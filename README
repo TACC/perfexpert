@@ -23,7 +23,7 @@ tool you will need to generate these files are:
 
 If you have all these GNU tools, to generate the 'configure' script just run:
 
-    $./autogen.sh
+    $ ./autogen.sh
 
 
 DOCUMENTATION:

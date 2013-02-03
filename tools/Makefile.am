@@ -8,6 +8,6 @@
 # $HEADER$
 #
 
-SUBDIRS = recommender
+SUBDIRS = $(ENABLE_RECOMMENDER) $(ENABLE_PR) $(ENABLE_CT) $(ENABLE_CR)
 
 # EOF

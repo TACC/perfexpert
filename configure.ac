@@ -12,7 +12,8 @@
 AC_PREREQ(2.63)
 
 # Define the package name, version, author, etc.
-AC_INIT([OptTran], [0.1], [Leonardo Fialho: fialho@utexas.edu], [opttran.tar.gz], [http://www.tacc.com.br/opttran/])
+AC_INIT([OptTran], [0.1], [Leonardo Fialho: fialho@utexas.edu],
+    [opttran.tar.gz], [http://www.tacc.com.br/opttran/])
 AC_COPYRIGHT([University of Texas at Austin])
 AC_REVISION([$Revision: 0.1 $])
 
@@ -33,25 +34,21 @@ m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 AC_PROG_CC
 AC_PROG_INSTALL
 
-# Check the operation system
-case "$host" in
-	*-darwin*)
-	AC_DEFINE([OS_MACOS], 1, [The target operating system is a Mac OSX])
-	AC_DEFINE([_XOPEN_SOURCE], 600, [Generate dependencies for Mountain Lion])
-	;;
-	*-linux*)
-	AC_DEFINE([OS_LINUX], 1, [The target operating system is a Linux])
-	;;
-esac
-
 # Checks for required (but generic) header files
-AC_CHECK_HEADER([stdio.h],  [AC_DEFINE([HAVE_STDIO_H],  1, [You have <stdio.h>.])],  [AC_MSG_ERROR([not found: stdio.h])])
-AC_CHECK_HEADER([getopt.h], [AC_DEFINE([HAVE_GETOPT_H], 1, [You have <getopt.h>.])], [AC_MSG_ERROR([not found: getopt.h])])
-AC_CHECK_HEADER([ctype.h],  [AC_DEFINE([HAVE_CTYPE_H],  1, [You have <ctype.h>.])],  [AC_MSG_ERROR([not found: ctype.h])])
-AC_CHECK_HEADER([stdlib.h], [AC_DEFINE([HAVE_STDLIB_H], 1, [You have <stdlib.h>.])], [AC_MSG_ERROR([not found: stdlib.h])])
-AC_CHECK_HEADER([stdarg.h], [AC_DEFINE([HAVE_STDARG_H], 1, [You have <stdarg.h>.])], [AC_MSG_ERROR([not found: stdarg.h])])
-AC_CHECK_HEADER([string.h], [AC_DEFINE([HAVE_STRING_H], 1, [You have <string.h>.])], [AC_MSG_ERROR([not found: string.h])])
-AC_CHECK_HEADER([unistd.h], [AC_DEFINE([HAVE_UNISTD_H], 1, [You have <unistd.h>.])], [AC_MSG_ERROR([not found: unistd.h])])
+AC_CHECK_HEADER([stdio.h],  [AC_DEFINE([HAVE_STDIO_H],  1,
+    [You have <stdio.h>.])],  [AC_MSG_ERROR([not found: stdio.h])])
+AC_CHECK_HEADER([getopt.h], [AC_DEFINE([HAVE_GETOPT_H], 1,
+    [You have <getopt.h>.])], [AC_MSG_ERROR([not found: getopt.h])])
+AC_CHECK_HEADER([ctype.h],  [AC_DEFINE([HAVE_CTYPE_H],  1,
+    [You have <ctype.h>.])],  [AC_MSG_ERROR([not found: ctype.h])])
+AC_CHECK_HEADER([stdlib.h], [AC_DEFINE([HAVE_STDLIB_H], 1,
+    [You have <stdlib.h>.])], [AC_MSG_ERROR([not found: stdlib.h])])
+AC_CHECK_HEADER([stdarg.h], [AC_DEFINE([HAVE_STDARG_H], 1,
+    [You have <stdarg.h>.])], [AC_MSG_ERROR([not found: stdarg.h])])
+AC_CHECK_HEADER([string.h], [AC_DEFINE([HAVE_STRING_H], 1,
+    [You have <string.h>.])], [AC_MSG_ERROR([not found: string.h])])
+AC_CHECK_HEADER([unistd.h], [AC_DEFINE([HAVE_UNISTD_H], 1,
+    [You have <unistd.h>.])], [AC_MSG_ERROR([not found: unistd.h])])
 
 # Checks for typedefs, structures, and compiler characteristics
 AC_C_INLINE
@@ -64,6 +61,7 @@ AC_FUNC_MALLOC
 AC_CONFIG_FILES([Makefile
 	tools/Makefile])
 
+###############################################################################
 # Enable/Disable 'recommender' (BEGIN)
 recommender_default="yes"
 AC_MSG_CHECKING([whether to enable the 'Optimization Recommender'])
@@ -77,22 +75,24 @@ if test "x$enable_recommender" = "xyes"; then
     AC_DEFINE(OPTTRAN_ENABLE_RECOMMENDER, [1], [Disable recommender])
 
 # Checks for SQLite library functions (only if 'recommender' is enabled)
-    AC_CHECK_LIB([sqlite3], [sqlite3_open],,   [AC_MSG_ERROR([SQLite3 not found!])])
-    AC_CHECK_LIB([sqlite3], [sqlite3_close],,  [AC_MSG_ERROR([SQLite3 not found!])])
-    AC_CHECK_LIB([sqlite3], [sqlite3_exec],,   [AC_MSG_ERROR([SQLite3 not found!])])
-    AC_CHECK_LIB([sqlite3], [sqlite3_free],,   [AC_MSG_ERROR([SQLite3 not found!])])
-    AC_CHECK_LIB([sqlite3], [sqlite3_errmsg],, [AC_MSG_ERROR([SQLite3 not found!])])
+    AC_CHECK_LIB([sqlite3], [sqlite3_open],,
+        [AC_MSG_ERROR([SQLite3 not found!])])
 
+    ENABLE_RECOMMENDER=recommender
     AC_CONFIG_FILES([tools/recommender/Makefile])
+    AC_SUBST([ENABLE_RECOMMENDER])
 else
     AC_MSG_RESULT(no)
     AC_DEFINE(OPTTRAN_ENABLE_RECOMMENDER, [0], [Disable recommender])
+    ENABLE_RECOMMENDER=
+    AC_SUBST([ENABLE_RECOMMENDER])
 fi
 # Enable/Disable 'recommender' (END)
 
+###############################################################################
 # Enable/Disable 'opttran_pr' (BEGIN)
 opttran_pr_default="yes"
-AC_MSG_CHECKING([whether to enable the 'Pattern Recognizer'])
+AC_MSG_CHECKING([whether to enable the 'OptTran Pattern Recognizer'])
 AC_ARG_ENABLE(opttran_pr,
     [AS_HELP_STRING([--disable-opttran_pr],
         [disable the pattern recognizer tool [default=enabled]])],,
@@ -106,14 +106,70 @@ if test "x$enable_opttran_pr" = "xyes"; then
     AC_PROG_LEX
     AC_PROG_YACC
     
-#    AC_CONFIG_FILES([tools/pr/Makefile])
+    ENABLE_PR=pr
+    AC_CONFIG_FILES([tools/pr/Makefile])
+    
+    AC_CONFIG_FILES([tools/pr/c_loop1/Makefile])
+    AC_CONFIG_FILES([tools/pr/c_loop2/Makefile])
+
+    AC_SUBST([ENABLE_PR])
 else
     AC_MSG_RESULT(no)
     AC_DEFINE(OPTTRAN_ENABLE_PR, [0], [Disable opttran_pr])
+    ENABLE_PR=
+    AC_SUBST([ENABLE_PR])
 fi
 # Enable/Disable 'opttran_pr' (END)
 
-# Add path to config.h
+###############################################################################
+# Enable/Disable 'opttran_ct' (BEGIN)
+opttran_ct_default="yes"
+AC_MSG_CHECKING([whether to enable the 'OprTran Code Transformer'])
+AC_ARG_ENABLE(opttran_ct,
+    [AS_HELP_STRING([--disable-opttran_ct],
+        [disable the code transformer tool [default=enabled]])],,
+    enable_opttran_ct=$opttran_ct_default)
+
+if test "x$enable_opttran_ct" = "xyes"; then
+    AC_MSG_RESULT(yes)
+    AC_DEFINE(OPTTRAN_ENABLE_CT, [1], [Disable opttran_ct])
+
+    ENABLE_CT=ct
+#    AC_CONFIG_FILES([tools/ct/Makefile])
+    AC_SUBST([ENABLE_CT])
+else
+    AC_MSG_RESULT(no)
+    AC_DEFINE(OPTTRAN_ENABLE_CT, [0], [Disable opttran_ct])
+    ENABLE_CT=
+    AC_SUBST([ENABLE_CT])
+fi
+# Enable/Disable 'opttran_ct' (END)
+
+###############################################################################
+# Enable/Disable 'opttran_cr' (BEGIN)
+opttran_cr_default="yes"
+AC_MSG_CHECKING([whether to enable the 'OprTran Code Re-Assembler'])
+AC_ARG_ENABLE(opttran_cr,
+    [AS_HELP_STRING([--disable-opttran_cr],
+        [disable the code re-assembler tool [default=enabled]])],,
+    enable_opttran_cr=$opttran_cr_default)
+
+if test "x$enable_opttran_cr" = "xyes"; then
+    AC_MSG_RESULT(yes)
+    AC_DEFINE(OPTTRAN_ENABLE_CR, [1], [Disable opttran_cr])
+
+    ENABLE_CR=cr
+#    AC_CONFIG_FILES([tools/cr/Makefile])
+    AC_SUBST([ENABLE_CR])
+else
+    AC_MSG_RESULT(no)
+    AC_DEFINE(OPTTRAN_ENABLE_CR, [0], [Disable opttran_cr])
+    ENABLE_CR=cr
+    AC_SUBST([ENABLE_CR])
+fi
+# Enable/Disable 'opttran_cr' (END)
+
+# Add path to install_dirs.h
 AC_CONFIG_FILES([config/install_dirs.h])
 
 # Generate output files

@@ -8,12 +8,11 @@
 # $HEADER$
 #
 
-AM_CPPFLAGS = -I$(srcdir)/../common
+AM_CFLAGS = -I$(srcdir)/../common
 
 bin_PROGRAMS = recommender
 
 recommender_SOURCES = recommender.c
-recommender_LDADD = 
 recommender_LDFLAGS = -lsqlite3
 
 # EOF
