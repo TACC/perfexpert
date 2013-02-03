@@ -1,0 +1,28 @@
+Copyright (c) 2013  University of Texas at Austin. All rights reserved.
+
+$COPYRIGHT
+$AUTHORS
+
+This static checker identifies is the given C source code is a valid iteration
+statement (FOR, DO and WHILE).
+
+Software requirements:
+
+	GNU Bison  (http://ftp.gnu.org/gnu/bison/)
+	GNU Flex   (http://flex.sourceforge.net/)
+
+Compiling instructions:
+
+	$ make
+
+Compiling instructions without Makefile:
+
+	$ yacc -d c_loop1.y
+	$ lex c_loop1.l
+	$ gcc -o c_loop1 lex.yy.c y.tab.c
+
+Using instruction:
+
+	$ ./c_loop1 < c_loop1_example.c
+
+EOF.
