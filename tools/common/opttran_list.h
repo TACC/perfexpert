@@ -21,14 +21,14 @@
 /**
  * @file 
  *
- * The opttran_list_t interface is used to provide a generic doubly-linked list
- * container for the Green Abstraction Layer. It was inspired by (but is
- * slightly different than) the Open MPI's lists interface, which was inspired
- * by Stantard Template Library (STL) std::list class. One notable difference
- * Open MPI's is that is that here, we provide a small subset of functions. The
- * main difference between Open MPI's lists interface and std::list classe is
- * that when an opal_list_t is destroyed, all of the opal_list_item_t objects
- * that it contains are orphaned -- they are not destroyed.
+ * The opttran_list interface is used to provide a generic doubly-linked list
+ * container for OptTran tools. It was inspired by (but is slightly different
+ * than) the Open MPI's lists interface, which was inspired by Stantard Template
+ * Library (STL) std::list class. One notable difference Open MPI's is that is
+ * that here, we provide a small subset of functions. The main difference
+ * between Open MPI's lists interface and std::list classe is that when an
+ * opttran_list_t is destroyed, all of the opttran_list_item_t objects that it
+ * contains are orphaned -- they are not destroyed.
  *
  * The general idea is that opttran_list_item_t can be put on an opttran_list_t.
  * Hence, you create a new type that derives from opttran_list_item_t; this new

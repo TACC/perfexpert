@@ -1,7 +1,9 @@
+
 Copyright (c) 2013  University of Texas at Austin. All rights reserved.
 
-$COPYRIGHT
-$AUTHORS
+$COPYRIGHT$
+
+$AUTHORS$
 
 This static checker identifies is the given C source code is a valid perfect
 nested iteration statement (FOR, DO and WHILE).
