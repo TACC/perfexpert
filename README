@@ -1,0 +1,37 @@
+Copyright (c) 2013  University of Texas at Austin. All rights reserved.
+
+$COPYRIGHT$
+
+Additional copyrights may follow
+
+COMPILING AND INSTALLING:
+-------------------------
+To compile OptTran just run: 
+
+    $ ./configure
+    $ make
+    # make install
+
+If the 'configure' script is not available on your source tree, probably you
+have retrieved this code from our source code repository. It means you will
+need some GNU tools to generate the 'configure'. The recommended version of the
+tool you will need to generate these files are:
+
+    - M4,       1.4.13 or newer (ftp://ftp.gnu.org/gnu/m4/)
+    - Autoconf  2.63 or newer   (ftp://ftp.gnu.org/gnu/autoconf/)
+    - Automake  1.11.1 or newer (ftp://ftp.gnu.org/gnu/automake/)
+
+If you have all these GNU tools, to generate the 'configure' script just run:
+
+    $./autogen.sh
+
+
+DOCUMENTATION:
+--------------
+
+
+HOW TO CONTRIBUTE TO OPTTRAN:
+-----------------------------
+
+
+EOF
