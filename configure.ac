@@ -63,27 +63,34 @@ AC_CONFIG_FILES([Makefile
 
 ###############################################################################
 # Enable/Disable 'recommender' (BEGIN)
-recommender_default="yes"
 AC_MSG_CHECKING([whether to enable the 'Optimization Recommender'])
 AC_ARG_ENABLE(recommender,
-    [AS_HELP_STRING([--disable-recommender],
-        [disable the optimization recommender tool [default=enabled]])],,
-    enable_recommender=$recommender_default)
+    [AS_HELP_STRING([--enable-recommender=@<:@yes/no@:>@],
+        [Enable/Disable the optimization recommender tool @<:@default=yes@:>@])],
+    ENABLE_RECOMMENDER=$enableval, ENABLE_RECOMMENDER=yes)
 
-if test "x$enable_recommender" = "xyes"; then
+if test x"$ENABLE_RECOMMENDER" = x"yes"; then
     AC_MSG_RESULT(yes)
-    AC_DEFINE(OPTTRAN_ENABLE_RECOMMENDER, [1], [Disable recommender])
+    AC_DEFINE(OPTTRAN_ENABLE_RECOMMENDER, [1], [Enable/Disable recommender])
 
 # Checks for SQLite library functions (only if 'recommender' is enabled)
-    AC_CHECK_LIB([sqlite3], [sqlite3_open],,
+    AC_CHECK_LIB([sqlite3], [sqlite3_open, sqlite3_close, sqlite3_exec,
+            sqlite3_free, sqlite3_errmsg],
+        [AC_MSG_NOTICE([You have SQLite3, this is awesome!])],
         [AC_MSG_ERROR([SQLite3 not found!])])
+
+# Check for the SQLite utility
+    AC_CHECK_PROG(SQLITE3_PROGRAM, sqlite3, yes)
+    if test x"$SQLITE3_PROGRAM" != x"yes" ; then
+        AC_MSG_ERROR([Please install SQLite3 utility before.])
+    fi
 
     ENABLE_RECOMMENDER=recommender
     AC_CONFIG_FILES([tools/recommender/Makefile])
     AC_SUBST([ENABLE_RECOMMENDER])
 else
     AC_MSG_RESULT(no)
-    AC_DEFINE(OPTTRAN_ENABLE_RECOMMENDER, [0], [Disable recommender])
+    AC_DEFINE(OPTTRAN_ENABLE_RECOMMENDER, [0], [Enable/Disable recommender])
     ENABLE_RECOMMENDER=
     AC_SUBST([ENABLE_RECOMMENDER])
 fi
@@ -91,16 +98,15 @@ fi
 
 ###############################################################################
 # Enable/Disable 'opttran_pr' (BEGIN)
-opttran_pr_default="yes"
 AC_MSG_CHECKING([whether to enable the 'OptTran Pattern Recognizer'])
 AC_ARG_ENABLE(opttran_pr,
-    [AS_HELP_STRING([--disable-opttran_pr],
-        [disable the pattern recognizer tool [default=enabled]])],,
-    enable_opttran_pr=$opttran_pr_default)
+    [AS_HELP_STRING([--disable-opttran_pr=@<:@yes/no@:>@],
+        [Enable/Disable the pattern recognizer tool @<:@default=yes@:>@])],
+    ENABLE_OPTTRAN_CR=$enableval, ENABLE_OPTTRAN_CR=yes)
 
-if test "x$enable_opttran_pr" = "xyes"; then
+if test x"$ENABLE_OPTTRAN_CR" = x"yes"; then
     AC_MSG_RESULT(yes)
-    AC_DEFINE(OPTTRAN_ENABLE_PR, [1], [Disable opttran_pr])
+    AC_DEFINE(OPTTRAN_ENABLE_PR, [1], [Enable/Disable opttran_pr])
 
 # Check for Lex/Flex and Yacc/Bison
     AC_PROG_LEX
@@ -108,14 +114,12 @@ if test "x$enable_opttran_pr" = "xyes"; then
     
     ENABLE_PR=pr
     AC_CONFIG_FILES([tools/pr/Makefile])
-    
     AC_CONFIG_FILES([tools/pr/c_loop1/Makefile])
     AC_CONFIG_FILES([tools/pr/c_loop2/Makefile])
-
     AC_SUBST([ENABLE_PR])
 else
     AC_MSG_RESULT(no)
-    AC_DEFINE(OPTTRAN_ENABLE_PR, [0], [Disable opttran_pr])
+    AC_DEFINE(OPTTRAN_ENABLE_PR, [0], [Enable/Disable opttran_pr])
     ENABLE_PR=
     AC_SUBST([ENABLE_PR])
 fi
@@ -123,23 +127,22 @@ fi
 
 ###############################################################################
 # Enable/Disable 'opttran_ct' (BEGIN)
-opttran_ct_default="yes"
 AC_MSG_CHECKING([whether to enable the 'OprTran Code Transformer'])
 AC_ARG_ENABLE(opttran_ct,
-    [AS_HELP_STRING([--disable-opttran_ct],
-        [disable the code transformer tool [default=enabled]])],,
-    enable_opttran_ct=$opttran_ct_default)
+    [AS_HELP_STRING([--disable-opttran_ct=@<:@yes/no@:>@],
+        [Enable/Disable the code transformer tool @<:@default=yes@:>@])],
+    ENABLE_OPTTRAN_CT=$enableval, ENABLE_OPTTRAN_CT=yes)
 
-if test "x$enable_opttran_ct" = "xyes"; then
+if test x"$ENABLE_OPTTRAN_CT" = x"yes"; then
     AC_MSG_RESULT(yes)
-    AC_DEFINE(OPTTRAN_ENABLE_CT, [1], [Disable opttran_ct])
+    AC_DEFINE(OPTTRAN_ENABLE_CT, [1], [Enable/Disable opttran_ct])
 
     ENABLE_CT=ct
 #    AC_CONFIG_FILES([tools/ct/Makefile])
     AC_SUBST([ENABLE_CT])
 else
     AC_MSG_RESULT(no)
-    AC_DEFINE(OPTTRAN_ENABLE_CT, [0], [Disable opttran_ct])
+    AC_DEFINE(OPTTRAN_ENABLE_CT, [0], [Enable/Disable opttran_ct])
     ENABLE_CT=
     AC_SUBST([ENABLE_CT])
 fi
@@ -147,23 +150,22 @@ fi
 
 ###############################################################################
 # Enable/Disable 'opttran_cr' (BEGIN)
-opttran_cr_default="yes"
 AC_MSG_CHECKING([whether to enable the 'OprTran Code Re-Assembler'])
 AC_ARG_ENABLE(opttran_cr,
-    [AS_HELP_STRING([--disable-opttran_cr],
-        [disable the code re-assembler tool [default=enabled]])],,
-    enable_opttran_cr=$opttran_cr_default)
+    [AS_HELP_STRING([--disable-opttran_cr=@<:@yes/no@:>@],
+        [Enable/Disable the code re-assembler tool @<:@default=yes@:>@])],
+    ENABLE_OPTTRAN_CR=$enableval, ENABLE_OPTTRAN_CR=yes)
 
-if test "x$enable_opttran_cr" = "xyes"; then
+if test x"$ENABLE_OPTTRAN_CR" = x"yes"; then
     AC_MSG_RESULT(yes)
-    AC_DEFINE(OPTTRAN_ENABLE_CR, [1], [Disable opttran_cr])
+    AC_DEFINE(OPTTRAN_ENABLE_CR, [1], [Enable/Disable opttran_cr])
 
     ENABLE_CR=cr
 #    AC_CONFIG_FILES([tools/cr/Makefile])
     AC_SUBST([ENABLE_CR])
 else
     AC_MSG_RESULT(no)
-    AC_DEFINE(OPTTRAN_ENABLE_CR, [0], [Disable opttran_cr])
+    AC_DEFINE(OPTTRAN_ENABLE_CR, [0], [Enable/Disable opttran_cr])
     ENABLE_CR=cr
     AC_SUBST([ENABLE_CR])
 fi
