@@ -94,7 +94,7 @@ fi
 opttran_pr_default="yes"
 AC_MSG_CHECKING([whether to enable the 'Pattern Recognizer'])
 AC_ARG_ENABLE(opttran_pr,
-    [AS_HELP_STRING([--disable-recommender],
+    [AS_HELP_STRING([--disable-opttran_pr],
         [disable the pattern recognizer tool [default=enabled]])],,
     enable_opttran_pr=$opttran_pr_default)
 
