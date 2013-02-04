@@ -34,6 +34,62 @@ m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 AC_PROG_CC
 AC_PROG_INSTALL
 
+#------------------------------------------------------------------------------
+# Check for the operation system to include specific defines (if needed!)
+AC_CANONICAL_HOST
+AC_MSG_CHECKING([for the OS])
+case "${host}" in
+    *-*-darwin*)
+        AC_DEFINE([OS_MACOS], 1, [The host OS is OSX])
+        AC_MSG_RESULT([you are a happy Mac user, I suppose.])
+        ;;
+    *-*-freebsd*)
+        AC_DEFINE([OS_FREEBSD], 1, [The host OS is FreeBSD])
+        AC_MSG_RESULT([hum... Are you happy with whis FreeBSD?])
+        ;;
+    *-*-linux*)
+        AC_DEFINE([OS_LINUX], 1, [The host OS is Linux])
+        AC_MSG_RESULT([OK, one more geek using Linux.])
+        ;;
+    *-*-netbsd*)
+        AC_DEFINE([OS_NETBSD], 1, [The host OS is NetBSD])
+        AC_MSG_RESULT([Really? There is at least one NetBSD user in the world!])
+        ;;
+    *-*-solaris2*)
+        AC_DEFINE([OS_SOLARIS], 1, [The host OS is Solaris])
+        AC_MSG_RESULT([I understand, you are stucked on this Solaris, right?.])
+        ;;
+    *-*-mingw* | *-*-cygwin*)
+        AC_DEFINE([OS_WINDOWS], 1, [The host OS is Windows])
+        AC_MSG_RESULT([I will pray for you Windows user.])
+        ;;
+    *)
+        AC_MSG_RESULT([Unsupported operating system: ${host}])
+        ;;
+esac
+
+#------------------------------------------------------------------------------
+# Any architecture-specific requirement?
+AC_MSG_CHECKING([for the architecture])
+case "$host" in
+    i?86-* | k?-* | athlon-* | pentium*-)
+        AC_DEFINE(ARCH_X86, 1, [Architecture is x86])
+        AC_MSG_RESULT([x86])
+        ;;
+    x86_64-*)
+        AC_DEFINE(ARCH_X86_64, 1, [Architecture is x86-64])
+        AC_MSG_RESULT([x86-64])
+        ;;
+    ppc-* | powerpc-*)
+        AC_DEFINE(ARCH_PPC, 1, [Architecture is PowerPC])
+        AC_MSG_RESULT([PowerPC])
+        ;;
+    *)
+        AC_MSG_ERROR([Unknown Architecture])
+        ;;
+esac
+
+#------------------------------------------------------------------------------
 # Checks for required (but generic) header files
 AC_CHECK_HEADER([stdio.h],  [AC_DEFINE([HAVE_STDIO_H],  1,
     [You have <stdio.h>.])],  [AC_MSG_ERROR([not found: stdio.h])])
@@ -61,7 +117,7 @@ AC_FUNC_MALLOC
 AC_CONFIG_FILES([Makefile
 	tools/Makefile])
 
-###############################################################################
+#------------------------------------------------------------------------------
 # Enable/Disable 'recommender' (BEGIN)
 AC_MSG_CHECKING([whether to enable the 'Optimization Recommender'])
 AC_ARG_ENABLE(recommender,
@@ -76,8 +132,8 @@ if test x"$ENABLE_RECOMMENDER" = x"yes"; then
 # Checks for SQLite library functions (only if 'recommender' is enabled)
     AC_CHECK_LIB([sqlite3], [sqlite3_open, sqlite3_close, sqlite3_exec,
             sqlite3_free, sqlite3_errmsg],
-        [AC_MSG_NOTICE([You have SQLite3, this is awesome!])],
-        [AC_MSG_ERROR([SQLite3 not found!])])
+        [AC_MSG_RESULT([You have SQLite3 (at least the library), great!])],
+        [AC_MSG_ERROR([SQLite3 not found ;-(])])
 
 # Check for the SQLite utility
     AC_CHECK_PROG(SQLITE3_PROGRAM, sqlite3, yes)
@@ -96,7 +152,7 @@ else
 fi
 # Enable/Disable 'recommender' (END)
 
-###############################################################################
+#------------------------------------------------------------------------------
 # Enable/Disable 'opttran_pr' (BEGIN)
 AC_MSG_CHECKING([whether to enable the 'OptTran Pattern Recognizer'])
 AC_ARG_ENABLE(opttran_pr,
@@ -125,7 +181,7 @@ else
 fi
 # Enable/Disable 'opttran_pr' (END)
 
-###############################################################################
+#------------------------------------------------------------------------------
 # Enable/Disable 'opttran_ct' (BEGIN)
 AC_MSG_CHECKING([whether to enable the 'OprTran Code Transformer'])
 AC_ARG_ENABLE(opttran_ct,
@@ -148,7 +204,7 @@ else
 fi
 # Enable/Disable 'opttran_ct' (END)
 
-###############################################################################
+#------------------------------------------------------------------------------
 # Enable/Disable 'opttran_cr' (BEGIN)
 AC_MSG_CHECKING([whether to enable the 'OprTran Code Re-Assembler'])
 AC_ARG_ENABLE(opttran_cr,
@@ -171,6 +227,7 @@ else
 fi
 # Enable/Disable 'opttran_cr' (END)
 
+#------------------------------------------------------------------------------
 # Add path to install_dirs.h
 AC_CONFIG_FILES([config/install_dirs.h])
 
