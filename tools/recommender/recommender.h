@@ -27,6 +27,14 @@
 #include <ctype.h>
 #endif
 
+#ifndef	_STDIO_H_
+#include <stdio.h> /* To use FILE type on globals */
+#endif
+
+/** Default values for some parameters */
+#define RECOMMENDATION_DB "recommendation.db"
+#define OPTTRAN_RECO_FILE "recommendations.txt"
+
 /** Structure to hold global variables */
 typedef struct {
     int  verbose;
@@ -36,6 +44,7 @@ typedef struct {
     int  use_opttran;
     char *inputfile;
     char *outputfile;
+    FILE *outputfile_FP;
     char *dbfile;
     char *opttrandir;
 } globals_t;
@@ -66,6 +75,13 @@ typedef struct node {
     char *key;
     char *value;
 } node_t;
+
+// TODO: change this structure to a SQL DB: first create a table with all
+//       measurements (read them from a TXT file), fill the table with the
+//       measurements values, and them use a user-defined table to calculate
+//       the metrics to select the most suitable list of recommendations. Store
+//       in the table the source code filne name and line number, just to
+//       search for them when parsing the list of segments.
 
 /** Structure to hold performance measurements (PerfExpert) */
 typedef struct measurements {

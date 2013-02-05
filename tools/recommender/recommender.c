@@ -17,6 +17,7 @@ globals_t globals; // Variable to hold global options, this one is OK
 
 int main (int argc, char** argv) {
     opttran_list_t segments;
+    segment_t *item;
     
     /* Set default values for globals */
     globals = (globals_t) {
@@ -27,7 +28,8 @@ int main (int argc, char** argv) {
         .use_opttran   = 0,                     // int
         .inputfile     = NULL,                  // char *
         .outputfile    = NULL,                  // char *
-        .dbfile        = "./recommendation.db", // char *
+        .outputfile_FP = stdout,                // FILE *
+        .dbfile        = RECOMMENDATION_DB, // char *
         .opttrandir    = NULL                   // char *
     };
 
@@ -65,9 +67,73 @@ int main (int argc, char** argv) {
     /* Calculate the weigths for each code bottleneck */
     calculate_weigths();
     
-    /* Select/output recommendations for each code bottleneck */
-    select_recommendations();
-    
+    /* Select/output recommendations for each code bottleneck (4 steps) */
+    /* Step 1: Print to a file or STDOUT is ok? Was OPRTRAN chose? */
+    if (1 == globals.use_opttran) {
+        globals.use_stdout = 0;
+        globals.outputfile = malloc(strlen(globals.opttrandir) +
+                                    strlen(OPTTRAN_RECO_FILE) + 1);
+        bzero(globals.outputfile, strlen(globals.opttrandir) +
+              strlen(OPTTRAN_RECO_FILE) + 1);
+        strcat(globals.outputfile, globals.opttrandir);
+        strcat(globals.outputfile, "/");
+        strcat(globals.outputfile, OPTTRAN_RECO_FILE);
+        OPTTRAN_OUTPUT_VERBOSE((7, "[recommender] printing OPTTRAN recommendation to dir (%s)",
+                                globals.opttrandir));
+    }
+    if (0 == globals.use_stdout) {
+        OPTTRAN_OUTPUT_VERBOSE((7, "[recommender] printing recommendation to file (%s)",
+                                globals.outputfile));
+        globals.outputfile_FP = fopen(globals.outputfile, "w+");
+        if (NULL == globals.outputfile_FP) {
+            OPTTRAN_OUTPUT(("[recommender] error opening file (%s)",
+                            globals.outputfile));
+            return OPTTRAN_ERROR;
+        }
+    } else {
+        OPTTRAN_OUTPUT_VERBOSE((7, "[recommender] printing recommendation to STDOUT"));
+    }
+
+    /* Step 2: For each code bottleneck... */
+    item = (segment_t *)opttran_list_get_first(&(segments));
+    do {
+        OPTTRAN_OUTPUT_VERBOSE((4, "[recommender] selecting recommendation for %s:%d",
+                                item->filename, item->line_number));
+        if (1 == globals.use_opttran) {
+            fprintf(globals.outputfile_FP, "%% recommendation for %s:%d\n",
+                    item->filename, item->line_number);
+            fprintf(globals.outputfile_FP, "code.filename=%s\n",
+                    item->filename);
+            fprintf(globals.outputfile_FP, "code.line_number=%d\n",
+                    item->line_number);
+            fprintf(globals.outputfile_FP, "code.fragment_file=%s_%d\n",
+                    item->filename, item->line_number);
+        } else {
+            fprintf(globals.outputfile_FP,
+                    "#--------------------------------------------------\n");
+            fprintf(globals.outputfile_FP,
+                    "# Recommendations for %s:%d\n", item->filename,
+                    item->line_number);
+            fprintf(globals.outputfile_FP,
+                    "#--------------------------------------------------\n");
+        }
+
+        /* Step 3: query DB for recommendations */
+        select_recommendations();
+
+        if (0 == globals.use_opttran) {
+            fprintf(globals.outputfile_FP, "\n");
+        }
+            
+        /* Move to the next code bottleneck */
+        item = (segment_t *)opttran_list_get_next(item);
+    } while ((opttran_list_item_t *)item != &(segments.sentinel));
+
+    /* Step 4: If we are using output file, close it! */
+    if (0 == globals.use_stdout) {
+        fclose(globals.outputfile_FP);
+    }
+
     /* Free segments (and all items) structure */
     while (OPTTRAN_FALSE == opttran_list_is_empty(&(segments))) {
         segment_t *item;
@@ -79,7 +145,11 @@ int main (int argc, char** argv) {
         free(item->extra_info);
         free(item->section_info);
         free(item);
-    } // I hope I didn't left anything behind...
+    }
+    if (1 == globals.use_opttran) {
+        free(globals.outputfile);
+    }
+    // I hope I didn't left anything behind...
     
     return OPTTRAN_SUCCESS;
 }
@@ -93,12 +163,14 @@ static void show_help(void) {
     OPTTRAN_OUTPUT(("  -i --stdin         Use STDIN as input for performance measurements"));
     OPTTRAN_OUTPUT(("  -f --inputfile     Use 'file' as input for performance measurements"));
     OPTTRAN_OUTPUT(("  -o --outputfile    Use 'file' as output for recommendations (default: stdout)"));
-    OPTTRAN_OUTPUT(("  -d --database      Select database file (default: ./recommendation.db)"));
+    OPTTRAN_OUTPUT(("                     if the file exists its content will be overwritten"));
     OPTTRAN_OUTPUT(("  -a --opttran       Create OptTran (automatic performance optimization) files"));
     OPTTRAN_OUTPUT(("                     into 'dir' directory (default: create no OptTran files)"));
-    OPTTRAN_OUTPUT(("  -h --help          Show this message"));
+    OPTTRAN_OUTPUT(("                     this argument overwrites -o, no output will be produced"));
+    OPTTRAN_OUTPUT(("  -d --database      Select database file (default: ./recommendation.db)"));
     OPTTRAN_OUTPUT(("  -v --verbose       Enable verbose mode using default verbose level (5)"));
     OPTTRAN_OUTPUT(("  -l --verbose_level Enable verbose mode using a specific verbose level (1-10)"));
+    OPTTRAN_OUTPUT(("  -h --help          Show this message"));
     
     /* I suppose that if I've to show the help is because something is wrong,
      * or maybe the user just want to see the options, so it seems to be a
@@ -496,26 +568,39 @@ static int parse_segment_params(opttran_list_t *segments_p, FILE *inputfile_p) {
         item = (segment_t *)opttran_list_get_next(item);
     } while ((opttran_list_item_t *)item != &(segments_p->sentinel));
     
-    OPTTRAN_OUTPUT_VERBOSE((4, "[recommender] === STDIN params OK ==="));
+    OPTTRAN_OUTPUT_VERBOSE((4, "[recommender] ==="));
     return OPTTRAN_SUCCESS;
 }
 
 /* output_recommendations */
-static int output_recommendations(void *NotUsed, int argc, char **argv,
-                                  char **azColName){
-    // TODO: make this output the correct information, this is just a test
-    int i;
-    for(i=0; i<argc; i++){
-        printf("%s = %s\n", azColName[i], argv[i] ? argv[i] : "NULL");
+static int output_recommendations(void *not_used, int col_count,
+                                  char **col_values, char **col_names){
+    
+    OPTTRAN_OUTPUT_VERBOSE((7, "[recommender] new recommendation found"));
+
+    /* If we are not plannning to use OPTTRAN, pint pretty, other just a list */
+    if (0 == globals.use_opttran) {
+        fprintf(globals.outputfile_FP, "# This is a possible recommendation for this code segment\n");
+        fprintf(globals.outputfile_FP, "Recommendation: %s\n", col_values[0]);
+        fprintf(globals.outputfile_FP, "Reason: %s\n", col_values[1]);
+        fprintf(globals.outputfile_FP, "Transformation: %s\n", col_values[2] ? col_values[2] :
+                "found no automatic transformation for this code segment");
+        fprintf(globals.outputfile_FP, "Code example:\n%s\n", col_values[3]);
+    } else {
+        if (NULL != col_values[2]) {
+            fprintf(globals.outputfile_FP, "%s\n", col_values[2]);
+        }
     }
-    printf("\n");
+
     return 0;
 }
 
 /* query_database */
 static int query_database(void) {
     sqlite3 *database;
-    
+
+    OPTTRAN_OUTPUT_VERBOSE((7, "[recommender] === Querying recommendation DB"));
+
     if (NULL == globals.dbfile) {
         globals.dbfile = "./recommendation.db";
     }
@@ -535,16 +620,17 @@ static int query_database(void) {
         sqlite3_close(database);
         return OPTTRAN_ERROR;
     }
-    
+
+    /* Query database */
     // TODO: define que correct SQL query
-    char *zErrMsg = 0;
-    if (SQLITE_OK != sqlite3_exec(database, "SELECT * FROM attribute;",
-                                  output_recommendations, 0, &zErrMsg)) {
-        fprintf(stderr, "Error: SQL error: %s\n", zErrMsg);
-        sqlite3_free(zErrMsg);
+    char *error_msg = 0;
+    if (SQLITE_OK != sqlite3_exec(database, "SELECT desc, reason, pattern, code FROM recommendation WHERE attr_code = 770 OR attr_code = 512 OR attr_code = 256 OR attr_code = 2;",
+                                  output_recommendations, 0, &error_msg)) {
+        fprintf(stderr, "Error: SQL error: %s\n", error_msg);
+        sqlite3_free(error_msg);
     }
     sqlite3_close(database);
-    
+
     return OPTTRAN_SUCCESS;
 }
 
