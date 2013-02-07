@@ -180,6 +180,9 @@ int main (int argc, char** argv) {
     if (1 == globals.use_opttran) {
         free(globals.outputfile);
     }
+    if (1 == globals.use_temp_metrics) {
+        free(globals.metrics_table);
+    }
     // I hope I didn't left anything behind...
 
     return OPTTRAN_SUCCESS;
@@ -465,6 +468,12 @@ static int parse_segment_params(opttran_list_t *segments_p, FILE *inputfile_p) {
         int temp;
         
         input_line++;
+
+        /* Ignore comments */
+        if (0 == strncmp("#", buffer, 1)) {
+            continue;
+        }
+
         /* Is this line a new code bottleneck specification? */
         if (0 == strncmp("%", buffer, 1)) {
             char temp_str[BUFFER_SIZE];
