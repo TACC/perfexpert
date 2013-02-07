@@ -15,48 +15,78 @@
 /* Global variables, try to not create them! */
 globals_t globals; // Variable to hold global options, this one is OK
 
+/* Functions declaration */
+static void show_help(void);
+static int  parse_env_vars(void);
+static int  parse_cli_params(int argc, char *argv[]);
+static int  parse_metrics_file(void);
+static int  parse_segment_params(opttran_list_t *segments_p, FILE *inputfile_p);
+static int  output_recommendations(void *not_used, int col_count,
+                                   char **col_values, char **col_names);
+static int  get_rowid(void *rowid, int col_count,
+                      char **col_values, char **col_names);
+static int  database_connect(void);
+static int  database_query(void);
+static int  calculate_weigths(void);
+static int  select_recommendations(void);
+
+/* main, life starts here */
 int main (int argc, char** argv) {
     opttran_list_t segments;
     segment_t *item;
     
     /* Set default values for globals */
     globals = (globals_t) {
-        .verbose       = 0,                     // int
-        .verbose_level = 0,                     // int
-        .use_stdin     = 0,                     // int
-        .use_stdout    = 1,                     // int
-        .use_opttran   = 0,                     // int
-        .inputfile     = NULL,                  // char *
-        .outputfile    = NULL,                  // char *
-        .outputfile_FP = stdout,                // FILE *
-        .dbfile        = RECOMMENDATION_DB, // char *
-        .opttrandir    = NULL                   // char *
+        .verbose          = 0,                 // int
+        .verbose_level    = 0,                 // int
+        .use_stdin        = 0,                 // int
+        .use_stdout       = 1,                 // int
+        .use_opttran      = 0,                 // int
+        .inputfile        = NULL,              // char *
+        .outputfile       = NULL,              // char *
+        .outputfile_FP    = stdout,            // FILE *
+        .dbfile           = RECOMMENDATION_DB, // char *
+        .opttrandir       = NULL,              // char *
+        .metrics_file     = NULL,              // char *
+        .use_temp_metrics = 0,                 // int
+        .metrics_table    = "metrics"          // char *
     };
 
     /* Parse command-line parameters */
     parse_cli_params(argc, argv);
     
+    /* Connect to database */
+    database_connect();
+    
     /* Create the list of code bottlenecks */
     opttran_list_construct(&(segments));
     
+    /* Calculate the temporary metrics table name */
+    if (1 == globals.use_temp_metrics) {
+        globals.metrics_table = malloc(strlen("metrics_") + 6);
+        sprintf(globals.metrics_table, "metrics_%d", (int)getpid());
+    }
+    
+    /* Parse metrics file if 'm' is defined, this will create a temporary table */
+    if (globals.metrics_file || (1 == globals.use_temp_metrics)) {
+        parse_metrics_file();
+    }
+    
     /* Parse input parameters */
     if (globals.use_stdin) {
-        OPTTRAN_OUTPUT_VERBOSE((3, "[recommender] using STDIN as default input for performance measurements"));
-        parse_segment_params(&segments, NULL);
+        parse_segment_params(&segments, stdin);
     } else {
         if (NULL != globals.inputfile) {
-            FILE *inputfile = NULL;
-            
-            OPTTRAN_OUTPUT_VERBOSE((3, "[recommender] using FILE (%s) as default input for performance measurements",
-                                    globals.inputfile));
+            FILE *inputfile_FP = NULL;
             
             /* Open input file */
-            if (NULL == (inputfile = fopen(globals.inputfile, "r"))) {
+            if (NULL == (inputfile_FP = fopen(globals.inputfile, "r"))) {
                 OPTTRAN_OUTPUT(("[recommender] error openning input file (%s)",
                                 globals.inputfile));
                 return OPTTRAN_ERROR;
             } else {
-                parse_segment_params(&segments, inputfile);
+                parse_segment_params(&segments, inputfile_FP);
+                fclose(inputfile_FP);
             }
         } else {
             fprintf(stderr, "Error: undefined input\n");
@@ -68,7 +98,7 @@ int main (int argc, char** argv) {
     calculate_weigths();
     
     /* Select/output recommendations for each code bottleneck (4 steps) */
-    /* Step 1: Print to a file or STDOUT is ok? Was OPRTRAN chose? */
+    /* Step 1: Print to a file or STDOUT is ok? Was OPRTRAN chosen? */
     if (1 == globals.use_opttran) {
         globals.use_stdout = 0;
         globals.outputfile = malloc(strlen(globals.opttrandir) +
@@ -129,10 +159,11 @@ int main (int argc, char** argv) {
         item = (segment_t *)opttran_list_get_next(item);
     } while ((opttran_list_item_t *)item != &(segments.sentinel));
 
-    /* Step 4: If we are using output file, close it! */
+    /* Step 4: If we are using output file, close it! (metrics DB too) */
     if (0 == globals.use_stdout) {
         fclose(globals.outputfile_FP);
     }
+    sqlite3_close(globals.db);
 
     /* Free segments (and all items) structure */
     while (OPTTRAN_FALSE == opttran_list_is_empty(&(segments))) {
@@ -150,7 +181,7 @@ int main (int argc, char** argv) {
         free(globals.outputfile);
     }
     // I hope I didn't left anything behind...
-    
+
     return OPTTRAN_SUCCESS;
 }
 
@@ -159,7 +190,8 @@ static void show_help(void) {
     OPTTRAN_OUTPUT_VERBOSE((10, "[recommender] printing help"));
     
     /*               12345678901234567890123456789012345678901234567890123456789012345678901234567890 */
-    OPTTRAN_OUTPUT(("Usage: recommender -i|-f file [-o file] [-d database] [-a dir] [-hv] [-l level]"));
+    OPTTRAN_OUTPUT(("Usage: recommender -i|-f file [-o file] [-d database] [-a dir] [-m file] [-hnv]"));
+    OPTTRAN_OUTPUT(("                   [-l level]"));
     OPTTRAN_OUTPUT(("  -i --stdin         Use STDIN as input for performance measurements"));
     OPTTRAN_OUTPUT(("  -f --inputfile     Use 'file' as input for performance measurements"));
     OPTTRAN_OUTPUT(("  -o --outputfile    Use 'file' as output for recommendations (default: stdout)"));
@@ -167,7 +199,12 @@ static void show_help(void) {
     OPTTRAN_OUTPUT(("  -a --opttran       Create OptTran (automatic performance optimization) files"));
     OPTTRAN_OUTPUT(("                     into 'dir' directory (default: create no OptTran files)"));
     OPTTRAN_OUTPUT(("                     this argument overwrites -o, no output will be produced"));
-    OPTTRAN_OUTPUT(("  -d --database      Select database file (default: ./recommendation.db)"));
+    OPTTRAN_OUTPUT(("  -d --database      Select database file"));
+    OPTTRAN_OUTPUT(("                     (default: %s)", RECOMMENDATION_DB));
+    OPTTRAN_OUTPUT(("  -m --metricfile    Use 'file' to define metrics different from the default"));
+    OPTTRAN_OUTPUT(("  -n --newmetrics    Do not use the system metrics table. A temporary table will"));
+    OPTTRAN_OUTPUT(("                     be created using the default metrics file:"));
+    OPTTRAN_OUTPUT(("                     %s)", METRICS_FILE));
     OPTTRAN_OUTPUT(("  -v --verbose       Enable verbose mode using default verbose level (5)"));
     OPTTRAN_OUTPUT(("  -l --verbose_level Enable verbose mode using a specific verbose level (1-10)"));
     OPTTRAN_OUTPUT(("  -h --help          Show this message"));
@@ -210,7 +247,7 @@ static int parse_cli_params(int argc, char *argv[]) {
 
     while (1) {
         /* get parameter */
-        parameter = getopt_long(argc, argv, "vhil:f:d:o:a:", long_options,
+        parameter = getopt_long(argc, argv, "vhinm:l:f:d:o:a:", long_options,
                                 &option_index);
         
         /* Detect the end of the options */
@@ -290,6 +327,20 @@ static int parse_cli_params(int argc, char *argv[]) {
                 OPTTRAN_OUTPUT_VERBOSE((10, "[recommender] option 'v' set"));
                 break;
                 
+            /* Use temporary metrics table */
+            case 'n':
+                globals.use_temp_metrics = 1;
+                OPTTRAN_OUTPUT_VERBOSE((10, "[recommender] option 'n' set"));
+                break;
+                
+            /* Specify new metrics */
+            case 'm':
+                globals.use_temp_metrics = 1;
+                globals.metrics_file = optarg;
+                OPTTRAN_OUTPUT_VERBOSE((10, "[recommender] option 'm' set [%s]",
+                                        globals.metrics_file));
+                break;
+                
             /* Unknown option */
             case '?':
                 show_help();
@@ -302,25 +353,123 @@ static int parse_cli_params(int argc, char *argv[]) {
     return OPTTRAN_SUCCESS;
 }
 
+/* parse_metrics_file */
+static int parse_metrics_file(void) {
+    FILE *metrics_FP;
+    char buffer[1024];
+    char *sql = NULL;
+    char *error_msg = NULL;
+    char *metrics_file;
+
+    if (NULL != globals.metrics_file) {
+        metrics_file = globals.metrics_file;
+    } else {
+        metrics_file = METRICS_FILE;
+    }
+
+    OPTTRAN_OUTPUT_VERBOSE((7, "[recommender] === Reading metrics file (%s)",
+                            metrics_file));
+
+    if (NULL == (metrics_FP = fopen(metrics_file, "r"))) {
+        OPTTRAN_OUTPUT(("[recommender] error openning metrics file (%s)",
+                        metrics_file));
+        show_help();
+    } else {
+        sql = malloc(2048);
+        bzero(sql, 2048);
+
+        sprintf(sql, "CREATE TEMP TABLE %s (\n", globals.metrics_table);
+        strcat(sql, "    id INTEGER PRIMARY KEY,\n");
+        strcat(sql, "    code_filename CHAR( 1024 ),\n");
+        strcat(sql, "    code_line_number INTEGER,\n");
+        strcat(sql, "    code_type CHAR( 128 ),\n");
+        strcat(sql, "    code_extra_info CHAR( 1024 ),\n");
+        
+        bzero(buffer, 1024);
+        while (NULL != fgets(buffer, sizeof buffer, metrics_FP)) {
+            int temp;
+            
+            /* avoid comments */
+            if ('#' == buffer[0]) {
+                continue;
+            }
+            /* avoid blank and too short lines */
+            if (10 >= strlen(buffer)) {
+                continue;
+            }
+            /* replace some characters just to provide a safe SQL clause */
+            for (temp = 0; temp < strlen(buffer); temp++) {
+                switch (buffer[temp]) {
+                    case '%':
+                    case '.':
+                    case '(':
+                    case ')':
+                    case '-':
+                        buffer[temp] = '_';
+                    default:
+                        break;
+                }
+            }
+            buffer[strcspn(buffer, "\n")] = '\0'; // remove the '\n'
+            strcat(sql, "    ");
+            strcat(sql, buffer);
+            strcat(sql, " FLOAT,\n");
+        }
+        sql[strlen(sql)-2] = 0; // remove the last ',' and '\n'
+        strcat(sql, ");");
+        OPTTRAN_OUTPUT_VERBOSE((10, "[recommender] metrics SQL: %s", sql));
+
+        /* Create metrics table */
+        if (SQLITE_OK != sqlite3_exec(globals.db, sql, NULL, 0,
+                                      &error_msg)) {
+            fprintf(stderr, "Error: SQL error: %s\n", error_msg);
+            fprintf(stderr, "SQL clause: %s\n", sql);
+            sqlite3_free(error_msg);
+            sqlite3_close(globals.db);
+            exit(OPTTRAN_ERROR);
+        }
+        free(sql);
+        OPTTRAN_OUTPUT(("[recommender] using temporary metric table (%s)",
+                        globals.metrics_table));
+    }
+    return OPTTRAN_SUCCESS;
+}
+
 /* parse_segment_params */
 static int parse_segment_params(opttran_list_t *segments_p, FILE *inputfile_p) {
     segment_t *item;
-    int input_line = 0;
+    int  input_line = 0;
     char buffer[1024];
-    
+    char sql[1024];
+    char *error_msg = NULL;
+    int  rowid = 0;
+
     OPTTRAN_OUTPUT_VERBOSE((4, "[recommender] === Parsing measurements ==="));
     
+    /* Which INPUT we are using? (just a double check) */
     if ((NULL == inputfile_p) && (globals.use_stdin)) {
         inputfile_p = stdin;
     }
+    if (globals.use_stdin) {
+        OPTTRAN_OUTPUT_VERBOSE((3, "[recommender] using STDIN as default input for performance measurements"));
+    } else {
+        OPTTRAN_OUTPUT_VERBOSE((3, "[recommender] using FILE (%s) as default input for performance measurements",
+                                globals.inputfile));
+    }
     
+    /* For each line in the INPUT file... */
+    OPTTRAN_OUTPUT_VERBOSE((7, "[recommender] --- parsing input file"));
+
+    bzero(buffer, 1024);
     while (NULL != fgets(buffer, sizeof buffer, inputfile_p)) {
         node_t *node;
+        int temp;
         
         input_line++;
-
         /* Is this line a new code bottleneck specification? */
         if (0 == strncmp("%", buffer, 1)) {
+            char temp_str[1024];
+            
             OPTTRAN_OUTPUT_VERBOSE((5, "[recommender] (%d) --- found new bottleneck",
                                     input_line));
 
@@ -330,237 +479,130 @@ static int parse_segment_params(opttran_list_t *segments_p, FILE *inputfile_p) {
             
             /* Add this item to 'segments' */
             opttran_list_append(segments_p, (opttran_list_item_t *) item);
+
+            bzero(temp_str, 1024);
+            sprintf(temp_str, "INSERT INTO %s (code_filename) VALUES ('new_code-%d');\n",
+                    globals.metrics_table, (int)getpid());
+            bzero(sql, 1024);
+            strcat(sql, temp_str);
+            strcat(sql, "                            ");
+            bzero(temp_str, 1024);
+            sprintf(temp_str, "SELECT id FROM %s WHERE code_filename = 'new_code-%d';",
+                    globals.metrics_table, (int)getpid());
+            strcat(sql, temp_str);
             
+            OPTTRAN_OUTPUT_VERBOSE((5, "[recommender]          SQL: %s", sql));
+            
+            /* Insert new code fragment into metrics database, retrieve id */
+            if (SQLITE_OK != sqlite3_exec(globals.db, sql, get_rowid,
+                                          (void *)&rowid, &error_msg)) {
+                fprintf(stderr, "Error: SQL error: %s\n", error_msg);
+                fprintf(stderr, "SQL clause: %s\n", sql);
+                sqlite3_free(error_msg);
+                sqlite3_close(globals.db);
+                exit(OPTTRAN_ERROR);
+            } else {
+                OPTTRAN_OUTPUT_VERBOSE((5, "[recommender]          ID: %d",
+                                        rowid));
+            }
             continue;
         }
 
         node = malloc(sizeof(node_t) + strlen(buffer) + 1);
+        bzero(node, sizeof(node_t) + strlen(buffer) + 1);
         node->key = strtok(strcpy((char*)(node + 1), buffer), "=\r\n");
         node->value = strtok(NULL, "\r\n");
 
         /* OK, now it is time to check which parameter is this, and add it to
-         * 'segments'
+         * 'segments' (only code.* parameters) other parameter should fit into
+         * the SQL DB.
          */
-        
+
         /* Code param: code.filename */
         if (0 == strncmp("code.filename", node->key, 13)) {
             item->filename = malloc(strlen(node->value) + 1);
+            bzero(item->filename, strlen(node->value) + 1);
             strcpy(item->filename, node->value);
             OPTTRAN_OUTPUT_VERBOSE((10, "[recommender] (%d)   [%s], filename",
                                     input_line, item->filename));
-            continue;
         }
         /* Code param: code.line_number */
         if (0 == strncmp("code.line_number", node->key, 16)) {
             item->line_number = atoi(node->value);
             OPTTRAN_OUTPUT_VERBOSE((10, "[recommender] (%d)   [%d], line number",
                                     input_line, item->line_number));
-            continue;
         }
         /* Code param: code.type */
         if (0 == strncmp("code.type", node->key, 9)) {
             item->type = malloc(strlen(node->value) + 1);
+            bzero(item->type, strlen(node->value) + 1);
             strcpy(item->type, node->value);
             OPTTRAN_OUTPUT_VERBOSE((10, "[recommender] (%d)   [%s], type",
                                     input_line, item->type));
-            continue;
         }
         /* Code param: code.extra_info */
         if (0 == strncmp("code.extra_info", node->key, 15)) {
             item->extra_info = malloc(strlen(node->value) + 1);
+            bzero(item->extra_info, strlen(node->value) + 1);
             strcpy(item->extra_info, node->value);
             OPTTRAN_OUTPUT_VERBOSE((10, "[recommender] (%d)   [%s], extra info",
                                     input_line, item->extra_info));
-            continue;
         }
         /* Code param: code.representativeness */
         if (0 == strncmp("code.representativeness", node->key, 23)) {
             item->representativeness = atof(node->value);
             OPTTRAN_OUTPUT_VERBOSE((10, "[recommender] (%d)   [%f], representativeness",
                                     input_line, item->representativeness));
+            free(node);
             continue;
         }
         /* Code param: code.section_info */
         if (0 == strncmp("code.section_info", node->key, 17)) {
             item->section_info = malloc(strlen(node->value) + 1);
+            bzero(item->section_info, strlen(node->value) + 1);
             strcpy(item->section_info, node->value);
             OPTTRAN_OUTPUT_VERBOSE((10, "[recommender] (%d)   [%s], section info",
                                     input_line, item->section_info));
+            free(node);
             continue;
         }
 
-        /* PerfExpert Measurement: overall */
-        if (0 == strncmp("overall", node->key, 7)) {
-            item->data.overall = atof(node->value);
-            OPTTRAN_OUTPUT_VERBOSE((10, "[recommender] (%d)   [%f], overall",
-                                    input_line, item->data.overall));
-            continue;
+        /* Clean the node->key (remove undesired characters) */
+        for (temp = 0; temp < strlen(node->key); temp++) {
+            switch (node->key[temp]) {
+                case '%':
+                case '.':
+                case '(':
+                case ')':
+                case '-':
+                    node->key[temp] = '_';
+                default:
+                    break;
+            }
         }
-        /* PerfExpert Measurement: data_accesses_overall */
-        if (0 == strncmp("data_accesses.overall", node->key, 22)) {
-            item->data.data_accesses_overall = atof(node->value);
-            OPTTRAN_OUTPUT_VERBOSE((10, "[recommender] (%d)   [%f], data accesses overall",
-                                    input_line, item->data.data_accesses_overall));
-            continue;
-        }
-        /* PerfExpert Measurement: data_accesses_L1d_hits */
-        if (0 == strncmp("data_accesses.L1d_hits", node->key, 22)) {
-            item->data.data_accesses_L1d_hits = atof(node->value);
-            OPTTRAN_OUTPUT_VERBOSE((10, "[recommender] (%d)   [%f], data accesses L1d hits",
-                                    input_line, item->data.data_accesses_L1d_hits));
-            continue;
-        }
-        /* PerfExpert Measurement: data_accesses_L2d_hits */
-        if (0 == strncmp("data_accesses.L2d_hits", node->key, 22)) {
-            item->data.data_accesses_L2d_hits = atof(node->value);
-            OPTTRAN_OUTPUT_VERBOSE((10, "[recommender] (%d)   [%f], data accesses L2d hits",
-                                    input_line, item->data.data_accesses_L2d_hits));
-            continue;
-        }
-        /* PerfExpert Measurement: data_accesses_L2d_misses */
-        if (0 == strncmp("data_accesses.L2d_misses", node->key, 24)) {
-            item->data.data_accesses_L2d_misses = atof(node->value);
-            OPTTRAN_OUTPUT_VERBOSE((10, "[recommender] (%d)   [%f], data accesses L2d misses",
-                                    input_line, item->data.data_accesses_L2d_misses));
-            continue;
-        }
-        /* PerfExpert Measurement: data_accesses_L3d_misses */
-        if (0 == strncmp("data_accesses.L3d_misses", node->key, 24)) {
-            item->data.data_accesses_L3d_misses = atof(node->value);
-            OPTTRAN_OUTPUT_VERBOSE((10, "[recommender] (%d)   [%f], data accesses L3d misses",
-                                    input_line, item->data.data_accesses_L3d_misses));
-            continue;
-        }
-        /* PerfExpert Measurement: ratio_floating_point */
-        if (0 == strncmp("ratio.floating_point", node->key, 20)) {
-            item->data.ratio_floating_point = atof(node->value);
-            OPTTRAN_OUTPUT_VERBOSE((10, "[recommender] (%d)   [%f], ratio floating point",
-                                    input_line, item->data.ratio_floating_point));
-            continue;
-        }
-        /* PerfExpert Measurement: ratio_data_accesses */
-        if (0 == strncmp("ratio.data_accesses", node->key, 19)) {
-            item->data.ratio_data_accesses = atof(node->value);
-            OPTTRAN_OUTPUT_VERBOSE((10, "[recommender] (%d)   [%f], ratio data accesses",
-                                    input_line, item->data.ratio_data_accesses));
-            continue;
-        }
-        /* PerfExpert Measurement: instruction_accesses_overall */
-        if (0 == strncmp("instruction_accesses.overall", node->key, 28)) {
-            item->data.instruction_accesses_overall = atof(node->value);
-            OPTTRAN_OUTPUT_VERBOSE((10, "[recommender] (%d)   [%f], instruction accesses overall",
-                                    input_line, item->data.instruction_accesses_overall));
-            continue;
-        }
-        /* PerfExpert Measurement: instruction_accesses_L1i_hits */
-        if (0 == strncmp("instruction_accesses.L1i_hits", node->key, 29)) {
-            item->data.instruction_accesses_L1i_hits = atof(node->value);
-            OPTTRAN_OUTPUT_VERBOSE((10, "[recommender] (%d)   [%f], instruction accesses L1i hits",
-                                    input_line, item->data.instruction_accesses_L1i_hits));
-            continue;
-        }
-        /* PerfExpert Measurement: instruction_accesses_L2i_hits */
-        if (0 == strncmp("instruction_accesses.L2i_hits", node->key, 29)) {
-            item->data.instruction_accesses_L2i_hits = atof(node->value);
-            OPTTRAN_OUTPUT_VERBOSE((10, "[recommender] (%d)   [%f], instruction accesses L2i hits",
-                                    input_line, item->data.instruction_accesses_L2i_hits));
-            continue;
-        }
-        /* PerfExpert Measurement: instruction_accesses_L2i_misses */
-        if (0 == strncmp("instruction_accesses.L2i_misses", node->key, 31)) {
-            item->data.instruction_accesses_L2i_misses = atof(node->value);
-            OPTTRAN_OUTPUT_VERBOSE((10, "[recommender] (%d)   [%f], instruction accesses L2i misses",
-                                    input_line, item->data.instruction_accesses_L2i_misses));
-            continue;
-        }
-        /* PerfExpert Measurement: instruction_TLB_overall */
-        if (0 == strncmp("instruction_TLB.overall", node->key, 23)) {
-            item->data.instruction_TLB_overall = atof(node->value);
-            OPTTRAN_OUTPUT_VERBOSE((10, "[recommender] (%d)   [%f], instruction TLB overall",
-                                    input_line, item->data.instruction_TLB_overall));
-            continue;
-        }
-        /* PerfExpert Measurement: data_TLB_overall */
-        if (0 == strncmp("data_TLB.overall", node->key, 16)) {
-            item->data.data_TLB_overall = atof(node->value);
-            OPTTRAN_OUTPUT_VERBOSE((10, "[recommender] (%d)   [%f], data TLB overall",
-                                    input_line, item->data.data_TLB_overall));
-            continue;
-        }
-        /* PerfExpert Measurement: branch_instructions_overall */
-        if (0 == strncmp("branch_instructions.overall", node->key, 27)) {
-            item->data.branch_instructions_overall = atof(node->value);
-            OPTTRAN_OUTPUT_VERBOSE((10, "[recommender] (%d)   [%f], branch instructions overall",
-                                    input_line, item->data.branch_instructions_overall));
-            continue;
-        }
-        /* PerfExpert Measurement: branch_instructions_correctly_predicted */
-        if (0 == strncmp("branch_instructions.correctly_predicted", node->key, 39)) {
-            item->data.branch_instructions_correctly_predicted = atof(node->value);
-            OPTTRAN_OUTPUT_VERBOSE((10, "[recommender] (%d)   [%f], branch instructions correctly predicted",
-                                    input_line, item->data.branch_instructions_correctly_predicted));
-            continue;
-        }
-        /* PerfExpert Measurement: branch_instructions_mispredicted */
-        if (0 == strncmp("branch_instructions.mispredicted", node->key, 32)) {
-            item->data.branch_instructions_mispredicted = atof(node->value);
-            OPTTRAN_OUTPUT_VERBOSE((10, "[recommender] (%d)   [%f], branch instructions mispredicted",
-                                    input_line, item->data.branch_instructions_mispredicted));
-            continue;
-        }
-        /* PerfExpert Measurement: floating_point_instr_overall */
-        if (0 == strncmp("floating-point_instr.overall", node->key, 28)) {
-            item->data.floating_point_instr_overall = atof(node->value);
-            OPTTRAN_OUTPUT_VERBOSE((10, "[recommender] (%d)   [%f], floating point instr overall",
-                                    input_line, item->data.floating_point_instr_overall));
-            continue;
-        }
-        /* PerfExpert Measurement: floating_point_instr_fast_FP_instr */
-        if (0 == strncmp("floating-point_instr.fast_FP_instr", node->key, 34)) {
-            item->data.floating_point_instr_fast_FP_instr = atof(node->value);
-            OPTTRAN_OUTPUT_VERBOSE((10, "[recommender] (%d)   [%f], floating point instr fast FP instr",
-                                    input_line, item->data.floating_point_instr_fast_FP_instr));
-            continue;
-        }
-        /* PerfExpert Measurement: floating_point_instr_slow_FP_instr */
-        if (0 == strncmp("floating-point_instr.slow_FP_instr", node->key, 34)) {
-            item->data.floating_point_instr_slow_FP_instr = atof(node->value);
-            OPTTRAN_OUTPUT_VERBOSE((10, "[recommender] (%d)   [%f], floating point instr slow FP instr",
-                                    input_line, item->data.floating_point_instr_slow_FP_instr));
-            continue;
-        }
-        /* PerfExpert Measurement: percent_GFLOPS_max_overall */
-        if (0 == strncmp("percent.GFLOPS_(%_max).overall", node->key, 30)) {
-            item->data.percent_GFLOPS_max_overall = atof(node->value);
-            OPTTRAN_OUTPUT_VERBOSE((10, "[recommender] (%d)   [%f], percent GFLOPS (% max) overall",
-                                    input_line, item->data.percent_GFLOPS_max_overall));
-            continue;
-        }
-        /* PerfExpert Measurement: percent_GFLOPS_max_packed */
-        if (0 == strncmp("percent.GFLOPS_(%_max).packed", node->key, 29)) {
-            item->data.percent_GFLOPS_max_packed = atof(node->value);
-            OPTTRAN_OUTPUT_VERBOSE((10, "[recommender] (%d)   [%f], percent GFLOPS (% max) packed",
-                                    input_line, item->data.percent_GFLOPS_max_packed));
-            continue;
-        }
-        /* PerfExpert Measurement: percent_GFLOPS_max_scalar */
-        if (0 == strncmp("percent.GFLOPS_(%_max).scalar", node->key, 29)) {
-            item->data.percent_GFLOPS_max_scalar = atof(node->value);
-            OPTTRAN_OUTPUT_VERBOSE((10, "[recommender] (%d)   [%f], percent GFLOPS (% max) scalar",
-                                    input_line, item->data.percent_GFLOPS_max_scalar));
-            continue;
-        }
-
-        /* Unknown parameter */
-        OPTTRAN_OUTPUT_VERBOSE((4, "[recommender] (%d) ignored line [%s=%s]",
-                                    input_line, node->key, node->value));
         
+        /* Assemble the SQL query */
+        bzero(sql, 1024);
+        sprintf(sql, "UPDATE %s SET %s='%s' WHERE id=%d;",
+                globals.metrics_table, node->key, node->value, rowid);
+
+        /* Update metrics table */
+        if (SQLITE_OK != sqlite3_exec(globals.db, sql, NULL,
+                                      (void *)&rowid, &error_msg)) {
+            OPTTRAN_OUTPUT_VERBOSE((4, "[recommender] (%d) ignored line [%s=%s] [%s] [SQL: %s] ",
+                                    input_line, node->key, node->value, error_msg, sql));
+            sqlite3_free(error_msg);
+        } else {
+            OPTTRAN_OUTPUT_VERBOSE((10, "[recommender] (%d)   %s",
+                                    input_line, sql));
+        }
         free(node);
     }
+
     /* print a summary of 'segments' */
     OPTTRAN_OUTPUT_VERBOSE((4, "[recommender] %d code segments found",
                             opttran_list_get_size(segments_p)));
-    
+
     item = (segment_t *)opttran_list_get_first(segments_p);
     do {
         OPTTRAN_OUTPUT_VERBOSE((4, "[recommender]   %s:%d",
@@ -569,6 +611,14 @@ static int parse_segment_params(opttran_list_t *segments_p, FILE *inputfile_p) {
     } while ((opttran_list_item_t *)item != &(segments_p->sentinel));
     
     OPTTRAN_OUTPUT_VERBOSE((4, "[recommender] ==="));
+    return OPTTRAN_SUCCESS;
+}
+
+/* get_rowid */
+static int get_rowid(void *rowid, int col_count,
+                                  char **col_values, char **col_names) {
+    int *temp = (int *)rowid;
+    *temp = atoi(col_values[0]);
     return OPTTRAN_SUCCESS;
 }
 
@@ -595,12 +645,11 @@ static int output_recommendations(void *not_used, int col_count,
     return 0;
 }
 
-/* query_database */
-static int query_database(void) {
-    sqlite3 *database;
+/* database_connect */
+static int database_connect(void) {
+    OPTTRAN_OUTPUT_VERBOSE((4, "[recommender] === Connecting to database ==="));
 
-    OPTTRAN_OUTPUT_VERBOSE((7, "[recommender] === Querying recommendation DB"));
-
+    /* Connect to the DB */
     if (NULL == globals.dbfile) {
         globals.dbfile = "./recommendation.db";
     }
@@ -614,22 +663,35 @@ static int query_database(void) {
                         globals.dbfile));
         return OPTTRAN_ERROR;
     }
-    if (SQLITE_OK != sqlite3_open(globals.dbfile, &database)) {
-        OPTTRAN_OUTPUT(("[recommender] error openning recommendation database (%s), %s",
-                        globals.dbfile, sqlite3_errmsg(database)));
-        sqlite3_close(database);
-        return OPTTRAN_ERROR;
+    
+    if (SQLITE_OK != sqlite3_open(globals.dbfile, &(globals.db))) {
+        OPTTRAN_OUTPUT(("[recommender] error openning database (%s), %s",
+                        globals.dbfile,
+                        sqlite3_errmsg(globals.db)));
+        sqlite3_close(globals.db);
+        exit(OPTTRAN_ERROR);
+    } else {
+        OPTTRAN_OUTPUT_VERBOSE((4, "[recommender]     connected to %s",
+                                globals.dbfile));
     }
+    return OPTTRAN_SUCCESS;
+}
+
+/* database_query */
+static int database_query(void) {
+    char *error_msg = NULL;
+
+    OPTTRAN_OUTPUT_VERBOSE((7, "[recommender] === Querying recommendation DB"));
 
     /* Query database */
-    // TODO: define que correct SQL query
-    char *error_msg = 0;
-    if (SQLITE_OK != sqlite3_exec(database, "SELECT desc, reason, pattern, code FROM recommendation WHERE attr_code = 770 OR attr_code = 512 OR attr_code = 256 OR attr_code = 2;",
-                                  output_recommendations, 0, &error_msg)) {
+    // TODO: put the right SQL query
+    if (SQLITE_OK != sqlite3_exec(globals.db, "SELECT desc, reason, pattern, code FROM recommendation WHERE attr_code = 770 OR attr_code = 512 OR attr_code = 256 OR attr_code = 2;",
+                                  output_recommendations, NULL, &error_msg)) {
         fprintf(stderr, "Error: SQL error: %s\n", error_msg);
         sqlite3_free(error_msg);
+        sqlite3_close(globals.db);
+        exit(OPTTRAN_ERROR);
     }
-    sqlite3_close(database);
 
     return OPTTRAN_SUCCESS;
 }
@@ -642,7 +704,7 @@ static int calculate_weigths(void) {
 
 /* select_recommendations */
 static int select_recommendations(void) {
-    query_database();
+    database_query();
     // TODO: everything
     return OPTTRAN_SUCCESS;
 }

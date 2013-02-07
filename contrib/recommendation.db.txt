@@ -1,4 +1,36 @@
 
+-- Table: metrics
+CREATE TABLE metrics (
+    id                                                 INTEGER       PRIMARY KEY,
+    code_filename                                      CHAR( 1024 ),
+    code_line_number                                   INTEGER,
+    code_type                                          CHAR( 128 ),
+    code_extra_info                                    CHAR( 1024 ),
+    perfexpert_overall                                 FLOAT,
+    perfexpert_data_accesses_overall                   FLOAT,
+    perfexpert_data_accesses_L1d_hits                  FLOAT,
+    perfexpert_data_accesses_L2d_hits                  FLOAT,
+    perfexpert_data_accesses_L2d_misses                FLOAT,
+    perfexpert_data_accesses_L3d_misses                FLOAT,
+    perfexpert_ratio_floating_point                    FLOAT,
+    perfexpert_ratio_data_accesses                     FLOAT,
+    perfexpert_instruction_accesses_overall            FLOAT,
+    perfexpert_instruction_accesses_L1i_hits           FLOAT,
+    perfexpert_instruction_accesses_L2i_hits           FLOAT,
+    perfexpert_instruction_accesses_L2i_misses         FLOAT,
+    perfexpert_instruction_TLB_overall                 FLOAT,
+    perfexpert_data_TLB_overall                        FLOAT,
+    perfexpert_branch_instructions_overall             FLOAT,
+    perfexpert_branch_instructions_correctly_predicted FLOAT,
+    perfexpert_branch_instructions_mispredicted        FLOAT,
+    perfexpert_floating_point_instr_overall            FLOAT,
+    perfexpert_floating_point_instr_fast_FP_instr      FLOAT,
+    perfexpert_floating_point_instr_slow_FP_instr      FLOAT,
+    perfexpert_percent_GFLOPS____max__overall          FLOAT,
+    perfexpert_percent_GFLOPS____max__packed           FLOAT,
+    perfexpert_percent_GFLOPS____max__scalar           FLOAT
+);
+
 -- Table: attribute
 CREATE TABLE attribute ( 
     attr_code INTEGER     NOT NULL,

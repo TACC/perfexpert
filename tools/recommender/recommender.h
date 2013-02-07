@@ -32,7 +32,8 @@
 #endif
 
 /** Default values for some parameters */
-#define RECOMMENDATION_DB "recommendation.db"
+#define RECOMMENDATION_DB "../../contrib/recommendation.db"
+#define METRICS_FILE      "../../contrib/recommender-metrics.txt"
 #define OPTTRAN_RECO_FILE "recommendations.txt"
 
 /** Structure to hold global variables */
@@ -46,7 +47,11 @@ typedef struct {
     char *outputfile;
     FILE *outputfile_FP;
     char *dbfile;
+    sqlite3 *db;
     char *opttrandir;
+    char *metrics_file;
+    int  use_temp_metrics;
+    char *metrics_table;
 } globals_t;
 
 extern globals_t globals; /**< Variable to hold global options */
@@ -67,6 +72,8 @@ static struct option long_options[] = {
     {"database",      required_argument, NULL, 'd'},
     {"outputfile",    required_argument, NULL, 'o'},
     {"opttran",       required_argument, NULL, 'a'},
+    {"metricfile",    required_argument, NULL, 'm'},
+    {"newmetrics",    no_argument,       NULL, 'n'},
     {0, 0, 0, 0}
 };
 
@@ -76,43 +83,9 @@ typedef struct node {
     char *value;
 } node_t;
 
-// TODO: change this structure to a SQL DB: first create a table with all
-//       measurements (read them from a TXT file), fill the table with the
-//       measurements values, and them use a user-defined table to calculate
-//       the metrics to select the most suitable list of recommendations. Store
-//       in the table the source code filne name and line number, just to
-//       search for them when parsing the list of segments.
-
-/** Structure to hold performance measurements (PerfExpert) */
-typedef struct measurements {
-    double overall;
-    double data_accesses_overall;
-    double data_accesses_L1d_hits;
-    double data_accesses_L2d_hits;
-    double data_accesses_L2d_misses;
-    double data_accesses_L3d_misses;
-    double ratio_floating_point;
-    double ratio_data_accesses;
-    double instruction_accesses_overall;
-    double instruction_accesses_L1i_hits;
-    double instruction_accesses_L2i_hits;
-    double instruction_accesses_L2i_misses;
-    double instruction_TLB_overall;
-    double data_TLB_overall;
-    double branch_instructions_overall;
-    double branch_instructions_correctly_predicted;
-    double branch_instructions_mispredicted;
-    double floating_point_instr_overall;
-    double floating_point_instr_fast_FP_instr;
-    double floating_point_instr_slow_FP_instr;
-    double percent_GFLOPS_max_overall;
-    double percent_GFLOPS_max_packed;
-    double percent_GFLOPS_max_scalar;
-}  measurements_t;
-
 /** Structure to hold code segments */
 typedef struct segment {
-    volatile struct opttran_list_item_t *next; /** Pointer to next list item     */
+    volatile struct opttran_list_item_t *next; /** Pointer to next list item */
     volatile struct opttran_list_item_t *prev; /** Pointer to previous list item */
     char   *filename;
     int    line_number;
@@ -120,18 +93,6 @@ typedef struct segment {
     char   *extra_info;
     char   *section_info;
     double representativeness;
-    struct measurements data;
 } segment_t;
-
-/* Function definitions */
-static void show_help(void);
-static int  parse_env_vars(void);
-static int  parse_cli_params(int argc, char *argv[]);
-static int  parse_segment_params(opttran_list_t *segments_p, FILE *inputfile_p);
-static int  output_recommendations(void *NotUsed, int argc, char **argv,
-                                   char **azColName);
-static int  query_database(void);
-static int  calculate_weigths(void);
-static int  select_recommendations(void);
 
 #endif /* RECOMMENDER_H */
