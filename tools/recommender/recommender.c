@@ -356,8 +356,8 @@ static int parse_cli_params(int argc, char *argv[]) {
 /* parse_metrics_file */
 static int parse_metrics_file(void) {
     FILE *metrics_FP;
-    char buffer[1024];
-    char *sql = NULL;
+    char buffer[BUFFER_SIZE];
+    char sql[BUFFER_SIZE];
     char *error_msg = NULL;
     char *metrics_file;
 
@@ -375,8 +375,7 @@ static int parse_metrics_file(void) {
                         metrics_file));
         show_help();
     } else {
-        sql = malloc(2048);
-        bzero(sql, 2048);
+        bzero(sql, BUFFER_SIZE);
 
         sprintf(sql, "CREATE TEMP TABLE %s (\n", globals.metrics_table);
         strcat(sql, "    id INTEGER PRIMARY KEY,\n");
@@ -384,8 +383,8 @@ static int parse_metrics_file(void) {
         strcat(sql, "    code_line_number INTEGER,\n");
         strcat(sql, "    code_type CHAR( 128 ),\n");
         strcat(sql, "    code_extra_info CHAR( 1024 ),\n");
-        
-        bzero(buffer, 1024);
+
+        bzero(buffer, BUFFER_SIZE);
         while (NULL != fgets(buffer, sizeof buffer, metrics_FP)) {
             int temp;
             
@@ -405,6 +404,7 @@ static int parse_metrics_file(void) {
                     case '(':
                     case ')':
                     case '-':
+                    case ':':
                         buffer[temp] = '_';
                     default:
                         break;
@@ -428,7 +428,6 @@ static int parse_metrics_file(void) {
             sqlite3_close(globals.db);
             exit(OPTTRAN_ERROR);
         }
-        free(sql);
         OPTTRAN_OUTPUT(("[recommender] using temporary metric table (%s)",
                         globals.metrics_table));
     }
@@ -439,8 +438,8 @@ static int parse_metrics_file(void) {
 static int parse_segment_params(opttran_list_t *segments_p, FILE *inputfile_p) {
     segment_t *item;
     int  input_line = 0;
-    char buffer[1024];
-    char sql[1024];
+    char buffer[BUFFER_SIZE];
+    char sql[BUFFER_SIZE];
     char *error_msg = NULL;
     int  rowid = 0;
 
@@ -460,7 +459,7 @@ static int parse_segment_params(opttran_list_t *segments_p, FILE *inputfile_p) {
     /* For each line in the INPUT file... */
     OPTTRAN_OUTPUT_VERBOSE((7, "[recommender] --- parsing input file"));
 
-    bzero(buffer, 1024);
+    bzero(buffer, BUFFER_SIZE);
     while (NULL != fgets(buffer, sizeof buffer, inputfile_p)) {
         node_t *node;
         int temp;
@@ -468,7 +467,7 @@ static int parse_segment_params(opttran_list_t *segments_p, FILE *inputfile_p) {
         input_line++;
         /* Is this line a new code bottleneck specification? */
         if (0 == strncmp("%", buffer, 1)) {
-            char temp_str[1024];
+            char temp_str[BUFFER_SIZE];
             
             OPTTRAN_OUTPUT_VERBOSE((5, "[recommender] (%d) --- found new bottleneck",
                                     input_line));
@@ -480,13 +479,13 @@ static int parse_segment_params(opttran_list_t *segments_p, FILE *inputfile_p) {
             /* Add this item to 'segments' */
             opttran_list_append(segments_p, (opttran_list_item_t *) item);
 
-            bzero(temp_str, 1024);
+            bzero(temp_str, BUFFER_SIZE);
             sprintf(temp_str, "INSERT INTO %s (code_filename) VALUES ('new_code-%d');\n",
                     globals.metrics_table, (int)getpid());
-            bzero(sql, 1024);
+            bzero(sql, BUFFER_SIZE);
             strcat(sql, temp_str);
             strcat(sql, "                            ");
-            bzero(temp_str, 1024);
+            bzero(temp_str, BUFFER_SIZE);
             sprintf(temp_str, "SELECT id FROM %s WHERE code_filename = 'new_code-%d';",
                     globals.metrics_table, (int)getpid());
             strcat(sql, temp_str);
@@ -575,6 +574,7 @@ static int parse_segment_params(opttran_list_t *segments_p, FILE *inputfile_p) {
                 case '(':
                 case ')':
                 case '-':
+                case ':':
                     node->key[temp] = '_';
                 default:
                     break;

@@ -31,6 +31,14 @@
 #include <stdio.h> /* To use FILE type on globals */
 #endif
 
+/** Buffers size, will be used for:
+ * - parsing INPUT file
+ * - parsing metrics file
+ * - storing SQL statements
+ * - maybe something else
+ */
+#define BUFFER_SIZE 4096
+
 /** Default values for some parameters */
 #define RECOMMENDATION_DB "../../contrib/recommendation.db"
 #define METRICS_FILE      "../../contrib/recommender-metrics.txt"
