@@ -229,7 +229,7 @@ fi
 
 #------------------------------------------------------------------------------
 # Add path to install_dirs.h
-AC_CONFIG_FILES([config/install_dirs.h])
+# AC_CONFIG_FILES([config/install_dirs.h])
 
 # Generate output files
 AC_OUTPUT

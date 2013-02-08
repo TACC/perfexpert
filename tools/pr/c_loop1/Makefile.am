@@ -10,8 +10,8 @@
 
 CLEANFILES = y.tab.c y.tab.h lex.yy.c
 
-y.tab.c y.tab.h: c_loop1.y; $(YACC) -d c_loop1.y
-lex.yy.c: c_loop1.l; $(LEX) c_loop1.l
+y.tab.c y.tab.h: c_loop1.y; $(YACC) -d $(srcdir)/c_loop1.y
+lex.yy.c: c_loop1.l; $(LEX) $(srcdir)/c_loop1.l
 
 bin_PROGRAMS = c_loop1
 
