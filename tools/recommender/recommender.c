@@ -34,6 +34,7 @@ static int  select_recommendations(void);
 int main (int argc, char** argv) {
     opttran_list_t segments;
     segment_t *item;
+    int i;
     
     /* Set default values for globals */
     globals = (globals_t) {
@@ -49,11 +50,19 @@ int main (int argc, char** argv) {
         .opttrandir       = NULL,              // char *
         .metrics_file     = NULL,              // char *
         .use_temp_metrics = 0,                 // int
+        .colorful         = 0,                 // int
         .metrics_table    = "metrics"          // char *
     };
 
     /* Parse command-line parameters */
     parse_cli_params(argc, argv);
+    if (8 <= globals.verbose_level) {
+        printf("%s complete command line:", PROGRAM_PREFIX);
+        for (i = 0; i < argc; i++) {
+            printf(" %s", argv[i]);
+        }
+        printf("\n");
+    }
     
     /* Connect to database */
     database_connect();
@@ -81,7 +90,7 @@ int main (int argc, char** argv) {
             
             /* Open input file */
             if (NULL == (inputfile_FP = fopen(globals.inputfile, "r"))) {
-                OPTTRAN_OUTPUT(("[recommender] error openning input file (%s)",
+                OPTTRAN_OUTPUT(("%s (%s)", _ERROR("error openning input file"),
                                 globals.inputfile));
                 return OPTTRAN_ERROR;
             } else {
@@ -89,7 +98,7 @@ int main (int argc, char** argv) {
                 fclose(inputfile_FP);
             }
         } else {
-            fprintf(stderr, "Error: undefined input\n");
+            OPTTRAN_OUTPUT(("%s", _ERROR("Error: undefined input")));
             show_help();
         }
     }
@@ -108,26 +117,27 @@ int main (int argc, char** argv) {
         strcat(globals.outputfile, globals.opttrandir);
         strcat(globals.outputfile, "/");
         strcat(globals.outputfile, OPTTRAN_RECO_FILE);
-        OPTTRAN_OUTPUT_VERBOSE((7, "[recommender] printing OPTTRAN recommendation to dir (%s)",
+        OPTTRAN_OUTPUT_VERBOSE((7, "printing OPTTRAN recommendation to dir (%s)",
                                 globals.opttrandir));
     }
     if (0 == globals.use_stdout) {
-        OPTTRAN_OUTPUT_VERBOSE((7, "[recommender] printing recommendation to file (%s)",
+        OPTTRAN_OUTPUT_VERBOSE((7, "printing recommendation to file (%s)",
                                 globals.outputfile));
         globals.outputfile_FP = fopen(globals.outputfile, "w+");
         if (NULL == globals.outputfile_FP) {
-            OPTTRAN_OUTPUT(("[recommender] error opening file (%s)",
+            OPTTRAN_OUTPUT(("%s (%s)", _ERROR("error opening file"),
                             globals.outputfile));
             return OPTTRAN_ERROR;
         }
     } else {
-        OPTTRAN_OUTPUT_VERBOSE((7, "[recommender] printing recommendation to STDOUT"));
+        OPTTRAN_OUTPUT_VERBOSE((7, "printing recommendation to STDOUT"));
     }
 
     /* Step 2: For each code bottleneck... */
     item = (segment_t *)opttran_list_get_first(&(segments));
     do {
-        OPTTRAN_OUTPUT_VERBOSE((4, "[recommender] selecting recommendation for %s:%d",
+        OPTTRAN_OUTPUT_VERBOSE((4, "%s %s:%d",
+                                _YELLOW("selecting recommendation for"),
                                 item->filename, item->line_number));
         if (1 == globals.use_opttran) {
             fprintf(globals.outputfile_FP, "%% recommendation for %s:%d\n",
@@ -190,27 +200,29 @@ int main (int argc, char** argv) {
 
 /* show_help */
 static void show_help(void) {
-    OPTTRAN_OUTPUT_VERBOSE((10, "[recommender] printing help"));
+    OPTTRAN_OUTPUT_VERBOSE((10, "printing help"));
     
-    /*               12345678901234567890123456789012345678901234567890123456789012345678901234567890 */
-    OPTTRAN_OUTPUT(("Usage: recommender -i|-f file [-o file] [-d database] [-a dir] [-m file] [-hnv]"));
-    OPTTRAN_OUTPUT(("                   [-l level]"));
-    OPTTRAN_OUTPUT(("  -i --stdin         Use STDIN as input for performance measurements"));
-    OPTTRAN_OUTPUT(("  -f --inputfile     Use 'file' as input for performance measurements"));
-    OPTTRAN_OUTPUT(("  -o --outputfile    Use 'file' as output for recommendations (default: stdout)"));
-    OPTTRAN_OUTPUT(("                     if the file exists its content will be overwritten"));
-    OPTTRAN_OUTPUT(("  -a --opttran       Create OptTran (automatic performance optimization) files"));
-    OPTTRAN_OUTPUT(("                     into 'dir' directory (default: create no OptTran files)"));
-    OPTTRAN_OUTPUT(("                     this argument overwrites -o, no output will be produced"));
-    OPTTRAN_OUTPUT(("  -d --database      Select database file"));
-    OPTTRAN_OUTPUT(("                     (default: %s)", RECOMMENDATION_DB));
-    OPTTRAN_OUTPUT(("  -m --metricfile    Use 'file' to define metrics different from the default"));
-    OPTTRAN_OUTPUT(("  -n --newmetrics    Do not use the system metrics table. A temporary table will"));
-    OPTTRAN_OUTPUT(("                     be created using the default metrics file:"));
-    OPTTRAN_OUTPUT(("                     %s)", METRICS_FILE));
-    OPTTRAN_OUTPUT(("  -v --verbose       Enable verbose mode using default verbose level (5)"));
-    OPTTRAN_OUTPUT(("  -l --verbose_level Enable verbose mode using a specific verbose level (1-10)"));
-    OPTTRAN_OUTPUT(("  -h --help          Show this message"));
+    /*      12345678901234567890123456789012345678901234567890123456789012345678901234567890 */
+    printf("Usage: recommender -i|-f file [-o file] [-d database] [-a dir] [-m file] [-hnvc]\n");
+    printf("                   [-l level]\n");
+    printf("  -i --stdin         Use STDIN as input for performance measurements\n");
+    printf("  -f --inputfile     Use 'file' as input for performance measurements\n");
+    printf("  -o --outputfile    Use 'file' as output for recommendations (default: stdout)\n");
+    printf("                     if the file exists its content will be overwritten\n");
+    printf("  -a --opttran       Create OptTran (automatic performance optimization) files\n");
+    printf("                     into 'dir' directory (default: create no OptTran files)\n");
+    printf("                     this argument overwrites -o, no output will be produced\n");
+    printf("  -d --database      Select database file\n");
+    printf("                     (default: %s)\n", RECOMMENDATION_DB);
+    printf("  -m --metricfile    Use 'file' to define metrics different from the default\n");
+    printf("  -n --newmetrics    Do not use the system metrics table. A temporary table will\n");
+    printf("                     be created using the default metrics file:\n");
+    printf("                     %s)\n", METRICS_FILE);
+    printf("  -v --verbose       Enable verbose mode using default verbose level (5)\n");
+    printf("  -l --verbose_level Enable verbose mode using a specific verbose level (1-10)\n");
+    printf("  -c --colorful      Enable colors on verbose mode, no weird characters will\n");
+    printf("                     apper on output files\n");
+    printf("  -h --help          Show this message\n");
     
     /* I suppose that if I've to show the help is because something is wrong,
      * or maybe the user just want to see the options, so it seems to be a
@@ -228,12 +240,12 @@ static int parse_env_vars(void) {
     if (NULL != temp_str) {
         globals.verbose_level = atoi(temp_str);
         if (0 != globals.verbose_level) {
-            OPTTRAN_OUTPUT_VERBOSE((5, "[recommender] ENV: verbose_level=%d",
+            OPTTRAN_OUTPUT_VERBOSE((5, "ENV: verbose_level=%d",
                                        globals.verbose_level));
         }
     }
 
-    OPTTRAN_OUTPUT_VERBOSE((4, "[recommender] === Environment variables OK ==="));
+    OPTTRAN_OUTPUT_VERBOSE((4, "=== %s", _BLUE("Environment variables")));
 
     return OPTTRAN_SUCCESS;
 }
@@ -250,7 +262,7 @@ static int parse_cli_params(int argc, char *argv[]) {
 
     while (1) {
         /* get parameter */
-        parameter = getopt_long(argc, argv, "vhinm:l:f:d:o:a:", long_options,
+        parameter = getopt_long(argc, argv, "cvhinm:l:f:d:o:a:", long_options,
                                 &option_index);
         
         /* Detect the end of the options */
@@ -262,39 +274,52 @@ static int parse_cli_params(int argc, char *argv[]) {
             case 'l':
                 globals.verbose = 1;
                 globals.verbose_level = atoi(optarg);
-                OPTTRAN_OUTPUT_VERBOSE((10, "[recommender] option 'l' set"));
+                OPTTRAN_OUTPUT_VERBOSE((10, "option 'l' set"));
                 if (0 >= atoi(optarg)) {
-                    OPTTRAN_OUTPUT(("[recommender] invalid debug level: too low (%d)",
+                    OPTTRAN_OUTPUT(("%s (%d)",
+                                    _ERROR("invalid debug level: too low"),
                                     atoi(optarg)));
-                    fprintf(stderr, "Error: invalid debug level: too low (%d)\n",
-                            atoi(optarg));
                     show_help();
                 }
                 if (10 < atoi(optarg)) {
-                    OPTTRAN_OUTPUT(("[recommender] invalid debug level: too high (%d)",
+                    OPTTRAN_OUTPUT(("%s (%d)",
+                                    _ERROR("invalid debug level: too high"),
                                     atoi(optarg)));
-                    fprintf(stderr, "Error: invalid debug level: too high (%d)\n",
-                            atoi(optarg));
                     show_help();
                 }
                 break;
 
+            /* Activate verbose mode */
+            case 'v':
+                globals.verbose = 1;
+                if (0 == globals.verbose_level) {
+                    globals.verbose_level = 5;
+                }
+                OPTTRAN_OUTPUT_VERBOSE((10, "option 'v' set"));
+                break;
+                
+            /* Activate colorful mode */
+            case 'c':
+                globals.colorful = 1;
+                OPTTRAN_OUTPUT_VERBOSE((10, "option 'c' set"));
+                break;
+
             /* Show help */
             case 'h':
-                OPTTRAN_OUTPUT_VERBOSE((10, "[recommender] option 'h' set"));
+                OPTTRAN_OUTPUT_VERBOSE((10, "option 'h' set"));
                 show_help();
 
             /* Use STDIN? */
             case 'i':
                 globals.use_stdin = 1;
-                OPTTRAN_OUTPUT_VERBOSE((10, "[recommender] option 'i' set"));
+                OPTTRAN_OUTPUT_VERBOSE((10, "option 'i' set"));
                 break;
 
             /* Use input file? */
             case 'f':
                 globals.use_stdin = 0;
                 globals.inputfile = optarg;
-                OPTTRAN_OUTPUT_VERBOSE((10, "[recommender] option 'f' set [%s]",
+                OPTTRAN_OUTPUT_VERBOSE((10, "option 'f' set [%s]",
                                         globals.inputfile));
                 break;
 
@@ -302,7 +327,7 @@ static int parse_cli_params(int argc, char *argv[]) {
             case 'o':
                 globals.use_stdout = 0;
                 globals.outputfile = optarg;
-                OPTTRAN_OUTPUT_VERBOSE((10, "[recommender] option 'o' set [%s]",
+                OPTTRAN_OUTPUT_VERBOSE((10, "option 'o' set [%s]",
                                         globals.outputfile));
                 break;
 
@@ -310,37 +335,28 @@ static int parse_cli_params(int argc, char *argv[]) {
             case 'a':
                 globals.use_opttran = 1;
                 globals.opttrandir = optarg;
-                OPTTRAN_OUTPUT_VERBOSE((10, "[recommender] option 'a' set [%s]",
+                OPTTRAN_OUTPUT_VERBOSE((10, "option 'a' set [%s]",
                                         globals.opttrandir));
                 break;
 
             /* Which database file? */
             case 'd':
                 globals.dbfile = optarg;
-                OPTTRAN_OUTPUT_VERBOSE((10, "[recommender] option 'd' set [%s]",
+                OPTTRAN_OUTPUT_VERBOSE((10, "option 'd' set [%s]",
                                         globals.dbfile));
-                break;
-                
-            /* Activate verbose mode */
-            case 'v':
-                globals.verbose = 1;
-                if (0 == globals.verbose_level) {
-                    globals.verbose_level = 5;
-                }
-                OPTTRAN_OUTPUT_VERBOSE((10, "[recommender] option 'v' set"));
                 break;
                 
             /* Use temporary metrics table */
             case 'n':
                 globals.use_temp_metrics = 1;
-                OPTTRAN_OUTPUT_VERBOSE((10, "[recommender] option 'n' set"));
+                OPTTRAN_OUTPUT_VERBOSE((10, "option 'n' set"));
                 break;
                 
             /* Specify new metrics */
             case 'm':
                 globals.use_temp_metrics = 1;
                 globals.metrics_file = optarg;
-                OPTTRAN_OUTPUT_VERBOSE((10, "[recommender] option 'm' set [%s]",
+                OPTTRAN_OUTPUT_VERBOSE((10, "option 'm' set [%s]",
                                         globals.metrics_file));
                 break;
                 
@@ -352,7 +368,7 @@ static int parse_cli_params(int argc, char *argv[]) {
                 exit(OPTTRAN_ERROR);
         }
     }
-    OPTTRAN_OUTPUT_VERBOSE((4, "[recommender] === CLI params OK ==="));
+    OPTTRAN_OUTPUT_VERBOSE((4, "=== %s", _BLUE("CLI params")));
     return OPTTRAN_SUCCESS;
 }
 
@@ -370,11 +386,11 @@ static int parse_metrics_file(void) {
         metrics_file = METRICS_FILE;
     }
 
-    OPTTRAN_OUTPUT_VERBOSE((7, "[recommender] === Reading metrics file (%s)",
+    OPTTRAN_OUTPUT_VERBOSE((7, "=== %s (%s)", _BLUE("Reading metrics file"),
                             metrics_file));
 
     if (NULL == (metrics_FP = fopen(metrics_file, "r"))) {
-        OPTTRAN_OUTPUT(("[recommender] error openning metrics file (%s)",
+        OPTTRAN_OUTPUT(("%s (%s)", _ERROR("error openning metrics file"),
                         metrics_file));
         show_help();
     } else {
@@ -420,7 +436,7 @@ static int parse_metrics_file(void) {
         }
         sql[strlen(sql)-2] = 0; // remove the last ',' and '\n'
         strcat(sql, ");");
-        OPTTRAN_OUTPUT_VERBOSE((10, "[recommender] metrics SQL: %s", sql));
+        OPTTRAN_OUTPUT_VERBOSE((10, "metrics SQL: %s", _CYAN(sql)));
 
         /* Create metrics table */
         if (SQLITE_OK != sqlite3_exec(globals.db, sql, NULL, 0,
@@ -431,7 +447,7 @@ static int parse_metrics_file(void) {
             sqlite3_close(globals.db);
             exit(OPTTRAN_ERROR);
         }
-        OPTTRAN_OUTPUT(("[recommender] using temporary metric table (%s)",
+        OPTTRAN_OUTPUT(("using temporary metric table (%s)",
                         globals.metrics_table));
     }
     return OPTTRAN_SUCCESS;
@@ -446,21 +462,21 @@ static int parse_segment_params(opttran_list_t *segments_p, FILE *inputfile_p) {
     char *error_msg = NULL;
     int  rowid = 0;
 
-    OPTTRAN_OUTPUT_VERBOSE((4, "[recommender] === Parsing measurements ==="));
+    OPTTRAN_OUTPUT_VERBOSE((4, "=== %s", _BLUE("Parsing measurements")));
     
     /* Which INPUT we are using? (just a double check) */
     if ((NULL == inputfile_p) && (globals.use_stdin)) {
         inputfile_p = stdin;
     }
     if (globals.use_stdin) {
-        OPTTRAN_OUTPUT_VERBOSE((3, "[recommender] using STDIN as default input for performance measurements"));
+        OPTTRAN_OUTPUT_VERBOSE((3, "using STDIN as default input for performance measurements"));
     } else {
-        OPTTRAN_OUTPUT_VERBOSE((3, "[recommender] using FILE (%s) as default input for performance measurements",
+        OPTTRAN_OUTPUT_VERBOSE((3, "using FILE (%s) as default input for performance measurements",
                                 globals.inputfile));
     }
     
     /* For each line in the INPUT file... */
-    OPTTRAN_OUTPUT_VERBOSE((7, "[recommender] --- parsing input file"));
+    OPTTRAN_OUTPUT_VERBOSE((7, "--- parsing input file"));
 
     bzero(buffer, BUFFER_SIZE);
     while (NULL != fgets(buffer, sizeof buffer, inputfile_p)) {
@@ -478,8 +494,8 @@ static int parse_segment_params(opttran_list_t *segments_p, FILE *inputfile_p) {
         if (0 == strncmp("%", buffer, 1)) {
             char temp_str[BUFFER_SIZE];
             
-            OPTTRAN_OUTPUT_VERBOSE((5, "[recommender] (%d) --- found new bottleneck",
-                                    input_line));
+            OPTTRAN_OUTPUT_VERBOSE((5, "(%d) --- %s", input_line,
+                                    _GREEN("new bottleneck found")));
 
             /* Create a list item for this code bottleneck */
             item = malloc(sizeof(segment_t));
@@ -493,13 +509,13 @@ static int parse_segment_params(opttran_list_t *segments_p, FILE *inputfile_p) {
                     globals.metrics_table, (int)getpid());
             bzero(sql, BUFFER_SIZE);
             strcat(sql, temp_str);
-            strcat(sql, "                            ");
+            strcat(sql, "                           ");
             bzero(temp_str, BUFFER_SIZE);
             sprintf(temp_str, "SELECT id FROM %s WHERE code_filename = 'new_code-%d';",
                     globals.metrics_table, (int)getpid());
             strcat(sql, temp_str);
             
-            OPTTRAN_OUTPUT_VERBOSE((5, "[recommender]          SQL: %s", sql));
+            OPTTRAN_OUTPUT_VERBOSE((5, "        SQL: %s", sql));
             
             /* Insert new code fragment into metrics database, retrieve id */
             if (SQLITE_OK != sqlite3_exec(globals.db, sql, get_rowid,
@@ -510,7 +526,7 @@ static int parse_segment_params(opttran_list_t *segments_p, FILE *inputfile_p) {
                 sqlite3_close(globals.db);
                 exit(OPTTRAN_ERROR);
             } else {
-                OPTTRAN_OUTPUT_VERBOSE((5, "[recommender]          ID: %d",
+                OPTTRAN_OUTPUT_VERBOSE((5, "             ID: %d",
                                         rowid));
             }
             continue;
@@ -531,21 +547,22 @@ static int parse_segment_params(opttran_list_t *segments_p, FILE *inputfile_p) {
             item->filename = malloc(strlen(node->value) + 1);
             bzero(item->filename, strlen(node->value) + 1);
             strcpy(item->filename, node->value);
-            OPTTRAN_OUTPUT_VERBOSE((10, "[recommender] (%d)   [%s], filename",
-                                    input_line, item->filename));
+            OPTTRAN_OUTPUT_VERBOSE((10, "(%d) %s     [%s]", input_line,
+                                    _MAGENTA("filename:"), item->filename));
         }
         /* Code param: code.line_number */
         if (0 == strncmp("code.line_number", node->key, 16)) {
             item->line_number = atoi(node->value);
-            OPTTRAN_OUTPUT_VERBOSE((10, "[recommender] (%d)   [%d], line number",
-                                    input_line, item->line_number));
+            OPTTRAN_OUTPUT_VERBOSE((10, "(%d) %s  [%d]", input_line,
+                                    _MAGENTA("line number:"),
+                                    item->line_number));
         }
         /* Code param: code.type */
         if (0 == strncmp("code.type", node->key, 9)) {
             item->type = malloc(strlen(node->value) + 1);
             bzero(item->type, strlen(node->value) + 1);
             strcpy(item->type, node->value);
-            OPTTRAN_OUTPUT_VERBOSE((10, "[recommender] (%d)   [%s], type",
+            OPTTRAN_OUTPUT_VERBOSE((10, "(%d) type:         [%s]",
                                     input_line, item->type));
         }
         /* Code param: code.extra_info */
@@ -553,13 +570,13 @@ static int parse_segment_params(opttran_list_t *segments_p, FILE *inputfile_p) {
             item->extra_info = malloc(strlen(node->value) + 1);
             bzero(item->extra_info, strlen(node->value) + 1);
             strcpy(item->extra_info, node->value);
-            OPTTRAN_OUTPUT_VERBOSE((10, "[recommender] (%d)   [%s], extra info",
+            OPTTRAN_OUTPUT_VERBOSE((10, "(%d) extra info:   [%s]",
                                     input_line, item->extra_info));
         }
         /* Code param: code.representativeness */
         if (0 == strncmp("code.representativeness", node->key, 23)) {
             item->representativeness = atof(node->value);
-            OPTTRAN_OUTPUT_VERBOSE((10, "[recommender] (%d)   [%f], representativeness",
+            OPTTRAN_OUTPUT_VERBOSE((10, "(%d) representativeness: [%f], ",
                                     input_line, item->representativeness));
             free(node);
             continue;
@@ -569,7 +586,7 @@ static int parse_segment_params(opttran_list_t *segments_p, FILE *inputfile_p) {
             item->section_info = malloc(strlen(node->value) + 1);
             bzero(item->section_info, strlen(node->value) + 1);
             strcpy(item->section_info, node->value);
-            OPTTRAN_OUTPUT_VERBOSE((10, "[recommender] (%d)   [%s], section info",
+            OPTTRAN_OUTPUT_VERBOSE((10, "(%d) section info: [%s]",
                                     input_line, item->section_info));
             free(node);
             continue;
@@ -598,28 +615,28 @@ static int parse_segment_params(opttran_list_t *segments_p, FILE *inputfile_p) {
         /* Update metrics table */
         if (SQLITE_OK != sqlite3_exec(globals.db, sql, NULL,
                                       (void *)&rowid, &error_msg)) {
-            OPTTRAN_OUTPUT_VERBOSE((4, "[recommender] (%d) ignored line [%s=%s] [%s] [SQL: %s] ",
-                                    input_line, node->key, node->value, error_msg, sql));
+            OPTTRAN_OUTPUT_VERBOSE((4, "(%d) %s", input_line,
+                                    _RED("ignored line")));
             sqlite3_free(error_msg);
         } else {
-            OPTTRAN_OUTPUT_VERBOSE((10, "[recommender] (%d)   %s",
-                                    input_line, sql));
+            OPTTRAN_OUTPUT_VERBOSE((10, "(%d) %s", input_line,
+                                    sql));
         }
         free(node);
     }
 
     /* print a summary of 'segments' */
-    OPTTRAN_OUTPUT_VERBOSE((4, "[recommender] %d code segments found",
-                            opttran_list_get_size(segments_p)));
+    OPTTRAN_OUTPUT_VERBOSE((4, "%d %s", opttran_list_get_size(segments_p),
+                            _YELLOW("code segments found")));
 
     item = (segment_t *)opttran_list_get_first(segments_p);
     do {
-        OPTTRAN_OUTPUT_VERBOSE((4, "[recommender]   %s:%d",
-                                item->filename, item->line_number));
+        OPTTRAN_OUTPUT_VERBOSE((4, "   %s:%d", item->filename,
+                                item->line_number));
         item = (segment_t *)opttran_list_get_next(item);
     } while ((opttran_list_item_t *)item != &(segments_p->sentinel));
     
-    OPTTRAN_OUTPUT_VERBOSE((4, "[recommender] ==="));
+    OPTTRAN_OUTPUT_VERBOSE((4, "==="));
     return OPTTRAN_SUCCESS;
 }
 
@@ -635,7 +652,7 @@ static int get_rowid(void *rowid, int col_count,
 static int output_recommendations(void *not_used, int col_count,
                                   char **col_values, char **col_names){
     
-    OPTTRAN_OUTPUT_VERBOSE((7, "[recommender] new recommendation found"));
+    OPTTRAN_OUTPUT_VERBOSE((7, "%s", _GREEN("new recommendation found")));
 
     /* If we are not plannning to use OPTTRAN, pint pretty, other just a list */
     if (0 == globals.use_opttran) {
@@ -656,32 +673,32 @@ static int output_recommendations(void *not_used, int col_count,
 
 /* database_connect */
 static int database_connect(void) {
-    OPTTRAN_OUTPUT_VERBOSE((4, "[recommender] === Connecting to database ==="));
+    OPTTRAN_OUTPUT_VERBOSE((4, "=== %s", _BLUE("Connecting to database")));
 
     /* Connect to the DB */
     if (NULL == globals.dbfile) {
         globals.dbfile = "./recommendation.db";
     }
     if (-1 == access(globals.dbfile, F_OK)) {
-        OPTTRAN_OUTPUT(("[recommender] recommendation database (%s) doesn't exist",
-                        globals.dbfile));
+        OPTTRAN_OUTPUT(("%s (%s) %s", _ERROR("recommendation database"),
+                        globals.dbfile, _ERROR("doesn't exist")));
         return OPTTRAN_ERROR;
     }
     if (-1 == access(globals.dbfile, R_OK)) {
-        OPTTRAN_OUTPUT(("[recommender] you don't have permission to read the recommendation database (%s)",
+        OPTTRAN_OUTPUT(("%s (%s)",
+                        _ERROR("you don't have permission to read the file"),
                         globals.dbfile));
         return OPTTRAN_ERROR;
     }
     
     if (SQLITE_OK != sqlite3_open(globals.dbfile, &(globals.db))) {
-        OPTTRAN_OUTPUT(("[recommender] error openning database (%s), %s",
+        OPTTRAN_OUTPUT(("%s (%s), %s", _ERROR("error openning database"),
                         globals.dbfile,
                         sqlite3_errmsg(globals.db)));
         sqlite3_close(globals.db);
         exit(OPTTRAN_ERROR);
     } else {
-        OPTTRAN_OUTPUT_VERBOSE((4, "[recommender]     connected to %s",
-                                globals.dbfile));
+        OPTTRAN_OUTPUT_VERBOSE((4, "connected to %s", globals.dbfile));
     }
     return OPTTRAN_SUCCESS;
 }
@@ -690,7 +707,7 @@ static int database_connect(void) {
 static int database_query(void) {
     char *error_msg = NULL;
 
-    OPTTRAN_OUTPUT_VERBOSE((7, "[recommender] === Querying recommendation DB"));
+    OPTTRAN_OUTPUT_VERBOSE((7, "=== %s", _BLUE("Querying recommendation DB")));
 
     /* Query database */
     // TODO: put the right SQL query

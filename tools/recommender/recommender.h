@@ -60,6 +60,7 @@ typedef struct {
     char *metrics_file;
     int  use_temp_metrics;
     char *metrics_table;
+    int  colorful;
 } globals_t;
 
 extern globals_t globals; /**< Variable to hold global options */
@@ -82,6 +83,7 @@ static struct option long_options[] = {
     {"opttran",       required_argument, NULL, 'a'},
     {"metricfile",    required_argument, NULL, 'm'},
     {"newmetrics",    no_argument,       NULL, 'n'},
+    {"colorful",      no_argument,       NULL, 'c'},
     {0, 0, 0, 0}
 };
 

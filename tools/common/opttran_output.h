@@ -53,6 +53,51 @@
 #define OPTTRAN_OUTPUT_VERBOSE(a) output_verbose a
 #endif
 
+#define PROGRAM_PREFIX "[recommender]"
+
+/* Colorful output functions, definitions and other stuff
+ * See: http://en.wikipedia.org/wiki/ANSI_escape_code for a complete list
+ */
+#define ATTR_NONE     0
+#define ATTR_BRIGHT   1
+#define ATTR_BLINK    5
+#define COLOR_BLACK   0
+#define COLOR_RED     1
+#define COLOR_GREEN   2
+#define COLOR_YELLOW  3
+#define COLOR_BLUE    4
+#define COLOR_MAGENTA 5
+#define COLOR_CYAN    6
+#define COLOR_WHITE   7
+
+char COLORFUL[1024];
+
+static char* colorful(int attr, int fg, int bg, char* str) {
+    if (1 == globals.colorful) {
+        char command[13];
+        char COLOR_RESET[] = "\x1b[0m";
+        
+        bzero(COLORFUL, 1024);
+        sprintf(command, "%c[%d;%d;%dm", 0x1B, attr, fg + 30, bg + 40);
+        strcat(COLORFUL, command);
+        strcat(COLORFUL, str);
+        strcat(COLORFUL, COLOR_RESET);
+        
+        return COLORFUL;
+    } else {
+        return str;
+    }
+}
+
+/* Use all your artistic side to combine the color as you prefer */
+#define _ERROR(a)   colorful(ATTR_BLINK, COLOR_RED,     COLOR_BLACK, a)
+#define _RED(a)     colorful(ATTR_NONE,  COLOR_RED,     COLOR_BLACK, a)
+#define _GREEN(a)   colorful(ATTR_NONE,  COLOR_GREEN,   COLOR_BLACK, a)
+#define _YELLOW(a)  colorful(ATTR_NONE,  COLOR_YELLOW,  COLOR_BLACK, a)
+#define _BLUE(a)    colorful(ATTR_NONE,  COLOR_BLUE,    COLOR_BLACK, a)
+#define _MAGENTA(a) colorful(ATTR_NONE,  COLOR_MAGENTA, COLOR_BLACK, a)
+#define _CYAN(a)    colorful(ATTR_NONE,  COLOR_CYAN,    COLOR_BLACK, a)
+
 /**
  * Global function to send output to screen. This function should never be
  * called directly. The macro OPTTRAN_OUTPUT should be called instead. Use this
@@ -69,14 +114,14 @@ static void output(const char *format, ...) {
     
     va_start(arglist, format);
     vasprintf(&str, format, arglist);
-    total_len = strlen(str);
+    total_len = strlen(str) + 14 + strlen(PROGRAM_PREFIX);
     
-    temp_str = (char *) malloc(total_len + 13);
+    temp_str = (char *) malloc(total_len);
     if (NULL == temp_str) {
-        printf("[opttran_output] ERROR: OUT OF MEMORY\n");
+        printf("%s ERROR: OUT OF MEMORY\n", PROGRAM_PREFIX);
     }
     
-    snprintf(temp_str, total_len + 13, "%s\n", str);
+    snprintf(temp_str, total_len, "%s %s\n", PROGRAM_PREFIX, str);
     
     write(fileno(stdout), temp_str, (int)strlen(temp_str));
     fflush(stdout);
@@ -106,14 +151,14 @@ static void output_verbose(int level, const char *format, ...) {
     if (globals.verbose_level >= level) {
         va_start(arglist, format);
         vasprintf(&str, format, arglist);
-        total_len = strlen(str);
+        total_len = strlen(str) + 14 + strlen(PROGRAM_PREFIX);
         
-        temp_str = (char *) malloc(total_len + 13);
+        temp_str = (char *) malloc(total_len);
         if (NULL == temp_str) {
-            printf("[opttran_output] ERROR: OUT OF MEMORY\n");
+            printf("%s ERROR: OUT OF MEMORY\n", PROGRAM_PREFIX);
         }
         
-        snprintf(temp_str, total_len + 13, "%s\n", str);
+        snprintf(temp_str, total_len, "%s %s\n", PROGRAM_PREFIX, str);
         
         write(fileno(stdout), temp_str, (int)strlen(temp_str));
         fflush(stdout);
