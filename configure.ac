@@ -121,7 +121,7 @@ AC_CONFIG_FILES([Makefile
 # Enable/Disable 'recommender' (BEGIN)
 AC_MSG_CHECKING([whether to enable the 'Optimization Recommender'])
 AC_ARG_ENABLE(recommender,
-    [AS_HELP_STRING([--enable-recommender=@<:@yes/no@:>@],
+    [AS_HELP_STRING([--disable-recommender=@<:@yes/no@:>@],
         [Enable/Disable the optimization recommender tool @<:@default=yes@:>@])],
     ENABLE_RECOMMENDER=$enableval, ENABLE_RECOMMENDER=yes)
 
@@ -158,9 +158,9 @@ AC_MSG_CHECKING([whether to enable the 'OptTran Pattern Recognizer'])
 AC_ARG_ENABLE(opttran_pr,
     [AS_HELP_STRING([--disable-opttran_pr=@<:@yes/no@:>@],
         [Enable/Disable the pattern recognizer tool @<:@default=yes@:>@])],
-    ENABLE_OPTTRAN_CR=$enableval, ENABLE_OPTTRAN_CR=yes)
+    ENABLE_OPTTRAN_PR=$enableval, ENABLE_OPTTRAN_PR=yes)
 
-if test x"$ENABLE_OPTTRAN_CR" = x"yes"; then
+if test x"$ENABLE_OPTTRAN_PR" = x"yes"; then
     AC_MSG_RESULT(yes)
     AC_DEFINE(OPTTRAN_ENABLE_PR, [1], [Enable/Disable opttran_pr])
 
@@ -186,8 +186,8 @@ fi
 AC_MSG_CHECKING([whether to enable the 'OprTran Code Transformer'])
 AC_ARG_ENABLE(opttran_ct,
     [AS_HELP_STRING([--disable-opttran_ct=@<:@yes/no@:>@],
-        [Enable/Disable the code transformer tool @<:@default=yes@:>@])],
-    ENABLE_OPTTRAN_CT=$enableval, ENABLE_OPTTRAN_CT=yes)
+        [Enable/Disable the code transformer tool @<:@default=no@:>@])],
+    ENABLE_OPTTRAN_CT=$enableval, ENABLE_OPTTRAN_CT=no)
 
 if test x"$ENABLE_OPTTRAN_CT" = x"yes"; then
     AC_MSG_RESULT(yes)
@@ -209,8 +209,8 @@ fi
 AC_MSG_CHECKING([whether to enable the 'OprTran Code Re-Assembler'])
 AC_ARG_ENABLE(opttran_cr,
     [AS_HELP_STRING([--disable-opttran_cr=@<:@yes/no@:>@],
-        [Enable/Disable the code re-assembler tool @<:@default=yes@:>@])],
-    ENABLE_OPTTRAN_CR=$enableval, ENABLE_OPTTRAN_CR=yes)
+        [Enable/Disable the code re-assembler tool @<:@default=no@:>@])],
+    ENABLE_OPTTRAN_CR=$enableval, ENABLE_OPTTRAN_CR=no)
 
 if test x"$ENABLE_OPTTRAN_CR" = x"yes"; then
     AC_MSG_RESULT(yes)
@@ -222,7 +222,7 @@ if test x"$ENABLE_OPTTRAN_CR" = x"yes"; then
 else
     AC_MSG_RESULT(no)
     AC_DEFINE(OPTTRAN_ENABLE_CR, [0], [Enable/Disable opttran_cr])
-    ENABLE_CR=cr
+    ENABLE_CR=
     AC_SUBST([ENABLE_CR])
 fi
 # Enable/Disable 'opttran_cr' (END)
