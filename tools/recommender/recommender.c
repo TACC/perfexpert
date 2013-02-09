@@ -185,6 +185,8 @@ int main (int argc, char** argv) {
         free(item->type);
         free(item->extra_info);
         free(item->section_info);
+// Shut your f*cking mounth, GCC! I know exaclty what I'm doing here!
+#pragma GCC diagnostic ignored "-Wall"
         free(item);
     }
     if (1 == globals.use_opttran) {
