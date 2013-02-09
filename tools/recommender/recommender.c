@@ -480,6 +480,10 @@ static int parse_segment_params(opttran_list_t *segments_p, FILE *inputfile_p) {
     /* For each line in the INPUT file... */
     OPTTRAN_OUTPUT_VERBOSE((7, "--- parsing input file"));
 
+    sqlite3_exec(globals.db, "BEGIN TRANSACTION;", get_rowid,
+                 (void *)&rowid, &error_msg))
+    
+    
     bzero(buffer, BUFFER_SIZE);
     while (NULL != fgets(buffer, sizeof buffer, inputfile_p)) {
         node_t *node;
@@ -496,6 +500,9 @@ static int parse_segment_params(opttran_list_t *segments_p, FILE *inputfile_p) {
         if (0 == strncmp("%", buffer, 1)) {
             char temp_str[BUFFER_SIZE];
             
+            sqlite3_exec(globals.db, "END TRANSACTION;", get_rowid,
+                         (void *)&rowid, &error_msg))
+
             OPTTRAN_OUTPUT_VERBOSE((5, "(%d) --- %s", input_line,
                                     _GREEN("new bottleneck found")));
 
@@ -531,6 +538,8 @@ static int parse_segment_params(opttran_list_t *segments_p, FILE *inputfile_p) {
                 OPTTRAN_OUTPUT_VERBOSE((5, "             ID: %d",
                                         rowid));
             }
+            sqlite3_exec(globals.db, "BEGIN TRANSACTION;", get_rowid,
+                         (void *)&rowid, &error_msg))
             continue;
         }
 
@@ -626,6 +635,9 @@ static int parse_segment_params(opttran_list_t *segments_p, FILE *inputfile_p) {
         }
         free(node);
     }
+
+    sqlite3_exec(globals.db, "END TRANSACTION;", get_rowid,
+                 (void *)&rowid, &error_msg))
 
     /* print a summary of 'segments' */
     OPTTRAN_OUTPUT_VERBOSE((4, "%d %s", opttran_list_get_size(segments_p),
