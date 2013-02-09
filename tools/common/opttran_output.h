@@ -70,14 +70,15 @@
 #define COLOR_CYAN    6
 #define COLOR_WHITE   7
 
-char COLORFUL[1024];
+#define COLORFUL_BUFFER_SIZE 8192
+char COLORFUL[COLORFUL_BUFFER_SIZE];
 
 static char* colorful(int attr, int fg, int bg, char* str) {
     if (1 == globals.colorful) {
         char command[13];
         char COLOR_RESET[] = "\x1b[0m";
         
-        bzero(COLORFUL, 1024);
+        bzero(COLORFUL, COLORFUL_BUFFER_SIZE);
         sprintf(command, "%c[%d;%d;%dm", 0x1B, attr, fg + 30, bg + 40);
         strcat(COLORFUL, command);
         strcat(COLORFUL, str);
@@ -118,7 +119,7 @@ static void output(const char *format, ...) {
     
     temp_str = (char *) malloc(total_len);
     if (NULL == temp_str) {
-        printf("%s ERROR: OUT OF MEMORY\n", PROGRAM_PREFIX);
+        printf("%s Error: out of memory\n", PROGRAM_PREFIX);
     }
     
     snprintf(temp_str, total_len, "%s %s\n", PROGRAM_PREFIX, str);
@@ -155,7 +156,7 @@ static void output_verbose(int level, const char *format, ...) {
         
         temp_str = (char *) malloc(total_len);
         if (NULL == temp_str) {
-            printf("%s ERROR: OUT OF MEMORY\n", PROGRAM_PREFIX);
+            printf("%s Error: out of memory\n", PROGRAM_PREFIX);
         }
         
         snprintf(temp_str, total_len, "%s %s\n", PROGRAM_PREFIX, str);
