@@ -9,14 +9,16 @@ COMPILING AND INSTALLING:
 -------------------------
 To compile OptTran just run: 
 
-    $ ./configure
-    $ make
-    # make install
+    $ mkdir _build
+    $ cd _build
+    $ ../configure [options]
+	$ make
+    $ make install
 
 If the 'configure' script is not available on your source tree, probably you
 have retrieved this code from our source code repository. It means you will
 need some GNU tools to generate the 'configure'. The recommended version of the
-tool you will need to generate these files are:
+tools you will need:
 
     - M4,       1.4.13 or newer (ftp://ftp.gnu.org/gnu/m4/)
     - Autoconf  2.63 or newer   (ftp://ftp.gnu.org/gnu/autoconf/)
@@ -26,9 +28,12 @@ If you have all these GNU tools, to generate the 'configure' script just run:
 
     $ ./autogen.sh
 
-
 DOCUMENTATION:
 --------------
+
+
+HOW TO EXTEND OPTTRAN CAPABILITIES:
+-----------------------------------
 
 
 HOW TO CONTRIBUTE TO OPTTRAN:

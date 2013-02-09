@@ -56,7 +56,7 @@
 #define PROGRAM_PREFIX "[recommender]"
 
 /* Colorful output functions, definitions and other stuff
- * See: http://en.wikipedia.org/wiki/ANSI_escape_code for a complete list
+ * See http://en.wikipedia.org/wiki/ANSI_escape_code for a complete list
  */
 #define ATTR_NONE     0
 #define ATTR_BRIGHT   1
