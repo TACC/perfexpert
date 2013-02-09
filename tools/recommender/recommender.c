@@ -517,7 +517,7 @@ static int parse_segment_params(opttran_list_t *segments_p, FILE *inputfile_p) {
     /* For each line in the INPUT file... */
     OPTTRAN_OUTPUT_VERBOSE((7, "--- parsing input file"));
 
-    /* Just to improve SQLite performance */
+    /* To improve SQLite performance and keep database clean */
     if (SQLITE_OK != sqlite3_exec(globals.db, "BEGIN TRANSACTION;", NULL, NULL,
                                   &error_msg)) {
         fprintf(stderr, "Error: SQL error: %s\n", error_msg);
@@ -542,15 +542,6 @@ static int parse_segment_params(opttran_list_t *segments_p, FILE *inputfile_p) {
         if (0 == strncmp("%", buffer, 1)) {
             char temp_str[BUFFER_SIZE];
             
-            /* Just to improve SQLite performance */
-            if (SQLITE_OK != sqlite3_exec(globals.db, "END TRANSACTION;", NULL,
-                                          NULL, &error_msg)) {
-                fprintf(stderr, "Error: SQL error: %s\n", error_msg);
-                sqlite3_free(error_msg);
-                sqlite3_close(globals.db);
-                exit(OPTTRAN_ERROR);
-            }
-
             OPTTRAN_OUTPUT_VERBOSE((5, "(%d) --- %s", input_line,
                                     _GREEN("new bottleneck found")));
 
@@ -591,14 +582,7 @@ static int parse_segment_params(opttran_list_t *segments_p, FILE *inputfile_p) {
             } else {
                 OPTTRAN_OUTPUT_VERBOSE((5, "        ID: %d", rowid));
             }
-            /* Just to improve SQLite performance */
-            if (SQLITE_OK != sqlite3_exec(globals.db, "BEGIN TRANSACTION;",
-                                          NULL, NULL, &error_msg)) {
-                fprintf(stderr, "Error: SQL error: %s\n", error_msg);
-                sqlite3_free(error_msg);
-                sqlite3_close(globals.db);
-                exit(OPTTRAN_ERROR);
-            }
+
             continue;
         }
 
@@ -715,7 +699,7 @@ static int parse_segment_params(opttran_list_t *segments_p, FILE *inputfile_p) {
         free(node);
     }
 
-    /* Just to improve SQLite performance */
+    /* To improve SQLite performance and keep database clean */
     if (SQLITE_OK != sqlite3_exec(globals.db, "END TRANSACTION;", NULL, NULL,
                                   &error_msg)) {
         fprintf(stderr, "Error: SQL error: %s\n", error_msg);
