@@ -185,9 +185,7 @@ int main (int argc, char** argv) {
         free(item->type);
         free(item->extra_info);
         free(item->section_info);
-// Shut your f*cking mounth, GCC! I know exaclty what I'm doing here!
-#pragma GCC diagnostic ignored "-Wall"
-        free(item);
+        free(item); // Some version of GCC will complain about this. Idiots.
     }
     if (1 == globals.use_opttran) {
         free(globals.outputfile);
@@ -480,9 +478,13 @@ static int parse_segment_params(opttran_list_t *segments_p, FILE *inputfile_p) {
     /* For each line in the INPUT file... */
     OPTTRAN_OUTPUT_VERBOSE((7, "--- parsing input file"));
 
-    sqlite3_exec(globals.db, "BEGIN TRANSACTION;", get_rowid,
-                 (void *)&rowid, &error_msg);
-    
+    /* Just to improve SQLite performance */
+    sqlite3_stmt *statement;
+    sqlite3_exec(globals.db, "BEGIN TRANSACTION;", get_rowid, (void *)&rowid,
+                 &error_msg);
+    sprintf(sql, "UPDATE %s SET @key='@value' WHERE id=@rowid;",
+            globals.metrics_table);
+    sqlite3_prepare_v2(globals.db, sql, BUFFER_SIZE, &statement, NULL);
     
     bzero(buffer, BUFFER_SIZE);
     while (NULL != fgets(buffer, sizeof buffer, inputfile_p)) {
@@ -500,6 +502,7 @@ static int parse_segment_params(opttran_list_t *segments_p, FILE *inputfile_p) {
         if (0 == strncmp("%", buffer, 1)) {
             char temp_str[BUFFER_SIZE];
             
+            /* Just to improve SQLite performance */
             sqlite3_exec(globals.db, "END TRANSACTION;", get_rowid,
                          (void *)&rowid, &error_msg);
 
@@ -538,6 +541,7 @@ static int parse_segment_params(opttran_list_t *segments_p, FILE *inputfile_p) {
                 OPTTRAN_OUTPUT_VERBOSE((5, "             ID: %d",
                                         rowid));
             }
+            /* Just to improve SQLite performance */
             sqlite3_exec(globals.db, "BEGIN TRANSACTION;", get_rowid,
                          (void *)&rowid, &error_msg);
             continue;
@@ -620,9 +624,13 @@ static int parse_segment_params(opttran_list_t *segments_p, FILE *inputfile_p) {
         
         /* Assemble the SQL query */
         bzero(sql, 1024);
-        sprintf(sql, "UPDATE %s SET %s='%s' WHERE id=%d;",
-                globals.metrics_table, node->key, node->value, rowid);
-
+        sqlite3_bind_text(statement, 1, node->key, -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(statement, 2, node->value, -1, SQLITE_TRANSIENT);
+        sqlite3_bind_int(statement, 3, rowid);
+        sqlite3_step(statement);
+        sqlite3_clear_bindings(statement);
+        sqlite3_reset(statement);
+        
         /* Update metrics table */
         if (SQLITE_OK != sqlite3_exec(globals.db, sql, NULL,
                                       (void *)&rowid, &error_msg)) {
@@ -630,14 +638,15 @@ static int parse_segment_params(opttran_list_t *segments_p, FILE *inputfile_p) {
                                     _RED("ignored line")));
             sqlite3_free(error_msg);
         } else {
-            OPTTRAN_OUTPUT_VERBOSE((10, "(%d) %s", input_line,
-                                    sql));
+            OPTTRAN_OUTPUT_VERBOSE((10, "(%d) %s = %s", input_line,
+                                    node->key, node->value));
         }
         free(node);
     }
 
-    sqlite3_exec(globals.db, "END TRANSACTION;", get_rowid,
-                 (void *)&rowid, &error_msg);
+    /* Just to improve SQLite performance */
+    sqlite3_exec(globals.db, "END TRANSACTION;", get_rowid, (void *)&rowid,
+                 &error_msg);
 
     /* print a summary of 'segments' */
     OPTTRAN_OUTPUT_VERBOSE((4, "%d %s", opttran_list_get_size(segments_p),
