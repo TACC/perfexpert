@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+PERFEXPERT_HOME=`dirname ${0}`;
+export PERFEXPERT_HPCDATA_HOME="${PERFEXPERT_HOME}/hpcdata/bin"
+LOG4J_CONFIG="-Dlog4j.configuration=file:${PERFEXPERT_HOME}/lib/log4j.properties"
+CLASSPATH="${PERFEXPERT_HOME}/bin/perfexpert.jar:${PERFEXPERT_HOME}/lib/argp-1.0.jar:${PERFEXPERT_HOME}/lib/log4j-1.2.16.jar"
+
+if [ -f ${PERFEXPERT_HOME}/bin/perfexpert.jar ]
+then
+	java ${LOG4J_CONFIG} -cp ${CLASSPATH} edu.utexas.tacc.perfexpert.PerfExpert ${*}
+else
+	echo "ERROR: PerfExpert does not seem to have been built. Did you run \`make'?"
+	exit 1
+fi

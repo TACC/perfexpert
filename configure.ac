@@ -90,6 +90,24 @@ case "$host" in
 esac
 
 #------------------------------------------------------------------------------
+# Debug
+AC_MSG_CHECKING([whether to enable debug])
+AC_ARG_ENABLE(debug,
+    AS_HELP_STRING([--enable-debug=@<:@yes/no@:>@],
+               [Enable/Disable debugging, @<:@default=no@:>@]]),
+    ENABLE_DEBUG=$enableval, ENABLE_DEBUG=no)
+
+if test x"$ENABLE_DEBUG" = x"yes"; then
+    AC_MSG_RESULT(yes)
+    AC_DEFINE(ENABLE_DEBUG, [1], [Enable/Disable debug])
+    ENABLE_DEBUG=true
+else
+    AC_MSG_RESULT(no)
+    AC_DEFINE(ENABLE_DEBUG, [0], [Enable/Disable debug])
+    ENABLE_DEBUG=false
+fi
+
+#------------------------------------------------------------------------------
 # Checks for required (but generic) header files
 AC_CHECK_HEADER([stdio.h],  [AC_DEFINE([HAVE_STDIO_H],  1,
     [You have <stdio.h>.])],  [AC_MSG_ERROR([not found: stdio.h])])
@@ -116,6 +134,33 @@ AC_FUNC_MALLOC
 # Output files
 AC_CONFIG_FILES([Makefile
 	tools/Makefile])
+
+#------------------------------------------------------------------------------
+# Enable/Disable 'perfexpert' (BEGIN)
+AC_MSG_CHECKING([whether to enable 'PerfExpert'])
+AC_ARG_ENABLE(perfexpert,
+    [AS_HELP_STRING([--disable-perfexpert=@<:@yes/no@:>@],
+        [Enable/Disable the application profiler tool @<:@default=yes@:>@])],
+    ENABLE_PERFEXPERT=$enableval, ENABLE_PERFEXPERT=yes)
+
+if test x"$ENABLE_PERFEXPERT" = x"yes"; then
+    AC_MSG_RESULT(yes)
+    AC_DEFINE(OPTTRAN_ENABLE_PERFEXPERT, [1], [Enable/Disable perfexpert])
+
+# inttypes.h is required for hound
+    AC_CHECK_HEADER([inttypes.h], [AC_DEFINE([HAVE_UNISTD_H], 1,
+        [You have <inttypes.h>.])], [AC_MSG_ERROR([not found: inttypes.h])])
+
+    ENABLE_PERFEXPERT=perfexpert
+    AC_CONFIG_FILES([tools/perfexpert/Makefile])
+    AC_SUBST([ENABLE_PERFEXPERT])
+else
+    AC_MSG_RESULT(no)
+    AC_DEFINE(OPTTRAN_ENABLE_PERFEXPERT, [0], [Enable/Disable perfexpert])
+    ENABLE_PERFEXPERT=
+    AC_SUBST([ENABLE_PERFEXPERT])
+fi
+# Enable/Disable 'perfexpert' (END)
 
 #------------------------------------------------------------------------------
 # Enable/Disable 'recommender' (BEGIN)
