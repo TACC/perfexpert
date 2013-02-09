@@ -130,10 +130,17 @@ if test x"$ENABLE_RECOMMENDER" = x"yes"; then
     AC_DEFINE(OPTTRAN_ENABLE_RECOMMENDER, [1], [Enable/Disable recommender])
 
 # Checks for SQLite library functions (only if 'recommender' is enabled)
-    AC_CHECK_LIB([sqlite3], [sqlite3_open, sqlite3_close, sqlite3_exec,
-            sqlite3_free, sqlite3_errmsg],
+#    AC_CHECK_LIB([sqlite3], [sqlite3_open, sqlite3_close, sqlite3_exec,
+#            sqlite3_free, sqlite3_errmsg],
+#        [AC_MSG_RESULT([You have SQLite3 (at least the library), great!])],
+#        [AC_MSG_ERROR([SQLite3 not found ;-(])])
+    AC_SEARCH_LIBS([sqlite3_open, sqlite3_close, sqlite3_exec, sqlite3_free,
+        sqlite3_errmsg], [sqlite3],
         [AC_MSG_RESULT([You have SQLite3 (at least the library), great!])],
         [AC_MSG_ERROR([SQLite3 not found ;-(])])
+    AC_CHECK_HEADER([sqlite3.h], [AC_DEFINE([HAVE_SQLITE3_H], 1,
+        [Awesome! You also have sqlite3.h!])],
+        [AC_MSG_ERROR([not found: sqlite3.h])])
 
 # Check for the SQLite utility
     AC_CHECK_PROG(SQLITE3_PROGRAM, sqlite3, yes)
