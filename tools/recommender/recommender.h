@@ -40,8 +40,9 @@
 #define BUFFER_SIZE 4096
 
 /** Default values for some parameters */
-#define RECOMMENDATION_DB "../../contrib/recommendation.db"
-#define METRICS_FILE      "../../contrib/recommender-metrics.txt"
+// TODO: these default files have to be replaced by the correct install dir path
+#define RECOMMENDATION_DB "../contrib/recommendation.db"
+#define METRICS_FILE      "../contrib/recommender-metrics.txt"
 #define OPTTRAN_RECO_FILE "recommendations.txt"
 
 /** Structure to hold global variables */
