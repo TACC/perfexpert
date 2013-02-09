@@ -77,21 +77,21 @@ struct opttran_list {
     volatile size_t length;
 };
 
-static void opttran_list_construct(opttran_list_t *list) {
+static inline void opttran_list_construct(opttran_list_t *list) {
     list->sentinel.next = &list->sentinel;
     list->sentinel.prev = &list->sentinel;
     list->length = 0;
 }
 
-static void opttran_list_destruct(opttran_list_t *list) {
+static inline void opttran_list_destruct(opttran_list_t *list) {
     opttran_list_construct(list);
 }
 
-static void opttran_list_item_construct(opttran_list_item_t *item) {
+static inline void opttran_list_item_construct(opttran_list_item_t *item) {
     item->next = item->prev = NULL;
 }
 
-static void opttran_list_item_destruct(opttran_list_item_t *item) {
+static inline void opttran_list_item_destruct(opttran_list_item_t *item) {
     /* nothing to do */
 }
 
