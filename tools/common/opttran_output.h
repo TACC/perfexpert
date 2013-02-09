@@ -123,7 +123,7 @@ static void output(const char *format, ...) {
     
     snprintf(temp_str, total_len, "%s %s\n", PROGRAM_PREFIX, str);
     
-    write(fileno(stdout), temp_str, (int)strlen(temp_str));
+    total_len = write(fileno(stdout), temp_str, (int)strlen(temp_str));
     fflush(stdout);
     
     free(str);
@@ -160,7 +160,7 @@ static void output_verbose(int level, const char *format, ...) {
         
         snprintf(temp_str, total_len, "%s %s\n", PROGRAM_PREFIX, str);
         
-        write(fileno(stdout), temp_str, (int)strlen(temp_str));
+        total_len = write(fileno(stdout), temp_str, (int)strlen(temp_str));
         fflush(stdout);
         
         free(str);
