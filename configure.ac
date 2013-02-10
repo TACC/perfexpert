@@ -32,6 +32,7 @@ m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 
 # Requires only a standard C compiler
 AC_PROG_CC
+AM_PROG_CC_C_O
 AC_PROG_INSTALL
 
 #------------------------------------------------------------------------------
