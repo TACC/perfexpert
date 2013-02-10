@@ -19,33 +19,33 @@
  * Author: Ashay Rane
  */
 
-#ifndef    SPECIFICS_X86_H
-#define    SPECIFICS_X86_H
+#ifndef SPECIFICS_X86_H_
+#define SPECIFICS_X86_H_
 
-#define    WORD_1    "4"
-#define    WORD_2    "8"
-#define    WORD_3    "12"
-#define    WORD_4    "16"
-#define    WORD_5    "20"
+#define WORD_1 "4"
+#define WORD_2 "8"
+#define WORD_3 "12"
+#define WORD_4 "16"
+#define WORD_5 "20"
 
-#define    AX    "eax"
-#define    BX    "ebx"
-#define    CX    "ecx"
-#define    DX    "edx"
+#define AX "eax"
+#define BX "ebx"
+#define CX "ecx"
+#define DX "edx"
 
-#define    SI    "esi"
-#define DI    "edi"
+#define SI "esi"
+#define DI "edi"
 
-#define BP    "ebp"
-#define SP    "esp"
+#define BP "ebp"
+#define SP "esp"
 
-#define MOV     "movl"
-#define XOR     "xorl"
-#define ADD     "addl"
-#define SUB     "subl"
-#define DEC     "decl"
-#define PUSH    "pushl"
-#define POP     "popl"
-#define    CMP    "cmpl"
+#define MOV  "movl"
+#define XOR  "xorl"
+#define ADD  "addl"
+#define SUB  "subl"
+#define DEC  "decl"
+#define PUSH "pushl"
+#define POP  "popl"
+#define CMP  "cmpl"
 
-#endif    /* SPECIFICS_X86_H */
+#endif /* SPECIFICS_X86_H */

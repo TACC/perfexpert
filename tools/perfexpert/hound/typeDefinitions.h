@@ -24,24 +24,41 @@
 
 #define DONT_CARE            0
 
-enum { INSTRUCTION=0, DATA, UNIFIED, TYPE_UNKNOWN };
-enum { CACHE=0, TLB };
-enum { UNKNOWN=-1, FULLY_ASSOCIATIVE=0, DIRECT_MAPPED=1 };
+enum {
+    INSTRUCTION = 0,
+    DATA,
+    UNIFIED,
+    TYPE_UNKNOWN
+};
 
-enum { PAGESIZE_4K=1, PAGESIZE_2M=2, PAGESIZE_4M=4 };
+enum {
+    CACHE = 0,
+    TLB
+};
+
+enum {
+    UNKNOWN = -1,
+    FULLY_ASSOCIATIVE = 0,
+    DIRECT_MAPPED = 1
+};
+
+enum {
+    PAGESIZE_4K = 1,
+    PAGESIZE_2M = 2,
+    PAGESIZE_4M = 4
+};
 
 typedef struct {
     unsigned char cacheOrTLB:1;
     unsigned char type:2;
     short level:4;
-
-    int lineSize;    // Also used as bitmap for page size for TLBs
+    int lineSize; // Also used as bitmap for page size for TLBs
     int lineCount;
     short wayness;
 } cacheInfo;
 
 typedef struct tagCacheList {
-    cacheInfo info;
+    cacheInfo            info;
     struct tagCacheList* lpNext;
 } cacheList;
 
@@ -52,19 +69,20 @@ typedef struct {
 } cacheCollection;
 
 typedef struct {
-    short code;
+    short     code;
     cacheInfo info;
 } intelCacheTableEntry;
 
 const char* getCacheType(unsigned char type) {
-    if (type == DATA)
+    if (DATA == type) {
         return "data";
-
-    if (type == INSTRUCTION)
+    }
+    if (INSTRUCTION == type) {
         return "instruction";
-
-    if (type == UNIFIED)
+    }
+    if (UNIFIED == type) {
         return "unified";
+    }
 }
 
 #endif /* TYPEDEFINITIONS_H_ */

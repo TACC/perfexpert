@@ -19,8 +19,8 @@
  * Author: Ashay Rane
  */
 
-#ifndef TYPE_DEFINITIONS_H
-#define TYPE_DEFINITIONS_H
+#ifndef TYPE_DEFINITIONS_H_
+#define TYPE_DEFINITIONS_H_
 
 typedef struct
 {

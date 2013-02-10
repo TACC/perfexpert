@@ -19,8 +19,8 @@
  * Author: Ashay Rane
  */
 
-#ifndef X86_GENERIC_H
-#define X86_GENERIC_H
+#ifndef X86_GENERIC_H_
+#define X86_GENERIC_H_
 
 #ifndef __x86_64
         #include "x86_specifics.h"

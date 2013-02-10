@@ -19,33 +19,33 @@
  * Author: Ashay Rane
  */
 
-#ifndef    SPECIFICS_X86_64_H
-#define    SPECIFICS_X86_64_H
+#ifndef SPECIFICS_X86_64_H_
+#define SPECIFICS_X86_64_H_
 
-#define    WORD_1    "8"
-#define    WORD_2    "16"
-#define    WORD_3    "24"
-#define    WORD_4    "32"
-#define    WORD_5    "40"
+#define WORD_1 "8"
+#define WORD_2 "16"
+#define WORD_3 "24"
+#define WORD_4 "32"
+#define WORD_5 "40"
 
-#define    AX    "rax"
-#define    BX    "rbx"
-#define    CX    "rcx"
-#define    DX    "rdx"
+#define AX "rax"
+#define BX "rbx"
+#define CX "rcx"
+#define DX "rdx"
 
-#define    SI    "rsi"
-#define DI    "rdi"
+#define SI "rsi"
+#define DI "rdi"
 
-#define BP    "rbp"
-#define SP    "rsp"
+#define BP "rbp"
+#define SP "rsp"
 
-#define MOV     "movq"
-#define XOR     "xorq"
-#define ADD     "addq"
-#define SUB     "subq"
-#define DEC     "decq"
-#define PUSH    "pushq"
-#define POP     "popq"
-#define CMP    "cmpq"
+#define MOV  "movq"
+#define XOR  "xorq"
+#define ADD  "addq"
+#define SUB  "subq"
+#define DEC  "decq"
+#define PUSH "pushq"
+#define POP  "popq"
+#define CMP  "cmpq"
 
-#endif    /* SPECIFICS_X86_64_H */
+#endif /* SPECIFICS_X86_64_H */
