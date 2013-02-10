@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<project basedir="." default="jar" name="HPCData">
+    <property environment="env"/>
+    <property name="debuglevel" value="source,lines,vars"/>
+    <property name="target" value="1.5"/>
+    <property name="source" value="1.5"/>
+    
+    <path id="HPCData.classpath">
+        <pathelement location="."/>
+        <pathelement location="../lib/log4j-1.2.16.jar"/>
+        <pathelement location="@@bagulho@@ @install@ ../argp/argp-1.0.jar"/> 
+    </path>
+    
+    <target name="clean">
+        <delete file="hpcdata.jar"/>
+    </target>
+    
+    <target name="cleanall" depends="clean"/>
+    
+    <target name="build">
+        <javac includeantruntime="false" debug="true" debuglevel="${debuglevel}" destdir="." source="${source}" target="${target}">
+            <src path="@@bagulho@@"/>
+            <classpath refid="HPCData.classpath"/>
+        </javac>
+    </target>
+
+    <target name="jar" depends="clean,build">
+        <jar jarfile="hpcdata.jar" basedir="."/>
+    </target>
+</project>

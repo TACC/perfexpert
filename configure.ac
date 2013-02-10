@@ -162,37 +162,46 @@ if test x"$ENABLE_PERFEXPERT" = x"yes"; then
     AC_DEFINE(OPTTRAN_ENABLE_PERFEXPERT, [1], [Enable/Disable perfexpert])
 
 # Houston, we have a problem. Currently, hound and sniffer only works on Linux.
-    if test x"$HOST_OS" != x"linux"; then
-        AC_MSG_ERROR([Sorry, but hound (the machine charecterization tool) does
-                  not support your operating system yet.])
-    fi
+#    if test x"$HOST_OS" != x"linux"; then
+#        AC_MSG_ERROR([Sorry, but hound (the machine charecterization tool) does
+#                  not support your operating system yet.])
+#    fi
+
+# Classes required for ArgP
+
+# Classes required for PerfExpert
+
+# Classes required for HPCData
 
 # Headers required for hound
-    AC_CHECK_HEADER([inttypes.h], [AC_DEFINE([HAVE_INTTYPES_H], 1,
-        [You have <inttypes.h>.])], [AC_MSG_ERROR([not found: inttypes.h])])
-    AC_CHECK_HEADER([sched.h], [AC_DEFINE([HAVE_SCHED_H], 1,
-        [You have <sched.h>.])], [AC_MSG_ERROR([not found: sched.h])])
-    AC_CHECK_HEADER([time.h], [AC_DEFINE([HAVE_TIME_H], 1,
-        [You have <time.h>.])], [AC_MSG_ERROR([not found: time.h])])
-    AC_CHECK_HEADER([errno.h], [AC_DEFINE([HAVE_ERRNO_H], 1,
-        [You have <errno.h>.])], [AC_MSG_ERROR([not found: errno.h])])
-    AC_CHECK_HEADER([sys/mman.h], [AC_DEFINE([HAVE_SYS_MMAN_H], 1,
-        [You have <sys/mman.h>.])], [AC_MSG_ERROR([not found: sys/mman.h])])
-    AC_CHECK_HEADER([sys/types.h], [AC_DEFINE([HAVE_SYS_TYPES_H], 1,
-        [You have <sys/types.h>.])], [AC_MSG_ERROR([not found: sys/types.h])])
+#    AC_CHECK_HEADER([inttypes.h], [AC_DEFINE([HAVE_INTTYPES_H], 1,
+#        [You have <inttypes.h>.])], [AC_MSG_ERROR([not found: inttypes.h])])
+#    AC_CHECK_HEADER([sched.h], [AC_DEFINE([HAVE_SCHED_H], 1,
+#        [You have <sched.h>.])], [AC_MSG_ERROR([not found: sched.h])])
+#    AC_CHECK_HEADER([time.h], [AC_DEFINE([HAVE_TIME_H], 1,
+#        [You have <time.h>.])], [AC_MSG_ERROR([not found: time.h])])
+#    AC_CHECK_HEADER([errno.h], [AC_DEFINE([HAVE_ERRNO_H], 1,
+#        [You have <errno.h>.])], [AC_MSG_ERROR([not found: errno.h])])
+#    AC_CHECK_HEADER([sys/mman.h], [AC_DEFINE([HAVE_SYS_MMAN_H], 1,
+#        [You have <sys/mman.h>.])], [AC_MSG_ERROR([not found: sys/mman.h])])
+#    AC_CHECK_HEADER([sys/types.h], [AC_DEFINE([HAVE_SYS_TYPES_H], 1,
+#        [You have <sys/types.h>.])], [AC_MSG_ERROR([not found: sys/types.h])])
 
 # Headers and libraries required for sniffer
-    AC_SEARCH_LIBS([PAPI_library_init, PAPI_add_event, PAPI_create_eventset,
-        PAPI_get_event_info, PAPI_event_name_to_code, PAPI_query_event],
-        [papi, libpapi.a], [AC_MSG_RESULT([Great! You have PAPI... :-)])],
-        [AC_MSG_ERROR([PAPI not found ;-(])])
-    AC_CHECK_HEADER([papi.h], [AC_DEFINE([HAVE_PAPI_H], 1,
-        [You have <papi.h>.])], [AC_MSG_ERROR([not found: papi.h])])
+#    AC_SEARCH_LIBS([PAPI_library_init, PAPI_add_event, PAPI_create_eventset,
+#        PAPI_get_event_info, PAPI_event_name_to_code, PAPI_query_event],
+#        [papi, libpapi.a], [AC_MSG_RESULT([Great! You have PAPI... :-)])],
+#        [AC_MSG_ERROR([PAPI not found ;-(])])
+#    AC_CHECK_HEADER([papi.h], [AC_DEFINE([HAVE_PAPI_H], 1,
+#        [You have <papi.h>.])], [AC_MSG_ERROR([not found: papi.h])])
 
     ENABLE_PERFEXPERT=perfexpert
     AC_CONFIG_FILES([tools/perfexpert/Makefile])
-    AC_CONFIG_FILES([tools/perfexpert/hound/Makefile])
-    AC_CONFIG_FILES([tools/perfexpert/sniffer/Makefile])
+    AC_CONFIG_FILES([tools/perfexpert/argp/Makefile])
+#    AC_CONFIG_FILES([tools/perfexpert/hpcdata/Makefile])
+#    AC_CONFIG_FILES([tools/perfexpert/perfexpert/Makefile])
+#    AC_CONFIG_FILES([tools/perfexpert/hound/Makefile])
+#    AC_CONFIG_FILES([tools/perfexpert/sniffer/Makefile])
     AC_SUBST([ENABLE_PERFEXPERT])
 else
     AC_MSG_RESULT(no)
