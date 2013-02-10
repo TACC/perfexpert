@@ -255,7 +255,7 @@ int discoverAMDCaches(cacheCollection* lpCaches) {
 	}
 
 	// Cache
-	if (info[ECX] & 0x0000f000)     // Not disabled {
+	if (info[ECX] & 0x0000f000) {    // Not disabled
 		cacheInfo L2Cache;
 		L2Cache.cacheOrTLB = CACHE;
 		L2Cache.type = UNIFIED;
