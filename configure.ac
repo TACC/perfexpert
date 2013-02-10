@@ -95,7 +95,7 @@ esac
 AC_MSG_CHECKING([whether to enable debug])
 AC_ARG_ENABLE(debug,
     AS_HELP_STRING([--enable-debug],
-               [Enable/Disable debugging, @<:@default=disabled@:>@]]),
+               [Enable/Disable debugging @<:@default=disabled@:>@]]),
     ENABLE_DEBUG=$enableval, ENABLE_DEBUG=no)
 
 AM_CONDITIONAL(ENABLE_DEBUG, test x"$ENABLE_DEBUG" = x"yes")
@@ -140,7 +140,7 @@ AC_CONFIG_FILES([Makefile
 
 #------------------------------------------------------------------------------
 # Enable/Disable 'perfexpert' (BEGIN)
-AC_MSG_CHECKING([whether to enable 'PerfExpert'])
+AC_MSG_CHECKING([whether to enable PerfExpert])
 AC_ARG_ENABLE(perfexpert,
     [AS_HELP_STRING([--disable-perfexpert],
         [Enable/Disable the application profiler tool @<:@default=enabled@:>@])],
@@ -178,7 +178,7 @@ fi
 
 #------------------------------------------------------------------------------
 # Enable/Disable 'recommender' (BEGIN)
-AC_MSG_CHECKING([whether to enable the 'Optimization Recommender'])
+AC_MSG_CHECKING([whether to enable the Optimization Recommender])
 AC_ARG_ENABLE(recommender,
     [AS_HELP_STRING([--disable-recommender],
         [Enable/Disable the optimization recommender tool @<:@default=enabled@:>@])],
@@ -216,7 +216,7 @@ fi
 
 #------------------------------------------------------------------------------
 # Enable/Disable 'opttran_pr' (BEGIN)
-AC_MSG_CHECKING([whether to enable the 'OptTran Pattern Recognizer'])
+AC_MSG_CHECKING([whether to enable OptTran Pattern Recognizer])
 AC_ARG_ENABLE(opttran_pr,
     [AS_HELP_STRING([--disable-opttran_pr],
         [Enable/Disable the pattern recognizer tool @<:@default=enabled@:>@])],
@@ -245,7 +245,7 @@ fi
 
 #------------------------------------------------------------------------------
 # Enable/Disable 'opttran_ct' (BEGIN)
-AC_MSG_CHECKING([whether to enable the 'OprTran Code Transformer'])
+AC_MSG_CHECKING([whether to enable OptTran Code Transformer])
 AC_ARG_ENABLE(opttran_ct,
     [AS_HELP_STRING([--disable-opttran_ct],
         [Enable/Disable the code transformer tool @<:@default=disabled@:>@])],
@@ -268,7 +268,7 @@ fi
 
 #------------------------------------------------------------------------------
 # Enable/Disable 'opttran_cr' (BEGIN)
-AC_MSG_CHECKING([whether to enable the 'OprTran Code Re-Assembler'])
+AC_MSG_CHECKING([whether to enable OptTran Code Re-Assembler])
 AC_ARG_ENABLE(opttran_cr,
     [AS_HELP_STRING([--disable-opttran_cr],
         [Enable/Disable the code re-assembler tool @<:@default=disabled@:>@])],
