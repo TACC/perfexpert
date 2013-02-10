@@ -272,7 +272,7 @@ int discoverAMDCaches(cacheCollection* lpCaches) {
 		insertIntoCacheList(&lpCaches->lpL2Caches, L2Cache);
 	}
 
-	if (info[EDX] & 0x0000f000)     // Not disabled {
+	if (info[EDX] & 0x0000f000) {    // Not disabled
 		cacheInfo L3Cache;
 		L3Cache.cacheOrTLB = CACHE;
 		L3Cache.type = UNIFIED;
