@@ -485,13 +485,13 @@ repeatIfNeg:
 double getTLBLatency(long size) {
     int i;
     int warmup = 0;
-    int unit_inc = stride / sizeof(size_t);
     size_t ret = 0,
            diff = 0,
            count = 0;
     size_t stride = getpagesize();
     size_t repeatCount = (warmup == 0 ? 1 : 2);
     size_t *ptr;
+    int unit_inc = stride / sizeof(size_t);
 
 
     if (NULL == (ret = posix_memalign((void**) &ptr, 8, size) != 0) || ptr) {
