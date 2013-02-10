@@ -97,6 +97,8 @@ AC_ARG_ENABLE(debug,
                [Enable/Disable debugging, @<:@default=disabled@:>@]]),
     ENABLE_DEBUG=$enableval, ENABLE_DEBUG=no)
 
+AM_CONDITIONAL(ENABLE_DEBUG, test x"$ENABLE_DEBUG" = x"yes")
+
 if test x"$ENABLE_DEBUG" = x"yes"; then
     AC_MSG_RESULT(yes)
     AC_DEFINE(ENABLE_DEBUG, [1], [Enable/Disable debug])
