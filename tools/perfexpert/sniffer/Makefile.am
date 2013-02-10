@@ -10,6 +10,6 @@
 
 bin_PROGRAMS = sniffer
 sniffer_SOURCES = sniffer.c
-sniffer_LDFLAGS = -lpapi
+sniffer_LDADD = libpapi.a
 
 # EOF
