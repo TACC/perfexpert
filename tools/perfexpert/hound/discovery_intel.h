@@ -146,7 +146,7 @@ int insertIntoCorrectCacheList(cacheCollection *lpCaches, cacheInfo cache) {
                 getCacheType(cache.type), cache.level, cache.lineCount);
     }
 #endif /* DEBUG_PRINT */
-    return insertIntoCacheList(lplpCacheList, cache);
+    return cache_list_insert(lplpCacheList, cache);
 }
 
 int mapIntelCache(cacheCollection *lpCaches, short code) {

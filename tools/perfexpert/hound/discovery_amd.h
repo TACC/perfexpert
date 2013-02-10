@@ -91,7 +91,7 @@ int discoverAMDCaches(cacheCollection *lpCaches) {
 #ifdef DEBUG_PRINT
         printf ("DEBUG: Found L1 data TLB with %d lines\n", L1DataTLB.lineCount);
 #endif /* DEBUG_PRINT */
-        insertIntoCacheList(&lpCaches->lpL1Caches, L1DataTLB);
+        cache_list_insert(&lpCaches->lpL1Caches, L1DataTLB);
     }
 
     if ((info[EAX] & 0x0000ff00) >> 8) {
@@ -107,7 +107,7 @@ int discoverAMDCaches(cacheCollection *lpCaches) {
 #ifdef DEBUG_PRINT
         printf ("DEBUG: Found L1 instruction TLB with %d lines\n", L1InstTLB.lineCount);
 #endif /* DEBUG_PRINT */
-        insertIntoCacheList(&lpCaches->lpL1Caches, L1InstTLB);
+        cache_list_insert(&lpCaches->lpL1Caches, L1InstTLB);
     }
 
     if ((info[EBX] & 0xff000000) >> 24) {
@@ -124,7 +124,7 @@ int discoverAMDCaches(cacheCollection *lpCaches) {
 #ifdef DEBUG_PRINT
         printf ("DEBUG: Found L1 data TLB with %d lines\n", L1DataTLB.lineCount);
 #endif /* DEBUG_PRINT */
-        insertIntoCacheList(&lpCaches->lpL1Caches, L1DataTLB);
+        cache_list_insert(&lpCaches->lpL1Caches, L1DataTLB);
     }
 
     if ((info[EBX] & 0x0000ff00) >> 8) {
@@ -141,7 +141,7 @@ int discoverAMDCaches(cacheCollection *lpCaches) {
 #ifdef DEBUG_PRINT
         printf ("DEBUG: Found L1 instruction TLB with %d lines\n", L1InstTLB.lineCount);
 #endif /* DEBUG_PRINT */
-        insertIntoCacheList(&lpCaches->lpL1Caches, L1InstTLB);
+        cache_list_insert(&lpCaches->lpL1Caches, L1InstTLB);
     }
 
     if ((info[ECX] & 0x00ff0000) >> 16) {
@@ -158,7 +158,7 @@ int discoverAMDCaches(cacheCollection *lpCaches) {
 #ifdef DEBUG_PRINT
         printf ("DEBUG: Found L1 data cache of size %.2lf KB\n", L1DataCache.lineCount * L1DataCache.lineSize / 1024.0);
 #endif /* DEBUG_PRINT */
-        insertIntoCacheList(&lpCaches->lpL1Caches, L1DataCache);
+        cache_list_insert(&lpCaches->lpL1Caches, L1DataCache);
     }
 
     if ((info[EDX] & 0x00ff0000) >> 16) {
@@ -174,7 +174,7 @@ int discoverAMDCaches(cacheCollection *lpCaches) {
 #ifdef DEBUG_PRINT
         printf ("DEBUG: Found L1 instruction cache of size %.2lf KB\n", L1InstCache.lineCount * L1InstCache.lineSize / 1024.0);
 #endif /* DEBUG_PRINT */
-        insertIntoCacheList(&lpCaches->lpL1Caches, L1InstCache);
+        cache_list_insert(&lpCaches->lpL1Caches, L1InstCache);
     }
 
     __cpuid(info, 0x80000006, 0);
@@ -193,7 +193,7 @@ int discoverAMDCaches(cacheCollection *lpCaches) {
 #ifdef DEBUG_PRINT
         printf ("DEBUG: Found L2 data TLB with %d lines\n", L2DataTLB.lineCount);
 #endif /* DEBUG_PRINT */
-        insertIntoCacheList(&lpCaches->lpL2Caches, L2DataTLB);
+        cache_list_insert(&lpCaches->lpL2Caches, L2DataTLB);
     }
 
     if (info[EAX] & 0x0000f000) {
@@ -209,7 +209,7 @@ int discoverAMDCaches(cacheCollection *lpCaches) {
 #ifdef DEBUG_PRINT
         printf ("DEBUG: Found L2 instruction TLB with %d lines\n", L2InstTLB.lineCount);
 #endif /* DEBUG_PRINT */
-        insertIntoCacheList(&lpCaches->lpL2Caches, L2InstTLB);
+        cache_list_insert(&lpCaches->lpL2Caches, L2InstTLB);
     }
 
     // 4 KB TLBs
@@ -226,7 +226,7 @@ int discoverAMDCaches(cacheCollection *lpCaches) {
 #ifdef DEBUG_PRINT
         printf ("DEBUG: Found L2 data TLB with %d lines\n", L2DataTLB.lineCount);
 #endif /* DEBUG_PRINT */
-        insertIntoCacheList(&lpCaches->lpL2Caches, L2DataTLB);
+        cache_list_insert(&lpCaches->lpL2Caches, L2DataTLB);
     }
 
     if (info[EBX] & 0x0000f000) {
@@ -242,7 +242,7 @@ int discoverAMDCaches(cacheCollection *lpCaches) {
 #ifdef DEBUG_PRINT
         printf ("DEBUG: Found L2 instruction TLB with %d lines\n", L2InstTLB.lineCount);
 #endif /* DEBUG_PRINT */
-        insertIntoCacheList(&lpCaches->lpL2Caches, L2InstTLB);
+        cache_list_insert(&lpCaches->lpL2Caches, L2InstTLB);
     }
 
     // Cache
@@ -259,7 +259,7 @@ int discoverAMDCaches(cacheCollection *lpCaches) {
 #ifdef DEBUG_PRINT
         printf ("DEBUG: Found L2 unified cache of size %.2lf KB\n", L2Cache.lineCount * L2Cache.lineSize / 1024.0);
 #endif /* DEBUG_PRINT */
-        insertIntoCacheList(&lpCaches->lpL2Caches, L2Cache);
+        cache_list_insert(&lpCaches->lpL2Caches, L2Cache);
     }
 
     if (info[EDX] & 0x0000f000) { // Not disabled
@@ -275,7 +275,7 @@ int discoverAMDCaches(cacheCollection *lpCaches) {
 #ifdef DEBUG_PRINT
         printf ("DEBUG: Found L3 unified cache of size %.2lf KB\n", L3Cache.lineCount * L3Cache.lineSize / 1024.0);
 #endif /* DEBUG_PRINT */
-        insertIntoCacheList(&lpCaches->lpL3Caches, L3Cache);
+        cache_list_insert(&lpCaches->lpL3Caches, L3Cache);
     }
 }
 
