@@ -213,16 +213,14 @@
 		measure(init_block, instruction_block, count, label_prefix)	\
 		cleanup()
 
-double allocateAndTest(long size, int stride, unsigned char warmup)
-{
+double allocateAndTest(long size, int stride, unsigned char warmup) {
 	if (stride > size)
 		return 0;
 
 	size_t ret = 0, diff = 0, count = 0, my_stride = stride;
 	size_t *ptr;
 
-	if ((ret = posix_memalign((void**) &ptr, 8, size) != 0) || ptr == NULL)
-	{
+	if ((ret = posix_memalign((void**) &ptr, 8, size) != 0) || ptr == NULL) {
 		if (errno == ENOMEM)
 			printf ("No memory\n");
 		else if (errno == EINVAL)
@@ -265,8 +263,7 @@ repeatIfNeg:
 	return diff / ((float) (count / ((float) stride)));
 }
 
-double allocateAndTestMainMemory(long size, int stride, unsigned char warmup)
-{
+double allocateAndTestMainMemory(long size, int stride, unsigned char warmup) {
 	if (stride > size)
 		return 0;
 
@@ -274,8 +271,7 @@ double allocateAndTestMainMemory(long size, int stride, unsigned char warmup)
 	size_t ret = 0, diff = 0, count = 0, my_stride = stride;
 	size_t *ptr;
 
-	if ((ret = posix_memalign((void**) &ptr, 8, size) != 0) || ptr == NULL)
-	{
+	if ((ret = posix_memalign((void**) &ptr, 8, size) != 0) || ptr == NULL) {
 		if (errno == ENOMEM)
 			printf ("No memory\n");
 		else if (errno == EINVAL)
@@ -288,28 +284,23 @@ double allocateAndTestMainMemory(long size, int stride, unsigned char warmup)
 	long elements = size/stride-1;  // Assuming completely divisible
 	int* swapBuffer = malloc(sizeof(int)*elements);
 	size_t* mem = (size_t *) ptr;
-	if (swapBuffer == NULL)
-	{
+	if (swapBuffer == NULL) {
 		// Try the usual +512 skip
-		for (i=0; i<elements-1; i++)
-		{
+		for (i=0; i<elements-1; i++) {
 			*mem = (size_t) &ptr [(i+1)*stride/sizeof(size_t)];
 			mem = (size_t*) *mem;
 		}
 
 		// Loop back
 		*mem = (size_t) &ptr[0];
-	}
-	else
-	{
+	} else {
 		srand(time(NULL));
 		int randomNumber;
 		for (i=0; i<elements; i++)
 			swapBuffer[i] = i;
 
 		// > 0 is on purpose, should not generate zero as one of the random numbers
-		for (i=elements-1; i>0; i--)
-		{
+		for (i=elements-1; i>0; i--) {
 			int temp = i*((float) rand() / RAND_MAX);
 			randomNumber = swapBuffer [temp];
 			swapBuffer[temp] = swapBuffer[i];
@@ -350,8 +341,7 @@ repeatIfNeg:
 	return diff / ((float) (count / ((float) stride)));
 }
 
-double getFPLatency()
-{
+double getFPLatency() {
 	size_t diff, count;
 	float op1 = 1424.4525;
 	float op2 = 0.5636;
@@ -382,8 +372,7 @@ repeatIfNeg:
 	return diff / ((float) (count * 2));
 }
 
-double getFPSlowLatency()
-{
+double getFPSlowLatency() {
 	size_t diff, count;
 	float op1 = 1424.4525;
 	float op2 = 0.5636;
@@ -414,8 +403,7 @@ repeatIfNeg:
 	return diff / ((float) (count * 2));
 }
 
-double getPredictedBranchLatency()
-{
+double getPredictedBranchLatency() {
 	size_t diff, count;
 
 repeatIfNeg:
@@ -439,8 +427,7 @@ repeatIfNeg:
 	return diff / 65536.0;
 }
 
-double getMisPredictedBranchLatency()
-{
+double getMisPredictedBranchLatency() {
 	size_t diff, count;
 
 repeatIfNeg:
@@ -526,16 +513,14 @@ repeatIfNeg:
 	return diff / 64.0;
 }
 
-double getTLBLatency(long size)
-{
+double getTLBLatency(long size) {
 	size_t ret = 0, diff = 0, count = 0;
 	size_t stride = getpagesize();
 	int warmup = 0;
 
 	size_t *ptr;
 
-	if ((ret = posix_memalign((void**) &ptr, 8, size) != 0) || ptr == NULL)
-	{
+	if ((ret = posix_memalign((void**) &ptr, 8, size) != 0) || ptr == NULL) {
 		if (errno == ENOMEM)
 			printf ("No memory\n");
 		else if (errno == EINVAL)

@@ -30,8 +30,7 @@ enum { UNKNOWN=-1, FULLY_ASSOCIATIVE=0, DIRECT_MAPPED=1 };
 
 enum { PAGESIZE_4K=1, PAGESIZE_2M=2, PAGESIZE_4M=4 };
 
-typedef struct
-{
+typedef struct {
 	unsigned char cacheOrTLB:1;
 	unsigned char type:2;
 	short level:4;
@@ -41,27 +40,23 @@ typedef struct
 	short wayness;
 } cacheInfo;
 
-typedef struct tagCacheList
-{
+typedef struct tagCacheList {
 	cacheInfo info;
 	struct tagCacheList* lpNext;
 } cacheList;
 
-typedef struct
-{
+typedef struct {
 	cacheList* lpL1Caches;
 	cacheList* lpL2Caches;
 	cacheList* lpL3Caches;
 } cacheCollection;
 
-typedef struct
-{
+typedef struct {
 	short code;
 	cacheInfo info;
 } intelCacheTableEntry;
 
-const char* getCacheType(unsigned char type)
-{
+const char* getCacheType(unsigned char type) {
 	if (type == DATA)
 		return "data";
 

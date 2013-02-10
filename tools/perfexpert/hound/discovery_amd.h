@@ -22,10 +22,8 @@
 #ifndef DISCOVERY_AMD_H_
 #define DISCOVERY_AMD_H_
 
-int getAMDL1Wayness(short code)
-{
-	switch (code)
-	{
+int getAMDL1Wayness(short code) {
+	switch (code) {
 		case 0:		return UNKNOWN;
 		case 1:		return DIRECT_MAPPED;
 		case 0xff:	return FULLY_ASSOCIATIVE;
@@ -33,15 +31,11 @@ int getAMDL1Wayness(short code)
 	}
 }
 
-int getAMDL2Wayness(short code)
-{
-	switch (code)
-	{
+int getAMDL2Wayness(short code) {
+	switch (code) {
 		case 1:		return DIRECT_MAPPED;
-
 		case 2:
 		case 4:		return code;
-
 		case 6:		return 8;
 		case 9:		return 16;
 		case 10:	return 32;
@@ -49,28 +43,16 @@ int getAMDL2Wayness(short code)
 		case 12:	return 64;
 		case 13:	return 96;
 		case 14:	return 128;
-
 		case 16:	return FULLY_ASSOCIATIVE;
-
-	/*
-		case 0:
-		case 3:
-		case 5:
-		case 7:
-		case 9:
-	*/
-
 		default:	return UNKNOWN;
 	}
 }
 
-int getAMDL3Wayness(short code)
-{
+int getAMDL3Wayness(short code) {
 	if (!code || code > 0xf)
 		return UNKNOWN;
 
-	switch(code)
-	{
+	switch(code) {
 		case 1:		return DIRECT_MAPPED;
 		case 2:		return 2;
 		case 4:		return 4;
@@ -89,15 +71,13 @@ int getAMDL3Wayness(short code)
 	return UNKNOWN;
 }
 
-int discoverAMDCaches(cacheCollection* lpCaches)
-{
+int discoverAMDCaches(cacheCollection* lpCaches) {
 	int i, info[4];
 
 	__cpuid(info, 0x80000005, 0);
 
 	// TLBs
-	if ((info[EAX] & 0xff000000) >> 24)
-	{
+	if ((info[EAX] & 0xff000000) >> 24) {
 		cacheInfo L1DataTLB;
 		L1DataTLB.cacheOrTLB = TLB;
 		L1DataTLB.type = DATA;
@@ -114,8 +94,7 @@ int discoverAMDCaches(cacheCollection* lpCaches)
 		insertIntoCacheList(&lpCaches->lpL1Caches, L1DataTLB);
 	}
 
-	if ((info[EAX] & 0x0000ff00) >> 8)
-	{
+	if ((info[EAX] & 0x0000ff00) >> 8) {
 		cacheInfo L1InstTLB;
 		L1InstTLB.cacheOrTLB = TLB;
 		L1InstTLB.type = INSTRUCTION;
@@ -132,8 +111,7 @@ int discoverAMDCaches(cacheCollection* lpCaches)
 		insertIntoCacheList(&lpCaches->lpL1Caches, L1InstTLB);
 	}
 
-	if ((info[EBX] & 0xff000000) >> 24)
-	{
+	if ((info[EBX] & 0xff000000) >> 24) {
 		// TLB for 4 KB pages
 		cacheInfo L1DataTLB;
 		L1DataTLB.cacheOrTLB = TLB;
@@ -151,8 +129,7 @@ int discoverAMDCaches(cacheCollection* lpCaches)
 		insertIntoCacheList(&lpCaches->lpL1Caches, L1DataTLB);
 	}
 
-	if ((info[EBX] & 0x0000ff00) >> 8)
-	{
+	if ((info[EBX] & 0x0000ff00) >> 8) {
 		// TLB for 4 KB pages
 		cacheInfo L1InstTLB;
 		L1InstTLB.cacheOrTLB = TLB;
@@ -170,8 +147,7 @@ int discoverAMDCaches(cacheCollection* lpCaches)
 		insertIntoCacheList(&lpCaches->lpL1Caches, L1InstTLB);
 	}
 
-	if ((info[ECX] & 0x00ff0000) >> 16)
-	{
+	if ((info[ECX] & 0x00ff0000) >> 16) {
 		// Caches
 		cacheInfo L1DataCache;
 		L1DataCache.cacheOrTLB = CACHE;
@@ -189,8 +165,7 @@ int discoverAMDCaches(cacheCollection* lpCaches)
 		insertIntoCacheList(&lpCaches->lpL1Caches, L1DataCache);
 	}
 
-	if ((info[EDX] & 0x00ff0000) >> 16)
-	{
+	if ((info[EDX] & 0x00ff0000) >> 16) {
 		cacheInfo L1InstCache;
 		L1InstCache.cacheOrTLB = CACHE;
 		L1InstCache.type = INSTRUCTION;
@@ -210,8 +185,7 @@ int discoverAMDCaches(cacheCollection* lpCaches)
 	__cpuid(info, 0x80000006, 0);
 
 	// TLBs
-	if (info[EAX] & 0xf0000000)
-	{
+	if (info[EAX] & 0xf0000000) {
 		cacheInfo L2DataTLB;
 		L2DataTLB.cacheOrTLB = TLB;
 		L2DataTLB.type = DATA;
@@ -228,8 +202,7 @@ int discoverAMDCaches(cacheCollection* lpCaches)
 		insertIntoCacheList(&lpCaches->lpL2Caches, L2DataTLB);
 	}
 
-	if (info[EAX] & 0x0000f000)
-	{
+	if (info[EAX] & 0x0000f000) {
 		cacheInfo L2InstTLB;
 		L2InstTLB.cacheOrTLB = TLB;
 		L2InstTLB.type = INSTRUCTION;
@@ -247,8 +220,7 @@ int discoverAMDCaches(cacheCollection* lpCaches)
 	}
 
 	// 4 KB TLBs
-	if ((info[EBX] & 0xf0000000) >> 28)
-	{
+	if ((info[EBX] & 0xf0000000) >> 28) {
 		cacheInfo L2DataTLB;
 		L2DataTLB.cacheOrTLB = TLB;
 		L2DataTLB.type = DATA;
@@ -265,8 +237,7 @@ int discoverAMDCaches(cacheCollection* lpCaches)
 		insertIntoCacheList(&lpCaches->lpL2Caches, L2DataTLB);
 	}
 
-	if (info[EBX] & 0x0000f000)
-	{
+	if (info[EBX] & 0x0000f000) {
 		cacheInfo L2InstTLB;
 		L2InstTLB.cacheOrTLB = TLB;
 		L2InstTLB.type = INSTRUCTION;
@@ -284,8 +255,7 @@ int discoverAMDCaches(cacheCollection* lpCaches)
 	}
 
 	// Cache
-	if (info[ECX] & 0x0000f000)     // Not disabled
-	{
+	if (info[ECX] & 0x0000f000)     // Not disabled {
 		cacheInfo L2Cache;
 		L2Cache.cacheOrTLB = CACHE;
 		L2Cache.type = UNIFIED;
@@ -302,8 +272,7 @@ int discoverAMDCaches(cacheCollection* lpCaches)
 		insertIntoCacheList(&lpCaches->lpL2Caches, L2Cache);
 	}
 
-	if (info[EDX] & 0x0000f000)     // Not disabled
-	{
+	if (info[EDX] & 0x0000f000)     // Not disabled {
 		cacheInfo L3Cache;
 		L3Cache.cacheOrTLB = CACHE;
 		L3Cache.type = UNIFIED;

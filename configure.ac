@@ -47,29 +47,36 @@ case "${host}" in
     *-*-darwin*)
         AC_DEFINE([OS_MACOS], 1, [The host OS is OSX])
         AC_MSG_RESULT([you are a happy Mac user, I suppose.])
+        HOST_OS=darwin
         ;;
     *-*-freebsd*)
         AC_DEFINE([OS_FREEBSD], 1, [The host OS is FreeBSD])
         AC_MSG_RESULT([hum... Are you happy with whis FreeBSD?])
+        HOST_OS=freebsd
         ;;
     *-*-linux*)
         AC_DEFINE([OS_LINUX], 1, [The host OS is Linux])
         AC_MSG_RESULT([OK, one more geek using Linux.])
+        HOST_OS=linux
         ;;
     *-*-netbsd*)
         AC_DEFINE([OS_NETBSD], 1, [The host OS is NetBSD])
         AC_MSG_RESULT([Really? There is at least one NetBSD user in the world!])
+        HOST_OS=netbsd
         ;;
     *-*-solaris2*)
         AC_DEFINE([OS_SOLARIS], 1, [The host OS is Solaris])
         AC_MSG_RESULT([I understand, you are stucked on this Solaris, right?.])
+        HOST_OS=solaris
         ;;
     *-*-mingw* | *-*-cygwin*)
         AC_DEFINE([OS_WINDOWS], 1, [The host OS is Windows])
         AC_MSG_RESULT([I will pray for you Windows user.])
+        HOST_OS=cygwin
         ;;
     *)
         AC_MSG_RESULT([Unsupported operating system: ${host}])
+        HOST_OS=unknown
         ;;
 esac
 
@@ -154,6 +161,12 @@ if test x"$ENABLE_PERFEXPERT" = x"yes"; then
     AC_MSG_RESULT(yes)
     AC_DEFINE(OPTTRAN_ENABLE_PERFEXPERT, [1], [Enable/Disable perfexpert])
 
+# Houston, we have a problem. Currently, hound and sniffer only works on Linux.
+    if test x"$HOST_OS" != x"linux"; then
+        AC_MSG_ERROR([Sorry, but hound (the machine charecterization tool) does
+                  not support your operating system yet.])
+    fi
+
 # Headers required for hound
     AC_CHECK_HEADER([inttypes.h], [AC_DEFINE([HAVE_INTTYPES_H], 1,
         [You have <inttypes.h>.])], [AC_MSG_ERROR([not found: inttypes.h])])
@@ -168,9 +181,18 @@ if test x"$ENABLE_PERFEXPERT" = x"yes"; then
     AC_CHECK_HEADER([sys/types.h], [AC_DEFINE([HAVE_SYS_TYPES_H], 1,
         [You have <sys/types.h>.])], [AC_MSG_ERROR([not found: sys/types.h])])
 
+# Headers and libraries required for sniffer
+    AC_SEARCH_LIBS([PAPI_library_init, PAPI_add_event, PAPI_create_eventset,
+        PAPI_get_event_info, PAPI_event_name_to_code, PAPI_query_event, ],
+        [papi], [AC_MSG_RESULT([Great! You have PAPI... :-)])],
+        [AC_MSG_ERROR([PAPI not found ;-(])])
+    AC_CHECK_HEADER([papi.h], [AC_DEFINE([HAVE_PAPI_H], 1,
+        [You have <papi.h>.])], [AC_MSG_ERROR([not found: papi.h])])
+
     ENABLE_PERFEXPERT=perfexpert
     AC_CONFIG_FILES([tools/perfexpert/Makefile])
     AC_CONFIG_FILES([tools/perfexpert/hound/Makefile])
+    AC_CONFIG_FILES([tools/perfexpert/sniffer/Makefile])
     AC_SUBST([ENABLE_PERFEXPERT])
 else
     AC_MSG_RESULT(no)

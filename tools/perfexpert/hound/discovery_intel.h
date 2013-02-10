@@ -113,26 +113,18 @@ const intelCacheTableEntry intelCacheTable[CACHE_TABLE_SIZE] = {
 	0xEC, {	CACHE,		UNIFIED,		3,			64,			393216,		24 }
 };
 
-int insertIntoCorrectCacheList(cacheCollection* lpCaches, cacheInfo cache)
-{
+int insertIntoCorrectCacheList(cacheCollection* lpCaches, cacheInfo cache) {
 	cacheList** lplpCacheList = NULL;
-	if (cache.level == 1 || cache.level == DONT_CARE)
-	{
+	if (cache.level == 1 || cache.level == DONT_CARE) {
 		// Insert into L1
 		lplpCacheList = &lpCaches->lpL1Caches;
-	}
-	else if (cache.level == 2)
-	{
+	} else if (cache.level == 2) {
 		// Insert into L2
 		lplpCacheList = &lpCaches->lpL2Caches;
-	}
-	else if (cache.level == 3)
-	{
+	} else if (cache.level == 3) {
 		// Insert into L3
 		lplpCacheList = &lpCaches->lpL3Caches;
-	}
-	else
-	{
+	} else {
 		// Ignore;
 		#ifdef	DEBUG_PRINT
 			printf ("DEBUG: Found cache/TLB at unknown level: %d, ignoring...\n", cache.level);
@@ -151,22 +143,19 @@ int insertIntoCorrectCacheList(cacheCollection* lpCaches, cacheInfo cache)
 	return insertIntoCacheList(lplpCacheList, cache);
 }
 
-int mapIntelCache(cacheCollection* lpCaches, short code)
-{
+int mapIntelCache(cacheCollection* lpCaches, short code) {
 	#ifdef	DEBUG_PRINT
 		printf ("DEBUG: Mapping code 0x%X to cache...\n", code);
 	#endif
 
-	if (code == 0xFF)
-	{
+	if (code == 0xFF) {
 		#ifdef	DEBUG_PRINT
 			printf ("DEBUG: Invoking CPUID with leaf 4 for discovering deterministic cache parameters\n");
 		#endif
 
 		int i=0, info[4];
 
-		while(1)
-		{
+		while(1) {
 			__cpuid(info, 0x04, i);
 			i++;
 
@@ -202,8 +191,7 @@ int mapIntelCache(cacheCollection* lpCaches, short code)
 		if (intelCacheTable[i].code == code)
 			break;
 
-	if (i == CACHE_TABLE_SIZE)
-	{
+	if (i == CACHE_TABLE_SIZE) {
 		#ifdef	DEBUG_PRINT
 			printf ("DEBUG: Could not find an entry for code: 0x%X, ignoring...\n", code);
 		#endif
@@ -215,18 +203,14 @@ int mapIntelCache(cacheCollection* lpCaches, short code)
 	return 0;
 }
 
-int discoverIntelCaches(cacheCollection* lpCaches)
-{
+int discoverIntelCaches(cacheCollection* lpCaches) {
 	// Loop over all caches
 	int i, info[4];
 
 	__cpuid(info, 0x2, 0);
-	if ((info[EAX] & 0xff) == 1)
-	{
-		for (i=1; i<4; i++)
-		{
-			if ((info[i] & 0x80000000) == 0)	// If MSB is set, this value is one among reserved
-			{
+	if ((info[EAX] & 0xff) == 1) {
+		for (i=1; i<4; i++) {
+			if ((info[i] & 0x80000000) == 0) {	// If MSB is set, this value is one among reserved
 				if (info[i] & 0xff)		mapIntelCache(lpCaches, info[i] & 0xff);
 				if (info[i] & 0xff00)		mapIntelCache(lpCaches, (info[i] & 0xff00) >> 8);
 				if (info[i] & 0xff0000)		mapIntelCache(lpCaches, (info[i] & 0xff0000) >> 16);

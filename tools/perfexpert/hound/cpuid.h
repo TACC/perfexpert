@@ -29,8 +29,7 @@
 #include <sys/types.h>
 #include <sched.h>
 
-typedef struct
-{
+typedef struct {
 	int reg[4];
 } CPUInfo;
 
@@ -41,8 +40,7 @@ enum { EAX=0, EBX, ECX, EDX };
 enum { PROC_UNKNOWN=-1, PROC_INTEL=0, PROC_AMD };
 
 #ifdef __GNUC__
-void mycpuid( int * p, unsigned int param, unsigned int ecx )
-{
+void mycpuid( int * p, unsigned int param, unsigned int ecx ) {
 #ifndef	__x86_64
    __asm__ __volatile__
    (
@@ -66,8 +64,7 @@ void mycpuid( int * p, unsigned int param, unsigned int ecx )
 }
 #else /* not __GNUC__ */
 #if 0
-void mycpuid( int * p, unsigned int param )
-{
+void mycpuid( int * p, unsigned int param ) {
 #ifndef __x86_64
    __asm__ __volatile__
    (
@@ -102,8 +99,7 @@ void mycpuid( int * p, unsigned int param )
 
 #define __cpuid mycpuid
 
-int isCPUIDSupported()
-{
+int isCPUIDSupported() {
 	#ifdef	_NO_CPUID
 		return 0;
 	#else
@@ -147,8 +143,7 @@ int isCPUIDSupported()
 	#endif
 }
 
-void getProcessorName(char* string)
-{
+void getProcessorName(char* string) {
 	int info[4];
 	__cpuid(info, 0, 0);
 	char processorName [13] = {0};

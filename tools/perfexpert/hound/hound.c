@@ -372,6 +372,7 @@ int main( int argc, char * argv[] )
 		printf ("mem_lat = %.2lf\n", get90thPercentile(cycleCollection, COLLECTION_SIZE));
 	}
 
+    // FIALHO TODO: if we avoid this Hound may work great on OXS.
 	// Lookup operating frequency in /proc/cpuinfo
 	FILE* fp = fopen("/proc/cpuinfo", "r");
 	if (fp == NULL)

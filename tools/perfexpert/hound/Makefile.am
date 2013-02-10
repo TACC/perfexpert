@@ -9,7 +9,6 @@
 #
 
 bin_PROGRAMS = hound
-
 hound_SOURCES = hound.c
 
 if ENABLE_DEBUG
