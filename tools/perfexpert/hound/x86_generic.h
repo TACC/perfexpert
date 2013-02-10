@@ -23,9 +23,9 @@
 #define X86_GENERIC_H
 
 #ifndef __x86_64
-#include "specifics/x86.h"
+#include "specifics_x86.h"
 #else /* __x86_64 */
-#include "specifics/x86-64.h"
+#include "specifics_x86-64.h"
 #endif /* __x86_64 */
 
 #include <time.h>

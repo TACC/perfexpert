@@ -149,9 +149,19 @@ if test x"$ENABLE_PERFEXPERT" = x"yes"; then
     AC_MSG_RESULT(yes)
     AC_DEFINE(OPTTRAN_ENABLE_PERFEXPERT, [1], [Enable/Disable perfexpert])
 
-# inttypes.h is required for hound
-    AC_CHECK_HEADER([inttypes.h], [AC_DEFINE([HAVE_UNISTD_H], 1,
+# Headers required for hound
+    AC_CHECK_HEADER([inttypes.h], [AC_DEFINE([HAVE_INTTYPES_H], 1,
         [You have <inttypes.h>.])], [AC_MSG_ERROR([not found: inttypes.h])])
+    AC_CHECK_HEADER([sched.h], [AC_DEFINE([HAVE_SCHED_H], 1,
+        [You have <sched.h>.])], [AC_MSG_ERROR([not found: sched.h])])
+    AC_CHECK_HEADER([time.h], [AC_DEFINE([HAVE_TIME_H], 1,
+        [You have <time.h>.])], [AC_MSG_ERROR([not found: time.h])])
+    AC_CHECK_HEADER([errno.h], [AC_DEFINE([HAVE_ERRNO_H], 1,
+        [You have <errno.h>.])], [AC_MSG_ERROR([not found: errno.h])])
+    AC_CHECK_HEADER([sys/mman.h], [AC_DEFINE([HAVE_SYS_MMAN_H], 1,
+        [You have <sys/mman.h>.])], [AC_MSG_ERROR([not found: sys/mman.h])])
+    AC_CHECK_HEADER([sys/types.h], [AC_DEFINE([HAVE_SYS_TYPES_H], 1,
+        [You have <sys/types.h>.])], [AC_MSG_ERROR([not found: sys/types.h])])
 
     ENABLE_PERFEXPERT=perfexpert
     AC_CONFIG_FILES([tools/perfexpert/Makefile])
