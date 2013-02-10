@@ -93,8 +93,8 @@ esac
 # Debug
 AC_MSG_CHECKING([whether to enable debug])
 AC_ARG_ENABLE(debug,
-    AS_HELP_STRING([--enable-debug=@<:@yes/no@:>@],
-               [Enable/Disable debugging, @<:@default=no@:>@]]),
+    AS_HELP_STRING([--enable-debug],
+               [Enable/Disable debugging, @<:@default=disabled@:>@]]),
     ENABLE_DEBUG=$enableval, ENABLE_DEBUG=no)
 
 if test x"$ENABLE_DEBUG" = x"yes"; then
@@ -139,8 +139,8 @@ AC_CONFIG_FILES([Makefile
 # Enable/Disable 'perfexpert' (BEGIN)
 AC_MSG_CHECKING([whether to enable 'PerfExpert'])
 AC_ARG_ENABLE(perfexpert,
-    [AS_HELP_STRING([--disable-perfexpert=@<:@yes/no@:>@],
-        [Enable/Disable the application profiler tool @<:@default=yes@:>@])],
+    [AS_HELP_STRING([--disable-perfexpert],
+        [Enable/Disable the application profiler tool @<:@default=enabled@:>@])],
     ENABLE_PERFEXPERT=$enableval, ENABLE_PERFEXPERT=yes)
 
 if test x"$ENABLE_PERFEXPERT" = x"yes"; then
@@ -153,6 +153,7 @@ if test x"$ENABLE_PERFEXPERT" = x"yes"; then
 
     ENABLE_PERFEXPERT=perfexpert
     AC_CONFIG_FILES([tools/perfexpert/Makefile])
+    AC_CONFIG_FILES([tools/perfexpert/hound/Makefile])
     AC_SUBST([ENABLE_PERFEXPERT])
 else
     AC_MSG_RESULT(no)
@@ -166,8 +167,8 @@ fi
 # Enable/Disable 'recommender' (BEGIN)
 AC_MSG_CHECKING([whether to enable the 'Optimization Recommender'])
 AC_ARG_ENABLE(recommender,
-    [AS_HELP_STRING([--disable-recommender=@<:@yes/no@:>@],
-        [Enable/Disable the optimization recommender tool @<:@default=yes@:>@])],
+    [AS_HELP_STRING([--disable-recommender],
+        [Enable/Disable the optimization recommender tool @<:@default=enabled@:>@])],
     ENABLE_RECOMMENDER=$enableval, ENABLE_RECOMMENDER=yes)
 
 if test x"$ENABLE_RECOMMENDER" = x"yes"; then
@@ -204,8 +205,8 @@ fi
 # Enable/Disable 'opttran_pr' (BEGIN)
 AC_MSG_CHECKING([whether to enable the 'OptTran Pattern Recognizer'])
 AC_ARG_ENABLE(opttran_pr,
-    [AS_HELP_STRING([--disable-opttran_pr=@<:@yes/no@:>@],
-        [Enable/Disable the pattern recognizer tool @<:@default=yes@:>@])],
+    [AS_HELP_STRING([--disable-opttran_pr],
+        [Enable/Disable the pattern recognizer tool @<:@default=enabled@:>@])],
     ENABLE_OPTTRAN_PR=$enableval, ENABLE_OPTTRAN_PR=yes)
 
 if test x"$ENABLE_OPTTRAN_PR" = x"yes"; then
@@ -233,8 +234,8 @@ fi
 # Enable/Disable 'opttran_ct' (BEGIN)
 AC_MSG_CHECKING([whether to enable the 'OprTran Code Transformer'])
 AC_ARG_ENABLE(opttran_ct,
-    [AS_HELP_STRING([--disable-opttran_ct=@<:@yes/no@:>@],
-        [Enable/Disable the code transformer tool @<:@default=no@:>@])],
+    [AS_HELP_STRING([--disable-opttran_ct],
+        [Enable/Disable the code transformer tool @<:@default=disabled@:>@])],
     ENABLE_OPTTRAN_CT=$enableval, ENABLE_OPTTRAN_CT=no)
 
 if test x"$ENABLE_OPTTRAN_CT" = x"yes"; then
@@ -256,8 +257,8 @@ fi
 # Enable/Disable 'opttran_cr' (BEGIN)
 AC_MSG_CHECKING([whether to enable the 'OprTran Code Re-Assembler'])
 AC_ARG_ENABLE(opttran_cr,
-    [AS_HELP_STRING([--disable-opttran_cr=@<:@yes/no@:>@],
-        [Enable/Disable the code re-assembler tool @<:@default=no@:>@])],
+    [AS_HELP_STRING([--disable-opttran_cr],
+        [Enable/Disable the code re-assembler tool @<:@default=disabled@:>@])],
     ENABLE_OPTTRAN_CR=$enableval, ENABLE_OPTTRAN_CR=no)
 
 if test x"$ENABLE_OPTTRAN_CR" = x"yes"; then
