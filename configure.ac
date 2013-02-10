@@ -30,6 +30,10 @@ AM_INIT_AUTOMAKE([foreign -Wall -Werror])
 # Ok Automake 1.12, shut up!
 m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 
+# We need some work here to save hound from -O2 on CFLAGS. This overwrites any
+# user-defined CFLAGS :-/
+CFLAGS=-g
+
 # Requires only a standard C compiler
 AC_PROG_CC
 AM_PROG_CC_C_O

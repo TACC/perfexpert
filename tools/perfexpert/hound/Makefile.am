@@ -12,15 +12,10 @@ bin_PROGRAMS = hound
 
 hound_SOURCES = hound.c
 
-AM_LDFLAGS = 
-
 if ENABLE_DEBUG
-    override hound_CFLAGS =
-    override AM_CFLAGS = -O0 -fPIC -DDEBUG_PRINT -g
+    AM_CFLAGS = -fPIC -DDEBUG_PRINT -g
 else
-    override hound_CFLAGS =
-    override AM_CFLAGS = -O0 -fPIC
+    AM_CFLAGS = -fPIC
 endif
-
 
 # EOF
