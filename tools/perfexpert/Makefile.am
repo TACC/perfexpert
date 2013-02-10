@@ -8,6 +8,6 @@
 # $HEADER$
 #
 
-SUBDIRS = hound
+SUBDIRS = hound sniffer
 
 # EOF
