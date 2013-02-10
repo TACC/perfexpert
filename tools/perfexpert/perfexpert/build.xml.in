@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<project basedir="." default="jar" name="ArgP">
+    <property environment="env"/>
+    <property name="version" value="1.0"/>
+    <property name="debuglevel" value="source,lines,vars"/>
+    <property name="target" value="1.5"/>
+    <property name="source" value="1.5"/>
+    
+    <path id="ArgP.classpath">
+        <pathelement location="."/>
+    </path>
+    
+    <target name="clean">
+        <delete file="argp-${version}.jar"/>
+    </target>
+    
+    <target name="cleanall" depends="clean"/>
+    
+    <target name="build">
+        <javac includeantruntime="false" debug="true" debuglevel="${debuglevel}" destdir="." source="${source}" target="${target}">
+            <src path="@@bagulho@@"/>
+            <classpath refid="ArgP.classpath"/>
+            <compilerarg value="-Xlint"/>
+        </javac>
+    </target>
+
+    <target name="jar" depends="clean,build">
+        <jar jarfile="argp-${version}.jar" basedir="."/>
+    </target>
+</project>
