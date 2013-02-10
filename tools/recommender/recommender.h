@@ -8,14 +8,14 @@
  * $HEADER$
  */
 
-#ifndef RECOMMENDER_H
-#define RECOMMENDER_H
+#ifndef RECOMMENDER_H_
+#define RECOMMENDER_H_
 
-#ifndef OPTTRAN_CONSTANTS_H
+#ifndef OPTTRAN_CONSTANTS_H_
 #include "opttran_constants.h"
 #endif
 
-#ifndef OPTTRAN_LIST_H
+#ifndef OPTTRAN_LIST_H_
 #include "opttran_list.h"
 #endif
 

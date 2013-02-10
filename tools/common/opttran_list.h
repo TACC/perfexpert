@@ -43,8 +43,8 @@
  * value returned by the opttran_list_get_size is incorrect.
  */
 
-#ifndef OPTTRAN_LIST_H
-#define OPTTRAN_LIST_H
+#ifndef OPTTRAN_LIST_H_
+#define OPTTRAN_LIST_H_
 
 #ifndef OPTTRAN_CONSTANTS_H
 #include "opttran_constants.h"

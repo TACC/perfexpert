@@ -18,8 +18,8 @@
  * $HEADER$
  */
 
-#ifndef OPTTRAN_OUTPUT_H
-#define OPTTRAN_OUTPUT_H
+#ifndef OPTTRAN_OUTPUT_H_
+#define OPTTRAN_OUTPUT_H_
 
 #ifndef	_STDIO_H_
 #include <stdio.h>

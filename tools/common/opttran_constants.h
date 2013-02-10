@@ -8,8 +8,8 @@
  * $HEADER$
  */
 
-#ifndef OPTTRAN_CONSTANTS_H
-#define OPTTRAN_CONSTANTS_H
+#ifndef OPTTRAN_CONSTANTS_H_
+#define OPTTRAN_CONSTANTS_H_
 
 /**
  * Some contants here are used to return errors from functions. Those codes
