@@ -19,6 +19,7 @@ endif
 
 install-exec-local:
 	./hound > machine.properties
+	$(MKDIR_P) $(sysconfdir)
 	$(INSTALL) -m 644 machine.properties $(sysconfdir)
 
 # EOF

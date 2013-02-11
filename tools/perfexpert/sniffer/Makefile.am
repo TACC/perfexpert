@@ -14,6 +14,7 @@ sniffer_LDADD = /usr/local/lib/libpapi.a
 
 install-exec-local:
 	./sniffer
+	$(MKDIR_P) $(sysconfdir)
 	$(INSTALL) -m 644 lcpi.properties $(sysconfdir)
 
 # EOF
