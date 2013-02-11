@@ -169,12 +169,6 @@ if test x"$ENABLE_PERFEXPERT" = x"yes"; then
         AC_PATH_TOOL(ANT_PROGRAM, ant)
     fi
 
-    # Classes required for ArgP
-
-    # Classes required for PerfExpert
-
-    # Classes required for HPCData
-
     # Currently, hound and sniffer only works on Linux.
     if test x"$HOST_OS" == x"linux"; then
 
@@ -198,7 +192,7 @@ if test x"$ENABLE_PERFEXPERT" = x"yes"; then
         # Headers and libraries required for sniffer
         AC_SEARCH_LIBS([PAPI_library_init, PAPI_add_event, PAPI_create_eventset,
             PAPI_get_event_info, PAPI_event_name_to_code, PAPI_query_event],
-            [papi, libpapi.a], [AC_MSG_RESULT([Great! You have PAPI... :-)])],
+            [papi], [AC_MSG_RESULT([Great! You have PAPI... :-)])],
             [AC_MSG_ERROR([PAPI not found ;-(])])
         AC_CHECK_HEADER([papi.h], [AC_DEFINE([HAVE_PAPI_H], 1,
             [You have <papi.h>.])], [AC_MSG_ERROR([not found: papi.h])])
