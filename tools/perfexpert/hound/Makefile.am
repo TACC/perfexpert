@@ -17,4 +17,8 @@ else
     AM_CFLAGS = -fPIC
 endif
 
+install-exec-local:
+	./hound
+	$(INSTALL) -m 644 machine.properties $(sysconfdir)
+
 # EOF
