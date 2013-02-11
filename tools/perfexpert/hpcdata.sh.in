@@ -1,0 +1,68 @@
+#!@BASH_PROGRAM@
+#
+# Copyright (c) 2012  University of Texas at Austin. All rights reserved.
+#
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+
+PREFIX=@prefix@
+exec_prefix=${PREFIX}
+LIBDIR=@libdir@
+ABS_BUILDDIR=@abs_builddir@
+ABS_TOP_SRCDIR=@abs_top_srcdir@
+
+# Try to find hpcdata.jar
+if [ -f ${LIBDIR}/hpcdata.jar ]; then
+    # Probable location after install
+    CLASSPATH="${LIBDIR}/hpcdata.jar"
+elif [ -f ${ABS_BUILDDIR}/hpcdata.jar ]; then
+    # Probable location before install
+    CLASSPATH="${ABS_BUILDDIR}/hpcdata.jar"
+else
+    echo "Unable to find HPCdata JAR file"
+    exit 1
+fi
+
+# Try to find argp-1.0.jar
+if [ -f ${LIBDIR}/argp-1.0.jar ]; then
+    # Probable location after install
+    CLASSPATH+=":${LIBDIR}/argp-1.0.jar"
+elif [ -f ${ABS_BUILDDIR}/argp-1.0.jar ]; then
+    # Probable location before install
+    CLASSPATH+="${ABS_BUILDDIR}/argp-1.0.jar"
+else
+    echo "Unable to find ArgP 1.0 JAR file"
+    exit 1
+fi
+
+# Try to find log4j-1.2.16.jar
+if [ -f ${LIBDIR}/log4j-1.2.16.jar ]; then
+    # Probable location after install
+    CLASSPATH+=":${LIBDIR}/log4j-1.2.16.jar"
+elif [ -f ${ABS_TOP_SRCDIR}/external/log4j-1.2.16.jar ]; then
+    # Probable location before install
+    CLASSPATH+="${ABS_TOP_SRCDIR}/external/log4j-1.2.16.jar"
+else
+    echo "Unable to find Log4J 1.2.16 JAR file"
+    exit 1
+fi
+
+# Try to find Log4J properties
+if [ -f ${LIBDIR}/log4j.properties ]; then
+    # Probable location after install
+    LOG4J="-Dlog4j.configuration=file:${LIBDIR}/log4j.properties"
+elif [ -f ${ABS_TOP_SRCDIR}/external/log4j-1.2.16.jar ]; then
+    # Probable location before install
+    LOG4J="-Dlog4j.configuration=file:${ABS_TOP_SRCDIR}/external/log4j.properties"
+else
+    echo "Unable to find Log4J properties file"
+    exit 1
+fi
+
+# echo "LOG4J: ${LOG4J}"
+# echo "CLASSPATH: ${CLASSPATH}"
+java ${LOG4J} -cp ${CLASSPATH} edu.utexas.tacc.hpcdata.HPCData ${*};
