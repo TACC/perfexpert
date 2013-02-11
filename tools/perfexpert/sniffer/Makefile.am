@@ -12,4 +12,8 @@ bin_PROGRAMS = sniffer
 sniffer_SOURCES = sniffer.c
 sniffer_LDADD = /usr/local/lib/libpapi.a
 
+install-exec-local:
+	./sniffer
+	$(INSTALL) -m 644 lcpi.properties $(sysconfdir)
+
 # EOF
