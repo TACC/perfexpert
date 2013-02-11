@@ -84,13 +84,13 @@ public class HPCToolkitParser extends AParser {
                 log.debug("Converting input file \"" + filename +
                           "\" to flat-profile XML: \"" + convertedFilename +
                           "\"");
-                if (!new File(HPCDataLocation + "/hpcdata").exists()) {
+                if (!new File(HPCDataLocation + "/hpcdata.sh").exists()) {
                     log.error("Could not locate HPCToolkit conversion program at: " +
-                              HPCDataLocation + "/hpcdata");
+                              HPCDataLocation + "/hpcdata.sh");
                     return null;
                 }
 
-                p = new ProcessBuilder("/bin/sh", HPCDataLocation + "/hpcdata",
+                p = new ProcessBuilder("/bin/sh", HPCDataLocation + "/hpcdata.sh",
                                        "-o=" + convertedFilename,
                                        filename).start();
                 
