@@ -18,4 +18,8 @@ clean-local:
 	rm argp-1.0.jar
 	rm -rf edu
 
+install-exec-local: all
+	$(MKDIR_P) $(libdir)
+	$(INSTALL) -m 644 argp-1.0.jar $(libdir)
+
 # EOF

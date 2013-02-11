@@ -18,4 +18,8 @@ clean-local:
 	rm hpcdata.jar
 	rm -rf edu
 
+install-exec-local: all
+	$(MKDIR_P) $(libdir)
+	$(INSTALL) -m 644 hpcdata.jar $(libdir)
+
 # EOF
