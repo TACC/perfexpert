@@ -14,7 +14,7 @@
  * details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with PerfExpert.  If not, see <http://www.gnu.org/licenses/>.
+ * along with PerfExpert. If not, see <http://www.gnu.org/licenses/>.
  *
  * Author: Ashay Rane
  */
@@ -161,4 +161,4 @@ t_event_entry event_list[EVENT_COUNT] = {
     -1, 0, 0, SAMPLING_CATEGORY_02, "FP_COMP_OPS_EXE:SSE_FP_SCALAR_SINGLE:SSE_SCALAR_DOUBLE"
 };
 
-#endif    /* TYPE_DEFINITIONS_H */
+#endif /* TYPE_DEFINITIONS_H */
