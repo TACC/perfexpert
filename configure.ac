@@ -38,6 +38,9 @@ CFLAGS=-g
 AC_PROG_CC
 AM_PROG_CC_C_O
 AC_PROG_INSTALL
+AC_PROG_MKDIR_P
+AC_PROG_LN_S
+AC_PROG_INSTALL
 
 #------------------------------------------------------------------------------
 # Check for the operation system to include specific defines (if needed!)
@@ -160,13 +163,21 @@ AC_ARG_ENABLE(perfexpert,
 if test x"$ENABLE_PERFEXPERT" = x"yes"; then
     AC_MSG_RESULT(yes)
     AC_DEFINE(OPTTRAN_ENABLE_PERFEXPERT, [1], [Enable/Disable perfexpert])
-    
+
     # First of all, we need Apache Ant
     AC_CHECK_PROG(ANT_PROGRAM, ant, yes)
     if test x"$ANT_PROGRAM" != x"yes" ; then
         AC_MSG_ERROR([Please install Apache Ant.])
     else
         AC_PATH_TOOL(ANT_PROGRAM, ant)
+    fi
+
+    # hpcdata, perfexpert and perfexert_run script requires Bash shell
+    AC_CHECK_PROG(BASH_PROGRAM, bash, yes)
+    if test x"$BASH_PROGRAM" != x"yes" ; then
+        AC_MSG_ERROR([Some of PerfExpert scripts require Bash shell.])
+    else
+        AC_PATH_TOOL(BASH_PROGRAM, bash)
     fi
 
     # Currently, hound and sniffer only works on Linux.
@@ -200,14 +211,18 @@ if test x"$ENABLE_PERFEXPERT" = x"yes"; then
         # Generate hound and sniffer Makefiles
         ENABLE_HOUND=hound
         ENABLE_SNIFFER=sniffer
+        ENABLE_PERFEXPERT_RUN=perfexpert_run.sh
         AC_CONFIG_FILES([tools/perfexpert/hound/Makefile])
         AC_CONFIG_FILES([tools/perfexpert/sniffer/Makefile])
+        AC_CONFIG_FILES([tools/perfexpert/perfexpert_run.sh],
+            [chmod +x tools/perfexpert/perfexpert_run.sh])
         AC_SUBST([ENABLE_HOUND])
         AC_SUBST([ENABLE_SNIFFER])
     else
         # Disable hound and sniffer
         ENABLE_HOUND=
         ENABLE_SNIFFER=
+        ENABLE_PERFEXPERT_RUN=
         AC_SUBST([ENABLE_HOUND])
         AC_SUBST([ENABLE_SNIFFER])
     fi
@@ -215,6 +230,10 @@ if test x"$ENABLE_PERFEXPERT" = x"yes"; then
     # Generate Makefiles for perfexpert
     ENABLE_PERFEXPERT=perfexpert
     AC_CONFIG_FILES([tools/perfexpert/Makefile])
+    AC_CONFIG_FILES([tools/perfexpert/hpcdata.sh],
+        [chmod +x tools/perfexpert/hpcdata.sh])
+    AC_CONFIG_FILES([tools/perfexpert/perfexpert.sh],
+        [chmod +x tools/perfexpert/perfexpert.sh])
     AC_CONFIG_FILES([tools/perfexpert/argp/Makefile])
     AC_CONFIG_FILES([tools/perfexpert/argp/build.xml])
     AC_CONFIG_FILES([tools/perfexpert/hpcdata/Makefile])
