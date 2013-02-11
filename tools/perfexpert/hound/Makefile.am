@@ -18,7 +18,7 @@ else
 endif
 
 install-exec-local:
-	./hound
+	./hound > machine.properties
 	$(INSTALL) -m 644 machine.properties $(sysconfdir)
 
 # EOF
