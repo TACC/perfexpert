@@ -8,8 +8,8 @@
     
     <path id="HPCData.classpath">
         <pathelement location="."/>
-        <pathelement location="../lib/log4j-1.2.16.jar"/>
-        <pathelement location="@@bagulho@@ @install@ ../argp/argp-1.0.jar"/> 
+        <pathelement location="@top_srcdir@/external/log4j-1.2.16.jar"/>
+        <pathelement location="../argp/argp-1.0.jar"/>
     </path>
     
     <target name="clean">
@@ -20,7 +20,7 @@
     
     <target name="build">
         <javac includeantruntime="false" debug="true" debuglevel="${debuglevel}" destdir="." source="${source}" target="${target}">
-            <src path="@@bagulho@@"/>
+            <src path="@srcdir@"/>
             <classpath refid="HPCData.classpath"/>
         </javac>
     </target>

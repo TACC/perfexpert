@@ -11,21 +11,26 @@
         <pathelement location="."/>
     </path>
     
+    <path id="PerfExpert.classpath">
+        <pathelement location="bin"/>
+        <pathelement location="@top_srcdir@/external/log4j-1.2.16.jar"/>
+        <pathelement location="../argp/argp-1.0.jar"/>
+    </path>
+
     <target name="clean">
-        <delete file="argp-${version}.jar"/>
+        <delete file="perfexpert.jar"/>
     </target>
     
     <target name="cleanall" depends="clean"/>
     
     <target name="build">
         <javac includeantruntime="false" debug="true" debuglevel="${debuglevel}" destdir="." source="${source}" target="${target}">
-            <src path="@@bagulho@@"/>
-            <classpath refid="ArgP.classpath"/>
-            <compilerarg value="-Xlint"/>
+            <src path="@srcdir@"/>
+            <classpath refid="PerfExpert.classpath"/>
         </javac>
     </target>
 
     <target name="jar" depends="clean,build">
-        <jar jarfile="argp-${version}.jar" basedir="."/>
+        <jar jarfile="perfexpert.jar" basedir="."/>
     </target>
 </project>

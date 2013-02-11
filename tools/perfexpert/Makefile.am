@@ -8,6 +8,6 @@
 # $HEADER$
 #
 
-SUBDIRS = argp hpcdata perfexpert hound sniffer
+SUBDIRS = argp hpcdata perfexpert $(ENABLE_HOUND) $(ENABLE_SNIFFER)
 
 # EOF

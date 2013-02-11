@@ -327,7 +327,7 @@ public class XMLParser extends DefaultHandler {
         if (n.getType().equals("P")) {
             Procedure p = (Procedure) n;
 
-            if (0 == !first && p.getA()) {
+            if (!first && 0 == p.getA()) {
                 // Output a C and then a PF
                  Printer.putProcFrame(p.getN(), proc_name_map.get(p.getN()), p.getL());
             } else {
@@ -351,7 +351,7 @@ public class XMLParser extends DefaultHandler {
                         printFile=true;
                     }
                     if (printFile) {
-                        if (-1 != !printModule && file) {
+                        if (!printModule && -1 != file) {
                             Printer.endF();
                         }
                         Printer.putF(p.getF(), file_name_map.get(p.getF()));

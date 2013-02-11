@@ -160,48 +160,73 @@ AC_ARG_ENABLE(perfexpert,
 if test x"$ENABLE_PERFEXPERT" = x"yes"; then
     AC_MSG_RESULT(yes)
     AC_DEFINE(OPTTRAN_ENABLE_PERFEXPERT, [1], [Enable/Disable perfexpert])
+    
+    # First of all, we need Apache Ant
+    AC_CHECK_PROG(ANT_PROGRAM, ant, yes)
+    if test x"$ANT_PROGRAM" != x"yes" ; then
+        AC_MSG_ERROR([Please install Apache Ant.])
+    else
+        AC_PATH_TOOL(ANT_PROGRAM, ant)
+    fi
 
-# Houston, we have a problem. Currently, hound and sniffer only works on Linux.
-#    if test x"$HOST_OS" != x"linux"; then
-#        AC_MSG_ERROR([Sorry, but hound (the machine charecterization tool) does
-#                  not support your operating system yet.])
-#    fi
+    # Classes required for ArgP
 
-# Classes required for ArgP
+    # Classes required for PerfExpert
 
-# Classes required for PerfExpert
+    # Classes required for HPCData
 
-# Classes required for HPCData
+    # Currently, hound and sniffer only works on Linux.
+    if test x"$HOST_OS" == x"linux"; then
 
-# Headers required for hound
-#    AC_CHECK_HEADER([inttypes.h], [AC_DEFINE([HAVE_INTTYPES_H], 1,
-#        [You have <inttypes.h>.])], [AC_MSG_ERROR([not found: inttypes.h])])
-#    AC_CHECK_HEADER([sched.h], [AC_DEFINE([HAVE_SCHED_H], 1,
-#        [You have <sched.h>.])], [AC_MSG_ERROR([not found: sched.h])])
-#    AC_CHECK_HEADER([time.h], [AC_DEFINE([HAVE_TIME_H], 1,
-#        [You have <time.h>.])], [AC_MSG_ERROR([not found: time.h])])
-#    AC_CHECK_HEADER([errno.h], [AC_DEFINE([HAVE_ERRNO_H], 1,
-#        [You have <errno.h>.])], [AC_MSG_ERROR([not found: errno.h])])
-#    AC_CHECK_HEADER([sys/mman.h], [AC_DEFINE([HAVE_SYS_MMAN_H], 1,
-#        [You have <sys/mman.h>.])], [AC_MSG_ERROR([not found: sys/mman.h])])
-#    AC_CHECK_HEADER([sys/types.h], [AC_DEFINE([HAVE_SYS_TYPES_H], 1,
-#        [You have <sys/types.h>.])], [AC_MSG_ERROR([not found: sys/types.h])])
+        # Headers required for hound
+        AC_CHECK_HEADER([inttypes.h], [AC_DEFINE([HAVE_INTTYPES_H], 1,
+            [You have <inttypes.h>.])],
+            [AC_MSG_ERROR([not found: inttypes.h])])
+        AC_CHECK_HEADER([sched.h], [AC_DEFINE([HAVE_SCHED_H], 1,
+            [You have <sched.h>.])], [AC_MSG_ERROR([not found: sched.h])])
+        AC_CHECK_HEADER([time.h], [AC_DEFINE([HAVE_TIME_H], 1,
+            [You have <time.h>.])], [AC_MSG_ERROR([not found: time.h])])
+        AC_CHECK_HEADER([errno.h], [AC_DEFINE([HAVE_ERRNO_H], 1,
+            [You have <errno.h>.])], [AC_MSG_ERROR([not found: errno.h])])
+        AC_CHECK_HEADER([sys/mman.h], [AC_DEFINE([HAVE_SYS_MMAN_H], 1,
+            [You have <sys/mman.h>.])],
+            [AC_MSG_ERROR([not found: sys/mman.h])])
+        AC_CHECK_HEADER([sys/types.h], [AC_DEFINE([HAVE_SYS_TYPES_H], 1,
+            [You have <sys/types.h>.])],
+            [AC_MSG_ERROR([not found: sys/types.h])])
 
-# Headers and libraries required for sniffer
-#    AC_SEARCH_LIBS([PAPI_library_init, PAPI_add_event, PAPI_create_eventset,
-#        PAPI_get_event_info, PAPI_event_name_to_code, PAPI_query_event],
-#        [papi, libpapi.a], [AC_MSG_RESULT([Great! You have PAPI... :-)])],
-#        [AC_MSG_ERROR([PAPI not found ;-(])])
-#    AC_CHECK_HEADER([papi.h], [AC_DEFINE([HAVE_PAPI_H], 1,
-#        [You have <papi.h>.])], [AC_MSG_ERROR([not found: papi.h])])
+        # Headers and libraries required for sniffer
+        AC_SEARCH_LIBS([PAPI_library_init, PAPI_add_event, PAPI_create_eventset,
+            PAPI_get_event_info, PAPI_event_name_to_code, PAPI_query_event],
+            [papi, libpapi.a], [AC_MSG_RESULT([Great! You have PAPI... :-)])],
+            [AC_MSG_ERROR([PAPI not found ;-(])])
+        AC_CHECK_HEADER([papi.h], [AC_DEFINE([HAVE_PAPI_H], 1,
+            [You have <papi.h>.])], [AC_MSG_ERROR([not found: papi.h])])
 
+        # Generate hound and sniffer Makefiles
+        ENABLE_HOUND=hound
+        ENABLE_SNIFFER=sniffer
+        AC_CONFIG_FILES([tools/perfexpert/hound/Makefile])
+        AC_CONFIG_FILES([tools/perfexpert/sniffer/Makefile])
+        AC_SUBST([ENABLE_HOUND])
+        AC_SUBST([ENABLE_SNIFFER])
+    else
+        # Disable hound and sniffer
+        ENABLE_HOUND=
+        ENABLE_SNIFFER=
+        AC_SUBST([ENABLE_HOUND])
+        AC_SUBST([ENABLE_SNIFFER])
+    fi
+
+    # Generate Makefiles for perfexpert
     ENABLE_PERFEXPERT=perfexpert
     AC_CONFIG_FILES([tools/perfexpert/Makefile])
     AC_CONFIG_FILES([tools/perfexpert/argp/Makefile])
-#    AC_CONFIG_FILES([tools/perfexpert/hpcdata/Makefile])
-#    AC_CONFIG_FILES([tools/perfexpert/perfexpert/Makefile])
-#    AC_CONFIG_FILES([tools/perfexpert/hound/Makefile])
-#    AC_CONFIG_FILES([tools/perfexpert/sniffer/Makefile])
+    AC_CONFIG_FILES([tools/perfexpert/argp/build.xml])
+    AC_CONFIG_FILES([tools/perfexpert/hpcdata/Makefile])
+    AC_CONFIG_FILES([tools/perfexpert/hpcdata/build.xml])
+    AC_CONFIG_FILES([tools/perfexpert/perfexpert/Makefile])
+    AC_CONFIG_FILES([tools/perfexpert/perfexpert/build.xml])
     AC_SUBST([ENABLE_PERFEXPERT])
 else
     AC_MSG_RESULT(no)
@@ -223,7 +248,7 @@ if test x"$ENABLE_RECOMMENDER" = x"yes"; then
     AC_MSG_RESULT(yes)
     AC_DEFINE(OPTTRAN_ENABLE_RECOMMENDER, [1], [Enable/Disable recommender])
 
-# Checks for SQLite headers, lib and program (only if 'recommender' is enabled)
+    # Checks for SQLite headers, lib and program (only if 'recommender' is enabled)
     AC_SEARCH_LIBS([sqlite3_open, sqlite3_close, sqlite3_exec, sqlite3_free,
         sqlite3_errmsg], [sqlite3],
         [AC_MSG_RESULT([You have SQLite3 (at least the library), great!])],
@@ -232,10 +257,10 @@ if test x"$ENABLE_RECOMMENDER" = x"yes"; then
         [Awesome! You also have sqlite3.h!])],
         [AC_MSG_ERROR([not found: sqlite3.h])])
 
-# Check for the SQLite utility
+    # Check for the SQLite utility
     AC_CHECK_PROG(SQLITE3_PROGRAM, sqlite3, yes)
     if test x"$SQLITE3_PROGRAM" != x"yes" ; then
-        AC_MSG_ERROR([Please install SQLite3 utility before.])
+        AC_MSG_ERROR([Please install SQLite3 utility.])
     fi
 
     ENABLE_RECOMMENDER=recommender
@@ -332,9 +357,20 @@ fi
 AC_OUTPUT
 
 AC_MSG_NOTICE([])
-AC_MSG_NOTICE([================================================])
-AC_MSG_NOTICE([  Great news! Now you just have to run "make".])
-AC_MSG_NOTICE([================================================])
+
+if test x"$HOST_OS" != x"linux"; then
+    AC_MSG_NOTICE([=======================================================])
+    AC_MSG_NOTICE([                    !!! WARNING !!!                    ])
+    AC_MSG_NOTICE([                                                       ])
+    AC_MSG_NOTICE([ Since you are not running Linux, Perfexpert is unable ])
+    AC_MSG_NOTICE([ to characterize you machine (hound tool) neither to   ])
+    AC_MSG_NOTICE([ generate LCPI configuration file (sniffer tool). Thus,])
+    AC_MSG_NOTICE([ 'perfexpert_run' script will not be available to you. ])
+fi
+
+AC_MSG_NOTICE([=======================================================])
+AC_MSG_NOTICE([      Great news! Now you just have to run "make".     ])
+AC_MSG_NOTICE([=======================================================])
 AC_MSG_NOTICE([])
 
 # EOF

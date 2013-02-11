@@ -19,7 +19,7 @@
     
     <target name="build">
         <javac includeantruntime="false" debug="true" debuglevel="${debuglevel}" destdir="." source="${source}" target="${target}">
-            <src path="@@bagulho@@"/>
+            <src path="@srcdir@"/>
             <classpath refid="ArgP.classpath"/>
             <compilerarg value="-Xlint"/>
         </javac>
