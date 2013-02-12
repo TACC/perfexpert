@@ -208,7 +208,27 @@ if test x"$ENABLE_PERFEXPERT" = x"yes"; then
         AC_CHECK_HEADER([papi.h], [AC_DEFINE([HAVE_PAPI_H], 1,
             [You have <papi.h>.])], [AC_MSG_ERROR([not found: papi.h])])
 
-        # Generate hound and sniffer Makefiles
+        # Some tools from HPCToolKit are required to perfexpert_run_exp.ss
+        AC_CHECK_PROG(HPCSTRUCT_PROGRAM, hpcstruc, yes)
+        if test x"$HPCSTRUCT_PROGRAM" != x"yes" ; then
+            AC_MSG_ERROR([It seems like you don't have HPCToolkit installed.])
+        else
+            AC_PATH_TOOL(HPCSTRUCT_PROGRAM, hpcstruc)
+        fi
+        AC_CHECK_PROG(HPCRUN_PROGRAM, hpcrun, yes)
+        if test x"$HPCRUN_PROGRAM" != x"yes" ; then
+            AC_MSG_ERROR([It seems like you don't have HPCToolkit installed.])
+        else
+            AC_PATH_TOOL(HPCRUN_PROGRAM, hpcrun)
+        fi
+        AC_CHECK_PROG(HPCPROF_PROGRAM, hpcprof, yes)
+        if test x"$HPCPROF_PROGRAM" != x"yes" ; then
+            AC_MSG_ERROR([It seems like you don't have HPCToolkit installed.])
+        else
+            AC_PATH_TOOL(HPCPROF_PROGRAM, hpcprof)
+        fi
+
+        # Generate hound and sniffer Makefiles and perfexpert_run_exp.sh
         ENABLE_HOUND=hound
         ENABLE_SNIFFER=sniffer
         AC_CONFIG_FILES([tools/perfexpert/hound/Makefile])
