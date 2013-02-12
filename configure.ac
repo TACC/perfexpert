@@ -12,7 +12,7 @@
 AC_PREREQ(2.63)
 
 # Define the package name, version, author, etc.
-AC_INIT([OptTran], [0.1], [Leonardo Fialho: fialho@utexas.edu],
+AC_INIT([opttran], [0.1], [Leonardo Fialho: fialho@utexas.edu],
     [opttran.tar.gz], [http://www.tacc.com.br/opttran/])
 AC_COPYRIGHT([University of Texas at Austin])
 AC_REVISION([$Revision: 0.1 $])
