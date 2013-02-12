@@ -45,7 +45,7 @@ else
     output_filename="experiment-${JOB_NAME}.o${JOB_ID}.xml"
 fi
 
-while getopts ":s:o:nh" option 2>/dev/null; do
+while getopts ":s:o:nhg" option 2>/dev/null; do
     case $option in
         s)
         structure="${OPTARG[@]}"
