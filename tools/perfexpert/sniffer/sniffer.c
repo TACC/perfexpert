@@ -464,10 +464,10 @@ int main(int argc, char* argv []) {
     /* instruction_accesses */
     if (IS_EVENT_AVAILABLE(L1_ICA)) {
         USE_EVENT(L1_ICA);
-        sprintf(l1i_hits, "%s", event_list[L1_ICA].PAPI_event_name);
+        sprintf(l1i_hits, event_list[L1_ICA].PAPI_event_name);
     } else if (IS_EVENT_AVAILABLE(ICACHE)) {
         USE_EVENT(ICACHE);
-        sprintf(l1i_hits, "%s", event_list[ICACHE].PAPI_event_name);
+        sprintf(l1i_hits, event_list[ICACHE].PAPI_event_name);
     } else {
         counter_err("instruction_accesses.L1i_hits");
     }
