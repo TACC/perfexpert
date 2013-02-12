@@ -705,13 +705,9 @@ int main(int argc, char* argv []) {
         } else {
             exp_count++;
         }
-        if ((0 > addCount) && (0 < remaining)) {
-            fprintf(fp, "--event PAPI_TOT_INS:%d\\\"\\n",
+        if ((0 < addCount) && (0 < remaining)) {
+            fprintf(fp, "--event PAPI_TOT_INS:%d\"\n",
                     event_list[TOT_INS].sampling_freq);
-        } else {
-            if (0 < remaining) {
-                fprintf(fp, "\"\n");
-            }
         }
     } while (0 < remaining);
 
