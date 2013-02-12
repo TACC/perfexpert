@@ -11,8 +11,8 @@ showHelp() {
     echo "  -n --no-debug        Do not switch to debug mode if program fails to execute"
     echo "                       with PerfExpert"
     echo "  -g --left-garbage    Do not remove the temporary directory"
-    echo "  -t --tempdir DIR     Use DIR as temporary directory. All the content in this"
-    echo "                       will be erased before using it"
+    echo "  -t --tempdir DIR     Use DIR as temporary directory. The content in this"
+    echo "                       directory will be erased before using it (!! WARNING !!)"
     echo "  -h --help            Show this message"
 }
 
@@ -135,16 +135,31 @@ fi
 # Put everything into a temporary directory
 if [ "${tmpdir}" == "false" ]; then
     tempdir=`mktemp -d .perfexpert-temp-XXXXXXX`
+else
+    mkdir -p "${tempdir}"
 fi
 
 # If for some reason tempdir was not set, set it to a default
 if [ "x${tempdir}" == "x" ]; then
         tempdir=".perfexpert-temp"
-        mkdir "${tempdir}"
+        mkdir -p "${tempdir}"
 fi
 
 # Just to be sure, we remove any files which might previously exist
-rm -rf ${tempdir}/*
+if [ "$tempdir" == "." ]; then
+    echo "[perfexpert] Sorry, we can't use the current directory to store temporary files."
+fi
+
+if [ "$tempdir" == "./" ]; then
+    echo "[perfexpert] Sorry, we can't use the current directory to store temporary files."
+fi
+
+# I don't like the idea of erasing with 'rm -rf *', let's try do something different
+#rm -rf ${tempdir}/*
+rm -rf ${tempdir}/hpcstruct
+rm -rf ${tempdir}/measurements
+rm -rf ${tempdir}/database
+rm -rf ${tempdir}/hpcprof.message
 
 # HPCTOOLKIT: STRUCT FILE (HPCSTRUCT)
 #
@@ -200,7 +215,7 @@ for index in $(seq 0 $((${#experiment[@]}-1))); do
         if [ "${left_garbage}" == "false" ]; then
             rm -rf ${tempdir}
         else
-            echo "[perfexpert] Temporary files are available on ${tempdir} directory"
+            echo "[perfexpert] Temporary files are available on '${tempdir}' directory"
         fi
         exit 1
     fi
@@ -217,18 +232,22 @@ if [ "x${returnCode}" != "x0" ]; then
     cat ${tempdir}/hpcprof.message
 
     # Clean up
-    rm -rf ${tempdir}
+    if [ "${left_garbage}" == "false" ]; then
+        rm -rf ${tempdir}
+    else
+        echo "[perfexpert] Temporary files are available on '${tempdir}' directory"
+    fi
 else
     echo " done!"
 
     # Get the final experiment.xml here
-    mv ${tempdir}/database/experiment.xml ./${output_filename}
+    cp ${tempdir}/database/experiment.xml ./${output_filename}
 
     # Clean up
     if [ "${left_garbage}" == "false" ]; then
         rm -rf ${tempdir}
     else
-        echo "[perfexpert] Temporary files are available on ${tempdir} directory"
+        echo "[perfexpert] Temporary files are available on '${tempdir}' directory"
     fi
 
     echo "[perfexpert] Run the following command to analyze the measurement data:"
