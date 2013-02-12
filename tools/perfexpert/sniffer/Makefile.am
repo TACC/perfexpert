@@ -22,4 +22,7 @@ install-exec-local:
 	cat perfexpert_run_exp.sh_template >> perfexpert_run_exp.sh
 	$(INSTALL) -m 755 perfexpert_run_exp.sh $(bindir)
 
+install-exec-hook:
+	cd $(bindir); rm perfexpert_run_exp; $(LN_S) perfexpert_run_exp.sh perfexpert_run_exp
+
 # EOF
