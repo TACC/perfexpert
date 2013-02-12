@@ -212,8 +212,8 @@ if test x"$ENABLE_PERFEXPERT" = x"yes"; then
         ENABLE_SNIFFER=sniffer
         AC_CONFIG_FILES([tools/perfexpert/hound/Makefile])
         AC_CONFIG_FILES([tools/perfexpert/sniffer/Makefile])
-        AC_CONFIG_FILES([tools/perfexpert/sniffer/perfexpert_run_exp.sh_temp],
-            [chmod +x tools/perfexpert/sniffer/perfexpert_run_exp.sh_temp])
+        AC_CONFIG_FILES([tools/perfexpert/sniffer/perfexpert_run_exp.sh_template],
+            [chmod +x tools/perfexpert/sniffer/perfexpert_run_exp.sh_template])
         AC_SUBST([ENABLE_HOUND])
         AC_SUBST([ENABLE_SNIFFER])
     else
