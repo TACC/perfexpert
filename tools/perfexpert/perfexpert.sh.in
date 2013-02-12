@@ -66,5 +66,5 @@ fi
 
 # echo "LOG4J: ${LOG4J}"
 # echo "CLASSPATH: ${CLASSPATH}"
-export PERFEXPERT_HPCDATA_HOME = "${BINDIR}"
+export PERFEXPERT_HPCDATA_HOME="${LIBDIR}"
 java ${LOG4J} -cp ${CLASSPATH} edu.utexas.tacc.perfexpert.PerfExpert ${*}

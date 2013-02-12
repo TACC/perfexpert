@@ -57,7 +57,7 @@ public class PerfExpert
 
 		String PERFEXPERT_HOME="";
 		ClassLoader loader = PerfExpert.class.getClassLoader();
-		String regex = "jar:file:(.*)/bin/perfexpert.jar!/edu/utexas/tacc/perfexpert/PerfExpert.class";
+		String regex = "jar:file:(.*)/perfexpert.jar!/edu/utexas/tacc/perfexpert/PerfExpert.class";
 		String jarURL = loader.getResource("edu/utexas/tacc/perfexpert/PerfExpert.class").toString();
 
 		Pattern p = Pattern.compile(regex);
