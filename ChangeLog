@@ -5,4 +5,8 @@ $COPYRIGHT$
 
 2013 02 02 - First version added to the git control version system
 
+Known Bugs:
+  - if the recommendation database exists, the installation script generates an
+    error while trying to build the database
+
 EOF
