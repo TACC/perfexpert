@@ -1,3 +1,4 @@
+
 showHelp() {
     echo "Usage: `basename ${0}` [OPTION...] program-name [arguments]"
     echo "Program to gather measurements for use with PerfExpert"
