@@ -1,6 +1,9 @@
 
-showHelp() {
+
+# BEGIN OF PARSING/CHECKING ARGUMENTS
+#
 #         12345678901234567890123456789012345678901234567890123456789012345678901234567890
+showHelp() {
     echo "Usage: `basename ${0}` [-n] [-s FILE] [-o FILE] program-name [program arguments]"
     echo "Program to gather measurements for use with PerfExpert"
     echo
@@ -33,9 +36,10 @@ structure=""
 structureSet=false
 
 # Generate output filename
-output_filename="experiment-${JOB_NAME}.o${JOB_ID}.xml"
 if [ "x${JOB_NAME}" == "x" ]; then
     output_filename="experiment.xml"
+else
+    output_filename="experiment-${JOB_NAME}.o${JOB_ID}.xml"
 fi
 
 while getopts ":s:o:nh" option 2>/dev/null; do
@@ -110,8 +114,10 @@ if [ ! -f ${program_name} ]; then
     echo "Error: could not run file: ${program_name}"
     exit 1
 fi
+#
+# END OF PARSING/CHECKING ARGUMENTS
 
-# Put everything into a temporary directory instead of clobbering the working directory
+# Put everything into a temporary directory
 tempDir=`mktemp -d .perfexpert-temp-XXXXXXX`
 
 # If for some reason tempDir was not set, set it to a default
@@ -123,6 +129,8 @@ fi
 # Just to be sure, we remove any files which might previously exist
 rm -rf ${tempDir}/*
 
+# HPCTOOLKIT: STRUCT FILE (HPCSTRUCT)
+#
 # Check if we received the HPCStruct file as a parameter
 if [ "x${hpcstruct_file}" != "x" ]; then
     # If yes, use it
@@ -137,6 +145,8 @@ fi
 # If anything goes bad, here is where we dump the information
 debug_file="perfexpert_debug.out"
 
+# HPCTOOLKIT: MEASURING PHASE (HPCRUN)
+#
 # Run experiments with different configurations
 for index in $(seq 0 $((${#experiment[@]}-1))); do
     echo "[perfexpert] Program execution #$((${index}+1)) of ${#experiment[@]}"
@@ -174,7 +184,8 @@ for index in $(seq 0 $((${#experiment[@]}-1))); do
     fi
 done
 
-echo
+# HPCTOOLKIT: SUMMARIZING RESULTS (HPCPROF)
+#
 echo -n "[perfexpert] Finished all measurements, summarizing the results..."
 @HPCPROF_PROGRAM@ --force-metric --metric=thread --struct ${tempDir}/hpcstruct --output ${tempDir}/database ${tempDir}/measurements &> ${tempDir}/hpcprof.message
 returnCode=${?}

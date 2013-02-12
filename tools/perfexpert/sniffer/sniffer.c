@@ -682,7 +682,7 @@ int main(int argc, char* argv []) {
                     ADD_EVENT(j);
                     
                     if (0 == remaining) { // New line
-                        fprintf(fp, "experiment[%d]=\\\"", exp_count);
+                        fprintf(fp, "\nexperiment[%d]=\"", exp_count);
                     }
                     fprintf(fp, "--event %s:%d ", event_list[j].PAPI_event_name,
                             event_list[j].sampling_freq);
