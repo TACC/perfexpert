@@ -40,7 +40,6 @@ debug=true
 structure=""
 structureSet=false
 left_garbage=false
-tempdir=false
 
 # Generate output filename
 if [ "x${JOB_NAME}" == "x" ]; then
@@ -93,7 +92,7 @@ if [ ${#} -lt 1 ]; then
     exit 1
 fi
 
-if [ "${structureSet}" == "true" ]; then
+if [ "x${structureSet}" == "xtrue" ]; then
     hpcstruct_file=${structure}
     if [ ! -f ${hpcstruct_file} ]; then
         echo "Error: could not find hpcstruct file: ${hpcstruct_file}"
@@ -133,7 +132,7 @@ fi
 # END OF PARSING/CHECKING ARGUMENTS
 
 # Put everything into a temporary directory
-if [ "${tmpdir}" == "false" ]; then
+if [ "x${tempdir}" == "x" ]; then
     tempdir=`mktemp -d .perfexpert-temp-XXXXXXX`
 else
     mkdir -p "${tempdir}"
@@ -146,11 +145,11 @@ if [ "x${tempdir}" == "x" ]; then
 fi
 
 # Just to be sure, we remove any files which might previously exist
-if [ "$tempdir" == "." ]; then
+if [ "x${tempdir}" == "x." ]; then
     echo "[perfexpert] Sorry, we can't use the current directory to store temporary files."
 fi
 
-if [ "$tempdir" == "./" ]; then
+if [ "x${tempdir}" == "x./" ]; then
     echo "[perfexpert] Sorry, we can't use the current directory to store temporary files."
 fi
 
@@ -212,7 +211,7 @@ for index in $(seq 0 $((${#experiment[@]}-1))); do
 
         # Clean up
         rm -rf core
-        if [ "${left_garbage}" == "false" ]; then
+        if [ "x${left_garbage}" == "xfalse" ]; then
             rm -rf ${tempdir}
         else
             echo "[perfexpert] Temporary files are available on '${tempdir}' directory"
@@ -232,7 +231,7 @@ if [ "x${returnCode}" != "x0" ]; then
     cat ${tempdir}/hpcprof.message
 
     # Clean up
-    if [ "${left_garbage}" == "false" ]; then
+    if [ "x${left_garbage}" == "xfalse" ]; then
         rm -rf ${tempdir}
     else
         echo "[perfexpert] Temporary files are available on '${tempdir}' directory"
@@ -244,7 +243,7 @@ else
     cp ${tempdir}/database/experiment.xml ./${output_filename}
 
     # Clean up
-    if [ "${left_garbage}" == "false" ]; then
+    if [ "x${left_garbage}" == "xfalse" ]; then
         rm -rf ${tempdir}
     else
         echo "[perfexpert] Temporary files are available on '${tempdir}' directory"
