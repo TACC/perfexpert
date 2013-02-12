@@ -33,7 +33,7 @@ if [ -f ${LIBDIR}/argp-1.0.jar ]; then
     CLASSPATH+=":${LIBDIR}/argp-1.0.jar"
 elif [ -f ${ABS_BUILDDIR}/argp-1.0.jar ]; then
     # Probable location before install
-    CLASSPATH+="${ABS_BUILDDIR}/argp-1.0.jar"
+    CLASSPATH+=":${ABS_BUILDDIR}/argp-1.0.jar"
 else
     echo "Unable to find ArgP 1.0 JAR file"
     exit 1
@@ -45,7 +45,7 @@ if [ -f ${LIBDIR}/log4j-1.2.16.jar ]; then
     CLASSPATH+=":${LIBDIR}/log4j-1.2.16.jar"
 elif [ -f ${ABS_TOP_SRCDIR}/external/log4j-1.2.16.jar ]; then
     # Probable location before install
-    CLASSPATH+="${ABS_TOP_SRCDIR}/external/log4j-1.2.16.jar"
+    CLASSPATH+=":${ABS_TOP_SRCDIR}/external/log4j-1.2.16.jar"
 else
     echo "Unable to find Log4J 1.2.16 JAR file"
     exit 1
