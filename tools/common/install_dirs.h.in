@@ -12,14 +12,13 @@
 #define INSTALL_DIRS_H_
 
 #define OPTTRAN_PREFIX      "@prefix@"
-#define OPTTRAN_EXEC_PREFIX "@exec_prefix@"
 /** Executables that users can run */
-#define OPTTRAN_BINDIR      "@bindir@"
+#define OPTTRAN_BINDIR      "@prefix@/bin"
 /** JAR files */
-#define OPTTRAN_LIBDIR      "@libdir@"
-/** Configuation files */
-#define OPTTRAN_ETCDIR      "@sysconfig@"
+#define OPTTRAN_LIBDIR      "@prefix@/lib"
+/** Configuration files */
+#define OPTTRAN_ETCDIR      "@prefix@/etc"
 /** Recommendation database */
-#define OPTTRAN_VARDIR      "@localstatedir@"
+#define OPTTRAN_VARDIR      "@prefix@/var"
 
 #endif /* INSTALL_DIRS_H */

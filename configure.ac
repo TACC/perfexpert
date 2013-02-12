@@ -20,10 +20,10 @@ AC_REVISION([$Revision: 0.1 $])
 # Used by autotools
 AC_CONFIG_AUX_DIR(config)
 
-# Generate a global HEADER files
+# Generate global config.h and install_dirs.h files
 AC_CONFIG_SRCDIR([tools/common/config.h.in])
 AC_CONFIG_HEADERS([tools/common/config.h])
-AC_CONFIG_HEADERS([tools/common/install_dirs.h])
+AC_CONFIG_FILES([tools/common/install_dirs.h])
 
 # Initialize Automake
 AM_INIT_AUTOMAKE([foreign -Wall -Werror])
@@ -363,27 +363,31 @@ fi
 # Enable/Disable 'opttran_cr' (END)
 
 #------------------------------------------------------------------------------
-# Add path to install_dirs.h
-# AC_CONFIG_FILES([config/install_dirs.h])
-
 # Generate output files
 AC_OUTPUT
 
 AC_MSG_NOTICE([])
 
 if test x"$HOST_OS" != x"linux"; then
-    AC_MSG_NOTICE([=======================================================])
-    AC_MSG_NOTICE([                    !!! WARNING !!!                    ])
-    AC_MSG_NOTICE([                                                       ])
-    AC_MSG_NOTICE([ Since you are not running Linux, Perfexpert is unable ])
-    AC_MSG_NOTICE([ to characterize you machine (hound tool) neither to   ])
-    AC_MSG_NOTICE([ generate LCPI configuration file (sniffer tool). Thus,])
-    AC_MSG_NOTICE([ 'perfexpert_run' script will not be available to you. ])
+    AC_MSG_NOTICE([=========================================================])
+    AC_MSG_NOTICE([                     !!! WARNING !!!                     ])
+    AC_MSG_NOTICE([                                                         ])
+    AC_MSG_NOTICE([  Since you are not running Linux, Perfexpert is unable  ])
+    AC_MSG_NOTICE([  to characterize you machine (using hound tool) neither ])
+    AC_MSG_NOTICE([  to generate LCPI configuration file (sniffer tool).    ])
+    AC_MSG_NOTICE([  Thus, 'perfexpert_run' script will not be available    ])
+    AC_MSG_NOTICE([  to you. However, if you want to run PerfExpert on this ])
+    AC_MSG_NOTICE([  installation just to analyze an experiment file you're ])
+    AC_MSG_NOTICE([  planning to run on another host you just have to copy  ])
+    AC_MSG_NOTICE([  the lcpi.properties and machine.properties files from  ])
+    AC_MSG_NOTICE([  the host's \$prefix/etc where you are planning to run  ])
+    AC_MSG_NOTICE([  the program you want to analyze/optimize to the        ])
+    AC_MSG_NOTICE([  $prefix/etc directory on this machine.                 ])
 fi
 
-AC_MSG_NOTICE([=======================================================])
-AC_MSG_NOTICE([      Great news! Now you just have to run "make".     ])
-AC_MSG_NOTICE([=======================================================])
+AC_MSG_NOTICE([=========================================================])
+AC_MSG_NOTICE([   Great news! Now you just have to run "make install"   ])
+AC_MSG_NOTICE([=========================================================])
 AC_MSG_NOTICE([])
 
 # EOF

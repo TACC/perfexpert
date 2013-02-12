@@ -6,7 +6,11 @@ $COPYRIGHT$
 2013 02 02 - First version added to the git control version system
 
 Known Bugs:
-  - if the recommendation database exists, the installation script generates an
-    error while trying to build the database
+ - if the recommendation database exists, the installation script generates an
+   error while trying to build the database
+ - the lcpi.properties may be slight different from one machine to other,
+   therefore, PerfExpert may output some warnings when using the
+   perfexper-experiment.xml example file from contrib (or $prefix/share/opttran)
+   directory
 
 EOF
