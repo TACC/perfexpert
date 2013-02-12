@@ -690,8 +690,8 @@ int main(int argc, char* argv []) {
                 }
                 remaining++;
             }
-            fprintf(fp, "\"\n");
         }
+        fprintf(fp, "\"\n");
         
         if (0 == addCount && 0 < remaining) {
             // Some events remain but could not be added to the event set
