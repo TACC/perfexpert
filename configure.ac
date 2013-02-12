@@ -209,11 +209,11 @@ if test x"$ENABLE_PERFEXPERT" = x"yes"; then
             [You have <papi.h>.])], [AC_MSG_ERROR([not found: papi.h])])
 
         # Some tools from HPCToolKit are required to perfexpert_run_exp.ss
-        AC_CHECK_PROG(HPCSTRUCT_PROGRAM, hpcstruc, yes)
+        AC_CHECK_PROG(HPCSTRUCT_PROGRAM, hpcstruct, yes)
         if test x"$HPCSTRUCT_PROGRAM" != x"yes" ; then
             AC_MSG_ERROR([It seems like you don't have HPCToolkit installed.])
         else
-            AC_PATH_TOOL(HPCSTRUCT_PROGRAM, hpcstruc)
+            AC_PATH_TOOL(HPCSTRUCT_PROGRAM, hpcstruct)
         fi
         AC_CHECK_PROG(HPCRUN_PROGRAM, hpcrun, yes)
         if test x"$HPCRUN_PROGRAM" != x"yes" ; then
