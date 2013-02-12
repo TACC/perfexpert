@@ -21,7 +21,7 @@ install-exec-local: install-dist_binSCRIPTS
 	$(INSTALL) -m 644 $(top_srcdir)/external/log4j.properties $(libdir)
 
 install-exec-hook:
-	cd $(bindir); $(LN_S) hpcdata.sh hpcdata
-	cd $(bindir); $(LN_S) perfexpert.sh perfexpert
+	cd $(bindir); rm hpcdata; $(LN_S) hpcdata.sh hpcdata
+	cd $(bindir); rm perfexpert; $(LN_S) perfexpert.sh perfexpert
 
 # EOF
