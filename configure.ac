@@ -37,7 +37,6 @@ CFLAGS=-g
 # Requires only a standard C compiler
 AC_PROG_CC
 AM_PROG_CC_C_O
-AC_PROG_INSTALL
 AC_PROG_MKDIR_P
 AC_PROG_LN_S
 AC_PROG_INSTALL
@@ -211,18 +210,16 @@ if test x"$ENABLE_PERFEXPERT" = x"yes"; then
         # Generate hound and sniffer Makefiles
         ENABLE_HOUND=hound
         ENABLE_SNIFFER=sniffer
-        ENABLE_PERFEXPERT_RUN_EXP=perfexpert_run_exp.sh
         AC_CONFIG_FILES([tools/perfexpert/hound/Makefile])
         AC_CONFIG_FILES([tools/perfexpert/sniffer/Makefile])
-        AC_CONFIG_FILES([tools/perfexpert/perfexpert_run_exp.sh],
-            [chmod +x tools/perfexpert/perfexpert_run_exp.sh])
+        AC_CONFIG_FILES([tools/perfexpert/sniffer/perfexpert_run_exp.sh_temp],
+            [chmod +x tools/perfexpert/sniffer/perfexpert_run_exp.sh_temp])
         AC_SUBST([ENABLE_HOUND])
         AC_SUBST([ENABLE_SNIFFER])
     else
         # Disable hound and sniffer
         ENABLE_HOUND=
         ENABLE_SNIFFER=
-        ENABLE_PERFEXPERT_RUN=
         AC_SUBST([ENABLE_HOUND])
         AC_SUBST([ENABLE_SNIFFER])
     fi
