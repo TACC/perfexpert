@@ -1,0 +1,25 @@
+/*
+ * Copyright (c) 2013  University of Texas at Austin. All rights reserved.
+ *
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+#ifndef INSTALL_DIRS_H_
+#define INSTALL_DIRS_H_
+
+#define OPTTRAN_PREFIX      "@prefix@"
+#define OPTTRAN_EXEC_PREFIX "@exec_prefix@"
+/** Executables that users can run */
+#define OPTTRAN_BINDIR      "@bindir@"
+/** JAR files */
+#define OPTTRAN_LIBDIR      "@libdir@"
+/** Configuation files */
+#define OPTTRAN_ETCDIR      "@sysconfig@"
+/** Recommendation database */
+#define OPTTRAN_VARDIR      "@localstatedir@"
+
+#endif /* INSTALL_DIRS_H */

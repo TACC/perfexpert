@@ -38,21 +38,37 @@ int main (int argc, char** argv) {
     
     /* Set default values for globals */
     globals = (globals_t) {
-        .verbose          = 0,                 // int
-        .verbose_level    = 0,                 // int
-        .use_stdin        = 0,                 // int
-        .use_stdout       = 1,                 // int
-        .use_opttran      = 0,                 // int
-        .inputfile        = NULL,              // char *
-        .outputfile       = NULL,              // char *
-        .outputfile_FP    = stdout,            // FILE *
-        .dbfile           = RECOMMENDATION_DB, // char *
-        .opttrandir       = NULL,              // char *
-        .metrics_file     = NULL,              // char *
-        .use_temp_metrics = 0,                 // int
-        .colorful         = 0,                 // int
-        .metrics_table    = "metrics"          // char *
+        .verbose          = 0,        // int
+        .verbose_level    = 0,        // int
+        .use_stdin        = 0,        // int
+        .use_stdout       = 1,        // int
+        .use_opttran      = 0,        // int
+        .inputfile        = NULL,     // char *
+        .outputfile       = NULL,     // char *
+        .outputfile_FP    = stdout,   // FILE *
+        .dbfile           = NULL,     // char *
+        .opttrandir       = NULL,     // char *
+        .metrics_file     = NULL,     // char *
+        .use_temp_metrics = 0,        // int
+        .colorful         = 0,        // int
+        .metrics_table    = "metrics" // char *
     };
+    globals.dbfile = malloc(strlen(RECOMMENDATION_DB) +
+                            strlen(OPTTRAN_VARDIR) + 1);
+    bzero(globals.dbfile,
+          strlen(RECOMMENDATION_DB) + strlen(OPTTRAN_VARDIR) + 1);
+    if (NULL == globals.dbfile) {
+        OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
+        exit(OPTTRAN_ERROR);
+    }
+    globals.metrics_file = malloc(strlen(METRICS_FILE) +
+                                  strlen(OPTTRAN_ETCDIR) + 1);
+    bzero(globals.metrics_file,
+          strlen(METRICS_FILE) + strlen(OPTTRAN_ETCDIR) + 1);
+    if (NULL == globals.metrics_file) {
+        OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
+        exit(OPTTRAN_ERROR);
+    }
 
     /* Parse command-line parameters */
     if (OPTTRAN_SUCCESS != parse_cli_params(argc, argv)) {
@@ -88,7 +104,7 @@ int main (int argc, char** argv) {
     }
     
     /* Parse metrics file if 'm' is defined, this will create a temp table */
-    if (globals.metrics_file || (1 == globals.use_temp_metrics)) {
+    if (1 == globals.use_temp_metrics) {
         if (OPTTRAN_SUCCESS != parse_metrics_file()) {
             OPTTRAN_OUTPUT(("%s", _ERROR("Error: parsing metrics file")));
             exit(OPTTRAN_ERROR);
@@ -248,11 +264,11 @@ static void show_help(void) {
     printf("                     into 'dir' directory (default: create no OptTran files)\n");
     printf("                     this argument overwrites -o, no output will be produced\n");
     printf("  -d --database      Select database file\n");
-    printf("                     (default: %s)\n", RECOMMENDATION_DB);
+    printf("                     (default: %s/%s)\n", OPTTRAN_VARDIR, RECOMMENDATION_DB);
     printf("  -m --metricfile    Use 'file' to define metrics different from the default\n");
     printf("  -n --newmetrics    Do not use the system metrics table. A temporary table will\n");
     printf("                     be created using the default metrics file:\n");
-    printf("                     %s)\n", METRICS_FILE);
+    printf("                     %s/%s)\n", OPTTRAN_ETCDIR, METRICS_FILE);
     printf("  -v --verbose       Enable verbose mode using default verbose level (5)\n");
     printf("  -l --verbose_level Enable verbose mode using a specific verbose level (1-10)\n");
     printf("  -c --colorful      Enable colors on verbose mode, no weird characters will\n");
@@ -416,20 +432,13 @@ static int parse_metrics_file(void) {
     char buffer[BUFFER_SIZE];
     char sql[BUFFER_SIZE];
     char *error_msg = NULL;
-    char *metrics_file;
-
-    if (NULL != globals.metrics_file) {
-        metrics_file = globals.metrics_file;
-    } else {
-        metrics_file = METRICS_FILE;
-    }
 
     OPTTRAN_OUTPUT_VERBOSE((7, "=== %s (%s)", _BLUE("Reading metrics file"),
-                            metrics_file));
+                            globals.metrics_file));
 
-    if (NULL == (metrics_FP = fopen(metrics_file, "r"))) {
+    if (NULL == (metrics_FP = fopen(globals.metrics_file, "r"))) {
         OPTTRAN_OUTPUT(("%s (%s)", _ERROR("error openning metrics file"),
-                        metrics_file));
+                        globals.metrics_file));
         show_help();
     } else {
         bzero(sql, BUFFER_SIZE);

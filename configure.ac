@@ -20,9 +20,10 @@ AC_REVISION([$Revision: 0.1 $])
 # Used by autotools
 AC_CONFIG_AUX_DIR(config)
 
-# Generate a global HEADER file
-AC_CONFIG_SRCDIR([config/config.h.in])
-AC_CONFIG_HEADERS([config/config.h])
+# Generate a global HEADER files
+AC_CONFIG_SRCDIR([tools/common/config.h.in])
+AC_CONFIG_HEADERS([tools/common/config.h])
+AC_CONFIG_HEADERS([tools/common/install_dirs.h])
 
 # Initialize Automake
 AM_INIT_AUTOMAKE([foreign -Wall -Werror])

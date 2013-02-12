@@ -11,6 +11,10 @@
 #ifndef RECOMMENDER_H_
 #define RECOMMENDER_H_
 
+#ifndef INSTALL_DIRS_H
+#include "install_dirs.h"
+#endif
+
 #ifndef OPTTRAN_CONSTANTS_H_
 #include "opttran_constants.h"
 #endif
@@ -41,8 +45,8 @@
 
 /** Default values for some parameters */
 // TODO: these default files have to be replaced by the correct install dir path
-#define RECOMMENDATION_DB "../contrib/recommendation.db"
-#define METRICS_FILE      "../contrib/recommender-metrics.txt"
+#define RECOMMENDATION_DB "recommendation.db"
+#define METRICS_FILE      "recommender-metrics.txt"
 #define OPTTRAN_RECO_FILE "recommendations.txt"
 
 /** Structure to hold global variables */
