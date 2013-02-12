@@ -272,6 +272,8 @@ if test x"$ENABLE_RECOMMENDER" = x"yes"; then
     AC_CHECK_PROG(SQLITE3_PROGRAM, sqlite3, yes)
     if test x"$SQLITE3_PROGRAM" != x"yes" ; then
         AC_MSG_ERROR([Please install SQLite3 utility.])
+    else
+        AC_PATH_TOOL(SQLITE3_PROGRAM, sqlite3)
     fi
 
     ENABLE_RECOMMENDER=recommender
