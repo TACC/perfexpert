@@ -680,7 +680,6 @@ int main(int argc, char* argv []) {
                                         &event_code);
                 if (PAPI_OK == PAPI_add_event(event_set, event_code)) {
                     ADD_EVENT(j);
-                    
                     if (0 == remaining) { // New line
                         fprintf(fp, "experiment[%d]=\"", exp_count);
                     }
@@ -704,12 +703,15 @@ int main(int argc, char* argv []) {
             fprintf(stderr, "\n");
             break;
         } else {
-            fprintf(fp, "\"\n");
             exp_count++;
         }
         if ((0 > addCount) && (0 < remaining)) {
             fprintf(fp, "--event PAPI_TOT_INS:%d\\\"\\n",
                     event_list[TOT_INS].sampling_freq);
+        } else {
+            if (0 < remaining) {
+                fprintf(fp, "\"\n");
+            }
         }
     } while (0 < remaining);
 
