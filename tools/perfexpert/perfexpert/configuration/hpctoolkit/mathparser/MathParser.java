@@ -19,7 +19,6 @@
  * Author: Ashay Rane
  */
 
-
 package edu.utexas.tacc.perfexpert.configuration.hpctoolkit.mathparser;
 
 import java.util.Properties;

@@ -16,73 +16,62 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with PerfExpert. If not, see <http://www.gnu.org/licenses/>.
  *
- * Author: Ashay Rane
+ * Author: Ashay Rane and Leonardo Fialho
  */
 
 package edu.utexas.tacc.perfexpert.parsing.profiles;
 
-public abstract class AProfile
-{
-	protected String codeSectionInfo = null;
+public abstract class AProfile {
+    protected String codeSectionInfo = null;
     // Fialho: adding some info to make my life easier.
     protected String codeFilename = null;
     protected int codeLineNumber = 0;
     protected String codeType = null;
     protected String codeExtraInfo = null;
-	
-	// Which code does this profile belong to?
-	public String getCodeSectionInfo()
-	{
-		return this.codeSectionInfo;
-	}
-	
-	public void setCodeSectionInfo(String codeSectionInfo)
-	{
-		this.codeSectionInfo = codeSectionInfo;
-	}
-	
-	public String getCodeFilename()
-	{
-		return this.codeFilename;
-	}
+    
+    // Which code does this profile belong to?
+    public String getCodeSectionInfo() {
+        return this.codeSectionInfo;
+    }
+    
+    public void setCodeSectionInfo(String codeSectionInfo) {
+        this.codeSectionInfo = codeSectionInfo;
+    }
+    
+    public String getCodeFilename() {
+        return this.codeFilename;
+    }
 
     // Fialho: adding some methods to make my life easier.
-	public void setCodeFilename(String codeFilename)
-	{
-		this.codeFilename = codeFilename;
-	}
-	
-	public int getCodeLineNumber()
-	{
-		return this.codeLineNumber;
-	}
-	
-	public void setCodeLineNumber(int codeLineNumber)
-	{
-		this.codeLineNumber = codeLineNumber;
-	}
-	
-	public String getCodeType()
-	{
-		return this.codeType;
-	}
-	
-	public void setCodeType(String codeType)
-	{
-		this.codeType = codeType;
-	}
-	
-	public String getCodeExtraInfo()
-	{
-		return this.codeExtraInfo;
-	}
-	
-	public void setCodeExtraInfo(String codeExtraInfo)
-	{
-		this.codeExtraInfo = codeExtraInfo;
-	}
-	
-	// Getters (and setters) for individual or all metrics
-	public abstract double getMetric(String key);
-	public abstract void setMetric(String key, double value);
+    public void setCodeFilename(String codeFilename) {
+        this.codeFilename = codeFilename;
+    }
+    
+    public int getCodeLineNumber() {
+        return this.codeLineNumber;
+    }
+    
+    public void setCodeLineNumber(int codeLineNumber) {
+        this.codeLineNumber = codeLineNumber;
+    }
+    
+    public String getCodeType() {
+        return this.codeType;
+    }
+    
+    public void setCodeType(String codeType) {
+        this.codeType = codeType;
+    }
+    
+    public String getCodeExtraInfo() {
+        return this.codeExtraInfo;
+    }
+    
+    public void setCodeExtraInfo(String codeExtraInfo) {
+        this.codeExtraInfo = codeExtraInfo;
+    }
+    
+    // Getters (and setters) for individual or all metrics
+    public abstract double getMetric(String key);
+    public abstract void setMetric(String key, double value);
 }

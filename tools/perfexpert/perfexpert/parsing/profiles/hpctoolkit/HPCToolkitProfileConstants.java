@@ -29,96 +29,91 @@ import java.util.Properties;
 
 import org.apache.log4j.Logger;
 
-public class HPCToolkitProfileConstants
-{
-	Logger log = Logger.getLogger( HPCToolkitProfileConstants.class );
+public class HPCToolkitProfileConstants {
+    Logger log = Logger.getLogger( HPCToolkitProfileConstants.class );
 
-	Map<String,Integer> perfCounterTranslation = new HashMap<String,Integer>();
-	Map<Integer,Integer> HPCToPETranslation = new HashMap<Integer,Integer>();
-	Map<String,Integer> lcpiTranslation = new HashMap<String,Integer>();
+    Map<String,Integer> perfCounterTranslation = new HashMap<String,Integer>();
+    Map<Integer,Integer> HPCToPETranslation = new HashMap<Integer,Integer>();
+    Map<String,Integer> lcpiTranslation = new HashMap<String,Integer>();
 
-	int indexOfInstructions = -1;
-	int indexOfCycles = -1;
-	int discoveredMetrics = 0;
-	long aggregateCycles = 0;
+    int indexOfInstructions = -1;
+    int indexOfCycles       = -1;
+    int discoveredMetrics   = 0;
+    long aggregateCycles    = 0;
 
-	public Map<String,Integer> getPerfCounterTranslation()
-	{
-		return perfCounterTranslation;
-	}
+    public Map<String,Integer> getPerfCounterTranslation() {
+        return perfCounterTranslation;
+    }
 
-	public Map<String,Integer> getLCPITranslation()
-	{
-		return lcpiTranslation;
-	}
+    public Map<String,Integer> getLCPITranslation() {
+        return lcpiTranslation;
+    }
 
-	public void setPerfCounterTranslation(Map<String,Integer> perfCounterTranslation)
-	{
-		this.perfCounterTranslation = perfCounterTranslation;
-	}
+    public void setPerfCounterTranslation(Map<String,Integer> perfCounterTranslation) {
+        this.perfCounterTranslation = perfCounterTranslation;
+    }
 
-	public void setLCPITranslation(Map<String,Integer> lcpiTranslation)
-	{
-		this.lcpiTranslation = lcpiTranslation;
-	}
+    public void setLCPITranslation(Map<String,Integer> lcpiTranslation) {
+        this.lcpiTranslation = lcpiTranslation;
+    }
 
-	public int getIndexOfCycles()
-	{
-		return indexOfCycles;
-	}
+    public int getIndexOfCycles() {
+        return indexOfCycles;
+    }
 
-	public int getIndexOfInstructions()
-	{
-		return indexOfInstructions;
-	}
+    public int getIndexOfInstructions() {
+        return indexOfInstructions;
+    }
 
-	public long getAggregateCycles()
-	{
-		return aggregateCycles;
-	}
+    public long getAggregateCycles() {
+        return aggregateCycles;
+    }
 
-	public void setAggregateCycles(long aggregateCycles)
-	{
-		this.aggregateCycles = aggregateCycles;
-	}
+    public void setAggregateCycles(long aggregateCycles) {
+        this.aggregateCycles = aggregateCycles;
+    }
 
-	public void registerMetric(int HPCToolkitIndex, String metricName)
-	{
-		if (perfCounterTranslation.containsKey(metricName))	// Register the duplicate
-		{
-			// WARNING: There is a one-to-one correspondence between the position of the element within HPCToPETranslation and HPCToolkitIndex
-			log.debug("Registered translation for duplicate metric " + metricName + ", was recorded at " + perfCounterTranslation.get(metricName));
-			HPCToPETranslation.put(HPCToolkitIndex, perfCounterTranslation.get(metricName));
-		}
-		else	// Register new metric
-		{
-			// Since we will require this frequently, it is best if we don't turn to the HashMap everytime
-			if (metricName.equals("PAPI_TOT_INS"))
-				indexOfInstructions = discoveredMetrics;
+    public void registerMetric(int HPCToolkitIndex, String metricName) {
+        if (perfCounterTranslation.containsKey(metricName)) {
+            // Register the duplicate
+            // WARNING: There is a one-to-one correspondence between the
+            //          position of the element within HPCToPETranslation and
+            //          HPCToolkitIndex
+            log.debug("Registered translation for duplicate metric " +
+                      metricName + ", was recorded at " +
+                      perfCounterTranslation.get(metricName));
+            HPCToPETranslation.put(HPCToolkitIndex,
+                                   perfCounterTranslation.get(metricName));
+        } else {
+            // Register new metric
+            // Since we will require this frequently, it is best if we don't turn to the HashMap everytime
+            if (metricName.equals("PAPI_TOT_INS")) {
+                indexOfInstructions = discoveredMetrics;
+            }
+            if (metricName.equals("PAPI_TOT_CYC")) {
+                indexOfCycles = discoveredMetrics;
+            }
+            perfCounterTranslation.put(metricName, discoveredMetrics);
+            HPCToPETranslation.put(HPCToolkitIndex, discoveredMetrics);
 
-			if (metricName.equals("PAPI_TOT_CYC"))
-				indexOfCycles = discoveredMetrics;
+            log.debug("Registered new metric " + metricName +
+                      " with mapping: " + HPCToolkitIndex + " -> " +
+                      discoveredMetrics);
+            discoveredMetrics++;
+        }
+    }
 
-			perfCounterTranslation.put(metricName, discoveredMetrics);
-			HPCToPETranslation.put(HPCToolkitIndex, discoveredMetrics);
-
-			log.debug("Registered new metric " + metricName + " with mapping: " + HPCToolkitIndex + " -> " + discoveredMetrics);
-			discoveredMetrics++;
-		}
-	}
-
-	public void setUpLCPITranslation(Properties lcpiProperties)
-	{
-		// This is just setting up a mapping between LCPI names and their corresponding index in the double array
-		int LCPICount = 0;
-		for (Object key : lcpiProperties.keySet())
-		{
-			String LCPI = (String) key;
-			if (!LCPI.equals("version"))	// Ignore version string
-			{
-				lcpiTranslation.put((String) key, LCPICount);
-				LCPICount++;
-			}
-		}
-	}
+    public void setUpLCPITranslation(Properties lcpiProperties) {
+        // This is just setting up a mapping between LCPI names and their
+        // corresponding index in the double array
+        int LCPICount = 0;
+        for (Object key : lcpiProperties.keySet()) {
+            String LCPI = (String) key;
+            if (!LCPI.equals("version")) {
+                // Ignore version string
+                lcpiTranslation.put((String) key, LCPICount);
+                LCPICount++;
+            }
+        }
+    }
 }

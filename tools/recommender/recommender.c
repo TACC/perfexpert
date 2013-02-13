@@ -5,30 +5,31 @@
  *
  * Additional copyrights may follow
  *
+ * This file is part of OptTran and PerfExpert.
+ *
+ * OptTran as well PerfExpert are free software: you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
+ *
+ * OptTran and PerfExpert are distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with OptTran or PerfExpert. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Author: Leonardo Fialho
+ *
  * $HEADER$
  */
 
 #include <sqlite3.h>
+
 #include "config.h"
 #include "recommender.h"
-
-//#include <linear.h>
-//#include <genC.h>
-//#include "ri.h"
-//#include "effects.h"
-//#include "properties.h"
-//#include "misc.h"
-//#include <newgen.h>
-//#include "ri-util.h"
-//#include "complexity_ri.h"
-//#include "constants.h"
-//#include "resources.h"
-//#include "database.h"
-//#include "pipsdbm.h"
-//#include "pipsmake.h"
-//#include "top-level.h"
-//#include <newgen.h>
-//#include <top-level.h>
+#include "opttran_util.h"
 
 /* Global variables, try to not create them! */
 globals_t globals; // Variable to hold global options, this one is OK
@@ -58,21 +59,23 @@ int main (int argc, char** argv) {
         .metrics_table    = "metrics" // char *
     };
     globals.dbfile = malloc(strlen(RECOMMENDATION_DB) +
-                            strlen(OPTTRAN_VARDIR) + 1);
+                            strlen(OPTTRAN_VARDIR) + 2);
     bzero(globals.dbfile,
-          strlen(RECOMMENDATION_DB) + strlen(OPTTRAN_VARDIR) + 1);
+          strlen(RECOMMENDATION_DB) + strlen(OPTTRAN_VARDIR) + 2);
     if (NULL == globals.dbfile) {
         OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
         exit(OPTTRAN_ERROR);
     }
+    sprintf(globals.dbfile, "%s/%s", OPTTRAN_VARDIR, RECOMMENDATION_DB);
     globals.metrics_file = malloc(strlen(METRICS_FILE) +
-                                  strlen(OPTTRAN_ETCDIR) + 1);
+                                  strlen(OPTTRAN_ETCDIR) + 2);
     bzero(globals.metrics_file,
-          strlen(METRICS_FILE) + strlen(OPTTRAN_ETCDIR) + 1);
+          strlen(METRICS_FILE) + strlen(OPTTRAN_ETCDIR) + 2);
     if (NULL == globals.metrics_file) {
         OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
         exit(OPTTRAN_ERROR);
     }
+    sprintf(globals.metrics_file, "%s/%s", OPTTRAN_ETCDIR, METRICS_FILE);
 
     /* Parse command-line parameters */
     if (OPTTRAN_SUCCESS != parse_cli_params(argc, argv)) {
@@ -86,47 +89,6 @@ int main (int argc, char** argv) {
         }
         printf("\n");
     }
-    
-//    /* TESTS USING PIPS FRAMEWORK */
-//    gen_array_t source_files = NULL;
-//    char *wspace = NULL;
-//    
-//    wspace = malloc(strlen("teste") + 1);
-//    bzero(wspace, strlen("teste") + 1);
-//    strncpy(wspace, "teste", strlen("teste"));
-//    
-//    pips_checks();
-//    printf("Erro 1\n");
-//    initialize_newgen();
-//    printf("Erro 2\n");
-//    initialize_sc((char*(*)(Variable)) entity_local_name);
-//    printf("Erro 3\n");
-//    source_files = gen_array_make(5);
-//    printf("Erro 4\n");
-//    gen_array_append(source_files, globals.source_file);
-//    printf("Erro 5\n");
-//    
-//    if(db_create_workspace(wspace)) {
-//        printf("Erro 6\n");
-//        create_workspace(source_files);
-//        printf("Erro 7\n");
-//    }
-//    else {
-//        printf("Cannot create workspace %s!\n", wspace);
-//        exit(1);
-//    }
-//    printf("Erro 8\n");
-//    open_module("compute");
-//    printf("Erro 9\n");
-//    open_module("main");
-//    printf("Erro 10\n");
-//    open_module("mm_naive!");
-//    printf("Erro 11\n");
-//    close_workspace(true);
-//    printf("Erro 12\n");
-//    return 0;
-//    
-//    /* END OF TESTS USING PIPS FRAMEWORK */
     
     /* Connect to database */
     if (OPTTRAN_SUCCESS != database_connect()) {
@@ -196,6 +158,13 @@ int main (int argc, char** argv) {
     /* Step 1: Print to a file or STDOUT is ok? Was OPRTRAN chosen? */
     if (1 == globals.use_opttran) {
         globals.use_stdout = 0;
+        
+        if (OPTTRAN_ERROR == opttran_util_make_path(globals.opttrandir, 0755)) {
+            OPTTRAN_OUTPUT(("%s",
+                            _ERROR("Error: cannot create opttran directory")));
+            exit(OPTTRAN_ERROR);
+        }
+        
         globals.outputfile = malloc(strlen(globals.opttrandir) +
                                     strlen(OPTTRAN_RECO_FILE) + 1);
         if (NULL == globals.outputfile) {
@@ -253,16 +222,26 @@ int main (int argc, char** argv) {
             OPTTRAN_OUTPUT(("%s", _ERROR("Error: selecting recommendations")));
             exit(OPTTRAN_ERROR);
         }
-
         if (0 == globals.use_opttran) {
             fprintf(globals.outputfile_FP, "\n");
+
+            if (NULL != globals.source_file) {
+                /* Hey ROSE, here we go... */
+                if (OPTTRAN_ERROR == extract_fragment(item)) {
+                    OPTTRAN_OUTPUT(("%s %s:%d",
+                                    _ERROR("Error: extracting fragments for"),
+                                    item->filename, item->line_number));
+                }
+            } else {
+                OPTTRAN_OUTPUT_VERBOSE((4, "source code not defined, can't extract fragments"));
+            }
         }
-            
+
         /* Move to the next code bottleneck */
         item = (segment_t *)opttran_list_get_next(item);
     }
 
-    /* Step 4: If we are using output file, close it! (metrics DB too) */
+    /* Step 4: If we are using an output file, close it! (metrics DB too) */
     if (0 == globals.use_stdout) {
         fclose(globals.outputfile_FP);
     }
@@ -308,12 +287,12 @@ static void show_help(void) {
     printf("  -a --opttran       Create OptTran (automatic performance optimization) files\n");
     printf("                     into 'dir' directory (default: create no OptTran files)\n");
     printf("                     this argument overwrites -o, no output will be produced\n");
-    printf("  -d --database      Select database file\n");
+    printf("  -d --database      Select the recommendation database file\n");
     printf("                     (default: %s/%s)\n", OPTTRAN_VARDIR, RECOMMENDATION_DB);
     printf("  -m --metricfile    Use 'file' to define metrics different from the default\n");
     printf("  -n --newmetrics    Do not use the system metrics table. A temporary table will\n");
     printf("                     be created using the default metrics file:\n");
-    printf("                     %s/%s)\n", OPTTRAN_ETCDIR, METRICS_FILE);
+    printf("                     %s/%s\n", OPTTRAN_ETCDIR, METRICS_FILE);
     printf("  -v --verbose       Enable verbose mode using default verbose level (5)\n");
     printf("  -l --verbose_level Enable verbose mode using a specific verbose level (1-10)\n");
     printf("  -c --colorful      Enable colors on verbose mode, no weird characters will\n");
@@ -321,10 +300,10 @@ static void show_help(void) {
     printf("  -s --sourcefile    Use 'file' to extract source code fragments identified as\n");
     printf("                     bootleneck by PerfExpert\n");
     printf("  -h --help          Show this message\n");
-    
+
     /* I suppose that if I've to show the help is because something is wrong,
      * or maybe the user just want to see the options, so it seems to be a
-     * good idea to exit the daemon with an error code.
+     * good idea to exit here with an error code.
      */
     exit(OPTTRAN_ERROR);
 }

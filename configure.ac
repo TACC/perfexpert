@@ -5,6 +5,23 @@
 #
 # Additional copyrights may follow
 #
+# This file is part of OptTran and PerfExpert.
+#
+# OptTran as well PerfExpert are free software: you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation, either version 3 of the License,
+# or (at your option) any later version.
+#
+# OptTran and PerfExpert are distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+# General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with OptTran or PerfExpert. If not, see <http://www.gnu.org/licenses/>.
+#
+# Author: Leonardo Fialho
+#
 # $HEADER$
 #
 
@@ -126,13 +143,16 @@ fi
 
 #------------------------------------------------------------------------------
 # Checks for required (but generic) header files
-AC_CHECK_HEADER([stdio.h],  [], [AC_MSG_ERROR([not found: stdio.h])])
-AC_CHECK_HEADER([getopt.h], [], [AC_MSG_ERROR([not found: getopt.h])])
-AC_CHECK_HEADER([ctype.h],  [], [AC_MSG_ERROR([not found: ctype.h])])
-AC_CHECK_HEADER([stdlib.h], [], [AC_MSG_ERROR([not found: stdlib.h])])
-AC_CHECK_HEADER([stdarg.h], [], [AC_MSG_ERROR([not found: stdarg.h])])
-AC_CHECK_HEADER([string.h], [], [AC_MSG_ERROR([not found: string.h])])
-AC_CHECK_HEADER([unistd.h], [], [AC_MSG_ERROR([not found: unistd.h])])
+AC_CHECK_HEADER([stdio.h],     [], [AC_MSG_ERROR([not found: stdio.h])])
+AC_CHECK_HEADER([getopt.h],    [], [AC_MSG_ERROR([not found: getopt.h])])
+AC_CHECK_HEADER([ctype.h],     [], [AC_MSG_ERROR([not found: ctype.h])])
+AC_CHECK_HEADER([stdlib.h],    [], [AC_MSG_ERROR([not found: stdlib.h])])
+AC_CHECK_HEADER([stdarg.h],    [], [AC_MSG_ERROR([not found: stdarg.h])])
+AC_CHECK_HEADER([string.h],    [], [AC_MSG_ERROR([not found: string.h])])
+AC_CHECK_HEADER([unistd.h],    [], [AC_MSG_ERROR([not found: unistd.h])])
+AC_CHECK_HEADER([sys/stat.h],  [], [AC_MSG_ERROR([not found: sys/stat.h])])
+AC_CHECK_HEADER([sys/types.h], [], [AC_MSG_ERROR([not found: sys/types.h])])
+AC_CHECK_HEADER([errno.h],     [], [AC_MSG_ERROR([not found: errno.h])])
 
 # Checks for typedefs, structures, and compiler characteristics
 AC_C_INLINE
@@ -176,13 +196,11 @@ if test x"$ENABLE_PERFEXPERT" = x"yes"; then
     # Currently, hound and sniffer only works on Linux.
     if test x"$HOST_OS" == x"linux"; then
 
-        # Headers required for hound
-        AC_CHECK_HEADER([inttypes.h],  [], [AC_MSG_ERROR([not found: inttypes.h])])
-        AC_CHECK_HEADER([sched.h],     [], [AC_MSG_ERROR([not found: sched.h])])
-        AC_CHECK_HEADER([time.h],      [], [AC_MSG_ERROR([not found: time.h])])
-        AC_CHECK_HEADER([errno.h],     [], [AC_MSG_ERROR([not found: errno.h])])
-        AC_CHECK_HEADER([sys/mman.h],  [], [AC_MSG_ERROR([not found: sys/mman.h])])
-        AC_CHECK_HEADER([sys/types.h], [], [AC_MSG_ERROR([not found: sys/types.h])])
+        # Headers required exclusivelly for hound
+        AC_CHECK_HEADER([inttypes.h], [], [AC_MSG_ERROR([not found: inttypes.h])])
+        AC_CHECK_HEADER([sched.h],    [], [AC_MSG_ERROR([not found: sched.h])])
+        AC_CHECK_HEADER([time.h],     [], [AC_MSG_ERROR([not found: time.h])])
+        AC_CHECK_HEADER([sys/mman.h], [], [AC_MSG_ERROR([not found: sys/mman.h])])
 
         # Headers and libraries required for sniffer
         AC_SEARCH_LIBS([PAPI_library_init, PAPI_add_event, PAPI_create_eventset,
