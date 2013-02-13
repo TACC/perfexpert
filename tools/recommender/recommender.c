@@ -14,21 +14,21 @@
 
 #include <linear.h>
 #include <genC.h>
-//#include "ri.h"
-//#include "effects.h"
-//#include "properties.h"
-//#include "misc.h"
+#include "ri.h"
+#include "effects.h"
+#include "properties.h"
+#include "misc.h"
 #include <newgen.h>
-//#include "ri-util.h"
-//#include "complexity_ri.h"
-//#include "constants.h"
-//#include "resources.h"
-//#include "database.h"
-//#include "pipsdbm.h"
-//#include "pipsmake.h"
-//#include "top-level.h"
-//#include <newgen.h>
-//#include <top-level.h>
+#include "ri-util.h"
+#include "complexity_ri.h"
+#include "constants.h"
+#include "resources.h"
+#include "database.h"
+#include "pipsdbm.h"
+#include "pipsmake.h"
+#include "top-level.h"
+#include <newgen.h>
+#include <top-level.h>
 
 /* Global variables, try to not create them! */
 globals_t globals; // Variable to hold global options, this one is OK
@@ -87,35 +87,46 @@ int main (int argc, char** argv) {
         printf("\n");
     }
     
-    /* TESTS USING PIPS FRAMEWORK */
-    gen_array_t source_files = NULL;
-    char workspace[] = "teste";
-    
-    pips_checks();
-    initialize_newgen();
-    initialize_sc((char*(*)(Variable)) entity_local_name);
-    
-    source_files = gen_array_make(5);
-    gen_array_append(source_files, globals.source_file);
-    
-    if (gen_array_nitems(source_files)>0) {
-	    if(db_create_workspace(workspace)) {
-            create_workspace(source_files);
-	    }
-	    else {
-            printf("Cannot create workspace %s!\n", workspace);
-            exit(1);
-	    }
-	} else {
-	    /* Workspace must be opened */
-	    if (!open_workspace(workspace)) {
-            printf("Cannot open workspace %s!\n", workspace);
-            exit(1);
-	    }
-	}
-    close_workspace(true);
-    
-    /* END OF TESTS USING PIPS FRAMEWORK */
+//    /* TESTS USING PIPS FRAMEWORK */
+//    gen_array_t source_files = NULL;
+//    char *wspace = NULL;
+//    
+//    wspace = malloc(strlen("teste") + 1);
+//    bzero(wspace, strlen("teste") + 1);
+//    strncpy(wspace, "teste", strlen("teste"));
+//    
+//    pips_checks();
+//    printf("Erro 1\n");
+//    initialize_newgen();
+//    printf("Erro 2\n");
+//    initialize_sc((char*(*)(Variable)) entity_local_name);
+//    printf("Erro 3\n");
+//    source_files = gen_array_make(5);
+//    printf("Erro 4\n");
+//    gen_array_append(source_files, globals.source_file);
+//    printf("Erro 5\n");
+//    
+//    if(db_create_workspace(wspace)) {
+//        printf("Erro 6\n");
+//        create_workspace(source_files);
+//        printf("Erro 7\n");
+//    }
+//    else {
+//        printf("Cannot create workspace %s!\n", wspace);
+//        exit(1);
+//    }
+//    printf("Erro 8\n");
+//    open_module("compute");
+//    printf("Erro 9\n");
+//    open_module("main");
+//    printf("Erro 10\n");
+//    open_module("mm_naive!");
+//    printf("Erro 11\n");
+//    close_workspace(true);
+//    printf("Erro 12\n");
+//    return 0;
+//    
+//    /* END OF TESTS USING PIPS FRAMEWORK */
     
     /* Connect to database */
     if (OPTTRAN_SUCCESS != database_connect()) {

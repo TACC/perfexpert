@@ -187,7 +187,7 @@ if test x"$ENABLE_PERFEXPERT" = x"yes"; then
         # Headers and libraries required for sniffer
         AC_SEARCH_LIBS([PAPI_library_init, PAPI_add_event, PAPI_create_eventset,
             PAPI_get_event_info, PAPI_event_name_to_code, PAPI_query_event],
-            [papi],, [AC_MSG_ERROR([PAPI library not found ;-(])])
+            [papi],, [AC_MSG_ERROR([PAPI library not found :(])])
         AC_CHECK_HEADER([papi.h], [], [AC_MSG_ERROR([not found: papi.h])])
 
         # Some tools from HPCToolKit are required to perfexpert_run_exp.ss
@@ -263,7 +263,7 @@ if test x"$ENABLE_RECOMMENDER" = x"yes"; then
 
     # Checks for SQLite headers, lib and program (only if 'recommender' is enabled)
     AC_SEARCH_LIBS([sqlite3_open, sqlite3_close, sqlite3_exec, sqlite3_free,
-        sqlite3_errmsg], [sqlite3],, [AC_MSG_ERROR([SQLite3 library not found ;-(])])
+        sqlite3_errmsg], [sqlite3],, [AC_MSG_ERROR([SQLite3 library not found :(])])
     AC_CHECK_HEADER([sqlite3.h], [], [AC_MSG_ERROR([not found: sqlite3.h])])
 
     # Check for the SQLite utility
@@ -274,13 +274,15 @@ if test x"$ENABLE_RECOMMENDER" = x"yes"; then
         AC_PATH_TOOL(SQLITE3_PROGRAM, sqlite3)
     fi
 
-    # Headers and libraries required for teste
-    AC_SEARCH_LIBS([create_workspace],
-        [pipslibs], [], [AC_MSG_ERROR([PIPS library not found ;-(])])
-    AC_SEARCH_LIBS([gen_array_append],
-        [newgenlibs], [], [AC_MSG_ERROR([NEWGEN library not found ;-(])])
-    AC_CHECK_HEADER([linear.h], [], [AC_MSG_ERROR([not found: linear.h])])
-    AC_CHECK_HEADER([genC.h], [], [AC_MSG_ERROR([not found: genC.h])])
+    # Headers and libraries required for PIPS 
+#    AC_SEARCH_LIBS([create_workspace],
+#        [pipslibs], [], [AC_MSG_ERROR([PIPS library not found :-(])])
+#    AC_SEARCH_LIBS([gen_array_append],
+#        [newgenlibs], [], [AC_MSG_ERROR([Newgen (PIPS) library not found :(])])
+#    AC_SEARCH_LIBS([initialize_sc],
+#        [linearlibs], [], [AC_MSG_ERROR([Linear (PIPS) library not found :(])])
+#    AC_CHECK_HEADER([linear.h], [], [AC_MSG_ERROR([not found: linear.h])])
+#    AC_CHECK_HEADER([genC.h], [], [AC_MSG_ERROR([not found: genC.h])])
 
     ENABLE_RECOMMENDER=recommender
     AC_CONFIG_FILES([tools/recommender/Makefile])

@@ -10,11 +10,9 @@
 
 AM_CFLAGS = -I$(srcdir)/../common
 
-bin_PROGRAMS = recommender teste
+bin_PROGRAMS = recommender
 
 recommender_SOURCES = recommender.c
-
-teste_SOURCES = teste.c
 
 # Install the recommendation database
 install-exec-local:

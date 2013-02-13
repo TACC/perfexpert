@@ -34,5 +34,7 @@ install-data-local:
 		$(datadir)/$(PACKAGE_NAME)/codes
 	$(INSTALL) -m 644 $(top_srcdir)/contrib/codes/pr-c_loop2_example_WHILE.c \
 		$(datadir)/$(PACKAGE_NAME)/codes
+	$(INSTALL) -m 644 $(top_srcdir)/contrib/codes/mm_naive.c \
+		$(datadir)/$(PACKAGE_NAME)/codes
 
 # EOF
