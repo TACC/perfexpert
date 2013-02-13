@@ -126,20 +126,13 @@ fi
 
 #------------------------------------------------------------------------------
 # Checks for required (but generic) header files
-AC_CHECK_HEADER([stdio.h],  [AC_DEFINE([HAVE_STDIO_H],  1,
-    [You have <stdio.h>.])],  [AC_MSG_ERROR([not found: stdio.h])])
-AC_CHECK_HEADER([getopt.h], [AC_DEFINE([HAVE_GETOPT_H], 1,
-    [You have <getopt.h>.])], [AC_MSG_ERROR([not found: getopt.h])])
-AC_CHECK_HEADER([ctype.h],  [AC_DEFINE([HAVE_CTYPE_H],  1,
-    [You have <ctype.h>.])],  [AC_MSG_ERROR([not found: ctype.h])])
-AC_CHECK_HEADER([stdlib.h], [AC_DEFINE([HAVE_STDLIB_H], 1,
-    [You have <stdlib.h>.])], [AC_MSG_ERROR([not found: stdlib.h])])
-AC_CHECK_HEADER([stdarg.h], [AC_DEFINE([HAVE_STDARG_H], 1,
-    [You have <stdarg.h>.])], [AC_MSG_ERROR([not found: stdarg.h])])
-AC_CHECK_HEADER([string.h], [AC_DEFINE([HAVE_STRING_H], 1,
-    [You have <string.h>.])], [AC_MSG_ERROR([not found: string.h])])
-AC_CHECK_HEADER([unistd.h], [AC_DEFINE([HAVE_UNISTD_H], 1,
-    [You have <unistd.h>.])], [AC_MSG_ERROR([not found: unistd.h])])
+AC_CHECK_HEADER([stdio.h],  [], [AC_MSG_ERROR([not found: stdio.h])])
+AC_CHECK_HEADER([getopt.h], [], [AC_MSG_ERROR([not found: getopt.h])])
+AC_CHECK_HEADER([ctype.h],  [], [AC_MSG_ERROR([not found: ctype.h])])
+AC_CHECK_HEADER([stdlib.h], [], [AC_MSG_ERROR([not found: stdlib.h])])
+AC_CHECK_HEADER([stdarg.h], [], [AC_MSG_ERROR([not found: stdarg.h])])
+AC_CHECK_HEADER([string.h], [], [AC_MSG_ERROR([not found: string.h])])
+AC_CHECK_HEADER([unistd.h], [], [AC_MSG_ERROR([not found: unistd.h])])
 
 # Checks for typedefs, structures, and compiler characteristics
 AC_C_INLINE
@@ -184,29 +177,18 @@ if test x"$ENABLE_PERFEXPERT" = x"yes"; then
     if test x"$HOST_OS" == x"linux"; then
 
         # Headers required for hound
-        AC_CHECK_HEADER([inttypes.h], [AC_DEFINE([HAVE_INTTYPES_H], 1,
-            [You have <inttypes.h>.])],
-            [AC_MSG_ERROR([not found: inttypes.h])])
-        AC_CHECK_HEADER([sched.h], [AC_DEFINE([HAVE_SCHED_H], 1,
-            [You have <sched.h>.])], [AC_MSG_ERROR([not found: sched.h])])
-        AC_CHECK_HEADER([time.h], [AC_DEFINE([HAVE_TIME_H], 1,
-            [You have <time.h>.])], [AC_MSG_ERROR([not found: time.h])])
-        AC_CHECK_HEADER([errno.h], [AC_DEFINE([HAVE_ERRNO_H], 1,
-            [You have <errno.h>.])], [AC_MSG_ERROR([not found: errno.h])])
-        AC_CHECK_HEADER([sys/mman.h], [AC_DEFINE([HAVE_SYS_MMAN_H], 1,
-            [You have <sys/mman.h>.])],
-            [AC_MSG_ERROR([not found: sys/mman.h])])
-        AC_CHECK_HEADER([sys/types.h], [AC_DEFINE([HAVE_SYS_TYPES_H], 1,
-            [You have <sys/types.h>.])],
-            [AC_MSG_ERROR([not found: sys/types.h])])
+        AC_CHECK_HEADER([inttypes.h],  [], [AC_MSG_ERROR([not found: inttypes.h])])
+        AC_CHECK_HEADER([sched.h],     [], [AC_MSG_ERROR([not found: sched.h])])
+        AC_CHECK_HEADER([time.h],      [], [AC_MSG_ERROR([not found: time.h])])
+        AC_CHECK_HEADER([errno.h],     [], [AC_MSG_ERROR([not found: errno.h])])
+        AC_CHECK_HEADER([sys/mman.h],  [], [AC_MSG_ERROR([not found: sys/mman.h])])
+        AC_CHECK_HEADER([sys/types.h], [], [AC_MSG_ERROR([not found: sys/types.h])])
 
         # Headers and libraries required for sniffer
         AC_SEARCH_LIBS([PAPI_library_init, PAPI_add_event, PAPI_create_eventset,
             PAPI_get_event_info, PAPI_event_name_to_code, PAPI_query_event],
-            [papi], [AC_MSG_RESULT([Great! You have PAPI... :-)])],
-            [AC_MSG_ERROR([PAPI not found ;-(])])
-        AC_CHECK_HEADER([papi.h], [AC_DEFINE([HAVE_PAPI_H], 1,
-            [You have <papi.h>.])], [AC_MSG_ERROR([not found: papi.h])])
+            [papi],, [AC_MSG_ERROR([PAPI library not found ;-(])])
+        AC_CHECK_HEADER([papi.h], [], [AC_MSG_ERROR([not found: papi.h])])
 
         # Some tools from HPCToolKit are required to perfexpert_run_exp.ss
         AC_CHECK_PROG(HPCSTRUCT_PROGRAM, hpcstruct, yes)
@@ -281,12 +263,8 @@ if test x"$ENABLE_RECOMMENDER" = x"yes"; then
 
     # Checks for SQLite headers, lib and program (only if 'recommender' is enabled)
     AC_SEARCH_LIBS([sqlite3_open, sqlite3_close, sqlite3_exec, sqlite3_free,
-        sqlite3_errmsg], [sqlite3],
-        [AC_MSG_RESULT([You have SQLite3 (at least the library), great!])],
-        [AC_MSG_ERROR([SQLite3 not found ;-(])])
-    AC_CHECK_HEADER([sqlite3.h], [AC_DEFINE([HAVE_SQLITE3_H], 1,
-        [Awesome! You also have sqlite3.h!])],
-        [AC_MSG_ERROR([not found: sqlite3.h])])
+        sqlite3_errmsg], [sqlite3],, [AC_MSG_ERROR([SQLite3 library not found ;-(])])
+    AC_CHECK_HEADER([sqlite3.h], [], [AC_MSG_ERROR([not found: sqlite3.h])])
 
     # Check for the SQLite utility
     AC_CHECK_PROG(SQLITE3_PROGRAM, sqlite3, yes)
@@ -295,6 +273,14 @@ if test x"$ENABLE_RECOMMENDER" = x"yes"; then
     else
         AC_PATH_TOOL(SQLITE3_PROGRAM, sqlite3)
     fi
+
+    # Headers and libraries required for teste
+    AC_SEARCH_LIBS([create_workspace],
+        [pipslibs], [], [AC_MSG_ERROR([PIPS library not found ;-(])])
+    AC_SEARCH_LIBS([gen_array_append],
+        [newgenlibs], [], [AC_MSG_ERROR([NEWGEN library not found ;-(])])
+    AC_CHECK_HEADER([linear.h], [], [AC_MSG_ERROR([not found: linear.h])])
+    AC_CHECK_HEADER([genC.h], [], [AC_MSG_ERROR([not found: genC.h])])
 
     ENABLE_RECOMMENDER=recommender
     AC_CONFIG_FILES([tools/recommender/Makefile])

@@ -10,9 +10,14 @@
 
 AM_CFLAGS = -I$(srcdir)/../common
 
-bin_PROGRAMS = recommender
+bin_PROGRAMS = recommender teste
+
 recommender_SOURCES = recommender.c
-recommender_LDFLAGS = -lsqlite3
+# recommender_LDFLAGS = -lsqlite3
+
+teste_SOURCES = teste.c
+# teste_LDFLAGS =  -L/opt/pips/lib -lpipslibs -lnewgenlibs
+# teste_CFLAGS = -I/opt/pips/include -L/opt/pips/lib
 
 # Install the recommendation database
 install-exec-local:
