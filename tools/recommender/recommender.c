@@ -12,23 +12,23 @@
 #include "config.h"
 #include "recommender.h"
 
-#include <linear.h>
-#include <genC.h>
-#include "ri.h"
-#include "effects.h"
-#include "properties.h"
-#include "misc.h"
-#include <newgen.h>
-#include "ri-util.h"
-#include "complexity_ri.h"
-#include "constants.h"
-#include "resources.h"
-#include "database.h"
-#include "pipsdbm.h"
-#include "pipsmake.h"
-#include "top-level.h"
-#include <newgen.h>
-#include <top-level.h>
+//#include <linear.h>
+//#include <genC.h>
+//#include "ri.h"
+//#include "effects.h"
+//#include "properties.h"
+//#include "misc.h"
+//#include <newgen.h>
+//#include "ri-util.h"
+//#include "complexity_ri.h"
+//#include "constants.h"
+//#include "resources.h"
+//#include "database.h"
+//#include "pipsdbm.h"
+//#include "pipsmake.h"
+//#include "top-level.h"
+//#include <newgen.h>
+//#include <top-level.h>
 
 /* Global variables, try to not create them! */
 globals_t globals; // Variable to hold global options, this one is OK
