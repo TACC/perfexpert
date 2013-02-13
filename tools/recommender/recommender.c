@@ -12,6 +12,24 @@
 #include "config.h"
 #include "recommender.h"
 
+#include <linear.h>
+#include <genC.h>
+//#include "ri.h"
+//#include "effects.h"
+//#include "properties.h"
+//#include "misc.h"
+#include <newgen.h>
+//#include "ri-util.h"
+//#include "complexity_ri.h"
+//#include "constants.h"
+//#include "resources.h"
+//#include "database.h"
+//#include "pipsdbm.h"
+//#include "pipsmake.h"
+//#include "top-level.h"
+//#include <newgen.h>
+//#include <top-level.h>
+
 /* Global variables, try to not create them! */
 globals_t globals; // Variable to hold global options, this one is OK
 
@@ -36,6 +54,7 @@ int main (int argc, char** argv) {
         .metrics_file     = NULL,     // char *
         .use_temp_metrics = 0,        // int
         .colorful         = 0,        // int
+        .source_file      = NULL,     // char *
         .metrics_table    = "metrics" // char *
     };
     globals.dbfile = malloc(strlen(RECOMMENDATION_DB) +
@@ -67,6 +86,36 @@ int main (int argc, char** argv) {
         }
         printf("\n");
     }
+    
+    /* TESTS USING PIPS FRAMEWORK */
+    gen_array_t source_files = NULL;
+    char workspace[] = "teste";
+    
+    pips_checks();
+    initialize_newgen();
+    initialize_sc((char*(*)(Variable)) entity_local_name);
+    
+    source_files = gen_array_make(5);
+    gen_array_append(source_files, globals.source_file);
+    
+    if (gen_array_nitems(source_files)>0) {
+	    if(db_create_workspace(workspace)) {
+            create_workspace(source_files);
+	    }
+	    else {
+            printf("Cannot create workspace %s!\n", workspace);
+            exit(1);
+	    }
+	} else {
+	    /* Workspace must be opened */
+	    if (!open_workspace(workspace)) {
+            printf("Cannot open workspace %s!\n", workspace);
+            exit(1);
+	    }
+	}
+    close_workspace(true);
+    
+    /* END OF TESTS USING PIPS FRAMEWORK */
     
     /* Connect to database */
     if (OPTTRAN_SUCCESS != database_connect()) {
@@ -240,7 +289,7 @@ static void show_help(void) {
     
     /*      12345678901234567890123456789012345678901234567890123456789012345678901234567890 */
     printf("Usage: recommender -i|-f file [-o file] [-d database] [-a dir] [-m file] [-hnvc]\n");
-    printf("                   [-l level]\n");
+    printf("                   [-l level] [-s file]\n");
     printf("  -i --stdin         Use STDIN as input for performance measurements\n");
     printf("  -f --inputfile     Use 'file' as input for performance measurements\n");
     printf("  -o --outputfile    Use 'file' as output for recommendations (default: stdout)\n");
@@ -258,6 +307,8 @@ static void show_help(void) {
     printf("  -l --verbose_level Enable verbose mode using a specific verbose level (1-10)\n");
     printf("  -c --colorful      Enable colors on verbose mode, no weird characters will\n");
     printf("                     apper on output files\n");
+    printf("  -s --sourcefile    Use 'file' to extract source code fragments identified as\n");
+    printf("                     bootleneck by PerfExpert\n");
     printf("  -h --help          Show this message\n");
     
     /* I suppose that if I've to show the help is because something is wrong,
@@ -301,7 +352,7 @@ static int parse_cli_params(int argc, char *argv[]) {
 
     while (1) {
         /* get parameter */
-        parameter = getopt_long(argc, argv, "cvhinm:l:f:d:o:a:", long_options,
+        parameter = getopt_long(argc, argv, "cvhinm:l:f:d:o:a:s:", long_options,
                                 &option_index);
         
         /* Detect the end of the options */
@@ -397,6 +448,13 @@ static int parse_cli_params(int argc, char *argv[]) {
                 globals.metrics_file = optarg;
                 OPTTRAN_OUTPUT_VERBOSE((10, "option 'm' set [%s]",
                                         globals.metrics_file));
+                break;
+                
+            /* Specify new metrics */
+            case 's':
+                globals.source_file = optarg;
+                OPTTRAN_OUTPUT_VERBOSE((10, "option 's' set [%s]",
+                                        globals.source_file));
                 break;
                 
             /* Unknown option */
@@ -729,7 +787,7 @@ static int get_rowid(void *rowid, int col_count, char **col_values,
 
 /* output_recommendations */
 static int output_recommendations(void *not_used, int col_count,
-                                  char **col_values, char **col_names){
+                                  char **col_values, char **col_names) {
     
     OPTTRAN_OUTPUT_VERBOSE((7, "%s", _GREEN("new recommendation found")));
 
