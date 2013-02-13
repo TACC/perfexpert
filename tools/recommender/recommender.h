@@ -44,7 +44,6 @@
 #define BUFFER_SIZE 4096
 
 /** Default values for some parameters */
-// TODO: these default files have to be replaced by the correct install dir path
 #define RECOMMENDATION_DB "recommendation.db"
 #define METRICS_FILE      "recommender-metrics.txt"
 #define OPTTRAN_RECO_FILE "recommendations.txt"
@@ -109,5 +108,20 @@ typedef struct segment {
     char   *section_info;
     double representativeness;
 } segment_t;
+
+/* Function declarations */
+static void show_help(void);
+static int  parse_env_vars(void);
+static int  parse_cli_params(int argc, char *argv[]);
+static int  parse_metrics_file(void);
+static int  parse_segment_params(opttran_list_t *segments_p, FILE *inputfile_p);
+static int  output_recommendations(void *not_used, int col_count,
+                                   char **col_values, char **col_names);
+static int  get_rowid(void *rowid, int col_count, char **col_values,
+                      char **col_names);
+static int  database_connect(void);
+static int  database_query(void);
+static int  calculate_weigths(void);
+static int  select_recommendations(void);
 
 #endif /* RECOMMENDER_H */

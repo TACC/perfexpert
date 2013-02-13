@@ -15,21 +15,6 @@
 /* Global variables, try to not create them! */
 globals_t globals; // Variable to hold global options, this one is OK
 
-/* Functions declaration */
-static void show_help(void);
-static int  parse_env_vars(void);
-static int  parse_cli_params(int argc, char *argv[]);
-static int  parse_metrics_file(void);
-static int  parse_segment_params(opttran_list_t *segments_p, FILE *inputfile_p);
-static int  output_recommendations(void *not_used, int col_count,
-                                   char **col_values, char **col_names);
-static int  get_rowid(void *rowid, int col_count,
-                      char **col_values, char **col_names);
-static int  database_connect(void);
-static int  database_query(void);
-static int  calculate_weigths(void);
-static int  select_recommendations(void);
-
 /* main, life starts here */
 int main (int argc, char** argv) {
     opttran_list_t *segments;
