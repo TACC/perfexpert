@@ -1,15 +1,15 @@
 Input file: "./experiment.xml"
 %
-code.section_info=Loop in function compute()
-code.filename=~unknown-file~
-code.line_number=0
+code.section_info=Loop in function compute() at mm_naive.c:11
+code.filename=mm_naive.c
+code.line_number=11
 code.type=loop
 code.extra_info=3
 code.representativeness=100
 perfexpert.ratio.data_accesses=0.161
 perfexpert.instruction_accesses.L2i_hits=0.002
 perfexpert.branch_instructions.mispredicted=0.001
-perfexpert.floating-point_instr.fast_FP_instr=1.993
+perfexpert.floating-point_instr.fast_FP_instr=1.992
 perfexpert.data_accesses.L2d_hits=0.548
 perfexpert.percent.GFLOPS_(%_max).overall=0.25
 perfexpert.percent.GFLOPS_(%_max).packed=0.0
@@ -17,7 +17,7 @@ perfexpert.floating-point_instr.slow_FP_instr=0.0
 perfexpert.percent.GFLOPS_(%_max).scalar=0.25
 perfexpert.loop-depth=3.0
 perfexpert.branch_instructions.correctly_predicted=0.04
-perfexpert.floating-point_instr.overall=1.993
+perfexpert.floating-point_instr.overall=1.992
 perfexpert.instruction_accesses.overall=0.04
 perfexpert.ratio.floating_point=0.117
 perfexpert.data_TLB.overall=1.842
@@ -26,7 +26,7 @@ perfexpert.data_accesses.L2d_misses=1.035
 perfexpert.instruction_accesses.L1i_hits=0.014
 perfexpert.data_accesses.L1d_hits=0.495
 perfexpert.data_accesses.overall=2.078
-perfexpert.overall=0.996
+perfexpert.overall=0.997
 perfexpert.branch_instructions.overall=0.041
 perfexpert.instruction_accesses.L2i_misses=0.024
 papi.PAPI_L1_DCA=1
