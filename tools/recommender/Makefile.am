@@ -25,10 +25,11 @@
 # $HEADER$
 #
 
-AM_CPPFLAGS = -I$(srcdir)/../common
-
 bin_PROGRAMS = recommender
 
+recommender_CPPFLAGS = -I$(srcdir)/../common -I/opt/rose/include
+recommender_LDADD = -lrose -ljvm 
+recommender_LDFLAGS = -L/opt/rose/lib -L/usr/lib/jvm/java-7-openjdk-amd64/jre/lib/amd64/server
 recommender_SOURCES = main.cpp recommender.c extract_fragment.cpp
 
 # Install the recommendation database
