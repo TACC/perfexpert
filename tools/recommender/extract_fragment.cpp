@@ -86,14 +86,44 @@ void visitorTraversal::atTraversalEnd() {
 }
 
 int extract_fragment(segment_t *segment) {
-    char teste[][] = { &globals.source_file, NULL }
+    char *files[3];
+
     OPTTRAN_OUTPUT_VERBOSE((7, "%s (%s:%d)",
                             _GREEN((char *)"extracting fragment for"),
                             segment->filename, segment->line_number));
     
+    /* Fill 'files', aka **argv */
+    printf("ERRO 1.1\n");
+    *files[0] = (char *)malloc(sizeof("recommender") + 1);
+    printf("ERRO 1.2\n");
+    if (NULL == *files[0]) {
+        OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
+        exit(OPTTRAN_ERROR);
+    }
+    printf("ERRO 1.3\n");
+    bzero(*files[0], sizeof("recommender") + 1);
+    printf("ERRO 1.4\n");
+    sprintf(*files[0], sizeof("recommender"), "recommender");
+    
+    printf("ERRO 1.5\n");
+    *files[1] = (char *)malloc(strlen(globals.source_file) + 1);
+    printf("ERRO 1.6\n");
+    if (NULL == *files[1]) {
+        OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
+        exit(OPTTRAN_ERROR);
+    }
+    printf("ERRO 1.7\n");
+    bzero(*files[1], strlen(globals.source_file) + 1);
+    printf("ERRO 1.8\n");
+    strncpy(*files[0], globals.source_file, strlen(globals.source_file));
+    
+    printf("ERRO 1.9\n");
+    *files[2] = NULL;
+    printf("ERRO 1.10\n");
+
     /* Build the AST */
     printf("ERRO 1\n");
-    SgProject* project = frontend(1, teste);
+    SgProject* project = frontend(1, files);
     printf("ERRO 2\n");
     ROSE_ASSERT(project != NULL);
     printf("ERRO 3\n");
