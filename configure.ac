@@ -303,7 +303,16 @@ if test x"$ENABLE_RECOMMENDER" = x"yes"; then
 #    AC_CHECK_HEADER([linear.h], [], [AC_MSG_ERROR([not found: linear.h])])
 #    AC_CHECK_HEADER([genC.h], [], [AC_MSG_ERROR([not found: genC.h])])
 
-    # Headers and libraries required for PIPS
+    # Headers and libraries required for ROSE. Thanks ROSE for not have a C
+    # interface, now I have to write all these stuff... :-/
+    AC_LANG(C++)
+    SAVED_LDFLAGS=$LDFLAGS
+    LDFLAGS="$LDFLAGS -lrose"
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <rose.h>], [frontend])],
+        [TEST_LIBS="$TEST_LIBS -lrose"] [],
+        [AC_MSG_WARN([ROSE library not found :-(])])
+    LDFLAGS=$SAVED_LDFLAGS
+
     AC_SEARCH_LIBS([frontend],
         [rose], [], [AC_MSG_ERROR([ROSE library not found :-(])])
     AC_CHECK_HEADER([rose.h], [], [AC_MSG_ERROR([not found: rose.h])])
