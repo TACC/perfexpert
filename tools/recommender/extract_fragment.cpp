@@ -57,9 +57,12 @@ class visitorTraversal : public AstSimpleProcessing {
 
 void visitorTraversal::visit(SgNode* n) {
     if ((NULL != isSgForStatement(n)) || (NULL != isSgFortranDo(n))) {
-        // static SgNode* lastFor = NULL;
         Sg_File_Info &fileInfo = *(n->get_file_info());
-        
+        // static SgNode* lastFor = NULL;
+
+//        if (fileInfo.get_line()) {
+//            
+//        }
         printf("Found a %s on '%s:%d', extracing it:\n", n->sage_class_name(),
                fileInfo.get_filename(), fileInfo.get_line());
         printf("%s\n", n->unparseToCompleteString().c_str());
@@ -78,71 +81,64 @@ void visitorTraversal::visit(SgNode* n) {
 }
 
 void visitorTraversal::atTraversalStart() {
-    printf("Traversal starts here.\n");
+    OPTTRAN_OUTPUT_VERBOSE((9, "%s (%s)",
+                            _YELLOW((char *)"starting traversal on "),
+                            segment->filename));
 }
 
 void visitorTraversal::atTraversalEnd() {
-    printf("Traversal ends here.\n");
+    OPTTRAN_OUTPUT_VERBOSE((9, "%s (%s)",
+                            _YELLOW((char *)"ending traversal on "),
+                            segment->filename));
 }
 
 int extract_fragment(segment_t *segment) {
     char **files;
+    int filenum;
+    int i;
 
     OPTTRAN_OUTPUT_VERBOSE((7, "%s (%s:%d)",
-                            _GREEN((char *)"extracting fragment for"),
+                            _GREEN((char *)"extracting fragment from"),
                             segment->filename, segment->line_number));
     
     /* Fill 'files', aka **argv */
-    printf("ERRO 1.0\n");
     files = (char **)malloc(sizeof(char *) * 3);
-
-    printf("ERRO 1.1\n");
     files[0] = (char *)malloc(sizeof("recommender") + 1);
-    printf("ERRO 1.2\n");
     if (NULL == files[0]) {
         OPTTRAN_OUTPUT(("%s", _ERROR((char *)"Error: out of memory")));
         exit(OPTTRAN_ERROR);
     }
-    printf("ERRO 1.3\n");
     bzero(files[0], sizeof("recommender") + 1);
-    printf("ERRO 1.4\n");
     snprintf(files[0], sizeof("recommender"), "recommender");
-    
-    printf("ERRO 1.5\n");
     files[1] = globals.source_file;
-    printf("ERRO 1.6\n");
     files[2] = NULL;
-    printf("ERRO 1.7\n");
 
     /* Build the AST */
-    printf("ERRO 1\n");
     SgProject* project = frontend(2, files);
-    printf("ERRO 2\n");
     ROSE_ASSERT(project != NULL);
-    printf("ERRO 3\n");
 
     /* Build the traversal object and call the traversal function
      * starting at the project node of the AST, using a pre-order traversal
      */
     visitorTraversal exampleTraversal;
-    printf("ERRO 4\n");
     exampleTraversal.traverseInputFiles(project, preorder);
 
     /* Insert manipulations of the AST here... */
 
-    /* Generate source code output */
-    printf("ERRO 5\n");
-    int filenum = project->numberOfFiles();
-    printf("ERRO 6\n");
-    for (int i=0; i<filenum; ++i) {
-        printf("ERRO 7\n");
+    /* Generate source code output on OPTTRAN directory */
+    // TODO: generate files in the right place
+    filenum = project->numberOfFiles();
+    for (i = 0; i < filenum; ++i) {
         SgSourceFile* file = isSgSourceFile(project->get_fileList()[i]);
-        printf("ERRO 8\n");
         file->unparse();
-        printf("ERRO 9\n");
     }
-    printf("ERRO 10\n");
 
+    free(files[0]);
+    free(files);
+
+    OPTTRAN_OUTPUT_VERBOSE((7, "%s",
+                            _GREEN((char *)"fragment extraction concluded")));
+    
     return OPTTRAN_SUCCESS;
 }
 
