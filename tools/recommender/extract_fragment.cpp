@@ -81,15 +81,15 @@ void visitorTraversal::visit(SgNode* n) {
 }
 
 void visitorTraversal::atTraversalStart() {
-    OPTTRAN_OUTPUT_VERBOSE((9, "%s (%s)",
-                            _YELLOW((char *)"starting traversal on "),
-                            segment->filename));
+    // TODO: put the right filename here
+    OPTTRAN_OUTPUT_VERBOSE((9, "%s (xxx)",
+                            _YELLOW((char *)"starting traversal on ")));
 }
 
 void visitorTraversal::atTraversalEnd() {
-    OPTTRAN_OUTPUT_VERBOSE((9, "%s (%s)",
-                            _YELLOW((char *)"ending traversal on "),
-                            segment->filename));
+    // TODO: put the right filename here
+    OPTTRAN_OUTPUT_VERBOSE((9, "%s (xxx)",
+                            _YELLOW((char *)"ending traversal on ")));
 }
 
 int extract_fragment(segment_t *segment) {
