@@ -28,6 +28,10 @@
 #ifndef RECOMMENDER_H_
 #define RECOMMENDER_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef INSTALL_DIRS_H
 #include "install_dirs.h"
 #endif
@@ -38,6 +42,10 @@
 
 #ifndef OPTTRAN_LIST_H_
 #include "opttran_list.h"
+#endif
+
+#ifndef _SQLITE3_H_
+#include <sqlite3.h>
 #endif
 
 #ifndef _GETOPT_H_
@@ -88,13 +96,13 @@ typedef struct {
 extern globals_t globals; /**< Variable to hold global options */
 
 /* WARNING: to include opttran_output.h globals have to be defined firts */
-#ifndef OPTTRAN_OUTPUT_H
-#include "opttran_output.h"
-#endif
-
 #ifdef PROGRAM_PREFIX
 #undef PROGRAM_PREFIX
+#endif
 #define PROGRAM_PREFIX "[recommender]"
+    
+#ifndef OPTTRAN_OUTPUT_H
+#include "opttran_output.h"
 #endif
 
 /** Structure to handle command line arguments. Try to keep the content of
@@ -123,8 +131,8 @@ typedef struct node {
 
 /** Structure to hold code segments */
 typedef struct segment {
-    volatile struct opttran_list_item_t *next; /** Pointer to next list item */
-    volatile struct opttran_list_item_t *prev; /** Pointer to previous list item */
+    volatile opttran_list_item_t *next; /** Pointer to next list item */
+    volatile opttran_list_item_t *prev; /** Pointer to previous list item */
     char   *filename;
     int    line_number;
     char   *type;
@@ -134,6 +142,7 @@ typedef struct segment {
 } segment_t;
 
 /* Function declarations */
+int recommender_main(int argc, char** argv);
 static void show_help(void);
 static int  parse_env_vars(void);
 static int  parse_cli_params(int argc, char *argv[]);
@@ -147,6 +156,10 @@ static int  database_connect(void);
 static int  database_query(void);
 static int  calculate_weigths(void);
 static int  select_recommendations(void);
-static int  extract_fragment(segment_t *segment);
+int  extract_fragment(segment_t *segment);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* RECOMMENDER_H */

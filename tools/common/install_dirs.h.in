@@ -28,6 +28,10 @@
 #ifndef INSTALL_DIRS_H_
 #define INSTALL_DIRS_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+    
 #define OPTTRAN_PREFIX      "@prefix@"
 /** Executables that users can run */
 #define OPTTRAN_BINDIR      "@prefix@/bin"
@@ -37,5 +41,9 @@
 #define OPTTRAN_ETCDIR      "@prefix@/etc"
 /** Recommendation database */
 #define OPTTRAN_VARDIR      "@prefix@/var"
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* INSTALL_DIRS_H */

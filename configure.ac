@@ -54,10 +54,11 @@ CFLAGS=-g
 
 # Requires only a standard C compiler
 AC_PROG_CC
-AM_PROG_CC_C_O
+AC_PROG_CXX
 AC_PROG_MKDIR_P
 AC_PROG_LN_S
 AC_PROG_INSTALL
+AM_PROG_CC_C_O
 
 #------------------------------------------------------------------------------
 # Check for the operation system to include specific defines (if needed!)

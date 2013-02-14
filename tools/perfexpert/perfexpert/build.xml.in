@@ -1,3 +1,5 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
 <!-- Copyright (c) 2013  University of Texas at Austin. All rights reserved. -->
 <!--                                                                         -->
 <!-- $COPYRIGHT$                                                             -->
@@ -24,8 +26,6 @@
 <!--                                                                         -->
 <!-- $HEADER$                                                                -->
 <!--                                                                         -->
-
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 
 <project basedir="." default="jar" name="ArgP">
     <property environment="env"/>

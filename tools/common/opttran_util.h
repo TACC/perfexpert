@@ -28,6 +28,10 @@
 #ifndef OPTTRAN_UTIL_H_
 #define OPTTRAN_UTIL_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+    
 #ifndef	_SYS_STAT_H
 #include <sys/stat.h>
 #endif
@@ -63,12 +67,12 @@ static int opttran_util_make_path(char *path, int nmode) {
     if (0 == stat(path, &sb)) {
         if (0 == S_ISDIR (sb.st_mode)) {
             OPTTRAN_OUTPUT(("%s '%s'",
-                            _ERROR("file exists but is not a directory"),
+                            _ERROR((char *)"file exists but is not a directory"),
                             path));
             return OPTTRAN_ERROR;
         }
         if (chmod(path, nmode)) {
-            OPTTRAN_OUTPUT(("%s %s: %s", _ERROR("system error"), path,
+            OPTTRAN_OUTPUT(("%s %s: %s", _ERROR((char *)"system error"), path,
                             strerror(errno)));
             return OPTTRAN_ERROR;
         }
@@ -76,15 +80,15 @@ static int opttran_util_make_path(char *path, int nmode) {
     }
     
     /* Save a copy, so we can write to it */
-    npath = malloc(strlen(path));
+    npath = (char *)malloc(strlen(path) + 1);
+    bzero(npath, strlen(path) + 1);
     if (NULL == npath) {
-        OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
+        OPTTRAN_OUTPUT(("%s", _ERROR((char *)"Error: out of memory")));
         exit(OPTTRAN_ERROR);
     }
-    strcpy(npath, path);
+    strncpy(npath, path, strlen(path));
     
     /* Check whether or not we need to do anything with intermediate dirs */
-    
     /* Skip leading slashes */
     p = npath;
     while ('/' == *p) {
@@ -95,14 +99,14 @@ static int opttran_util_make_path(char *path, int nmode) {
         if (0 != stat(npath, &sb)) {
             if (mkdir(npath, nmode)) {
                 OPTTRAN_OUTPUT(("%s '%s': %s",
-                                _ERROR("cannot create directory"), npath,
+                                _ERROR((char *)"cannot create directory"), npath,
                                 strerror(errno)));
                 free(npath);
                 return OPTTRAN_ERROR;
             }
         } else if (0 == S_ISDIR(sb.st_mode)) {
             OPTTRAN_OUTPUT(("'%s': %s", npath,
-                            _ERROR("file exists but is not a directory")));
+                            _ERROR((char *)"file exists but is not a directory")));
             free (npath);
             return OPTTRAN_ERROR;
         }
@@ -114,7 +118,7 @@ static int opttran_util_make_path(char *path, int nmode) {
     
     /* Create the final directory component */
     if (stat(npath, &sb) && mkdir(npath, nmode)) {
-        OPTTRAN_OUTPUT(("%s '%s': %s", _ERROR("cannot create directory"),
+        OPTTRAN_OUTPUT(("%s '%s': %s", _ERROR((char *)"cannot create directory"),
                         npath, strerror(errno)));
         free(npath);
         return OPTTRAN_ERROR;
@@ -123,5 +127,9 @@ static int opttran_util_make_path(char *path, int nmode) {
     free(npath);
     return OPTTRAN_SUCCESS;
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* OPTTRAN_UTIL_H */

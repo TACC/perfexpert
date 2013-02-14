@@ -64,6 +64,10 @@
 #ifndef OPTTRAN_LIST_H_
 #define OPTTRAN_LIST_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+    
 #ifndef OPTTRAN_CONSTANTS_H_
 #include "opttran_constants.h"
 #endif
@@ -202,5 +206,9 @@ static inline void opttran_list_append(opttran_list_t *list,
     /* increment list element counter */
     list->length++;
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* OPTTRAN_LIST_H */

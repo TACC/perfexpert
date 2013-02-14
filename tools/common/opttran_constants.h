@@ -28,6 +28,10 @@
 #ifndef OPTTRAN_CONSTANTS_H_
 #define OPTTRAN_CONSTANTS_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+    
 /**
  * Some contants here are used to return errors from functions. Those codes
  * should be defined using 'exponential values', e.g. 1, 2, 4, 8, etc. Thus,
@@ -43,5 +47,9 @@
 
 #define OPTTRAN_TRUE   1 /**< used to return boolean values */
 #define OPTTRAN_FALSE  0 /**< used to return boolean values */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* OPTTRAN_CONSTANTS_H */

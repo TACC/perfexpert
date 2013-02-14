@@ -39,6 +39,10 @@
 #ifndef OPTTRAN_OUTPUT_H_
 #define OPTTRAN_OUTPUT_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+    
 #ifndef	_STDIO_H_
 #include <stdio.h>
 #endif
@@ -71,7 +75,9 @@
 #define OPTTRAN_OUTPUT_VERBOSE(a) output_verbose a
 #endif
 
-#define PROGRAM_PREFIX "[none]"
+#ifndef PROGRAM_PREFIX
+#define PROGRAM_PREFIX "[---]"
+#endif
 
 /* Colorful output functions, definitions and other stuff
  * See http://en.wikipedia.org/wiki/ANSI_escape_code for a complete list
@@ -89,12 +95,12 @@
 #define COLOR_WHITE   7
 
 #define COLORFUL_BUFFER_SIZE 8192
-char COLORFUL[COLORFUL_BUFFER_SIZE];
+static char COLORFUL[COLORFUL_BUFFER_SIZE];
 
 static char* colorful(int attr, int fg, int bg, char* str) {
     if (1 == globals.colorful) {
         char command[13];
-        char COLOR_RESET[] = "\x1b[0m";
+        const char COLOR_RESET[] = "\x1b[0m";
         
         bzero(COLORFUL, COLORFUL_BUFFER_SIZE);
         sprintf(command, "%c[%d;%d;%dm", 0x1B, attr, fg + 30, bg + 40);
@@ -188,5 +194,9 @@ static void output_verbose(int level, const char *format, ...) {
         va_end(arglist);
     }
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* OPTTRAN_OUTPUT_H */

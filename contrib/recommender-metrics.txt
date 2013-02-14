@@ -27,6 +27,7 @@ papi.PAPI_FP_INS
 papi.PAPI_L1_ICA
 papi.PAPI_L2_ICA
 papi.PAPI_L2_ICM
+papi.PAPI_L1_DCA
 papi.PAPI_L2_DCA
 papi.PAPI_L2_TCM
 papi.PAPI_L3_TCM

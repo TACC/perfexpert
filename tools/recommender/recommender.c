@@ -25,41 +25,53 @@
  * $HEADER$
  */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* Standard headers */
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <getopt.h>
 #include <sqlite3.h>
 
+/* OptTran headers */
 #include "config.h"
 #include "recommender.h"
+#include "opttran_output.h"
 #include "opttran_util.h"
 
 /* Global variables, try to not create them! */
 globals_t globals; // Variable to hold global options, this one is OK
 
 /* main, life starts here */
-int main (int argc, char** argv) {
+int recommender_main(int argc, char** argv) {
     opttran_list_t *segments;
     segment_t *item;
     int i;
     
     /* Set default values for globals */
     globals = (globals_t) {
-        .verbose          = 0,        // int
-        .verbose_level    = 0,        // int
-        .use_stdin        = 0,        // int
-        .use_stdout       = 1,        // int
-        .use_opttran      = 0,        // int
-        .inputfile        = NULL,     // char *
-        .outputfile       = NULL,     // char *
-        .outputfile_FP    = stdout,   // FILE *
-        .dbfile           = NULL,     // char *
-        .opttrandir       = NULL,     // char *
-        .metrics_file     = NULL,     // char *
-        .use_temp_metrics = 0,        // int
-        .colorful         = 0,        // int
-        .source_file      = NULL,     // char *
-        .metrics_table    = "metrics" // char *
+        .verbose          = 0,                 // int
+        .verbose_level    = 0,                 // int
+        .use_stdin        = 0,                 // int
+        .use_stdout       = 1,                 // int
+        .use_opttran      = 0,                 // int
+        .inputfile        = NULL,              // char *
+        .outputfile       = OPTTRAN_RECO_FILE, // char *
+        .outputfile_FP    = stdout,            // FILE *
+        .dbfile           = NULL,              // char *
+        .opttrandir       = NULL,              // char *
+        .metrics_file     = NULL,              // char *
+        .use_temp_metrics = 0,                 // int
+        .colorful         = 0,                 // int
+        .source_file      = NULL,              // char *
+        .metrics_table    = "metrics"          // char *
     };
-    globals.dbfile = malloc(strlen(RECOMMENDATION_DB) +
-                            strlen(OPTTRAN_VARDIR) + 2);
+    globals.dbfile = (char *)malloc(strlen(RECOMMENDATION_DB) +
+                                    strlen(OPTTRAN_VARDIR) + 2);
     bzero(globals.dbfile,
           strlen(RECOMMENDATION_DB) + strlen(OPTTRAN_VARDIR) + 2);
     if (NULL == globals.dbfile) {
@@ -67,8 +79,8 @@ int main (int argc, char** argv) {
         exit(OPTTRAN_ERROR);
     }
     sprintf(globals.dbfile, "%s/%s", OPTTRAN_VARDIR, RECOMMENDATION_DB);
-    globals.metrics_file = malloc(strlen(METRICS_FILE) +
-                                  strlen(OPTTRAN_ETCDIR) + 2);
+    globals.metrics_file = (char *)malloc(strlen(METRICS_FILE) +
+                                          strlen(OPTTRAN_ETCDIR) + 2);
     bzero(globals.metrics_file,
           strlen(METRICS_FILE) + strlen(OPTTRAN_ETCDIR) + 2);
     if (NULL == globals.metrics_file) {
@@ -97,7 +109,7 @@ int main (int argc, char** argv) {
     }
     
     /* Create the list of code bottlenecks */
-    segments = malloc(sizeof(segment_t));
+    segments = (opttran_list_t *)malloc(sizeof(segment_t));
     if (NULL == segments) {
         OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
         exit(OPTTRAN_ERROR);
@@ -106,7 +118,7 @@ int main (int argc, char** argv) {
     
     /* Calculate the temporary metrics table name */
     if (1 == globals.use_temp_metrics) {
-        globals.metrics_table = malloc(strlen("metrics_") + 6);
+        globals.metrics_table = (char *)malloc(strlen("metrics_") + 6);
         sprintf(globals.metrics_table, "metrics_%d", (int)getpid());
     }
     
@@ -119,7 +131,7 @@ int main (int argc, char** argv) {
     }
     
     /* Parse input parameters */
-    if (globals.use_stdin) {
+    if (1 == globals.use_stdin) {
         if (OPTTRAN_SUCCESS != parse_segment_params(segments, stdin)) {
             OPTTRAN_OUTPUT(("%s", _ERROR("Error: parsing input params")));
             exit(OPTTRAN_ERROR);
@@ -154,19 +166,27 @@ int main (int argc, char** argv) {
         exit(OPTTRAN_ERROR);
     }
     
-    /* Select/output recommendations for each code bottleneck (4 steps) */
+    /* Select/output recommendations for each code bottleneck (5 steps) */
     /* Step 1: Print to a file or STDOUT is ok? Was OPRTRAN chosen? */
     if (1 == globals.use_opttran) {
         globals.use_stdout = 0;
-        
+
+        if (NULL == globals.opttrandir) {
+            globals.opttrandir = (char *)malloc(strlen("./opttran-") + 8);
+            bzero(globals.opttrandir, strlen("./opttran-" + 8));
+            sprintf(globals.opttrandir, "./opttran-%d", getpid());
+        }
+        OPTTRAN_OUTPUT_VERBOSE((7, "using (%s) as output directory",
+                                globals.opttrandir));
+
         if (OPTTRAN_ERROR == opttran_util_make_path(globals.opttrandir, 0755)) {
             OPTTRAN_OUTPUT(("%s",
                             _ERROR("Error: cannot create opttran directory")));
             exit(OPTTRAN_ERROR);
         }
         
-        globals.outputfile = malloc(strlen(globals.opttrandir) +
-                                    strlen(OPTTRAN_RECO_FILE) + 1);
+        globals.outputfile = (char *)malloc(strlen(globals.opttrandir) +
+                                            strlen(OPTTRAN_RECO_FILE) + 1);
         if (NULL == globals.outputfile) {
             OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
             exit(OPTTRAN_ERROR);
@@ -176,7 +196,7 @@ int main (int argc, char** argv) {
         strcat(globals.outputfile, globals.opttrandir);
         strcat(globals.outputfile, "/");
         strcat(globals.outputfile, OPTTRAN_RECO_FILE);
-        OPTTRAN_OUTPUT_VERBOSE((7, "printing OPTTRAN output to dir (%s)",
+        OPTTRAN_OUTPUT_VERBOSE((7, "printing OPTTRAN output to (%s)",
                                 globals.opttrandir));
     }
     if (0 == globals.use_stdout) {
@@ -195,7 +215,7 @@ int main (int argc, char** argv) {
     /* Step 2: For each code bottleneck... */
     item = (segment_t *)opttran_list_get_first(segments);
     while ((opttran_list_item_t *)item != &(segments->sentinel)) {
-        OPTTRAN_OUTPUT_VERBOSE((4, "%s %s:%d",
+        OPTTRAN_OUTPUT_VERBOSE((4, "%s (%s:%d)",
                                 _YELLOW("selecting recommendation for"),
                                 item->filename, item->line_number));
         if (1 == globals.use_opttran) {
@@ -222,13 +242,19 @@ int main (int argc, char** argv) {
             OPTTRAN_OUTPUT(("%s", _ERROR("Error: selecting recommendations")));
             exit(OPTTRAN_ERROR);
         }
+        
         if (0 == globals.use_opttran) {
             fprintf(globals.outputfile_FP, "\n");
-
+        }
+        
+        /* Step 4: extract fragments */
+        if (1 == globals.use_opttran){
+            OPTTRAN_OUTPUT_VERBOSE((4, "code fragments will be put on (%s)",
+                                    globals.opttrandir));
             if (NULL != globals.source_file) {
                 /* Hey ROSE, here we go... */
                 if (OPTTRAN_ERROR == extract_fragment(item)) {
-                    OPTTRAN_OUTPUT(("%s %s:%d",
+                    OPTTRAN_OUTPUT(("%s (%s:%d)",
                                     _ERROR("Error: extracting fragments for"),
                                     item->filename, item->line_number));
                 }
@@ -241,7 +267,7 @@ int main (int argc, char** argv) {
         item = (segment_t *)opttran_list_get_next(item);
     }
 
-    /* Step 4: If we are using an output file, close it! (metrics DB too) */
+    /* Step 5: If we are using an output file, close it! (metrics DB too) */
     if (0 == globals.use_stdout) {
         fclose(globals.outputfile_FP);
     }
@@ -284,21 +310,22 @@ static void show_help(void) {
     printf("  -f --inputfile     Use 'file' as input for performance measurements\n");
     printf("  -o --outputfile    Use 'file' as output for recommendations (default: stdout)\n");
     printf("                     if the file exists its content will be overwritten\n");
-    printf("  -a --opttran       Create OptTran (automatic performance optimization) files\n");
-    printf("                     into 'dir' directory (default: create no OptTran files)\n");
-    printf("                     this argument overwrites -o, no output will be produced\n");
     printf("  -d --database      Select the recommendation database file\n");
     printf("                     (default: %s/%s)\n", OPTTRAN_VARDIR, RECOMMENDATION_DB);
     printf("  -m --metricfile    Use 'file' to define metrics different from the default\n");
     printf("  -n --newmetrics    Do not use the system metrics table. A temporary table will\n");
     printf("                     be created using the default metrics file:\n");
     printf("                     %s/%s\n", OPTTRAN_ETCDIR, METRICS_FILE);
+    printf("  -a --opttran       Create OptTran (automatic performance optimization) files\n");
+    printf("                     into 'dir' directory (default: create no OptTran files).\n");
+    printf("                     This argument overwrites -o (no output on STDOUT, except\n");
+    printf("                     for verbose messages)\n");
+    printf("  -s --sourcefile    Use 'file' to extract source code fragments identified as\n");
+    printf("                     bootleneck by PerfExpert (this option sets -a argument)\n");
     printf("  -v --verbose       Enable verbose mode using default verbose level (5)\n");
     printf("  -l --verbose_level Enable verbose mode using a specific verbose level (1-10)\n");
     printf("  -c --colorful      Enable colors on verbose mode, no weird characters will\n");
     printf("                     apper on output files\n");
-    printf("  -s --sourcefile    Use 'file' to extract source code fragments identified as\n");
-    printf("                     bootleneck by PerfExpert\n");
     printf("  -h --help          Show this message\n");
 
     /* I suppose that if I've to show the help is because something is wrong,
@@ -414,6 +441,7 @@ static int parse_cli_params(int argc, char *argv[]) {
             /* Use opttran? */
             case 'a':
                 globals.use_opttran = 1;
+                globals.use_stdout = 0;
                 globals.opttrandir = optarg;
                 OPTTRAN_OUTPUT_VERBOSE((10, "option 'a' set [%s]",
                                         globals.opttrandir));
@@ -442,6 +470,7 @@ static int parse_cli_params(int argc, char *argv[]) {
                 
             /* Specify new metrics */
             case 's':
+                globals.use_opttran = 1;
                 globals.source_file = optarg;
                 OPTTRAN_OUTPUT_VERBOSE((10, "option 's' set [%s]",
                                         globals.source_file));
@@ -455,6 +484,35 @@ static int parse_cli_params(int argc, char *argv[]) {
                 exit(OPTTRAN_ERROR);
         }
     }
+    OPTTRAN_OUTPUT_VERBOSE((10, "Summary of selected options:"));
+    OPTTRAN_OUTPUT_VERBOSE((10, "   Verbose:               %s",
+                            globals.verbose ? "yes" : "no"));
+    OPTTRAN_OUTPUT_VERBOSE((10, "   Verbose level:         %d",
+                            globals.verbose_level));
+    OPTTRAN_OUTPUT_VERBOSE((10, "   Colorful verbose?      %s",
+                            globals.colorful ? "yes" : "no"));
+    OPTTRAN_OUTPUT_VERBOSE((10, "   Use STDOUT?            %s",
+                            globals.use_stdout ? "yes" : "no"));
+    OPTTRAN_OUTPUT_VERBOSE((10, "   Use STDIN?             %s",
+                            globals.use_stdin ? "yes" : "no"));
+    OPTTRAN_OUTPUT_VERBOSE((10, "   Use OPTTRAN?           %s",
+                            globals.use_opttran ? "yes" : "no"));
+    OPTTRAN_OUTPUT_VERBOSE((10, "   Input file:            %s",
+                            globals.inputfile ? globals.inputfile : "(null)"));
+    OPTTRAN_OUTPUT_VERBOSE((10, "   Output file:           %s",
+                            globals.outputfile ? globals.outputfile : "(null)"));
+    OPTTRAN_OUTPUT_VERBOSE((10, "   Database file:         %s",
+                            globals.dbfile ? globals.dbfile : "(null)"));
+    OPTTRAN_OUTPUT_VERBOSE((10, "   Metrics file:          %s",
+                            globals.metrics_file ? globals.metrics_file : "(null)"));
+    OPTTRAN_OUTPUT_VERBOSE((10, "   Use temporary metrics: %s",
+                            globals.use_temp_metrics ? "yes" : "no"));
+    OPTTRAN_OUTPUT_VERBOSE((10, "   Metrics table:         %s",
+                            globals.metrics_table ? globals.metrics_table : "(null)"));
+    OPTTRAN_OUTPUT_VERBOSE((10, "   OPTTRAN directory:     %s",
+                            globals.opttrandir ? globals.opttrandir : "(null)"));
+    OPTTRAN_OUTPUT_VERBOSE((10, "   Source file:           %s",
+                            globals.source_file ? globals.source_file : "(null)"));
     OPTTRAN_OUTPUT_VERBOSE((4, "=== %s", _BLUE("CLI params")));
     return OPTTRAN_SUCCESS;
 }
@@ -588,7 +646,7 @@ static int parse_segment_params(opttran_list_t *segments_p, FILE *inputfile_p) {
                                     _GREEN("new bottleneck found")));
 
             /* Create a list item for this code bottleneck */
-            item = malloc(sizeof(segment_t));
+            item = (segment_t *)malloc(sizeof(segment_t));
             if (NULL == item) {
                 OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
                 exit(OPTTRAN_ERROR);
@@ -628,7 +686,7 @@ static int parse_segment_params(opttran_list_t *segments_p, FILE *inputfile_p) {
             continue;
         }
 
-        node = malloc(sizeof(node_t) + strlen(buffer) + 1);
+        node = (node_t *)malloc(sizeof(node_t) + strlen(buffer) + 1);
         if (NULL == node) {
             OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
             exit(OPTTRAN_ERROR);
@@ -644,7 +702,7 @@ static int parse_segment_params(opttran_list_t *segments_p, FILE *inputfile_p) {
 
         /* Code param: code.filename */
         if (0 == strncmp("code.filename", node->key, 13)) {
-            item->filename = malloc(strlen(node->value) + 1);
+            item->filename = (char *)malloc(strlen(node->value) + 1);
             if (NULL == item->filename) {
                 OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
                 exit(OPTTRAN_ERROR);
@@ -663,7 +721,7 @@ static int parse_segment_params(opttran_list_t *segments_p, FILE *inputfile_p) {
         }
         /* Code param: code.type */
         if (0 == strncmp("code.type", node->key, 9)) {
-            item->type = malloc(strlen(node->value) + 1);
+            item->type = (char *)malloc(strlen(node->value) + 1);
             if (NULL == item->type) {
                 OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
                 exit(OPTTRAN_ERROR);
@@ -675,7 +733,7 @@ static int parse_segment_params(opttran_list_t *segments_p, FILE *inputfile_p) {
         }
         /* Code param: code.extra_info */
         if (0 == strncmp("code.extra_info", node->key, 15)) {
-            item->extra_info = malloc(strlen(node->value) + 1);
+            item->extra_info = (char *)malloc(strlen(node->value) + 1);
             if (NULL == item->extra_info) {
                 OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
                 exit(OPTTRAN_ERROR);
@@ -695,7 +753,7 @@ static int parse_segment_params(opttran_list_t *segments_p, FILE *inputfile_p) {
         }
         /* Code param: code.section_info */
         if (0 == strncmp("code.section_info", node->key, 17)) {
-            item->section_info = malloc(strlen(node->value) + 1);
+            item->section_info = (char *)malloc(strlen(node->value) + 1);
             if (NULL == item->section_info) {
                 OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
                 exit(OPTTRAN_ERROR);
@@ -783,8 +841,8 @@ static int output_recommendations(void *not_used, int col_count,
 
     /* Pretty print unless we are using OPTTRAN */
     if (0 == globals.use_opttran) {
-        fprintf(globals.outputfile_FP,
-                "# This is a possible recommendation for this code segment\n");
+        fprintf(globals.outputfile_FP, "#\n# This is a possible recommendation");
+        fprintf(globals.outputfile_FP, " for this code segment\n#\n");
         fprintf(globals.outputfile_FP, "Recommendation: %s\n", col_values[0]);
         fprintf(globals.outputfile_FP, "Reason: %s\n", col_values[1]);
         fprintf(globals.outputfile_FP,
@@ -862,5 +920,9 @@ static int select_recommendations(void) {
     // TODO: everything
     return OPTTRAN_SUCCESS;
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 // EOF
