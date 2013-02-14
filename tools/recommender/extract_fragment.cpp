@@ -116,7 +116,7 @@ int extract_fragment(segment_t *segment) {
 
     /* Build the AST */
     printf("ERRO 1\n");
-    SgProject* project = frontend(1, files);
+    SgProject* project = frontend(2, files);
     printf("ERRO 2\n");
     ROSE_ASSERT(project != NULL);
     printf("ERRO 3\n");
