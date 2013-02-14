@@ -48,45 +48,35 @@
 
 extern globals_t globals; // globals was defined on 'recommender.c'
 
-class visitorTraversal : public AstSimpleProcessing {
+class recommenderTraversal : public AstSimpleProcessing {
     public :
     virtual void visit(SgNode* n);
     virtual void atTraversalStart();
     virtual void atTraversalEnd();
+    segment_t *item;
 };
 
-void visitorTraversal::visit(SgNode* n) {
-    if ((NULL != isSgForStatement(n)) || (NULL != isSgFortranDo(n))) {
-        Sg_File_Info &fileInfo = *(n->get_file_info());
-        // static SgNode* lastFor = NULL;
+void recommenderTraversal::visit(SgNode* node) {
+    if ((NULL != isSgForStatement(node)) || (NULL != isSgFortranDo(node))) {
+        Sg_File_Info &fileInfo = *(node->get_file_info());
 
-//        if (fileInfo.get_line()) {
-//            
-//        }
-        printf("Found a %s on '%s:%d', extracing it:\n", n->sage_class_name(),
-               fileInfo.get_filename(), fileInfo.get_line());
-        printf("%s\n", n->unparseToCompleteString().c_str());
+        OPTTRAN_OUTPUT_VERBOSE((9, "found a (%s) on (%s:%d)",
+                                node->sage_class_name(),
+                                fileInfo.get_filename(),
+                                fileInfo.get_line()));
         
-//        printf("Found a for loop: hooking a printf here...\n");
-//        SgExprStatement * printIt =
-//        SageBuilder::buildFunctionCallStmt("printf",
-//                                           SageBuilder::buildVoidType(),
-//                                           SageBuilder::buildExprListExp(isSgExpression(n)),
-//                                           SageInterface::getScope(n));
-//        SageInterface::insertStatementAfter(isSgStatement(n), printIt);
-//        SgSourceFile* file = isSgSourceFile(buildFile("teste.c", "teste.c", project));
-//        SgNode* test = deepCopyNode(n);
-//        deleteAST (SgNode *node)
+        OPTTRAN_OUTPUT_VERBOSE((9, "%s",
+                                node->unparseToCompleteString().c_str()));
     }
 }
 
-void visitorTraversal::atTraversalStart() {
+void recommenderTraversal::atTraversalStart() {
     // TODO: put the right filename here
     OPTTRAN_OUTPUT_VERBOSE((9, "%s (xxx)",
                             _YELLOW((char *)"starting traversal on ")));
 }
 
-void visitorTraversal::atTraversalEnd() {
+void recommenderTraversal::atTraversalEnd() {
     // TODO: put the right filename here
     OPTTRAN_OUTPUT_VERBOSE((9, "%s (xxx)",
                             _YELLOW((char *)"ending traversal on ")));
@@ -97,8 +87,8 @@ int extract_fragment(segment_t *segment) {
     int filenum;
     int i;
 
-    OPTTRAN_OUTPUT_VERBOSE((7, "%s (%s:%d)",
-                            _GREEN((char *)"extracting fragment from"),
+    OPTTRAN_OUTPUT_VERBOSE((7, "=== %s (%s:%d)",
+                            _BLUE((char *)"Extracting fragment from"),
                             segment->filename, segment->line_number));
     
     /* Fill 'files', aka **argv */
@@ -120,8 +110,9 @@ int extract_fragment(segment_t *segment) {
     /* Build the traversal object and call the traversal function
      * starting at the project node of the AST, using a pre-order traversal
      */
-    visitorTraversal exampleTraversal;
-    exampleTraversal.traverseInputFiles(project, preorder);
+    recommenderTraversal segmentTraversal;
+    segmentTraversal.item = segment;
+    segmentTraversal.traverseInputFiles(project, preorder);
 
     /* Insert manipulations of the AST here... */
 
@@ -137,7 +128,7 @@ int extract_fragment(segment_t *segment) {
     free(files);
 
     OPTTRAN_OUTPUT_VERBOSE((7, "%s",
-                            _GREEN((char *)"fragment extraction concluded")));
+                            _RED((char *)"fragment extraction concluded")));
     
     return OPTTRAN_SUCCESS;
 }
