@@ -136,9 +136,10 @@ static void output(const char *format, ...) {
     char *str = NULL;
     char *temp_str = NULL;
     size_t total_len;
+    int rc;
     
     va_start(arglist, format);
-    vasprintf(&str, format, arglist);
+    rc = vasprintf(&str, format, arglist);
     total_len = strlen(str) + 14 + strlen(PROGRAM_PREFIX);
     
     temp_str = (char *) malloc(total_len);
@@ -172,10 +173,11 @@ static void output_verbose(int level, const char *format, ...) {
     char *str = NULL;
     char *temp_str = NULL;
     size_t total_len;
+    int rc;
     
     if (globals.verbose_level >= level) {
         va_start(arglist, format);
-        vasprintf(&str, format, arglist);
+        rc = vasprintf(&str, format, arglist);
         total_len = strlen(str) + 14 + strlen(PROGRAM_PREFIX);
         
         temp_str = (char *) malloc(total_len);
