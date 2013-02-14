@@ -91,23 +91,33 @@ int extract_fragment(segment_t *segment) {
                             segment->filename, segment->line_number));
     
     /* Build the AST */
-    SgProject* project = frontend(0, NULL);
+    printf("ERRO 1\n");
+    SgProject* project = frontend(1, (char **)(segment->source_file));
+    printf("ERRO 2\n");
     ROSE_ASSERT(project != NULL);
+    printf("ERRO 3\n");
 
     /* Build the traversal object and call the traversal function
      * starting at the project node of the AST, using a pre-order traversal
      */
     visitorTraversal exampleTraversal;
+    printf("ERRO 4\n");
     exampleTraversal.traverseInputFiles(project, preorder);
 
     /* Insert manipulations of the AST here... */
 
     /* Generate source code output */
+    printf("ERRO 5\n");
     int filenum = project->numberOfFiles();
+    printf("ERRO 6\n");
     for (int i=0; i<filenum; ++i) {
+        printf("ERRO 7\n");
         SgSourceFile* file = isSgSourceFile(project->get_fileList()[i]);
+        printf("ERRO 8\n");
         file->unparse();
+        printf("ERRO 9\n");
     }
+    printf("ERRO 10\n");
 
     return OPTTRAN_SUCCESS;
 }
