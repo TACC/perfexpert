@@ -293,7 +293,7 @@ if test x"$ENABLE_RECOMMENDER" = x"yes"; then
         AC_PATH_TOOL(SQLITE3_PROGRAM, sqlite3)
     fi
 
-    # Headers and libraries required for PIPS 
+    # Headers and libraries required for PIPS
 #    AC_SEARCH_LIBS([create_workspace],
 #        [pipslibs], [], [AC_MSG_ERROR([PIPS library not found :-(])])
 #    AC_SEARCH_LIBS([gen_array_append],
@@ -302,6 +302,12 @@ if test x"$ENABLE_RECOMMENDER" = x"yes"; then
 #        [linearlibs], [], [AC_MSG_ERROR([Linear (PIPS) library not found :(])])
 #    AC_CHECK_HEADER([linear.h], [], [AC_MSG_ERROR([not found: linear.h])])
 #    AC_CHECK_HEADER([genC.h], [], [AC_MSG_ERROR([not found: genC.h])])
+
+    # Headers and libraries required for PIPS
+    AC_SEARCH_LIBS([frontend],
+        [rose], [], [AC_MSG_ERROR([ROSE library not found :-(])])
+    AC_CHECK_HEADER([rose.h], [], [AC_MSG_ERROR([not found: rose.h])])
+    AC_CHECK_HEADER([sage3.h], [], [AC_MSG_ERROR([not found: sage3.h])])
 
     ENABLE_RECOMMENDER=recommender
     AC_CONFIG_FILES([tools/recommender/Makefile])

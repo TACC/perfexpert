@@ -29,12 +29,14 @@
 extern "C" {
 #endif
 
-/* Standard headers */
+/* System standard headers */
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
 #include <getopt.h>
+
+/* Utility headers */
 #include <sqlite3.h>
 
 /* OptTran headers */
