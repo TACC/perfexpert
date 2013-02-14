@@ -48,6 +48,43 @@
 
 extern globals_t globals; // globals was defined on 'recommender.c'
 
+class visitorTraversal : public AstSimpleProcessing {
+    public :
+    virtual void visit(SgNode* n);
+    virtual void atTraversalStart();
+    virtual void atTraversalEnd();
+};
+
+void visitorTraversal::visit(SgNode* n) {
+    if ((NULL != isSgForStatement(n)) || (NULL != isSgFortranDo(n))) {
+        // static SgNode* lastFor = NULL;
+        Sg_File_Info &fileInfo = *(n->get_file_info());
+        
+        printf("Found a %s on '%s:%d', extracing it:\n", n->sage_class_name(),
+               fileInfo.get_filename(), fileInfo.get_line());
+        printf("%s\n", n->unparseToCompleteString().c_str());
+        
+//        printf("Found a for loop: hooking a printf here...\n");
+//        SgExprStatement * printIt =
+//        SageBuilder::buildFunctionCallStmt("printf",
+//                                           SageBuilder::buildVoidType(),
+//                                           SageBuilder::buildExprListExp(isSgExpression(n)),
+//                                           SageInterface::getScope(n));
+//        SageInterface::insertStatementAfter(isSgStatement(n), printIt);
+//        SgSourceFile* file = isSgSourceFile(buildFile("teste.c", "teste.c", project));
+//        SgNode* test = deepCopyNode(n);
+//        deleteAST (SgNode *node)
+    }
+}
+
+void visitorTraversal::atTraversalStart() {
+    printf("Traversal starts here.\n");
+}
+
+void visitorTraversal::atTraversalEnd() {
+    printf("Traversal ends here.\n");
+}
+
 int extract_fragment(segment_t *segment) {
     OPTTRAN_OUTPUT_VERBOSE((7, "%s (%s:%d)",
                             _GREEN((char *)"extracting fragment for"),
@@ -60,10 +97,17 @@ int extract_fragment(segment_t *segment) {
     /* Build the traversal object and call the traversal function
      * starting at the project node of the AST, using a pre-order traversal
      */
+    visitorTraversal exampleTraversal;
+    exampleTraversal.traverseInputFiles(project, preorder);
 
     /* Insert manipulations of the AST here... */
 
     /* Generate source code output */
+    int filenum = project->numberOfFiles();
+    for (int i=0; i<filenum; ++i) {
+        SgSourceFile* file = isSgSourceFile(project->get_fileList()[i]);
+        file->unparse();
+    }
 
     return OPTTRAN_SUCCESS;
 }
