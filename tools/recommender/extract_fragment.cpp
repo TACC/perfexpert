@@ -86,13 +86,14 @@ void visitorTraversal::atTraversalEnd() {
 }
 
 int extract_fragment(segment_t *segment) {
+    char teste[][] = { &globals.source_file, NULL }
     OPTTRAN_OUTPUT_VERBOSE((7, "%s (%s:%d)",
                             _GREEN((char *)"extracting fragment for"),
                             segment->filename, segment->line_number));
     
     /* Build the AST */
     printf("ERRO 1\n");
-    SgProject* project = frontend(1, (char **)(globals.source_file));
+    SgProject* project = frontend(1, teste);
     printf("ERRO 2\n");
     ROSE_ASSERT(project != NULL);
     printf("ERRO 3\n");
