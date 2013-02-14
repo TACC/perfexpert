@@ -94,22 +94,22 @@ int extract_fragment(segment_t *segment) {
     
     /* Fill 'files', aka **argv */
     printf("ERRO 1.0\n");
-    **files = malloc(sizeof(char*) * 3);
+    files = (char **)malloc(sizeof(char *) * 3);
 
     printf("ERRO 1.1\n");
     files[0] = (char *)malloc(sizeof("recommender") + 1);
     printf("ERRO 1.2\n");
     if (NULL == files[0]) {
-        OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
+        OPTTRAN_OUTPUT(("%s", _ERROR((char *)"Error: out of memory")));
         exit(OPTTRAN_ERROR);
     }
     printf("ERRO 1.3\n");
     bzero(files[0], sizeof("recommender") + 1);
     printf("ERRO 1.4\n");
-    sprintf(files[0], sizeof("recommender"), "recommender");
+    snprintf(files[0], sizeof("recommender"), "recommender");
     
     printf("ERRO 1.5\n");
-    files[1] = &(globals.source_file);
+    files[1] = globals.source_file;
     printf("ERRO 1.6\n");
     files[2] = NULL;
     printf("ERRO 1.7\n");
