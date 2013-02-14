@@ -32,13 +32,8 @@
 #include <string.h>
 
 /* Utility headers */
-#ifndef ROSE_H
 #include <rose.h>
-#endif
-
-#ifndef SAGE3_CLASSES_H
 #include <sage3.h>
-#endif
 
 /* OptTran headers */
 #include "config.h"
