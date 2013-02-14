@@ -310,11 +310,8 @@ if test x"$ENABLE_RECOMMENDER" = x"yes"; then
     LDFLAGS="$LDFLAGS -lrose"
     AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <rose.h>], [frontend])],
         [TEST_LIBS="$TEST_LIBS -lrose"] [],
-        [AC_MSG_WARN([ROSE library not found :-(])])
+        [AC_MSG_ERROR([ROSE library not found :-(])])
     LDFLAGS=$SAVED_LDFLAGS
-
-    AC_SEARCH_LIBS([frontend],
-        [rose], [], [AC_MSG_ERROR([ROSE library not found :-(])])
     AC_CHECK_HEADER([rose.h], [], [AC_MSG_ERROR([not found: rose.h])])
     AC_CHECK_HEADER([sage3.h], [], [AC_MSG_ERROR([not found: sage3.h])])
 
