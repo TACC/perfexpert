@@ -28,6 +28,7 @@
 bin_PROGRAMS = hound
 hound_SOURCES = hound.c
 
+# Overwrite CFLAGS from 'configure'
 if ENABLE_DEBUG
     AM_CFLAGS = -fPIC -DDEBUG_PRINT -g
 else
