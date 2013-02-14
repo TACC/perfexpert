@@ -314,8 +314,11 @@ if test x"$ENABLE_RECOMMENDER" = x"yes"; then
 #    LDFLAGS=$SAVED_LDFLAGS
 #    AC_SEARCH_LIBS([back_end],
 #        [rose], [], [AC_MSG_ERROR([ROSE library not found :-(])])
-    AC_CHECK_HEADER([rose.h], [], [AC_MSG_ERROR([not found: rose.h])])
-    AC_CHECK_HEADER([sage3.h], [], [AC_MSG_ERROR([not found: sage3.h])])
+#    AC_CHECK_HEADER([rose.h], [], [AC_MSG_ERROR([not found: rose.h])])
+#    AC_CHECK_HEADER([sage3.h], [], [AC_MSG_ERROR([not found: sage3.h])])
+    AC_LANG_CPLUSPLUS
+    AC_CHECK_LIB([rose], [frontend], [],
+        [AC_MSG_ERROR([ROSE library not found :-(])])
 
     ENABLE_RECOMMENDER=recommender
     AC_CONFIG_FILES([tools/recommender/Makefile])
