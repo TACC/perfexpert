@@ -25,20 +25,32 @@
 # $HEADER$
 #
 
+# TODO: replace ROSE include/libdir by some 'configure' parameter (the same for Java)
+
 bin_PROGRAMS = recommender
 
 recommender_CPPFLAGS = -I$(srcdir)/../common -I/opt/rose/include
 recommender_LDADD = -lrose -ljvm 
 recommender_LDFLAGS = -L/opt/rose/lib -L/usr/lib/jvm/java-7-openjdk-amd64/jre/lib/amd64/server
-recommender_SOURCES = main.cpp recommender.c extract_fragment.cpp
+recommender_SOURCES = main.cpp \
+	recommender.c \
+	recommender_extract_fragment.cpp \
+	recommenderTraversal.cpp
 
 # Install the recommendation database
 install-exec-local:
 	$(MKDIR_P) $(localstatedir)
 	$(MKDIR_P) $(sysconfdir)
 	$(MKDIR_P) $(datadir)/$(PACKAGE_NAME)
-	$(SQLITE3_PROGRAM) $(localstatedir)/recommendation.db \
+	if [ -f $(localstatedir)/recommendation.db ]; then echo \
+		!!!WARNING!!! Database file already exists, press ENTER \
+		to overwrite it; read line; fi
+	rm -rf recommendation.db
+	$(SQLITE3_PROGRAM) recommendation.db \
 		< $(top_srcdir)/contrib/recommendation.db.txt
+	$(INSTALL) -m 644 recommendation.db $(localstatedir)
+#	$(SQLITE3_PROGRAM) $(localstatedir)/recommendation.db \
+#		< $(top_srcdir)/contrib/recommendation.db.txt
 	$(INSTALL) -m 644 $(top_srcdir)/contrib/recommender-metrics.txt \
 		$(sysconfdir)
 	$(INSTALL) -m 644 $(top_srcdir)/contrib/recommendation.db.txt \

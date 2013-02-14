@@ -45,51 +45,22 @@
 #include "recommender.h"
 #include "opttran_output.h"
 #include "opttran_util.h"
+#include "recommenderTraversal.h"
 
 extern globals_t globals; // globals was defined on 'recommender.c'
 
-class recommenderTraversal : public AstSimpleProcessing {
-    public :
-    virtual void visit(SgNode* n);
-    virtual void atTraversalStart();
-    virtual void atTraversalEnd();
-    segment_t *item;
-};
-
-void recommenderTraversal::visit(SgNode* node) {
-    if ((NULL != isSgForStatement(node)) || (NULL != isSgFortranDo(node))) {
-        Sg_File_Info &fileInfo = *(node->get_file_info());
-
-        OPTTRAN_OUTPUT_VERBOSE((9, "found a (%s) on (%s:%d)",
-                                node->sage_class_name(),
-                                fileInfo.get_filename(),
-                                fileInfo.get_line()));
-        
-        OPTTRAN_OUTPUT_VERBOSE((9, "%s",
-                                node->unparseToCompleteString().c_str()));
-    }
-}
-
-void recommenderTraversal::atTraversalStart() {
-    // TODO: put the right filename here
-    OPTTRAN_OUTPUT_VERBOSE((9, "%s (xxx)",
-                            _YELLOW((char *)"starting traversal on ")));
-}
-
-void recommenderTraversal::atTraversalEnd() {
-    // TODO: put the right filename here
-    OPTTRAN_OUTPUT_VERBOSE((9, "%s (xxx)",
-                            _YELLOW((char *)"ending traversal on ")));
-}
-
 int extract_fragment(segment_t *segment) {
-    char **files;
+    recommenderTraversal segmentTraversal;
+    SgProject *userProject = NULL;
+    char **files = NULL;
+    char *fragments_dir = NULL;
     int filenum;
     int i;
 
-    OPTTRAN_OUTPUT_VERBOSE((7, "=== %s (%s:%d)",
+    OPTTRAN_OUTPUT_VERBOSE((7, "=== %s (%s:%d) [%s]",
                             _BLUE((char *)"Extracting fragment from"),
-                            segment->filename, segment->line_number));
+                            segment->filename, segment->line_number,
+                            segment->type));
     
     /* Fill 'files', aka **argv */
     files = (char **)malloc(sizeof(char *) * 3);
@@ -103,32 +74,49 @@ int extract_fragment(segment_t *segment) {
     files[1] = globals.source_file;
     files[2] = NULL;
 
-    /* Build the AST */
-    SgProject* project = frontend(2, files);
-    ROSE_ASSERT(project != NULL);
+    /* Load files and build AST */
+    userProject = frontend(2, files);
+    ROSE_ASSERT(userProject != NULL);
 
-    /* Build the traversal object and call the traversal function
-     * starting at the project node of the AST, using a pre-order traversal
+    /* Build the traversal object and call the traversal function starting at
+     * the project node of the AST, using a pre-order traversal
      */
-    recommenderTraversal segmentTraversal;
+    fragments_dir = (char *)malloc(strlen(globals.opttrandir) +
+                                   strlen(OPTTRAN_FRAGMENTS_DIR) + 10);
+    if (NULL == fragments_dir) {
+        OPTTRAN_OUTPUT(("%s", _ERROR((char *)"Error: out of memory")));
+        exit(OPTTRAN_ERROR);
+    }
+    bzero(fragments_dir, (strlen(globals.opttrandir) +
+                          strlen(OPTTRAN_FRAGMENTS_DIR) + 10));
+    sprintf(fragments_dir, "%s/%s", globals.opttrandir, OPTTRAN_FRAGMENTS_DIR);
+    if (OPTTRAN_ERROR == opttran_util_make_path(fragments_dir, 0755)) {
+        OPTTRAN_OUTPUT(("%s", _ERROR((char *)"Error: cannot create fragments directory")));
+        free(fragments_dir);
+        exit(OPTTRAN_ERROR);
+    } else {
+        OPTTRAN_OUTPUT_VERBOSE((8, "...to (%s)", fragments_dir));
+        free(fragments_dir);
+    }
     segmentTraversal.item = segment;
-    segmentTraversal.traverseInputFiles(project, preorder);
+    segmentTraversal.traverseInputFiles(userProject, preorder);
 
     /* Insert manipulations of the AST here... */
 
     /* Generate source code output on OPTTRAN directory */
     // TODO: generate files in the right place
-    filenum = project->numberOfFiles();
+    filenum = userProject->numberOfFiles();
     for (i = 0; i < filenum; ++i) {
-        SgSourceFile* file = isSgSourceFile(project->get_fileList()[i]);
+        SgSourceFile* file = isSgSourceFile(userProject->get_fileList()[i]);
         file->unparse();
     }
 
+    /* I believe now it is OK to free 'argv' */
     free(files[0]);
     free(files);
 
     OPTTRAN_OUTPUT_VERBOSE((7, "%s",
-                            _RED((char *)"fragment extraction concluded")));
+                            _GREEN((char *)"fragment extraction concluded")));
     
     return OPTTRAN_SUCCESS;
 }

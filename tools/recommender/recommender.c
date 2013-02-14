@@ -52,7 +52,6 @@ globals_t globals; // Variable to hold global options, this one is OK
 int recommender_main(int argc, char** argv) {
     opttran_list_t *segments;
     segment_t *item;
-    int i;
     
     /* Set default values for globals */
     globals = (globals_t) {
@@ -96,13 +95,6 @@ int recommender_main(int argc, char** argv) {
         OPTTRAN_OUTPUT(("%s", _ERROR("Error: parsing command line arguments")));
         exit(OPTTRAN_ERROR);
     }
-    if (8 <= globals.verbose_level) {
-        printf("%s complete command line:", PROGRAM_PREFIX);
-        for (i = 0; i < argc; i++) {
-            printf(" %s", argv[i]);
-        }
-        printf("\n");
-    }
     
     /* Connect to database */
     if (OPTTRAN_SUCCESS != database_connect()) {
@@ -144,7 +136,8 @@ int recommender_main(int argc, char** argv) {
             
             /* Open input file */
             if (NULL == (inputfile_FP = fopen(globals.inputfile, "r"))) {
-                OPTTRAN_OUTPUT(("%s (%s)", _ERROR("error openning input file"),
+                OPTTRAN_OUTPUT(("%s (%s)",
+                                _ERROR("Error: unable to open input file"),
                                 globals.inputfile));
                 return OPTTRAN_ERROR;
             } else {
@@ -169,7 +162,7 @@ int recommender_main(int argc, char** argv) {
     }
     
     /* Select/output recommendations for each code bottleneck (5 steps) */
-    /* Step 1: Print to a file or STDOUT is ok? Was OPRTRAN chosen? */
+    /* Step 1: Print to a file or STDOUT is ok? Was OPTTRAN chosen? */
     if (1 == globals.use_opttran) {
         globals.use_stdout = 0;
 
@@ -206,7 +199,8 @@ int recommender_main(int argc, char** argv) {
                                 globals.outputfile));
         globals.outputfile_FP = fopen(globals.outputfile, "w+");
         if (NULL == globals.outputfile_FP) {
-            OPTTRAN_OUTPUT(("%s (%s)", _ERROR("error opening file"),
+            OPTTRAN_OUTPUT(("%s (%s)",
+                            _ERROR("Error: unable to open output file"),
                             globals.outputfile));
             return OPTTRAN_ERROR;
         }
@@ -386,13 +380,13 @@ static int parse_cli_params(int argc, char *argv[]) {
                 OPTTRAN_OUTPUT_VERBOSE((10, "option 'l' set"));
                 if (0 >= atoi(optarg)) {
                     OPTTRAN_OUTPUT(("%s (%d)",
-                                    _ERROR("invalid debug level: too low"),
+                                    _ERROR("Error: invalid debug level (too low)"),
                                     atoi(optarg)));
                     show_help();
                 }
                 if (10 < atoi(optarg)) {
                     OPTTRAN_OUTPUT(("%s (%d)",
-                                    _ERROR("invalid debug level: too high"),
+                                    _ERROR("Error: invalid debug level (too high)"),
                                     atoi(optarg)));
                     show_help();
                 }
@@ -486,6 +480,7 @@ static int parse_cli_params(int argc, char *argv[]) {
                 exit(OPTTRAN_ERROR);
         }
     }
+    OPTTRAN_OUTPUT_VERBOSE((4, "=== %s", _BLUE("CLI params")));
     OPTTRAN_OUTPUT_VERBOSE((10, "Summary of selected options:"));
     OPTTRAN_OUTPUT_VERBOSE((10, "   Verbose:               %s",
                             globals.verbose ? "yes" : "no"));
@@ -515,7 +510,17 @@ static int parse_cli_params(int argc, char *argv[]) {
                             globals.opttrandir ? globals.opttrandir : "(null)"));
     OPTTRAN_OUTPUT_VERBOSE((10, "   Source file:           %s",
                             globals.source_file ? globals.source_file : "(null)"));
-    OPTTRAN_OUTPUT_VERBOSE((4, "=== %s", _BLUE("CLI params")));
+
+    /* Not using OPTTRAN_OUTPUT_VERBOSE because I want only one line */
+    if (8 <= globals.verbose_level) {
+        int i;
+        printf("%s complete command line:", PROGRAM_PREFIX);
+        for (i = 0; i < argc; i++) {
+            printf(" %s", argv[i]);
+        }
+        printf("\n");
+    }
+
     return OPTTRAN_SUCCESS;
 }
 
@@ -530,7 +535,7 @@ static int parse_metrics_file(void) {
                             globals.metrics_file));
 
     if (NULL == (metrics_FP = fopen(globals.metrics_file, "r"))) {
-        OPTTRAN_OUTPUT(("%s (%s)", _ERROR("error openning metrics file"),
+        OPTTRAN_OUTPUT(("%s (%s)", _ERROR("Error: unable to open metrics file"),
                         globals.metrics_file));
         show_help();
     } else {
@@ -812,7 +817,7 @@ static int parse_segment_params(opttran_list_t *segments_p, FILE *inputfile_p) {
 
     /* print a summary of 'segments' */
     OPTTRAN_OUTPUT_VERBOSE((4, "%d %s", opttran_list_get_size(segments_p),
-                            _YELLOW("code segments found")));
+                            _GREEN("code segment(s) found")));
 
     item = (segment_t *)opttran_list_get_first(segments_p);
     while ((opttran_list_item_t *)item != &(segments_p->sentinel)) {
@@ -869,19 +874,20 @@ static int database_connect(void) {
         globals.dbfile = "./recommendation.db";
     }
     if (-1 == access(globals.dbfile, F_OK)) {
-        OPTTRAN_OUTPUT(("%s (%s) %s", _ERROR("recommendation database"),
-                        globals.dbfile, _ERROR("doesn't exist")));
+        OPTTRAN_OUTPUT(("%s (%s)",
+                        _ERROR("Error: recommendation database doesn't exist"),
+                        globals.dbfile));
         return OPTTRAN_ERROR;
     }
     if (-1 == access(globals.dbfile, R_OK)) {
         OPTTRAN_OUTPUT(("%s (%s)",
-                        _ERROR("you don't have permission to read the file"),
+                        _ERROR("Error: you don't have permission to read"),
                         globals.dbfile));
         return OPTTRAN_ERROR;
     }
     
     if (SQLITE_OK != sqlite3_open(globals.dbfile, &(globals.db))) {
-        OPTTRAN_OUTPUT(("%s (%s), %s", _ERROR("error openning database"),
+        OPTTRAN_OUTPUT(("%s (%s), %s", _ERROR("Error: openning database"),
                         globals.dbfile, sqlite3_errmsg(globals.db)));
         sqlite3_close(globals.db);
         exit(OPTTRAN_ERROR);

@@ -69,9 +69,10 @@ extern "C" {
 #define BUFFER_SIZE 4096
 
 /** Default values for some parameters */
-#define RECOMMENDATION_DB "recommendation.db"
-#define METRICS_FILE      "recommender-metrics.txt"
-#define OPTTRAN_RECO_FILE "recommendations.txt"
+#define RECOMMENDATION_DB       "recommendation.db"
+#define METRICS_FILE            "recommender-metrics.txt"
+#define OPTTRAN_RECO_FILE       "recommendations.txt"
+#define OPTTRAN_FRAGMENTS_DIR   "fragments"
 
 /** Structure to hold global variables */
 typedef struct {
