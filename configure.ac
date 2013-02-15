@@ -23,7 +23,7 @@
 # Author: Leonardo Fialho
 #
 # $HEADER$
-#
+#------------------------------------------------------------------------------
 
 # Requires autoconf 2.67 at least
 AC_PREREQ(2.63)
@@ -60,70 +60,70 @@ AC_PROG_LN_S
 AC_PROG_INSTALL
 AM_PROG_CC_C_O
 
+# Checks for typedefs, structures, and compiler characteristics
+AC_C_INLINE
+AC_TYPE_SIZE_T
+
+# Checks for library functions
+AC_FUNC_MALLOC
+
+# Output files
+AC_CONFIG_FILES([Makefile tools/Makefile])
+
 #------------------------------------------------------------------------------
 # Check for the operation system to include specific defines (if needed!)
+#
 AC_CANONICAL_HOST
 AC_MSG_CHECKING([for the OS])
-case "${host}" in
-    *-*-darwin*)
+AS_CASE([${host}],
+    [*-*-darwin*], [
         AC_DEFINE([OS_MACOS], 1, [The host OS is OSX])
-        AC_MSG_RESULT([you are a happy Mac user, I suppose.])
-        HOST_OS=darwin
-        ;;
-    *-*-freebsd*)
+        AC_MSG_RESULT([you are a happy Mac user, I suppose...])
+        HOST_OS=darwin],
+    [*-*-freebsd*], [
         AC_DEFINE([OS_FREEBSD], 1, [The host OS is FreeBSD])
         AC_MSG_RESULT([hum... Are you happy with whis FreeBSD?])
-        HOST_OS=freebsd
-        ;;
-    *-*-linux*)
+        HOST_OS=freebsd],
+    [*-*-linux*], [
         AC_DEFINE([OS_LINUX], 1, [The host OS is Linux])
-        AC_MSG_RESULT([OK, one more geek using Linux.])
-        HOST_OS=linux
-        ;;
-    *-*-netbsd*)
+        AC_MSG_RESULT([one more geek using Linux])
+        HOST_OS=linux],
+    [*-*-netbsd*], [
         AC_DEFINE([OS_NETBSD], 1, [The host OS is NetBSD])
-        AC_MSG_RESULT([Really? There is at least one NetBSD user in the world!])
-        HOST_OS=netbsd
-        ;;
-    *-*-solaris2*)
+        AC_MSG_RESULT([really? There is at least one NetBSD user in the world!])
+        HOST_OS=netbsd],
+    [*-*-solaris2*], [
         AC_DEFINE([OS_SOLARIS], 1, [The host OS is Solaris])
-        AC_MSG_RESULT([I understand, you are stucked on this Solaris, right?.])
-        HOST_OS=solaris
-        ;;
-    *-*-mingw* | *-*-cygwin*)
+        AC_MSG_RESULT([I understand, you are stucked on Solaris, right?])
+        HOST_OS=solaris],
+    [*-*-mingw* | *-*-cygwin*], [
         AC_DEFINE([OS_WINDOWS], 1, [The host OS is Windows])
-        AC_MSG_RESULT([I will pray for you Windows user.])
-        HOST_OS=cygwin
-        ;;
-    *)
-        AC_MSG_RESULT([Unsupported operating system: ${host}])
-        HOST_OS=unknown
-        ;;
-esac
+        AC_MSG_RESULT([I will pray for you, Windows user :-/])
+        HOST_OS=cygwin],
+    [AC_MSG_RESULT([Unsupported operating system: ${host}])
+     HOST_OS=unknown
+])
 
 #------------------------------------------------------------------------------
 # Any architecture-specific requirement?
+#
 AC_MSG_CHECKING([for the architecture])
-case "$host" in
-    i?86-* | k?-* | athlon-* | pentium*-)
+AS_CASE([${host}],
+    [i?86-* | k?-* | athlon-* | pentium*-], [
         AC_DEFINE(ARCH_X86, 1, [Architecture is x86])
-        AC_MSG_RESULT([x86])
-        ;;
-    x86_64-*)
+        AC_MSG_RESULT([x86])],
+    [x86_64-*], [
         AC_DEFINE(ARCH_X86_64, 1, [Architecture is x86-64])
-        AC_MSG_RESULT([x86-64])
-        ;;
-    ppc-* | powerpc-*)
+        AC_MSG_RESULT([x86-64])],
+    [ppc-* | powerpc-*], [
         AC_DEFINE(ARCH_PPC, 1, [Architecture is PowerPC])
-        AC_MSG_RESULT([PowerPC])
-        ;;
-    *)
-        AC_MSG_ERROR([Unknown Architecture])
-        ;;
-esac
+        AC_MSG_RESULT([PowerPC])],
+    [AC_MSG_ERROR([Unknown Architecture])
+])
 
 #------------------------------------------------------------------------------
 # Debug
+#
 AC_MSG_CHECKING([whether to enable debug])
 AC_ARG_ENABLE(debug,
     AS_HELP_STRING([--enable-debug],
@@ -132,18 +132,19 @@ AC_ARG_ENABLE(debug,
 
 AM_CONDITIONAL(ENABLE_DEBUG, test x"$ENABLE_DEBUG" = x"yes")
 
-if test x"$ENABLE_DEBUG" = x"yes"; then
+AS_IF([test x"$ENABLE_DEBUG" = x"yes"], [
     AC_MSG_RESULT(yes)
     AC_DEFINE(ENABLE_DEBUG, [1], [Enable/Disable debug])
     ENABLE_DEBUG=true
-else
+], [
     AC_MSG_RESULT(no)
     AC_DEFINE(ENABLE_DEBUG, [0], [Enable/Disable debug])
     ENABLE_DEBUG=false
-fi
+])
 
 #------------------------------------------------------------------------------
 # Checks for required (but generic) header files
+#
 AC_CHECK_HEADER([stdio.h],     [], [AC_MSG_ERROR([not found: stdio.h])])
 AC_CHECK_HEADER([getopt.h],    [], [AC_MSG_ERROR([not found: getopt.h])])
 AC_CHECK_HEADER([ctype.h],     [], [AC_MSG_ERROR([not found: ctype.h])])
@@ -155,47 +156,33 @@ AC_CHECK_HEADER([sys/stat.h],  [], [AC_MSG_ERROR([not found: sys/stat.h])])
 AC_CHECK_HEADER([sys/types.h], [], [AC_MSG_ERROR([not found: sys/types.h])])
 AC_CHECK_HEADER([errno.h],     [], [AC_MSG_ERROR([not found: errno.h])])
 
-# Checks for typedefs, structures, and compiler characteristics
-AC_C_INLINE
-AC_TYPE_SIZE_T
-
-# Checks for library functions
-AC_FUNC_MALLOC
-
-# Output files
-AC_CONFIG_FILES([Makefile
-	tools/Makefile])
-
 #------------------------------------------------------------------------------
 # Enable/Disable 'perfexpert' (BEGIN)
+#
 AC_MSG_CHECKING([whether to enable PerfExpert])
 AC_ARG_ENABLE(perfexpert,
     [AS_HELP_STRING([--disable-perfexpert],
         [Enable/Disable the application profiler tool @<:@default=enabled@:>@])],
     ENABLE_PERFEXPERT=$enableval, ENABLE_PERFEXPERT=yes)
 
-if test x"$ENABLE_PERFEXPERT" = x"yes"; then
+AS_IF([test x"$ENABLE_PERFEXPERT" = x"yes"], [
     AC_MSG_RESULT(yes)
     AC_DEFINE(OPTTRAN_ENABLE_PERFEXPERT, [1], [Enable/Disable perfexpert])
 
     # First of all, we need Apache Ant
     AC_CHECK_PROG(ANT_PROGRAM, ant, yes)
-    if test x"$ANT_PROGRAM" != x"yes" ; then
-        AC_MSG_ERROR([Please install Apache Ant.])
-    else
-        AC_PATH_TOOL(ANT_PROGRAM, ant)
-    fi
+    AS_IF([test x"$ANT_PROGRAM" != x"yes"],
+        [AC_MSG_ERROR([Please install Apache Ant.])],
+        [AC_PATH_TOOL(ANT_PROGRAM, ant)])
 
     # hpcdata, perfexpert and perfexert_run script requires Bash shell
     AC_CHECK_PROG(BASH_PROGRAM, bash, yes)
-    if test x"$BASH_PROGRAM" != x"yes" ; then
-        AC_MSG_ERROR([Some of PerfExpert scripts require Bash shell.])
-    else
-        AC_PATH_TOOL(BASH_PROGRAM, bash)
-    fi
+    AS_IF([test x"$BASH_PROGRAM" != x"yes"],
+        [AC_MSG_ERROR([Some of PerfExpert scripts require Bash shell.])],
+        [AC_PATH_TOOL(BASH_PROGRAM, bash)])
 
     # Currently, hound and sniffer only works on Linux.
-    if test x"$HOST_OS" == x"linux"; then
+    AS_IF([test x"$HOST_OS" == x"linux"], [
 
         # Headers required exclusivelly for hound
         AC_CHECK_HEADER([inttypes.h], [], [AC_MSG_ERROR([not found: inttypes.h])])
@@ -206,30 +193,26 @@ if test x"$ENABLE_PERFEXPERT" = x"yes"; then
         # Headers and libraries required for sniffer
         AC_SEARCH_LIBS([PAPI_library_init, PAPI_add_event, PAPI_create_eventset,
             PAPI_get_event_info, PAPI_event_name_to_code, PAPI_query_event],
-            [papi],, [AC_MSG_ERROR([PAPI library not found :(])])
+            [papi],, [AC_MSG_ERROR([PAPI library not found!])])
         AC_CHECK_HEADER([papi.h], [], [AC_MSG_ERROR([not found: papi.h])])
 
-        # Some tools from HPCToolKit are required to perfexpert_run_exp.ss
+        # Some tools from HPCToolKit are required to perfexpert_run_exp.sh
         AC_CHECK_PROG(HPCSTRUCT_PROGRAM, hpcstruct, yes)
-        if test x"$HPCSTRUCT_PROGRAM" != x"yes" ; then
-            AC_MSG_ERROR([It seems like you don't have HPCToolkit installed.])
-        else
-            AC_PATH_TOOL(HPCSTRUCT_PROGRAM, hpcstruct)
-        fi
-        AC_CHECK_PROG(HPCRUN_PROGRAM, hpcrun, yes)
-        if test x"$HPCRUN_PROGRAM" != x"yes" ; then
-            AC_MSG_ERROR([It seems like you don't have HPCToolkit installed.])
-        else
-            AC_PATH_TOOL(HPCRUN_PROGRAM, hpcrun)
-        fi
-        AC_CHECK_PROG(HPCPROF_PROGRAM, hpcprof, yes)
-        if test x"$HPCPROF_PROGRAM" != x"yes" ; then
-            AC_MSG_ERROR([It seems like you don't have HPCToolkit installed.])
-        else
-            AC_PATH_TOOL(HPCPROF_PROGRAM, hpcprof)
-        fi
+        AS_IF([test x"$HPCSTRUCT_PROGRAM" != x"yes"],
+            [AC_MSG_ERROR([It seems like you don't have HPCToolkit installed.])],
+            [AC_PATH_TOOL(HPCSTRUCT_PROGRAM, hpcstruct)])
 
-        # Generate hound and sniffer Makefiles and perfexpert_run_exp.sh
+        AC_CHECK_PROG(HPCRUN_PROGRAM, hpcrun, yes)
+        AS_IF([test x"$HPCRUN_PROGRAM" != x"yes"],
+            [AC_MSG_ERROR([It seems like you don't have HPCToolkit installed.])],
+            [AC_PATH_TOOL(HPCRUN_PROGRAM, hpcrun)])
+
+        AC_CHECK_PROG(HPCPROF_PROGRAM, hpcprof, yes)
+        AS_IF([test x"$HPCPROF_PROGRAM" != x"yes"],
+            [AC_MSG_ERROR([It seems like you don't have HPCToolkit installed.])],
+            [AC_PATH_TOOL(HPCPROF_PROGRAM, hpcprof)])
+
+        # Generate hound and sniffer Makefiles and also perfexpert_run_exp.sh
         ENABLE_HOUND=hound
         ENABLE_SNIFFER=sniffer
         AC_CONFIG_FILES([tools/perfexpert/hound/Makefile])
@@ -238,13 +221,13 @@ if test x"$ENABLE_PERFEXPERT" = x"yes"; then
             [chmod +x tools/perfexpert/sniffer/perfexpert_run_exp.sh_template])
         AC_SUBST([ENABLE_HOUND])
         AC_SUBST([ENABLE_SNIFFER])
-    else
+    ], [
         # Disable hound and sniffer
         ENABLE_HOUND=
         ENABLE_SNIFFER=
         AC_SUBST([ENABLE_HOUND])
         AC_SUBST([ENABLE_SNIFFER])
-    fi
+    ])
 
     # Generate Makefiles for perfexpert
     ENABLE_PERFEXPERT=perfexpert
@@ -260,86 +243,94 @@ if test x"$ENABLE_PERFEXPERT" = x"yes"; then
     AC_CONFIG_FILES([tools/perfexpert/perfexpert/Makefile])
     AC_CONFIG_FILES([tools/perfexpert/perfexpert/build.xml])
     AC_SUBST([ENABLE_PERFEXPERT])
-else
+], [
     AC_MSG_RESULT(no)
     AC_DEFINE(OPTTRAN_ENABLE_PERFEXPERT, [0], [Enable/Disable perfexpert])
     ENABLE_PERFEXPERT=
     AC_SUBST([ENABLE_PERFEXPERT])
-fi
+])
+#
 # Enable/Disable 'perfexpert' (END)
-
 #------------------------------------------------------------------------------
 # Enable/Disable 'recommender' (BEGIN)
+#
 AC_MSG_CHECKING([whether to enable the Optimization Recommender])
-AC_ARG_ENABLE(recommender,
+AC_ARG_ENABLE([recommender],
     [AS_HELP_STRING([--disable-recommender],
         [Enable/Disable the optimization recommender tool @<:@default=enabled@:>@])],
-    ENABLE_RECOMMENDER=$enableval, ENABLE_RECOMMENDER=yes)
+    [ENABLE_RECOMMENDER=$enableval], [ENABLE_RECOMMENDER=yes])
 
-if test x"$ENABLE_RECOMMENDER" = x"yes"; then
+AS_IF([test x"$ENABLE_RECOMMENDER" = x"yes"], [
     AC_MSG_RESULT(yes)
     AC_DEFINE(OPTTRAN_ENABLE_RECOMMENDER, [1], [Enable/Disable recommender])
 
     # Checks for SQLite headers, lib and program (only if 'recommender' is enabled)
     AC_SEARCH_LIBS([sqlite3_open, sqlite3_close, sqlite3_exec, sqlite3_free,
-        sqlite3_errmsg], [sqlite3],, [AC_MSG_ERROR([SQLite3 library not found :(])])
+        sqlite3_errmsg], [sqlite3],, [AC_MSG_ERROR([SQLite3 library not found])])
     AC_CHECK_HEADER([sqlite3.h], [], [AC_MSG_ERROR([not found: sqlite3.h])])
 
-    # Check for the SQLite utility
+    # Check for the SQLite program
     AC_CHECK_PROG(SQLITE3_PROGRAM, sqlite3, yes)
-    if test x"$SQLITE3_PROGRAM" != x"yes" ; then
-        AC_MSG_ERROR([Please install SQLite3 utility.])
-    else
-        AC_PATH_TOOL(SQLITE3_PROGRAM, sqlite3)
-    fi
+    AS_IF([test x"$SQLITE3_PROGRAM" = x"yes"],
+        [AC_PATH_TOOL(SQLITE3_PROGRAM, sqlite3)],
+        [AC_MSG_ERROR([Please install SQLite3 program])])
 
-    # Headers and libraries required for PIPS
-#    AC_SEARCH_LIBS([create_workspace],
-#        [pipslibs], [], [AC_MSG_ERROR([PIPS library not found :-(])])
-#    AC_SEARCH_LIBS([gen_array_append],
-#        [newgenlibs], [], [AC_MSG_ERROR([Newgen (PIPS) library not found :(])])
-#    AC_SEARCH_LIBS([initialize_sc],
-#        [linearlibs], [], [AC_MSG_ERROR([Linear (PIPS) library not found :(])])
-#    AC_CHECK_HEADER([linear.h], [], [AC_MSG_ERROR([not found: linear.h])])
-#    AC_CHECK_HEADER([genC.h], [], [AC_MSG_ERROR([not found: genC.h])])
+    # Support to Rose Compiler
+    AC_ARG_WITH([rose],
+        [AS_HELP_STRING([--with-rose],
+            [support to Rose Compiler @<:@default=no@:>@ which enables some
+            advanced features on the Optimization Recommender tool, as well is
+            required to enable OptTran:CT (Code Transformer tool), and
+            OptTran:CR (Code Re-Assembler tool). Use the argument to set Rose's
+            prefix path, if you do that there is no need to set neither
+            '--with-rose-libs' nor '--with-rose-include'])],
+        [WITH_ROSE=$withval], [WITH_ROSE=no])
 
-    # Headers and libraries required for ROSE. Thanks ROSE for not have a C
-    # interface, now I have to write all these stuff... :-/
-#    AC_LANG(C++)
-#    SAVED_LDFLAGS=$LDFLAGS
-#    LDFLAGS="$LDFLAGS -lrose"
-#    AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <rose.h>], [frontend])],
-#        [TEST_LIBS="$TEST_LIBS -lrose"] [],
-#        [AC_MSG_ERROR([ROSE library not found :-(])])
-#    LDFLAGS=$SAVED_LDFLAGS
-#    AC_SEARCH_LIBS([back_end],
-#        [rose], [], [AC_MSG_ERROR([ROSE library not found :-(])])
-#    AC_CHECK_HEADER([rose.h], [], [AC_MSG_ERROR([not found: rose.h])])
-#    AC_CHECK_HEADER([sage3.h], [], [AC_MSG_ERROR([not found: sage3.h])])
-#    AC_LANG_CPLUSPLUS
-#    AC_CHECK_LIB([rose], [frontend], [],
-#        [AC_MSG_ERROR([ROSE library not found :-(])])
+    AC_ARG_WITH([rose-libs],
+        [AS_HELP_STRING([--with-rose-lib],
+            [support to Rose Compiler @<:@default=no@:>@, use the argument to
+             set Rose's library path])],
+        [WITH_ROSE_LIB=withval], [WITH_ROSE_LIB=no])
+
+    AC_ARG_WITH([rose-include],
+        [AS_HELP_STRING([--with-rose-include],
+            [support to Rose Compiler @<:@default=no@:>@, use the argument to
+             set Rose's include path])],
+        [WITH_ROSE_INCLUDE=$withval], [WITH_ROSE_INCLUDE=no])
+
+    AS_IF([test x"$WITH_ROSE" = x"no"], [
+        AC_MSG_WARN([Rose support disabled])
+        AC_MSG_WARN([- OptTran automatic source optimization will be disabled])
+        AC_MSG_WARN([- Recommender tool will disable fragments extraction])
+    ], [
+        # TODO: check for Rose libraries
+        AC_MSG_RESULT([checking for Rose libraries at $WITH_ROSE/lib])
+
+        # TODO: check for Rose header files
+        AC_MSG_RESULT([checking for Rose include files at $WITH_ROSE/include])
+    ])
 
     ENABLE_RECOMMENDER=recommender
     AC_CONFIG_FILES([tools/recommender/Makefile])
     AC_SUBST([ENABLE_RECOMMENDER])
-else
+], [
     AC_MSG_RESULT(no)
     AC_DEFINE(OPTTRAN_ENABLE_RECOMMENDER, [0], [Enable/Disable recommender])
     ENABLE_RECOMMENDER=
     AC_SUBST([ENABLE_RECOMMENDER])
-fi
+])
+#
 # Enable/Disable 'recommender' (END)
-
 #------------------------------------------------------------------------------
 # Enable/Disable 'opttran_pr' (BEGIN)
+#
 AC_MSG_CHECKING([whether to enable OptTran Pattern Recognizer])
 AC_ARG_ENABLE(opttran_pr,
     [AS_HELP_STRING([--disable-opttran_pr],
         [Enable/Disable the pattern recognizer tool @<:@default=enabled@:>@])],
     ENABLE_OPTTRAN_PR=$enableval, ENABLE_OPTTRAN_PR=yes)
 
-if test x"$ENABLE_OPTTRAN_PR" = x"yes"; then
+AS_IF([test x"$ENABLE_OPTTRAN_PR" = x"yes"], [
     AC_MSG_RESULT(yes)
     AC_DEFINE(OPTTRAN_ENABLE_PR, [1], [Enable/Disable opttran_pr])
 
@@ -352,66 +343,68 @@ if test x"$ENABLE_OPTTRAN_PR" = x"yes"; then
     AC_CONFIG_FILES([tools/pr/c_loop1/Makefile])
     AC_CONFIG_FILES([tools/pr/c_loop2/Makefile])
     AC_SUBST([ENABLE_PR])
-else
+], [
     AC_MSG_RESULT(no)
     AC_DEFINE(OPTTRAN_ENABLE_PR, [0], [Enable/Disable opttran_pr])
     ENABLE_PR=
     AC_SUBST([ENABLE_PR])
-fi
+])
+#
 # Enable/Disable 'opttran_pr' (END)
-
 #------------------------------------------------------------------------------
 # Enable/Disable 'opttran_ct' (BEGIN)
+#
 AC_MSG_CHECKING([whether to enable OptTran Code Transformer])
 AC_ARG_ENABLE(opttran_ct,
     [AS_HELP_STRING([--disable-opttran_ct],
         [Enable/Disable the code transformer tool @<:@default=disabled@:>@])],
-    ENABLE_OPTTRAN_CT=$enableval, ENABLE_OPTTRAN_CT=no)
+    [ENABLE_OPTTRAN_CT=$enableval], [ENABLE_OPTTRAN_CT=no])
 
-if test x"$ENABLE_OPTTRAN_CT" = x"yes"; then
+AS_IF([test x"$ENABLE_OPTTRAN_CT" = x"yes"], [
     AC_MSG_RESULT(yes)
     AC_DEFINE(OPTTRAN_ENABLE_CT, [1], [Enable/Disable opttran_ct])
 
     ENABLE_CT=ct
-#    AC_CONFIG_FILES([tools/ct/Makefile])
+    AC_CONFIG_FILES([tools/ct/Makefile])
     AC_SUBST([ENABLE_CT])
-else
+], [
     AC_MSG_RESULT(no)
     AC_DEFINE(OPTTRAN_ENABLE_CT, [0], [Enable/Disable opttran_ct])
     ENABLE_CT=
     AC_SUBST([ENABLE_CT])
-fi
+])
+#
 # Enable/Disable 'opttran_ct' (END)
-
 #------------------------------------------------------------------------------
 # Enable/Disable 'opttran_cr' (BEGIN)
+#
 AC_MSG_CHECKING([whether to enable OptTran Code Re-Assembler])
 AC_ARG_ENABLE(opttran_cr,
     [AS_HELP_STRING([--disable-opttran_cr],
         [Enable/Disable the code re-assembler tool @<:@default=disabled@:>@])],
-    ENABLE_OPTTRAN_CR=$enableval, ENABLE_OPTTRAN_CR=no)
+    [ENABLE_OPTTRAN_CR=$enableval], [ENABLE_OPTTRAN_CR=no])
 
-if test x"$ENABLE_OPTTRAN_CR" = x"yes"; then
+AS_IF([test x"$ENABLE_OPTTRAN_CR" = x"yes"], [
     AC_MSG_RESULT(yes)
     AC_DEFINE(OPTTRAN_ENABLE_CR, [1], [Enable/Disable opttran_cr])
 
     ENABLE_CR=cr
-#    AC_CONFIG_FILES([tools/cr/Makefile])
+    AC_CONFIG_FILES([tools/cr/Makefile])
     AC_SUBST([ENABLE_CR])
-else
+], [
     AC_MSG_RESULT(no)
     AC_DEFINE(OPTTRAN_ENABLE_CR, [0], [Enable/Disable opttran_cr])
     ENABLE_CR=
     AC_SUBST([ENABLE_CR])
-fi
+])
+#
 # Enable/Disable 'opttran_cr' (END)
-
 #------------------------------------------------------------------------------
 # Generate output files
+#
 AC_OUTPUT
 
 AC_MSG_NOTICE([])
-
 if test x"$HOST_OS" != x"linux"; then
     AC_MSG_NOTICE([=========================================================])
     AC_MSG_NOTICE([                     !!! WARNING !!!                     ])
@@ -428,7 +421,6 @@ if test x"$HOST_OS" != x"linux"; then
     AC_MSG_NOTICE([  the program you want to analyze/optimize to the        ])
     AC_MSG_NOTICE([  $prefix/etc directory on this machine.                 ])
 fi
-
 AC_MSG_NOTICE([=========================================================])
 AC_MSG_NOTICE([   Great news! Now you just have to run "make install"   ])
 AC_MSG_NOTICE([=========================================================])
