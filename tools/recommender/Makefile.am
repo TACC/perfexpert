@@ -28,7 +28,7 @@
 bin_PROGRAMS = recommender
 
 recommender_CPPFLAGS = -I$(srcdir)/../common
-recommender_SOURCES = recommender.c
+recommender_SOURCES = main.cpp recommender.c
 
 # recommender_LDADD = -lrose -ljvm
 # recommender_LDFLAGS = -L/opt/rose/lib -L/usr/lib/jvm/java-7-openjdk-amd64/jre/lib/amd64/server
@@ -39,8 +39,7 @@ if WITH_ROSE_SUPPORT
 recommender_CPPFLAGS += -I$(WITH_ROSE_INCLUDE) -DHAVE_ROSE
 recommender_LDADD = -lrose -ljvm 
 recommender_LDFLAGS = -L$(WITH_ROSE_LIBS) -L$(WITH_JVM_LIBS)
-recommender_SOURCES += main.cpp \
-	recommender_extract_fragment.cpp \
+recommender_SOURCES += recommender_extract_fragment.cpp \
 	recommenderTraversal.cpp
 endif
 
