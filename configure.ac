@@ -145,12 +145,13 @@ AS_IF([test x"$ENABLE_DEBUG" = x"yes"], [
 #------------------------------------------------------------------------------
 # Checks for required (but generic) header files
 #
+AC_HEADER_STDC
+#AC_CHECK_HEADER([stdlib.h],    [], [AC_MSG_ERROR([not found: stdlib.h])])
+#AC_CHECK_HEADER([stdarg.h],    [], [AC_MSG_ERROR([not found: stdarg.h])])
+#AC_CHECK_HEADER([string.h],    [], [AC_MSG_ERROR([not found: string.h])])
 AC_CHECK_HEADER([stdio.h],     [], [AC_MSG_ERROR([not found: stdio.h])])
 AC_CHECK_HEADER([getopt.h],    [], [AC_MSG_ERROR([not found: getopt.h])])
 AC_CHECK_HEADER([ctype.h],     [], [AC_MSG_ERROR([not found: ctype.h])])
-AC_CHECK_HEADER([stdlib.h],    [], [AC_MSG_ERROR([not found: stdlib.h])])
-AC_CHECK_HEADER([stdarg.h],    [], [AC_MSG_ERROR([not found: stdarg.h])])
-AC_CHECK_HEADER([string.h],    [], [AC_MSG_ERROR([not found: string.h])])
 AC_CHECK_HEADER([unistd.h],    [], [AC_MSG_ERROR([not found: unistd.h])])
 AC_CHECK_HEADER([sys/stat.h],  [], [AC_MSG_ERROR([not found: sys/stat.h])])
 AC_CHECK_HEADER([sys/types.h], [], [AC_MSG_ERROR([not found: sys/types.h])])
@@ -460,25 +461,27 @@ AS_IF([test x"$ENABLE_OPTTRAN_CR" = x"yes"], [
 AC_OUTPUT
 
 AC_MSG_NOTICE([])
-if test x"$HOST_OS" != x"linux"; then
-    AC_MSG_NOTICE([=========================================================])
-    AC_MSG_NOTICE([                     !!! WARNING !!!                     ])
-    AC_MSG_NOTICE([                                                         ])
-    AC_MSG_NOTICE([  Since you are not running Linux, Perfexpert is unable  ])
-    AC_MSG_NOTICE([  to characterize you machine (using hound tool) neither ])
-    AC_MSG_NOTICE([  to generate LCPI configuration file (sniffer tool).    ])
-    AC_MSG_NOTICE([  Thus, 'perfexpert_run' script will not be available    ])
-    AC_MSG_NOTICE([  to you. However, if you want to run PerfExpert on this ])
-    AC_MSG_NOTICE([  installation just to analyze an experiment file you're ])
-    AC_MSG_NOTICE([  planning to run on another host you just have to copy  ])
-    AC_MSG_NOTICE([  the lcpi.properties and machine.properties files from  ])
-    AC_MSG_NOTICE([  the host's \$prefix/etc where you are planning to run  ])
-    AC_MSG_NOTICE([  the program you want to analyze/optimize to the        ])
-    AC_MSG_NOTICE([  $prefix/etc directory on this machine.                 ])
-fi
-AC_MSG_NOTICE([=========================================================])
-AC_MSG_NOTICE([   Great news! Now you just have to run "make install"   ])
-AC_MSG_NOTICE([=========================================================])
+AS_IF([test x"$HOST_OS" != x"linux"], [
+    AS_IF([test x"$ENABLE_PERFEXPERT" = x"yes"], [
+        AC_MSG_NOTICE([========================================================])
+        AC_MSG_NOTICE([                    !!! WARNING !!!                     ])
+        AC_MSG_NOTICE([                                                        ])
+        AC_MSG_NOTICE([ Since you are not running Linux, Perfexpert is unable  ])
+        AC_MSG_NOTICE([ to characterize you machine (using hound tool) neither ])
+        AC_MSG_NOTICE([ to generate LCPI configuration file (sniffer tool).    ])
+        AC_MSG_NOTICE([ Thus, 'perfexpert_run' script will not be available    ])
+        AC_MSG_NOTICE([ to you. However, if you want to run PerfExpert on this ])
+        AC_MSG_NOTICE([ installation just to analyze an experiment file you're ])
+        AC_MSG_NOTICE([ planning to run on another host you just have to copy  ])
+        AC_MSG_NOTICE([ the lcpi.properties and machine.properties files from  ])
+        AC_MSG_NOTICE([ the host's \$prefix/etc where you are planning to run  ])
+        AC_MSG_NOTICE([ the program you want to analyze/optimize to the        ])
+        AC_MSG_NOTICE([ $prefix/etc directory on this machine.                 ])
+    ], [])
+], [])
+AC_MSG_NOTICE([========================================================])
+AC_MSG_NOTICE([  Great news! Now you just have to run "make install"   ])
+AC_MSG_NOTICE([========================================================])
 AC_MSG_NOTICE([])
 
 # EOF
