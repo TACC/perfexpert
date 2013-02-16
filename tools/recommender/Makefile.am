@@ -37,7 +37,7 @@ recommender_LDADD = -lrose -ljvm
 recommender_LDFLAGS = -L$(WITH_ROSE_LIBS) -L$(WITH_JVM_LIBS)
 recommender_SOURCES += recommender_extract_fragment.cpp \
 	recommenderTraversal.cpp
-endif !WITH_ROSE_SUPPORT
+endif
 
 # recommender_LDADD = -lrose -ljvm
 # recommender_LDFLAGS = -L/opt/rose/lib -L/usr/lib/jvm/java-7-openjdk-amd64/jre/lib/amd64/server
