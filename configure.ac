@@ -254,7 +254,6 @@ AS_IF([test x"$ENABLE_PERFEXPERT" = x"yes"], [
 #------------------------------------------------------------------------------
 # Enable/Disable 'recommender' (BEGIN)
 #
-AM_CONDITIONAL([WITH_ROSE_SUPPORT], [test x"$WITH_ROSE_SUPPORT" = x"yes"])
 AC_MSG_CHECKING([whether to enable the Optimization Recommender])
 AC_ARG_ENABLE([recommender],
     [AS_HELP_STRING([--disable-recommender],
@@ -368,6 +367,7 @@ AS_IF([test x"$ENABLE_RECOMMENDER" = x"yes"], [
     ENABLE_RECOMMENDER=
     AC_SUBST([ENABLE_RECOMMENDER])
 ])
+AM_CONDITIONAL([WITH_ROSE_SUPPORT], [test x"$WITH_ROSE_SUPPORT" = x"yes"])
 #
 # Enable/Disable 'recommender' (END)
 #------------------------------------------------------------------------------
