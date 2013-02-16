@@ -255,6 +255,7 @@ AS_IF([test x"$ENABLE_PERFEXPERT" = x"yes"], [
 # Enable/Disable 'recommender' (BEGIN)
 #
 AC_MSG_CHECKING([whether to enable the Optimization Recommender])
+AM_CONDITIONAL([WITH_ROSE_SUPPORT], [test x"$WITH_ROSE_SUPPORT" = x"yes"])
 AC_ARG_ENABLE([recommender],
     [AS_HELP_STRING([--disable-recommender],
         [Enable/Disable the optimization recommender tool @<:@default=enabled@:>@])],
@@ -262,7 +263,6 @@ AC_ARG_ENABLE([recommender],
 
 AS_IF([test x"$ENABLE_RECOMMENDER" = x"yes"], [
     AC_MSG_RESULT(yes)
-    AC_DEFINE(OPTTRAN_ENABLE_RECOMMENDER, [1], [Enable/Disable recommender])
 
     # Checks for SQLite headers, lib and program (only if 'recommender' is enabled)
     AC_SEARCH_LIBS([sqlite3_open, sqlite3_close, sqlite3_exec, sqlite3_free,
@@ -274,10 +274,6 @@ AS_IF([test x"$ENABLE_RECOMMENDER" = x"yes"], [
     AS_IF([test x"$SQLITE3_PROGRAM" = x"yes"],
         [AC_PATH_TOOL(SQLITE3_PROGRAM, sqlite3)],
         [AC_MSG_ERROR([Please install SQLite3 program])])
-
-    ENABLE_RECOMMENDER=recommender
-    AC_CONFIG_FILES([tools/recommender/Makefile])
-    AC_SUBST([ENABLE_RECOMMENDER])
 
     # Support to Rose Compiler (optional)
     AC_MSG_CHECKING([whether to enable the Rose support on Recommender])
@@ -342,7 +338,7 @@ AS_IF([test x"$ENABLE_RECOMMENDER" = x"yes"], [
             AC_MSG_WARN([- Recommender will not be able to extract code fragments])
             WITH_ROSE=no
         ], [
-            WITH_ROSE_SUPPORT=true
+            WITH_ROSE_SUPPORT=yes
             # TODO: check for Rose libraries
             AC_MSG_RESULT([checking for Rose libraries at $WITH_ROSE_LIBS])
 
@@ -359,15 +355,18 @@ AS_IF([test x"$ENABLE_RECOMMENDER" = x"yes"], [
 
             AC_SUBST([WITH_JVM_LIBS])
         ])
-        WITH_ROSE_SUPPORT=false
+        WITH_ROSE_SUPPORT=no
     ])
+    AC_DEFINE(OPTTRAN_ENABLE_RECOMMENDER, [1], [Enable/Disable recommender])
+    ENABLE_RECOMMENDER=recommender
+    AC_CONFIG_FILES([tools/recommender/Makefile])
+    AC_SUBST([ENABLE_RECOMMENDER])
 ], [
     AC_MSG_RESULT(no)
     AC_DEFINE(OPTTRAN_ENABLE_RECOMMENDER, [0], [Enable/Disable recommender])
     ENABLE_RECOMMENDER=
     AC_SUBST([ENABLE_RECOMMENDER])
 ])
-AM_CONDITIONAL([WITH_ROSE_SUPPORT], [test x$WITH_ROSE_SUPPORT = xtrue])
 #
 # Enable/Disable 'recommender' (END)
 #------------------------------------------------------------------------------
