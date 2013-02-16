@@ -310,8 +310,9 @@ AS_IF([test x"$ENABLE_RECOMMENDER" = x"yes"], [
     # Rose requires JVM, so we have to check for JVM
     AC_ARG_WITH([jvm],
         [AS_HELP_STRING([--with-jvm], [JVM is required when Rose is selected,
-            use this argument to set JVM library path])],
-        [WITH_JVM=$withval], [WITH_JVM=no])
+            use this argument to set JVM library path])], [
+        WITH_JVM_LIBS=$withval
+        WITH_JVM=yes], [WITH_JVM=no])
 
     AS_IF([test x"$WITH_ROSE" = x"no"], [
         AC_MSG_RESULT(no)
@@ -350,7 +351,7 @@ AS_IF([test x"$ENABLE_RECOMMENDER" = x"yes"], [
             AC_SUBST([WITH_ROSE_LIBS])
             AC_SUBST([WITH_ROSE_INCLUDE])
             # TODO: check for JVM libraries
-            AC_MSG_RESULT([checking for JVM libraries at $WITH_JVM])
+            AC_MSG_RESULT([checking for JVM libraries at $WITH_JVM_LIBS])
 
 
             AC_SUBST([WITH_JVM_LIBS])
