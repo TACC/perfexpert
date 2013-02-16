@@ -41,6 +41,8 @@ recommender_LDADD = -lrose -ljvm
 recommender_LDFLAGS = -L$(WITH_ROSE_LIBS) -L$(WITH_JVM_LIBS)
 recommender_SOURCES += recommender_extract_fragment.cpp \
 	recommenderTraversal.cpp
+else
+	echo "Que porra é essa?"
 endif
 
 # Install the recommendation database
