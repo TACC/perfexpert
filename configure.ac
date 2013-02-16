@@ -254,6 +254,7 @@ AS_IF([test x"$ENABLE_PERFEXPERT" = x"yes"], [
 #------------------------------------------------------------------------------
 # Enable/Disable 'recommender' (BEGIN)
 #
+AM_CONDITIONAL([WITH_ROSE_SUPPORT], [test x"$WITH_ROSE_SUPPORT" = x"yes"])
 AC_MSG_CHECKING([whether to enable the Optimization Recommender])
 AC_ARG_ENABLE([recommender],
     [AS_HELP_STRING([--disable-recommender],
@@ -275,44 +276,92 @@ AS_IF([test x"$ENABLE_RECOMMENDER" = x"yes"], [
         [AC_PATH_TOOL(SQLITE3_PROGRAM, sqlite3)],
         [AC_MSG_ERROR([Please install SQLite3 program])])
 
-    # Support to Rose Compiler
+    ENABLE_RECOMMENDER=recommender
+    AC_CONFIG_FILES([tools/recommender/Makefile])
+    AC_SUBST([ENABLE_RECOMMENDER])
+
+    # Support to Rose Compiler (optional)
+    AC_MSG_CHECKING([whether to enable the Rose support on Recommender])
     AC_ARG_WITH([rose],
         [AS_HELP_STRING([--with-rose],
             [support to Rose Compiler @<:@default=no@:>@ which enables some
             advanced features on the Optimization Recommender tool, as well is
             required to enable OptTran:CT (Code Transformer tool), and
-            OptTran:CR (Code Re-Assembler tool). Use the argument to set Rose's
-            prefix path, if you do that there is no need to set neither
-            '--with-rose-libs' nor '--with-rose-include'])],
-        [WITH_ROSE=$withval], [WITH_ROSE=no])
+            OptTran:CR (Code Re-Assembler tool). Use this argument to set Rose's
+            prefix path (where Rose's libraries and include directories are
+            located), if you do that there is no need to set neither
+            '--with-rose-libs' nor '--with-rose-include'])], [
+        WITH_ROSE=$withval
+        WITH_ROSE_LIBS=$WITH_ROSE/lib
+        WITH_ROSE_INCLUDE=$WITH_ROSE/include], [WITH_ROSE=no])
 
     AC_ARG_WITH([rose-libs],
-        [AS_HELP_STRING([--with-rose-lib],
-            [support to Rose Compiler @<:@default=no@:>@, use the argument to
-             set Rose's library path])],
-        [WITH_ROSE_LIB=withval], [WITH_ROSE_LIB=no])
+        [AS_HELP_STRING([--with-rose-libs],
+            [support to Rose Compiler @<:@default=no@:>@, use this argument to
+             set Rose's library path (it overwrites '--with-rose argument)])], [
+        WITH_ROSE_LIBS=$withval
+        WITH_ROSE=yes], [])
 
     AC_ARG_WITH([rose-include],
         [AS_HELP_STRING([--with-rose-include],
-            [support to Rose Compiler @<:@default=no@:>@, use the argument to
-             set Rose's include path])],
-        [WITH_ROSE_INCLUDE=$withval], [WITH_ROSE_INCLUDE=no])
+            [support to Rose Compiler @<:@default=no@:>@, use this argument to
+             set Rose's include path (it overwrites '--with-rose argument)])], [
+        WITH_ROSE_INCLUDE=$withval
+        WITH_ROSE=yes], [])
+
+    # Both WITH_ROSE_LIBS and WITH_ROSE_INCLUDE have to be defined
+    AS_IF([test x"$WITH_ROSE_LIBS" = x""], [WITH_ROSE=no], [])
+    AS_IF([test x"$WITH_ROSE_INCLUDE" = x""], [WITH_ROSE=no], [])
+
+    # Rose requires JVM, so we have to check for JVM
+    AC_ARG_WITH([jvm],
+        [AS_HELP_STRING([--with-jvm], [JVM is required when Rose is selected,
+            use this argument to set JVM library path])],
+        [WITH_JVM=$withval], [WITH_JVM=no])
 
     AS_IF([test x"$WITH_ROSE" = x"no"], [
+        AC_MSG_RESULT(no)
+
+        AS_IF([test x"$WITH_ROSE_LIBS" = x""], [
+            AC_MSG_WARN([You chose to enable Rose support but Rose library path
+                was not defined. Use '--with-rose-libs=path' or
+                '--with-rose=prefix' to define it])], [])
+
+        AS_IF([test x"$WITH_ROSE_INCLUDE" = x""], [
+            AC_MSG_WARN([You chose to enable Rose support but Rose include path
+                was not defined. Use '--with-rose-include=path' or
+                '--with-rose=prefix' to define it])], [])
+
         AC_MSG_WARN([Rose support disabled])
         AC_MSG_WARN([- OptTran automatic source optimization will be disabled])
         AC_MSG_WARN([- Recommender tool will disable fragments extraction])
     ], [
-        # TODO: check for Rose libraries
-        AC_MSG_RESULT([checking for Rose libraries at $WITH_ROSE/lib])
+        AC_MSG_RESULT(yes)
+        AS_IF([test x"$WITH_JVM" = x"no"], [
+            AC_MSG_WARN([JVM not selected, so Rose support will be disabled])
+            AC_MSG_WARN([- OptTran automatic source optimization will be disabled])
+            AC_MSG_WARN([- Recommender will not be able to extract code fragments])
+            WITH_ROSE=no
+        ], [
+            WITH_ROSE_SUPPORT=yes
+            # TODO: check for Rose libraries
+            AC_MSG_RESULT([checking for Rose libraries at $WITH_ROSE_LIBS])
 
-        # TODO: check for Rose header files
-        AC_MSG_RESULT([checking for Rose include files at $WITH_ROSE/include])
+
+            # TODO: check for Rose header files
+            AC_MSG_RESULT([checking for Rose include files at $WITH_ROSE_INCLUDE])
+
+
+            AC_SUBST([WITH_ROSE_LIBS])
+            AC_SUBST([WITH_ROSE_INCLUDE])
+            # TODO: check for JVM libraries
+            AC_MSG_RESULT([checking for JVM libraries at $WITH_JVM])
+
+
+            AC_SUBST([WITH_JVM_LIBS])
+        ])
+        WITH_ROSE_SUPPORT=no
     ])
-
-    ENABLE_RECOMMENDER=recommender
-    AC_CONFIG_FILES([tools/recommender/Makefile])
-    AC_SUBST([ENABLE_RECOMMENDER])
 ], [
     AC_MSG_RESULT(no)
     AC_DEFINE(OPTTRAN_ENABLE_RECOMMENDER, [0], [Enable/Disable recommender])
@@ -323,6 +372,9 @@ AS_IF([test x"$ENABLE_RECOMMENDER" = x"yes"], [
 # Enable/Disable 'recommender' (END)
 #------------------------------------------------------------------------------
 # Enable/Disable 'opttran_pr' (BEGIN)
+#
+# It looks like there is a bug while checking for LEX which makes the LEX check
+# result appears before the result message (yes/no).
 #
 AC_MSG_CHECKING([whether to enable OptTran Pattern Recognizer])
 AC_ARG_ENABLE(opttran_pr,

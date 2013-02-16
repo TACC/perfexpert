@@ -27,14 +27,22 @@
 
 bin_PROGRAMS = recommender
 
-# TODO: replace ROSE include/libdir by some 'configure' parameter (the same for Java)
-recommender_CPPFLAGS = -I$(srcdir)/../common -I/opt/rose/include
+recommender_CPPFLAGS = -I$(srcdir)/../common
+recommender_SOURCES = recommender.c
+
+# recommender_LDADD = -lrose -ljvm
+# recommender_LDFLAGS = -L/opt/rose/lib -L/usr/lib/jvm/java-7-openjdk-amd64/jre/lib/amd64/server
+# recommender_CPPFLAGS += -I/opt/rose/include
+
+# Adding support to Rose
+if WITH_ROSE_SUPPORT
+recommender_CPPFLAGS += -I$(WITH_ROSE_INCLUDE) -DHAVE_ROSE
 recommender_LDADD = -lrose -ljvm 
-recommender_LDFLAGS = -L/opt/rose/lib -L/usr/lib/jvm/java-7-openjdk-amd64/jre/lib/amd64/server
-recommender_SOURCES = main.cpp \
-	recommender.c \
+recommender_LDFLAGS = -L$(WITH_ROSE_LIBS) -L$(WITH_JVM_LIBS)
+recommender_SOURCES += main.cpp \
 	recommender_extract_fragment.cpp \
 	recommenderTraversal.cpp
+endif
 
 # Install the recommendation database
 install-exec-local:

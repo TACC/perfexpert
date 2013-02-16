@@ -157,8 +157,10 @@ static int  database_connect(void);
 static int  database_query(void);
 static int  calculate_weigths(void);
 static int  select_recommendations(void);
+#ifdef HAVE_ROSE
 int  extract_fragment(segment_t *segment);
-
+#endif
+    
 #ifdef __cplusplus
 }
 #endif

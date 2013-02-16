@@ -244,6 +244,7 @@ int recommender_main(int argc, char** argv) {
         }
         
         /* Step 4: extract fragments */
+#ifdef HAVE_ROSE
         if ((1 == globals.use_opttran) && (NULL != globals.source_file)) {
             char *fragments_dir = NULL;
 
@@ -275,7 +276,7 @@ int recommender_main(int argc, char** argv) {
         } else {
             OPTTRAN_OUTPUT_VERBOSE((4, "source code not defined, can't extract fragments"));
         }
-        
+#endif
         /* Move to the next code bottleneck */
         item = (segment_t *)opttran_list_get_next(item);
     }
@@ -329,12 +330,14 @@ static void show_help(void) {
     printf("  -n --newmetrics    Do not use the system metrics table. A temporary table will\n");
     printf("                     be created using the default metrics file:\n");
     printf("                     %s/%s\n", OPTTRAN_ETCDIR, METRICS_FILE);
+#ifdef HAVE_ROSE
     printf("  -a --opttran       Create OptTran (automatic performance optimization) files\n");
     printf("                     into 'dir' directory (default: create no OptTran files).\n");
     printf("                     This argument overwrites -o (no output on STDOUT, except\n");
     printf("                     for verbose messages)\n");
     printf("  -s --sourcefile    Use 'file' to extract source code fragments identified as\n");
     printf("                     bootleneck by PerfExpert (this option sets -a argument)\n");
+#endif
     printf("  -v --verbose       Enable verbose mode using default verbose level (5)\n");
     printf("  -l --verbose_level Enable verbose mode using a specific verbose level (1-10)\n");
     printf("  -c --colorful      Enable colors on verbose mode, no weird characters will\n");
@@ -382,9 +385,13 @@ static int parse_cli_params(int argc, char *argv[]) {
 
     while (1) {
         /* get parameter */
+#ifdef HAVE_ROSE
         parameter = getopt_long(argc, argv, "cvhinm:l:f:d:o:a:s:", long_options,
                                 &option_index);
-        
+#else
+        parameter = getopt_long(argc, argv, "cvhinm:l:f:d:o:", long_options,
+                                &option_index);
+#endif
         /* Detect the end of the options */
         if (-1 == parameter)
             break;
@@ -450,7 +457,7 @@ static int parse_cli_params(int argc, char *argv[]) {
                 OPTTRAN_OUTPUT_VERBOSE((10, "option 'o' set [%s]",
                                         globals.outputfile));
                 break;
-
+#ifdef HAVE_ROSE
             /* Use opttran? */
             case 'a':
                 globals.use_opttran = 1;
@@ -460,6 +467,14 @@ static int parse_cli_params(int argc, char *argv[]) {
                                         globals.opttrandir));
                 break;
 
+            /* Specify the source */
+            case 's':
+                globals.use_opttran = 1;
+                globals.source_file = optarg;
+                OPTTRAN_OUTPUT_VERBOSE((10, "option 's' set [%s]",
+                                        globals.source_file));
+                break;
+#endif
             /* Which database file? */
             case 'd':
                 globals.dbfile = optarg;
@@ -479,14 +494,6 @@ static int parse_cli_params(int argc, char *argv[]) {
                 globals.metrics_file = optarg;
                 OPTTRAN_OUTPUT_VERBOSE((10, "option 'm' set [%s]",
                                         globals.metrics_file));
-                break;
-                
-            /* Specify new metrics */
-            case 's':
-                globals.use_opttran = 1;
-                globals.source_file = optarg;
-                OPTTRAN_OUTPUT_VERBOSE((10, "option 's' set [%s]",
-                                        globals.source_file));
                 break;
                 
             /* Unknown option */
