@@ -336,6 +336,7 @@ AS_IF([test x"$ENABLE_RECOMMENDER" = x"yes"], [
             AC_MSG_WARN([- OptTran automatic source optimization will be disabled])
             AC_MSG_WARN([- Recommender will not be able to extract code fragments])
             WITH_ROSE=no
+            WITH_ROSE_SUPPORT=no
         ], [
             WITH_ROSE_SUPPORT=yes
             # TODO: check for Rose libraries
@@ -355,8 +356,6 @@ AS_IF([test x"$ENABLE_RECOMMENDER" = x"yes"], [
             AC_SUBST([WITH_JVM_LIBS])
             AC_DEFINE([HAVE_ROSE], [1], [Enable Rose support])
         ])
-        WITH_ROSE_SUPPORT=no
-        AC_DEFINE([HAVE_ROSE], [0], [Disable Rose support])
     ])
     AC_DEFINE(OPTTRAN_ENABLE_RECOMMENDER, [1], [Enable/Disable recommender])
     ENABLE_RECOMMENDER=recommender
