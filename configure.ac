@@ -255,7 +255,6 @@ AS_IF([test x"$ENABLE_PERFEXPERT" = x"yes"], [
 # Enable/Disable 'recommender' (BEGIN)
 #
 AC_MSG_CHECKING([whether to enable the Optimization Recommender])
-AM_CONDITIONAL([WITH_ROSE_SUPPORT], [test x"$WITH_ROSE_SUPPORT" = x"yes"])
 AC_ARG_ENABLE([recommender],
     [AS_HELP_STRING([--disable-recommender],
         [Enable/Disable the optimization recommender tool @<:@default=enabled@:>@])],
@@ -354,8 +353,10 @@ AS_IF([test x"$ENABLE_RECOMMENDER" = x"yes"], [
 
 
             AC_SUBST([WITH_JVM_LIBS])
+            AC_DEFINE([HAVE_ROSE], [1], [Enable Rose support])
         ])
         WITH_ROSE_SUPPORT=no
+        AC_DEFINE([HAVE_ROSE], [0], [Disable Rose support])
     ])
     AC_DEFINE(OPTTRAN_ENABLE_RECOMMENDER, [1], [Enable/Disable recommender])
     ENABLE_RECOMMENDER=recommender
@@ -367,6 +368,9 @@ AS_IF([test x"$ENABLE_RECOMMENDER" = x"yes"], [
     ENABLE_RECOMMENDER=
     AC_SUBST([ENABLE_RECOMMENDER])
 ])
+
+AM_CONDITIONAL([WITH_ROSE_SUPPORT], [test x"$WITH_ROSE_SUPPORT" = x"yes"])
+# AM_COND_IF([WITH_ROSE_SUPPORT], [AC_CONFIG_FILES([wrapper:wrapper.in])])
 #
 # Enable/Disable 'recommender' (END)
 #------------------------------------------------------------------------------
