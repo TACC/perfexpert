@@ -342,7 +342,7 @@ AS_IF([test x"$ENABLE_RECOMMENDER" = x"yes"], [
             AC_MSG_WARN([- Recommender will not be able to extract code fragments])
             WITH_ROSE=no
         ], [
-            WITH_ROSE_SUPPORT=yes
+            WITH_ROSE_SUPPORT=true
             # TODO: check for Rose libraries
             AC_MSG_RESULT([checking for Rose libraries at $WITH_ROSE_LIBS])
 
@@ -359,7 +359,7 @@ AS_IF([test x"$ENABLE_RECOMMENDER" = x"yes"], [
 
             AC_SUBST([WITH_JVM_LIBS])
         ])
-        WITH_ROSE_SUPPORT=no
+        WITH_ROSE_SUPPORT=false
     ])
 ], [
     AC_MSG_RESULT(no)
@@ -367,7 +367,7 @@ AS_IF([test x"$ENABLE_RECOMMENDER" = x"yes"], [
     ENABLE_RECOMMENDER=
     AC_SUBST([ENABLE_RECOMMENDER])
 ])
-AM_CONDITIONAL([WITH_ROSE_SUPPORT], [test x"$WITH_ROSE_SUPPORT" = x"yes"])
+AM_CONDITIONAL([WITH_ROSE_SUPPORT], [test x$WITH_ROSE_SUPPORT = xtrue])
 #
 # Enable/Disable 'recommender' (END)
 #------------------------------------------------------------------------------
