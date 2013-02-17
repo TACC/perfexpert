@@ -360,8 +360,11 @@ AS_IF([test x"$ENABLE_RECOMMENDER" = x"yes"], [
             LIBS="-lrose -ljvm"
             AC_MSG_RESULT([XPTO: CPPFLAGS=$CPPFLAGS, LDFLAGS=$LDFLAGS, LDADD=$LDADD, LIBS=$LIBS])
             AC_LANG([C++])
+            # A random large enough (to avoid similarity with other libraries)
+            # C symbol of Rose library (just to avoid checking for C++ symbols)
+            AC_CHECK_LIB([rose], [add_friend_function_to_lookup_list_for_class],
+                [], [AC_MSG_ERROR([not found: rose lib])])
 #            AC_CHECK_HEADER([rose.h], [], [AC_MSG_ERROR([not found: rose.h])])
-            AC_CHECK_LIB([rose], [frontend], [], [AC_MSG_ERROR([not found: rose lib])])
             AC_LANG([C])
             CPPFLAGS=$OLD_CPPFLAGS
             LDFLAGS=$OLD_LDFLAGS
