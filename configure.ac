@@ -357,10 +357,10 @@ AS_IF([test x"$ENABLE_RECOMMENDER" = x"yes"], [
             OLD_LDFLAGS="$LDFLAGS"
             OLD_LDADD="$LDADD"
             OLD_LIBS="$LIBS"
-            CPPFLAGS="-I$WITH_ROSE_INCLUDE"
-            LDFLAGS="-L$WITH_ROSE_LIBS -L$WITH_JVM_LIBS"
-            LDADD="-lrose -ljvm"
-            LIBS="-lrose -ljvm"
+            CPPFLAGS+="-I$WITH_ROSE_INCLUDE"
+            LDFLAGS+="-L$WITH_ROSE_LIBS -L$WITH_JVM_LIBS"
+            LDADD+="-lrose -ljvm"
+            LIBS+="-lrose -ljvm"
             AC_MSG_RESULT([XPTO_OLD: CPPFLAGS=$OLD_CPPFLAGS, LDFLAGS=$OLD_LDFLAGS, LDADD=$OLD_LDADD, LIBS=$OLD_LIBS])
             AC_MSG_RESULT([XPTO: CPPFLAGS=$CPPFLAGS, LDFLAGS=$LDFLAGS, LDADD=$LDADD, LIBS=$LIBS])
             AC_LANG([C++])
