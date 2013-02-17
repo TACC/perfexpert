@@ -288,7 +288,12 @@ AS_IF([test x"$ENABLE_RECOMMENDER" = x"yes"], [
             '--with-rose-libs' nor '--with-rose-include'])], [
         WITH_ROSE=$withval
         WITH_ROSE_LIBS=$WITH_ROSE/lib
-        WITH_ROSE_INCLUDE=$WITH_ROSE/include], [WITH_ROSE=no])
+        WITH_ROSE_INCLUDE=$WITH_ROSE/include
+    ], [
+        WITH_ROSE=no
+        WITH_ROSE_LIBS=no
+        WITH_ROSE_INCLUDE=no
+    ])
 
     AC_ARG_WITH([rose-libs],
         [AS_HELP_STRING([--with-rose-libs],
@@ -344,6 +349,24 @@ AS_IF([test x"$ENABLE_RECOMMENDER" = x"yes"], [
             # TODO: check for Rose libraries
             AC_MSG_RESULT([checking for Rose libraries at $WITH_ROSE_LIBS])
 
+
+#            OLD_CPPFLAGS=$CPPFLAGS
+#            OLD_LDFLAGS=$LDFLAGS
+#            OLD_LDADD=$LDADD
+#            OLD_LIBS=$LIBS
+#            CPPFLAGS="-I$WITH_ROSE_INCLUDE"
+#            LDFLAGS="-L$WITH_ROSE_LIBS -L$WITH_JVM_LIBS"
+#            LDADD="-lrose -ljvm"
+#            LIBS="-lrose -ljvm"
+#            AC_MSG_RESULT([XPTO: CPPFLAGS=$CPPFLAGS, LDFLAGS=$LDFLAGS, LDADD=$LDADD, LIBS=$LIBS])
+#            AC_LANG([C++])
+#            AC_CHECK_HEADER([rose.h], [], [AC_MSG_ERROR([not found: rose.h])])
+#            AC_CHECK_LIB()
+#            AC_LANG([C])
+#            CPPFLAGS=$OLD_CPPFLAGS
+#            LDFLAGS=$OLD_LDFLAGS
+#            LDADD=$OLD_LDADD
+#            LIBS=$OLD_LIBS
 
             # TODO: check for Rose header files
             AC_MSG_RESULT([checking for Rose include files at $WITH_ROSE_INCLUDE])
