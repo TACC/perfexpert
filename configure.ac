@@ -367,7 +367,7 @@ AS_IF([test x"$ENABLE_RECOMMENDER" = x"yes"], [
                 [], [AC_MSG_ERROR([not found: rose lib])])
 
 
-            AC_CHECK_HEADER([$WITH_ROSE_INCLUDE/rose.h], [], [AC_MSG_ERROR([not found: rose.h])])
+            AC_CHECK_HEADER([rose.h], [], [AC_MSG_ERROR([not found: rose.h])])
 
 
             AC_LANG_POP([C++])
