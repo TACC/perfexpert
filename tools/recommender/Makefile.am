@@ -32,9 +32,7 @@ recommender_SOURCES = main.cpp recommender.c
 
 # Adding support to Rose
 if WITH_ROSE_SUPPORT
-recommender_CPPFLAGS += -I$(WITH_ROSE_INCLUDE) -DHAVE_ROSE
-recommender_LDADD = -lrose -ljvm
-recommender_LDFLAGS = -L$(WITH_ROSE_LIBS) -L$(WITH_JVM_LIBS)
+recommender_CPPFLAGS += -DHAVE_ROSE
 recommender_SOURCES += recommender_extract_fragment.cpp \
 	recommenderTraversal.cpp
 endif
