@@ -48,6 +48,9 @@ AM_INIT_AUTOMAKE([foreign -Wall -Werror])
 # Ok Automake 1.12, shut up!
 m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 
+# Just to have a cleaner output
+#AM_SILENT_RULES([yes])
+
 # We need some work here to save hound from -O2 on CFLAGS. This overwrites any
 # user-defined CFLAGS :-/
 CFLAGS=-g
@@ -358,6 +361,7 @@ AS_IF([test x"$ENABLE_RECOMMENDER" = x"yes"], [
             LDFLAGS="-L$WITH_ROSE_LIBS -L$WITH_JVM_LIBS"
             LDADD="-lrose -ljvm"
             LIBS="-lrose -ljvm"
+            AC_MSG_RESULT([XPTO_OLD: CPPFLAGS=$OLD_CPPFLAGS, LDFLAGS=$OLD_LDFLAGS, LDADD=$OLD_LDADD, LIBS=$OLD_LIBS])
             AC_MSG_RESULT([XPTO: CPPFLAGS=$CPPFLAGS, LDFLAGS=$LDFLAGS, LDADD=$LDADD, LIBS=$LIBS])
             AC_LANG([C++])
             # A random number of C symbols from Rose library
