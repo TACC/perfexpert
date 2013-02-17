@@ -356,11 +356,10 @@ AS_IF([test x"$ENABLE_RECOMMENDER" = x"yes"], [
             AC_MSG_RESULT([checking for Rose libraries at $WITH_ROSE_LIBS])
 
 
-#            LIBS+="-lrose -ljvm"
             AC_MSG_RESULT([XPTO_OLD: CPPFLAGS=$OLD_CPPFLAGS, LDFLAGS=$OLD_LDFLAGS, LDADD=$OLD_LDADD, LIBS=$OLD_LIBS])
             AC_MSG_RESULT([XPTO: CPPFLAGS=$CPPFLAGS, LDFLAGS=$LDFLAGS, LDADD=$LDADD, LIBS=$LIBS])
 
-            AC_LANG_PUSH([C++])
+#            AC_LANG_PUSH([C++])
             # A random number of C symbols from Rose library
             # (just to avoid checking for C++ symbols)
             AC_CHECK_LIB([rose], [node_has_side_effects, add_to_scopes_list,
@@ -371,7 +370,7 @@ AS_IF([test x"$ENABLE_RECOMMENDER" = x"yes"], [
             AC_CHECK_HEADER([rose.h], [], [AC_MSG_ERROR([not found: rose.h])])
 
 
-            AC_LANG_POP([C++])
+#            AC_LANG_POP([C++])
 
             # TODO: check for Rose header files
             AC_MSG_RESULT([checking for Rose include files at $WITH_ROSE_INCLUDE])
