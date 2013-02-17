@@ -353,13 +353,13 @@ AS_IF([test x"$ENABLE_RECOMMENDER" = x"yes"], [
             AC_MSG_RESULT([checking for Rose libraries at $WITH_ROSE_LIBS])
 
 
-            OLD_CPPFLAGS="$CPPFLAGS"
-            OLD_LDFLAGS="$LDFLAGS"
-            OLD_LDADD="$LDADD"
-            OLD_LIBS="$LIBS"
+            #OLD_CPPFLAGS="$CPPFLAGS"
+            #OLD_LDFLAGS="$LDFLAGS"
+            #OLD_LDADD="$LDADD"
+            #OLD_LIBS="$LIBS"
             CPPFLAGS+="-I$WITH_ROSE_INCLUDE"
             LDFLAGS+="-L$WITH_ROSE_LIBS -L$WITH_JVM_LIBS"
-            LDADD+="-lrose -ljvm"
+            #LDADD+="-lrose -ljvm"
             LIBS+="-lrose -ljvm"
             AC_MSG_RESULT([XPTO_OLD: CPPFLAGS=$OLD_CPPFLAGS, LDFLAGS=$OLD_LDFLAGS, LDADD=$OLD_LDADD, LIBS=$OLD_LIBS])
             AC_MSG_RESULT([XPTO: CPPFLAGS=$CPPFLAGS, LDFLAGS=$LDFLAGS, LDADD=$LDADD, LIBS=$LIBS])
@@ -369,13 +369,13 @@ AS_IF([test x"$ENABLE_RECOMMENDER" = x"yes"], [
             AC_CHECK_LIB([rose], [node_has_side_effects, add_to_scopes_list,
                 copy_node, node_complete_object_type, set_node_operator],
                 [], [AC_MSG_ERROR([not found: rose lib])])
-            AX_ABSOLUTE_HEADER([rose.h])
+            AX_ABSOLUTE_HEADER(rose.h)
             #AC_CHECK_HEADER([$WITH_ROSE_INCLUDE/rose.h], [], [AC_MSG_ERROR([not found: rose.h])])
             AC_LANG_POP([C++])
-            CPPFLAGS=$OLD_CPPFLAGS
-            LDFLAGS=$OLD_LDFLAGS
-            LDADD=$OLD_LDADD
-            LIBS=$OLD_LIBS
+            #CPPFLAGS=$OLD_CPPFLAGS
+            #LDFLAGS=$OLD_LDFLAGS
+            #LDADD=$OLD_LDADD
+            #LIBS=$OLD_LIBS
 
             # TODO: check for Rose header files
             AC_MSG_RESULT([checking for Rose include files at $WITH_ROSE_INCLUDE])
