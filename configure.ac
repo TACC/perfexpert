@@ -301,14 +301,14 @@ AS_IF([test x"$ENABLE_RECOMMENDER" = x"yes"], [
     AC_ARG_WITH([rose-libs],
         [AS_HELP_STRING([--with-rose-libs],
             [support to Rose Compiler @<:@default=no@:>@, use this argument to
-             set Rose's library path (it overwrites '--with-rose argument)])], [
+             set Rose's library path (it overwrites '--with-rose argument')])], [
         WITH_ROSE_LIBS=$withval
         WITH_ROSE=yes], [])
 
     AC_ARG_WITH([rose-include],
         [AS_HELP_STRING([--with-rose-include],
             [support to Rose Compiler @<:@default=no@:>@, use this argument to
-             set Rose's include path (it overwrites '--with-rose argument)])], [
+             set Rose's include path (it overwrites '--with-rose argument')])], [
         WITH_ROSE_INCLUDE=$withval
         WITH_ROSE=yes], [])
 
@@ -361,7 +361,6 @@ AS_IF([test x"$ENABLE_RECOMMENDER" = x"yes"], [
             # How the hell I can make the rose.h header check work?
             #AC_CHECK_HEADER([rose.h], [], [AC_MSG_ERROR([not found: rose.h])])
 
-            # TODO: check for JVM libraries
             # A random number of C symbols from JVM library
             AC_CHECK_LIB([jvm], [JVM_InitializeCompiler, JVM_Open, JVM_Close], [],
                 [AC_MSG_ERROR([Java Virtual Machine (JVM) library not found!])])
