@@ -353,10 +353,10 @@ AS_IF([test x"$ENABLE_RECOMMENDER" = x"yes"], [
             AC_MSG_RESULT([checking for Rose libraries at $WITH_ROSE_LIBS])
 
 
-            OLD_CPPFLAGS=$CPPFLAGS
-            OLD_LDFLAGS=$LDFLAGS
-            OLD_LDADD=$LDADD
-            OLD_LIBS=$LIBS
+            OLD_CPPFLAGS="$CPPFLAGS"
+            OLD_LDFLAGS="$LDFLAGS"
+            OLD_LDADD="$LDADD"
+            OLD_LIBS="$LIBS"
             CPPFLAGS="-I$WITH_ROSE_INCLUDE"
             LDFLAGS="-L$WITH_ROSE_LIBS -L$WITH_JVM_LIBS"
             LDADD="-lrose -ljvm"
@@ -369,7 +369,7 @@ AS_IF([test x"$ENABLE_RECOMMENDER" = x"yes"], [
             AC_CHECK_LIB([rose], [node_has_side_effects, add_to_scopes_list,
                 copy_node, node_complete_object_type, set_node_operator],
                 [], [AC_MSG_ERROR([not found: rose lib])])
-#            AC_CHECK_HEADER([rose.h], [], [AC_MSG_ERROR([not found: rose.h])])
+            AC_CHECK_HEADER([rose.h], [], [AC_MSG_ERROR([not found: rose.h])])
             AC_LANG([C])
             CPPFLAGS=$OLD_CPPFLAGS
             LDFLAGS=$OLD_LDFLAGS
