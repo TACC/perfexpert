@@ -63,7 +63,7 @@ public class AutoSCOPE {
   public AutoSCOPE(String dbname) {
     String PERFEXPERT_HOME = "";
     ClassLoader loader = AutoSCOPE.class.getClassLoader();
-    String regex = "jar:file:(.*)/bin/perfexpert.jar!/edu/utexas/tacc/perfexpert/PerfExpert.class";
+    String regex = "jar:file:(.*)/lib/perfexpert.jar!/edu/utexas/tacc/perfexpert/PerfExpert.class";
     String jarURL = loader.getResource("edu/utexas/tacc/perfexpert/PerfExpert.class").toString();
 
     Pattern p = Pattern.compile(regex);
@@ -72,7 +72,8 @@ public class AutoSCOPE {
     if (m.find())
       PERFEXPERT_HOME = m.group(1);
     else {
-      System.err.println("Could not extract location of PerfExpert jar from URL: (" + jarURL + "), was using the regex: \"" + regex + "\"");
+      System.err.println("Could not extract location of PerfExpert jar from URL: (" +
+                         jarURL + "), was using the regex: \"" + regex + "\"");
       System.exit(1);
     }
 
@@ -339,7 +340,7 @@ public class AutoSCOPE {
     codesection.weights[br_i] = lcpi.get("branch_instructions.overall");
     codesection.weights[fpt_fast] = lcpi.get("floating-point_instr.fast_FP_instr");
     codesection.weights[fpt_slow] = lcpi.get("floating-point_instr.slow_FP_instr");
-    
+
     float m = codesection.weights[d_L1];
     m = Math.max(m, codesection.weights[d_L2]);
     m = Math.max(m, codesection.weights[d_mem]);
@@ -361,7 +362,7 @@ public class AutoSCOPE {
     codesection.weights[br_i] -= m;
     codesection.weights[fpt_fast] -= m;
     codesection.weights[fpt_slow] -= m;
-
+      
     cs.add(codesection);
   }
 

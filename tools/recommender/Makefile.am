@@ -37,11 +37,9 @@ recommender_SOURCES += recommender_extract_fragment.cpp \
 	recommenderTraversal.cpp
 endif
 
-# recommender_LDADD = -lrose -ljvm
-# recommender_LDFLAGS = -L/opt/rose/lib -L/usr/lib/jvm/java-7-openjdk-amd64/jre/lib/amd64/server
-# recommender_CPPFLAGS += -I/opt/rose/include
-
 # Install the recommendation database
+# TODO: replace this terrible warning by a code to rename current file with
+#       today's date and print a nice warning about this
 install-exec-local:
 	$(MKDIR_P) $(localstatedir)
 	$(MKDIR_P) $(sysconfdir)
