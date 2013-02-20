@@ -30,7 +30,6 @@ bin_PROGRAMS = recommender
 recommender_SOURCES = main.cpp recommender.c
 recommender_CPPFLAGS = -I$(srcdir)/../common
 recommender_CFLAGS = -O3
-recommender_CXXFLAGS = -O3
 
 # Adding support to Rose
 if WITH_ROSE_SUPPORT
