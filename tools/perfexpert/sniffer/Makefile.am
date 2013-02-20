@@ -27,7 +27,6 @@
 
 bin_PROGRAMS = sniffer
 sniffer_SOURCES = sniffer.c
-# sniffer_LDADD = /usr/local/lib/libpapi.a
 
 install-exec-local:
 	./sniffer

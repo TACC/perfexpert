@@ -176,8 +176,9 @@ AS_IF([test x"$ENABLE_PERFEXPERT" = x"yes"], [
     # Apache ANT argument
     AC_ARG_WITH([apache-ant],
         [AS_HELP_STRING([--with-apache-ant],
-            [Use this argument to set where Apache Ant program is installed (it
-            is not necessary if it is in the PATH)])], [PATH+="$withval"], [])
+            [Use this argument to set where Apache Ant program is installed (not
+            necessary if it is in the PATH). Ant is necessary to compile
+            PerfExpert])], [PATH+="$withval"], [])
 
     # First of all, we need Apache Ant
     AC_CHECK_PROG(ANT_PROGRAM, ant, yes)
@@ -206,8 +207,8 @@ AS_IF([test x"$ENABLE_PERFEXPERT" = x"yes"], [
                 [Use this argument to set PAPI prefix path (where PAPI library
                 and include directories are located), if you do that there is no
                 need to set neither '--with-papi-lib' nor '--with-papi-include'.
-                This argument is not necessary if PAPI is installed into the
-                '/usr' directory])], [
+                This argument is not necessary if PAPI is installed into default
+                directories ('/usr' and '/usr/local')])], [
             CPPFLAGS+="-I$withval/include"
             LDFLAGS+="-L$withval/lib"], [])
 
@@ -232,7 +233,7 @@ AS_IF([test x"$ENABLE_PERFEXPERT" = x"yes"], [
         AC_ARG_WITH([hpctoolkit],
             [AS_HELP_STRING([--with-hpctoolkit],
                 [Use this argument to set where HPCTollkit binaries are 
-                installed (it is not necessary if they are in the PATH)])], [
+                installed (not necessary if they are in the PATH)])], [
             PATH+="$withval"], [])
 
         # Some tools from HPCToolKit are required to perfexpert_run_exp.sh

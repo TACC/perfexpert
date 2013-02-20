@@ -27,7 +27,7 @@
 
 bin_PROGRAMS = recommender
 
-recommender_CPPFLAGS = -I$(srcdir)/../common
+# recommender_CPPFLAGS = -I$(srcdir)/../common
 recommender_SOURCES = main.cpp recommender.c
 
 # Adding support to Rose
