@@ -927,9 +927,6 @@ INSERT INTO function ([desc], [statement]) VALUES ('AutoSCOPE recommendation alg
   )
   GROUP BY recom.id
   -- ranked by score
-  ORDER BY score DESC
-  -- only the top N recommendations
-  -- LIMIT 5
-;");
+  ORDER BY score DESC;");
 
 END TRANSACTION;
