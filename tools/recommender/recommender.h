@@ -63,13 +63,14 @@ extern "C" {
 /** Buffers size, will be used for:
  * - parsing INPUT file
  * - parsing metrics file
- * - storing SQL statements
+ * - storing SQL statements (including the 'functions')
  * - maybe something else
  */
 #define BUFFER_SIZE 4096
 
 /** Default values for some parameters */
 #define RECOMMENDATION_DB       "recommendation.db"
+#define METRICS_TABLE           "metric"
 #define METRICS_FILE            "recommender-metrics.txt"
 #define OPTTRAN_RECO_FILE       "recommendations.txt"
 #define OPTTRAN_FRAGMENTS_DIR   "fragments"
@@ -92,6 +93,8 @@ typedef struct {
     char *metrics_table;
     int  colorful;
     char *source_file;
+    int  opttran_pid;
+    int  rec_count;
 } globals_t;
 
 extern globals_t globals; /**< Variable to hold global options */
@@ -110,17 +113,18 @@ extern globals_t globals; /**< Variable to hold global options */
  *  this structure compatible with the parse_cli_params() and show_help().
  */
 static struct option long_options[] = {
-    {"verbose_level", required_argument, NULL, 'l'},
-    {"stdin",         no_argument,       NULL, 'i'},
-    {"inputfile",     required_argument, NULL, 'f'},
-    {"help",          no_argument,       NULL, 'h'},
-    {"database",      required_argument, NULL, 'd'},
-    {"outputfile",    required_argument, NULL, 'o'},
-    {"opttran",       required_argument, NULL, 'a'},
-    {"metricfile",    required_argument, NULL, 'm'},
-    {"newmetrics",    no_argument,       NULL, 'n'},
-    {"colorful",      no_argument,       NULL, 'c'},
-    {"sourcefile",    required_argument, NULL, 's'},
+    {"verbose_level",   required_argument, NULL, 'l'},
+    {"stdin",           no_argument,       NULL, 'i'},
+    {"inputfile",       required_argument, NULL, 'f'},
+    {"help",            no_argument,       NULL, 'h'},
+    {"database",        required_argument, NULL, 'd'},
+    {"outputfile",      required_argument, NULL, 'o'},
+    {"opttran",         required_argument, NULL, 'a'},
+    {"recommendations", required_argument, NULL, 'r'},
+    {"metricfile",      required_argument, NULL, 'm'},
+    {"newmetrics",      no_argument,       NULL, 'n'},
+    {"colorful",        no_argument,       NULL, 'c'},
+    {"sourcefile",      required_argument, NULL, 's'},
     {0, 0, 0, 0}
 };
 
@@ -129,6 +133,15 @@ typedef struct node {
     char *key;
     char *value;
 } node_t;
+
+/** Structure to hold recommendation selecting functions */
+typedef struct function {
+    volatile opttran_list_item_t *next;
+    volatile opttran_list_item_t *prev;
+    int id;
+    char *desc;
+    char statement[BUFFER_SIZE];
+} function_t;
 
 /** Structure to hold code segments */
 typedef struct segment {
@@ -139,7 +152,10 @@ typedef struct segment {
     char   *type;
     char   *extra_info;
     char   *section_info;
+    double loop_depth;
     double representativeness;
+    int    rowid;
+    opttran_list_t functions;
 } segment_t;
 
 /* Function declarations */
@@ -149,14 +165,16 @@ static int  parse_env_vars(void);
 static int  parse_cli_params(int argc, char *argv[]);
 static int  parse_metrics_file(void);
 static int  parse_segment_params(opttran_list_t *segments_p, FILE *inputfile_p);
-static int  output_recommendations(void *not_used, int col_count,
-                                   char **col_values, char **col_names);
 static int  get_rowid(void *rowid, int col_count, char **col_values,
                       char **col_names);
+static int  get_weight(void *weight, int col_count, char **col_values,
+                       char **col_names);
+static int  output_recommendations(void *not_used, int col_count,
+                                   char **col_values, char **col_names);
 static int  database_connect(void);
-static int  database_query(void);
-static int  calculate_weigths(void);
-static int  select_recommendations(void);
+static int  accumulate_functions(void *functions, int col_count,
+                                 char **col_values, char **col_names);
+static int  select_recommendations(segment_t *segment);
 #ifdef HAVE_ROSE
 int  extract_fragment(segment_t *segment);
 #endif

@@ -69,25 +69,28 @@ int recommender_main(int argc, char** argv) {
         .use_temp_metrics = 0,                 // int
         .colorful         = 0,                 // int
         .source_file      = NULL,              // char *
-        .metrics_table    = "metrics"          // char *
+        .metrics_table    = METRICS_TABLE,     // char *
+        .opttran_pid      = (int)getpid(),     // int
+        .rec_count        = 5                  // int
     };
     globals.dbfile = (char *)malloc(strlen(RECOMMENDATION_DB) +
                                     strlen(OPTTRAN_VARDIR) + 2);
-    bzero(globals.dbfile,
-          strlen(RECOMMENDATION_DB) + strlen(OPTTRAN_VARDIR) + 2);
     if (NULL == globals.dbfile) {
         OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
         exit(OPTTRAN_ERROR);
     }
+    bzero(globals.dbfile,
+          strlen(RECOMMENDATION_DB) + strlen(OPTTRAN_VARDIR) + 2);
     sprintf(globals.dbfile, "%s/%s", OPTTRAN_VARDIR, RECOMMENDATION_DB);
+
     globals.metrics_file = (char *)malloc(strlen(METRICS_FILE) +
                                           strlen(OPTTRAN_ETCDIR) + 2);
-    bzero(globals.metrics_file,
-          strlen(METRICS_FILE) + strlen(OPTTRAN_ETCDIR) + 2);
     if (NULL == globals.metrics_file) {
         OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
         exit(OPTTRAN_ERROR);
     }
+    bzero(globals.metrics_file,
+          strlen(METRICS_FILE) + strlen(OPTTRAN_ETCDIR) + 2);
     sprintf(globals.metrics_file, "%s/%s", OPTTRAN_ETCDIR, METRICS_FILE);
 
     /* Parse command-line parameters */
@@ -155,12 +158,6 @@ int recommender_main(int argc, char** argv) {
         }
     }
     
-    /* Calculate the weigths for each code bottleneck */
-    if (OPTTRAN_SUCCESS != calculate_weigths()) {
-        OPTTRAN_OUTPUT(("%s", _ERROR("Error: calculating weights")));
-        exit(OPTTRAN_ERROR);
-    }
-    
     /* Select/output recommendations for each code bottleneck (5 steps) */
     /* Step 1: Print to a file or STDOUT is ok? Was OPTTRAN chosen? */
     if (1 == globals.use_opttran) {
@@ -168,6 +165,10 @@ int recommender_main(int argc, char** argv) {
 
         if (NULL == globals.opttrandir) {
             globals.opttrandir = (char *)malloc(strlen("./opttran-") + 8);
+            if (NULL == globals.opttrandir) {
+                OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
+                exit(OPTTRAN_ERROR);
+            }
             bzero(globals.opttrandir, strlen("./opttran-" + 8));
             sprintf(globals.opttrandir, "./opttran-%d", getpid());
         }
@@ -234,7 +235,7 @@ int recommender_main(int argc, char** argv) {
         }
 
         /* Step 3: query DB for recommendations */
-        if (OPTTRAN_SUCCESS != select_recommendations()) {
+        if (OPTTRAN_SUCCESS != select_recommendations(item)) {
             OPTTRAN_OUTPUT(("%s", _ERROR("Error: selecting recommendations")));
             exit(OPTTRAN_ERROR);
         }
@@ -288,6 +289,7 @@ int recommender_main(int argc, char** argv) {
     sqlite3_close(globals.db);
 
     /* Free segments (and all items) structure */
+    // TODO: free the functions list also
     while (OPTTRAN_FALSE == opttran_list_is_empty(segments)) {
         segment_t *item;
         item = (segment_t *)opttran_list_get_first(segments);
@@ -318,8 +320,11 @@ static void show_help(void) {
     OPTTRAN_OUTPUT_VERBOSE((10, "printing help"));
     
     /*      12345678901234567890123456789012345678901234567890123456789012345678901234567890 */
-    printf("Usage: recommender -i|-f file [-o file] [-d database] [-a dir] [-m file] [-hnvc]\n");
-    printf("                   [-l level] [-s file]\n");
+    printf("Usage: recommender -i|-f file [-o file] [-d database] [-m file] [-nvch] [-p pid]\n");
+#ifdef HAVE_ROSE
+    printf("                    [-a dir] [-s file] ");
+#endif
+    printf("                     [-l level]\n");
     printf("  -i --stdin         Use STDIN as input for performance measurements\n");
     printf("  -f --inputfile     Use 'file' as input for performance measurements\n");
     printf("  -o --outputfile    Use 'file' as output for recommendations (default: stdout)\n");
@@ -338,6 +343,8 @@ static void show_help(void) {
     printf("  -s --sourcefile    Use 'file' to extract source code fragments identified as\n");
     printf("                     bootleneck by PerfExpert (this option sets -a argument)\n");
 #endif
+    printf("  -p --pid           Use 'pid' to identify consecutive calls to Recommender.");
+    printf("                     This argument is set automatically when using OptTran");
     printf("  -v --verbose       Enable verbose mode using default verbose level (5)\n");
     printf("  -l --verbose_level Enable verbose mode using a specific verbose level (1-10)\n");
     printf("  -c --colorful      Enable colors on verbose mode, no weird characters will\n");
@@ -386,11 +393,11 @@ static int parse_cli_params(int argc, char *argv[]) {
     while (1) {
         /* get parameter */
 #ifdef HAVE_ROSE
-        parameter = getopt_long(argc, argv, "cvhinm:l:f:d:o:a:s:", long_options,
-                                &option_index);
+        parameter = getopt_long(argc, argv, "cvhinm:l:f:d:o:a:s:p:r:",
+                                long_options, &option_index);
 #else
-        parameter = getopt_long(argc, argv, "cvhinm:l:f:d:o:", long_options,
-                                &option_index);
+        parameter = getopt_long(argc, argv, "cvhinm:l:f:d:o:p:r:",
+                                long_options, &option_index);
 #endif
         /* Detect the end of the options */
         if (-1 == parameter)
@@ -496,6 +503,20 @@ static int parse_cli_params(int argc, char *argv[]) {
                                         globals.metrics_file));
                 break;
                 
+            /* Specify OptTran PID */
+            case 'p':
+                globals.opttran_pid = atoi(optarg);
+                OPTTRAN_OUTPUT_VERBOSE((10, "option 'p' set [%d]",
+                                        globals.opttran_pid));
+                break;
+                
+            /* Specify OptTran PID */
+            case 'r':
+                globals.rec_count = atoi(optarg);
+                OPTTRAN_OUTPUT_VERBOSE((10, "option 'r' set [%d]",
+                                        globals.rec_count));
+                break;
+                
             /* Unknown option */
             case '?':
                 show_help();
@@ -518,6 +539,10 @@ static int parse_cli_params(int argc, char *argv[]) {
                             globals.use_stdin ? "yes" : "no"));
     OPTTRAN_OUTPUT_VERBOSE((10, "   Use OPTTRAN?           %s",
                             globals.use_opttran ? "yes" : "no"));
+    OPTTRAN_OUTPUT_VERBOSE((10, "   Recommendation count:  %d",
+                            globals.rec_count));
+    OPTTRAN_OUTPUT_VERBOSE((10, "   OPTTRAN PID:           %d",
+                            globals.opttran_pid));
     OPTTRAN_OUTPUT_VERBOSE((10, "   Input file:            %s",
                             globals.inputfile ? globals.inputfile : "(null)"));
     OPTTRAN_OUTPUT_VERBOSE((10, "   Output file:           %s",
@@ -687,6 +712,7 @@ static int parse_segment_params(opttran_list_t *segments_p, FILE *inputfile_p) {
             /* Add this item to 'segments' */
             opttran_list_append(segments_p, (opttran_list_item_t *) item);
 
+            /* Create the SQL statement for this new segment */
             bzero(temp_str, BUFFER_SIZE);
             sprintf(temp_str,
                     "INSERT INTO %s (code_filename) VALUES ('new_code-%d');\n",
@@ -699,7 +725,7 @@ static int parse_segment_params(opttran_list_t *segments_p, FILE *inputfile_p) {
                     "SELECT id FROM %s WHERE code_filename = 'new_code-%d';",
                     globals.metrics_table, (int)getpid());
             strcat(sql, temp_str);
-            
+
             OPTTRAN_OUTPUT_VERBOSE((5, "        SQL: %s", _CYAN(sql)));
             
             /* Insert new code fragment into metrics database, retrieve id */
@@ -712,6 +738,21 @@ static int parse_segment_params(opttran_list_t *segments_p, FILE *inputfile_p) {
                 exit(OPTTRAN_ERROR);
             } else {
                 OPTTRAN_OUTPUT_VERBOSE((5, "        ID: %d", rowid));
+                /* Store the rowid on the segment structure */
+                item->rowid = rowid;
+            }
+
+            /* Set OptTran PID for the new segment */
+            bzero(sql, BUFFER_SIZE);
+            sprintf(sql, "UPDATE %s SET pid=%d WHERE id=%d;",
+                    globals.metrics_table, globals.opttran_pid, rowid);
+            if (SQLITE_OK != sqlite3_exec(globals.db, sql, NULL, NULL,
+                                          &error_msg)) {
+                fprintf(stderr, "Error: SQL error: %s\n", error_msg);
+                fprintf(stderr, "SQL clause: %s\n", sql);
+                sqlite3_free(error_msg);
+                sqlite3_close(globals.db);
+                exit(OPTTRAN_ERROR);
             }
 
             continue;
@@ -796,6 +837,14 @@ static int parse_segment_params(opttran_list_t *segments_p, FILE *inputfile_p) {
             free(node);
             continue;
         }
+        /* Code param: code.section_info */
+        if (0 == strncmp("perfexpert.loop_depth", node->key, 21)) {
+            item->loop_depth = atof(node->value);
+            OPTTRAN_OUTPUT_VERBOSE((10, "(%d) loop depth: [%d]", input_line,
+                                    item->loop_depth));
+            free(node);
+            continue;
+        }
 
         /* Clean the node->key (remove undesired characters) */
         for (temp = 0; temp < strlen(node->key); temp++) {
@@ -813,7 +862,7 @@ static int parse_segment_params(opttran_list_t *segments_p, FILE *inputfile_p) {
         }
         
         /* Assemble the SQL query */
-        bzero(sql, 1024);
+        bzero(sql, BUFFER_SIZE);
         sprintf(sql, "UPDATE %s SET %s='%s' WHERE id=%d;",
                 globals.metrics_table, node->key, node->value, rowid);
 
@@ -864,6 +913,16 @@ static int get_rowid(void *rowid, int col_count, char **col_values,
     return OPTTRAN_SUCCESS;
 }
 
+/* get_rowid */
+static int get_weight(void *weight, int col_count, char **col_values,
+                      char **col_names) {
+    double *temp = (double *)weight;
+    if (NULL != col_values[0]) {
+        *temp = atof(col_values[0]);
+    }
+    return OPTTRAN_SUCCESS;
+}
+    
 /* output_recommendations */
 static int output_recommendations(void *not_used, int col_count,
                                   char **col_values, char **col_names) {
@@ -874,10 +933,10 @@ static int output_recommendations(void *not_used, int col_count,
     if (0 == globals.use_opttran) {
         fprintf(globals.outputfile_FP, "#\n# This is a possible recommendation");
         fprintf(globals.outputfile_FP, " for this code segment\n#\n");
-        fprintf(globals.outputfile_FP, "Recommendation: %s\n", col_values[0]);
-        fprintf(globals.outputfile_FP, "Reason: %s\n", col_values[1]);
+        fprintf(globals.outputfile_FP, "Recommendation ID: %s\n", col_values[0]);
+        fprintf(globals.outputfile_FP, "Description: %s\n", col_values[1]);
         fprintf(globals.outputfile_FP,
-                "Transformation: %s\n", col_values[2] ? col_values[2] :
+                "Reason: %s\n", col_values[2] ? col_values[2] :
                 "found no automatic transformation for this code segment");
         fprintf(globals.outputfile_FP, "Code example:\n%s\n", col_values[3]);
     } else {
@@ -921,16 +980,239 @@ static int database_connect(void) {
     return OPTTRAN_SUCCESS;
 }
 
-/* database_query */
-static int database_query(void) {
+/* accumulate_functions */
+static int accumulate_functions(void *functions, int col_count,
+                                char **col_values, char **col_names) {
+    function_t *function;
+    
+    /* Copy SQL query result into functions list */
+    function = (function_t *)malloc(sizeof(function_t));
+    if (NULL == function) {
+        OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
+        exit(OPTTRAN_ERROR);
+    }
+    opttran_list_item_construct((opttran_list_item_t *) function);
+
+    function->id = atoi(col_values[0]);
+    
+    function->desc = (char *)malloc(strlen(col_values[1]) + 1);
+    if (NULL == function->desc) {
+        OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
+        exit(OPTTRAN_ERROR);
+    }
+    bzero(function->desc, strlen(col_values[1]) + 1);
+    strncpy(function->desc, col_values[1], strlen(col_values[1]));
+    
+    bzero(function->statement, BUFFER_SIZE);
+    strncpy(function->statement, col_values[2], strlen(col_values[2]));
+
+    opttran_list_append((opttran_list_t *) functions,
+                        (opttran_list_item_t *) function);
+
+    OPTTRAN_OUTPUT_VERBOSE((10, "%s (ID: %d, %s) [%d bytes]",
+                            _YELLOW("function found"), function->id,
+                            function->desc, strlen(function->statement)));
+
+    return OPTTRAN_SUCCESS;
+}
+
+/* select_recommendations */
+static int select_recommendations(segment_t *segment) {
     char *error_msg = NULL;
+    function_t *function;
+    char sql[BUFFER_SIZE];
+    char temp_str[BUFFER_SIZE];
+    double weight = 0;
 
+    opttran_list_construct((opttran_list_t *) &(segment->functions));
+    
     OPTTRAN_OUTPUT_VERBOSE((7, "=== %s", _BLUE("Querying recommendation DB")));
+    
+    /* Select all functions, accumulate them */
+    OPTTRAN_OUTPUT_VERBOSE((8, "%s [%s:%d, ROWID: %d]",
+                            _YELLOW("looking for functions to segment"),
+                            segment->filename, segment->line_number,
+                            segment->rowid));
+    
+    if (SQLITE_OK != sqlite3_exec(globals.db,
+                                  "SELECT id, desc, statement FROM function",
+                                  accumulate_functions,
+                                  (void *)&(segment->functions),
+                                  &error_msg)) {
+        fprintf(stderr, "Error: SQL error: %s\n", error_msg);
+        sqlite3_free(error_msg);
+        sqlite3_close(globals.db);
+        exit(OPTTRAN_ERROR);
+    }
 
-    /* Query database */
-    // TODO: put the correct SQL query here
-    if (SQLITE_OK != sqlite3_exec(globals.db, "SELECT desc, reason, pattern, code FROM recommendation WHERE attr_code = 770 OR attr_code = 512 OR attr_code = 256 OR attr_code = 2;",
-                                  output_recommendations, NULL, &error_msg)) {
+    /* Execute all functions, accumulate recommendations */
+    OPTTRAN_OUTPUT_VERBOSE((8, "%d %s",
+                            opttran_list_get_size(&(segment->functions)),
+                            _GREEN("functions found")));
+
+    /* Create a temporary table to store possible recommendations */
+    bzero(sql, BUFFER_SIZE);
+    sprintf(sql, "CREATE  TABLE recommendation_%d (function_id INTEGER,\n",
+            (int)getpid());
+    strcat(sql, "                        "); // Pretty print ;-)
+    strcat(sql, "recommendation_id INTEGER, score FLOAT, weigth FLOAT)");
+
+    OPTTRAN_OUTPUT_VERBOSE((10, "%s",
+                            _YELLOW("creating temporary table of recommendations")));
+    OPTTRAN_OUTPUT_VERBOSE((10, "   SQL: %s", _CYAN(sql)));
+    
+    if (SQLITE_OK != sqlite3_exec(globals.db, sql, NULL, NULL, &error_msg)) {
+        fprintf(stderr, "Error: SQL error: %s\n", error_msg);
+        sqlite3_free(error_msg);
+        sqlite3_close(globals.db);
+        exit(OPTTRAN_ERROR);
+    }
+
+    /* For each function, execute it! */
+    function = (function_t *)opttran_list_get_first(&(segment->functions));
+    while ((opttran_list_item_t *)function != &(segment->functions.sentinel)) {
+        sqlite3_stmt *statement;
+        int rc;
+        
+        OPTTRAN_OUTPUT_VERBOSE((8, "%s (ID: %d, %s) [%d bytes]",
+                                _YELLOW("running function"), function->id,
+                                function->desc, strlen(function->statement)));
+
+        /* Prepare the SQL statement */
+        if (SQLITE_OK != sqlite3_prepare_v2(globals.db, function->statement,
+                                            BUFFER_SIZE, &statement, NULL)) {
+            fprintf(stderr, "Error: SQL error: %s\n", error_msg);
+            sqlite3_free(error_msg);
+            sqlite3_close(globals.db);
+            exit(OPTTRAN_ERROR);
+        }
+
+        /* Bind ROWID */
+        if (SQLITE_OK != sqlite3_bind_int(statement,
+                                          sqlite3_bind_parameter_index(statement,
+                                                                       "@RID"),
+                                          segment->rowid)) {
+            fprintf(stderr, "Error: SQL error: %s\n", error_msg);
+            sqlite3_free(error_msg);
+            sqlite3_close(globals.db);
+            exit(OPTTRAN_ERROR);
+        }
+
+        /* Bind loop depth */
+        if (SQLITE_OK != sqlite3_bind_double(statement,
+                                             sqlite3_bind_parameter_index(statement,
+                                                                          "@LPD"),
+                                             segment->loop_depth)) {
+            fprintf(stderr, "Error: SQL error: %s\n", error_msg);
+            sqlite3_free(error_msg);
+            sqlite3_close(globals.db);
+            exit(OPTTRAN_ERROR);
+        }
+
+        /* Run que query */
+        OPTTRAN_OUTPUT_VERBOSE((10, "   %s",
+                                _GREEN("list of recommendations: ")));
+        do {
+            rc = sqlite3_step(statement);
+            if (0 < sqlite3_column_double(statement, 1)) {
+                /* Find the weigth of this recommendation */
+                weight = 0;
+                bzero(sql, BUFFER_SIZE);
+                sprintf(sql, "SELECT weight FROM recommendation_function WHERE id_recommendation=%d AND id_function=%d",
+                        sqlite3_column_int(statement, 0), function->id);
+                if (SQLITE_OK != sqlite3_exec(globals.db, sql, get_weight,
+                                              (void *)&weight, &error_msg)) {
+                    fprintf(stderr, "Error: SQL error: %s\n", error_msg);
+                    sqlite3_free(error_msg);
+                    sqlite3_close(globals.db);
+                    exit(OPTTRAN_ERROR);
+                }
+
+                /* Insert recommendation into the temporary table */
+                bzero(sql, BUFFER_SIZE);
+                sprintf(sql, "INSERT INTO recommendation_%d ", (int)getpid());
+                bzero(temp_str, BUFFER_SIZE);
+                sprintf(temp_str, "VALUES (%d, %d, %f, %f);", function->id,
+                        sqlite3_column_int(statement, 0),
+                        sqlite3_column_double(statement, 1), weight);
+                strcat(sql, temp_str);
+                
+                if (SQLITE_OK != sqlite3_exec(globals.db, sql, NULL, NULL,
+                                              &error_msg)) {
+                    fprintf(stderr, "Error: SQL error: %s\n", error_msg);
+                    sqlite3_free(error_msg);
+                    sqlite3_close(globals.db);
+                    exit(OPTTRAN_ERROR);
+                }
+                
+                OPTTRAN_OUTPUT_VERBOSE((10, "      FunctionID=%d, RecommendationID=%d, Score=%f, Weight=%f",
+                                        function->id,
+                                        sqlite3_column_int(statement, 0),
+                                        sqlite3_column_double(statement, 1),
+                                        weight));
+            }
+        } while (SQLITE_ROW == rc);
+
+        if (SQLITE_DONE != rc) {
+            /* Something went wrong :-/ */
+            fprintf(stderr, "Error: SQL error: %s\n",
+                    sqlite3_errmsg(globals.db));
+            sqlite3_free(error_msg);
+            sqlite3_close(globals.db);
+            exit(OPTTRAN_ERROR);
+        }
+        
+        /* SQLite3 cleanup */
+        if (SQLITE_OK != sqlite3_finalize(statement)) {
+            fprintf(stderr, "Error: SQL error: %s\n", error_msg);
+            sqlite3_free(error_msg);
+            sqlite3_close(globals.db);
+            exit(OPTTRAN_ERROR);
+        }
+        
+        /* Move to the next code bottleneck */
+        function = (function_t *)opttran_list_get_next(function);
+    }
+
+    /* Calculate the normalized rank of recommendations, should use weights? */
+    // TODO: someday, I will add the weighting system here
+    
+    /* Select top-N recommendations, output them */
+    // TODO: include the pattern in the SQL query
+    bzero(sql, BUFFER_SIZE);
+    strcat(sql, "SELECT r.id, r.desc, r.reason, r.example FROM recommendation AS r");
+    strcat(sql, "\n                        ");
+    bzero(temp_str, BUFFER_SIZE);
+    sprintf(temp_str, "INNER JOIN recommendation_%d", (int)getpid());
+    strcat(sql, temp_str);
+    strcat(sql, " AS temp\n                        ");
+    strcat(sql, "WHERE r.id = temp.recommendation_id");
+    strcat(sql, "\n                        ORDER BY");
+    bzero(temp_str, BUFFER_SIZE);
+    sprintf(temp_str, " temp.score DESC LIMIT %d", globals.rec_count);
+    strcat(sql, temp_str);
+    
+    OPTTRAN_OUTPUT_VERBOSE((10, "%s",
+                            _YELLOW("selecting top-N recommendations")));
+    OPTTRAN_OUTPUT_VERBOSE((10, "   SQL: %s", _CYAN(sql)));
+
+    if (SQLITE_OK != sqlite3_exec(globals.db, sql, output_recommendations, NULL,
+                                  &error_msg)) {
+        fprintf(stderr, "Error: SQL error: %s\n", error_msg);
+        sqlite3_free(error_msg);
+        sqlite3_close(globals.db);
+        exit(OPTTRAN_ERROR);
+    }
+
+    /* Remove the temporary table */
+    bzero(sql, BUFFER_SIZE);
+    sprintf(sql, "DROP TABLE recommendation_%d;", (int)getpid());
+    
+    OPTTRAN_OUTPUT_VERBOSE((10, "%s",
+                            _YELLOW("dropping temporary table of recommendations")));
+    OPTTRAN_OUTPUT_VERBOSE((10, "   SQL: %s", _CYAN(sql)));
+    
+    if (SQLITE_OK != sqlite3_exec(globals.db, sql, NULL, NULL, &error_msg)) {
         fprintf(stderr, "Error: SQL error: %s\n", error_msg);
         sqlite3_free(error_msg);
         sqlite3_close(globals.db);
@@ -938,20 +1220,7 @@ static int database_query(void) {
     }
 
     OPTTRAN_OUTPUT_VERBOSE((7, "==="));
-
-    return OPTTRAN_SUCCESS;
-}
-
-/* calculate_weigths */
-static int calculate_weigths(void) {
-    // TODO: everything
-    return OPTTRAN_SUCCESS;
-}
-
-/* select_recommendations */
-static int select_recommendations(void) {
-    database_query();
-    // TODO: everything
+    
     return OPTTRAN_SUCCESS;
 }
 

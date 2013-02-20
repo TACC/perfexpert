@@ -39,7 +39,8 @@ endif
 
 # Install the recommendation database
 # TODO: replace this terrible warning by a code to rename current file with
-#       today's date and print a nice warning about this
+#       today's date and print a nice warning about this use a logfile will be
+#       nice, thus, in the end of compilation I only have to 'cat' the logfile
 install-exec-local:
 	$(MKDIR_P) $(localstatedir)
 	$(MKDIR_P) $(sysconfdir)
