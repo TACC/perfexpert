@@ -173,6 +173,12 @@ AS_IF([test x"$ENABLE_PERFEXPERT" = x"yes"], [
     AC_MSG_RESULT(yes)
     AC_DEFINE(OPTTRAN_ENABLE_PERFEXPERT, [1], [Enable/Disable perfexpert])
 
+    # Apache ANT argument
+    AC_ARG_WITH([apache-ant],
+        [AS_HELP_STRING([--with-apache-ant],
+            [Use this argument to set where Apache Ant program is installed (it
+            is not necessary if it is in the PATH)])], [PATH+="$withval"], [])
+
     # First of all, we need Apache Ant
     AC_CHECK_PROG(ANT_PROGRAM, ant, yes)
     AS_IF([test x"$ANT_PROGRAM" != x"yes"],
@@ -194,11 +200,40 @@ AS_IF([test x"$ENABLE_PERFEXPERT" = x"yes"], [
         AC_CHECK_HEADER([time.h],     [], [AC_MSG_ERROR([not found: time.h])])
         AC_CHECK_HEADER([sys/mman.h], [], [AC_MSG_ERROR([not found: sys/mman.h])])
 
-        # Headers and libraries required for sniffer
+        # PAPI arguments
+        AC_ARG_WITH([papi],
+            [AS_HELP_STRING([--with-papi],
+                [Use this argument to set PAPI prefix path (where PAPI library
+                and include directories are located), if you do that there is no
+                need to set neither '--with-papi-lib' nor '--with-papi-include'.
+                This argument is not necessary if PAPI is installed into the
+                '/usr' directory])], [
+            CPPFLAGS+="-I$withval/include"
+            LDFLAGS+="-L$withval/lib"], [])
+
+        AC_ARG_WITH([papi-lib],
+            [AS_HELP_STRING([--with-papi-lib],
+                [use this argument to set PAPI library path (it overwrites
+                '--with-papi' argument)])], [LDFLAGS+="-L$withval"], [])
+
+        AC_ARG_WITH([papi-include],
+            [AS_HELP_STRING([--with-papi-include],
+                [use this argument to set PAPI include path (it overwrites
+                '--with-papi' argument)])], [CPPFLAGS+="-I$withval"], [])
+
+        # Checks for headers and libraries required for sniffer (PAPI)
         AC_SEARCH_LIBS([PAPI_library_init, PAPI_add_event, PAPI_create_eventset,
             PAPI_get_event_info, PAPI_event_name_to_code, PAPI_query_event],
             [papi],, [AC_MSG_ERROR([PAPI library not found!])])
         AC_CHECK_HEADER([papi.h], [], [AC_MSG_ERROR([not found: papi.h])])
+        AC_DEFINE([HAVE_PAPI], [1], [PAPI found])
+
+        # HPCTollkit argument
+        AC_ARG_WITH([hpctoolkit],
+            [AS_HELP_STRING([--with-hpctoolkit],
+                [Use this argument to set where HPCTollkit binaries are 
+                installed (it is not necessary if they are in the PATH)])], [
+            PATH+="$withval"], [])
 
         # Some tools from HPCToolKit are required to perfexpert_run_exp.sh
         AC_CHECK_PROG(HPCSTRUCT_PROGRAM, hpcstruct, yes)
@@ -285,8 +320,8 @@ AS_IF([test x"$ENABLE_RECOMMENDER" = x"yes"], [
             [support to Rose Compiler @<:@default=no@:>@ which enables some
             advanced features on the Optimization Recommender tool, as well is
             required to enable OptTran:CT (Code Transformer tool), and
-            OptTran:CR (Code Re-Assembler tool). Use this argument to set Rose's
-            prefix path (where Rose's libraries and include directories are
+            OptTran:CR (Code Re-Assembler tool). Use this argument to set Rose
+            prefix path (where Rose libraries and include directories are
             located), if you do that there is no need to set neither
             '--with-rose-libs' nor '--with-rose-include'])], [
         WITH_ROSE=$withval
@@ -301,14 +336,14 @@ AS_IF([test x"$ENABLE_RECOMMENDER" = x"yes"], [
     AC_ARG_WITH([rose-libs],
         [AS_HELP_STRING([--with-rose-libs],
             [support to Rose Compiler @<:@default=no@:>@, use this argument to
-             set Rose's library path (it overwrites '--with-rose argument')])], [
+             set Rose library path (it overwrites '--with-rose' argument)])], [
         WITH_ROSE_LIBS=$withval
         WITH_ROSE=yes], [])
 
     AC_ARG_WITH([rose-include],
         [AS_HELP_STRING([--with-rose-include],
             [support to Rose Compiler @<:@default=no@:>@, use this argument to
-             set Rose's include path (it overwrites '--with-rose argument')])], [
+             set Rose include path (it overwrites '--with-rose' argument)])], [
         WITH_ROSE_INCLUDE=$withval
         WITH_ROSE=yes], [])
 
