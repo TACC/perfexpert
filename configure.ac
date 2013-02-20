@@ -179,13 +179,15 @@ AS_IF([test x"$ENABLE_PERFEXPERT" = x"yes"], [
         [AS_HELP_STRING([--with-apache-ant],
             [Use this argument to set where Apache Ant program is installed (not
             necessary if it is in the PATH). Ant is necessary to compile
-            PerfExpert])], [ANT_PATH="$withval"], [])
-
-    # First of all, we need Apache Ant
-    AC_CHECK_PROG([ANT_PROGRAM], [ant], [$ANT_PATH/ant], [no], [$ANT_PATH])
-    AS_IF([test x"$ANT_PROGRAM" = x"no"],
-        [AC_MSG_ERROR([Please install Apache Ant.])],
-        [])
+            PerfExpert])], [
+        ANT_PATH="$withval"
+        AC_PATH_TOOL([ANT_PROGRAM], [ant], [no], [$ANT_PATH])
+        AS_IF([test x"$ANT_PROGRAM" = x"no"], 
+            [AC_MSG_ERROR([Ant not found in $ANT_PATH])])], [
+        AC_PATH_TOOL([ANT_PROGRAM], [ant], [no])
+        AS_IF([test x"$ANT_PROGRAM" = x"no"],
+            [AM_MSG_ERROR([Ant not found in the PATH, try using '--with-apache-ant'])])
+    ])
 
     # hpcdata, perfexpert and perfexert_run script requires Bash shell
     AC_CHECK_PROG(BASH_PROGRAM, bash, yes)
