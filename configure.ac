@@ -179,10 +179,10 @@ AS_IF([test x"$ENABLE_PERFEXPERT" = x"yes"], [
         [AS_HELP_STRING([--with-apache-ant],
             [Use this argument to set where Apache Ant program is installed (not
             necessary if it is in the PATH). Ant is necessary to compile
-            PerfExpert])], [PATH+="$withval"], [])
+            PerfExpert])], [ANT_PATH="$withval"], [])
 
     # First of all, we need Apache Ant
-    AC_CHECK_PROG(ANT_PROGRAM, ant, yes)
+    AC_CHECK_PROG([ANT_PROGRAM,] [ant], [], [], [$PATH$PATH_SEPARATOR$ANT_PATH])
     AS_IF([test x"$ANT_PROGRAM" != x"yes"],
         [AC_MSG_ERROR([Please install Apache Ant.])],
         [AC_PATH_TOOL(ANT_PROGRAM, ant)])
