@@ -27,12 +27,12 @@
 
 bin_PROGRAMS = recommender
 
-# recommender_CPPFLAGS = -I$(srcdir)/../common
+recommender_CPPFLAGS = -I$(srcdir)/../common
 recommender_SOURCES = main.cpp recommender.c
 
 # Adding support to Rose
 if WITH_ROSE_SUPPORT
-recommender_CPPFLAGS = -DHAVE_ROSE
+recommender_CPPFLAGS += -DHAVE_ROSE
 recommender_SOURCES += recommender_extract_fragment.cpp \
 	recommenderTraversal.cpp
 endif
