@@ -53,8 +53,8 @@ m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 
 # We need some work here to save hound from -O2 on CFLAGS. This overwrites any
 # user-defined CFLAGS :-/
-CFLAGS=-g
-CXXFLAGS=-g -O3
+CFLAGS="-g"
+CXXFLAGS="-g -O3"
 
 # Requires only a standard C compiler
 AC_PROG_CC
