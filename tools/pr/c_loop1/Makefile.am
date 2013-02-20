@@ -33,5 +33,6 @@ lex.yy.c: c_loop1.l; $(LEX) $(srcdir)/c_loop1.l
 bin_PROGRAMS = c_loop1
 
 c_loop1_SOURCES = y.tab.c lex.yy.c
+c_loop1_CFLAGS = -O3
 
 # EOF

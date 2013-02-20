@@ -27,6 +27,7 @@
 
 bin_PROGRAMS = sniffer
 sniffer_SOURCES = sniffer.c
+sniffer_CFLAGS = -O3
 
 install-exec-local:
 	./sniffer
