@@ -174,7 +174,7 @@ AS_IF([test x"$ENABLE_PERFEXPERT" = x"yes"], [
     AC_MSG_RESULT(yes)
     AC_DEFINE(OPTTRAN_ENABLE_PERFEXPERT, [1], [Enable/Disable perfexpert])
 
-    # Apache ANT argument
+    # Find Apache ANT, optionally, using an argument
     AC_ARG_WITH([apache-ant],
         [AS_HELP_STRING([--with-apache-ant],
             [Use this argument to set where Apache Ant program is installed (not
@@ -186,14 +186,14 @@ AS_IF([test x"$ENABLE_PERFEXPERT" = x"yes"], [
             [AC_MSG_ERROR([Ant not found in $ANT_PATH])])], [
         AC_PATH_TOOL([ANT_PROGRAM], [ant], [no])
         AS_IF([test x"$ANT_PROGRAM" = x"no"],
-            [AM_MSG_ERROR([Ant not found in the PATH, try using '--with-apache-ant'])])
+            [AC_MSG_ERROR([Ant not found, try using '--with-apache-ant'])])
     ])
 
     # hpcdata, perfexpert and perfexert_run script requires Bash shell
-    AC_CHECK_PROG(BASH_PROGRAM, bash, yes)
+    AC_CHECK_PROG([BASH_PROGRAM], [bash], [yes])
     AS_IF([test x"$BASH_PROGRAM" != x"yes"],
         [AC_MSG_ERROR([Some of PerfExpert scripts require Bash shell.])],
-        [AC_PATH_TOOL(BASH_PROGRAM, bash)])
+        [AC_PATH_TOOL([BASH_PROGRAM], [bash])])
 
     # Currently, hound and sniffer only works on Linux.
     AS_IF([test x"$HOST_OS" == x"linux"], [
@@ -226,34 +226,38 @@ AS_IF([test x"$ENABLE_PERFEXPERT" = x"yes"], [
                 '--with-papi' argument)])], [CPPFLAGS+="-I$withval"], [])
 
         # Checks for headers and libraries required for sniffer (PAPI)
-        AC_SEARCH_LIBS([PAPI_library_init, PAPI_add_event, PAPI_create_eventset,
-            PAPI_get_event_info, PAPI_event_name_to_code, PAPI_query_event],
-            [papi],, [AC_MSG_ERROR([PAPI library not found!])])
+        AC_CHECK_LIB([papi], [PAPI_library_init, PAPI_add_event,
+            PAPI_create_eventset, PAPI_get_event_info, PAPI_event_name_to_code,
+            PAPI_query_event], [], [AC_MSG_ERROR([PAPI library not found!])])
         AC_CHECK_HEADER([papi.h], [], [AC_MSG_ERROR([not found: papi.h])])
         AC_DEFINE([HAVE_PAPI], [1], [PAPI found])
 
-        # HPCTollkit argument
+        # Find HPCToolkit program, optionally, using an argument
         AC_ARG_WITH([hpctoolkit],
             [AS_HELP_STRING([--with-hpctoolkit],
                 [Use this argument to set where HPCTollkit binaries are 
                 installed (not necessary if they are in the PATH)])], [
-            PATH+="$withval"], [])
-
-        # Some tools from HPCToolKit are required to perfexpert_run_exp.sh
-        AC_CHECK_PROG(HPCSTRUCT_PROGRAM, hpcstruct, yes)
-        AS_IF([test x"$HPCSTRUCT_PROGRAM" != x"yes"],
-            [AC_MSG_ERROR([It seems like you don't have HPCToolkit installed.])],
-            [AC_PATH_TOOL(HPCSTRUCT_PROGRAM, hpcstruct)])
-
-        AC_CHECK_PROG(HPCRUN_PROGRAM, hpcrun, yes)
-        AS_IF([test x"$HPCRUN_PROGRAM" != x"yes"],
-            [AC_MSG_ERROR([It seems like you don't have HPCToolkit installed.])],
-            [AC_PATH_TOOL(HPCRUN_PROGRAM, hpcrun)])
-
-        AC_CHECK_PROG(HPCPROF_PROGRAM, hpcprof, yes)
-        AS_IF([test x"$HPCPROF_PROGRAM" != x"yes"],
-            [AC_MSG_ERROR([It seems like you don't have HPCToolkit installed.])],
-            [AC_PATH_TOOL(HPCPROF_PROGRAM, hpcprof)])
+            HPCTOOLKIT_PATH="$withval"
+            AC_PATH_TOOL([HPCSTRUCT_PROGRAM], [hpcstruct], [no], [$HPCTOOLKIT_PATH])
+            AS_IF([test x"$HPCSTRUCT_PROGRAM" = x"no"],
+                [AC_MSG_ERROR([hpcstruct not found in $HPCTOOLKIT_PATH])])
+            AC_PATH_TOOL([HPCRUN_PROGRAM], [hpcrun], [no], [$HPCTOOLKIT_PATH])
+            AS_IF([test x"$HPCRUN_PROGRAM" = x"no"],
+                [AC_MSG_ERROR([hpcrun not found in $HPCTOOLKIT_PATH])])
+            AC_PATH_TOOL([HPCPROF_PROGRAM], [hpcprof], [no], [$HPCTOOLKIT_PATH])
+            AS_IF([test x"$HPCPROF_PROGRAM" = x"no"],
+                [AC_MSG_ERROR([hpcprof not found in $HPCTOOLKIT_PATH])])
+        ], [
+            AC_PATH_TOOL([HPCSTRUCT_PROGRAM], [hpcstruct], [no])
+            AS_IF([test x"$HPCSTRUCT_PROGRAM" = x"no"],
+                [AC_MSG_ERROR([hpcstruct not found, try using '--with-hpctoolkit'])])
+            AC_PATH_TOOL([HPCRUN_PROGRAM], [hpcrun], [no])
+            AS_IF([test x"$HPCRUN_PROGRAM" = x"no"],
+                [AC_MSG_ERROR([hpcrun not found, try using '--with-hpctoolkit'])])
+            AC_PATH_TOOL([HPCPROF_PROGRAM], [hpcprof], [no])
+            AS_IF([test x"$HPCPROF_PROGRAM" = x"no"],
+                [AC_MSG_ERROR([hpcprof not found, try using '--with-hpctoolkit'])])
+        ])
 
         # Generate hound and sniffer Makefiles and also perfexpert_run_exp.sh
         ENABLE_HOUND=hound
@@ -307,8 +311,9 @@ AS_IF([test x"$ENABLE_RECOMMENDER" = x"yes"], [
     AC_MSG_RESULT(yes)
 
     # Checks for SQLite headers, lib and program (only if 'recommender' is enabled)
-    AC_SEARCH_LIBS([sqlite3_open, sqlite3_close, sqlite3_exec, sqlite3_free,
-        sqlite3_errmsg], [sqlite3],, [AC_MSG_ERROR([SQLite3 library not found])])
+    AC_CHECK_LIB([sqlite3], [sqlite3_open, sqlite3_close, sqlite3_exec,
+        sqlite3_free, sqlite3_errmsg], [],
+        [AC_MSG_ERROR([SQLite3 library not found])])
     AC_CHECK_HEADER([sqlite3.h], [], [AC_MSG_ERROR([not found: sqlite3.h])])
 
     # Check for the SQLite program
