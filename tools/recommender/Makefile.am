@@ -38,23 +38,25 @@ recommender_SOURCES += recommender_extract_fragment.cpp \
 	recommenderTraversal.cpp
 endif
 
+
 # Install the recommendation database
-# TODO: replace this terrible warning by a code to rename current file with
-#       today's date and print a nice warning about this use a logfile will be
-#       nice, thus, in the end of compilation I only have to 'cat' the logfile
 install-exec-local:
+	if [ -f $(top_builddir)/warnings_recommender ]; then \
+		rm $(top_builddir)/warnings_recommender; fi
 	$(MKDIR_P) $(localstatedir)
 	$(MKDIR_P) $(sysconfdir)
 	$(MKDIR_P) $(datadir)/$(PACKAGE_NAME)
 	$(SQLITE3_PROGRAM) recommendation.db \
 		< $(top_srcdir)/contrib/recommendation.db.txt
-	$(INSTALL) -m 644 recommendation.db $(localstatedir)
-	if [ -f $(localstatedir)/recommendation.db ]; then echo; \
-		echo -ne "#################################\n#         !!!WARNING!!!"; \
-		echo -ne "         #\n#                               #\n# Database "; \
-		echo -e "file already exists, #\n#  press ENTER to overwrite it  #"; \
-		echo "#################################"; read line; fi
-	rm -rf recommendation.db
+	if [ -f $(localstatedir)/recommendation.db ]; then echo \
+		"############################# WARNING #############################" \
+		>> $(top_builddir)/warnings_recommender; echo \
+		"Your recommendation database was moved to recommendation.db.old" \
+		>> $(top_builddir)/warnings_recommender; echo \
+		"############################# WARNING #############################" \
+		>> $(top_builddir)/warnings_recommender; fi
+	$(INSTALL) -b -m 644 recommendation.db $(localstatedir)
+	rm recommendation.db
 	$(INSTALL) -m 644 $(top_srcdir)/contrib/recommender-metrics.txt \
 		$(sysconfdir)
 	$(INSTALL) -m 644 $(top_srcdir)/contrib/recommendation.db.txt \

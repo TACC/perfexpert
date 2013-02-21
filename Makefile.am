@@ -27,4 +27,7 @@
 
 SUBDIRS = tools
 
+install-data-hook:
+	cat $(top_builddir)/warnings*
+
 # EOF
