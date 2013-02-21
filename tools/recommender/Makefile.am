@@ -40,8 +40,7 @@ endif
 
 # Install the recommendation database
 install-exec-local:
-	if [ -f $(top_builddir)/warnings_recommender ]; then \
-		rm $(top_builddir)/warnings_recommender; fi
+	echo "" > $(top_builddir)/warnings_recommender
 	$(MKDIR_P) $(localstatedir)
 	$(MKDIR_P) $(sysconfdir)
 	$(MKDIR_P) $(datadir)/$(PACKAGE_NAME)
