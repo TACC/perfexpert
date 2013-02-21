@@ -56,10 +56,10 @@ PRIMARY KEY ("id")
 );
 
 --
--- 'loop' field menans:
+-- 'loop' field means:
 --     0 = [should not be used], 1 = [1 loops (AutoSCOPE's 'loop1')],
 --     2 = [2 loops (AutoSCOPE's 'loop2')], [3 = 3 loop (AutoSCOPE's 'loop3')],
---     4 = [attribute not set]
+--     null = [attribute not set]
 -- AutoSCOPE's multiple_functions, multiple_loops and boost were ignored
 --
 CREATE TABLE "recommendation" (
@@ -67,7 +67,7 @@ CREATE TABLE "recommendation" (
     "desc" CHAR(1024) NOT NULL,
     "reason" CHAR(1024) NOT NULL,
     "example" CHAR(1024),
-    "loop" INTEGER NOT NULL,
+    "loop" INTEGER,
 PRIMARY KEY ("id")
 );
 
@@ -248,14 +248,14 @@ y[i] = a * b[i] + x[i];
  =====>
 temp = a * b[i];
 d[i] = temp + c[i];
-y[i] = temp + x[i];', 4);
+y[i] = temp + x[i];', null);
 
 INSERT INTO [recommendation] ([id], [desc], [reason], [example], [loop]) VALUES (2,
     'eliminate floating-point operations through distributivity',
     'this optimization reduces the number of executed floating-point operations',
     'd[i] = a[i] * b[i] + a[i] * c[i];
  =====>
-d[i] = a[i] * (b[i] + c[i]);', 4);
+d[i] = a[i] * (b[i] + c[i]);', null);
 
 INSERT INTO [recommendation] ([id], [desc], [reason], [example], [loop]) VALUES (3,
     'eliminate floating-point operations through associativity',
@@ -265,7 +265,7 @@ y[i] = x[i] * a[i] * b[i];
  =====>
 temp = a[i] * b[i];
 d[i] = temp * c[i];
-y[i] = x[i] * temp;', 4);
+y[i] = x[i] * temp;', null);
 
 INSERT INTO [recommendation] ([id], [desc], [reason], [example], [loop]) VALUES (4,
     'move loop invariant computations out of loop', 
@@ -284,14 +284,14 @@ INSERT INTO [recommendation] ([id], [desc], [reason], [example], [loop]) VALUES 
     'this optimization reduces the amount of memory required to store floating-point data, which often makes accessing the data faster',
 'double a[n];
  =====>
-float a[n];', 4);
+float a[n];', null);
 
 INSERT INTO [recommendation] ([id], [desc], [reason], [example], [loop]) VALUES (6,
     'compare squared values instead of computing the square root',
     'this optimization replaces a slow operation with equivalent but much faster operations', 
     'if (x < sqrt(y)) {...}
  =====>
-if ((x < 0.0) || (x*x < y)) {...}', 4);
+if ((x < 0.0) || (x*x < y)) {...}', null);
 
 INSERT INTO [recommendation] ([id], [desc], [reason], [example], [loop]) VALUES (7,
     'compute the reciprocal outside of loop and use multiplication inside the loop',
@@ -325,14 +325,14 @@ INSERT INTO [recommendation] ([id], [desc], [reason], [example], [loop]) VALUES 
  =====>
 temp = x + y;
 if (x < y)
-  a = temp;', 4);
+  a = temp;', null);
 
 INSERT INTO [recommendation] ([id], [desc], [reason], [example], [loop]) VALUES (10, 
     'express Boolean logic in form of integer computation', 
     'this optimization replaces a code sequence with an equivalent code sequence that is faster because fewer branches are executed', 
     'if ((a == 0) && (b == 0) && (c == 0)) {...}
  =====>
-if ((a | b | c) == 0) {...}', 4);
+if ((a | b | c) == 0) {...}', null);
 
 INSERT INTO [recommendation] ([id], [desc], [reason], [example], [loop]) VALUES (11,
     'remove IF', 
@@ -343,7 +343,7 @@ if (x == 0)
 else
   a = c;
  =====>
-a = (b & ~x) | (c & x);', 4);
+a = (b & ~x) | (c & x);', null);
 
 INSERT INTO [recommendation] ([id], [desc], [reason], [example], [loop]) VALUES (12,
     'unroll loops (more)',
@@ -411,14 +411,14 @@ INSERT INTO [recommendation] ([id], [desc], [reason], [example], [loop]) VALUES 
 }
 z = f(y);
  =====>
-z = y * y;', 4);
+z = y * y;', null);
 
 INSERT INTO [recommendation] ([id], [desc], [reason], [example], [loop]) VALUES (17,
     'change the order of subroutine calls', 
     'this optimization, when allowed, may yield faster execution when it results in more opportunity for compiler optimizations', 
     'f(); h();
  =====>
-h(); f();', 4);
+h(); f();', null);
 
 INSERT INTO [recommendation] ([id], [desc], [reason], [example], [loop]) VALUES (18,
     'factor out sequences of common code into subroutines', 
@@ -428,7 +428,7 @@ same_code;
  =====>
 void f() {same_code;}
 f();
-f();', 4);
+f();', null);
 
 INSERT INTO [recommendation] ([id], [desc], [reason], [example], [loop]) VALUES (19,
     'sort subroutines by call chains (subroutine coloring)', 
@@ -447,7 +447,7 @@ h() {...}
 loop {
   f();
   h();
-}', 4);
+}', null);
 
 INSERT INTO [recommendation] ([id], [desc], [reason], [example], [loop]) VALUES (20,
     'lower the loop unroll factor', 
@@ -483,7 +483,7 @@ void fg(int flag) {
     statements2;
   }
   statementsX;
-}', 4);
+}', null);
 
 INSERT INTO [recommendation] ([id], [desc], [reason], [example], [loop]) VALUES (22,
     'split off cold code into separate subroutines and place them at end of file',
@@ -495,7 +495,7 @@ INSERT INTO [recommendation] ([id], [desc], [reason], [example], [loop]) VALUES 
 void f() {lots_of_code}
 ...
 if (unlikely_condition)
-  f();', 4);
+  f();', null);
 
 INSERT INTO [recommendation] ([id], [desc], [reason], [example], [loop]) VALUES (23,
     'use trace scheduling to reduce the branch taken frequency', 
@@ -510,7 +510,7 @@ if (!likely_condition) {
   g(); h();
 } else {
   f(); h();
-}', 4);
+}', null);
 
 INSERT INTO [recommendation] ([id], [desc], [reason], [example], [loop]) VALUES (24,
     'move loop invariant memory accesses out of loop', 
@@ -570,21 +570,21 @@ x = t * t;
 ...
 a[i] = t = x / b;
 ...
-b = t + 1.0;', 4);
+b = t + 1.0;', null);
 
 INSERT INTO [recommendation] ([id], [desc], [reason], [example], [loop]) VALUES (28,
     'align data, especially arrays and structs', 
     'this optimization enables the use of vector instructions, which increase the memory bandwidth', 
     'int x[1024];
  =====>
-__declspec(align(16)) int x[1024];', 4);
+__declspec(align(16)) int x[1024];', null);
 
 INSERT INTO [recommendation] ([id], [desc], [reason], [example], [loop]) VALUES (29,
     'help the compiler by marking pointers to non-overlapping data with "restrict"',
     'this optimization, when applicable, enables the compiler to tune the code more aggressively',
     'void *a, *b;
  =====>
-void * restrict a, * restrict b;', 4);
+void * restrict a, * restrict b;', null);
 
 INSERT INTO [recommendation] ([id], [desc], [reason], [example], [loop]) VALUES (30,
     'fuse multiple loops that access the same data',
@@ -710,7 +710,7 @@ INSERT INTO [recommendation] ([id], [desc], [reason], [example], [loop]) VALUES 
     'this optimization reduces the memory footprint, which may improve cache performance', 
     'double a[n];
  =====>
-float a[n];', 4);
+float a[n];', null);
 
 INSERT INTO [recommendation] ([id], [desc], [reason], [example], [loop]) VALUES (38,
     'apply loop fission so every loop accesses just a couple of different arrays',
@@ -754,7 +754,7 @@ struct s_hot {
 } a_hot[n];
 struct s_cold {
   many_cold_fields;
-} a_cold[n];', 4);
+} a_cold[n];', null);
 
 INSERT INTO [recommendation] ([id], [desc], [reason], [example], [loop]) VALUES (41,
     'pad memory areas so that temporal elements do not map to same set in cache',

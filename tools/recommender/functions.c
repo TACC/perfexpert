@@ -1099,8 +1099,9 @@ static int select_recommendations(segment_t *segment) {
         /* Bind loop depth
          *
          * WARNING: if the loopd depth is zero (it means not defined, we should
-         *          set it to 4, according to the database definition. I have to
-         *          think better on this, because it is AutoSCOPE's behaviour.
+         *          set it to NULL, according to the database definition. I have
+         *          to think better on this, because it could be only true for
+         *          AutoSCOPE.
          */
         if (SQLITE_OK != sqlite3_bind_double(statement,
                                              sqlite3_bind_parameter_index(statement, "@LPD"),
