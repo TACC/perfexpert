@@ -710,6 +710,16 @@ static int parse_segment_params(opttran_list_t *segments_p, FILE *inputfile_p) {
             }
             opttran_list_item_construct((opttran_list_item_t *) item);
             
+            /* Initialize some elements on segment */
+            item->filename = NULL;
+            item->line_number = 0;
+            item->type = NULL;
+            item->extra_info = NULL;
+            item->section_info = NULL;
+            item->loop_depth = 0;
+            item->representativeness = 0;
+            item->rowid = 0;
+
             /* Add this item to 'segments' */
             opttran_list_append(segments_p, (opttran_list_item_t *) item);
 
@@ -1118,51 +1128,59 @@ static int select_recommendations(segment_t *segment) {
         do {
             rc = sqlite3_step(statement);
 
-            if (0 < sqlite3_column_double(statement, 1)) {
-                /* Find the weigth of this recommendation */
-                weight = 0;
-                bzero(sql, BUFFER_SIZE);
-                strcat(sql, "SELECT weight FROM recommendation_function WHERE");
-                bzero(temp_str, BUFFER_SIZE);
-                sprintf(temp_str, " id_recommendation=%d AND id_function=%d;",
-                        sqlite3_column_int(statement, 0), function->id);
-                strcat(sql, temp_str);
-                if (SQLITE_OK != sqlite3_exec(globals.db, sql, get_weight,
-                                              (void *)&weight, &error_msg)) {
-                    fprintf(stderr, "Error: SQL error: %s\n", error_msg);
-                    sqlite3_free(error_msg);
-                    sqlite3_close(globals.db);
-                    exit(OPTTRAN_ERROR);
-                }
+            /* It is possible that this function does not return results */
+            if (SQLITE_DONE == rc) {
+                OPTTRAN_OUTPUT_VERBOSE((10, "      no recommendations for function (%d)",
+                                        function->id));
+                continue;
+            } else if (SQLITE_ROW == rc) {
 
-                /* Insert recommendation into the temporary table */
-                bzero(sql, BUFFER_SIZE);
-                sprintf(sql, "INSERT INTO recommendation_%d_%d ", (int)getpid(),
-                        segment->rowid);
-                bzero(temp_str, BUFFER_SIZE);
-                sprintf(temp_str, "VALUES (%d, %d, %f, %f);", function->id,
-                        sqlite3_column_int(statement, 0),
-                        sqlite3_column_double(statement, 1), weight);
-                strcat(sql, temp_str);
-                
-                if (SQLITE_OK != sqlite3_exec(globals.db, sql, NULL, NULL,
-                                              &error_msg)) {
-                    fprintf(stderr, "Error: SQL error: %s\n", error_msg);
-                    sqlite3_free(error_msg);
-                    sqlite3_close(globals.db);
-                    exit(OPTTRAN_ERROR);
+                if (0 < sqlite3_column_double(statement, 1)) {
+                    /* Find the weigth of this recommendation */
+                    weight = 0;
+                    bzero(sql, BUFFER_SIZE);
+                    strcat(sql, "SELECT weight FROM recommendation_function WHERE");
+                    bzero(temp_str, BUFFER_SIZE);
+                    sprintf(temp_str, " id_recommendation=%d AND id_function=%d;",
+                            sqlite3_column_int(statement, 0), function->id);
+                    strcat(sql, temp_str);
+                    if (SQLITE_OK != sqlite3_exec(globals.db, sql, get_weight,
+                                                  (void *)&weight, &error_msg)) {
+                        fprintf(stderr, "Error: SQL error: %s\n", error_msg);
+                        sqlite3_free(error_msg);
+                        sqlite3_close(globals.db);
+                        exit(OPTTRAN_ERROR);
+                    }
+                    
+                    /* Insert recommendation into the temporary table */
+                    bzero(sql, BUFFER_SIZE);
+                    sprintf(sql, "INSERT INTO recommendation_%d_%d ", (int)getpid(),
+                            segment->rowid);
+                    bzero(temp_str, BUFFER_SIZE);
+                    sprintf(temp_str, "VALUES (%d, %d, %f, %f);", function->id,
+                            sqlite3_column_int(statement, 0),
+                            sqlite3_column_double(statement, 1), weight);
+                    strcat(sql, temp_str);
+                    
+                    if (SQLITE_OK != sqlite3_exec(globals.db, sql, NULL, NULL,
+                                                  &error_msg)) {
+                        fprintf(stderr, "Error: SQL error: %s\n", error_msg);
+                        sqlite3_free(error_msg);
+                        sqlite3_close(globals.db);
+                        exit(OPTTRAN_ERROR);
+                    }
+                    
+                    OPTTRAN_OUTPUT_VERBOSE((10, "      FunctionID=%d, RecommendationID=%d, Score=%f, Weight=%f",
+                                            function->id,
+                                            sqlite3_column_int(statement, 0),
+                                            sqlite3_column_double(statement, 1),
+                                            weight));
                 }
-                
-                OPTTRAN_OUTPUT_VERBOSE((10, "      FunctionID=%d, RecommendationID=%d, Score=%f, Weight=%f",
-                                        function->id,
-                                        sqlite3_column_int(statement, 0),
-                                        sqlite3_column_double(statement, 1),
-                                        weight));
             }
         } while (SQLITE_ROW == rc);
 
+        /* Something went wrong :-/ */
         if (SQLITE_DONE != rc) {
-            /* Something went wrong :-/ */
             fprintf(stderr, "Error: SQL error: %s\n",
                     sqlite3_errmsg(globals.db));
             sqlite3_free(error_msg);
