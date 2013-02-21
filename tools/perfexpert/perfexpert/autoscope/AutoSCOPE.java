@@ -59,7 +59,6 @@ public class AutoSCOPE {
   private int[] funcloop;
   private Vector<CodeSection> cs;
 
-
   public AutoSCOPE(String dbname) {
     String PERFEXPERT_HOME = "";
     ClassLoader loader = AutoSCOPE.class.getClassLoader();
@@ -172,12 +171,12 @@ public class AutoSCOPE {
           System.err.println("need at least one category: skipping entry");
         } else {
           Entry e = new Entry(component[0], component[1], component[2], component[3], cat, attr, cnt);
+          System.out.println("Desc=" + component[0] + " Category=" + cat + " Attributes=" + attr + " CNT?=" + cnt);
           db.add(e);
         }
       }
     }
   }
-
 
   private String recommendOne(int attr, float[] weights, int max) {
     String suggestion = new String("");
@@ -253,7 +252,6 @@ public class AutoSCOPE {
     return suggestion;
   }
 
-
   private static String readFile(String path) {
     try {
       FileInputStream stream = new FileInputStream(new File(path));
@@ -276,8 +274,8 @@ public class AutoSCOPE {
     public int attr_cnt;
     public float score;
 
-
-    public Entry(String des, String expl, String eg, String flags, int cat, int attr, int cnt) {
+    public Entry(String des, String expl, String eg, String flags, int cat,
+                 int attr, int cnt) {
       description = des;
       explanation = expl;
       codeexample = eg;
@@ -288,13 +286,12 @@ public class AutoSCOPE {
       score = 0.0f;
     }
 
-
     public Boolean Match(int avail_attrib) {
       // check if available attributes contain all required attributes and
       // whether loop/no-loop matches
-      return ((attributes & avail_attrib) == attributes) && (((attributes & 7) == 0) == ((avail_attrib & 7) == 0));
+      return ((attributes & avail_attrib) == attributes) &&
+             ((0 == (attributes & 7)) == (0 == (avail_attrib & 7)));
     }
-
 
     public void Score(float[] weights) {
       score = 0.0f;
@@ -306,7 +303,6 @@ public class AutoSCOPE {
       }
     }
   }
-
 
   public void addCodeSection(String header, Map<String, Float> lcpi) {
     CodeSection codesection = new CodeSection(header);
@@ -371,14 +367,12 @@ public class AutoSCOPE {
     public int loop, depth;
     public float[] weights;
 
-
     CodeSection(String name) {
       header = name;
       weights = new float[10];
       depth = 0;
     }
   }
-
 
   public String recommend(int max) {
     int attr = 0;
@@ -397,6 +391,9 @@ public class AutoSCOPE {
       }
       output += "\n********************************************************************************\n";
       output += codesection.header;
+      output += "\ncs.loop=" + codesection.loop + " cs.depth=" + codesection.depth;
+      output += " attr=" + attr + " attrib_avail=" + avail_attrib;
+      output += " funcloop[0]=" + funcloop[0] + " funcloop[1]=" + funcloop[1];
       output += "\n********************************************************************************\n";
       output += recommendOne(avail_attrib, codesection.weights, max);
     }

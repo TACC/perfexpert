@@ -325,31 +325,32 @@ static void show_help(void) {
     printf("                   [-a dir] [-s file] ");
 #endif
     printf("                   [-l level]\n");
-    printf("  -i --stdin         Use STDIN as input for performance measurements\n");
-    printf("  -f --inputfile     Use 'file' as input for performance measurements\n");
-    printf("  -o --outputfile    Use 'file' as output for recommendations (default: stdout)\n");
-    printf("                     if the file exists its content will be overwritten\n");
-    printf("  -d --database      Select the recommendation database file\n");
-    printf("                     (default: %s/%s)\n", OPTTRAN_VARDIR, RECOMMENDATION_DB);
-    printf("  -m --metricfile    Use 'file' to define metrics different from the default\n");
-    printf("  -n --newmetrics    Do not use the system metrics table. A temporary table will\n");
-    printf("                     be created using the default metrics file:\n");
-    printf("                     %s/%s\n", OPTTRAN_ETCDIR, METRICS_FILE);
+    printf("  -i --stdin           Use STDIN as input for performance measurements\n");
+    printf("  -f --inputfile       Use 'file' as input for performance measurements\n");
+    printf("  -o --outputfile      Use 'file' as output for recommendations (default stdout)\n");
+    printf("                       if the file exists its content will be overwritten\n");
+    printf("  -d --database        Select the recommendation database file\n");
+    printf("                       (default: %s/%s)\n", OPTTRAN_VARDIR, RECOMMENDATION_DB);
+    printf("  -m --metricfile      Use 'file' to define metrics different from the default\n");
+    printf("  -n --newmetrics      Do not use the system metrics table. A temporary table\n");
+    printf("                       will be created using the default metrics file:\n");
+    printf("                       %s/%s\n", OPTTRAN_ETCDIR, METRICS_FILE);
+    printf("  -r --recommendations Number of recommendation to show\n");
 #ifdef HAVE_ROSE
-    printf("  -a --opttran       Create OptTran (automatic performance optimization) files\n");
-    printf("                     into 'dir' directory (default: create no OptTran files).\n");
-    printf("                     This argument overwrites -o (no output on STDOUT, except\n");
-    printf("                     for verbose messages)\n");
-    printf("  -s --sourcefile    Use 'file' to extract source code fragments identified as\n");
-    printf("                     bootleneck by PerfExpert (this option sets -a argument)\n");
+    printf("  -a --opttran         Create OptTran (automatic performance optimization) files\n");
+    printf("                       into 'dir' directory (default: create no OptTran files).\n");
+    printf("                       This argument overwrites -o (no output on STDOUT, except\n");
+    printf("                       for verbose messages)\n");
+    printf("  -s --sourcefile      Use 'file' to extract source code fragments identified as\n");
+    printf("                       bootleneck by PerfExpert (this option sets -a argument)\n");
 #endif
-    printf("  -p --pid           Use 'pid' to identify consecutive calls to Recommender.\n");
-    printf("                     This argument is set automatically when using OptTran\n");
-    printf("  -v --verbose       Enable verbose mode using default verbose level (5)\n");
-    printf("  -l --verbose_level Enable verbose mode using a specific verbose level (1-10)\n");
-    printf("  -c --colorful      Enable colors on verbose mode, no weird characters will\n");
-    printf("                     apper on output files\n");
-    printf("  -h --help          Show this message\n");
+    printf("  -p --pid             Use 'pid' to identify consecutive calls to Recommender.\n");
+    printf("                       This argument is set automatically when using OptTran\n");
+    printf("  -v --verbose         Enable verbose mode using default verbose level (5)\n");
+    printf("  -l --verbose_level   Enable verbose mode using a specific verbose level (1-10)\n");
+    printf("  -c --colorful        Enable colors on verbose mode, no weird characters will\n");
+    printf("                       appear on output files\n");
+    printf("  -h --help            Show this message\n");
 
     /* I suppose that if I've to show the help is because something is wrong,
      * or maybe the user just want to see the options, so it seems to be a
@@ -1095,7 +1096,12 @@ static int select_recommendations(segment_t *segment) {
             exit(OPTTRAN_ERROR);
         }
 
-        /* Bind loop depth */
+        /* Bind loop depth
+         *
+         * WARNING: if the loopd depth is zero (it means not defined, we should
+         *          set it to 4, according to the database definition. I have to
+         *          think better on this, because it is AutoSCOPE's behaviour.
+         */
         if (SQLITE_OK != sqlite3_bind_double(statement,
                                              sqlite3_bind_parameter_index(statement, "@LPD"),
                                              segment->loop_depth)) {

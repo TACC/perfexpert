@@ -46,7 +46,8 @@ public class HPCToolkitPresentation {
                                               MachineConfigManager machineConfig,
                                               String file01,
                                               boolean aggregateOnly,
-                                              int maxSuggestions) {
+                                              int maxSuggestions,
+                                              boolean opttran) { // Fialho: new flag
         Map<String, Float> lcpiMap = new HashMap<String,Float>(20);
 
         List<HPCToolkitProfile> profiles02 = null;
@@ -139,42 +140,44 @@ public class HPCToolkitPresentation {
             
             // Fialho: removing the AutoSCOPE functionality from PerfExpert,
             //         outputing measurement when --recommend is in use.
-//            AutoSCOPE as = new AutoSCOPE("/optimizations/opt-sug-intel.pdb");
-//            as.addCodeSection(profile.getCodeSectionInfo() + " (" +
-//                              doubleFormat.format(profile.getImportance()*100) +
-//                              "% of the total runtime)", lcpi);
-//            System.out.println (as.recommend(maxSuggestions));
-            
-            System.out.println("%");
-            System.out.println("code.section_info=" + profile.getCodeSectionInfo());
-            System.out.println("code.filename=" + profile.getCodeFilename());
-            System.out.println("code.line_number=" + profile.getCodeLineNumber());
-            System.out.println("code.type=" + profile.getCodeType());
-            System.out.println("code.extra_info=" + profile.getCodeExtraInfo());
-            System.out.println("code.representativeness=" + doubleFormat.format(profile.getImportance()*100));
-            
-            // PerfExpert metrics with correspondent measurements
-            Set s = lcpi.entrySet();
-            Iterator it = s.iterator();
-            while (it.hasNext()) {
-                Map.Entry m = (Map.Entry)it.next();
-                System.out.println("perfexpert." + m.getKey() + "=" + m.getValue());
-            }
-            
-            // PAPI raw measurements
-            s = perfCtrTranslation.entrySet();
-            it = s.iterator();
-            while (it.hasNext()) {
-                Map.Entry m = (Map.Entry)it.next();
-                System.out.println("papi." + m.getKey() + "=" + m.getValue());
-            }
-            
-            // Hound host measurements
-            s = machineConfig.getProperties().entrySet();
-            it = s.iterator();
-            while (it.hasNext()) {
-                Map.Entry m = (Map.Entry)it.next();
-                System.out.println("hound." + m.getKey() + "=" + m.getValue());
+            if (false == opttran) {
+                AutoSCOPE as = new AutoSCOPE("/var/opt-sug-intel.pdb");
+                as.addCodeSection(profile.getCodeSectionInfo() + " (" +
+                                  doubleFormat.format(profile.getImportance()*100) +
+                                  "% of the total runtime)", lcpi);
+                System.out.println (as.recommend(maxSuggestions));
+            } else {
+                System.out.println("%");
+                System.out.println("code.section_info=" + profile.getCodeSectionInfo());
+                System.out.println("code.filename=" + profile.getCodeFilename());
+                System.out.println("code.line_number=" + profile.getCodeLineNumber());
+                System.out.println("code.type=" + profile.getCodeType());
+                System.out.println("code.extra_info=" + profile.getCodeExtraInfo());
+                System.out.println("code.representativeness=" + doubleFormat.format(profile.getImportance()*100));
+                
+                // PerfExpert metrics with correspondent measurements
+                Set s = lcpi.entrySet();
+                Iterator it = s.iterator();
+                while (it.hasNext()) {
+                    Map.Entry m = (Map.Entry)it.next();
+                    System.out.println("perfexpert." + m.getKey() + "=" + m.getValue());
+                }
+                
+                // PAPI raw measurements
+                s = perfCtrTranslation.entrySet();
+                it = s.iterator();
+                while (it.hasNext()) {
+                    Map.Entry m = (Map.Entry)it.next();
+                    System.out.println("papi." + m.getKey() + "=" + m.getValue());
+                }
+                
+                // Hound host measurements
+                s = machineConfig.getProperties().entrySet();
+                it = s.iterator();
+                while (it.hasNext()) {
+                    Map.Entry m = (Map.Entry)it.next();
+                    System.out.println("hound." + m.getKey() + "=" + m.getValue());
+                }
             }
         }
     }

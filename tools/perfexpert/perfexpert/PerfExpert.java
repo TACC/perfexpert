@@ -86,11 +86,16 @@ public class PerfExpert {
         UnflaggedOption ufExp02 = new UnflaggedOption("experiment.xml",
                                                       "Second experiment.xml file, for comparison only. Not valid with -r,--recommend",
                                                       ArgType.STRING);
+        // Fialho: adding a new option --opttran
+        Switch swOpttran = new Switch('o', "opttran", "Show recommendations using OptTran format");
+
         ufExp02.setMandatory(false);
 
         Parser parser = new Parser();
         parser.registerOption(swHelp);
         parser.registerOption(swAgg);
+        // Fialho: parsing new option --opttran
+        parser.registerOption(swOpttran);
         parser.registerOption(flRecommend);
         parser.registerOption(flThreads);
         parser.registerOption(ufThreshold);
@@ -115,6 +120,8 @@ public class PerfExpert {
         Double threshold = 0.1;
         Integer max_suggestions = 0;
         boolean recommend = false, aggregateOnly = false;
+        // Fialho: new flag, opttran
+        boolean opttran = false;
         String filename01 = null, filename02 = null, threads = null;
 
         threshold = (Double) parser.getValue(ufThreshold);
@@ -126,6 +133,7 @@ public class PerfExpert {
             max_suggestions=0;
         }
         aggregateOnly = parser.isSet(swAgg);
+        opttran = parser.isSet(swOpttran);
         filename01 = (String) parser.getValue(ufExp01);
         filename02 = (String) parser.getValue(ufExp02);
         threads = (String) parser.getValue(flThreads);
@@ -186,7 +194,8 @@ public class PerfExpert {
                                                           machineConfig,
                                                           filename01,
                                                           aggregateOnly,
-                                                          max_suggestions);
+                                                          max_suggestions,
+                                                          opttran); // Fialho: new flag
         }
     }
 }
