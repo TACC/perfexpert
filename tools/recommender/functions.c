@@ -1035,7 +1035,7 @@ static int select_recommendations(segment_t *segment) {
                             segment->rowid));
     
     if (SQLITE_OK != sqlite3_exec(globals.db,
-                                  "SELECT id, desc, statement FROM function",
+                                  "SELECT id, desc, statement FROM function;",
                                   accumulate_functions,
                                   (void *)&(segment->functions),
                                   &error_msg)) {
@@ -1052,10 +1052,10 @@ static int select_recommendations(segment_t *segment) {
 
     /* Create a temporary table to store possible recommendations */
     bzero(sql, BUFFER_SIZE);
-    sprintf(sql, "CREATE  TABLE recommendation_%d (function_id INTEGER,\n",
-            (int)getpid());
+    sprintf(sql, "CREATE TABLE recommendation_%d_%d (function_id INTEGER,\n",
+            (int)getpid(), segment->rowid);
     strcat(sql, "                        "); // Pretty print ;-)
-    strcat(sql, "recommendation_id INTEGER, score FLOAT, weigth FLOAT)");
+    strcat(sql, "recommendation_id INTEGER, score FLOAT, weigth FLOAT);");
 
     OPTTRAN_OUTPUT_VERBOSE((10, "%s",
                             _YELLOW("creating temporary table of recommendations")));
@@ -1089,8 +1089,7 @@ static int select_recommendations(segment_t *segment) {
 
         /* Bind ROWID */
         if (SQLITE_OK != sqlite3_bind_int(statement,
-                                          sqlite3_bind_parameter_index(statement,
-                                                                       "@RID"),
+                                          sqlite3_bind_parameter_index(statement, "@RID"),
                                           segment->rowid)) {
             fprintf(stderr, "Error: SQL error: %s\n", error_msg);
             sqlite3_free(error_msg);
@@ -1100,8 +1099,7 @@ static int select_recommendations(segment_t *segment) {
 
         /* Bind loop depth */
         if (SQLITE_OK != sqlite3_bind_double(statement,
-                                             sqlite3_bind_parameter_index(statement,
-                                                                          "@LPD"),
+                                             sqlite3_bind_parameter_index(statement, "@LPD"),
                                              segment->loop_depth)) {
             fprintf(stderr, "Error: SQL error: %s\n", error_msg);
             sqlite3_free(error_msg);
@@ -1109,17 +1107,23 @@ static int select_recommendations(segment_t *segment) {
             exit(OPTTRAN_ERROR);
         }
 
+        OPTTRAN_OUTPUT_VERBOSE((10, "%s", _RED(function->statement)));
+
         /* Run que query */
         OPTTRAN_OUTPUT_VERBOSE((10, "   %s",
                                 _GREEN("list of recommendations: ")));
         do {
             rc = sqlite3_step(statement);
+
             if (0 < sqlite3_column_double(statement, 1)) {
                 /* Find the weigth of this recommendation */
                 weight = 0;
                 bzero(sql, BUFFER_SIZE);
-                sprintf(sql, "SELECT weight FROM recommendation_function WHERE id_recommendation=%d AND id_function=%d",
+                strcat(sql, "SELECT weight FROM recommendation_function WHERE");
+                bzero(temp_str, BUFFER_SIZE);
+                sprintf(temp_str, " id_recommendation=%d AND id_function=%d;",
                         sqlite3_column_int(statement, 0), function->id);
+                strcat(sql, temp_str);
                 if (SQLITE_OK != sqlite3_exec(globals.db, sql, get_weight,
                                               (void *)&weight, &error_msg)) {
                     fprintf(stderr, "Error: SQL error: %s\n", error_msg);
@@ -1130,7 +1134,8 @@ static int select_recommendations(segment_t *segment) {
 
                 /* Insert recommendation into the temporary table */
                 bzero(sql, BUFFER_SIZE);
-                sprintf(sql, "INSERT INTO recommendation_%d ", (int)getpid());
+                sprintf(sql, "INSERT INTO recommendation_%d_%d ", (int)getpid(),
+                        segment->rowid);
                 bzero(temp_str, BUFFER_SIZE);
                 sprintf(temp_str, "VALUES (%d, %d, %f, %f);", function->id,
                         sqlite3_column_int(statement, 0),
@@ -1163,6 +1168,12 @@ static int select_recommendations(segment_t *segment) {
         }
         
         /* SQLite3 cleanup */
+        if (SQLITE_OK != sqlite3_reset(statement)) {
+            fprintf(stderr, "Error: SQL error: %s\n", error_msg);
+            sqlite3_free(error_msg);
+            sqlite3_close(globals.db);
+            exit(OPTTRAN_ERROR);
+        }
         if (SQLITE_OK != sqlite3_finalize(statement)) {
             fprintf(stderr, "Error: SQL error: %s\n", error_msg);
             sqlite3_free(error_msg);
@@ -1183,17 +1194,19 @@ static int select_recommendations(segment_t *segment) {
     strcat(sql, "SELECT r.id, r.desc, r.reason, r.example FROM recommendation AS r");
     strcat(sql, "\n                        ");
     bzero(temp_str, BUFFER_SIZE);
-    sprintf(temp_str, "INNER JOIN recommendation_%d", (int)getpid());
+    sprintf(temp_str, "INNER JOIN recommendation_%d_%d", (int)getpid(),
+            segment->rowid);
     strcat(sql, temp_str);
     strcat(sql, " AS temp\n                        ");
     strcat(sql, "WHERE r.id = temp.recommendation_id");
     strcat(sql, "\n                        ORDER BY");
     bzero(temp_str, BUFFER_SIZE);
-    sprintf(temp_str, " temp.score DESC LIMIT %d", globals.rec_count);
+    sprintf(temp_str, " temp.score DESC LIMIT %d;", globals.rec_count);
     strcat(sql, temp_str);
     
-    OPTTRAN_OUTPUT_VERBOSE((10, "%s",
-                            _YELLOW("selecting top-N recommendations")));
+    OPTTRAN_OUTPUT_VERBOSE((10, "%s (top %d)",
+                            _YELLOW("selecting top-N recommendations"),
+                            globals.rec_count));
     OPTTRAN_OUTPUT_VERBOSE((10, "   SQL: %s", _CYAN(sql)));
 
     if (SQLITE_OK != sqlite3_exec(globals.db, sql, output_recommendations, NULL,
@@ -1204,9 +1217,10 @@ static int select_recommendations(segment_t *segment) {
         exit(OPTTRAN_ERROR);
     }
 
-    /* Remove the temporary table */
+    /* Remove the temporary table now, don't wait for the connection closing */
     bzero(sql, BUFFER_SIZE);
-    sprintf(sql, "DROP TABLE recommendation_%d;", (int)getpid());
+    sprintf(sql, "DROP TABLE recommendation_%d_%d;", (int)getpid(),
+            segment->rowid);
     
     OPTTRAN_OUTPUT_VERBOSE((10, "%s",
                             _YELLOW("dropping temporary table of recommendations")));

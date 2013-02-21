@@ -911,11 +911,11 @@ JOIN
       metric.perfexpert_ratio_floating_point) > 1
     AND
       -- Recommender rowid, the last inserted bottleneck
-      metric.id = 4
+      metric.id = @RID
   )
-WHERE recom.loop_depth >= 1
+WHERE recom.loop_depth >= @LPD
   -- Recommender rowid, the last inserted bottleneck
-  AND metric.id = 4  
+  AND metric.id = @RID
 GROUP BY recom.id
 -- ranked by their scores
 ORDER BY score DESC;");

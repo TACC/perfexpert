@@ -25,6 +25,9 @@
  * $HEADER$
  */
 
+#ifndef TRAVERSAL_H_
+#define TRAVERSAL_H_
+
 /* Utility headers */
 #ifndef ROSE_H
 #include <rose.h>
@@ -41,5 +44,7 @@ class recommenderTraversal : public AstSimpleProcessing {
     virtual void atTraversalEnd();
     segment_t *item;
 };
+
+#endif /* TRAVERSAL_H */
 
 // EOF
