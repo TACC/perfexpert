@@ -837,13 +837,11 @@ static int parse_segment_params(opttran_list_t *segments_p, FILE *inputfile_p) {
             free(node);
             continue;
         }
-        /* Code param: code.section_info */
-        if (0 == strncmp("perfexpert.loop_depth", node->key, 21)) {
+        /* Code param: perfexpert.loop_depth */
+        if (0 == strncmp("perfexpert.loop-depth", node->key, 21)) {
             item->loop_depth = atof(node->value);
-            OPTTRAN_OUTPUT_VERBOSE((10, "(%d) loop depth: [%d]", input_line,
+            OPTTRAN_OUTPUT_VERBOSE((10, "(%d) loop depth: [%f]", input_line,
                                     item->loop_depth));
-            free(node);
-            continue;
         }
 
         /* Clean the node->key (remove undesired characters) */
@@ -1106,8 +1104,6 @@ static int select_recommendations(segment_t *segment) {
             sqlite3_close(globals.db);
             exit(OPTTRAN_ERROR);
         }
-
-        OPTTRAN_OUTPUT_VERBOSE((10, "%s", _RED(function->statement)));
 
         /* Run que query */
         OPTTRAN_OUTPUT_VERBOSE((10, "   %s",
