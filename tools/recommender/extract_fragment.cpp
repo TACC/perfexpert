@@ -40,7 +40,7 @@
 #include "recommender.h"
 #include "opttran_output.h"
 #include "opttran_util.h"
-#include "recommenderTraversal.h"
+#include "traversal.h"
 
 extern globals_t globals; // globals was defined on 'recommender.c'
 
