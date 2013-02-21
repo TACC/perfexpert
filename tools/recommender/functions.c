@@ -322,9 +322,9 @@ static void show_help(void) {
     /*      12345678901234567890123456789012345678901234567890123456789012345678901234567890 */
     printf("Usage: recommender -i|-f file [-o file] [-d database] [-m file] [-nvch] [-p pid]\n");
 #ifdef HAVE_ROSE
-    printf("                    [-a dir] [-s file] ");
+    printf("                   [-a dir] [-s file] ");
 #endif
-    printf("                     [-l level]\n");
+    printf("                   [-l level]\n");
     printf("  -i --stdin         Use STDIN as input for performance measurements\n");
     printf("  -f --inputfile     Use 'file' as input for performance measurements\n");
     printf("  -o --outputfile    Use 'file' as output for recommendations (default: stdout)\n");
@@ -343,8 +343,8 @@ static void show_help(void) {
     printf("  -s --sourcefile    Use 'file' to extract source code fragments identified as\n");
     printf("                     bootleneck by PerfExpert (this option sets -a argument)\n");
 #endif
-    printf("  -p --pid           Use 'pid' to identify consecutive calls to Recommender.");
-    printf("                     This argument is set automatically when using OptTran");
+    printf("  -p --pid           Use 'pid' to identify consecutive calls to Recommender.\n");
+    printf("                     This argument is set automatically when using OptTran\n");
     printf("  -v --verbose       Enable verbose mode using default verbose level (5)\n");
     printf("  -l --verbose_level Enable verbose mode using a specific verbose level (1-10)\n");
     printf("  -c --colorful      Enable colors on verbose mode, no weird characters will\n");
