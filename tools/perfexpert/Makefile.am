@@ -39,6 +39,7 @@ install-exec-local: install-dist_binSCRIPTS
 	$(INSTALL) -m 644 $(top_srcdir)/external/log4j.properties $(libdir)
 	$(INSTALL) -m 644 $(top_srcdir)/contrib/perfexpert-experiment.xml \
 		$(datadir)/$(PACKAGE_NAME)
+	$(INSTALL) -m 644 $(top_srcdir)/contrib/opt-sug-intel.pdb $(localstatedir)
 
 install-exec-hook:
 	cd $(bindir); rm hpcdata; $(LN_S) hpcdata.sh hpcdata
