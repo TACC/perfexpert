@@ -69,9 +69,10 @@ JOIN
       -- Recommender rowid, the last inserted bottleneck
       metric.id = @RID
   )
-WHERE recom.loop_depth >= @LPD
+WHERE (recom.loop <= @LPD AND metric.code_type = 'loop') OR
+      (recom.loop IS NULL AND metric.code_type = 'function')
   -- Recommender rowid, the last inserted bottleneck
-  AND metric.id = @RID  
+  AND metric.id = @RID
 GROUP BY recom.id
 -- ranked by their scores
 ORDER BY score DESC;
