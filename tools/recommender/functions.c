@@ -1106,13 +1106,7 @@ static int select_recommendations(segment_t *segment) {
             exit(OPTTRAN_ERROR);
         }
 
-        /* Bind loop depth
-         *
-         * WARNING: if the loopd depth is zero (it means not defined, we should
-         *          set it to NULL, according to the database definition. I have
-         *          to think better on this, because it could be only true for
-         *          AutoSCOPE.
-         */
+        /* Bind loop depth */
         if (SQLITE_OK != sqlite3_bind_double(statement,
                                              sqlite3_bind_parameter_index(statement, "@LPD"),
                                              segment->loop_depth)) {
@@ -1134,7 +1128,19 @@ static int select_recommendations(segment_t *segment) {
                                         function->id));
                 continue;
             } else if (SQLITE_ROW == rc) {
-
+                /* check if there are at least two columns in the SQL result and
+                 * their types are both SQLITE_FLOAT
+                 */
+                if (SQLITE_FLOAT != sqlite3_column_type(statement, 0)) {
+                    OPTTRAN_OUTPUT(("%s", _ERROR("The first column of a recommendation function returned a type different than double. The result of this function will be ignored.")));
+                    continue;
+                }
+                if (SQLITE_FLOAT != sqlite3_column_type(statement, 1)) {
+                    OPTTRAN_OUTPUT(("%s", _ERROR("The second column of a recommendation function returned a type different than double. The result of this function will be ignored.")));
+                    continue;
+                }
+                
+                /* Consider only the results where the score is positive */
                 if (0 < sqlite3_column_double(statement, 1)) {
                     /* Find the weigth of this recommendation */
                     weight = 0;
@@ -1208,7 +1214,7 @@ static int select_recommendations(segment_t *segment) {
 
     /* Calculate the normalized rank of recommendations, should use weights? */
     // TODO: someday, I will add the weighting system here
-    
+
     /* Select top-N recommendations, output them */
     // TODO: include the pattern in the SQL query
     bzero(sql, BUFFER_SIZE);
