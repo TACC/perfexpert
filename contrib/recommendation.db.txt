@@ -52,7 +52,7 @@ CREATE TABLE "category" (
     "id" INTEGER NOT NULL,
     "desc" TEXT(1024) NOT NULL,
     "short" TEXT(16) NOT NULL,
-PRIMARY KEY ("id")
+    PRIMARY KEY ("id")
 );
 
 --
@@ -68,88 +68,88 @@ CREATE TABLE "recommendation" (
     "reason" CHAR(1024) NOT NULL,
     "example" CHAR(1024),
     "loop" INTEGER,
-PRIMARY KEY ("id")
+    PRIMARY KEY ("id")
 );
 
 CREATE TABLE "pattern" (
     "id" INTEGER NOT NULL,
     "language" INTEGER NOT NULL,
     "recognizer" TEXT(256) NOT NULL,
-PRIMARY KEY ("id") ,
-CONSTRAINT "fk_pattern_language"
-    FOREIGN KEY ("language")
-    REFERENCES "language" ("id")
+    PRIMARY KEY ("id") ,
+    CONSTRAINT "fk_pattern_language"
+        FOREIGN KEY ("language")
+        REFERENCES "language" ("id")
 );
 
 CREATE TABLE "language" (
     "id" INTEGER NOT NULL,
     "desc" TEXT(256) NOT NULL,
     "short" TEXT(16) NOT NULL,
-PRIMARY KEY ("id")
+    PRIMARY KEY ("id")
 );
 
 CREATE TABLE "architecture" (
     "id" INTEGER NOT NULL,
     "desc" TEXT(1024),
     "short" TEXT(16),
-PRIMARY KEY ("id")
+    PRIMARY KEY ("id")
 );
 
 CREATE TABLE "function" (
     "id" INTEGER NOT NULL,
     "desc" TEXT(1024) NOT NULL,
     "statement" TEXT(1048576) NOT NULL,
-PRIMARY KEY ("id")
+    PRIMARY KEY ("id")
 );
 
 CREATE TABLE "recommendation_architecture" (
     "id_recommendation" INTEGER NOT NULL,
     "id_architecture" INTEGER NOT NULL,
-PRIMARY KEY(id_recommendation, id_architecture),
-CONSTRAINT "fk_recommendation_architecture_recommendation"
-    FOREIGN KEY ("id_recommendation")
-    REFERENCES "recommendation" ("id"),
-CONSTRAINT "fk_recommendation_architecture_architecture" 
-    FOREIGN KEY ("id_architecture") 
-    REFERENCES "architecture" ("id")
+    PRIMARY KEY(id_recommendation, id_architecture),
+    CONSTRAINT "fk_recommendation_architecture_recommendation"
+        FOREIGN KEY ("id_recommendation")
+        REFERENCES "recommendation" ("id"),
+    CONSTRAINT "fk_recommendation_architecture_architecture" 
+        FOREIGN KEY ("id_architecture") 
+        REFERENCES "architecture" ("id")
 );
 
 CREATE TABLE "recommendation_pattern" (
     "id_recommendation" INTEGER NOT NULL,
     "id_pattern" INTEGER NOT NULL,
-PRIMARY KEY(id_recommendation, id_pattern),
-CONSTRAINT "fk_recommendation_pattern_recommendation" 
-    FOREIGN KEY ("id_recommendation") 
-    REFERENCES "recommendation" ("id"),
-CONSTRAINT "fk_recommendation_pattern_pattern" 
-    FOREIGN KEY ("id_pattern") 
-    REFERENCES "pattern" ("id")
+    PRIMARY KEY(id_recommendation, id_pattern),
+    CONSTRAINT "fk_recommendation_pattern_recommendation" 
+        FOREIGN KEY ("id_recommendation") 
+        REFERENCES "recommendation" ("id"),
+    CONSTRAINT "fk_recommendation_pattern_pattern" 
+        FOREIGN KEY ("id_pattern") 
+        REFERENCES "pattern" ("id")
 );
 
 CREATE TABLE "recommendation_category" (
     "id_recommendation" INTEGER NOT NULL,
     "id_category" INTEGER NOT NULL,
     "weight" REAL DEFAULT 1,
-PRIMARY KEY(id_recommendation, id_category),
-CONSTRAINT "fk_recommendation_category_category" 
-    FOREIGN KEY ("id_category")
-    REFERENCES "category" ("id"),
-CONSTRAINT "fk_recommendation_category_recommendation" 
-    FOREIGN KEY ("id_recommendation") 
-    REFERENCES "recommendation" ("id")
+    PRIMARY KEY(id_recommendation, id_category),
+    CONSTRAINT "fk_recommendation_category_category" 
+        FOREIGN KEY ("id_category")
+        REFERENCES "category" ("id"),
+    CONSTRAINT "fk_recommendation_category_recommendation" 
+        FOREIGN KEY ("id_recommendation") 
+        REFERENCES "recommendation" ("id")
 );
 
 CREATE TABLE "recommendation_function" (
     "id_recommendation" INTEGER NOT NULL,
     "id_function" INTEGER NOT NULL,
     "weight" REAL,
-PRIMARY KEY(id_recommendation, id_function),
-CONSTRAINT "fk_recommendation_function_recommendation" 
-    FOREIGN KEY ("id_recommendation") 
-    REFERENCES "recommendation" ("id"),
-CONSTRAINT "fk_recommendation_function_function" 
-    FOREIGN KEY ("id_function") 
-    REFERENCES "function" ("id")
+    PRIMARY KEY(id_recommendation, id_function),
+    CONSTRAINT "fk_recommendation_function_recommendation" 
+        FOREIGN KEY ("id_recommendation") 
+        REFERENCES "recommendation" ("id"),
+    CONSTRAINT "fk_recommendation_function_function" 
+        FOREIGN KEY ("id_function") 
+        REFERENCES "function" ("id")
 );
 
 CREATE TABLE "metric" (
@@ -217,7 +217,7 @@ CREATE TABLE "metric" (
     "hound_FP_slow_lat" FLOAT,
     "hound_FP_lat" FLOAT,
     "hound_TLB_lat" FLOAT,
-PRIMARY KEY ("id") 
+    PRIMARY KEY ("id") 
 );
 
 --
@@ -239,6 +239,8 @@ INSERT INTO [category] ([id], [short], [desc]) VALUES (6, 'i-tlb', 'Bad instruct
 INSERT INTO [category] ([id], [short], [desc]) VALUES (7, 'br-i', 'Bad branch instructions');
 INSERT INTO [category] ([id], [short], [desc]) VALUES (8, 'fpt-fast', 'Bad float point instuctions (fast FP)');
 INSERT INTO [category] ([id], [short], [desc]) VALUES (9, 'fpt-slow', 'Bad float point instuctions (slow FP)');
+
+INSERT INTO [pattern] ([id], [language], [recognizer]) VALUES (1, 1, 'c_loop2');
 
 INSERT INTO [recommendation] ([id], [desc], [reason], [example], [loop]) VALUES (1,
     'eliminate common subexpressions involving memory accesses',
@@ -847,7 +849,7 @@ INSERT INTO [recommendation_category] ([id_recommendation], [id_category]) VALUE
 -- AustoSCOPE recommendation selection algorithm
 --
 -- @RID is the rowid
--- @LPD it the loop depth
+-- @LPD is the loop depth
 --
 INSERT INTO function ([desc], [statement]) VALUES ('AutoSCOPE recommendation algorithm', "SELECT
 recom.id AS recommendation_id,
