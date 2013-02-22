@@ -37,7 +37,6 @@ recommender_CPPFLAGS += -DHAVE_ROSE
 recommender_SOURCES += extract_fragment.cpp traversal.cpp
 endif
 
-
 # Install the recommendation database
 install-exec-local:
 	echo "" > $(top_builddir)/warnings_recommender
