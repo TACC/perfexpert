@@ -845,6 +845,8 @@ INSERT INTO [recommendation_category] ([id_recommendation], [id_category]) VALUE
 INSERT INTO [recommendation_category] ([id_recommendation], [id_category]) VALUES (41, 3);
 INSERT INTO [recommendation_category] ([id_recommendation], [id_category]) VALUES (42, 3);
 
+INSERT INTO [recommendation_pattern] ([id_recommendation], [id_pattern]) VALUES (31, 1);
+
 --
 -- AustoSCOPE recommendation selection algorithm
 --
