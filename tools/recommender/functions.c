@@ -52,6 +52,7 @@ globals_t globals; // Variable to hold global options, this one is OK
 int recommender_main(int argc, char** argv) {
     opttran_list_t *segments;
     segment_t *item;
+    function_t *function;
     
     /* Set default values for globals */
     globals = (globals_t) {
@@ -71,7 +72,7 @@ int recommender_main(int argc, char** argv) {
         .source_file      = NULL,              // char *
         .metrics_table    = METRICS_TABLE,     // char *
         .opttran_pid      = (int)getpid(),     // int
-        .rec_count        = 5                  // int
+        .rec_count        = 3                  // int
     };
     globals.dbfile = (char *)malloc(strlen(RECOMMENDATION_DB) +
                                     strlen(OPTTRAN_VARDIR) + 2);
@@ -266,16 +267,21 @@ int recommender_main(int argc, char** argv) {
             } else {
                 OPTTRAN_OUTPUT_VERBOSE((4, "code fragments will be put in (%s)",
                                         fragments_dir));
-                free(fragments_dir);
             }
             /* Hey ROSE, here we go... */
             if (OPTTRAN_ERROR == extract_fragment(item)) {
                 OPTTRAN_OUTPUT(("%s (%s:%d)",
                                 _ERROR("Error: extracting fragments for"),
                                 item->filename, item->line_number));
+            } else {
+                fprintf(globals.outputfile_FP,
+                        "recommender.code_fragment=%s/%s_%d", fragments_dir,
+                        item->filename, item->line_number);
             }
+            free(fragments_dir);
         } else {
-            OPTTRAN_OUTPUT_VERBOSE((4, "source code not defined, can't extract fragments"));
+            OPTTRAN_OUTPUT_VERBOSE((4, "%s",
+                                    _YELLOW("source code not defined, can't extract fragments")));
         }
 #endif
         /* Move to the next code bottleneck */
@@ -288,16 +294,21 @@ int recommender_main(int argc, char** argv) {
     }
     sqlite3_close(globals.db);
 
-    /* Free segments (and all items) structure */
-    // TODO: free the functions list also
+    /* Free segments (and all sub-element, including functions) structure */
     while (OPTTRAN_FALSE == opttran_list_is_empty(segments)) {
-        segment_t *item;
         item = (segment_t *)opttran_list_get_first(segments);
         opttran_list_remove_item(segments, (opttran_list_item_t *)item);
         free(item->filename);
         free(item->type);
         free(item->extra_info);
         free(item->section_info);
+        while (OPTTRAN_FALSE ==
+               opttran_list_is_empty((opttran_list_t *)&(item->functions))) {
+            function = (function_t *)opttran_list_get_first((opttran_list_t *)&(item->functions));
+            free(function->desc);
+            opttran_list_item_destruct((opttran_list_item_t *)function);
+            free(function);
+        }
         opttran_list_item_destruct((opttran_list_item_t *)item);
         free(item); // Some version of GCC will complain about this
     }
@@ -943,7 +954,10 @@ static int output_patterns(void *weight, int col_count, char **col_values,
     } else {
         /* OptTran output */
         if (NULL != col_values[0]) {
-            fprintf(globals.outputfile_FP, "%s\n", col_values[0]);
+            fprintf(globals.outputfile_FP, "recommender.recognizer=%s\n",
+                    col_values[0]);
+            fprintf(globals.outputfile_FP, "recommender.recognizer_id=%s\n",
+                    col_values[1]);
         }
     }
     return OPTTRAN_SUCCESS;
@@ -968,11 +982,11 @@ static int output_recommendations(void *not_used, int col_count,
         fprintf(globals.outputfile_FP, "#\n# This is a possible recommendation");
         fprintf(globals.outputfile_FP, " for this code segment\n#\n");
         fprintf(globals.outputfile_FP, "Recommendation ID: %s\n",
-                col_values[1]);
+                col_values[2]);
         fprintf(globals.outputfile_FP, "Recommendation Description: %s\n",
                 col_values[0]);
         fprintf(globals.outputfile_FP, "Recommendation Reason: %s\n",
-                col_values[2]);
+                col_values[1]);
         fprintf(globals.outputfile_FP, "Pattern Recognizers: ");
 
         /* Find the patterns available for this recommendation id */
@@ -996,9 +1010,11 @@ static int output_recommendations(void *not_used, int col_count,
         fprintf(globals.outputfile_FP, "Code example:\n%s\n", col_values[3]);
     } else {
         /* OptTran output */
+        fprintf(globals.outputfile_FP, "recommender.recommendation_id=%s\n",
+                col_values[2]);
         /* Find the patterns available for this recommendation id */
         bzero(sql, BUFFER_SIZE);
-        strcat(sql, "SELECT p.recognizer FROM pattern AS p INNER JOIN");
+        strcat(sql, "SELECT p.recognizer, p.id FROM pattern AS p INNER JOIN");
         strcat(sql, "\n                        ");
         strcat(sql, "recommendation_pattern AS rp ON p.id = rp.id_pattern");
         strcat(sql, "\n                        ");
@@ -1184,7 +1200,7 @@ static int select_recommendations(segment_t *segment) {
 
             /* It is possible that this function does not return results */
             if (SQLITE_DONE == rc) {
-                OPTTRAN_OUTPUT_VERBOSE((10, "      no recommendations for function (%d)",
+                OPTTRAN_OUTPUT_VERBOSE((10, "      end of recommendations for function (%d)",
                                         function->id));
                 continue;
             } else if (SQLITE_ROW == rc) {
