@@ -99,7 +99,7 @@ typedef struct {
 
 extern globals_t globals; /**< Variable to hold global options */
 
-/* WARNING: to include opttran_output.h globals have to be defined firts */
+/* WARNING: to include opttran_output.h globals have to be defined first */
 #ifdef PROGRAM_PREFIX
 #undef PROGRAM_PREFIX
 #endif
