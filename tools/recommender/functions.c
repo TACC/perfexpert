@@ -931,30 +931,90 @@ static int get_weight(void *weight, int col_count, char **col_values,
     }
     return OPTTRAN_SUCCESS;
 }
-    
+
+/* output_patterns */
+static int output_patterns(void *weight, int col_count, char **col_values,
+                           char **col_names) {
+    if (0 == globals.use_opttran) {
+        /* Pretty print for the user */
+        if (NULL != col_values[0]) {
+            fprintf(globals.outputfile_FP, "%s ", col_values[0]);
+        }
+    } else {
+        /* OptTran output */
+        if (NULL != col_values[0]) {
+            fprintf(globals.outputfile_FP, "%s\n", col_values[0]);
+        }
+    }
+    return OPTTRAN_SUCCESS;
+}
+
 /* output_recommendations */
 static int output_recommendations(void *not_used, int col_count,
                                   char **col_values, char **col_names) {
-    
+    char temp_str[BUFFER_SIZE];
+    char sql[BUFFER_SIZE];
+    char *error_msg = NULL;
+    /*
+     * 0 (TEXT)    desc
+     * 1 (TEXT)    reason
+     * 2 (INTEGER) id
+     * 3 (TEXT)    example
+     */
     OPTTRAN_OUTPUT_VERBOSE((7, "%s", _GREEN("new recommendation found")));
-
-    /* Pretty print unless we are using OPTTRAN */
+    
     if (0 == globals.use_opttran) {
+        /* Pretty print for the user */
         fprintf(globals.outputfile_FP, "#\n# This is a possible recommendation");
         fprintf(globals.outputfile_FP, " for this code segment\n#\n");
-        fprintf(globals.outputfile_FP, "Recommendation ID: %s\n", col_values[0]);
-        fprintf(globals.outputfile_FP, "Description: %s\n", col_values[1]);
-        fprintf(globals.outputfile_FP,
-                "Reason: %s\n", col_values[2] ? col_values[2] :
-                "found no automatic transformation for this code segment");
+        fprintf(globals.outputfile_FP, "Recommendation ID: %s\n",
+                col_values[1]);
+        fprintf(globals.outputfile_FP, "Recommendation Description: %s\n",
+                col_values[0]);
+        fprintf(globals.outputfile_FP, "Recommendation Reason: %s\n",
+                col_values[2]);
+        fprintf(globals.outputfile_FP, "Pattern Recognizers: ");
+
+        /* Find the patterns available for this recommendation id */
+        bzero(sql, BUFFER_SIZE);
+        strcat(sql, "SELECT p.recognizer FROM pattern AS p INNER JOIN");
+        strcat(sql, "\n                        ");
+        strcat(sql, "recommendation_pattern AS rp ON p.id = rp.id_pattern");
+        strcat(sql, "\n                        ");
+        bzero(temp_str, BUFFER_SIZE);
+        sprintf(temp_str, "WHERE rp.id_recommendation = %s;", col_values[2]);
+        strcat(sql, temp_str);
+
+        if (SQLITE_OK != sqlite3_exec(globals.db, sql, output_patterns, NULL,
+                                      &error_msg)) {
+            fprintf(stderr, "Error: SQL error: %s\n", error_msg);
+            sqlite3_free(error_msg);
+            sqlite3_close(globals.db);
+            exit(OPTTRAN_ERROR);
+        }
+        fprintf(globals.outputfile_FP, "\n");
         fprintf(globals.outputfile_FP, "Code example:\n%s\n", col_values[3]);
     } else {
-        if (NULL != col_values[2]) {
-            fprintf(globals.outputfile_FP, "%s\n", col_values[2]);
+        /* OptTran output */
+        /* Find the patterns available for this recommendation id */
+        bzero(sql, BUFFER_SIZE);
+        strcat(sql, "SELECT p.recognizer FROM pattern AS p INNER JOIN");
+        strcat(sql, "\n                        ");
+        strcat(sql, "recommendation_pattern AS rp ON p.id = rp.id_pattern");
+        strcat(sql, "\n                        ");
+        bzero(temp_str, BUFFER_SIZE);
+        sprintf(temp_str, "WHERE rp.id_recommendation = %s;", col_values[2]);
+        strcat(sql, temp_str);
+        
+        if (SQLITE_OK != sqlite3_exec(globals.db, sql, output_patterns, NULL,
+                                      &error_msg)) {
+            fprintf(stderr, "Error: SQL error: %s\n", error_msg);
+            sqlite3_free(error_msg);
+            sqlite3_close(globals.db);
+            exit(OPTTRAN_ERROR);
         }
     }
-
-    return 0;
+    return OPTTRAN_SUCCESS;
 }
 
 /* database_connect */
@@ -1063,7 +1123,7 @@ static int select_recommendations(segment_t *segment) {
     bzero(sql, BUFFER_SIZE);
     sprintf(sql, "CREATE TABLE recommendation_%d_%d (function_id INTEGER,\n",
             (int)getpid(), segment->rowid);
-    strcat(sql, "                        "); // Pretty print ;-)
+    strcat(sql, "                        ");
     strcat(sql, "recommendation_id INTEGER, score FLOAT, weigth FLOAT);");
 
     OPTTRAN_OUTPUT_VERBOSE((10, "%s",
@@ -1129,9 +1189,9 @@ static int select_recommendations(segment_t *segment) {
                 continue;
             } else if (SQLITE_ROW == rc) {
                 /* check if there are at least two columns in the SQL result and
-                 * their types are both SQLITE_FLOAT
+                 * their types are SQLITE_INTEGER and SQLITE_FLOAT respectivelly
                  */
-                if (SQLITE_FLOAT != sqlite3_column_type(statement, 0)) {
+                if (SQLITE_INTEGER != sqlite3_column_type(statement, 0)) {
                     OPTTRAN_OUTPUT(("%s", _ERROR("The first column of a recommendation function returned a type different than double. The result of this function will be ignored.")));
                     continue;
                 }
@@ -1215,20 +1275,20 @@ static int select_recommendations(segment_t *segment) {
     /* Calculate the normalized rank of recommendations, should use weights? */
     // TODO: someday, I will add the weighting system here
 
-    /* Select top-N recommendations, output them */
-    // TODO: include the pattern in the SQL query
+    /* Select top-N recommendations, output them besides the pattern */
     bzero(sql, BUFFER_SIZE);
-    strcat(sql, "SELECT r.id, r.desc, r.reason, r.example FROM recommendation AS r");
+    strcat(sql, "SELECT r.desc AS desc, r.reason AS reason, r.id AS id,");
+    strcat(sql, "\n                        ");
+    strcat(sql, "r.example AS example FROM recommendation AS r");
     strcat(sql, "\n                        ");
     bzero(temp_str, BUFFER_SIZE);
-    sprintf(temp_str, "INNER JOIN recommendation_%d_%d", (int)getpid(),
-            segment->rowid);
+    sprintf(temp_str,
+            "INNER JOIN recommendation_%d_%d AS m ON r.id = m.recommendation_id",
+            (int)getpid(), segment->rowid);
     strcat(sql, temp_str);
-    strcat(sql, " AS temp\n                        ");
-    strcat(sql, "WHERE r.id = temp.recommendation_id");
-    strcat(sql, "\n                        ORDER BY");
+    strcat(sql, "\n                        ");
     bzero(temp_str, BUFFER_SIZE);
-    sprintf(temp_str, " temp.score DESC LIMIT %d;", globals.rec_count);
+    sprintf(temp_str, "ORDER BY m.score DESC LIMIT %d;", globals.rec_count);
     strcat(sql, temp_str);
     
     OPTTRAN_OUTPUT_VERBOSE((10, "%s (top %d)",

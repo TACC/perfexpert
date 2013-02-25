@@ -241,6 +241,7 @@ INSERT INTO [category] ([id], [short], [desc]) VALUES (8, 'fpt-fast', 'Bad float
 INSERT INTO [category] ([id], [short], [desc]) VALUES (9, 'fpt-slow', 'Bad float point instuctions (slow FP)');
 
 INSERT INTO [pattern] ([id], [language], [recognizer]) VALUES (1, 1, 'c_loop2');
+INSERT INTO [pattern] ([id], [language], [recognizer]) VALUES (2, 2, 'f_loop2');
 
 INSERT INTO [recommendation] ([id], [desc], [reason], [example], [loop]) VALUES (1,
     'eliminate common subexpressions involving memory accesses',
@@ -846,6 +847,7 @@ INSERT INTO [recommendation_category] ([id_recommendation], [id_category]) VALUE
 INSERT INTO [recommendation_category] ([id_recommendation], [id_category]) VALUES (42, 3);
 
 INSERT INTO [recommendation_pattern] ([id_recommendation], [id_pattern]) VALUES (31, 1);
+INSERT INTO [recommendation_pattern] ([id_recommendation], [id_pattern]) VALUES (31, 2);
 
 --
 -- AustoSCOPE recommendation selection algorithm
