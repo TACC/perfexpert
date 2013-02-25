@@ -115,13 +115,16 @@ static char* colorful(int attr, int fg, int bg, char* str) {
 }
 
 /* Use all your artistic side to combine the color as you prefer */
-#define _ERROR(a)   colorful(ATTR_BLINK, COLOR_RED,     COLOR_BLACK, a)
-#define _RED(a)     colorful(ATTR_NONE,  COLOR_RED,     COLOR_BLACK, a)
-#define _GREEN(a)   colorful(ATTR_NONE,  COLOR_GREEN,   COLOR_BLACK, a)
-#define _YELLOW(a)  colorful(ATTR_NONE,  COLOR_YELLOW,  COLOR_BLACK, a)
-#define _BLUE(a)    colorful(ATTR_NONE,  COLOR_BLUE,    COLOR_BLACK, a)
-#define _MAGENTA(a) colorful(ATTR_NONE,  COLOR_MAGENTA, COLOR_BLACK, a)
-#define _CYAN(a)    colorful(ATTR_NONE,  COLOR_CYAN,    COLOR_BLACK, a)
+#define _ERROR(a)      colorful(ATTR_BLINK,  COLOR_RED,     COLOR_BLACK, a)
+#define _RED(a)        colorful(ATTR_NONE,   COLOR_RED,     COLOR_BLACK, a)
+#define _GREEN(a)      colorful(ATTR_NONE,   COLOR_GREEN,   COLOR_BLACK, a)
+#define _YELLOW(a)     colorful(ATTR_NONE,   COLOR_YELLOW,  COLOR_BLACK, a)
+#define _BLUE(a)       colorful(ATTR_NONE,   COLOR_BLUE,    COLOR_BLACK, a)
+#define _MAGENTA(a)    colorful(ATTR_NONE,   COLOR_MAGENTA, COLOR_BLACK, a)
+#define _CYAN(a)       colorful(ATTR_NONE,   COLOR_CYAN,    COLOR_BLACK, a)
+#define _BOLDRED(a)    colorful(ATTR_BRIGHT, COLOR_RED,     COLOR_BLACK, a)
+#define _BOLDGREEN(a)  colorful(ATTR_BRIGHT, COLOR_GREEN,   COLOR_BLACK, a)
+#define _BOLDYELLOW(a) colorful(ATTR_BRIGHT, COLOR_YELLOW,  COLOR_BLACK, a)
 
 /**
  * Global function to send output to screen. This function should never be
