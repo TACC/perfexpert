@@ -114,7 +114,7 @@ int recommender_main(int argc, char** argv) {
     }
     opttran_list_construct(segments);
     
-    /* Calculate the temporary metrics table name */
+    /* Define the temporary metrics table name */
     if (1 == globals.use_temp_metrics) {
         globals.metrics_table = (char *)malloc(strlen("metrics_") + 6);
         sprintf(globals.metrics_table, "metrics_%d", (int)getpid());
@@ -223,8 +223,6 @@ int recommender_main(int argc, char** argv) {
                     item->filename);
             fprintf(globals.outputfile_FP, "code.line_number=%d\n",
                     item->line_number);
-            fprintf(globals.outputfile_FP, "code.fragment_file=%s_%d\n",
-                    item->filename, item->line_number);
         } else {
             fprintf(globals.outputfile_FP,
                     "#--------------------------------------------------\n");
@@ -372,6 +370,7 @@ static void show_help(void) {
 
 /* parse_env_vars */
 static int parse_env_vars(void) {
+    // TODO: add here all the parameter we have for command line arguments
     char *temp_str;
     
     /* Get the variables */
@@ -412,9 +411,10 @@ static int parse_cli_params(int argc, char *argv[]) {
                                 long_options, &option_index);
 #endif
         /* Detect the end of the options */
-        if (-1 == parameter)
+        if (-1 == parameter) {
             break;
-        
+        }
+
         switch (parameter) {
             /* Verbose level */
             case 'l':
@@ -677,8 +677,7 @@ static int parse_segment_params(opttran_list_t *segments_p, FILE *inputfile_p) {
         OPTTRAN_OUTPUT_VERBOSE((3,
                                 "using STDIN as input for perf measurements"));
     } else {
-        OPTTRAN_OUTPUT_VERBOSE((3,
-                                "using (%s) as input for perf measurements",
+        OPTTRAN_OUTPUT_VERBOSE((3, "using (%s) as input for perf measurements",
                                 globals.inputfile));
     }
 
@@ -953,11 +952,11 @@ static int output_patterns(void *weight, int col_count, char **col_values,
         }
     } else {
         /* OptTran output */
-        if (NULL != col_values[0]) {
-            fprintf(globals.outputfile_FP, "recommender.recognizer=%s\n",
-                    col_values[0]);
+        if ((NULL != col_values[0]) && (NULL != col_values[1])) {
             fprintf(globals.outputfile_FP, "recommender.recognizer_id=%s\n",
                     col_values[1]);
+            fprintf(globals.outputfile_FP, "recommender.recognizer=%s\n",
+                    col_values[0]);
         }
     }
     return OPTTRAN_SUCCESS;
