@@ -25,6 +25,12 @@
 # $HEADER$
 #
 
+bin_PROGRAMS = opttran_pr
+
+opttran_pr_SOURCES = main.c
+opttran_pr_CPPFLAGS = -I$(srcdir)/../common
+opttran_pr_CFLAGS = -O3
+
 SUBDIRS = c_loop1 c_loop2
 
 install-data-local:
