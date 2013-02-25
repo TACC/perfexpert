@@ -75,6 +75,7 @@ CREATE TABLE "pattern" (
     "id" INTEGER NOT NULL,
     "language" INTEGER NOT NULL,
     "recognizer" TEXT(256) NOT NULL,
+    "desc" TEXT(1024) NOT NULL,
     PRIMARY KEY ("id") ,
     CONSTRAINT "fk_pattern_language"
         FOREIGN KEY ("language")
@@ -225,23 +226,37 @@ CREATE TABLE "metric" (
 --
 BEGIN TRANSACTION;
 
-INSERT INTO [language] ([id], [short], [desc]) VALUES (1, 'c', 'ANSI C, C90, C99, ...');
-INSERT INTO [language] ([id], [short], [desc]) VALUES (2, 'fortran', 'Fortran 90, Fortran 95, ...');
+INSERT INTO [language] ([id], [short], [desc]) VALUES 
+    (1, 'c', 'ANSI C, C90, C99, ...');
+INSERT INTO [language] ([id], [short], [desc]) VALUES 
+    (2, 'fortran', 'Fortran 90, Fortran 95, ...');
 
-INSERT INTO [architecture] ([id], [short], [desc]) VALUES (1, 'x86_64', '64 bit extension of the x86 instruction set');
+INSERT INTO [architecture] ([id], [short], [desc]) VALUES 
+    (1, 'x86_64', '64 bit extension of the x86 instruction set');
 
-INSERT INTO [category] ([id], [short], [desc]) VALUES (1, 'd-l1', 'Bad L1 data access');
-INSERT INTO [category] ([id], [short], [desc]) VALUES (2, 'd-l2', 'Bad L2 data access');
-INSERT INTO [category] ([id], [short], [desc]) VALUES (3, 'd-mem', 'Bad memory access');
-INSERT INTO [category] ([id], [short], [desc]) VALUES (4, 'd-tlb', 'Bad data TLB access');
-INSERT INTO [category] ([id], [short], [desc]) VALUES (5, 'i-access', 'Bad instruction access');
-INSERT INTO [category] ([id], [short], [desc]) VALUES (6, 'i-tlb', 'Bad instruction TLB access');
-INSERT INTO [category] ([id], [short], [desc]) VALUES (7, 'br-i', 'Bad branch instructions');
-INSERT INTO [category] ([id], [short], [desc]) VALUES (8, 'fpt-fast', 'Bad float point instuctions (fast FP)');
-INSERT INTO [category] ([id], [short], [desc]) VALUES (9, 'fpt-slow', 'Bad float point instuctions (slow FP)');
+INSERT INTO [category] ([id], [short], [desc]) VALUES
+    (1, 'd-l1', 'bad L1 data access');
+INSERT INTO [category] ([id], [short], [desc]) VALUES
+    (2, 'd-l2', 'bad L2 data access');
+INSERT INTO [category] ([id], [short], [desc]) VALUES
+    (3, 'd-mem', 'bad memory access');
+INSERT INTO [category] ([id], [short], [desc]) VALUES 
+    (4, 'd-tlb', 'bad data TLB access');
+INSERT INTO [category] ([id], [short], [desc]) VALUES 
+    (5, 'i-access', 'bad instruction access');
+INSERT INTO [category] ([id], [short], [desc]) VALUES 
+    (6, 'i-tlb', 'bad instruction TLB access');
+INSERT INTO [category] ([id], [short], [desc]) VALUES 
+    (7, 'br-i', 'bad branch instructions');
+INSERT INTO [category] ([id], [short], [desc]) VALUES 
+    (8, 'fpt-fast', 'bad float point instuctions (fast FP)');
+INSERT INTO [category] ([id], [short], [desc]) VALUES 
+    (9, 'fpt-slow', 'bad float point instuctions (slow FP)');
 
-INSERT INTO [pattern] ([id], [language], [recognizer]) VALUES (1, 1, 'c_loop2');
-INSERT INTO [pattern] ([id], [language], [recognizer]) VALUES (2, 2, 'f_loop2');
+INSERT INTO [pattern] ([id], [language], [recognizer], [desc]) VALUES
+    (1, 1, 'c_loop2', '2 perfect nested loops');
+INSERT INTO [pattern] ([id], [language], [recognizer], [desc]) VALUES
+    (2, 2, 'f_loop2', '2 perfect nested loops');
 
 INSERT INTO [recommendation] ([id], [desc], [reason], [example], [loop]) VALUES (1,
     'eliminate common subexpressions involving memory accesses',
