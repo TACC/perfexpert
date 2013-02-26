@@ -51,7 +51,10 @@ globals_t globals; // Variable to hold global options, this one is OK
 /* main, life starts here */
 int main(int argc, char** argv) {
     opttran_list_t *fragments;
-
+    fragment_t *fragment;
+    recommendation_t *recommendation;
+    recognizer_t *recognizer;
+    
     /* Set default values for globals */
     globals = (globals_t) {
         .verbose          = 0,      // int
@@ -59,6 +62,7 @@ int main(int argc, char** argv) {
         .use_stdin        = 0,      // int
         .use_stdout       = 1,      // int
         .inputfile        = NULL,   // char *
+        .outputfile       = NULL,   // char *
         .outputfile_FP    = stdout, // FILE *
         .testall          = 0,      // int
         .colorful         = 0       // int
@@ -108,14 +112,58 @@ int main(int argc, char** argv) {
             show_help();
         }
     }
-    
+
     /* Test the pattern recognizers */
     if (OPTTRAN_SUCCESS != test_recognizers(fragments)) {
         OPTTRAN_OUTPUT(("%s", _ERROR("Error: testing pattern recognizers")));
         exit(OPTTRAN_ERROR);
     }
-    
-    // TODO: recursively free all structures
+
+    /* Output results */
+    if (0 == globals.use_stdout) {
+        OPTTRAN_OUTPUT_VERBOSE((7, "printing test results to file (%s)",
+                                globals.outputfile));
+        globals.outputfile_FP = fopen(globals.outputfile, "w+");
+        if (NULL == globals.outputfile_FP) {
+            OPTTRAN_OUTPUT(("%s (%s)",
+                            _ERROR("Error: unable to open output file"),
+                            globals.outputfile));
+            return OPTTRAN_ERROR;
+        }
+    } else {
+        OPTTRAN_OUTPUT_VERBOSE((7, "printing test results to STDOUT"));
+    }
+    if (OPTTRAN_SUCCESS != output_results(fragments)) {
+        OPTTRAN_OUTPUT(("%s", _ERROR("Error: outputting results")));
+        exit(OPTTRAN_ERROR);
+    }
+    if (0 == globals.use_stdout) {
+        fclose(globals.outputfile_FP);
+    }
+
+    /* Free fragments */
+    while (OPTTRAN_FALSE == opttran_list_is_empty(fragments)) {
+        fragment = (fragment_t *)opttran_list_get_first(fragments);
+        opttran_list_remove_item(fragments, (opttran_list_item_t *)fragment);
+        while (OPTTRAN_FALSE == opttran_list_is_empty(&(fragment->recommendations))) {
+            recommendation = (recommendation_t *)opttran_list_get_first(&(fragment->recommendations));
+            opttran_list_remove_item(&(fragment->recommendations),
+                                     (opttran_list_item_t *)recommendation);
+            while (OPTTRAN_FALSE == opttran_list_is_empty(&(recommendation->recognizers))) {
+                recognizer = (recognizer_t *)opttran_list_get_first(&(recommendation->recognizers));
+                opttran_list_remove_item(&(recommendation->recognizers),
+                                         (opttran_list_item_t *)recognizer);
+                free(recognizer->program);
+                free(recognizer);
+            }
+            free(recommendation);
+        }
+        free(fragment->filename);
+        free(fragment->fragment_file);
+        free(fragment);
+    }
+    opttran_list_destruct(fragments);
+    free(fragments);
 
     return OPTTRAN_SUCCESS;
 }
@@ -549,7 +597,6 @@ static int test_recognizers(opttran_list_t *fragments_p) {
 
     /* Run the tests */
     test = (test_t *)opttran_list_get_first(tests);
-
     while ((opttran_list_item_t *)test != &(tests->sentinel)) {
         if (OPTTRAN_SUCCESS != test_one(test)) {
             OPTTRAN_OUTPUT(("   %s [%s] >> [%s]", _RED("Error: running test"),
@@ -596,8 +643,16 @@ static int test_recognizers(opttran_list_t *fragments_p) {
         test = (test_t *)opttran_list_get_next(test);
     }
 
-    OPTTRAN_OUTPUT_VERBOSE((4, "==="));
+    /* Free 'tests' structure' */
+    while (OPTTRAN_FALSE == opttran_list_is_empty(tests)) {
+        test = (test_t *)opttran_list_get_first(tests);
+        opttran_list_remove_item(tests, (opttran_list_item_t *)test);
+        free(test); // Some version of GCC will complain about this
+    }
+    opttran_list_destruct(tests);
+    free(tests);
 
+    OPTTRAN_OUTPUT_VERBOSE((4, "==="));
     return OPTTRAN_SUCCESS;
 }
 
@@ -730,6 +785,15 @@ static int test_one(test_t *test) {
             break;
     }
 
+    return OPTTRAN_SUCCESS;
+}
+
+/* output results */
+static int output_results(opttran_list_t *fragments_p) {
+
+    OPTTRAN_OUTPUT_VERBOSE((4, "=== %s", _BLUE("Outputting results")));
+
+    OPTTRAN_OUTPUT_VERBOSE((4, "==="));
     return OPTTRAN_SUCCESS;
 }
 
