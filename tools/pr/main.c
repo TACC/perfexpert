@@ -584,6 +584,15 @@ static int test_recognizers(opttran_list_t *fragments_p) {
             default:
                 break;
         }
+        
+        /* Break the loop if 'testall' is not set */
+        if ((0 == globals.testall) &&
+            (OPTTRAN_SUCCESS == (int)*(test->test_result))) {
+            OPTTRAN_OUTPUT_VERBOSE((7, "   %s", _YELLOW("passed test")));
+            break;
+        }
+        
+        /* Move on to the next test... */
         test = (test_t *)opttran_list_get_next(test);
     }
 
@@ -683,7 +692,6 @@ static int test_one(test_t *test) {
             bzero(buffer, BUFFER_SIZE);
             while (0 != (r_bytes = read(PARENT_READ, buffer, BUFFER_SIZE))) {
                 w_bytes = write(file, buffer, r_bytes);
-                printf("GRAVOU: %d, BUFFER: %s", w_bytes, buffer);
                 bzero(buffer, BUFFER_SIZE);
             }
             close(file);

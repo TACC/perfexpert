@@ -5,16 +5,16 @@ recommender.recommendation_id=31
 recommender.recognizer_id=1
 recommender.recognizer=c_loop1
 recommender.recognizer_id=2
-recommender.recognizer=c_loop2
-recommender.recommendation_id=4
-recommender.recommendation_id=39
-recommender.code_fragment=teste/fragments/mm_naive.c_11
-% recommendation for mm_naive.c:11
-code.filename=mm_naive.c
-code.line_number=11
-recommender.recommendation_id=31
-recommender.recognizer_id=1
 recommender.recognizer=f_loop1
 recommender.recommendation_id=4
 recommender.recommendation_id=39
 recommender.code_fragment=teste/fragments/mm_naive.c_11
+% recommendation for mm_naive.c:7
+code.filename=mm_naive.c
+code.line_number=7
+recommender.recommendation_id=31
+recommender.recognizer_id=1
+recommender.recognizer=c_loop2
+recommender.recommendation_id=4
+recommender.recommendation_id=39
+recommender.code_fragment=teste/fragments/mm_naive.c_7
