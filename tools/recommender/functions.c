@@ -71,7 +71,7 @@ int recommender_main(int argc, char** argv) {
         .colorful         = 0,                 // int
         .source_file      = NULL,              // char *
         .metrics_table    = METRICS_TABLE,     // char *
-        .opttran_pid      = (int)getpid(),     // int
+        .opttran_pid      = (unsigned long long int)getpid(), // int
         .rec_count        = 3                  // int
     };
     globals.dbfile = (char *)malloc(strlen(RECOMMENDATION_DB) +
@@ -352,7 +352,7 @@ static void show_help(void) {
     printf("  -s --sourcefile      Use 'file' to extract source code fragments identified as\n");
     printf("                       bootleneck by PerfExpert (this option sets -a argument)\n");
 #endif
-    printf("  -p --pid             Use 'pid' to identify consecutive calls to Recommender.\n");
+    printf("  -p --opttranid       Use 'pid' to identify consecutive calls to Recommender.\n");
     printf("                       This argument is set automatically when using OptTran\n");
     printf("  -v --verbose         Enable verbose mode using default verbose level (5)\n");
     printf("  -l --verbose_level   Enable verbose mode using a specific verbose level (1-10)\n");
@@ -516,12 +516,12 @@ static int parse_cli_params(int argc, char *argv[]) {
                 
             /* Specify OptTran PID */
             case 'p':
-                globals.opttran_pid = atoi(optarg);
-                OPTTRAN_OUTPUT_VERBOSE((10, "option 'p' set [%d]",
+                globals.opttran_pid = strtoull(optarg, (char **)NULL, 10);
+                OPTTRAN_OUTPUT_VERBOSE((10, "option 'p' set [%llu]",
                                         globals.opttran_pid));
                 break;
                 
-            /* Specify OptTran PID */
+            /* Number of recommendation to output */
             case 'r':
                 globals.rec_count = atoi(optarg);
                 OPTTRAN_OUTPUT_VERBOSE((10, "option 'r' set [%d]",
@@ -552,7 +552,7 @@ static int parse_cli_params(int argc, char *argv[]) {
                             globals.use_opttran ? "yes" : "no"));
     OPTTRAN_OUTPUT_VERBOSE((10, "   Recommendation count:  %d",
                             globals.rec_count));
-    OPTTRAN_OUTPUT_VERBOSE((10, "   OPTTRAN PID:           %d",
+    OPTTRAN_OUTPUT_VERBOSE((10, "   OPTTRAN PID:           %llu",
                             globals.opttran_pid));
     OPTTRAN_OUTPUT_VERBOSE((10, "   Input file:            %s",
                             globals.inputfile ? globals.inputfile : "(null)"));
@@ -764,7 +764,7 @@ static int parse_segment_params(opttran_list_t *segments_p, FILE *inputfile_p) {
 
             /* Set OptTran PID for the new segment */
             bzero(sql, BUFFER_SIZE);
-            sprintf(sql, "UPDATE %s SET pid=%d WHERE id=%d;",
+            sprintf(sql, "UPDATE %s SET pid=%llu WHERE id=%d;",
                     globals.metrics_table, globals.opttran_pid, rowid);
             if (SQLITE_OK != sqlite3_exec(globals.db, sql, NULL, NULL,
                                           &error_msg)) {
