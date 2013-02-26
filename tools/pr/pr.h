@@ -44,6 +44,12 @@ extern "C" {
 #include "opttran_list.h"
 #endif
 
+#if HAVE_SQLITE3
+#ifndef _SQLITE3_H_
+#include <sqlite3.h>
+#endif
+#endif
+
 #ifndef _GETOPT_H_
 #include <getopt.h> /* To parse command line arguments */
 #endif
@@ -58,6 +64,10 @@ extern "C" {
  */
 #define BUFFER_SIZE 4096
 
+/** Default values for some parameters */
+#define RECOMMENDATION_DB "recommendation.db"
+#define MAX_FRAGMENT_DATA 1048576
+
 /** Structure to hold global variables */
 typedef struct {
     int  verbose;
@@ -69,6 +79,11 @@ typedef struct {
     FILE *outputfile_FP;
     int  colorful;
     int  testall;
+#if HAVE_SQLITE3
+    char *dbfile;
+    sqlite3 *db;
+    unsigned long long int opttran_pid;
+#endif
 } globals_t;
 
 extern globals_t globals; /**< Variable to hold global options */
@@ -94,6 +109,9 @@ static struct option long_options[] = {
     {"outputfile",      required_argument, NULL, 'o'},
     {"colorful",        no_argument,       NULL, 'c'},
     {"testall",         no_argument,       NULL, 'a'},
+#if HAVE_SQLITE3
+    {"pid",             required_argument, NULL, 'p'},
+#endif
     {0, 0, 0, 0}
 };
 
@@ -147,7 +165,10 @@ static int  parse_fragment_params(opttran_list_t *segments_p, FILE *inputfile_p)
 static int  test_recognizers(opttran_list_t *fragments_p);
 static int  test_one(test_t *test);
 static int  output_results(opttran_list_t *fragments_p);
-
+#if HAVE_SQLITE3
+static int  database_connect(void);
+#endif
+    
 #ifdef __cplusplus
 }
 #endif

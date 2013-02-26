@@ -38,6 +38,12 @@ extern "C" {
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <fcntl.h>
+#include <inttypes.h>
+
+#if HAVE_SQLITE3
+/* Utility headers */
+#include <sqlite3.h>
+#endif
     
 /* OptTran headers */
 #include "config.h"
@@ -64,10 +70,22 @@ int main(int argc, char** argv) {
         .inputfile        = NULL,   // char *
         .outputfile       = NULL,   // char *
         .outputfile_FP    = stdout, // FILE *
+#if HAVE_SQLITE3
+        .opttran_pid      = (unsigned long long int)getpid(), // int
+#endif
         .testall          = 0,      // int
         .colorful         = 0       // int
     };
-    
+    globals.dbfile = (char *)malloc(strlen(RECOMMENDATION_DB) +
+                                    strlen(OPTTRAN_VARDIR) + 2);
+    if (NULL == globals.dbfile) {
+        OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
+        exit(OPTTRAN_ERROR);
+    }
+    bzero(globals.dbfile,
+          strlen(RECOMMENDATION_DB) + strlen(OPTTRAN_VARDIR) + 2);
+    sprintf(globals.dbfile, "%s/%s", OPTTRAN_VARDIR, RECOMMENDATION_DB);
+
     /* Parse command-line parameters */
     if (OPTTRAN_SUCCESS != parse_cli_params(argc, argv)) {
         OPTTRAN_OUTPUT(("%s", _ERROR("Error: parsing command line arguments")));
@@ -164,6 +182,7 @@ int main(int argc, char** argv) {
     }
     opttran_list_destruct(fragments);
     free(fragments);
+    free(globals.dbfile);
 
     return OPTTRAN_SUCCESS;
 }
@@ -173,12 +192,21 @@ static void show_help(void) {
     OPTTRAN_OUTPUT_VERBOSE((10, "printing help"));
     
     /*      12345678901234567890123456789012345678901234567890123456789012345678901234567890 */
-    printf("Usage: recommender -i|-f file [-o file] [-avch] [-l level]\n");
+    printf("Usage: recommender -i|-f file [-o file] [-avch] [-l level]");
+#if HAVE_SQLITE3
+    printf(" [-d database] [-p pid]");
+#endif
+    printf("\n");
     printf("  -i --stdin           Use STDIN as input for patterns\n");
     printf("  -f --inputfile       Use 'file' as input for patterns\n");
     printf("  -o --outputfile      Use 'file' as output (default stdout)\n");
     printf("  -a --testall         Test all the pattern recognizers of each code fragment,\n");
     printf("                       otherwise stop on the first valid one\n");
+#if HAVE_SQLITE3
+    printf("  -d --database        Select the recommendation database file\n");
+    printf("                       (default: %s/%s)\n", OPTTRAN_VARDIR, RECOMMENDATION_DB);
+    printf("  -p --opttranid       Use 'pid' to log on DB consecutive calls to Recommender\n");
+#endif
     printf("  -v --verbose         Enable verbose mode using default verbose level (5)\n");
     printf("  -l --verbose_level   Enable verbose mode using a specific verbose level (1-10)\n");
     printf("  -c --colorful        Enable colors on verbose mode, no weird characters will\n");
@@ -227,9 +255,13 @@ static int parse_cli_params(int argc, char *argv[]) {
     
     while (1) {
         /* get parameter */
+#if HAVE_SQLITE3
+        parameter = getopt_long(argc, argv, "acvhif:l:o:p:", long_options,
+                                &option_index);
+#else
         parameter = getopt_long(argc, argv, "acvhif:l:o:", long_options,
                                 &option_index);
-
+#endif
         /* Detect the end of the options */
         if (-1 == parameter) {
             break;
@@ -263,7 +295,21 @@ static int parse_cli_params(int argc, char *argv[]) {
                 }
                 OPTTRAN_OUTPUT_VERBOSE((10, "option 'v' set"));
                 break;
-                
+#if HAVE_SQLITE3
+            /* Which database file? */
+            case 'd':
+                globals.dbfile = optarg;
+                OPTTRAN_OUTPUT_VERBOSE((10, "option 'd' set [%s]",
+                                        globals.dbfile));
+                break;
+
+            /* Specify OptTran PID */
+            case 'p':
+                globals.opttran_pid = strtoull(optarg, (char **)NULL, 10);
+                OPTTRAN_OUTPUT_VERBOSE((10, "option 'p' set [%llu]",
+                                        globals.opttran_pid));
+                break;
+#endif
             /* Activate colorful mode */
             case 'c':
                 globals.colorful = 1;
@@ -329,7 +375,11 @@ static int parse_cli_params(int argc, char *argv[]) {
                             globals.outputfile ? globals.outputfile : "(null)"));
     OPTTRAN_OUTPUT_VERBOSE((10, "   Test all?         %s",
                             globals.testall ? "yes" : "no"));
-    
+    OPTTRAN_OUTPUT_VERBOSE((10, "   OPTTRAN PID:      %llu",
+                            globals.opttran_pid));
+    OPTTRAN_OUTPUT_VERBOSE((10, "   Database file:    %s",
+                            globals.dbfile ? globals.dbfile : "(null)"));
+
     /* Not using OPTTRAN_OUTPUT_VERBOSE because I want only one line */
     if (8 <= globals.verbose_level) {
         int i;
@@ -795,6 +845,14 @@ static int output_results(opttran_list_t *fragments_p) {
     recommendation_t *recommendation;
     recognizer_t *recognizer;
     fragment_t *fragment;
+#if HAVE_SQLITE3
+    int  r_bytes = 0;
+    int  fragment_FP;
+    char sql[BUFFER_SIZE];
+    char *error_msg = NULL;
+    char temp_str[BUFFER_SIZE];
+    char fragment_data[MAX_FRAGMENT_DATA];
+#endif
 
     OPTTRAN_OUTPUT_VERBOSE((4, "=== %s", _BLUE("Outputting results")));
 
@@ -838,6 +896,55 @@ static int output_results(opttran_list_t *fragments_p) {
                     fprintf(globals.outputfile_FP, "%s\n",
                             recognizer->test_result ? "(not valid)" : "(valid)");
                 }
+#if HAVE_SQLITE3
+                /* Log result on SQLite: 3 steps */
+                /* Step 1: connect to database */
+                if (OPTTRAN_SUCCESS != database_connect()) {
+                    OPTTRAN_OUTPUT(("%s",
+                                    _ERROR("Error: connecting to database")));
+                    return OPTTRAN_ERROR;
+                }
+
+                /* Step 2: read fragment file content */
+                if (-1 == (fragment_FP = open(fragment->fragment_file, O_RDONLY))) {
+                    OPTTRAN_OUTPUT(("%s (%s)",
+                                    _ERROR("Error: unable to open fragment file"),
+                                    fragment->fragment_file));
+                    return OPTTRAN_ERROR;
+                } else {
+                    bzero(fragment_data, MAX_FRAGMENT_DATA);
+                    r_bytes = read(fragment_FP, fragment_data, MAX_FRAGMENT_DATA);
+                    // TODO: escape single quotes from fragment_data
+                    close(fragment_FP);
+                }
+
+                /* Step 3: insert data into DB */
+                bzero(sql, BUFFER_SIZE);
+                strcat(sql, "INSERT INTO log_pr (pid, code_filename,");
+                strcat(sql, "\n                        ");
+                strcat(sql, "code_line_number, code_fragment, id_recommendation,");
+                strcat(sql, "\n                        ");
+                strcat(sql, "id_pattern, result) VALUES (");
+                strcat(sql, "\n                        ");
+                bzero(temp_str, BUFFER_SIZE);
+                sprintf(temp_str, "%llu, '%s', %d, '%s', %d, %d, %d);",
+                        globals.opttran_pid, fragment->filename,
+                        fragment->line_number, fragment_data, recommendation->id,
+                        recognizer->id, recognizer->test_result);
+                strcat(sql, temp_str);
+
+                OPTTRAN_OUTPUT_VERBOSE((10, "%s",
+                                        _YELLOW("logging results into DB")));
+                OPTTRAN_OUTPUT_VERBOSE((10, "   SQL: %s", _CYAN(sql)));
+
+                if (SQLITE_OK != sqlite3_exec(globals.db, sql, NULL, NULL,
+                                              &error_msg)) {
+                    fprintf(stderr, "Error: SQL error: %s\n", error_msg);
+                    sqlite3_free(error_msg);
+                    sqlite3_close(globals.db);
+                    exit(OPTTRAN_ERROR);
+                }
+#endif
                 recognizer = (recognizer_t *)opttran_list_get_next(recognizer);
             }
             recommendation = (recommendation_t *)opttran_list_get_next(recommendation);
@@ -849,6 +956,40 @@ static int output_results(opttran_list_t *fragments_p) {
     return OPTTRAN_SUCCESS;
 }
 
+#if HAVE_SQLITE3
+/* database_connect */
+static int database_connect(void) {
+    OPTTRAN_OUTPUT_VERBOSE((4, "=== %s", _BLUE("Connecting to database")));
+
+    /* Connect to the DB */
+    if (NULL == globals.dbfile) {
+        globals.dbfile = "./recommendation.db";
+    }
+    if (-1 == access(globals.dbfile, F_OK)) {
+        OPTTRAN_OUTPUT(("%s (%s)",
+                        _ERROR("Error: recommendation database doesn't exist"),
+                        globals.dbfile));
+        return OPTTRAN_ERROR;
+    }
+    if (-1 == access(globals.dbfile, R_OK)) {
+        OPTTRAN_OUTPUT(("%s (%s)",
+                        _ERROR("Error: you don't have permission to read"),
+                        globals.dbfile));
+        return OPTTRAN_ERROR;
+    }
+
+    if (SQLITE_OK != sqlite3_open(globals.dbfile, &(globals.db))) {
+        OPTTRAN_OUTPUT(("%s (%s), %s", _ERROR("Error: openning database"),
+                        globals.dbfile, sqlite3_errmsg(globals.db)));
+        sqlite3_close(globals.db);
+        exit(OPTTRAN_ERROR);
+    } else {
+        OPTTRAN_OUTPUT_VERBOSE((4, "connected to %s", globals.dbfile));
+    }
+    return OPTTRAN_SUCCESS;
+}
+#endif
+    
 #ifdef __cplusplus
 }
 #endif
