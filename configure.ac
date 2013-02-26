@@ -198,7 +198,7 @@ AS_IF([test x"$ENABLE_PERFEXPERT" = x"yes"], [
     # Currently, hound and sniffer only works on Linux.
     AS_IF([test x"$HOST_OS" == x"linux"], [
 
-        # Headers required exclusivelly for hound
+        # Headers required exclusively for hound
         AC_CHECK_HEADER([inttypes.h], [], [AC_MSG_ERROR([not found: inttypes.h])])
         AC_CHECK_HEADER([sched.h],    [], [AC_MSG_ERROR([not found: sched.h])])
         AC_CHECK_HEADER([time.h],     [], [AC_MSG_ERROR([not found: time.h])])
@@ -446,7 +446,11 @@ AS_IF([test x"$ENABLE_OPTTRAN_PR" = x"yes"], [
     AC_MSG_RESULT(yes)
     AC_DEFINE(OPTTRAN_ENABLE_PR, [1], [Enable/Disable opttran_pr])
 
-# Check for Lex/Flex and Yacc/Bison
+    # Headers required exclusively for OptTran:PR
+    AC_CHECK_HEADER([sys/wait.h], [], [AC_MSG_ERROR([not found: sys/wait.h])])
+    AC_CHECK_HEADER([fcntl.h], [], [AC_MSG_ERROR([not found: fcntl.h])])
+
+    # Check for Lex/Flex and Yacc/Bison
     AC_PROG_LEX
     AC_PROG_YACC
     

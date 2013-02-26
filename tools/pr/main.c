@@ -34,6 +34,10 @@ extern "C" {
 #include <stdlib.h>
 #include <string.h>
 #include <getopt.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <fcntl.h>
     
 /* OptTran headers */
 #include "config.h"
@@ -50,13 +54,14 @@ int main(int argc, char** argv) {
 
     /* Set default values for globals */
     globals = (globals_t) {
-        .verbose          = 0,                 // int
-        .verbose_level    = 0,                 // int
-        .use_stdin        = 0,                 // int
-        .use_stdout       = 1,                 // int
-        .inputfile        = NULL,              // char *
-        .outputfile_FP    = stdout,            // FILE *
-        .colorful         = 0                  // int
+        .verbose          = 0,      // int
+        .verbose_level    = 0,      // int
+        .use_stdin        = 0,      // int
+        .use_stdout       = 1,      // int
+        .inputfile        = NULL,   // char *
+        .outputfile_FP    = stdout, // FILE *
+        .testall          = 0,      // int
+        .colorful         = 0       // int
     };
     
     /* Parse command-line parameters */
@@ -75,7 +80,7 @@ int main(int argc, char** argv) {
 
     /* Parse input parameters */
     if (1 == globals.use_stdin) {
-        if (OPTTRAN_SUCCESS != parse_pattern_params(fragments, stdin)) {
+        if (OPTTRAN_SUCCESS != parse_fragment_params(fragments, stdin)) {
             OPTTRAN_OUTPUT(("%s", _ERROR("Error: parsing input params")));
             exit(OPTTRAN_ERROR);
         }
@@ -90,8 +95,8 @@ int main(int argc, char** argv) {
                                 globals.inputfile));
                 return OPTTRAN_ERROR;
             } else {
-                if (OPTTRAN_SUCCESS != parse_pattern_params(fragments,
-                                                            inputfile_FP)) {
+                if (OPTTRAN_SUCCESS != parse_fragment_params(fragments,
+                                                             inputfile_FP)) {
                     OPTTRAN_OUTPUT(("%s",
                                     _ERROR("Error: parsing input params")));
                     exit(OPTTRAN_ERROR);
@@ -103,6 +108,14 @@ int main(int argc, char** argv) {
             show_help();
         }
     }
+    
+    /* Test the pattern recognizers */
+    if (OPTTRAN_SUCCESS != test_recognizers(fragments)) {
+        OPTTRAN_OUTPUT(("%s", _ERROR("Error: testing pattern recognizers")));
+        exit(OPTTRAN_ERROR);
+    }
+    
+    // TODO: recursively free all structures
 
     return OPTTRAN_SUCCESS;
 }
@@ -112,10 +125,12 @@ static void show_help(void) {
     OPTTRAN_OUTPUT_VERBOSE((10, "printing help"));
     
     /*      12345678901234567890123456789012345678901234567890123456789012345678901234567890 */
-    printf("Usage: recommender -i|-f file [-o file] [-vch] [-l level]\n");
+    printf("Usage: recommender -i|-f file [-o file] [-avch] [-l level]\n");
     printf("  -i --stdin           Use STDIN as input for patterns\n");
     printf("  -f --inputfile       Use 'file' as input for patterns\n");
     printf("  -o --outputfile      Use 'file' as output (default stdout)\n");
+    printf("  -a --testall         Test all the pattern recognizers of each code fragment,\n");
+    printf("                       otherwise stop on the first valid one\n");
     printf("  -v --verbose         Enable verbose mode using default verbose level (5)\n");
     printf("  -l --verbose_level   Enable verbose mode using a specific verbose level (1-10)\n");
     printf("  -c --colorful        Enable colors on verbose mode, no weird characters will\n");
@@ -164,7 +179,7 @@ static int parse_cli_params(int argc, char *argv[]) {
     
     while (1) {
         /* get parameter */
-        parameter = getopt_long(argc, argv, "cvhif:l:o:", long_options,
+        parameter = getopt_long(argc, argv, "acvhif:l:o:", long_options,
                                 &option_index);
 
         /* Detect the end of the options */
@@ -234,6 +249,12 @@ static int parse_cli_params(int argc, char *argv[]) {
                                         globals.outputfile));
                 break;
 
+            /* Test all or stop on the first valid? */
+            case 'a':
+                globals.testall = 1;
+                OPTTRAN_OUTPUT_VERBOSE((10, "option 'a' set"));
+                break;
+
             /* Unknown option */
             case '?':
                 show_help();
@@ -244,20 +265,22 @@ static int parse_cli_params(int argc, char *argv[]) {
     }
     OPTTRAN_OUTPUT_VERBOSE((4, "=== %s", _BLUE("CLI params")));
     OPTTRAN_OUTPUT_VERBOSE((10, "Summary of selected options:"));
-    OPTTRAN_OUTPUT_VERBOSE((10, "   Verbose:               %s",
+    OPTTRAN_OUTPUT_VERBOSE((10, "   Verbose:          %s",
                             globals.verbose ? "yes" : "no"));
-    OPTTRAN_OUTPUT_VERBOSE((10, "   Verbose level:         %d",
+    OPTTRAN_OUTPUT_VERBOSE((10, "   Verbose level:    %d",
                             globals.verbose_level));
-    OPTTRAN_OUTPUT_VERBOSE((10, "   Colorful verbose?      %s",
+    OPTTRAN_OUTPUT_VERBOSE((10, "   Colorful verbose? %s",
                             globals.colorful ? "yes" : "no"));
-    OPTTRAN_OUTPUT_VERBOSE((10, "   Use STDOUT?            %s",
+    OPTTRAN_OUTPUT_VERBOSE((10, "   Use STDOUT?       %s",
                             globals.use_stdout ? "yes" : "no"));
-    OPTTRAN_OUTPUT_VERBOSE((10, "   Use STDIN?             %s",
+    OPTTRAN_OUTPUT_VERBOSE((10, "   Use STDIN?        %s",
                             globals.use_stdin ? "yes" : "no"));
-    OPTTRAN_OUTPUT_VERBOSE((10, "   Input file:            %s",
+    OPTTRAN_OUTPUT_VERBOSE((10, "   Input file:       %s",
                             globals.inputfile ? globals.inputfile : "(null)"));
-    OPTTRAN_OUTPUT_VERBOSE((10, "   Output file:           %s",
+    OPTTRAN_OUTPUT_VERBOSE((10, "   Output file:      %s",
                             globals.outputfile ? globals.outputfile : "(null)"));
+    OPTTRAN_OUTPUT_VERBOSE((10, "   Test all?         %s",
+                            globals.testall ? "yes" : "no"));
     
     /* Not using OPTTRAN_OUTPUT_VERBOSE because I want only one line */
     if (8 <= globals.verbose_level) {
@@ -271,9 +294,9 @@ static int parse_cli_params(int argc, char *argv[]) {
     
     return OPTTRAN_SUCCESS;
 }
-    
-/* parse_segment_params */
-static int parse_pattern_params(opttran_list_t *fragments_p, FILE *inputfile_p) {
+
+/* parse_fragment_params */
+static int parse_fragment_params(opttran_list_t *fragments_p, FILE *inputfile_p) {
     fragment_t *fragment;
     recommendation_t *recommendation;
     recognizer_t *recognizer;
@@ -420,6 +443,7 @@ static int parse_pattern_params(opttran_list_t *fragments_p, FILE *inputfile_p) 
             }
             opttran_list_item_construct((opttran_list_item_t *)recognizer);
             recognizer->id = atoi(node->value);
+            recognizer->test_result = OPTTRAN_UNDEFINED;
             opttran_list_append((opttran_list_t *)&(recommendation->recognizers),
                                 (opttran_list_item_t *)recognizer);
             OPTTRAN_OUTPUT_VERBOSE((10, "(%d)  | | \\- %s   [%d]", input_line,
@@ -454,7 +478,7 @@ static int parse_pattern_params(opttran_list_t *fragments_p, FILE *inputfile_p) 
     
     /* print a summary of 'segments' */
     OPTTRAN_OUTPUT_VERBOSE((4, "%d %s", opttran_list_get_size(fragments_p),
-                            _GREEN("code fragments(s) found")));
+                            _GREEN("code fragment(s) found")));
     
     fragment = (fragment_t *)opttran_list_get_first(fragments_p);
     while ((opttran_list_item_t *)fragment != &(fragments_p->sentinel)) {
@@ -465,6 +489,238 @@ static int parse_pattern_params(opttran_list_t *fragments_p, FILE *inputfile_p) 
     
     OPTTRAN_OUTPUT_VERBOSE((4, "==="));
     
+    return OPTTRAN_SUCCESS;
+}
+
+/* test_recognizers */
+static int test_recognizers(opttran_list_t *fragments_p) {
+    opttran_list_t *recommendations;
+    opttran_list_t *recognizers;
+    recommendation_t *recommendation;
+    recognizer_t *recognizer;
+    fragment_t *fragment;
+    opttran_list_t *tests;
+    test_t *test;
+
+    tests = (opttran_list_t *)malloc(sizeof(opttran_list_t));
+    if (NULL == tests) {
+        OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
+        exit(OPTTRAN_ERROR);
+    }
+    opttran_list_construct(tests);
+
+    OPTTRAN_OUTPUT_VERBOSE((4, "=== %s", _BLUE("Testing pattern recognizers")));
+
+    /* Create a list of all pattern recognizers we have to test */
+    fragment = (fragment_t *)opttran_list_get_first(fragments_p);
+    while ((opttran_list_item_t *)fragment != &(fragments_p->sentinel)) {
+        /* For all code fragments ... */
+        recommendations = (opttran_list_t *)&(fragment->recommendations);
+        recommendation = (recommendation_t *)opttran_list_get_first(&(fragment->recommendations));
+        while ((opttran_list_item_t *)recommendation != &(recommendations->sentinel)) {
+            /* For all recommendations ... */
+            recognizers = (opttran_list_t *)&(recommendation->recognizers);
+            recognizer = (recognizer_t *)opttran_list_get_first(&(recommendation->recognizers));
+            while ((opttran_list_item_t *)recognizer != &(recognizers->sentinel)) {
+                /* For all fragment recognizers ... */
+                test = (test_t *)malloc(sizeof(test_t));
+                if (NULL == test) {
+                    OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
+                    exit(OPTTRAN_ERROR);
+                }
+                opttran_list_item_construct((opttran_list_item_t *)test);
+                test->program = recognizer->program;
+                test->fragment_file = fragment->fragment_file;
+                test->test_result = &(recognizer->test_result);
+
+                /* Add this item to to-'tests' */
+                opttran_list_append(tests, (opttran_list_item_t *)test);
+
+                recognizer = (recognizer_t *)opttran_list_get_next(recognizer);
+            }
+            recommendation = (recommendation_t *)opttran_list_get_next(recommendation);
+        }
+        fragment = (fragment_t *)opttran_list_get_next(fragment);
+    }
+
+    /* Print a summary of 'tests' */
+    OPTTRAN_OUTPUT_VERBOSE((4, "%d %s", opttran_list_get_size(tests),
+                            _GREEN("test(s) should be run")));
+
+    /* Run the tests */
+    test = (test_t *)opttran_list_get_first(tests);
+
+    while ((opttran_list_item_t *)test != &(tests->sentinel)) {
+        if (OPTTRAN_SUCCESS != test_one(test)) {
+            OPTTRAN_OUTPUT(("   %s [%s] >> [%s]", _RED("Error: running test"),
+                            test->program, test->fragment_file));
+        }
+
+        switch ((int)*(test->test_result)) {
+            case OPTTRAN_UNDEFINED:
+                OPTTRAN_OUTPUT_VERBOSE((8, "   %s [%s] >> [%s]",
+                                        _BOLDRED("UNDEF"), test->program,
+                                        test->fragment_file));
+                break;
+
+            case OPTTRAN_FAILURE:
+                OPTTRAN_OUTPUT_VERBOSE((8, "   %s  [%s] >> [%s]",
+                                        _ERROR("FAIL"), test->program,
+                                        test->fragment_file));
+                break;
+                
+            case OPTTRAN_SUCCESS:
+                OPTTRAN_OUTPUT_VERBOSE((8, "   %s    [%s] >> [%s]",
+                                        _BOLDGREEN("OK"), test->program,
+                                        test->fragment_file));
+                break;
+                
+            case OPTTRAN_ERROR:
+                OPTTRAN_OUTPUT_VERBOSE((8, "   %s [%s] >> [%s]",
+                                        _BOLDYELLOW("ERROR"), test->program,
+                                        test->fragment_file));
+                break;
+                
+            default:
+                break;
+        }
+        test = (test_t *)opttran_list_get_next(test);
+    }
+
+    OPTTRAN_OUTPUT_VERBOSE((4, "==="));
+
+    return OPTTRAN_SUCCESS;
+}
+
+/* test_one */
+static int test_one(test_t *test) {
+    int  pipe1[2];
+    int  pipe2[2];
+    int  pid = 0;
+    int  file = 0;
+    int  r_bytes = 0;
+    int  w_bytes = 0;
+    int  rc = OPTTRAN_UNDEFINED;
+    char temp_str[BUFFER_SIZE];
+    char buffer[BUFFER_SIZE];
+
+#define	PARENT_READ  pipe1[0]
+#define	CHILD_WRITE  pipe1[1]
+#define CHILD_READ   pipe2[0]
+#define PARENT_WRITE pipe2[1]
+    
+    /* Creating pipes */
+    if (-1 == pipe(pipe1)) {
+        OPTTRAN_OUTPUT(("%s", _ERROR("Error: unable to create pipe1")));
+        return OPTTRAN_ERROR;
+    }
+    if (-1 == pipe(pipe2)) {
+        OPTTRAN_OUTPUT(("%s", _ERROR("Error: unable to create pipe2")));
+        return OPTTRAN_ERROR;
+    }
+    
+    /* Forking child */
+    pid = fork();
+    if (-1 == pid) {
+        OPTTRAN_OUTPUT(("%s", _ERROR("Error: unable to fork")));
+        return OPTTRAN_ERROR;
+    }
+
+    if (0 == pid) {
+        /* Child */
+        bzero(temp_str, BUFFER_SIZE);
+        sprintf(temp_str, "%s/%s", OPTTRAN_BINDIR, test->program);
+        OPTTRAN_OUTPUT_VERBOSE((10, "   running %s", _CYAN(temp_str)));
+        
+        close(PARENT_WRITE);
+        close(PARENT_READ);
+
+        if (-1 == dup2(CHILD_READ, STDIN_FILENO)) {
+            OPTTRAN_OUTPUT(("%s", _ERROR("Error: unable to DUP STDIN")));
+            return OPTTRAN_ERROR;
+        }
+        if (-1 == dup2(CHILD_WRITE, STDOUT_FILENO)) {
+            OPTTRAN_OUTPUT(("%s", _ERROR("Error: unable to DUP STDOUT")));
+            return OPTTRAN_ERROR;
+        }
+
+        execl(temp_str, test->program, NULL);
+        
+        OPTTRAN_OUTPUT(("child process failed to run"));
+        exit(127);
+    } else {
+        /* Parent */
+        close(CHILD_READ);
+        close(CHILD_WRITE);
+        
+        /* Open input file and sent if to the child process */
+        if (-1 == (file = open(test->fragment_file, O_RDONLY))) {
+            OPTTRAN_OUTPUT(("%s (%s)",
+                            _ERROR("Error: unable to open fragment file"),
+                            test->fragment_file));
+            return OPTTRAN_ERROR;
+        } else {
+            bzero(buffer, BUFFER_SIZE);
+            while (0 != (r_bytes = read(file, buffer, BUFFER_SIZE))) {
+                w_bytes = write(PARENT_WRITE, buffer, r_bytes);
+                bzero(buffer, BUFFER_SIZE);
+            }
+            close(file);
+            close(PARENT_WRITE);
+        }
+        
+        /* Read child process' answer and write it to output file */
+        bzero(temp_str, BUFFER_SIZE);
+        sprintf(temp_str, "%s.output", test->fragment_file);
+        OPTTRAN_OUTPUT_VERBOSE((10, "   output  %s", _CYAN(temp_str)));
+
+        if (-1 == (file = open(temp_str, O_CREAT|O_TRUNC, 0644))) {
+            OPTTRAN_OUTPUT(("%s (%s)",
+                            _ERROR("Error: unable to open output file"),
+                            temp_str));
+            return OPTTRAN_ERROR;
+        } else {
+            bzero(buffer, BUFFER_SIZE);
+            while (0 != (r_bytes = read(PARENT_READ, buffer, BUFFER_SIZE))) {
+                w_bytes = write(file, buffer, r_bytes);
+                bzero(buffer, BUFFER_SIZE);
+            }
+            close(file);
+            close(PARENT_READ);
+        }
+        wait(&rc);
+        OPTTRAN_OUTPUT_VERBOSE((10, "   result  %s %d", _CYAN("return code"),
+                                rc >> 8));
+    }
+
+    /* Evaluating the result */
+    switch (rc >> 8) {
+        /* The pattern matches */
+        case 0:
+            *test->test_result = OPTTRAN_SUCCESS;
+            break;
+
+        /* The pattern doesn't match */
+        case 255:
+            *test->test_result = OPTTRAN_ERROR;
+            break;
+        
+        /* Error during fork() or waitpid() */
+        case -1:
+            *test->test_result = OPTTRAN_FAILURE;
+            break;
+        
+        /* Execution failed */
+        case 127:
+            *test->test_result = OPTTRAN_FAILURE;
+            break;
+        
+        /* Not sure what happened */
+        default:
+            *test->test_result = OPTTRAN_UNDEFINED;
+            break;
+    }
+
     return OPTTRAN_SUCCESS;
 }
 
