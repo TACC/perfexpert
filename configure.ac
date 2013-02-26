@@ -150,9 +150,6 @@ AS_IF([test x"$ENABLE_DEBUG" = x"yes"], [
 # Checks for required (but generic) header files
 #
 AC_HEADER_STDC
-#AC_CHECK_HEADER([stdlib.h],    [], [AC_MSG_ERROR([not found: stdlib.h])])
-#AC_CHECK_HEADER([stdarg.h],    [], [AC_MSG_ERROR([not found: stdarg.h])])
-#AC_CHECK_HEADER([string.h],    [], [AC_MSG_ERROR([not found: string.h])])
 AC_CHECK_HEADER([stdio.h],     [], [AC_MSG_ERROR([not found: stdio.h])])
 AC_CHECK_HEADER([getopt.h],    [], [AC_MSG_ERROR([not found: getopt.h])])
 AC_CHECK_HEADER([ctype.h],     [], [AC_MSG_ERROR([not found: ctype.h])])
@@ -427,7 +424,6 @@ AS_IF([test x"$ENABLE_RECOMMENDER" = x"yes"], [
 ])
 
 AM_CONDITIONAL([WITH_ROSE_SUPPORT], [test x"$WITH_ROSE_SUPPORT" = x"yes"])
-# AM_COND_IF([WITH_ROSE_SUPPORT], [AC_CONFIG_FILES([wrapper:wrapper.in])])
 #
 # Enable/Disable 'recommender' (END)
 #------------------------------------------------------------------------------
@@ -448,7 +444,21 @@ AS_IF([test x"$ENABLE_OPTTRAN_PR" = x"yes"], [
 
     # Headers required exclusively for OptTran:PR
     AC_CHECK_HEADER([sys/wait.h], [], [AC_MSG_ERROR([not found: sys/wait.h])])
-    AC_CHECK_HEADER([fcntl.h], [], [AC_MSG_ERROR([not found: fcntl.h])])
+    AC_CHECK_HEADER([inttypes.h], [], [AC_MSG_ERROR([not found: inttypes.h])])
+    AC_CHECK_HEADER([fcntl.h],    [], [AC_MSG_ERROR([not found: fcntl.h])])
+
+    # Checks for SQLite headers, lib and program (only if 'recommender' is enabled)
+    AC_CHECK_LIB([sqlite3], [sqlite3_open, sqlite3_close, sqlite3_exec,
+        sqlite3_free, sqlite3_errmsg], [],
+        [AC_MSG_ERROR([SQLite3 library not found])])
+    AC_CHECK_HEADER([sqlite3.h], [
+        AC_DEFINE([HAVE_SQLITE3], [1], [Enable SQLite3 support
+        WITH_SQLITE3_SUPPORT=yes])], [])
+
+    # Check for the SQLite program
+    AC_CHECK_PROG(SQLITE3_PROGRAM, sqlite3, yes)
+    AS_IF([test x"$SQLITE3_PROGRAM" = x"yes"],
+        [AC_PATH_TOOL(SQLITE3_PROGRAM, sqlite3)], [])
 
     # Check for Lex/Flex and Yacc/Bison
     AC_PROG_LEX
@@ -465,6 +475,8 @@ AS_IF([test x"$ENABLE_OPTTRAN_PR" = x"yes"], [
     ENABLE_PR=
     AC_SUBST([ENABLE_PR])
 ])
+
+AM_CONDITIONAL([WITH_SQLITE3_SUPPORT], [test x"$WITH_SQLITE3_SUPPORT" = x"yes"])
 #
 # Enable/Disable 'opttran_pr' (END)
 #------------------------------------------------------------------------------
