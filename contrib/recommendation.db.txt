@@ -153,6 +153,23 @@ CREATE TABLE "recommendation_function" (
         REFERENCES "function" ("id")
 );
 
+CREATE TABLE "log_pr" (
+    "timestamp" DATE DEFAULT (datetime('now','localtime')),
+    "pid" INTEGER NOT NULL,
+    "code_filename" CHAR(1024) NOT NULL,
+    "code_line_number" INTEGER NOT NULL,
+    "code_fragment" TEXT(1048576) NOT NULL,
+    "id_recommendation" INTEGER NOT NULL,
+    "id_pattern" INTEGER NOT NULL,
+    "result" INTEGER NOT NULL,
+    CONSTRAINT "fk_recommendation_pattern_recommendation" 
+        FOREIGN KEY ("id_recommendation") 
+        REFERENCES "recommendation" ("id"),
+    CONSTRAINT "fk_recommendation_pattern_pattern" 
+        FOREIGN KEY ("id_pattern") 
+        REFERENCES "pattern" ("id")
+);
+
 CREATE TABLE "metric" (
     "id" INTEGER,
     "timestamp" DATE DEFAULT (datetime('now','localtime')),
