@@ -226,9 +226,8 @@ int recommender_main(int argc, char** argv) {
         } else {
             fprintf(globals.outputfile_FP,
                     "#--------------------------------------------------\n");
-            fprintf(globals.outputfile_FP,
-                    "# Recommendations for %s:%d\n", item->filename,
-                    item->line_number);
+            fprintf(globals.outputfile_FP, "# Recommendations for %s:%d\n",
+                    item->filename, item->line_number);
             fprintf(globals.outputfile_FP,
                     "#--------------------------------------------------\n");
         }
