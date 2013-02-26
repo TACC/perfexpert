@@ -146,6 +146,7 @@ static int  parse_cli_params(int argc, char *argv[]);
 static int  parse_fragment_params(opttran_list_t *segments_p, FILE *inputfile_p);
 static int  test_recognizers(opttran_list_t *fragments_p);
 static int  test_one(test_t *test);
+static int  output_results(opttran_list_t *fragments_p);
 
 #ifdef __cplusplus
 }

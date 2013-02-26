@@ -790,8 +790,60 @@ static int test_one(test_t *test) {
 
 /* output results */
 static int output_results(opttran_list_t *fragments_p) {
+    opttran_list_t *recommendations;
+    opttran_list_t *recognizers;
+    recommendation_t *recommendation;
+    recognizer_t *recognizer;
+    fragment_t *fragment;
 
     OPTTRAN_OUTPUT_VERBOSE((4, "=== %s", _BLUE("Outputting results")));
+
+    /* Output tests result */
+    fragment = (fragment_t *)opttran_list_get_first(fragments_p);
+    while ((opttran_list_item_t *)fragment != &(fragments_p->sentinel)) {
+        /* For all code fragments ... */
+        recommendations = (opttran_list_t *)&(fragment->recommendations);
+        recommendation = (recommendation_t *)opttran_list_get_first(&(fragment->recommendations));
+
+        if (0 == globals.use_stdout) {
+            fprintf(globals.outputfile_FP, "%% transformation for %s:%d\n",
+                    fragment->filename, fragment->line_number);
+            fprintf(globals.outputfile_FP, "recommender.code_fragment=%s\n",
+                    fragment->fragment_file);
+        } else {
+            fprintf(globals.outputfile_FP,
+                    "#--------------------------------------------------\n");
+            fprintf(globals.outputfile_FP, "# Transformations for %s:%d\n",
+                    fragment->filename, fragment->line_number);
+            fprintf(globals.outputfile_FP,
+                    "#--------------------------------------------------\n");
+            fprintf(globals.outputfile_FP, "Fragment file: %s\n",
+                    fragment->fragment_file);
+        }
+
+        while ((opttran_list_item_t *)recommendation != &(recommendations->sentinel)) {
+            /* For all recommendations ... */
+            recognizers = (opttran_list_t *)&(recommendation->recognizers);
+            recognizer = (recognizer_t *)opttran_list_get_first(&(recommendation->recognizers));
+            while ((opttran_list_item_t *)recognizer != &(recognizers->sentinel)) {
+                /* For all fragment recognizers ... */
+                if (0 == globals.use_stdout) {
+                    if (OPTTRAN_SUCCESS == recognizer->test_result) {
+                        fprintf(globals.outputfile_FP, "pr.transformation=%s\n",
+                                recognizer->program);
+                    }
+                } else {
+                    fprintf(globals.outputfile_FP, "Transformation: %s ",
+                            recognizer->program);
+                    fprintf(globals.outputfile_FP, "%s\n",
+                            recognizer->test_result ? "(not valid)" : "(valid)");
+                }
+                recognizer = (recognizer_t *)opttran_list_get_next(recognizer);
+            }
+            recommendation = (recommendation_t *)opttran_list_get_next(recommendation);
+        }
+        fragment = (fragment_t *)opttran_list_get_next(fragment);
+    }
 
     OPTTRAN_OUTPUT_VERBOSE((4, "==="));
     return OPTTRAN_SUCCESS;
