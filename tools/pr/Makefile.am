@@ -35,7 +35,7 @@ SUBDIRS = c_loop1 c_loop2
 
 install-data-local:
 	$(MKDIR_P) $(datadir)/$(PACKAGE_NAME)/codes
-	$(INSTALL) -m 644 $(top_srcdir)/contrib/pr-input.txt \
+	$(INSTALL) -m 644 $(top_srcdir)/contrib/opttran_pr-input_example.txt \
 		$(datadir)/$(PACKAGE_NAME)
 	$(INSTALL) -m 644 $(top_srcdir)/contrib/codes/pr-c_loop1_example_DO.c \
 		$(datadir)/$(PACKAGE_NAME)/codes
