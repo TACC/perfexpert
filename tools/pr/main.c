@@ -646,7 +646,7 @@ static int test_one(test_t *test) {
 
         execl(temp_str, test->program, NULL);
         
-        OPTTRAN_OUTPUT(("child process failed to run"));
+        OPTTRAN_OUTPUT(("child process failed to run, check if program exists"));
         exit(127);
     } else {
         /* Parent */
@@ -671,10 +671,10 @@ static int test_one(test_t *test) {
         
         /* Read child process' answer and write it to output file */
         bzero(temp_str, BUFFER_SIZE);
-        sprintf(temp_str, "%s.output", test->fragment_file);
+        sprintf(temp_str, "%s.%s.output", test->fragment_file, test->program);
         OPTTRAN_OUTPUT_VERBOSE((10, "   output  %s", _CYAN(temp_str)));
 
-        if (-1 == (file = open(temp_str, O_CREAT|O_TRUNC, 0644))) {
+        if (-1 == (file = open(temp_str, O_CREAT|O_WRONLY, 0644))) {
             OPTTRAN_OUTPUT(("%s (%s)",
                             _ERROR("Error: unable to open output file"),
                             temp_str));
@@ -683,6 +683,7 @@ static int test_one(test_t *test) {
             bzero(buffer, BUFFER_SIZE);
             while (0 != (r_bytes = read(PARENT_READ, buffer, BUFFER_SIZE))) {
                 w_bytes = write(file, buffer, r_bytes);
+                printf("GRAVOU: %d, BUFFER: %s", w_bytes, buffer);
                 bzero(buffer, BUFFER_SIZE);
             }
             close(file);
