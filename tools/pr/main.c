@@ -299,10 +299,10 @@ static int parse_cli_params(int argc, char *argv[]) {
     while (1) {
         /* get parameter */
 #if HAVE_SQLITE3
-        parameter = getopt_long(argc, argv, "acvhif:l:o:p:", long_options,
+        parameter = getopt_long(argc, argv, "a:cvhif:l:o:p:t", long_options,
                                 &option_index);
 #else
-        parameter = getopt_long(argc, argv, "acvhif:l:o:", long_options,
+        parameter = getopt_long(argc, argv, "a:cvhif:l:o:t", long_options,
                                 &option_index);
 #endif
         /* Detect the end of the options */
