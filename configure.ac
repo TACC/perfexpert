@@ -49,7 +49,7 @@ AM_INIT_AUTOMAKE([foreign -Wall -Werror])
 m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 
 # Just to have a cleaner output during 'make'
-#AM_SILENT_RULES([yes])
+AM_SILENT_RULES([yes])
 
 # We need some work here to save hound from -O2 on CFLAGS. This overwrites any
 # user-defined CFLAGS :-/
