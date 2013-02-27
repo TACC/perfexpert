@@ -44,7 +44,7 @@ extern "C" {
 #include "opttran_list.h"
 #endif
 
-#if HAVE_SQLITE3
+#if HAVE_SQLITE3 == 1
 #ifndef _SQLITE3_H_
 #include <sqlite3.h>
 #endif
@@ -80,8 +80,9 @@ typedef struct {
     FILE *outputfile_FP;
     int  colorful;
     int  testall;
+    int  use_opttran;
     char *opttrandir;
-#if HAVE_SQLITE3
+#if HAVE_SQLITE3 == 1
     char *dbfile;
     sqlite3 *db;
     unsigned long long int opttran_pid;
@@ -112,7 +113,7 @@ static struct option long_options[] = {
     {"colorful",        no_argument,       NULL, 'c'},
     {"testall",         no_argument,       NULL, 't'},
     {"opttran",         required_argument, NULL, 'a'},
-#if HAVE_SQLITE3
+#if HAVE_SQLITE3 == 1
     {"pid",             required_argument, NULL, 'p'},
 #endif
     {0, 0, 0, 0}
@@ -168,7 +169,7 @@ static int  parse_fragment_params(opttran_list_t *segments_p, FILE *inputfile_p)
 static int  test_recognizers(opttran_list_t *fragments_p);
 static int  test_one(test_t *test);
 static int  output_results(opttran_list_t *fragments_p);
-#if HAVE_SQLITE3
+#if HAVE_SQLITE3 == 1
 static int  database_connect(void);
 #endif
     

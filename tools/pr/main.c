@@ -40,7 +40,7 @@ extern "C" {
 #include <fcntl.h>
 #include <inttypes.h>
 
-#if HAVE_SQLITE3
+#if HAVE_SQLITE3 == 1
 /* Utility headers */
 #include <sqlite3.h>
 #endif
@@ -71,7 +71,7 @@ int main(int argc, char** argv) {
         .outputfile       = NULL,   // char *
         .outputfile_FP    = stdout, // FILE *
         .opttrandir       = NULL,   // char *
-#if HAVE_SQLITE3
+#if HAVE_SQLITE3 == 1
         .opttran_pid      = (unsigned long long int)getpid(), // int
 #endif
         .testall          = 0,      // int
@@ -232,7 +232,7 @@ static void show_help(void) {
     
     /*      12345678901234567890123456789012345678901234567890123456789012345678901234567890 */
     printf("Usage: opttran_pr -i|-f file [-o file] [-tvch] [-l level] [-a dir]");
-#if HAVE_SQLITE3
+#if HAVE_SQLITE3 == 1
     printf(" [-d database] [-p pid]");
 #endif
     printf("\n");
@@ -245,7 +245,7 @@ static void show_help(void) {
     printf("                       into 'dir' directory (default: create no OptTran files).\n");
     printf("                       This argument overwrites -o (no output on STDOUT, except\n");
     printf("                       for verbose messages)\n");
-#if HAVE_SQLITE3
+#if HAVE_SQLITE3 == 1
     printf("  -d --database        Select the recommendation database file\n");
     printf("                       (default: %s/%s)\n", OPTTRAN_VARDIR, RECOMMENDATION_DB);
     printf("  -p --opttranid       Use 'pid' to log on DB consecutive calls to Recommender\n");
@@ -298,7 +298,7 @@ static int parse_cli_params(int argc, char *argv[]) {
     
     while (1) {
         /* get parameter */
-#if HAVE_SQLITE3
+#if HAVE_SQLITE3 == 1
         parameter = getopt_long(argc, argv, "a:cvhif:l:o:p:t", long_options,
                                 &option_index);
 #else
@@ -338,7 +338,7 @@ static int parse_cli_params(int argc, char *argv[]) {
                 }
                 OPTTRAN_OUTPUT_VERBOSE((10, "option 'v' set"));
                 break;
-#if HAVE_SQLITE3
+#if HAVE_SQLITE3 == 1
             /* Which database file? */
             case 'd':
                 globals.dbfile = optarg;
@@ -897,7 +897,7 @@ static int output_results(opttran_list_t *fragments_p) {
     recommendation_t *recommendation;
     recognizer_t *recognizer;
     fragment_t *fragment;
-#if HAVE_SQLITE3
+#if HAVE_SQLITE3 == 1
     int  r_bytes = 0;
     int  fragment_FP;
     char sql[BUFFER_SIZE];
@@ -948,7 +948,7 @@ static int output_results(opttran_list_t *fragments_p) {
                     fprintf(globals.outputfile_FP, "%s\n",
                             recognizer->test_result ? "(not valid)" : "(valid)");
                 }
-#if HAVE_SQLITE3
+#if HAVE_SQLITE3 == 1
                 /* Log result on SQLite: 3 steps */
                 /* Step 1: connect to database */
                 if (OPTTRAN_SUCCESS != database_connect()) {
@@ -1008,7 +1008,7 @@ static int output_results(opttran_list_t *fragments_p) {
     return OPTTRAN_SUCCESS;
 }
 
-#if HAVE_SQLITE3
+#if HAVE_SQLITE3 == 1
 /* database_connect */
 static int database_connect(void) {
     OPTTRAN_OUTPUT_VERBOSE((4, "=== %s", _BLUE("Connecting to database")));

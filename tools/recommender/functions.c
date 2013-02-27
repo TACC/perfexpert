@@ -243,7 +243,7 @@ int recommender_main(int argc, char** argv) {
         }
         
         /* Step 4: extract fragments */
-#ifdef HAVE_ROSE
+#if HAVE_ROSE == 1
         if ((1 == globals.use_opttran) && (NULL != globals.source_file)) {
             char *fragments_dir = NULL;
 
@@ -329,7 +329,7 @@ static void show_help(void) {
     
     /*      12345678901234567890123456789012345678901234567890123456789012345678901234567890 */
     printf("Usage: recommender -i|-f file [-o file] [-d database] [-m file] [-nvch] [-p pid]\n");
-#ifdef HAVE_ROSE
+#if HAVE_ROSE == 1
     printf("                   [-a dir] [-s file] ");
 #endif
     printf("                   [-l level]\n");
@@ -344,7 +344,7 @@ static void show_help(void) {
     printf("                       will be created using the default metrics file:\n");
     printf("                       %s/%s\n", OPTTRAN_ETCDIR, METRICS_FILE);
     printf("  -r --recommendations Number of recommendation to show\n");
-#ifdef HAVE_ROSE
+#if HAVE_ROSE == 1
     printf("  -a --opttran         Create OptTran (automatic performance optimization) files\n");
     printf("                       into 'dir' directory (default: create no OptTran files).\n");
     printf("                       This argument overwrites -o (no output on STDOUT, except\n");
@@ -402,7 +402,7 @@ static int parse_cli_params(int argc, char *argv[]) {
 
     while (1) {
         /* get parameter */
-#ifdef HAVE_ROSE
+#if HAVE_ROSE == 1
         parameter = getopt_long(argc, argv, "cvhinm:l:f:d:o:a:s:p:r:",
                                 long_options, &option_index);
 #else
@@ -475,7 +475,7 @@ static int parse_cli_params(int argc, char *argv[]) {
                 OPTTRAN_OUTPUT_VERBOSE((10, "option 'o' set [%s]",
                                         globals.outputfile));
                 break;
-#ifdef HAVE_ROSE
+#if HAVE_ROSE == 1
             /* Use opttran? */
             case 'a':
                 globals.use_opttran = 1;
