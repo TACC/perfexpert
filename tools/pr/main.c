@@ -231,7 +231,7 @@ static void show_help(void) {
     OPTTRAN_OUTPUT_VERBOSE((10, "printing help"));
     
     /*      12345678901234567890123456789012345678901234567890123456789012345678901234567890 */
-    printf("Usage: recommender -i|-f file [-o file] [-tvch] [-l level] [-a dir]");
+    printf("Usage: opttran_pr -i|-f file [-o file] [-tvch] [-l level] [-a dir]");
 #if HAVE_SQLITE3
     printf(" [-d database] [-p pid]");
 #endif
