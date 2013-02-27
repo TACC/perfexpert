@@ -25,4 +25,15 @@
 # $HEADER$
 #
 
+bin_PROGRAMS = opttran_ct
+
+opttran_ct_SOURCES = main.c
+opttran_ct_CPPFLAGS = -I$(srcdir)/../common
+opttran_ct_CFLAGS = -O3
+
+# Adding support to SQLite3
+if WITH_SQLITE3_SUPPORT
+opttran_ct_CPPFLAGS += -DHAVE_SQLITE3
+endif
+
 # EOF

@@ -48,7 +48,7 @@ AM_INIT_AUTOMAKE([foreign -Wall -Werror])
 # Ok Automake 1.12, shut up!
 m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 
-# Just to have a cleaner output
+# Just to have a cleaner output during 'make'
 AM_SILENT_RULES([yes])
 
 # We need some work here to save hound from -O2 on CFLAGS. This overwrites any
@@ -57,12 +57,11 @@ CFLAGS="-g"
 CXXFLAGS="-g -O3"
 
 # Requires only a standard C compiler
-AC_PROG_CC
+AM_PROG_CC_C_O
 AC_PROG_CXX
 AC_PROG_MKDIR_P
 AC_PROG_LN_S
 AC_PROG_INSTALL
-AM_PROG_CC_C_O
 
 # Checks for typedefs, structures, and compiler characteristics
 AC_C_INLINE
@@ -81,27 +80,27 @@ AC_CANONICAL_HOST
 AC_MSG_CHECKING([for the OS])
 AS_CASE([${host}],
     [*-*-darwin*], [
-        AC_DEFINE([OS_MACOS], 1, [The host OS is OSX])
+        AC_DEFINE([OS_MACOS], [1], [The host OS is OSX])
         AC_MSG_RESULT([you are a happy Mac user, I suppose...])
         HOST_OS=darwin],
     [*-*-freebsd*], [
-        AC_DEFINE([OS_FREEBSD], 1, [The host OS is FreeBSD])
+        AC_DEFINE([OS_FREEBSD], [1], [The host OS is FreeBSD])
         AC_MSG_RESULT([hum... Are you happy with whis FreeBSD?])
         HOST_OS=freebsd],
     [*-*-linux*], [
-        AC_DEFINE([OS_LINUX], 1, [The host OS is Linux])
+        AC_DEFINE([OS_LINUX], [1], [The host OS is Linux])
         AC_MSG_RESULT([one more geek using Linux])
         HOST_OS=linux],
     [*-*-netbsd*], [
-        AC_DEFINE([OS_NETBSD], 1, [The host OS is NetBSD])
+        AC_DEFINE([OS_NETBSD], [1], [The host OS is NetBSD])
         AC_MSG_RESULT([really? There is at least one NetBSD user in the world!])
         HOST_OS=netbsd],
     [*-*-solaris2*], [
-        AC_DEFINE([OS_SOLARIS], 1, [The host OS is Solaris])
+        AC_DEFINE([OS_SOLARIS], [1], [The host OS is Solaris])
         AC_MSG_RESULT([I understand, you are stucked on Solaris, right?])
         HOST_OS=solaris],
     [*-*-mingw* | *-*-cygwin*], [
-        AC_DEFINE([OS_WINDOWS], 1, [The host OS is Windows])
+        AC_DEFINE([OS_WINDOWS], [1], [The host OS is Windows])
         AC_MSG_RESULT([I will pray for you, Windows user :-/])
         HOST_OS=cygwin],
     [AC_MSG_RESULT([Unsupported operating system: ${host}])
@@ -114,13 +113,13 @@ AS_CASE([${host}],
 AC_MSG_CHECKING([for the architecture])
 AS_CASE([${host}],
     [i?86-* | k?-* | athlon-* | pentium*-], [
-        AC_DEFINE(ARCH_X86, 1, [Architecture is x86])
+        AC_DEFINE([ARCH_X86], [1], [Architecture is x86])
         AC_MSG_RESULT([x86])],
     [x86_64-*], [
-        AC_DEFINE(ARCH_X86_64, 1, [Architecture is x86-64])
+        AC_DEFINE([ARCH_X86_64], [1], [Architecture is x86-64])
         AC_MSG_RESULT([x86-64])],
     [ppc-* | powerpc-*], [
-        AC_DEFINE(ARCH_PPC, 1, [Architecture is PowerPC])
+        AC_DEFINE([ARCH_PPC], [1], [Architecture is PowerPC])
         AC_MSG_RESULT([PowerPC])],
     [AC_MSG_ERROR([Unknown Architecture])
 ])
@@ -128,133 +127,248 @@ AS_CASE([${host}],
 #------------------------------------------------------------------------------
 # Debug
 #
-AC_MSG_CHECKING([whether to enable debug])
-AC_ARG_ENABLE(debug,
-    AS_HELP_STRING([--enable-debug],
-               [Enable/Disable debugging @<:@default=disabled@:>@]]),
-    ENABLE_DEBUG=$enableval, ENABLE_DEBUG=no)
+AC_ARG_ENABLE([debug],
+    [AS_HELP_STRING([--enable-debug],
+        [Enable/Disable debugging [default=disabled]])],
+    [ENABLE_DEBUG=$enableval], [ENABLE_DEBUG=no])
 
-AM_CONDITIONAL(ENABLE_DEBUG, test x"$ENABLE_DEBUG" = x"yes")
+AC_MSG_CHECKING([whether to enable debug])
 
 AS_IF([test x"$ENABLE_DEBUG" = x"yes"], [
-    AC_MSG_RESULT(yes)
+    AC_MSG_RESULT([yes])
     AC_DEFINE(ENABLE_DEBUG, [1], [Enable/Disable debug])
-    ENABLE_DEBUG=true
 ], [
-    AC_MSG_RESULT(no)
+    AC_MSG_RESULT([no])
     AC_DEFINE(ENABLE_DEBUG, [0], [Enable/Disable debug])
-    ENABLE_DEBUG=false
 ])
+
+AM_CONDITIONAL([ENABLE_DEBUG], [test x"$ENABLE_DEBUG" = x"yes"])
 
 #------------------------------------------------------------------------------
 # Checks for required (but generic) header files
 #
-AC_HEADER_STDC
 AC_CHECK_HEADER([stdio.h],     [], [AC_MSG_ERROR([not found: stdio.h])])
 AC_CHECK_HEADER([getopt.h],    [], [AC_MSG_ERROR([not found: getopt.h])])
 AC_CHECK_HEADER([ctype.h],     [], [AC_MSG_ERROR([not found: ctype.h])])
-AC_CHECK_HEADER([unistd.h],    [], [AC_MSG_ERROR([not found: unistd.h])])
-AC_CHECK_HEADER([sys/stat.h],  [], [AC_MSG_ERROR([not found: sys/stat.h])])
-AC_CHECK_HEADER([sys/types.h], [], [AC_MSG_ERROR([not found: sys/types.h])])
 AC_CHECK_HEADER([errno.h],     [], [AC_MSG_ERROR([not found: errno.h])])
+AC_CHECK_HEADER([fcntl.h],     [], [AC_MSG_ERROR([not found: fcntl.h])])
+AC_CHECK_HEADER([sys/wait.h],  [], [AC_MSG_ERROR([not found: sys/wait.h])])
 
 #------------------------------------------------------------------------------
-# Enable/Disable 'perfexpert' (BEGIN)
+# Checks for SQLite headers, lib and program (optional except for recommender)
+#
+AC_CHECK_LIB([sqlite3], [sqlite3_open, sqlite3_close, sqlite3_exec,
+    sqlite3_free, sqlite3_errmsg], [],
+    [AC_MSG_ERROR([SQLite3 library not found])])
+
+AC_CHECK_HEADER([sqlite3.h], [
+    AC_DEFINE([HAVE_SQLITE3], [1], [SQLite3 support])
+    WITH_SQLITE3_SUPPORT=yes
+], [
+    AC_DEFINE([HAVE_SQLITE3], [0], [SQLite3 support])
+    WITH_SQLITE3_SUPPORT=no
+])
+
+AC_PATH_TOOL([SQLITE3_PROGRAM], [sqlite3])
+
+AM_CONDITIONAL([WITH_SQLITE3_SUPPORT], [test x"$WITH_SQLITE3_SUPPORT" = x"yes"])
+
+#------------------------------------------------------------------------------
+# Find Apache ANT, optionally, using an argument (required for PerfExpert)
+#
+AC_ARG_WITH([apache-ant],
+    [AS_HELP_STRING([--with-apache-ant],
+        [Use this argument to set where Apache Ant program is installed (not
+        necessary if it is in the PATH). Ant is necessary to compile
+        PerfExpert])], [
+    ANT_PATH="$withval"
+    AC_PATH_TOOL([ANT_PROGRAM], [ant], [no], [$ANT_PATH])
+    AS_IF([test x"$ANT_PROGRAM" = x"no"],
+        [AC_MSG_ERROR([Ant not found in $ANT_PATH])])], [
+        AC_PATH_TOOL([ANT_PROGRAM], [ant], [no])])
+
+#------------------------------------------------------------------------------
+# Most scripts require Bash shell
+#
+AC_PATH_TOOL([BASH_PROGRAM], [bash], [no])
+AS_IF([test x"$BASH_PROGRAM" == x"no"],
+    [AC_MSG_ERROR([Most of our scripts require the Bash shell.])], [])
+
+#------------------------------------------------------------------------------
+# Check for PAPI, optionally, using an argument (required for PerfExpert)
+#
+AC_ARG_WITH([papi],
+    [AS_HELP_STRING([--with-papi],
+        [Use this argument to set PAPI prefix path (where PAPI library
+        and include directories are located), if you do that there is no
+        need to set neither '--with-papi-lib' nor '--with-papi-include'.
+        This argument is not necessary if PAPI is installed into default
+        directories ('/usr' and '/usr/local')])], [
+    CPPFLAGS+="-I$withval/include"
+    LDFLAGS+="-L$withval/lib"], [])
+
+AC_ARG_WITH([papi-lib],
+    [AS_HELP_STRING([--with-papi-lib],
+        [use this argument to set PAPI library path (it overwrites
+        '--with-papi' argument)])], [LDFLAGS+="-L$withval"], [])
+
+AC_ARG_WITH([papi-include],
+    [AS_HELP_STRING([--with-papi-include],
+        [use this argument to set PAPI include path (it overwrites
+        '--with-papi' argument)])], [CPPFLAGS+="-I$withval"], [])
+
+# Checks for headers and libraries required for sniffer (PAPI)
+AC_CHECK_LIB([papi], [PAPI_library_init, PAPI_add_event,
+    PAPI_create_eventset, PAPI_get_event_info, PAPI_event_name_to_code,
+    PAPI_query_event], [HAVE_PAPI_LIB=yes], [HAVE_PAPI_LIB=no])
+AC_CHECK_HEADER([papi.h], [HAVE_PAPI_HEADER=yes], [HAVE_PAPI_HEADER=no])
+
+AS_IF([test x"HAVE_PAPI_LIB" == x"yes"], [
+    AS_IF([test x"HAVE_PAPI_HEADER" == x"yes"], [
+        AC_DEFINE([HAVE_PAPI], [1], [PAPI support])
+    ], [
+        AC_DEFINE([HAVE_PAPI], [0], [PAPI support])
+    ])
+], [])
+
+#------------------------------------------------------------------------------
+# Find HPCToolkit programs, optionally, using an argument
+#
+AC_ARG_WITH([hpctoolkit],
+    [AS_HELP_STRING([--with-hpctoolkit],
+        [Use this argument to set where HPCTollkit binaries are
+        installed (not necessary if they are in the PATH)])], [
+    HPCTOOLKIT_PATH="$withval"
+    AC_PATH_TOOL([HPCSTRUCT_PROGRAM], [hpcstruct], [no], [$HPCTOOLKIT_PATH])
+    AC_PATH_TOOL([HPCRUN_PROGRAM],    [hpcrun],    [no], [$HPCTOOLKIT_PATH])
+    AC_PATH_TOOL([HPCPROF_PROGRAM],   [hpcprof],   [no], [$HPCTOOLKIT_PATH])
+    AS_IF([test x"$HPCSTRUCT_PROGRAM" = x"no"],
+        [AC_MSG_ERROR([hpcstruct not found in $HPCTOOLKIT_PATH])])
+    AS_IF([test x"$HPCRUN_PROGRAM" = x"no"],
+        [AC_MSG_ERROR([hpcrun not found in $HPCTOOLKIT_PATH])])
+    AS_IF([test x"$HPCPROF_PROGRAM" = x"no"],
+        [AC_MSG_ERROR([hpcprof not found in $HPCTOOLKIT_PATH])])
+], [
+    AC_PATH_TOOL([HPCSTRUCT_PROGRAM], [hpcstruct], [no])
+    AC_PATH_TOOL([HPCRUN_PROGRAM],    [hpcrun],    [no])
+    AC_PATH_TOOL([HPCPROF_PROGRAM],   [hpcprof],   [no])
+])
+
+#------------------------------------------------------------------------------
+# Support to JVM (optional), using an argument
+#
+AC_ARG_WITH([jvm],
+    [AS_HELP_STRING([--with-jvm], [JVM is required when Rose is selected,
+        use this argument to set JVM library path])], [
+    WITH_JVM_LIBS=$withval
+    # A random number of C symbols of JVM library
+    AC_CHECK_LIB([jvm], [JVM_InitializeCompiler, JVM_Open, JVM_Close], [],
+        [AC_MSG_ERROR([Java Virtual Machine (JVM) library not found!])])
+    WITH_JVM=yes], [WITH_JVM=no]
+)
+
+#------------------------------------------------------------------------------
+# Support to Rose Compiler (optional), using an argument
+#
+AC_ARG_WITH([rose],
+    [AS_HELP_STRING([--with-rose],
+        [support to Rose Compiler @<:@default=no@:>@ which enables some
+        advanced features on the Optimization Recommender tool, as well is
+        required to enable OptTran:CT (Code Transformer tool), and
+        OptTran:CR (Code Re-Assembler tool). Use this argument to set Rose
+        prefix path (where Rose libraries and include directories are
+        located), if you do that there is no need to set neither
+        '--with-rose-libs' nor '--with-rose-include'])], [
+    WITH_ROSE_LIBS=$withval/lib
+    WITH_ROSE_INCLUDE=$withval/include
+    WITH_ROSE=yes
+], [
+    WITH_ROSE=no
+])
+
+AC_ARG_WITH([rose-libs],
+    [AS_HELP_STRING([--with-rose-libs],
+        [support to Rose Compiler @<:@default=no@:>@, use this argument to
+        set Rose library path (it overwrites '--with-rose' argument)])], [
+    WITH_ROSE_LIBS=$withval
+    WITH_ROSE=yes], [])
+
+AC_ARG_WITH([rose-include],
+    [AS_HELP_STRING([--with-rose-include],
+        [support to Rose Compiler @<:@default=no@:>@, use this argument to
+        set Rose include path (it overwrites '--with-rose' argument)])], [
+    WITH_ROSE_INCLUDE=$withval
+    WITH_ROSE=yes], [])
+
+AS_IF([test x"$WITH_ROSE" == x"yes"], [
+    # Rose requires JVM, so...
+    AS_IF([test x"$WITH_JVM" == x"no"], [
+        AC_MSG_ERROR([Rose requires a JVM, use '--with-jvm' to define it])], [])
+
+    AS_IF([test x"$WITH_ROSE_LIBS" = x""], [
+        AC_MSG_ERROR([You chose to enable Rose support but Rose library path
+            was not defined. Use '--with-rose-libs=path' or
+            '--with-rose=prefix' to define it])], [])
+
+    AS_IF([test x"$WITH_ROSE_INCLUDE" = x""], [
+        AC_MSG_ERROR([You chose to enable Rose support but Rose include path
+            was not defined. Use '--with-rose-include=path' or
+            '--with-rose=prefix' to define it])], [])
+
+    # A random number of C symbols of Rose library
+    AC_CHECK_LIB([rose], [node_has_side_effects, add_to_scopes_list,
+        copy_node, node_complete_object_type, set_node_operator],
+        [], [AC_MSG_ERROR([Rose library not found!])])
+
+    # How the hell I can make the rose.h header check work?
+    #AC_CHECK_HEADER([rose.h], [], [AC_MSG_ERROR([not found: rose.h])])
+
+    CPPFLAGS+="-I$WITH_ROSE_INCLUDE"
+    LDFLAGS+="-L$WITH_ROSE_LIBS -L$WITH_JVM_LIBS"
+    AC_DEFINE([HAVE_ROSE], [1], [Enable Rose support])
+], [
+    AC_DEFINE([HAVE_ROSE], [0], [Enable Rose support])
+])
+
+AM_CONDITIONAL([WITH_ROSE_SUPPORT], [test x"$WITH_ROSE_SUPPORT" = x"yes"])
+
+#------------------------------------------------------------------------------
+# Enable/Disable 'perfexpert'
 #
 AC_MSG_CHECKING([whether to enable PerfExpert])
-AC_ARG_ENABLE(perfexpert,
+AC_ARG_ENABLE([perfexpert],
     [AS_HELP_STRING([--disable-perfexpert],
-        [Enable/Disable the application profiler tool @<:@default=enabled@:>@])],
-    ENABLE_PERFEXPERT=$enableval, ENABLE_PERFEXPERT=yes)
+        [Enable/Disable the application profiler tool [default=enabled]])],
+    [ENABLE_OPTTRAN_PERFEXPERT=$enableval], [ENABLE_OPTTRAN_PERFEXPERT=yes])
 
-AS_IF([test x"$ENABLE_PERFEXPERT" = x"yes"], [
-    AC_MSG_RESULT(yes)
-    AC_DEFINE(OPTTRAN_ENABLE_PERFEXPERT, [1], [Enable/Disable perfexpert])
+AS_IF([test x"$ENABLE_OPTTRAN_PERFEXPERT" = x"yes"], [
+    AC_MSG_RESULT([yes])
 
-    # Find Apache ANT, optionally, using an argument
-    AC_ARG_WITH([apache-ant],
-        [AS_HELP_STRING([--with-apache-ant],
-            [Use this argument to set where Apache Ant program is installed (not
-            necessary if it is in the PATH). Ant is necessary to compile
-            PerfExpert])], [
-        ANT_PATH="$withval"
-        AC_PATH_TOOL([ANT_PROGRAM], [ant], [no], [$ANT_PATH])
-        AS_IF([test x"$ANT_PROGRAM" = x"no"], 
-            [AC_MSG_ERROR([Ant not found in $ANT_PATH])])], [
-        AC_PATH_TOOL([ANT_PROGRAM], [ant], [no])
-        AS_IF([test x"$ANT_PROGRAM" = x"no"],
-            [AC_MSG_ERROR([Ant not found, try using '--with-apache-ant'])])
-    ])
-
-    # hpcdata, perfexpert and perfexert_run script requires Bash shell
-    AC_CHECK_PROG([BASH_PROGRAM], [bash], [yes])
-    AS_IF([test x"$BASH_PROGRAM" != x"yes"],
-        [AC_MSG_ERROR([Some of PerfExpert scripts require Bash shell.])],
-        [AC_PATH_TOOL([BASH_PROGRAM], [bash])])
+    # Apache ANT is required
+    AS_IF([test x"$ANT_PROGRAM" = x"no"],
+        [AC_MSG_ERROR([Ant not found, try using '--with-apache-ant'])])
 
     # Currently, hound and sniffer only works on Linux.
     AS_IF([test x"$HOST_OS" == x"linux"], [
 
         # Headers required exclusively for hound
-        AC_CHECK_HEADER([inttypes.h], [], [AC_MSG_ERROR([not found: inttypes.h])])
         AC_CHECK_HEADER([sched.h],    [], [AC_MSG_ERROR([not found: sched.h])])
         AC_CHECK_HEADER([time.h],     [], [AC_MSG_ERROR([not found: time.h])])
         AC_CHECK_HEADER([sys/mman.h], [], [AC_MSG_ERROR([not found: sys/mman.h])])
 
-        # PAPI arguments
-        AC_ARG_WITH([papi],
-            [AS_HELP_STRING([--with-papi],
-                [Use this argument to set PAPI prefix path (where PAPI library
-                and include directories are located), if you do that there is no
-                need to set neither '--with-papi-lib' nor '--with-papi-include'.
-                This argument is not necessary if PAPI is installed into default
-                directories ('/usr' and '/usr/local')])], [
-            CPPFLAGS+="-I$withval/include"
-            LDFLAGS+="-L$withval/lib"], [])
+        # PAPI is required
+        AS_IF([test x"HAVE_PAPI_LIB" == x"no"],
+            [AC_MSG_ERROR([PAPI not found, try using '--with-papi'])], [])
+        AS_IF([test x"HAVE_PAPI_HEADER" == x"no"],
+            [AC_MSG_ERROR([PAPI not found, try using '--with-papi'])], [])
 
-        AC_ARG_WITH([papi-lib],
-            [AS_HELP_STRING([--with-papi-lib],
-                [use this argument to set PAPI library path (it overwrites
-                '--with-papi' argument)])], [LDFLAGS+="-L$withval"], [])
-
-        AC_ARG_WITH([papi-include],
-            [AS_HELP_STRING([--with-papi-include],
-                [use this argument to set PAPI include path (it overwrites
-                '--with-papi' argument)])], [CPPFLAGS+="-I$withval"], [])
-
-        # Checks for headers and libraries required for sniffer (PAPI)
-        AC_CHECK_LIB([papi], [PAPI_library_init, PAPI_add_event,
-            PAPI_create_eventset, PAPI_get_event_info, PAPI_event_name_to_code,
-            PAPI_query_event], [], [AC_MSG_ERROR([PAPI library not found!])])
-        AC_CHECK_HEADER([papi.h], [], [AC_MSG_ERROR([not found: papi.h])])
-        AC_DEFINE([HAVE_PAPI], [1], [PAPI found])
-
-        # Find HPCToolkit program, optionally, using an argument
-        AC_ARG_WITH([hpctoolkit],
-            [AS_HELP_STRING([--with-hpctoolkit],
-                [Use this argument to set where HPCTollkit binaries are 
-                installed (not necessary if they are in the PATH)])], [
-            HPCTOOLKIT_PATH="$withval"
-            AC_PATH_TOOL([HPCSTRUCT_PROGRAM], [hpcstruct], [no], [$HPCTOOLKIT_PATH])
-            AS_IF([test x"$HPCSTRUCT_PROGRAM" = x"no"],
-                [AC_MSG_ERROR([hpcstruct not found in $HPCTOOLKIT_PATH])])
-            AC_PATH_TOOL([HPCRUN_PROGRAM], [hpcrun], [no], [$HPCTOOLKIT_PATH])
-            AS_IF([test x"$HPCRUN_PROGRAM" = x"no"],
-                [AC_MSG_ERROR([hpcrun not found in $HPCTOOLKIT_PATH])])
-            AC_PATH_TOOL([HPCPROF_PROGRAM], [hpcprof], [no], [$HPCTOOLKIT_PATH])
-            AS_IF([test x"$HPCPROF_PROGRAM" = x"no"],
-                [AC_MSG_ERROR([hpcprof not found in $HPCTOOLKIT_PATH])])
-        ], [
-            AC_PATH_TOOL([HPCSTRUCT_PROGRAM], [hpcstruct], [no])
-            AS_IF([test x"$HPCSTRUCT_PROGRAM" = x"no"],
-                [AC_MSG_ERROR([hpcstruct not found, try using '--with-hpctoolkit'])])
-            AC_PATH_TOOL([HPCRUN_PROGRAM], [hpcrun], [no])
-            AS_IF([test x"$HPCRUN_PROGRAM" = x"no"],
-                [AC_MSG_ERROR([hpcrun not found, try using '--with-hpctoolkit'])])
-            AC_PATH_TOOL([HPCPROF_PROGRAM], [hpcprof], [no])
-            AS_IF([test x"$HPCPROF_PROGRAM" = x"no"],
-                [AC_MSG_ERROR([hpcprof not found, try using '--with-hpctoolkit'])])
-        ])
+        # HPCToolkit is required
+        AS_IF([test x"$HPCSTRUCT_PROGRAM" = x"no"],
+            [AC_MSG_ERROR([hpcstruct not found, try using '--with-hpctoolkit'])])
+        AS_IF([test x"$HPCRUN_PROGRAM" = x"no"],
+            [AC_MSG_ERROR([hpcrun not found, try using '--with-hpctoolkit'])])
+        AS_IF([test x"$HPCPROF_PROGRAM" = x"no"],
+            [AC_MSG_ERROR([hpcprof not found, try using '--with-hpctoolkit'])])
 
         # Generate hound and sniffer Makefiles and also perfexpert_run_exp.sh
         ENABLE_HOUND=hound
@@ -263,14 +377,10 @@ AS_IF([test x"$ENABLE_PERFEXPERT" = x"yes"], [
         AC_CONFIG_FILES([tools/perfexpert/sniffer/Makefile])
         AC_CONFIG_FILES([tools/perfexpert/sniffer/perfexpert_run_exp.sh_template],
             [chmod +x tools/perfexpert/sniffer/perfexpert_run_exp.sh_template])
-        AC_SUBST([ENABLE_HOUND])
-        AC_SUBST([ENABLE_SNIFFER])
     ], [
         # Disable hound and sniffer
         ENABLE_HOUND=
         ENABLE_SNIFFER=
-        AC_SUBST([ENABLE_HOUND])
-        AC_SUBST([ENABLE_SNIFFER])
     ])
 
     # Generate Makefiles for perfexpert
@@ -286,255 +396,126 @@ AS_IF([test x"$ENABLE_PERFEXPERT" = x"yes"], [
     AC_CONFIG_FILES([tools/perfexpert/hpcdata/build.xml])
     AC_CONFIG_FILES([tools/perfexpert/perfexpert/Makefile])
     AC_CONFIG_FILES([tools/perfexpert/perfexpert/build.xml])
-    AC_SUBST([ENABLE_PERFEXPERT])
 ], [
-    AC_MSG_RESULT(no)
-    AC_DEFINE(OPTTRAN_ENABLE_PERFEXPERT, [0], [Enable/Disable perfexpert])
+    AC_MSG_RESULT([no])
     ENABLE_PERFEXPERT=
-    AC_SUBST([ENABLE_PERFEXPERT])
 ])
-#
-# Enable/Disable 'perfexpert' (END)
+AC_SUBST([ENABLE_HOUND])
+AC_SUBST([ENABLE_SNIFFER])
+AC_SUBST([ENABLE_PERFEXPERT])
+
 #------------------------------------------------------------------------------
-# Enable/Disable 'recommender' (BEGIN)
+# Enable/Disable 'recommender'
 #
-AC_MSG_CHECKING([whether to enable the Optimization Recommender])
 AC_ARG_ENABLE([recommender],
     [AS_HELP_STRING([--disable-recommender],
-        [Enable/Disable the optimization recommender tool @<:@default=enabled@:>@])],
-    [ENABLE_RECOMMENDER=$enableval], [ENABLE_RECOMMENDER=yes])
+        [Enable/Disable the optimization recommender tool [default=enabled]])],
+    [ENABLE_OPTTRAN_RECOMMENDER=$enableval], [ENABLE_OPTTRAN_RECOMMENDER=yes])
 
-AS_IF([test x"$ENABLE_RECOMMENDER" = x"yes"], [
-    AC_MSG_RESULT(yes)
+AC_MSG_CHECKING([whether to enable the Optimization Recommender])
+AS_IF([test x"$ENABLE_OPTTRAN_RECOMMENDER" = x"yes"], [
+    AC_MSG_RESULT([yes])
 
-    # Checks for SQLite headers, lib and program (only if 'recommender' is enabled)
-    AC_CHECK_LIB([sqlite3], [sqlite3_open, sqlite3_close, sqlite3_exec,
-        sqlite3_free, sqlite3_errmsg], [],
-        [AC_MSG_ERROR([SQLite3 library not found])])
-    AC_CHECK_HEADER([sqlite3.h], [], [AC_MSG_ERROR([not found: sqlite3.h])])
+    # SQLite is required
+    AS_IF([test x"$WITH_SQLITE3_SUPPORT" = x"no"],
+        [AC_MSG_ERROR([Please install SQLite3 program])], [])
 
-    # Check for the SQLite program
-    AC_CHECK_PROG(SQLITE3_PROGRAM, sqlite3, yes)
-    AS_IF([test x"$SQLITE3_PROGRAM" = x"yes"],
-        [AC_PATH_TOOL(SQLITE3_PROGRAM, sqlite3)],
-        [AC_MSG_ERROR([Please install SQLite3 program])])
-
-    # Support to Rose Compiler (optional)
-    AC_MSG_CHECKING([whether to enable the Rose support on Recommender])
-    AC_ARG_WITH([rose],
-        [AS_HELP_STRING([--with-rose],
-            [support to Rose Compiler @<:@default=no@:>@ which enables some
-            advanced features on the Optimization Recommender tool, as well is
-            required to enable OptTran:CT (Code Transformer tool), and
-            OptTran:CR (Code Re-Assembler tool). Use this argument to set Rose
-            prefix path (where Rose libraries and include directories are
-            located), if you do that there is no need to set neither
-            '--with-rose-libs' nor '--with-rose-include'])], [
-        WITH_ROSE=$withval
-        WITH_ROSE_LIBS=$WITH_ROSE/lib
-        WITH_ROSE_INCLUDE=$WITH_ROSE/include
-    ], [
-        WITH_ROSE=no
-        WITH_ROSE_LIBS=no
-        WITH_ROSE_INCLUDE=no
-    ])
-
-    AC_ARG_WITH([rose-libs],
-        [AS_HELP_STRING([--with-rose-libs],
-            [support to Rose Compiler @<:@default=no@:>@, use this argument to
-             set Rose library path (it overwrites '--with-rose' argument)])], [
-        WITH_ROSE_LIBS=$withval
-        WITH_ROSE=yes], [])
-
-    AC_ARG_WITH([rose-include],
-        [AS_HELP_STRING([--with-rose-include],
-            [support to Rose Compiler @<:@default=no@:>@, use this argument to
-             set Rose include path (it overwrites '--with-rose' argument)])], [
-        WITH_ROSE_INCLUDE=$withval
-        WITH_ROSE=yes], [])
-
-    # Both WITH_ROSE_LIBS and WITH_ROSE_INCLUDE have to be defined
-    AS_IF([test x"$WITH_ROSE_LIBS" = x""], [WITH_ROSE=no], [])
-    AS_IF([test x"$WITH_ROSE_INCLUDE" = x""], [WITH_ROSE=no], [])
-
-    # Rose requires JVM, so we have to check for JVM
-    AC_ARG_WITH([jvm],
-        [AS_HELP_STRING([--with-jvm], [JVM is required when Rose is selected,
-            use this argument to set JVM library path])], [
-        WITH_JVM_LIBS=$withval
-        WITH_JVM=yes], [WITH_JVM=no])
-
-    AS_IF([test x"$WITH_ROSE" = x"no"], [
-        AC_MSG_RESULT(no)
-
-        AS_IF([test x"$WITH_ROSE_LIBS" = x""], [
-            AC_MSG_WARN([You chose to enable Rose support but Rose library path
-                was not defined. Use '--with-rose-libs=path' or
-                '--with-rose=prefix' to define it])], [])
-
-        AS_IF([test x"$WITH_ROSE_INCLUDE" = x""], [
-            AC_MSG_WARN([You chose to enable Rose support but Rose include path
-                was not defined. Use '--with-rose-include=path' or
-                '--with-rose=prefix' to define it])], [])
-
-        AC_MSG_WARN([Rose support disabled])
-        AC_MSG_WARN([- OptTran automatic source optimization will be disabled])
-        AC_MSG_WARN([- Recommender tool will disable fragments extraction])
-    ], [
-        AC_MSG_RESULT(yes)
-        AS_IF([test x"$WITH_JVM" = x"no"], [
-            AC_MSG_WARN([JVM not selected, so Rose support will be disabled])
-            AC_MSG_WARN([- OptTran automatic source optimization will be disabled])
-            AC_MSG_WARN([- Recommender will not be able to extract code fragments])
-            WITH_ROSE=no
-            WITH_ROSE_SUPPORT=no
-        ], [
-            WITH_ROSE_SUPPORT=yes
-            CPPFLAGS+="-I$WITH_ROSE_INCLUDE"
-            LDFLAGS+="-L$WITH_ROSE_LIBS -L$WITH_JVM_LIBS"
-
-            # A random number of C symbols from Rose library
-            # (just to avoid checking for C++ symbols)
-            AC_CHECK_LIB([rose], [node_has_side_effects, add_to_scopes_list,
-                copy_node, node_complete_object_type, set_node_operator],
-                [], [AC_MSG_ERROR([Rose library not found!])])
-
-            # How the hell I can make the rose.h header check work?
-            #AC_CHECK_HEADER([rose.h], [], [AC_MSG_ERROR([not found: rose.h])])
-
-            # A random number of C symbols from JVM library
-            AC_CHECK_LIB([jvm], [JVM_InitializeCompiler, JVM_Open, JVM_Close], [],
-                [AC_MSG_ERROR([Java Virtual Machine (JVM) library not found!])])
-
-            AC_SUBST([WITH_ROSE_LIBS])
-            AC_SUBST([WITH_ROSE_INCLUDE])
-            AC_SUBST([WITH_JVM_LIBS])
-            AC_DEFINE([HAVE_ROSE], [1], [Enable Rose support])
-        ])
-    ])
-    AC_DEFINE(OPTTRAN_ENABLE_RECOMMENDER, [1], [Enable/Disable recommender])
     ENABLE_RECOMMENDER=recommender
     AC_CONFIG_FILES([tools/recommender/Makefile])
-    AC_SUBST([ENABLE_RECOMMENDER])
 ], [
-    AC_MSG_RESULT(no)
-    AC_DEFINE(OPTTRAN_ENABLE_RECOMMENDER, [0], [Enable/Disable recommender])
+    AC_MSG_RESULT([no])
     ENABLE_RECOMMENDER=
-    AC_SUBST([ENABLE_RECOMMENDER])
 ])
+AC_SUBST([ENABLE_RECOMMENDER])
 
-AM_CONDITIONAL([WITH_ROSE_SUPPORT], [test x"$WITH_ROSE_SUPPORT" = x"yes"])
-#
-# Enable/Disable 'recommender' (END)
 #------------------------------------------------------------------------------
-# Enable/Disable 'opttran_pr' (BEGIN)
+# Enable/Disable 'opttran_pr'
 #
 # It looks like there is a bug while checking for LEX which makes the LEX check
 # result appears before the result message (yes/no).
 #
-AC_MSG_CHECKING([whether to enable OptTran Pattern Recognizer])
-AC_ARG_ENABLE(opttran_pr,
+AC_ARG_ENABLE([opttran_pr],
     [AS_HELP_STRING([--disable-opttran_pr],
-        [Enable/Disable the pattern recognizer tool @<:@default=enabled@:>@])],
-    ENABLE_OPTTRAN_PR=$enableval, ENABLE_OPTTRAN_PR=yes)
+        [Enable/Disable the pattern recognizer tool [default=enabled]])],
+    [ENABLE_OPTTRAN_PR=$enableval], [ENABLE_OPTTRAN_PR=yes])
 
+AC_MSG_CHECKING([whether to enable OptTran Pattern Recognizer])
 AS_IF([test x"$ENABLE_OPTTRAN_PR" = x"yes"], [
-    AC_MSG_RESULT(yes)
-    AC_DEFINE(OPTTRAN_ENABLE_PR, [1], [Enable/Disable opttran_pr])
-
-    # Headers required exclusively for OptTran:PR
-    AC_CHECK_HEADER([sys/wait.h], [], [AC_MSG_ERROR([not found: sys/wait.h])])
-    AC_CHECK_HEADER([inttypes.h], [], [AC_MSG_ERROR([not found: inttypes.h])])
-    AC_CHECK_HEADER([fcntl.h],    [], [AC_MSG_ERROR([not found: fcntl.h])])
-
-    # Checks for SQLite headers, lib and program (only if 'recommender' is enabled)
-    AC_CHECK_LIB([sqlite3], [sqlite3_open, sqlite3_close, sqlite3_exec,
-        sqlite3_free, sqlite3_errmsg], [],
-        [AC_MSG_ERROR([SQLite3 library not found])])
-    AC_CHECK_HEADER([sqlite3.h], [
-        AC_DEFINE([HAVE_SQLITE3], [1], [Enable SQLite3 support
-        WITH_SQLITE3_SUPPORT=yes])], [])
-
-    # Check for the SQLite program
-    AC_CHECK_PROG(SQLITE3_PROGRAM, sqlite3, yes)
-    AS_IF([test x"$SQLITE3_PROGRAM" = x"yes"],
-        [AC_PATH_TOOL(SQLITE3_PROGRAM, sqlite3)], [])
+    AC_MSG_RESULT([yes])
 
     # Check for Lex/Flex and Yacc/Bison
     AC_PROG_LEX
     AC_PROG_YACC
-    
+
     ENABLE_PR=pr
     AC_CONFIG_FILES([tools/pr/Makefile])
     AC_CONFIG_FILES([tools/pr/c_loop1/Makefile])
     AC_CONFIG_FILES([tools/pr/c_loop2/Makefile])
-    AC_SUBST([ENABLE_PR])
 ], [
-    AC_MSG_RESULT(no)
-    AC_DEFINE(OPTTRAN_ENABLE_PR, [0], [Enable/Disable opttran_pr])
+    AC_MSG_RESULT([no])
     ENABLE_PR=
-    AC_SUBST([ENABLE_PR])
 ])
+AC_SUBST([ENABLE_PR])
 
-AM_CONDITIONAL([WITH_SQLITE3_SUPPORT], [test x"$WITH_SQLITE3_SUPPORT" = x"yes"])
-#
-# Enable/Disable 'opttran_pr' (END)
 #------------------------------------------------------------------------------
-# Enable/Disable 'opttran_ct' (BEGIN)
+# Enable/Disable 'opttran_ct'
 #
 AC_MSG_CHECKING([whether to enable OptTran Code Transformer])
-AC_ARG_ENABLE(opttran_ct,
+AC_ARG_ENABLE([opttran_ct],
     [AS_HELP_STRING([--disable-opttran_ct],
-        [Enable/Disable the code transformer tool @<:@default=disabled@:>@])],
-    [ENABLE_OPTTRAN_CT=$enableval], [ENABLE_OPTTRAN_CT=no])
+        [Enable/Disable the code transformer tool [default=enabled]])],
+    [ENABLE_OPTTRAN_CT=$enableval], [ENABLE_OPTTRAN_CT=yes])
 
 AS_IF([test x"$ENABLE_OPTTRAN_CT" = x"yes"], [
-    AC_MSG_RESULT(yes)
-    AC_DEFINE(OPTTRAN_ENABLE_CT, [1], [Enable/Disable opttran_ct])
+    AC_MSG_RESULT([yes])
 
     ENABLE_CT=ct
     AC_CONFIG_FILES([tools/ct/Makefile])
-    AC_SUBST([ENABLE_CT])
 ], [
-    AC_MSG_RESULT(no)
-    AC_DEFINE(OPTTRAN_ENABLE_CT, [0], [Enable/Disable opttran_ct])
+    AC_MSG_RESULT([no])
     ENABLE_CT=
-    AC_SUBST([ENABLE_CT])
 ])
-#
-# Enable/Disable 'opttran_ct' (END)
+AC_SUBST([ENABLE_CT])
+
 #------------------------------------------------------------------------------
-# Enable/Disable 'opttran_cr' (BEGIN)
+# Enable/Disable 'opttran_cr'
 #
 AC_MSG_CHECKING([whether to enable OptTran Code Re-Assembler])
-AC_ARG_ENABLE(opttran_cr,
+AC_ARG_ENABLE([opttran_cr],
     [AS_HELP_STRING([--disable-opttran_cr],
-        [Enable/Disable the code re-assembler tool @<:@default=disabled@:>@])],
+        [Enable/Disable the code re-assembler tool [default=enabled]])],
     [ENABLE_OPTTRAN_CR=$enableval], [ENABLE_OPTTRAN_CR=no])
 
 AS_IF([test x"$ENABLE_OPTTRAN_CR" = x"yes"], [
     AC_MSG_RESULT(yes)
-    AC_DEFINE(OPTTRAN_ENABLE_CR, [1], [Enable/Disable opttran_cr])
 
     ENABLE_CR=cr
     AC_CONFIG_FILES([tools/cr/Makefile])
-    AC_SUBST([ENABLE_CR])
 ], [
     AC_MSG_RESULT(no)
-    AC_DEFINE(OPTTRAN_ENABLE_CR, [0], [Enable/Disable opttran_cr])
     ENABLE_CR=
-    AC_SUBST([ENABLE_CR])
 ])
-#
-# Enable/Disable 'opttran_cr' (END)
+AC_SUBST([ENABLE_CR])
+
 #------------------------------------------------------------------------------
 # Generate output files
 #
 AC_OUTPUT
-
-AC_MSG_NOTICE([])
+AC_MSG_NOTICE([========================================================])
+AC_MSG_NOTICE([  PerfExpert:                $ENABLE_OPTTRAN_PERFEXPERT ])
+AC_MSG_NOTICE([  Optimizations Recommender: $ENABLE_OPTTRAN_RECOMMENDER])
+AC_MSG_NOTICE([  Code Pattern Recognizer:   $ENABLE_OPTTRAN_PR         ])
+AC_MSG_NOTICE([  Code Transformer:          $ENABLE_OPTTRAN_CT         ])
+AC_MSG_NOTICE([  Code Re-Assembler:         $ENABLE_OPTTRAN_CR         ])
+AC_MSG_NOTICE([                                                        ])
+AC_MSG_NOTICE([  Debug mode: $ENABLE_DEBUG                             ])
+AC_MSG_NOTICE([  PAPI:       $HAVE_PAPI_LIB                            ])
+AC_MSG_NOTICE([  HPCToolkit: $HPCRUN_PROGRAM, $HPCSTRUCT_PROGRAM, $HPCPROF_PROGRAM])
+AC_MSG_NOTICE([  SQLite3:    $WITH_SQLITE3_SUPPORT                     ])
+AC_MSG_NOTICE([  Rose:       $WITH_ROSE                                ])
+AC_MSG_NOTICE([  Java VM:    $WITH_JVM                                 ])
 AS_IF([test x"$HOST_OS" != x"linux"], [
-    AS_IF([test x"$ENABLE_PERFEXPERT" = x"yes"], [
+    AS_IF([test x"$ENABLE_OPTTRAN_PERFEXPERT" = x"yes"], [
         AC_MSG_NOTICE([========================================================])
         AC_MSG_NOTICE([                    !!! WARNING !!!                     ])
         AC_MSG_NOTICE([                                                        ])
