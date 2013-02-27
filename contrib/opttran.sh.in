@@ -1,3 +1,4 @@
+#!@BASH_PROGRAM@
 #
 # Copyright (c) 2013  University of Texas at Austin. All rights reserved.
 #
@@ -5,7 +6,7 @@
 #
 # Additional copyrights may follow
 #
-# This file is part of OptTran and PerfExpert.
+# This file is part of OptTran.
 #
 # OptTran as well PerfExpert are free software: you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public License as
@@ -25,16 +26,11 @@
 # $HEADER$
 #
 
-SUBDIRS = $(ENABLE_PERFEXPERT) $(ENABLE_RECOMMENDER) $(ENABLE_PR)
-SUBDIRS += $(ENABLE_CT) $(ENABLE_CR)
+OPTTRAN_PREFIX=@prefix@
+OPTTRAN_BINDIR=@prefix@/bin
+OPTTRAN_LIBDIR=@prefix@/lib
+OPTTRAN_ETCDIR=@prefix@/etc
+OPTTRAN_VARDIR=@prefix@/var
 
-install-data-local:
-	$(MKDIR_P) $(datadir)/$(PACKAGE_NAME)/codes
-	$(INSTALL) -m 644 $(top_srcdir)/contrib/codes/mm_naive.c \
-		$(datadir)/$(PACKAGE_NAME)/codes
-	$(INSTALL) -m 644 $(top_srcdir)/contrib/opttran.sh $(bindir)
-	
-install-data-hook:
-	cd $(bindir); rm opttran.sh; $(LN_S) opttran.sh opttran
 
-# EOF
+
