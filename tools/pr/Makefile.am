@@ -31,11 +31,6 @@ opttran_pr_SOURCES = main.c
 opttran_pr_CPPFLAGS = -I$(srcdir)/../common
 opttran_pr_CFLAGS = -O3
 
-# Adding support to SQLite3
-if WITH_SQLITE3_SUPPORT
-opttran_pr_CPPFLAGS += -DHAVE_SQLITE3
-endif
-
 SUBDIRS = c_loop1 c_loop2
 
 install-data-local:

@@ -25,8 +25,6 @@
 # $HEADER$
 #
 
-EXTRA_DIST = argp-1.0.jar
-
 # The following commands should use TAB, not SPACES
 all:
 	$(ANT_PROGRAM) -f build.xml

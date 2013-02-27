@@ -33,7 +33,6 @@ recommender_CFLAGS = -O3
 
 # Adding support to Rose
 if WITH_ROSE_SUPPORT
-recommender_CPPFLAGS += -DHAVE_ROSE
 recommender_SOURCES += extract_fragment.cpp traversal.cpp
 endif
 

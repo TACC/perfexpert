@@ -178,7 +178,7 @@ static int  database_connect(void);
 static int  accumulate_functions(void *functions, int col_count,
                                  char **col_values, char **col_names);
 static int  select_recommendations(segment_t *segment);
-#ifdef HAVE_ROSE
+#if HAVE_ROSE == 1
 int  extract_fragment(segment_t *segment);
 #endif
     

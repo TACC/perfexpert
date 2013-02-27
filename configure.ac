@@ -49,12 +49,12 @@ AM_INIT_AUTOMAKE([foreign -Wall -Werror])
 m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 
 # Just to have a cleaner output during 'make'
-AM_SILENT_RULES([yes])
+#AM_SILENT_RULES([yes])
 
 # We need some work here to save hound from -O2 on CFLAGS. This overwrites any
 # user-defined CFLAGS :-/
 CFLAGS="-g"
-CXXFLAGS="-g -O3"
+CXXFLAGS="-O3 -g"
 
 # Requires only a standard C compiler
 AM_PROG_CC_C_O
@@ -162,16 +162,14 @@ AC_CHECK_LIB([sqlite3], [sqlite3_open, sqlite3_close, sqlite3_exec,
     [AC_MSG_ERROR([SQLite3 library not found])])
 
 AC_CHECK_HEADER([sqlite3.h], [
-    AC_DEFINE([HAVE_SQLITE3], [1], [SQLite3 support])
     WITH_SQLITE3_SUPPORT=yes
+    AC_DEFINE([HAVE_SQLITE3], [1], [SQLite3 support])
 ], [
-    AC_DEFINE([HAVE_SQLITE3], [0], [SQLite3 support])
     WITH_SQLITE3_SUPPORT=no
+    AC_DEFINE([HAVE_SQLITE3], [0], [SQLite3 support])
 ])
 
 AC_PATH_TOOL([SQLITE3_PROGRAM], [sqlite3])
-
-AM_CONDITIONAL([WITH_SQLITE3_SUPPORT], [test x"$WITH_SQLITE3_SUPPORT" = x"yes"])
 
 #------------------------------------------------------------------------------
 # Find Apache ANT, optionally, using an argument (required for PerfExpert)
@@ -204,32 +202,32 @@ AC_ARG_WITH([papi],
         need to set neither '--with-papi-lib' nor '--with-papi-include'.
         This argument is not necessary if PAPI is installed into default
         directories ('/usr' and '/usr/local')])], [
-    CPPFLAGS+="-I$withval/include"
-    LDFLAGS+="-L$withval/lib"], [])
+    CPPFLAGS+=" -I$withval/include"
+    LDFLAGS+=" -L$withval/lib"], [])
 
 AC_ARG_WITH([papi-lib],
     [AS_HELP_STRING([--with-papi-lib],
         [use this argument to set PAPI library path (it overwrites
-        '--with-papi' argument)])], [LDFLAGS+="-L$withval"], [])
+        '--with-papi' argument)])], [LDFLAGS+=" -L$withval"], [])
 
 AC_ARG_WITH([papi-include],
     [AS_HELP_STRING([--with-papi-include],
         [use this argument to set PAPI include path (it overwrites
-        '--with-papi' argument)])], [CPPFLAGS+="-I$withval"], [])
+        '--with-papi' argument)])], [CPPFLAGS+=" -I$withval"], [])
 
-# Checks for headers and libraries required for sniffer (PAPI)
+# Checks for PAPI library and header file
 AC_CHECK_LIB([papi], [PAPI_library_init, PAPI_add_event,
     PAPI_create_eventset, PAPI_get_event_info, PAPI_event_name_to_code,
-    PAPI_query_event], [HAVE_PAPI_LIB=yes], [HAVE_PAPI_LIB=no])
+    PAPI_query_event], [], [HAVE_PAPI_LIB=no])
 AC_CHECK_HEADER([papi.h], [HAVE_PAPI_HEADER=yes], [HAVE_PAPI_HEADER=no])
 
-AS_IF([test x"HAVE_PAPI_LIB" == x"yes"], [
+AS_IF([test x"HAVE_PAPI_LIB" == x"no"], [], [
     AS_IF([test x"HAVE_PAPI_HEADER" == x"yes"], [
         AC_DEFINE([HAVE_PAPI], [1], [PAPI support])
     ], [
         AC_DEFINE([HAVE_PAPI], [0], [PAPI support])
     ])
-], [])
+])
 
 #------------------------------------------------------------------------------
 # Find HPCToolkit programs, optionally, using an argument
@@ -261,6 +259,8 @@ AC_ARG_WITH([jvm],
     [AS_HELP_STRING([--with-jvm], [JVM is required when Rose is selected,
         use this argument to set JVM library path])], [
     WITH_JVM_LIBS=$withval
+    LDFLAGS+=" -L$WITH_JVM_LIBS"
+
     # A random number of C symbols of JVM library
     AC_CHECK_LIB([jvm], [JVM_InitializeCompiler, JVM_Open, JVM_Close], [],
         [AC_MSG_ERROR([Java Virtual Machine (JVM) library not found!])])
@@ -315,6 +315,9 @@ AS_IF([test x"$WITH_ROSE" == x"yes"], [
             was not defined. Use '--with-rose-include=path' or
             '--with-rose=prefix' to define it])], [])
 
+    CPPFLAGS+=" -I$WITH_ROSE_INCLUDE"
+    LDFLAGS+=" -L$WITH_ROSE_LIBS"
+
     # A random number of C symbols of Rose library
     AC_CHECK_LIB([rose], [node_has_side_effects, add_to_scopes_list,
         copy_node, node_complete_object_type, set_node_operator],
@@ -323,10 +326,10 @@ AS_IF([test x"$WITH_ROSE" == x"yes"], [
     # How the hell I can make the rose.h header check work?
     #AC_CHECK_HEADER([rose.h], [], [AC_MSG_ERROR([not found: rose.h])])
 
-    CPPFLAGS+="-I$WITH_ROSE_INCLUDE"
-    LDFLAGS+="-L$WITH_ROSE_LIBS -L$WITH_JVM_LIBS"
+    WITH_ROSE_SUPPORT=yes
     AC_DEFINE([HAVE_ROSE], [1], [Enable Rose support])
 ], [
+    WITH_ROSE_SUPPORT=no
     AC_DEFINE([HAVE_ROSE], [0], [Enable Rose support])
 ])
 
@@ -522,18 +525,26 @@ AC_SUBST([WITH_OPTTRAN_SUPPORT])
 #
 AC_OUTPUT
 AC_MSG_NOTICE([========================================================])
-AC_MSG_NOTICE([  PerfExpert:                $ENABLE_OPTTRAN_PERFEXPERT ])
-AC_MSG_NOTICE([  Optimizations Recommender: $ENABLE_OPTTRAN_RECOMMENDER])
-AC_MSG_NOTICE([  Code Pattern Recognizer:   $ENABLE_OPTTRAN_PR         ])
-AC_MSG_NOTICE([  Code Transformer:          $ENABLE_OPTTRAN_CT         ])
-AC_MSG_NOTICE([  Code Re-Assembler:         $ENABLE_OPTTRAN_CR         ])
+AC_MSG_NOTICE([ PerfExpert:                $ENABLE_OPTTRAN_PERFEXPERT  ])
+AC_MSG_NOTICE([ Optimizations Recommender: $ENABLE_OPTTRAN_RECOMMENDER ])
+AC_MSG_NOTICE([ Code Pattern Recognizer:   $ENABLE_OPTTRAN_PR          ])
+AC_MSG_NOTICE([ Code Transformer:          $ENABLE_OPTTRAN_CT          ])
+AC_MSG_NOTICE([ Code Re-Assembler:         $ENABLE_OPTTRAN_CR          ])
 AC_MSG_NOTICE([                                                        ])
-AC_MSG_NOTICE([  Debug mode: $ENABLE_DEBUG                             ])
-AC_MSG_NOTICE([  PAPI:       $HAVE_PAPI_LIB                            ])
-AC_MSG_NOTICE([  HPCToolkit: $HPCRUN_PROGRAM, $HPCSTRUCT_PROGRAM, $HPCPROF_PROGRAM])
-AC_MSG_NOTICE([  SQLite3:    $WITH_SQLITE3_SUPPORT                     ])
-AC_MSG_NOTICE([  Rose:       $WITH_ROSE                                ])
-AC_MSG_NOTICE([  Java VM:    $WITH_JVM                                 ])
+AC_MSG_NOTICE([ Debug mode: $ENABLE_DEBUG                              ])
+AC_MSG_NOTICE([ PAPI:       $HAVE_PAPI_LIB                             ])
+AC_MSG_NOTICE([ HPCToolkit: $HPCRUN_PROGRAM, $HPCSTRUCT_PROGRAM, $HPCPROF_PROGRAM])
+AC_MSG_NOTICE([ SQLite3:    $WITH_SQLITE3_SUPPORT                      ])
+AC_MSG_NOTICE([ Rose:       $WITH_ROSE                                 ])
+AC_MSG_NOTICE([ Java VM:    $WITH_JVM                                  ])
+AC_MSG_NOTICE([                                                        ])
+AC_MSG_NOTICE([ CC=$CC                                                 ])
+AC_MSG_NOTICE([ CXX=$CXX                                               ])
+AC_MSG_NOTICE([ CPPFLAGS=$CPPFLAGS                                     ])
+AC_MSG_NOTICE([ CFLAGS=$CFLAGS                                         ])
+AC_MSG_NOTICE([ CXXFLAGS=$CXXFLAGS                                     ])
+AC_MSG_NOTICE([ LDFLAGS=$LDFLAGS                                       ])
+AC_MSG_NOTICE([ LIBS=$LIBS                                             ])
 AS_IF([test x"$HOST_OS" != x"linux"], [
     AS_IF([test x"$ENABLE_OPTTRAN_PERFEXPERT" = x"yes"], [
         AC_MSG_NOTICE([========================================================])
