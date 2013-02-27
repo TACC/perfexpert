@@ -77,6 +77,7 @@ typedef struct {
     char *outputfile;
     FILE *outputfile_FP;
     int  colorful;
+    int  use_opttran;
     char *opttrandir;
 #if HAVE_SQLITE3
     char *dbfile;

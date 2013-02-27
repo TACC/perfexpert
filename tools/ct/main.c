@@ -91,7 +91,7 @@ int main(int argc, char** argv) {
 
     /* Parse input parameters */
     if (1 == globals.use_stdin) {
-        if (OPTTRAN_SUCCESS != parse_fragment_params(fragments, stdin)) {
+        if (OPTTRAN_SUCCESS != parse_fragment_params(NULL, stdin)) {
             OPTTRAN_OUTPUT(("%s", _ERROR("Error: parsing input params")));
             exit(OPTTRAN_ERROR);
         }
@@ -106,7 +106,7 @@ int main(int argc, char** argv) {
                                 globals.inputfile));
                 return OPTTRAN_ERROR;
             } else {
-                if (OPTTRAN_SUCCESS != parse_fragment_params(fragments,
+                if (OPTTRAN_SUCCESS != parse_fragment_params(NULL,
                                                              inputfile_FP)) {
                     OPTTRAN_OUTPUT(("%s",
                                     _ERROR("Error: parsing input params")));
@@ -337,9 +337,6 @@ static int parse_cli_params(int argc, char *argv[]) {
 
 /* parse_fragment_params */
 static int parse_fragment_params(opttran_list_t *fragments_p, FILE *inputfile_p) {
-    fragment_t *fragment;
-    recommendation_t *recommendation;
-    recognizer_t *recognizer;
     char buffer[BUFFER_SIZE];
     int  input_line = 0;
 
@@ -376,24 +373,8 @@ static int parse_fragment_params(opttran_list_t *fragments_p, FILE *inputfile_p)
             char temp_str[BUFFER_SIZE];
 
             OPTTRAN_OUTPUT_VERBOSE((5, "(%d) --- %s", input_line,
-                                    _GREEN("new fragment found")));
+                                    _GREEN("new ????? found")));
 
-            /* Create a list item for this code bottleneck */
-            fragment = (fragment_t *)malloc(sizeof(fragment_t));
-            if (NULL == fragment) {
-                OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
-                exit(OPTTRAN_ERROR);
-            }
-            opttran_list_item_construct((opttran_list_item_t *)fragment);
-
-            /* Initialize some elements on segment */
-            fragment->filename = NULL;
-            fragment->line_number = 0;
-            fragment->fragment_file = NULL;
-            opttran_list_construct((opttran_list_t *)&(fragment->recommendations));
-
-            /* Add this item to 'segments' */
-            opttran_list_append(fragments_p, (opttran_list_item_t *)fragment);
 
             continue;
         }
@@ -413,97 +394,16 @@ static int parse_fragment_params(opttran_list_t *fragments_p, FILE *inputfile_p)
 
         /* Code param: code.filename */
         if (0 == strncmp("code.filename", node->key, 13)) {
-            fragment->filename = (char *)malloc(strlen(node->value) + 1);
-            if (NULL == fragment->filename) {
-                OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
-                exit(OPTTRAN_ERROR);
-            }
-            bzero(fragment->filename, strlen(node->value) + 1);
-            strcpy(fragment->filename, node->value);
-            OPTTRAN_OUTPUT_VERBOSE((10, "(%d)  \\- %s            [%s]",
-                                    input_line, _MAGENTA("filename:"),
-                                    fragment->filename));
-            free(node);
-            continue;
-        }
-        /* Code param: code.line_number */
-        if (0 == strncmp("code.line_number", node->key, 16)) {
-            fragment->line_number = atoi(node->value);
-            OPTTRAN_OUTPUT_VERBOSE((10, "(%d)  \\- %s         [%d]", input_line,
-                                    _MAGENTA("line number:"),
-                                    fragment->line_number));
-            free(node);
-            continue;
-        }
-        /* Recommender param: recommender.code_fragment */
-        if (0 == strncmp("recommender.code_fragment", node->key, 25)) {
-            fragment->fragment_file = (char *)malloc(strlen(node->value) + 1);
-            if (NULL == fragment->fragment_file) {
-                OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
-                exit(OPTTRAN_ERROR);
-            }
-            bzero(fragment->fragment_file, strlen(node->value) + 1);
-            strcpy(fragment->fragment_file, node->value);
-            OPTTRAN_OUTPUT_VERBOSE((10, "(%d)  \\- %s       [%s]", input_line,
-                                    _MAGENTA("fragment file:"),
-                                    fragment->fragment_file));
-            free(node);
-            continue;
-        }
-        /* It is expected that after a 'recommender.recommendation_id' there
-         * will be a list of recognizer (no recognizers is also valid).
-         */
-        /* Recommender param: recommender.recommendation_id */
-        if (0 == strncmp("recommender.recommendation_id", node->key, 29)) {
-            recommendation = (recommendation_t *)malloc(sizeof(recommendation_t));
-            if (NULL == recommendation) {
-                OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
-                exit(OPTTRAN_ERROR);
-            }
-            opttran_list_item_construct((opttran_list_item_t *)recommendation);
-            recommendation->id = atoi(node->value);
-            opttran_list_construct((opttran_list_t *)&(recommendation->recognizers));
-            opttran_list_append((opttran_list_t *)&(fragment->recommendations),
-                                (opttran_list_item_t *)recommendation);
-            OPTTRAN_OUTPUT_VERBOSE((10, "(%d)  | \\- %s [%d]", input_line,
-                                    _YELLOW("recommendation ID:"),
-                                    recommendation->id));
-            free(node);
-            continue;
-        }
-        /* If there is a new recognizer, the ID should become first, them the
-         * recognizer name. This allow us to correctly allocate the struct mem.
-         */
-        /* Recommender param: recommender.recognizer_id */
-        if (0 == strncmp("recommender.recognizer_id", node->key, 25)) {
-            recognizer = (recognizer_t *)malloc(sizeof(recognizer_t));
-            if (NULL == recognizer) {
-                OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
-                exit(OPTTRAN_ERROR);
-            }
-            opttran_list_item_construct((opttran_list_item_t *)recognizer);
-            recognizer->id = atoi(node->value);
-            recognizer->test_result = OPTTRAN_UNDEFINED;
-            opttran_list_append((opttran_list_t *)&(recommendation->recognizers),
-                                (opttran_list_item_t *)recognizer);
-            OPTTRAN_OUTPUT_VERBOSE((10, "(%d)  | | \\- %s   [%d]", input_line,
-                                    _CYAN("recognizer ID:"),
-                                    recognizer->id));
-            free(node);
-            continue;
-        }
-        /* Recommender param: recommender.recognizer */
-        if (0 == strncmp("recommender.recognizer", node->key, 22)) {
-            recognizer->program = (char *)malloc(strlen(node->value) + 1);
-            if (NULL == recognizer->program) {
-                OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
-                exit(OPTTRAN_ERROR);
-            }
-            bzero(recognizer->program, strlen(node->value) + 1);
-            strcpy(recognizer->program, node->value);
-            OPTTRAN_OUTPUT_VERBOSE((10, "(%d)  | | \\- %s      [%s]",
-                                    input_line, _CYAN("recognizer:"),
-                                    recognizer->program));
+//            fragment->filename = (char *)malloc(strlen(node->value) + 1);
+//            if (NULL == fragment->filename) {
+//                OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
+//                exit(OPTTRAN_ERROR);
+//            }
+//            bzero(fragment->filename, strlen(node->value) + 1);
+//            strcpy(fragment->filename, node->value);
+//            OPTTRAN_OUTPUT_VERBOSE((10, "(%d)  \\- %s            [%s]",
+//                                    input_line, _MAGENTA("filename:"),
+//                                    fragment->filename));
             free(node);
             continue;
         }
@@ -520,12 +420,12 @@ static int parse_fragment_params(opttran_list_t *fragments_p, FILE *inputfile_p)
     OPTTRAN_OUTPUT_VERBOSE((4, "%d %s", opttran_list_get_size(fragments_p),
                             _GREEN("code fragment(s) found")));
 
-    fragment = (fragment_t *)opttran_list_get_first(fragments_p);
-    while ((opttran_list_item_t *)fragment != &(fragments_p->sentinel)) {
-        OPTTRAN_OUTPUT_VERBOSE((4, "   %s:%d", fragment->filename,
-                                fragment->line_number));
-        fragment = (fragment_t *)opttran_list_get_next(fragment);
-    }
+//    fragment = (fragment_t *)opttran_list_get_first(fragments_p);
+//    while ((opttran_list_item_t *)fragment != &(fragments_p->sentinel)) {
+//        OPTTRAN_OUTPUT_VERBOSE((4, "   %s:%d", fragment->filename,
+//                                fragment->line_number));
+//        fragment = (fragment_t *)opttran_list_get_next(fragment);
+//    }
 
     OPTTRAN_OUTPUT_VERBOSE((4, "==="));
 
