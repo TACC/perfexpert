@@ -195,7 +195,7 @@ int main(int argc, char** argv) {
         fclose(globals.outputfile_FP);
     }
 
-    /* Free fragments */
+    /* Free memory */
     while (OPTTRAN_FALSE == opttran_list_is_empty(fragments)) {
         fragment = (fragment_t *)opttran_list_get_first(fragments);
         opttran_list_remove_item(fragments, (opttran_list_item_t *)fragment);
@@ -219,6 +219,9 @@ int main(int argc, char** argv) {
     opttran_list_destruct(fragments);
     free(fragments);
     free(globals.dbfile);
+    if (1 == globals.use_opttran) {
+        free(globals.outputfile);
+    }
 
     return OPTTRAN_SUCCESS;
 }
