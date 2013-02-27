@@ -32,9 +32,13 @@ install-data-local:
 	$(MKDIR_P) $(datadir)/$(PACKAGE_NAME)/codes
 	$(INSTALL) -m 644 $(top_srcdir)/contrib/codes/mm_naive.c \
 		$(datadir)/$(PACKAGE_NAME)/codes
-	$(INSTALL) -m 644 $(top_srcdir)/contrib/opttran.sh $(bindir)
+	if (test x"$(WITH_OPTTRAN_SUPPORT)" = x"yes"); then \
+		$(INSTALL) -m 644 $(top_srcdir)/contrib/opttran.sh $(bindir); \
+	fi
 	
 install-data-hook:
-	cd $(bindir); rm opttran.sh; $(LN_S) opttran.sh opttran
+	if (test x"$(WITH_OPTTRAN_SUPPORT)" = x"yes"); then \
+		cd $(bindir); rm opttran.sh; $(LN_S) opttran.sh opttran; \
+	fi
 
 # EOF

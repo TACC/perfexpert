@@ -498,6 +498,26 @@ AS_IF([test x"$ENABLE_OPTTRAN_CR" = x"yes"], [
 AC_SUBST([ENABLE_CR])
 
 #------------------------------------------------------------------------------
+# Do we have all the tools? So generate the ninja-super-power-script opttran.sh
+#
+AS_IF([test x"$ENABLE_OPTTRAN_PERFEXPERT" = x"yes"], [
+    AS_IF([test x"$ENABLE_OPTTRAN_RECOMMENDER" = x"yes"], [
+        AS_IF([test x"$ENABLE_OPTTRAN_PR" = x"yes"], [
+            AS_IF([test x"$ENABLE_OPTTRAN_CT" = x"yes"], [
+                AS_IF([test x"$ENABLE_OPTTRAN_CR" = x"yes"], [
+                    AC_CONFIG_FILES([contrib/opttran.sh],
+                        [chmod +x contrib/opttran.sh])
+                    WITH_OPTTRAN_SUPPORT=yes
+                ], [
+                    WITH_OPTTRAN_SUPPORT=no
+                ])
+            ])
+        ])
+    ])
+])
+AC_SUBST([WITH_OPTTRAN_SUPPORT])
+
+#------------------------------------------------------------------------------
 # Generate output files
 #
 AC_OUTPUT
