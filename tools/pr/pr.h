@@ -66,6 +66,7 @@ extern "C" {
 
 /** Default values for some parameters */
 #define RECOMMENDATION_DB "recommendation.db"
+#define OPTTRAN_PR_FILE   "transformations.txt"
 #define MAX_FRAGMENT_DATA 1048576
 
 /** Structure to hold global variables */
@@ -79,6 +80,7 @@ typedef struct {
     FILE *outputfile_FP;
     int  colorful;
     int  testall;
+    char *opttrandir;
 #if HAVE_SQLITE3
     char *dbfile;
     sqlite3 *db;
@@ -108,7 +110,8 @@ static struct option long_options[] = {
     {"help",            no_argument,       NULL, 'h'},
     {"outputfile",      required_argument, NULL, 'o'},
     {"colorful",        no_argument,       NULL, 'c'},
-    {"testall",         no_argument,       NULL, 'a'},
+    {"testall",         no_argument,       NULL, 't'},
+    {"opttran",         required_argument, NULL, 'a'},
 #if HAVE_SQLITE3
     {"pid",             required_argument, NULL, 'p'},
 #endif

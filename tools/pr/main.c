@@ -70,6 +70,7 @@ int main(int argc, char** argv) {
         .inputfile        = NULL,   // char *
         .outputfile       = NULL,   // char *
         .outputfile_FP    = stdout, // FILE *
+        .opttrandir       = NULL,   // char *
 #if HAVE_SQLITE3
         .opttran_pid      = (unsigned long long int)getpid(), // int
 #endif
@@ -138,6 +139,41 @@ int main(int argc, char** argv) {
     }
 
     /* Output results */
+    if (1 == globals.use_opttran) {
+        globals.use_stdout = 0;
+
+        if (NULL == globals.opttrandir) {
+            globals.opttrandir = (char *)malloc(strlen("./opttran-") + 8);
+            if (NULL == globals.opttrandir) {
+                OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
+                exit(OPTTRAN_ERROR);
+            }
+            bzero(globals.opttrandir, strlen("./opttran-" + 8));
+            sprintf(globals.opttrandir, "./opttran-%d", getpid());
+        }
+        OPTTRAN_OUTPUT_VERBOSE((7, "using (%s) as output directory",
+                                globals.opttrandir));
+
+        if (OPTTRAN_ERROR == opttran_util_make_path(globals.opttrandir, 0755)) {
+            OPTTRAN_OUTPUT(("%s",
+                            _ERROR("Error: cannot create opttran directory")));
+            exit(OPTTRAN_ERROR);
+        }
+
+        globals.outputfile = (char *)malloc(strlen(globals.opttrandir) +
+                                            strlen(OPTTRAN_PR_FILE) + 1);
+        if (NULL == globals.outputfile) {
+            OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
+            exit(OPTTRAN_ERROR);
+        }
+        bzero(globals.outputfile, strlen(globals.opttrandir) +
+              strlen(OPTTRAN_PR_FILE) + 1);
+        strcat(globals.outputfile, globals.opttrandir);
+        strcat(globals.outputfile, "/");
+        strcat(globals.outputfile, OPTTRAN_PR_FILE);
+        OPTTRAN_OUTPUT_VERBOSE((7, "printing OPTTRAN output to (%s)",
+                                globals.opttrandir));
+    }
     if (0 == globals.use_stdout) {
         OPTTRAN_OUTPUT_VERBOSE((7, "printing test results to file (%s)",
                                 globals.outputfile));
@@ -192,7 +228,7 @@ static void show_help(void) {
     OPTTRAN_OUTPUT_VERBOSE((10, "printing help"));
     
     /*      12345678901234567890123456789012345678901234567890123456789012345678901234567890 */
-    printf("Usage: recommender -i|-f file [-o file] [-avch] [-l level]");
+    printf("Usage: recommender -i|-f file [-o file] [-tvch] [-l level] [-a dir]");
 #if HAVE_SQLITE3
     printf(" [-d database] [-p pid]");
 #endif
@@ -200,8 +236,12 @@ static void show_help(void) {
     printf("  -i --stdin           Use STDIN as input for patterns\n");
     printf("  -f --inputfile       Use 'file' as input for patterns\n");
     printf("  -o --outputfile      Use 'file' as output (default stdout)\n");
-    printf("  -a --testall         Test all the pattern recognizers of each code fragment,\n");
+    printf("  -t --testall         Test all the pattern recognizers of each code fragment,\n");
     printf("                       otherwise stop on the first valid one\n");
+    printf("  -a --opttran         Create OptTran (automatic performance optimization) files\n");
+    printf("                       into 'dir' directory (default: create no OptTran files).\n");
+    printf("                       This argument overwrites -o (no output on STDOUT, except\n");
+    printf("                       for verbose messages)\n");
 #if HAVE_SQLITE3
     printf("  -d --database        Select the recommendation database file\n");
     printf("                       (default: %s/%s)\n", OPTTRAN_VARDIR, RECOMMENDATION_DB);
@@ -343,10 +383,19 @@ static int parse_cli_params(int argc, char *argv[]) {
                                         globals.outputfile));
                 break;
 
-            /* Test all or stop on the first valid? */
+            /* Use opttran? */
             case 'a':
+                globals.use_opttran = 1;
+                globals.use_stdout = 0;
+                globals.opttrandir = optarg;
+                OPTTRAN_OUTPUT_VERBOSE((10, "option 'a' set [%s]",
+                                        globals.opttrandir));
+                break;
+                
+            /* Test all or stop on the first valid? */
+            case 't':
                 globals.testall = 1;
-                OPTTRAN_OUTPUT_VERBOSE((10, "option 'a' set"));
+                OPTTRAN_OUTPUT_VERBOSE((10, "option 't' set"));
                 break;
 
             /* Unknown option */
