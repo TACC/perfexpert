@@ -169,7 +169,21 @@ AC_CHECK_HEADER([sqlite3.h], [
     AC_DEFINE([HAVE_SQLITE3], [0], [SQLite3 support])
 ])
 
-AC_PATH_TOOL([SQLITE3_PROGRAM], [sqlite3])
+AC_PATH_TOOL([SQLITE3_PROGRAM], [sqlite3], [no])
+
+#------------------------------------------------------------------------------
+# Checks for PIPS, optionally, using an argument (optional except for opttran_ct)
+#
+AC_ARG_WITH([pips],
+    [AS_HELP_STRING([--with-pips],
+        [Use this argument to set where PIPS binries are installed (not
+        necessary if it is in the PATH). TPIPS (one of the PIPS binaries) is
+        necessary to compile OptTran:CT])], [
+    PIPS_PATH="$withval"
+    AC_PATH_TOOL([TPIPS_PROGRAM], [tpips], [no], [$PIPS_PATH])
+    AS_IF([test x"$TPIPS_PROGRAM" = x"no"],
+        [AC_MSG_ERROR([TPIPS not found in $PIPS_PATH])])], [
+    AC_PATH_TOOL([TPIPS_PROGRAM], [tpips], [no])])
 
 #------------------------------------------------------------------------------
 # Find Apache ANT, optionally, using an argument (required for PerfExpert)
@@ -421,7 +435,7 @@ AS_IF([test x"$ENABLE_OPTTRAN_RECOMMENDER" = x"yes"], [
 
     # SQLite is required
     AS_IF([test x"$WITH_SQLITE3_SUPPORT" = x"no"],
-        [AC_MSG_ERROR([Please install SQLite3 program])], [])
+        [AC_MSG_ERROR([Please install SQLite3])], [])
 
     ENABLE_RECOMMENDER=recommender
     AC_CONFIG_FILES([tools/recommender/Makefile])
@@ -472,6 +486,13 @@ AC_ARG_ENABLE([opttran_ct],
 AS_IF([test x"$ENABLE_OPTTRAN_CT" = x"yes"], [
     AC_MSG_RESULT([yes])
 
+    AS_IF([test x"$TPIPS_PROGRAM" = x"no"],
+        [AC_MSG_ERROR([TPIPS not found, try using '--with-pips'])], [])
+
+    AC_CONFIG_FILES([tools/ct/c_loop2/Makefile])
+    AC_CONFIG_FILES([tools/ct/c_loop2/c_loop2.sh],
+        [chmod +x tools/ct/c_loop2/c_loop2.sh])
+
     ENABLE_CT=ct
     AC_CONFIG_FILES([tools/ct/Makefile])
 ], [
@@ -503,22 +524,21 @@ AC_SUBST([ENABLE_CR])
 #------------------------------------------------------------------------------
 # Do we have all the tools? So generate the ninja-super-power-script opttran.sh
 #
-AS_IF([test x"$ENABLE_OPTTRAN_PERFEXPERT" = x"yes"], [
-    AS_IF([test x"$ENABLE_OPTTRAN_RECOMMENDER" = x"yes"], [
-        AS_IF([test x"$ENABLE_OPTTRAN_PR" = x"yes"], [
-            AS_IF([test x"$ENABLE_OPTTRAN_CT" = x"yes"], [
-                AS_IF([test x"$ENABLE_OPTTRAN_CR" = x"yes"], [
-                    AC_CONFIG_FILES([contrib/opttran.sh],
-                        [chmod +x contrib/opttran.sh])
-                    WITH_OPTTRAN_SUPPORT=yes
-                ], [
-                    WITH_OPTTRAN_SUPPORT=no
-                ])
-            ])
-        ])
-    ])
-])
-AC_SUBST([WITH_OPTTRAN_SUPPORT])
+#AS_IF([test x"$ENABLE_OPTTRAN_PERFEXPERT" = x"yes"], [
+#    AS_IF([test x"$ENABLE_OPTTRAN_RECOMMENDER" = x"yes"], [
+#        AS_IF([test x"$ENABLE_OPTTRAN_PR" = x"yes"], [
+#            AS_IF([test x"$ENABLE_OPTTRAN_CT" = x"yes"], [
+#                AS_IF([test x"$ENABLE_OPTTRAN_CR" = x"yes"], [
+AC_CONFIG_FILES([tools/opttran.sh], [chmod +x tools/opttran.sh])
+#                    WITH_OPTTRAN_SUPPORT=yes
+#                ], [
+#                    WITH_OPTTRAN_SUPPORT=no
+#                ])
+#            ])
+#        ])
+#    ])
+#])
+#AC_SUBST([WITH_OPTTRAN_SUPPORT])
 
 #------------------------------------------------------------------------------
 # Generate output files
@@ -532,11 +552,12 @@ AC_MSG_NOTICE([ Code Transformer:          $ENABLE_OPTTRAN_CT          ])
 AC_MSG_NOTICE([ Code Re-Assembler:         $ENABLE_OPTTRAN_CR          ])
 AC_MSG_NOTICE([                                                        ])
 AC_MSG_NOTICE([ Debug mode: $ENABLE_DEBUG                              ])
-AC_MSG_NOTICE([ PAPI:       $HAVE_PAPI_LIB                             ])
+AC_MSG_NOTICE([ PAPI:       $HAVE_PAPI_HEADER                          ])
 AC_MSG_NOTICE([ HPCToolkit: $HPCRUN_PROGRAM, $HPCSTRUCT_PROGRAM, $HPCPROF_PROGRAM])
 AC_MSG_NOTICE([ SQLite3:    $WITH_SQLITE3_SUPPORT                      ])
 AC_MSG_NOTICE([ Rose:       $WITH_ROSE                                 ])
 AC_MSG_NOTICE([ Java VM:    $WITH_JVM                                  ])
+AC_MSG_NOTICE([ PIPS:       $TPIPS_PROGRAM                             ])
 AC_MSG_NOTICE([                                                        ])
 AC_MSG_NOTICE([ CC=$CC                                                 ])
 AC_MSG_NOTICE([ CXX=$CXX                                               ])
