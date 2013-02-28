@@ -94,7 +94,7 @@ int main(int argc, char** argv) {
     }
     
     /* Create the list of code patterns */
-    fragments = (opttran_list_t *)malloc(sizeof(fragment_t));
+    fragments = (opttran_list_t *)malloc(sizeof(opttran_list_t));
     if (NULL == fragments) {
         OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
         exit(OPTTRAN_ERROR);
@@ -427,6 +427,8 @@ static int parse_cli_params(int argc, char *argv[]) {
                             globals.outputfile ? globals.outputfile : "(null)"));
     OPTTRAN_OUTPUT_VERBOSE((10, "   Test all?         %s",
                             globals.testall ? "yes" : "no"));
+    OPTTRAN_OUTPUT_VERBOSE((10, "   Use OPTTRAN?      %s",
+                            globals.use_opttran ? "yes" : "no"));
     OPTTRAN_OUTPUT_VERBOSE((10, "   OPTTRAN PID:      %llu",
                             globals.opttran_pid));
     OPTTRAN_OUTPUT_VERBOSE((10, "   Database file:    %s",
@@ -837,7 +839,8 @@ static int test_one(test_t *test) {
         
         /* Read child process' answer and write it to output file */
         bzero(temp_str, BUFFER_SIZE);
-        sprintf(temp_str, "%s.%s.output", test->fragment_file, test->program);
+        sprintf(temp_str, "%s.%s.recognizer_output", test->fragment_file,
+                test->program);
         OPTTRAN_OUTPUT_VERBOSE((10, "   output  %s", _CYAN(temp_str)));
 
         if (-1 == (file = open(temp_str, O_CREAT|O_WRONLY, 0644))) {
