@@ -107,7 +107,7 @@ int recommender_main(int argc, char** argv) {
     }
     
     /* Create the list of code bottlenecks */
-    segments = (opttran_list_t *)malloc(sizeof(segment_t));
+    segments = (opttran_list_t *)malloc(sizeof(opttran_list_t));
     if (NULL == segments) {
         OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
         exit(OPTTRAN_ERROR);
