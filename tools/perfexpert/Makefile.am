@@ -31,8 +31,9 @@ SUBDIRS = argp hpcdata perfexpert $(ENABLE_HOUND) $(ENABLE_SNIFFER)
 
 dist_bin_SCRIPTS = hpcdata.sh perfexpert.sh
 
-# The following commands should use TAB, not SPACES
 install-exec-local: install-dist_binSCRIPTS
+
+install-data-local:
 	$(MKDIR_P) $(libdir)
 	$(MKDIR_P) $(datadir)/$(PACKAGE_NAME)
 	$(INSTALL) -m 644 $(top_srcdir)/external/log4j-1.2.16.jar $(libdir)
