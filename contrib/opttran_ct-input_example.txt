@@ -1,0 +1,5 @@
+% transformation for mm_naive.c:11
+recommender.code_fragment=teste/fragments/mm_naive.c_11
+pr.transformation=c_loop1
+% transformation for mm_naive.c:7
+recommender.code_fragment=teste/fragments/mm_naive.c_7
