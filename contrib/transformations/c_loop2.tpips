@@ -1,0 +1,22 @@
+setproperty ABORT_ON_USER_ERROR TRUE
+delete loop_interchange
+create loop_interchange loop_interchange.c
+
+activate INTERPROCEDURAL_SUMMARY_PRECONDITION
+activate TRANSFORMERS_INTER_FULL
+activate PRECONDITIONS_INTER_FULL
+setproperty SEMANTICS_FIX_POINT_OPERATOR "derivative"
+
+echo Initial source code
+display PRINTED_FILE[loop_interchange]
+
+apply LOOP_INTERCHANGE
+l1
+
+display PRINTED_FILE[loop_interchange]
+echo Source code after loop interchange
+
+apply UNSPLIT[%PROGRAM]
+
+close
+quit
