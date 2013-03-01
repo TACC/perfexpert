@@ -171,7 +171,6 @@ public class AutoSCOPE {
           System.err.println("need at least one category: skipping entry");
         } else {
           Entry e = new Entry(component[0], component[1], component[2], component[3], cat, attr, cnt);
-          System.out.println("Desc=" + component[0] + " Category=" + cat + " Attributes=" + attr + " CNT?=" + cnt);
           db.add(e);
         }
       }
