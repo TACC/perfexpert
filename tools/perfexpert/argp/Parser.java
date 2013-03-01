@@ -41,7 +41,7 @@ public class Parser {
 
     public String getUsage(String appname) {
         StringBuilder sb = new StringBuilder();
-        sb.append("USAGE: " + appname);
+        sb.append("Usage: " + appname);
 
         if (registeredNamedOptions != null)
             sb.append(" [OPTIONS]");
