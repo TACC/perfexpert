@@ -174,6 +174,7 @@ int main(int argc, char** argv) {
         OPTTRAN_OUTPUT_VERBOSE((7, "printing OPTTRAN output to (%s)",
                                 globals.opttrandir));
     }
+
     if (0 == globals.use_stdout) {
         OPTTRAN_OUTPUT_VERBOSE((7, "printing test results to file (%s)",
                                 globals.outputfile));
@@ -187,6 +188,7 @@ int main(int argc, char** argv) {
     } else {
         OPTTRAN_OUTPUT_VERBOSE((7, "printing test results to STDOUT"));
     }
+
     if (OPTTRAN_SUCCESS != output_results(fragments)) {
         OPTTRAN_OUTPUT(("%s", _ERROR("Error: outputting results")));
         exit(OPTTRAN_ERROR);
@@ -213,7 +215,10 @@ int main(int argc, char** argv) {
             free(recommendation);
         }
         free(fragment->filename);
+        free(fragment->code_type);
         free(fragment->fragment_file);
+        free(fragment->outer_loop_fragment_file);
+        free(fragment->outer_outer_loop_fragment_file);
         free(fragment);
     }
     opttran_list_destruct(fragments);
@@ -501,7 +506,13 @@ static int parse_fragment_params(opttran_list_t *fragments_p, FILE *inputfile_p)
             /* Initialize some elements on segment */
             fragment->filename = NULL;
             fragment->line_number = 0;
+            fragment->code_type = NULL;
+            fragment->loop_depth = 0;
             fragment->fragment_file = NULL;
+            fragment->outer_loop_fragment_file = NULL;
+            fragment->outer_outer_loop_fragment_file = NULL;
+            fragment->outer_loop = 0;
+            fragment->outer_outer_loop = 0;
             opttran_list_construct((opttran_list_t *)&(fragment->recommendations));
 
             /* Add this item to 'segments' */
@@ -532,18 +543,58 @@ static int parse_fragment_params(opttran_list_t *fragments_p, FILE *inputfile_p)
             }
             bzero(fragment->filename, strlen(node->value) + 1);
             strcpy(fragment->filename, node->value);
-            OPTTRAN_OUTPUT_VERBOSE((10, "(%d)  \\- %s            [%s]",
-                                    input_line, _MAGENTA("filename:"),
-                                    fragment->filename));
+            OPTTRAN_OUTPUT_VERBOSE((10, "(%d)  \\- %s [%s]", input_line,
+                                    _MAGENTA("filename:"), fragment->filename));
             free(node);
             continue;
         }
         /* Code param: code.line_number */
         if (0 == strncmp("code.line_number", node->key, 16)) {
             fragment->line_number = atoi(node->value);
-            OPTTRAN_OUTPUT_VERBOSE((10, "(%d)  \\- %s         [%d]", input_line,
+            OPTTRAN_OUTPUT_VERBOSE((10, "(%d)  \\- %s [%d]", input_line,
                                     _MAGENTA("line number:"),
                                     fragment->line_number));
+            free(node);
+            continue;
+        }
+        /* Code param: code.type */
+        if (0 == strncmp("code.type", node->key, 9)) {
+            fragment->code_type = (char *)malloc(strlen(node->value) + 1);
+            if (NULL == fragment->code_type) {
+                OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
+                exit(OPTTRAN_ERROR);
+            }
+            bzero(fragment->code_type, strlen(node->value) + 1);
+            strcpy(fragment->code_type, node->value);
+            OPTTRAN_OUTPUT_VERBOSE((10, "(%d)  \\- %s [%s]", input_line,
+                                    _MAGENTA("type:"), fragment->code_type));
+            free(node);
+            continue;
+        }
+        /* Code param: code.loop_depth */
+        if (0 == strncmp("code.loop_depth", node->key, 15)) {
+            fragment->loop_depth = atoi(node->value);
+            OPTTRAN_OUTPUT_VERBOSE((10, "(%d)  \\- %s [%d]",
+                                    input_line, _MAGENTA("loop depth:"),
+                                    fragment->loop_depth));
+            free(node);
+            continue;
+        }
+        /* Code param: code.outer_loop */
+        if (0 == strncmp("code.outer_loop", node->key, 15)) {
+            fragment->outer_loop = atoi(node->value);
+            OPTTRAN_OUTPUT_VERBOSE((10, "(%d)  \\- %s [%d]", input_line,
+                                    _MAGENTA("outer loop:"),
+                                    fragment->outer_loop));
+            free(node);
+            continue;
+        }
+        /* Code param: code.outer_outer_loop */
+        if (0 == strncmp("code.outer_outer_loop", node->key, 21)) {
+            fragment->outer_outer_loop = atoi(node->value);
+            OPTTRAN_OUTPUT_VERBOSE((10, "(%d)  \\- %s [%d]", input_line,
+                                    _MAGENTA("outer outer loop:"),
+                                    fragment->outer_outer_loop));
             free(node);
             continue;
         }
@@ -556,9 +607,39 @@ static int parse_fragment_params(opttran_list_t *fragments_p, FILE *inputfile_p)
             }
             bzero(fragment->fragment_file, strlen(node->value) + 1);
             strcpy(fragment->fragment_file, node->value);
-            OPTTRAN_OUTPUT_VERBOSE((10, "(%d)  \\- %s       [%s]", input_line,
+            OPTTRAN_OUTPUT_VERBOSE((10, "(%d)  \\- %s [%s]", input_line,
                                     _MAGENTA("fragment file:"),
                                     fragment->fragment_file));
+            free(node);
+            continue;
+        }
+        /* Recommender param: recommender.outer_loop_fragment */
+        if (0 == strncmp("recommender.outer_loop_fragment", node->key, 31)) {
+            fragment->outer_loop_fragment_file = (char *)malloc(strlen(node->value) + 1);
+            if (NULL == fragment->outer_loop_fragment_file) {
+                OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
+                exit(OPTTRAN_ERROR);
+            }
+            bzero(fragment->outer_loop_fragment_file, strlen(node->value) + 1);
+            strcpy(fragment->outer_loop_fragment_file, node->value);
+            OPTTRAN_OUTPUT_VERBOSE((10, "(%d)  \\- %s [%s]", input_line,
+                                    _MAGENTA("outer loop fragment file:"),
+                                    fragment->outer_loop_fragment_file));
+            free(node);
+            continue;
+        }
+        /* Recommender param: recommender.outer_outer_loop_fragment */
+        if (0 == strncmp("recommender.outer_outer_loop_fragment", node->key, 31)) {
+            fragment->outer_outer_loop_fragment_file = (char *)malloc(strlen(node->value) + 1);
+            if (NULL == fragment->outer_outer_loop_fragment_file) {
+                OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
+                exit(OPTTRAN_ERROR);
+            }
+            bzero(fragment->outer_outer_loop_fragment_file, strlen(node->value) + 1);
+            strcpy(fragment->outer_outer_loop_fragment_file, node->value);
+            OPTTRAN_OUTPUT_VERBOSE((10, "(%d)  \\- %s [%s]", input_line,
+                                    _MAGENTA("outer loop fragment file:"),
+                                    fragment->outer_outer_loop_fragment_file));
             free(node);
             continue;
         }
@@ -598,9 +679,8 @@ static int parse_fragment_params(opttran_list_t *fragments_p, FILE *inputfile_p)
             recognizer->test_result = OPTTRAN_UNDEFINED;
             opttran_list_append((opttran_list_t *)&(recommendation->recognizers),
                                 (opttran_list_item_t *)recognizer);
-            OPTTRAN_OUTPUT_VERBOSE((10, "(%d)  | | \\- %s   [%d]", input_line,
-                                    _CYAN("recognizer ID:"),
-                                    recognizer->id));
+            OPTTRAN_OUTPUT_VERBOSE((10, "(%d)  | | \\- %s [%d]", input_line,
+                                    _CYAN("recognizer ID:"), recognizer->id));
             free(node);
             continue;
         }
@@ -613,9 +693,8 @@ static int parse_fragment_params(opttran_list_t *fragments_p, FILE *inputfile_p)
             }
             bzero(recognizer->program, strlen(node->value) + 1);
             strcpy(recognizer->program, node->value);
-            OPTTRAN_OUTPUT_VERBOSE((10, "(%d)  | | \\- %s      [%s]",
-                                    input_line, _CYAN("recognizer:"),
-                                    recognizer->program));
+            OPTTRAN_OUTPUT_VERBOSE((10, "(%d)  | | \\- %s [%s]", input_line,
+                                    _CYAN("recognizer:"), recognizer->program));
             free(node);
             continue;
         }
@@ -663,6 +742,8 @@ static int test_recognizers(opttran_list_t *fragments_p) {
 
     OPTTRAN_OUTPUT_VERBOSE((4, "=== %s", _BLUE("Testing pattern recognizers")));
 
+    OPTTRAN_OUTPUT_VERBOSE((8, "creating a list of tests to run..."));
+
     /* Create a list of all pattern recognizers we have to test */
     fragment = (fragment_t *)opttran_list_get_first(fragments_p);
     while ((opttran_list_item_t *)fragment != &(fragments_p->sentinel)) {
@@ -685,15 +766,66 @@ static int test_recognizers(opttran_list_t *fragments_p) {
                 test->fragment_file = fragment->fragment_file;
                 test->test_result = &(recognizer->test_result);
 
+                OPTTRAN_OUTPUT_VERBOSE((10, "[%s] %s", test->program,
+                                        test->fragment_file));
+
                 /* Add this item to to-'tests' */
                 opttran_list_append(tests, (opttran_list_item_t *)test);
 
+                /* It we're testing for a loop, check for the outer loop */
+                if ((0 == strncmp("loop", fragment->code_type, 4)) &&
+                    (2 <= fragment->loop_depth) &&
+                    (0 != fragment->outer_loop) &&
+                    (NULL != fragment->outer_loop_fragment_file)) {
+
+                    /* Add the outer loop test */
+                    test = (test_t *)malloc(sizeof(test_t));
+                    if (NULL == test) {
+                        OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
+                        exit(OPTTRAN_ERROR);
+                    }
+                    opttran_list_item_construct((opttran_list_item_t *)test);
+                    test->program = recognizer->program;
+                    test->fragment_file = fragment->outer_loop_fragment_file;
+                    test->test_result = &(recognizer->test2_result);
+
+                    OPTTRAN_OUTPUT_VERBOSE((10, "[%s] %s", test->program,
+                                            test->fragment_file));
+
+                    /* Add this item to to-'tests' */
+                    opttran_list_append(tests, (opttran_list_item_t *)test);
+                    
+                    /* And test for the outer outer loop too */
+                    if ((3 <= fragment->loop_depth) &&
+                        (0 != fragment->outer_outer_loop) &&
+                        (NULL != fragment->outer_outer_loop_fragment_file)) {
+
+                        /* Add the outer outer loop test */
+                        test = (test_t *)malloc(sizeof(test_t));
+                        if (NULL == test) {
+                            OPTTRAN_OUTPUT(("%s",
+                                            _ERROR("Error: out of memory")));
+                            exit(OPTTRAN_ERROR);
+                        }
+                        opttran_list_item_construct((opttran_list_item_t *)test);
+                        test->program = recognizer->program;
+                        test->fragment_file = fragment->outer_outer_loop_fragment_file;
+                        test->test_result = &(recognizer->test3_result);
+
+                        OPTTRAN_OUTPUT_VERBOSE((10, "[%s] %s", test->program,
+                                                test->fragment_file));
+
+                        /* Add this item to to-'tests' */
+                        opttran_list_append(tests, (opttran_list_item_t *)test);
+                    }
+                }
                 recognizer = (recognizer_t *)opttran_list_get_next(recognizer);
             }
             recommendation = (recommendation_t *)opttran_list_get_next(recommendation);
         }
         fragment = (fragment_t *)opttran_list_get_next(fragment);
     }
+    OPTTRAN_OUTPUT_VERBOSE((8, "...done!"));
 
     /* Print a summary of 'tests' */
     OPTTRAN_OUTPUT_VERBOSE((4, "%d %s", opttran_list_get_size(tests),
@@ -746,7 +878,6 @@ static int test_recognizers(opttran_list_t *fragments_p) {
         /* Move on to the next test... */
         test = (test_t *)opttran_list_get_next(test);
     }
-
     /* Free 'tests' structure' */
     while (OPTTRAN_FALSE == opttran_list_is_empty(tests)) {
         test = (test_t *)opttran_list_get_first(tests);
@@ -754,9 +885,11 @@ static int test_recognizers(opttran_list_t *fragments_p) {
         free(test); // Some version of GCC will complain about this
     }
     opttran_list_destruct(tests);
+    // TODO: in case of empty lists (no recognizers) this causes a segfault :-/
     free(tests);
 
     OPTTRAN_OUTPUT_VERBOSE((4, "==="));
+
     return OPTTRAN_SUCCESS;
 }
 
@@ -893,6 +1026,7 @@ static int test_one(test_t *test) {
     return OPTTRAN_SUCCESS;
 }
 
+// TODO: change the output to include the extra tests for loops (outer loops)
 /* output results */
 static int output_results(opttran_list_t *fragments_p) {
     opttran_list_t *recommendations;

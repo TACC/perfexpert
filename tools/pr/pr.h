@@ -141,6 +141,8 @@ typedef struct recognizer {
     int  id;
     char *program;
     int  test_result;
+    int  test2_result;
+    int  test3_result;
 } recognizer_t;
 
 /** Structure to hold recommendations */
@@ -157,7 +159,13 @@ typedef struct fragment {
     volatile opttran_list_item_t *prev; /** Pointer to previous list item */
     char   *filename;
     int    line_number;
+    char   *code_type;
+    int    loop_depth;
     char   *fragment_file;
+    int    outer_loop;
+    char   *outer_loop_fragment_file;
+    int    outer_outer_loop;
+    char   *outer_outer_loop_fragment_file;
     opttran_list_t recommendations;
 } fragment_t;
 
