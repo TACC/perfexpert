@@ -364,10 +364,11 @@ static void show_help(void) {
     
     /*      12345678901234567890123456789012345678901234567890123456789012345678901234567890 */
     printf("Usage: recommender -i|-f file [-o file] [-d database] [-m file] [-nvch] [-p pid]\n");
+    printf("                   [-l level]");
 #if HAVE_ROSE == 1
-    printf("                   [-a dir] [-s file] ");
+    printf(" [-a dir] [-s file]");
 #endif
-    printf("                   [-l level]\n");
+    printf("\n");
     printf("  -i --stdin           Use STDIN as input for performance measurements\n");
     printf("  -f --inputfile       Use 'file' as input for performance measurements\n");
     printf("  -o --outputfile      Use 'file' as output for recommendations (default stdout)\n");
