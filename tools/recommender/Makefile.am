@@ -27,13 +27,12 @@
 
 bin_PROGRAMS = recommender
 
-recommender_SOURCES = main.cpp functions.c
+recommender_SOURCES = main.cpp recommender.c
 recommender_CPPFLAGS = -I$(srcdir)/../common
-recommender_CFLAGS = -O3
 
 # Adding support to Rose
 if WITH_ROSE_SUPPORT
-recommender_SOURCES += extract_fragment.cpp traversal.cpp
+recommender_SOURCES += rose_functions.cpp
 endif
 
 # Install the recommendation database

@@ -39,11 +39,14 @@
 
 class recommenderTraversal : public AstSimpleProcessing {
     public :
-    virtual void visit(SgNode* node);
+    virtual void visit(SgNode *node);
     virtual void atTraversalStart();
     virtual void atTraversalEnd();
     segment_t *item;
 };
+
+static int output_fragment(SgNode *node, Sg_File_Info *fileInfo,
+	                       segment_t *item);
 
 #endif /* TRAVERSAL_H */
 

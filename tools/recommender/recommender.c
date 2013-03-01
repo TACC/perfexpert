@@ -72,6 +72,7 @@ int recommender_main(int argc, char** argv) {
         .source_file      = NULL,              // char *
         .metrics_table    = METRICS_TABLE,     // char *
         .opttran_pid      = (unsigned long long int)getpid(), // int
+        .fragments_dir    = NULL,              // char *
         .rec_count        = 3                  // int
     };
     globals.dbfile = (char *)malloc(strlen(RECOMMENDATION_DB) +
@@ -158,9 +159,11 @@ int recommender_main(int argc, char** argv) {
             show_help();
         }
     }
-    
+
     /* Select/output recommendations for each code bottleneck (5 steps) */
     /* Step 1: Print to a file or STDOUT is ok? Was OPTTRAN chosen? */
+    OPTTRAN_OUTPUT_VERBOSE((7, "=== %s", _BLUE("STEP 1")));
+
     if (1 == globals.use_opttran) {
         globals.use_stdout = 0;
 
@@ -209,8 +212,40 @@ int recommender_main(int argc, char** argv) {
     } else {
         OPTTRAN_OUTPUT_VERBOSE((7, "printing recommendation to STDOUT"));
     }
+#if HAVE_ROSE == 1
+    if ((1 == globals.use_opttran) && (NULL != globals.source_file)) {
+        globals.fragments_dir = (char *)malloc(strlen(globals.opttrandir) +
+                                               strlen(OPTTRAN_FRAGMENTS_DIR) +
+                                               10);
+        if (NULL == globals.fragments_dir) {
+            OPTTRAN_OUTPUT(("%s", _ERROR((char *)"Error: out of memory")));
+            exit(OPTTRAN_ERROR);
+        }
+        bzero(globals.fragments_dir, (strlen(globals.opttrandir) +
+                                      strlen(OPTTRAN_FRAGMENTS_DIR) + 10));
+        sprintf(globals.fragments_dir, "%s/%s", globals.opttrandir,
+                OPTTRAN_FRAGMENTS_DIR);
+        if (OPTTRAN_ERROR == opttran_util_make_path(globals.fragments_dir,
+                                                    0755)) {
+            OPTTRAN_OUTPUT(("%s", _ERROR((char *)"Error: cannot create fragments directory")));
+            exit(OPTTRAN_ERROR);
+        } else {
+            OPTTRAN_OUTPUT_VERBOSE((4, "code fragments will be put in (%s)",
+                                    globals.fragments_dir));
+        }
+
+        /* Open ROSE */
+        if (OPTTRAN_ERROR == open_rose()) {
+            OPTTRAN_OUTPUT(("%s",
+                            _ERROR("Error: starting Rose, disabling OPTTRAN")));
+            globals.use_opttran = 0;
+        }
+    }
+#endif
 
     /* Step 2: For each code bottleneck... */
+    OPTTRAN_OUTPUT_VERBOSE((7, "=== %s", _BLUE("STEP 2")));
+
     item = (segment_t *)opttran_list_get_first(segments);
     while ((opttran_list_item_t *)item != &(segments->sentinel)) {
         OPTTRAN_OUTPUT_VERBOSE((4, "%s (%s:%d)",
@@ -223,6 +258,9 @@ int recommender_main(int argc, char** argv) {
                     item->filename);
             fprintf(globals.outputfile_FP, "code.line_number=%d\n",
                     item->line_number);
+            fprintf(globals.outputfile_FP, "code.type=%s\n", item->type);
+            fprintf(globals.outputfile_FP, "code.loop_depth=%1.0lf\n",
+                item->loop_depth);
         } else {
             fprintf(globals.outputfile_FP,
                     "#--------------------------------------------------\n");
@@ -233,6 +271,8 @@ int recommender_main(int argc, char** argv) {
         }
 
         /* Step 3: query DB for recommendations */
+        OPTTRAN_OUTPUT_VERBOSE((7, "=== %s", _BLUE("STEP 3")));
+
         if (OPTTRAN_SUCCESS != select_recommendations(item)) {
             OPTTRAN_OUTPUT(("%s", _ERROR("Error: selecting recommendations")));
             exit(OPTTRAN_ERROR);
@@ -243,39 +283,15 @@ int recommender_main(int argc, char** argv) {
         }
         
         /* Step 4: extract fragments */
+        OPTTRAN_OUTPUT_VERBOSE((7, "=== %s", _BLUE("STEP 4")));
 #if HAVE_ROSE == 1
         if ((1 == globals.use_opttran) && (NULL != globals.source_file)) {
-            char *fragments_dir = NULL;
-
-            fragments_dir = (char *)malloc(strlen(globals.opttrandir) +
-                                           strlen(OPTTRAN_FRAGMENTS_DIR) + 10);
-            if (NULL == fragments_dir) {
-                OPTTRAN_OUTPUT(("%s", _ERROR((char *)"Error: out of memory")));
-                exit(OPTTRAN_ERROR);
-            }
-            bzero(fragments_dir, (strlen(globals.opttrandir) +
-                                  strlen(OPTTRAN_FRAGMENTS_DIR) + 10));
-            sprintf(fragments_dir, "%s/%s", globals.opttrandir,
-                    OPTTRAN_FRAGMENTS_DIR);
-            if (OPTTRAN_ERROR == opttran_util_make_path(fragments_dir, 0755)) {
-                OPTTRAN_OUTPUT(("%s", _ERROR((char *)"Error: cannot create fragments directory")));
-                free(fragments_dir);
-                exit(OPTTRAN_ERROR);
-            } else {
-                OPTTRAN_OUTPUT_VERBOSE((4, "code fragments will be put in (%s)",
-                                        fragments_dir));
-            }
             /* Hey ROSE, here we go... */
             if (OPTTRAN_ERROR == extract_fragment(item)) {
                 OPTTRAN_OUTPUT(("%s (%s:%d)",
                                 _ERROR("Error: extracting fragments for"),
                                 item->filename, item->line_number));
-            } else {
-                fprintf(globals.outputfile_FP,
-                        "recommender.code_fragment=%s/%s_%d", fragments_dir,
-                        item->filename, item->line_number);
             }
-            free(fragments_dir);
         } else {
             OPTTRAN_OUTPUT_VERBOSE((4, "%s",
                                     _YELLOW("source code not defined, can't extract fragments")));
@@ -285,12 +301,28 @@ int recommender_main(int argc, char** argv) {
         item = (segment_t *)opttran_list_get_next(item);
     }
 
-    /* Step 5: If we are using an output file, close it! (metrics DB too) */
+    /* Step 5: If we are using an output file, close it! (also close DB) */
+    OPTTRAN_OUTPUT_VERBOSE((7, "=== %s", _BLUE("STEP 5")));
+
     if (0 == globals.use_stdout) {
         fclose(globals.outputfile_FP);
     }
     sqlite3_close(globals.db);
+#if HAVE_ROSE == 1
+    if ((1 == globals.use_opttran) && (NULL != globals.source_file)) {
+        /* Output source code */
+        if (OPTTRAN_SUCCESS != extract_source()) {
+            OPTTRAN_OUTPUT(("%s", _ERROR("Error: extracting source code")));
+            exit(OPTTRAN_ERROR);
+        }
 
+        /* Close Rose */
+        if (OPTTRAN_SUCCESS != close_rose()) {
+            OPTTRAN_OUTPUT(("%s", _ERROR("Error: closing Rose")));
+            exit(OPTTRAN_ERROR);
+        }
+    }
+#endif
     /* Free segments (and all sub-element, including functions) structure */
     while (OPTTRAN_FALSE == opttran_list_is_empty(segments)) {
         item = (segment_t *)opttran_list_get_first(segments);
@@ -314,6 +346,9 @@ int recommender_main(int argc, char** argv) {
     
     if (1 == globals.use_opttran) {
         free(globals.outputfile);
+        if (NULL != globals.source_file) {
+            free(globals.fragments_dir);
+        }
     }
     if (1 == globals.use_temp_metrics) {
         free(globals.metrics_table);
@@ -728,6 +763,8 @@ static int parse_segment_params(opttran_list_t *segments_p, FILE *inputfile_p) {
             item->loop_depth = 0;
             item->representativeness = 0;
             item->rowid = 0;
+            item->outer_loop = 0;
+            item->outer_outer_loop = 0;
 
             /* Add this item to 'segments' */
             opttran_list_append(segments_p, (opttran_list_item_t *) item);

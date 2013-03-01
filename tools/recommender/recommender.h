@@ -74,6 +74,7 @@ extern "C" {
 #define METRICS_FILE            "recommender-metrics.txt"
 #define OPTTRAN_RECO_FILE       "recommendations.txt"
 #define OPTTRAN_FRAGMENTS_DIR   "fragments"
+#define OPTTRAN_SOURCE_DIR      "source"
 
 /** Structure to hold global variables */
 typedef struct {
@@ -94,6 +95,7 @@ typedef struct {
     int  colorful;
     char *source_file;
     int  rec_count;
+    char *fragments_dir;
     unsigned long long int opttran_pid;
 } globals_t;
 
@@ -157,6 +159,8 @@ typedef struct segment {
     double representativeness;
     int    rowid;
     opttran_list_t functions;
+    int    outer_loop;
+    int    outer_outer_loop;
 } segment_t;
 
 /* Function declarations */
@@ -170,18 +174,22 @@ static int  get_rowid(void *rowid, int col_count, char **col_values,
                       char **col_names);
 static int  get_weight(void *weight, int col_count, char **col_values,
                        char **col_names);
-static int output_patterns(void *weight, int col_count, char **col_values,
-                           char **col_names);
+static int  output_patterns(void *weight, int col_count, char **col_values,
+                            char **col_names);
 static int  output_recommendations(void *not_used, int col_count,
                                    char **col_values, char **col_names);
 static int  database_connect(void);
 static int  accumulate_functions(void *functions, int col_count,
                                  char **col_values, char **col_names);
 static int  select_recommendations(segment_t *segment);
+
 #if HAVE_ROSE == 1
-int  extract_fragment(segment_t *segment);
+int open_rose(void);
+int close_rose(void);
+int extract_fragment(segment_t *segment);
+int extract_source(void);
 #endif
-    
+
 #ifdef __cplusplus
 }
 #endif
