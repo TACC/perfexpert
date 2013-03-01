@@ -158,7 +158,7 @@ fi
 rm -rf ${tempdir}/hpcstruct
 rm -rf ${tempdir}/measurements
 rm -rf ${tempdir}/database
-rm -rf ${tempdir}/hpcprof.message
+rm -rf ${tempdir}/hpcprof.output
 
 # HPCTOOLKIT: STRUCT FILE (HPCSTRUCT)
 #
@@ -223,12 +223,12 @@ done
 # HPCTOOLKIT: SUMMARIZING RESULTS (HPCPROF)
 #
 echo -n "[perfexpert] Finished all measurements, summarizing the results..."
-@HPCPROF_PROGRAM@ --force-metric --metric=thread --struct ${tempdir}/hpcstruct --output ${tempdir}/database ${tempdir}/measurements &> ${tempdir}/hpcprof.message
+@HPCPROF_PROGRAM@ --force-metric --metric=thread --struct ${tempdir}/hpcstruct --output ${tempdir}/database ${tempdir}/measurements &> ${tempdir}/hpcprof.output
 returnCode=${?}
 
 if [ "x${returnCode}" != "x0" ]; then
     echo "error!"
-    cat ${tempdir}/hpcprof.message
+    cat ${tempdir}/hpcprof.output
 
     # Clean up
     if [ "x${left_garbage}" == "xfalse" ]; then
