@@ -37,6 +37,8 @@
 #include <sage3.h>
 #endif
 
+#define OPTTRAN_LOOP_LABEL 16
+
 class recommenderTraversal : public AstSimpleProcessing {
     public :
     virtual void visit(SgNode *node);

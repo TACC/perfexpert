@@ -42,6 +42,10 @@
 #include "opttran_util.h"
 #include "rose_functions.h"
 
+using namespace std;
+using namespace SageInterface;
+using namespace SageBuilder;
+
 extern globals_t globals; // globals was defined on 'recommender.c'
 
 SgProject *userProject;
@@ -195,27 +199,34 @@ void recommenderTraversal::visit(SgNode *node) {
         SageInterface::attachComment(f_loop, "OPTTRAN working here");
     }
 
-//SgLabelStatement *label;
-//SgName *name = "loop_11:";
-//SgStatement *statement;
-//SgScopeStatement *scope;
-//
-//label = SageBuilder::buildLabelStatement(&name, statement, scope);
-//- how to add this statement to the AST?
-
     /* Find code fragment for bottlenecks type 'loop' in C */
     if ((NULL != (c_loop = isSgForStatement(node))) &&
         (0 == strncmp("loop", item->type, 4)) &&
         (fileInfo->get_line() == item->line_number)) {
+        SgLabelStatement *label = NULL;
+        SgScopeStatement *scope = NULL;
+        SgStatement *statement = NULL;
+
+        char label_name[OPTTRAN_LOOP_LABEL];
+        bzero(label_name, OPTTRAN_LOOP_LABEL);
+        sprintf(label_name, "loop_%d", fileInfo->get_line());
+
+        SgName name = label_name;
 
         /* Found a C loop on the exact line number */
-        SageInterface::attachComment(c_loop, "OPTTRAN: bottleneck");
-        // TODO: label it!
         OPTTRAN_OUTPUT_VERBOSE((8, "found a (%s) on (%s:%d)",
                                 node->sage_class_name(),
                                 fileInfo->get_filename(),
                                 fileInfo->get_line()));
 
+        /* Add a comment to the loop */
+        attachComment(c_loop, "OPTTRAN: bottleneck");
+
+        /* Label the loop */
+        label = buildLabelStatement(name, statement, scope);
+        insertStatementBefore(isSgStatement(node), label);
+
+        /* Extract the loop fragment */
         if (OPTTRAN_SUCCESS != output_fragment(node, fileInfo, item)) {
             OPTTRAN_OUTPUT(("%s",
                             _ERROR((char *)"Error: extracting fragment")));
@@ -232,22 +243,38 @@ void recommenderTraversal::visit(SgNode *node) {
 
             parent = node->get_parent();
 
-            /* It is a basic block, who is this basic block's parent? */
+            /* It is a basic block. Who is this basic block's parent? */
             if (NULL != isSgBasicBlock(parent)) {
                 parent = parent->get_parent();
             }
 
+            /* Is it a for/do/while? */
             if (NULL != (parent_loop = isSgForStatement(parent))) {
                 temp_info = parent->get_file_info();
                 item->outer_loop = temp_info->get_line();
 
-                SageInterface::attachComment(parent_loop,
-                                             "OPTTRAN: parent loop of bottleneck");
-                // TODO: label it!
+                /* The parent is a loop */
                 OPTTRAN_OUTPUT_VERBOSE((8, "loop has a parent loop at (%s:%d)",
                                         temp_info->get_filename(),
                                         temp_info->get_line()));
 
+                /* Add a comment to the loop */
+                attachComment(parent_loop,
+                              "OPTTRAN: parent loop of bottleneck");
+
+                /* Label the loop */
+                label = NULL;
+                scope = NULL;
+                statement = NULL;
+
+                bzero(label_name, OPTTRAN_LOOP_LABEL);
+                sprintf(label_name, "loop_%d", temp_info->get_line());
+                SgName name_parent = label_name;
+
+                label = buildLabelStatement(name_parent, statement, scope);
+                insertStatementBefore(isSgStatement(parent_loop), label);
+
+                /* Extract the parent loop fragment */
                 if (OPTTRAN_SUCCESS != output_fragment(parent, temp_info,
                                                        item)) {
                     OPTTRAN_OUTPUT(("%s", _ERROR((char *)"Error: extracting fragment")));
@@ -260,27 +287,46 @@ void recommenderTraversal::visit(SgNode *node) {
                         globals.fragments_dir, item->filename,
                         temp_info->get_line());
 
+                /* What is the loop detph and who is node's grandparent */
                 if (3 <= item->loop_depth) {
                     grandparent = parent->get_parent();
 
-                    /* It is a basic block, who is this basic block's parent? */
+                    /* It is a basic block. Who is this basic block's parent? */
                     if (NULL != isSgBasicBlock(grandparent)) {
                         grandparent = grandparent->get_parent();
                     }
 
+                    /* Is it a for/do/while? */
                     if (NULL != (grandparent_loop = isSgForStatement(grandparent))) {
                         temp_info = grandparent->get_file_info();
                         item->outer_outer_loop = temp_info->get_line();
 
-                        SageInterface::attachComment(grandparent_loop,
-                                                     "OPTTRAN: start work here");
-                        SageInterface::attachComment(grandparent_loop,
-                                                     "OPTTRAN: grandparent loop of bottleneck");
-                        // TODO: label it!
-
+                        /* The grandparent is a loop */
                         OPTTRAN_OUTPUT_VERBOSE((8, "loop has a grandparent loop at (%s:%d)",
                                                 temp_info->get_filename(),
                                                 temp_info->get_line()));
+
+                        /* Add a comment to the loop */
+                        attachComment(grandparent_loop,
+                                      "OPTTRAN: start work here");
+                        attachComment(grandparent_loop,
+                                      "OPTTRAN: grandparent loop of bottleneck");
+
+                        /* Label the loop */
+                        label = NULL;
+                        scope = NULL;
+                        statement = NULL;
+
+                        bzero(label_name, OPTTRAN_LOOP_LABEL);
+                        sprintf(label_name, "loop_%d", temp_info->get_line());
+                        SgName name_grandparent = label_name;
+
+                        label = buildLabelStatement(name_grandparent, statement,
+                                                    scope);
+                        insertStatementBefore(isSgStatement(grandparent_loop),
+                                              label);
+
+                        /* Extract the parent loop fragment */
                         if (OPTTRAN_SUCCESS != output_fragment(grandparent,
                                                                temp_info,
                                                                item)) {
@@ -296,12 +342,11 @@ void recommenderTraversal::visit(SgNode *node) {
                                 temp_info->get_line());
                     }
                 } else {
-                    SageInterface::attachComment(parent_loop,
-                                                 "OPTTRAN: start work here");
+                    attachComment(parent_loop, "OPTTRAN: start work here");
                 }
             }
         } else {
-            SageInterface::attachComment(c_loop, "OPTTRAN: start work here");
+            attachComment(c_loop, "OPTTRAN: start work here");
         }
     }
 
