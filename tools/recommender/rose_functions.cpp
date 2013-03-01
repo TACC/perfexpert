@@ -219,13 +219,6 @@ void recommenderTraversal::visit(SgNode *node) {
                                 fileInfo->get_filename(),
                                 fileInfo->get_line()));
 
-        /* Add a comment to the loop */
-        attachComment(c_loop, "OPTTRAN: bottleneck");
-
-        /* Label the loop */
-        label = buildLabelStatement(name, statement, scope);
-        insertStatementBefore(isSgStatement(node), label);
-
         /* Extract the loop fragment */
         if (OPTTRAN_SUCCESS != output_fragment(node, fileInfo, item)) {
             OPTTRAN_OUTPUT(("%s",
@@ -239,7 +232,8 @@ void recommenderTraversal::visit(SgNode *node) {
         if (2 <= item->loop_depth) {
             SgForStatement *parent_loop = NULL;
             SgForStatement *grandparent_loop = NULL;
-            Sg_File_Info *temp_info = NULL;
+            Sg_File_Info *parent_info = NULL;
+            Sg_File_Info *grand_parent_info = NULL;
 
             parent = node->get_parent();
 
@@ -250,32 +244,16 @@ void recommenderTraversal::visit(SgNode *node) {
 
             /* Is it a for/do/while? */
             if (NULL != (parent_loop = isSgForStatement(parent))) {
-                temp_info = parent->get_file_info();
-                item->outer_loop = temp_info->get_line();
+                parent_info = parent->get_file_info();
+                item->outer_loop = parent_info->get_line();
 
                 /* The parent is a loop */
                 OPTTRAN_OUTPUT_VERBOSE((8, "loop has a parent loop at (%s:%d)",
-                                        temp_info->get_filename(),
-                                        temp_info->get_line()));
-
-                /* Add a comment to the loop */
-                attachComment(parent_loop,
-                              "OPTTRAN: parent loop of bottleneck");
-
-                /* Label the loop */
-                label = NULL;
-                scope = NULL;
-                statement = NULL;
-
-                bzero(label_name, OPTTRAN_LOOP_LABEL);
-                sprintf(label_name, "loop_%d", temp_info->get_line());
-                SgName name_parent = label_name;
-
-                label = buildLabelStatement(name_parent, statement, scope);
-                insertStatementBefore(isSgStatement(parent_loop), label);
+                                        parent_info->get_filename(),
+                                        parent_info->get_line()));
 
                 /* Extract the parent loop fragment */
-                if (OPTTRAN_SUCCESS != output_fragment(parent, temp_info,
+                if (OPTTRAN_SUCCESS != output_fragment(parent, parent_info,
                                                        item)) {
                     OPTTRAN_OUTPUT(("%s", _ERROR((char *)"Error: extracting fragment")));
                     return;
@@ -285,7 +263,7 @@ void recommenderTraversal::visit(SgNode *node) {
                 fprintf(globals.outputfile_FP,
                         "recommender.outer_loop_fragment=%s/%s_%d\n",
                         globals.fragments_dir, item->filename,
-                        temp_info->get_line());
+                        parent_info->get_line());
 
                 /* What is the loop detph and who is node's grandparent */
                 if (3 <= item->loop_depth) {
@@ -298,13 +276,28 @@ void recommenderTraversal::visit(SgNode *node) {
 
                     /* Is it a for/do/while? */
                     if (NULL != (grandparent_loop = isSgForStatement(grandparent))) {
-                        temp_info = grandparent->get_file_info();
-                        item->outer_outer_loop = temp_info->get_line();
+                        grand_parent_info = grandparent->get_file_info();
+                        item->outer_outer_loop = grand_parent_info->get_line();
 
                         /* The grandparent is a loop */
                         OPTTRAN_OUTPUT_VERBOSE((8, "loop has a grandparent loop at (%s:%d)",
-                                                temp_info->get_filename(),
-                                                temp_info->get_line()));
+                                                grand_parent_info->get_filename(),
+                                                grand_parent_info->get_line()));
+
+                        /* Extract the parent loop fragment */
+                        if (OPTTRAN_SUCCESS != output_fragment(grandparent,
+                                                               grand_parent_info,
+                                                               item)) {
+                            OPTTRAN_OUTPUT(("%s", _ERROR((char *)"Error: extracting fragment")));
+                            return;
+                        }
+                        fprintf(globals.outputfile_FP,
+                                "code.outer_outer_loop=%d\n",
+                                item->outer_outer_loop);
+                        fprintf(globals.outputfile_FP,
+                                "recommender.outer_outer_loop_fragment=%s/%s_%d\n",
+                                globals.fragments_dir, item->filename,
+                                grand_parent_info->get_line());
 
                         /* Add a comment to the loop */
                         attachComment(grandparent_loop,
@@ -318,36 +311,42 @@ void recommenderTraversal::visit(SgNode *node) {
                         statement = NULL;
 
                         bzero(label_name, OPTTRAN_LOOP_LABEL);
-                        sprintf(label_name, "loop_%d", temp_info->get_line());
+                        sprintf(label_name, "loop_%d", grand_parent_info->get_line());
                         SgName name_grandparent = label_name;
 
                         label = buildLabelStatement(name_grandparent, statement,
                                                     scope);
                         insertStatementBefore(isSgStatement(grandparent_loop),
                                               label);
-
-                        /* Extract the parent loop fragment */
-                        if (OPTTRAN_SUCCESS != output_fragment(grandparent,
-                                                               temp_info,
-                                                               item)) {
-                            OPTTRAN_OUTPUT(("%s", _ERROR((char *)"Error: extracting fragment")));
-                            return;
-                        }
-                        fprintf(globals.outputfile_FP,
-                                "code.outer_outer_loop=%d\n",
-                                item->outer_outer_loop);
-                        fprintf(globals.outputfile_FP,
-                                "recommender.outer_outer_loop_fragment=%s/%s_%d\n",
-                                globals.fragments_dir, item->filename,
-                                temp_info->get_line());
                     }
                 } else {
                     attachComment(parent_loop, "OPTTRAN: start work here");
                 }
+                /* Add a comment to the loop */
+                attachComment(parent_loop,
+                              "OPTTRAN: parent loop of bottleneck");
+
+                /* Label the loop */
+                label = NULL;
+                scope = NULL;
+                statement = NULL;
+
+                bzero(label_name, OPTTRAN_LOOP_LABEL);
+                sprintf(label_name, "loop_%d", parent_info->get_line());
+                SgName name_parent = label_name;
+
+                label = buildLabelStatement(name_parent, statement, scope);
+                insertStatementBefore(isSgStatement(parent_loop), label);
             }
         } else {
             attachComment(c_loop, "OPTTRAN: start work here");
         }
+        /* Add a comment to the loop */
+        attachComment(c_loop, "OPTTRAN: bottleneck");
+
+        /* Label the loop */
+        label = buildLabelStatement(name, statement, scope);
+        insertStatementBefore(isSgStatement(node), label);
     }
 
     /* Find code fragments for bottlenecks type 'function' */
