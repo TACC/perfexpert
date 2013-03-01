@@ -30,17 +30,13 @@ extern "C" {
 #endif
 
 /* System standard headers */
-//#include <stdio.h>
-//#include <stdlib.h>
-//#include <string.h>
-//#include <getopt.h>
-//#include <unistd.h>
-//#include <sys/types.h>
-//#include <sys/wait.h>
-//#include <fcntl.h>
-//#include <inttypes.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <getopt.h>
+#include <inttypes.h>
 
-#if HAVE_SQLITE3
+#if HAVE_SQLITE3 == 1
 /* Utility headers */
 #include <sqlite3.h>
 #endif
@@ -56,6 +52,9 @@ globals_t globals; // Variable to hold global options, this one is OK
 
 /* main, life starts here */
 int main(int argc, char** argv) {
+    fragment_t *fragment;
+    opttran_list_t *fragments;
+    transformation_t *transformation;
 
     /* Set default values for globals */
     globals = (globals_t) {
@@ -67,7 +66,7 @@ int main(int argc, char** argv) {
         .outputfile       = NULL,   // char *
         .outputfile_FP    = stdout, // FILE *
         .opttrandir       = NULL,   // char *
-#if HAVE_SQLITE3
+#if HAVE_SQLITE3 == 1
         .opttran_pid      = (unsigned long long int)getpid(), // int
 #endif
         .colorful         = 0       // int
@@ -88,10 +87,17 @@ int main(int argc, char** argv) {
         exit(OPTTRAN_ERROR);
     }
 
+    /* Create the list of fragments */
+    fragments = (opttran_list_t *)malloc(sizeof(opttran_list_t));
+    if (NULL == fragments) {
+        OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
+        exit(OPTTRAN_ERROR);
+    }
+    opttran_list_construct(fragments);
 
     /* Parse input parameters */
     if (1 == globals.use_stdin) {
-        if (OPTTRAN_SUCCESS != parse_fragment_params(NULL, stdin)) {
+        if (OPTTRAN_SUCCESS != parse_transformation_params(fragments, stdin)) {
             OPTTRAN_OUTPUT(("%s", _ERROR("Error: parsing input params")));
             exit(OPTTRAN_ERROR);
         }
@@ -106,8 +112,8 @@ int main(int argc, char** argv) {
                                 globals.inputfile));
                 return OPTTRAN_ERROR;
             } else {
-                if (OPTTRAN_SUCCESS != parse_fragment_params(NULL,
-                                                             inputfile_FP)) {
+                if (OPTTRAN_SUCCESS != parse_transformation_params(fragments,
+                                                                   inputfile_FP)) {
                     OPTTRAN_OUTPUT(("%s",
                                     _ERROR("Error: parsing input params")));
                     exit(OPTTRAN_ERROR);
@@ -120,7 +126,25 @@ int main(int argc, char** argv) {
         }
     }
 
+    /* Apply transformation */
+
+    /* Output results */
+    
     /* Free memory */
+    while (OPTTRAN_FALSE == opttran_list_is_empty(fragments)) {
+        fragment = (fragment_t *)opttran_list_get_first(fragments);
+        opttran_list_remove_item(fragments, (opttran_list_item_t *)fragment);
+        while (OPTTRAN_FALSE == opttran_list_is_empty(&(fragment->transformations))) {
+            transformation = (transformation_t *)opttran_list_get_first(&(fragment->transformations));
+            opttran_list_remove_item(&(fragment->transformations),
+                                     (opttran_list_item_t *)transformation);
+            free(transformation->program);
+            free(transformation);
+        }
+        free(fragment);
+    }
+    opttran_list_destruct(fragments);
+    free(fragments);
     free(globals.dbfile);
 
     return OPTTRAN_SUCCESS;
@@ -132,7 +156,7 @@ static void show_help(void) {
 
     /*      12345678901234567890123456789012345678901234567890123456789012345678901234567890 */
     printf("Usage: opttran_ct -i|-f file [-o file] [-vch] [-l level] [-a dir]");
-#if HAVE_SQLITE3
+#if HAVE_SQLITE3 == 1
     printf(" [-d database] [-p pid]");
 #endif
     printf("\n");
@@ -143,7 +167,7 @@ static void show_help(void) {
     printf("                       into 'dir' directory (default: create no OptTran files).\n");
     printf("                       This argument overwrites -o (no output on STDOUT, except\n");
     printf("                       for verbose messages)\n");
-#if HAVE_SQLITE3
+#if HAVE_SQLITE3 == 1
     printf("  -d --database        Select the recommendation database file\n");
     printf("                       (default: %s/%s)\n", OPTTRAN_VARDIR, RECOMMENDATION_DB);
     printf("  -p --opttranid       Use 'pid' to log on DB consecutive calls to Recommender\n");
@@ -196,7 +220,7 @@ static int parse_cli_params(int argc, char *argv[]) {
 
     while (1) {
         /* get parameter */
-#if HAVE_SQLITE3
+#if HAVE_SQLITE3 == 1
         parameter = getopt_long(argc, argv, "a:cvhif:l:o:p:t", long_options,
                                 &option_index);
 #else
@@ -236,7 +260,7 @@ static int parse_cli_params(int argc, char *argv[]) {
                 }
                 OPTTRAN_OUTPUT_VERBOSE((10, "option 'v' set"));
                 break;
-#if HAVE_SQLITE3
+#if HAVE_SQLITE3 == 1
             /* Which database file? */
             case 'd':
                 globals.dbfile = optarg;
@@ -317,6 +341,8 @@ static int parse_cli_params(int argc, char *argv[]) {
                             globals.inputfile ? globals.inputfile : "(null)"));
     OPTTRAN_OUTPUT_VERBOSE((10, "   Output file:      %s",
                             globals.outputfile ? globals.outputfile : "(null)"));
+    OPTTRAN_OUTPUT_VERBOSE((10, "   Use OPTTRAN?      %s",
+                            globals.use_opttran ? "yes" : "no"));
     OPTTRAN_OUTPUT_VERBOSE((10, "   OPTTRAN PID:      %llu",
                             globals.opttran_pid));
     OPTTRAN_OUTPUT_VERBOSE((10, "   Database file:    %s",
@@ -335,8 +361,11 @@ static int parse_cli_params(int argc, char *argv[]) {
     return OPTTRAN_SUCCESS;
 }
 
-/* parse_fragment_params */
-static int parse_fragment_params(opttran_list_t *fragments_p, FILE *inputfile_p) {
+/* parse_transformation_params */
+static int parse_transformation_params(opttran_list_t *fragments_p,
+                                       FILE *inputfile_p) {
+    fragment_t *fragment;
+    transformation_t *transformation;
     char buffer[BUFFER_SIZE];
     int  input_line = 0;
 
@@ -373,8 +402,22 @@ static int parse_fragment_params(opttran_list_t *fragments_p, FILE *inputfile_p)
             char temp_str[BUFFER_SIZE];
 
             OPTTRAN_OUTPUT_VERBOSE((5, "(%d) --- %s", input_line,
-                                    _GREEN("new ????? found")));
+                                    _GREEN("new fragment found")));
 
+            /* Create a list item for this code fragment */
+            fragment = (fragment_t *)malloc(sizeof(fragment_t));
+            if (NULL == fragment) {
+                OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
+                exit(OPTTRAN_ERROR);
+            }
+            opttran_list_item_construct((opttran_list_item_t *)fragment);
+
+            /* Initialize some elements on 'fragment' */
+            fragment->fragment_file = NULL;
+            opttran_list_construct((opttran_list_t *)&(fragment->transformations));
+
+            /* Add this item to 'fragments_p' */
+            opttran_list_append(fragments_p, (opttran_list_item_t *)fragment);
 
             continue;
         }
@@ -392,18 +435,44 @@ static int parse_fragment_params(opttran_list_t *fragments_p, FILE *inputfile_p)
          * 'patterns'.
          */
 
-        /* Code param: code.filename */
-        if (0 == strncmp("code.filename", node->key, 13)) {
-//            fragment->filename = (char *)malloc(strlen(node->value) + 1);
-//            if (NULL == fragment->filename) {
-//                OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
-//                exit(OPTTRAN_ERROR);
-//            }
-//            bzero(fragment->filename, strlen(node->value) + 1);
-//            strcpy(fragment->filename, node->value);
-//            OPTTRAN_OUTPUT_VERBOSE((10, "(%d)  \\- %s            [%s]",
-//                                    input_line, _MAGENTA("filename:"),
-//                                    fragment->filename));
+        /* Code param: recommender.code_fragment */
+        if (0 == strncmp("recommender.code_fragment", node->key, 25)) {
+            fragment->fragment_file = (char *)malloc(strlen(node->value) + 1);
+            if (NULL == fragment->fragment_file) {
+                OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
+                exit(OPTTRAN_ERROR);
+            }
+            bzero(fragment->fragment_file, strlen(node->value) + 1);
+            strcpy(fragment->fragment_file, node->value);
+            OPTTRAN_OUTPUT_VERBOSE((10, "(%d) %s      [%s]", input_line,
+                                    _MAGENTA("fragment file:"),
+                                    fragment->fragment_file));
+            free(node);
+            continue;
+        }
+
+        /* Code param: pr.transformation */
+        if (0 == strncmp("pr.transformation", node->key, 17)) {
+            transformation = (transformation_t *)malloc(sizeof(transformation_t));
+            if (NULL == transformation) {
+                OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
+                exit(OPTTRAN_ERROR);
+            }
+            opttran_list_item_construct((opttran_list_item_t *)transformation);
+            opttran_list_append((opttran_list_t *)&(fragment->transformations),
+                                (opttran_list_item_t *)transformation);
+
+            transformation->program = (char *)malloc(strlen(node->value) + 1);
+            if (NULL == transformation->program) {
+                OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
+                exit(OPTTRAN_ERROR);
+            }
+
+            bzero(transformation->program, strlen(node->value) + 1);
+            strcpy(transformation->program, node->value);
+            OPTTRAN_OUTPUT_VERBOSE((10, "(%d)  \\- %s [%s]", input_line,
+                                    _YELLOW("transformation:"),
+                                    transformation->program));
             free(node);
             continue;
         }
@@ -416,23 +485,22 @@ static int parse_fragment_params(opttran_list_t *fragments_p, FILE *inputfile_p)
         free(node);
     }
 
-    /* print a summary of 'segments' */
+    /* print a summary of 'fragments' */
     OPTTRAN_OUTPUT_VERBOSE((4, "%d %s", opttran_list_get_size(fragments_p),
                             _GREEN("code fragment(s) found")));
 
-//    fragment = (fragment_t *)opttran_list_get_first(fragments_p);
-//    while ((opttran_list_item_t *)fragment != &(fragments_p->sentinel)) {
-//        OPTTRAN_OUTPUT_VERBOSE((4, "   %s:%d", fragment->filename,
-//                                fragment->line_number));
-//        fragment = (fragment_t *)opttran_list_get_next(fragment);
-//    }
+    fragment = (fragment_t *)opttran_list_get_first(fragments_p);
+    while ((opttran_list_item_t *)fragment != &(fragments_p->sentinel)) {
+        OPTTRAN_OUTPUT_VERBOSE((4, "   %s", fragment->fragment_file));
+        fragment = (fragment_t *)opttran_list_get_next(fragment);
+    }
 
     OPTTRAN_OUTPUT_VERBOSE((4, "==="));
 
     return OPTTRAN_SUCCESS;
 }
 
-#if HAVE_SQLITE3
+#if HAVE_SQLITE3 == 1
 /* database_connect */
 static int database_connect(void) {
     OPTTRAN_OUTPUT_VERBOSE((4, "=== %s", _BLUE("Connecting to database")));

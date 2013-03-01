@@ -44,7 +44,7 @@ extern "C" {
 #include "opttran_list.h"
 #endif
 
-#if HAVE_SQLITE3
+#if HAVE_SQLITE3 == 1
 #ifndef _SQLITE3_H_
 #include <sqlite3.h>
 #endif
@@ -79,7 +79,7 @@ typedef struct {
     int  colorful;
     int  use_opttran;
     char *opttrandir;
-#if HAVE_SQLITE3
+#if HAVE_SQLITE3 == 1
     char *dbfile;
     sqlite3 *db;
     unsigned long long int opttran_pid;
@@ -109,7 +109,7 @@ static struct option long_options[] = {
     {"outputfile",      required_argument, NULL, 'o'},
     {"colorful",        no_argument,       NULL, 'c'},
     {"opttran",         required_argument, NULL, 'a'},
-#if HAVE_SQLITE3
+#if HAVE_SQLITE3 == 1
     {"pid",             required_argument, NULL, 'p'},
 #endif
     {0, 0, 0, 0}
@@ -121,13 +121,28 @@ typedef struct node {
     char *value;
 } node_t;
 
+/** Structure to hold transformations */
+typedef struct transformation {
+    volatile opttran_list_item_t *next;
+    volatile opttran_list_item_t *prev;
+    char *program;
+} transformation_t;
+
+/** Structure to hold fragments */
+typedef struct fragment {
+    volatile opttran_list_item_t *next;
+    volatile opttran_list_item_t *prev;
+    char *fragment_file;
+    opttran_list_t transformations;
+} fragment_t;
 
 /* Function declarations */
 static void show_help(void);
 static int  parse_env_vars(void);
 static int  parse_cli_params(int argc, char *argv[]);
-static int  parse_fragment_params(opttran_list_t *segments_p, FILE *inputfile_p);
-#if HAVE_SQLITE3
+static int  parse_transformation_params(opttran_list_t *segments_p,
+                                        FILE *inputfile_p);
+#if HAVE_SQLITE3 == 1
 static int  database_connect(void);
 #endif
     
