@@ -161,6 +161,7 @@ typedef struct segment {
     opttran_list_t functions;
     int    outer_loop;
     int    outer_outer_loop;
+    char   *function_name; // Should add functiona_name to DB?
 } segment_t;
 
 /* Function declarations */

@@ -259,6 +259,8 @@ int recommender_main(int argc, char** argv) {
             fprintf(globals.outputfile_FP, "code.line_number=%d\n",
                     item->line_number);
             fprintf(globals.outputfile_FP, "code.type=%s\n", item->type);
+            fprintf(globals.outputfile_FP, "code.function_name=%s\n",
+                    item->function_name);
             fprintf(globals.outputfile_FP, "code.loop_depth=%1.0lf\n",
                 item->loop_depth);
         } else {
@@ -766,6 +768,7 @@ static int parse_segment_params(opttran_list_t *segments_p, FILE *inputfile_p) {
             item->rowid = 0;
             item->outer_loop = 0;
             item->outer_outer_loop = 0;
+            item->function_name  = NULL;
 
             /* Add this item to 'segments' */
             opttran_list_append(segments_p, (opttran_list_item_t *) item);
@@ -892,6 +895,20 @@ static int parse_segment_params(opttran_list_t *segments_p, FILE *inputfile_p) {
             strcpy(item->section_info, node->value);
             OPTTRAN_OUTPUT_VERBOSE((10, "(%d) section info: [%s]", input_line,
                                     item->section_info));
+            free(node);
+            continue;
+        }
+        /* Code param: code.function_name */
+        if (0 == strncmp("code.function_name", node->key, 18)) {
+            item->function_name = (char *)malloc(strlen(node->value) + 1);
+            if (NULL == item->function_name) {
+                OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
+                exit(OPTTRAN_ERROR);
+            }
+            bzero(item->function_name, strlen(node->value) + 1);
+            strcpy(item->function_name, node->value);
+            OPTTRAN_OUTPUT_VERBOSE((10, "(%d) function name: [%s]", input_line,
+                                    item->function_name));
             free(node);
             continue;
         }
