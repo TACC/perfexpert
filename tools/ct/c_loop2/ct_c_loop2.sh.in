@@ -41,7 +41,7 @@ showhelp() {
 }
 
 # Parse params
-eval set -- $(getopt -n $0 -o "s:p:hd" -- "$@")
+eval set -- $(getopt -n $0 -o "f:s:p:hd" -- "$@")
 declare s p h d
 while [ $# -gt 0 ]; do
     case "$1" in
