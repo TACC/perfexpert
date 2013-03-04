@@ -166,6 +166,7 @@ typedef struct fragment {
     char   *outer_loop_fragment_file;
     int    outer_outer_loop;
     char   *outer_outer_loop_fragment_file;
+    char   *function_name;
     opttran_list_t recommendations;
 } fragment_t;
 

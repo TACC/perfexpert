@@ -571,6 +571,21 @@ static int parse_fragment_params(opttran_list_t *fragments_p, FILE *inputfile_p)
             free(node);
             continue;
         }
+        /* Code param: code.function_name */
+        if (0 == strncmp("code.function_name", node->key, 18)) {
+            fragment->function_name = (char *)malloc(strlen(node->value) + 1);
+            if (NULL == fragment->function_name) {
+                OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
+                exit(OPTTRAN_ERROR);
+            }
+            bzero(fragment->function_name, strlen(node->value) + 1);
+            strcpy(fragment->function_name, node->value);
+            OPTTRAN_OUTPUT_VERBOSE((10, "(%d)  \\- %s [%s]", input_line,
+                                    _MAGENTA("type:"),
+                                    fragment->function_name));
+            free(node);
+            continue;
+        }
         /* Code param: code.loop_depth */
         if (0 == strncmp("code.loop_depth", node->key, 15)) {
             fragment->loop_depth = atoi(node->value);
@@ -1056,6 +1071,15 @@ static int output_results(opttran_list_t *fragments_p) {
         if (0 == globals.use_stdout) {
             fprintf(globals.outputfile_FP, "%% transformation for %s:%d\n",
                     fragment->filename, fragment->line_number);
+            fprintf(globals.outputfile_FP, "code.filename=%s\n",
+                    fragment->filename);
+            fprintf(globals.outputfile_FP, "code.line_number=%d\n",
+                    fragment->line_number);
+            fprintf(globals.outputfile_FP, "code.type=%s\n",
+                    fragment->code_type);
+            fprintf(globals.outputfile_FP, "code.function_name=%s\n",
+                    fragment->function_name);
+
         } else {
             fprintf(globals.outputfile_FP,
                     "#--------------------------------------------------\n");
