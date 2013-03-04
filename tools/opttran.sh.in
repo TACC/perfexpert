@@ -26,25 +26,22 @@
 # $HEADER$
 #
 
+# TODO:
+#
 # 0) Receive compiler/compilation flags as parameters
 # 1) Check arguments
 # 2) Create the unique identifier for opttran run
 # 3) Insert such identifier on tools arguments
 # 4) ...
 
-
-
-
-
-
-
 OPTTRAN_DIR="teste"
 USER_BINARY="mm_naive"
 USER_SOURCE="mm_naive.c"
+DEBUG="yes"
+LOGFILE="/dev/stdout"
 
-
-
-
+###############################################################################
+# Script variables
 #
 # Install directories
 #
@@ -53,7 +50,6 @@ OPTTRAN_BINDIR="@prefix@/bin"
 OPTTRAN_LIBDIR="@prefix@/lib"
 OPTTRAN_ETCDIR="@prefix@/etc"
 OPTTRAN_VARDIR="@prefix@/var"
-
 #
 # Path to tools
 #
@@ -62,7 +58,7 @@ OPTTRAN_PERFEXPERT="${OPTTRAN_BINDIR}/perfexpert"
 OPTTRAN_RECOMMENDER="${OPTTRAN_BINDIR}/recommender"
 OPTTRAN_PR="${OPTTRAN_BINDIR}/opttran_pr"
 
-#
+###############################################################################
 # Set 'perfexpert_run_exp' up
 #
 # Usage: perfexpert_run_exp [-ngh] [-t DIR] [-s FILE] [-o FILE] program_executable
@@ -84,7 +80,7 @@ OPTTRAN_PERFEXPERT_RUN_EXP_CMD+=" -o ${OPTTRAN_DIR}/perfexpert-experiment.xml"
 OPTTRAN_PERFEXPERT_RUN_EXP_CMD+=" ${USER_BINARY}"
 OPTTRAN_PERFEXPERT_RUN_EXP_CMD+=" > ${OPTTRAN_DIR}/perfexpert_run_exp.output"
 
-#
+###############################################################################
 # Set 'perfexpert' up
 #
 # Usage: perfexpert [OPTIONS] <threshold> <experiment.xml> [<experiment.xml>]
@@ -106,7 +102,7 @@ OPTTRAN_PERFEXPERT_CMD+=" 0.1"
 OPTTRAN_PERFEXPERT_CMD+=" ${OPTTRAN_DIR}/perfexpert-experiment.xml"
 OPTTRAN_PERFEXPERT_CMD+=" > ${OPTTRAN_DIR}/perfexpert.output"
 
-#
+###############################################################################
 # Set 'recommender' up
 #
 # Usage: recommender -i|-f file [-o file] [-d database] [-m file] [-nvch] [-p pid]
@@ -144,7 +140,7 @@ OPTTRAN_RECOMMENDER_CMD+=" --opttran ${OPTTRAN_DIR}"
 OPTTRAN_RECOMMENDER_CMD+=" --sourcefile ${USER_SOURCE}"
 OPTTRAN_RECOMMENDER_CMD+=" > ${OPTTRAN_DIR}/recommender.output"
 
-#
+###############################################################################
 # Set 'opttran_pr' up
 #
 # Usage: opttran_pr -i|-f file [-o file] [-tvch] [-l level] [-a dir] [-d database] [-p pid]
@@ -169,33 +165,91 @@ OPTTRAN_RECOMMENDER_CMD+=" > ${OPTTRAN_DIR}/recommender.output"
 OPTTRAN_PR_CMD="${OPTTRAN_PR}"
 OPTTRAN_PR_CMD+=" --verbose_level 10"
 OPTTRAN_PR_CMD+=" --colorful"
-OPTTRAN_PR_CMD+=" --inputfile teste/recommendations.txt"
+OPTTRAN_PR_CMD+=" --inputfile ${OPTTRAN_DIR}/recommendations.txt"
 OPTTRAN_PR_CMD+=" --testall"
-OPTTRAN_PR_CMD+=" --opttran teste"
+OPTTRAN_PR_CMD+=" --opttran ${OPTTRAN_DIR}"
+OPTTRAN_PR_CMD+=" > ${OPTTRAN_DIR}/opttran_pr.output"
 
-#
+###############################################################################
 # Let's run these tools!
 #
-echo "Creating dir: ${OPTTRAN_DIR}" > ${OPTTRAN_PR}/opttran.log
-mkdir -p ${OPTTRAN_DIR}
 
-echo "[opttran] Running PerfExpert: measurements phase (this could take a while...)"
-echo "Running: ${OPTTRAN_PERFEXPERT_RUN_EXP_CMD}" > ${OPTTRAN_PR}/opttran.log
+# Create OPTTRAN dir
+if [ x"${DEBUG}" == x"yes" ]; then
+    echo "Creating dir: ${OPTTRAN_DIR}" >> ${LOGFILE}
+    echo "@MKDIR_P@ ${OPTTRAN_DIR}" >> ${LOGFILE}
+fi
+eval @MKDIR_P@ ${OPTTRAN_DIR}
+if [ 0 != $? ]; then
+    echo "[opttran] unable to create OPTTRAN directory (${OPTTRAN_DIR})"
+    echo "ERROR: unable to create OPTTRAN directory (${OPTTRAN_DIR})" >> ${LOGFILE}
+    exit 1
+fi
+
+# Run PerfExpert (run_exp)
+echo -n "[opttran] Running PerfExpert: measurements phase (this could take a while)..."
+if [ x"${DEBUG}" == x"yes" ]; then
+    echo "Running: ${OPTTRAN_PERFEXPERT_RUN_EXP_CMD}" >> ${LOGFILE}
+fi
 eval ${OPTTRAN_PERFEXPERT_RUN_EXP_CMD}
+if [ 0 == $? ]; then
+    echo " ok!"
+else
+    echo " fail :("
+    echo "ERROR: running PerfExpert (run_exp)" >> ${LOGFILE}
+    exit 1
+fi
 
-echo "[opttran] Running PerfExpert: analysis phase"
-echo "Running: ${OPTTRAN_PERFEXPERT_CMD}" > ${OPTTRAN_PR}/opttran.log
-echo "Moving: perfexpert.log to ${OPTTRAN_DIR}/" > ${OPTTRAN_PR}/opttran.log
+# Run PerfExpert (analysis)
+echo -n "[opttran] Running PerfExpert: analysis phase..."
+if [ x"${DEBUG}" == x"yes" ]; then
+    echo "Running: ${OPTTRAN_PERFEXPERT_CMD}" >> ${LOGFILE}
+fi
 eval ${OPTTRAN_PERFEXPERT_CMD}
-mv perfexpert.log ${OPTTRAN_DIR}/
+if [ 0 == $? ]; then
+    echo " ok!"
+else
+    echo " fail :("
+    echo "ERROR: running PerfExpert (analysis)" >> ${LOGFILE}
+    exit 1
+fi
 
-echo "[opttran] Looking for recommendations"
-echo "Running: ${OPTTRAN_RECOMMENDER_CMD}" > ${OPTTRAN_PR}/opttran.log
+# Clean PerfExpert perfexpert.log
+if [ x"${DEBUG}" == x"yes" ]; then
+    echo "Moving: perfexpert.log to ${OPTTRAN_DIR}/" >> ${LOGFILE}
+fi
+eval mv perfexpert.log ${OPTTRAN_DIR}/
+if [ 0 != $? ]; then
+    echo "ERROR: unable to move perfexpert.log" >> ${LOGFILE}
+fi
+
+# Run Recommender
+echo -n "[opttran] Looking for recommendations..."
+if [ x"${DEBUG}" == x"yes" ]; then
+    echo "Running: ${OPTTRAN_RECOMMENDER_CMD}" >> ${LOGFILE}
+fi
 eval ${OPTTRAN_RECOMMENDER_CMD}
+if [ 0 == $? ]; then
+    echo " ok!"
+else
+    echo " fail :("
+    echo "ERROR: running Recommender" >> ${LOGFILE}
+    exit 1
+fi
 
-echo "[opttran] Test the feasibility of recommendations"
-echo "Running: ${OPTTRAN_PR_CMD}" > ${OPTTRAN_PR}/opttran.log
+# Run the Pattern Recognizer
+echo -n "[opttran] Test the feasibility of recommendations..."
+if [ x"${DEBUG}" == x"yes" ]; then
+    echo "Running: ${OPTTRAN_PR_CMD}" >> ${LOGFILE}
+fi
 eval ${OPTTRAN_PR_CMD}
+if [ 0 == $? ]; then
+    echo " ok!"
+else
+    echo " fail :("
+    echo "ERROR: running OptTran:PR" >> ${LOGFILE}
+    exit 1
+fi
 
 
 
