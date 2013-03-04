@@ -39,6 +39,7 @@ DROP TABLE IF EXISTS "recommendation_pattern";
 DROP TABLE IF EXISTS "recommendation_category";
 DROP TABLE IF EXISTS "recommendation_function";
 DROP TABLE IF EXISTS "metric";
+DROP TABLE IF EXISTS "log_pr";
 
 --
 -- Enable foreign keys
