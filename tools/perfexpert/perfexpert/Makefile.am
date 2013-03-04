@@ -34,7 +34,7 @@ clean-local:
 	rm -rf edu
 
 install-exec-local: all
-	$(MKDIR_P) $(libdir)
-	$(INSTALL) -m 644 perfexpert.jar $(libdir)
+	$(MKDIR_P) $(libdir)/
+	$(INSTALL) -m 644 perfexpert.jar $(libdir)/
 
 # EOF

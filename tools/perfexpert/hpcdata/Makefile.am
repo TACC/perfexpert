@@ -35,6 +35,6 @@ clean-local:
 
 install-exec-local: all
 	$(MKDIR_P) $(libdir)
-	$(INSTALL) -m 644 hpcdata.jar $(libdir)
+	$(INSTALL) -m 644 hpcdata.jar $(libdir)/
 
 # EOF

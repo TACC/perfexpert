@@ -35,12 +35,13 @@ install-exec-local: install-dist_binSCRIPTS
 
 install-data-local:
 	$(MKDIR_P) $(libdir)
+	$(MKDIR_P) $(localstatedir)
 	$(MKDIR_P) $(datadir)/$(PACKAGE_NAME)
-	$(INSTALL) -m 644 $(top_srcdir)/external/log4j-1.2.16.jar $(libdir)
-	$(INSTALL) -m 644 $(top_srcdir)/external/log4j.properties $(libdir)
+	$(INSTALL) -m 644 $(top_srcdir)/external/log4j-1.2.16.jar $(libdir)/
+	$(INSTALL) -m 644 $(top_srcdir)/external/log4j.properties $(libdir)/
 	$(INSTALL) -m 644 $(top_srcdir)/contrib/perfexpert-input_example.xml \
-		$(datadir)/$(PACKAGE_NAME)
-	$(INSTALL) -m 644 $(top_srcdir)/contrib/opt-sug-intel.pdb $(localstatedir)
+		$(datadir)/$(PACKAGE_NAME)/
+	$(INSTALL) -m 644 $(top_srcdir)/contrib/opt-sug-intel.pdb $(localstatedir)/
 
 install-exec-hook:
 	cd $(bindir); rm hpcdata; $(LN_S) hpcdata.sh hpcdata
