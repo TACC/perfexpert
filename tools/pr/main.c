@@ -1026,7 +1026,6 @@ static int test_one(test_t *test) {
     return OPTTRAN_SUCCESS;
 }
 
-// TODO: change the output to include the extra tests for loops (outer loops)
 /* output results */
 static int output_results(opttran_list_t *fragments_p) {
     opttran_list_t *recommendations;
@@ -1037,10 +1036,12 @@ static int output_results(opttran_list_t *fragments_p) {
 #if HAVE_SQLITE3 == 1
     int  r_bytes = 0;
     int  fragment_FP;
-    char sql[BUFFER_SIZE];
+    char sql[MAX_FRAGMENT_DATA];
     char *error_msg = NULL;
-    char temp_str[BUFFER_SIZE];
-    char fragment_data[MAX_FRAGMENT_DATA];
+    char temp_str[MAX_FRAGMENT_DATA/4];
+    char fragment_data[MAX_FRAGMENT_DATA/4];
+    char parent_fragment_data[MAX_FRAGMENT_DATA/4];
+    char grandparent_fragment_data[MAX_FRAGMENT_DATA/4];
 #endif
 
     OPTTRAN_OUTPUT_VERBOSE((4, "=== %s", _BLUE("Outputting results")));
@@ -1055,8 +1056,6 @@ static int output_results(opttran_list_t *fragments_p) {
         if (0 == globals.use_stdout) {
             fprintf(globals.outputfile_FP, "%% transformation for %s:%d\n",
                     fragment->filename, fragment->line_number);
-            fprintf(globals.outputfile_FP, "recommender.code_fragment=%s\n",
-                    fragment->fragment_file);
         } else {
             fprintf(globals.outputfile_FP,
                     "#--------------------------------------------------\n");
@@ -1076,6 +1075,27 @@ static int output_results(opttran_list_t *fragments_p) {
                 /* For all fragment recognizers ... */
                 if (0 == globals.use_stdout) {
                     if (OPTTRAN_SUCCESS == recognizer->test_result) {
+                        fprintf(globals.outputfile_FP,
+                                "recommender.code_fragment=%s\n",
+                                fragment->fragment_file);
+                        fprintf(globals.outputfile_FP, "pr.transformation=%s\n",
+                                recognizer->program);
+                    }
+                    /* If it is a loop, check parent loop test result */
+                    if ((0 == strncmp(fragment->code_type, "loop", 4)) &&
+                        (OPTTRAN_SUCCESS == recognizer->test2_result)) {
+                        fprintf(globals.outputfile_FP,
+                                "recommender.code_fragment=%s\n",
+                                fragment->outer_loop_fragment_file);
+                        fprintf(globals.outputfile_FP, "pr.transformation=%s\n",
+                                recognizer->program);
+                    }
+                    /* If it is a loop, check grandparent loop test result */
+                    if ((0 == strncmp(fragment->code_type, "loop", 4)) &&
+                        (OPTTRAN_SUCCESS == recognizer->test3_result)) {
+                        fprintf(globals.outputfile_FP,
+                                "recommender.code_fragment=%s\n",
+                                fragment->outer_outer_loop_fragment_file);
                         fprintf(globals.outputfile_FP, "pr.transformation=%s\n",
                                 recognizer->program);
                     }
@@ -1084,6 +1104,25 @@ static int output_results(opttran_list_t *fragments_p) {
                             recognizer->program);
                     fprintf(globals.outputfile_FP, "%s\n",
                             recognizer->test_result ? "(not valid)" : "(valid)");
+                    /* If it is a loop, check parent loop test result */
+                    if ((0 == strncmp(fragment->code_type, "loop", 4)) &&
+                        (0 != fragment->outer_loop)) {
+                        fprintf(globals.outputfile_FP, "Transformation: %s ",
+                                recognizer->program);
+                        fprintf(globals.outputfile_FP, "%s\n",
+                                recognizer->test2_result ?
+                                "(not valid on parent loop)" :
+                                "(valid on parent loop)");
+                    }
+                    if ((0 == strncmp(fragment->code_type, "loop", 4)) &&
+                        (0 != fragment->outer_outer_loop)) {
+                        fprintf(globals.outputfile_FP, "Transformation: %s ",
+                                recognizer->program);
+                        fprintf(globals.outputfile_FP, "%s\n",
+                                recognizer->test3_result ?
+                                "(not valid on grandparent loop)" :
+                                "(valid on grandparent loop)");
+                    }
                 }
 #if HAVE_SQLITE3 == 1
                 /* Log result on SQLite: 3 steps */
@@ -1101,26 +1140,98 @@ static int output_results(opttran_list_t *fragments_p) {
                                     fragment->fragment_file));
                     return OPTTRAN_ERROR;
                 } else {
-                    bzero(fragment_data, MAX_FRAGMENT_DATA);
-                    r_bytes = read(fragment_FP, fragment_data, MAX_FRAGMENT_DATA);
+                    bzero(fragment_data, MAX_FRAGMENT_DATA/4);
+                    r_bytes = read(fragment_FP, fragment_data,
+                                   MAX_FRAGMENT_DATA/4);
                     // TODO: escape single quotes from fragment_data
                     close(fragment_FP);
                 }
+                /* parent fragment data */
+                if ((0 == strncmp(fragment->code_type, "loop", 4)) &&
+                    (0 != fragment->outer_loop)) {
+                    if (-1 == (fragment_FP = open(fragment->outer_loop_fragment_file,
+                                                  O_RDONLY))) {
+                        OPTTRAN_OUTPUT(("%s (%s)",
+                                        _ERROR("Error: unable to open fragment file"),
+                                        fragment->outer_loop_fragment_file));
+                        return OPTTRAN_ERROR;
+                    } else {
+                        bzero(parent_fragment_data, MAX_FRAGMENT_DATA/4);
+                        r_bytes = read(fragment_FP, parent_fragment_data,
+                                       MAX_FRAGMENT_DATA/4);
+                        // TODO: escape single quotes from parent_fragment_data
+                        close(fragment_FP);
+                    }
+                }
+                /* grandparent fragment data */
+                if ((0 == strncmp(fragment->code_type, "loop", 4)) &&
+                    (0 != fragment->outer_outer_loop)) {
+                    if (-1 == (fragment_FP = open(fragment->outer_outer_loop_fragment_file,
+                                                  O_RDONLY))) {
+                        OPTTRAN_OUTPUT(("%s (%s)",
+                                        _ERROR("Error: unable to open fragment file"),
+                                        fragment->outer_outer_loop_fragment_file));
+                        return OPTTRAN_ERROR;
+                    } else {
+                        bzero(grandparent_fragment_data, MAX_FRAGMENT_DATA/4);
+                        r_bytes = read(fragment_FP, grandparent_fragment_data,
+                                       MAX_FRAGMENT_DATA/4);
+                        // TODO: escape single quotes from grandparent_fragment_data
+                        close(fragment_FP);
+                    }
+                }
 
                 /* Step 3: insert data into DB */
-                bzero(sql, BUFFER_SIZE);
+                bzero(sql, MAX_FRAGMENT_DATA);
                 strcat(sql, "INSERT INTO log_pr (pid, code_filename,");
                 strcat(sql, "\n                        ");
                 strcat(sql, "code_line_number, code_fragment, id_recommendation,");
                 strcat(sql, "\n                        ");
                 strcat(sql, "id_pattern, result) VALUES (");
                 strcat(sql, "\n                        ");
-                bzero(temp_str, BUFFER_SIZE);
+                bzero(temp_str, MAX_FRAGMENT_DATA/4);
                 sprintf(temp_str, "%llu, '%s', %d, '%s', %d, %d, %d);",
                         globals.opttran_pid, fragment->filename,
                         fragment->line_number, fragment_data, recommendation->id,
                         recognizer->id, recognizer->test_result);
                 strcat(sql, temp_str);
+
+                /* Add the parent loop test result */
+                if ((0 == strncmp(fragment->code_type, "loop", 4)) &&
+                    (0 != fragment->outer_loop)) {
+                    strcat(sql, "\n                     ");
+                    strcat(sql, "INSERT INTO log_pr (pid, code_filename,");
+                    strcat(sql, "\n                        ");
+                    strcat(sql, "code_line_number, code_fragment, id_recommendation,");
+                    strcat(sql, "\n                        ");
+                    strcat(sql, "id_pattern, result) VALUES (");
+                    strcat(sql, "\n                        ");
+                    bzero(temp_str, MAX_FRAGMENT_DATA/4);
+                    sprintf(temp_str, "%llu, '%s', %d, '%s', %d, %d, %d);",
+                            globals.opttran_pid, fragment->filename,
+                            fragment->outer_loop, parent_fragment_data,
+                            recommendation->id, recognizer->id,
+                            recognizer->test2_result);
+                    strcat(sql, temp_str);
+                }
+                /* Add the grandparent loop test result */
+                if ((0 == strncmp(fragment->code_type, "loop", 4)) &&
+                    (0 != fragment->outer_outer_loop)) {
+                    strcat(sql, "\n                     ");
+                    strcat(sql, "INSERT INTO log_pr (pid, code_filename,");
+                    strcat(sql, "\n                        ");
+                    strcat(sql, "code_line_number, code_fragment, id_recommendation,");
+                    strcat(sql, "\n                        ");
+                    strcat(sql, "id_pattern, result) VALUES (");
+                    strcat(sql, "\n                        ");
+                    bzero(temp_str, MAX_FRAGMENT_DATA/4);
+                    sprintf(temp_str, "%llu, '%s', %d, '%s', %d, %d, %d);",
+                            globals.opttran_pid, fragment->filename,
+                            fragment->outer_outer_loop,
+                            grandparent_fragment_data, recommendation->id,
+                            recognizer->id, recognizer->test3_result);
+                    strcat(sql, temp_str);
+                }
 
                 OPTTRAN_OUTPUT_VERBOSE((10, "%s",
                                         _YELLOW("logging results into DB")));
