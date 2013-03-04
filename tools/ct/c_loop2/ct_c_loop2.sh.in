@@ -1,0 +1,124 @@
+#!@BASH_PROGRAM@
+#
+# Copyright (c) 2013  University of Texas at Austin. All rights reserved.
+#
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# This file is part of OptTran and PerfExpert.
+#
+# OptTran as well PerfExpert are free software: you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation, either version 3 of the License,
+# or (at your option) any later version.
+#
+# OptTran and PerfExpert are distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+# General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with OptTran or PerfExpert. If not, see <http://www.gnu.org/licenses/>.
+#
+# Author: Leonardo Fialho
+#
+# $HEADER$
+#
+
+###############################################################################
+# Parsing/Checking arguments
+#
+# Help    1234567890123456789012345678901234567890123456789012345678901234567890
+showhelp() {
+    echo "Usage: c_loop2.sh -d -p NAME -s FILE -f FUNCTION"
+    echo
+    echo "  -p NAME     Use NAME as project directory name for the transformation"
+    echo "  -s FILE     Use FILE to define the source code to be transformed"
+    echo "  -f FUNCTION Apply the loop transformations on function FUNCTION"
+    echo "  -d          Enable debug"
+    echo "  -h          Show this message"
+}
+
+# Parse params
+eval set -- $(getopt -n $0 -o "s:p:hd" -- "$@")
+declare s p h d
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -f) shift; function="$1"; shift;;
+        -s) shift; source="$1"; shift;;
+        -p) shift; project="$1"; shift;;
+        -d) debug=yes; shift;;
+        -h) showhelp; exit 1;;
+        --) shift;;
+        -*) echo "[c_loop2.sh] Error: unrecognized option: $1"; showhelp; exit 1;;
+    esac
+done
+
+# Is debug enabled?
+if [ x"${debug}" == x"yes" ]; then
+    echo "[c_loop2.sh] Project: ${project}"
+    echo "[c_loop2.sh] Source:  ${source}"
+fi
+
+# Sanity check: -p and -s are mandatory
+if [ x"${source}" == x"" ]; then
+    echo "[c_loop2.sh] Error: source file not defined"
+    showhelp
+    exit 1
+fi
+if [ x"${project}" == x"" ]; then
+    echo "[c_loop2.sh] Error: project name not defined"
+    showhelp
+    exit 1
+fi
+if [ x"${function}" == x"" ]; then
+    echo "[c_loop2.sh] Error: function name not defined"
+    showhelp
+    exit 1
+fi
+
+# Sanity check: source file should exists
+if [ ! -f ${source} ]; then
+    echo "[c_loop2.sh] Error: could not find the source file: ${source}"
+    exit 1
+fi
+# Sanity check: project directory should not exists
+if [ -d ${project}.database ]; then
+    echo "[c_loop2.sh] Error: project directory already exists: ${project}"
+    exit 1
+fi
+
+###############################################################################
+# Create TPIPS script file
+#
+if [ ! -f "${project}.tpips" ]; then
+    echo "[c_loop2.sh] Warning: there is already a script with this name: ${project}.tpips"
+    echo "[c_loop2.sh]          existing script will be renamed to ${project}.tpips.old"
+    mv ${project}.tpips ${project}.tpips.old
+fi
+echo "setproperty ABORT_ON_USER_ERROR TRUE"                  > ${project}.tpips
+echo "create ${project} ${source}"                          >> ${project}.tpips
+echo "activate INTERPROCEDURAL_SUMMARY_PRECONDITION"        >> ${project}.tpips
+echo "activate TRANSFORMERS_INTER_FULL"                     >> ${project}.tpips
+echo "activate PRECONDITIONS_INTER_FULL"                    >> ${project}.tpips
+echo "setproperty SEMANTICS_FIX_POINT_OPERATOR \"derivative\"" >> ${project}.tpips
+echo "module ${function}"                                   >> ${project}.tpips
+echo "apply LOOP_INTERCHANGE"                               >> ${project}.tpips
+echo "loop_10"                                              >> ${project}.tpips
+echo "apply UNSPLIT[%PROGRAM]"                              >> ${project}.tpips
+echo "close"                                                >> ${project}.tpips
+echo "quit"                                                 >> ${project}.tpips
+
+###############################################################################
+# Run TPIPS script
+#
+command="@TPIPS_PROGRAM@ ${project}.tpips"
+
+eval ${command}
+
+if [ "0" != ${?} ]; then
+    echo "[c_loop2.sh] Error: TPIPS execution failed"
+fi
+
+exit 0

@@ -490,8 +490,8 @@ AS_IF([test x"$ENABLE_OPTTRAN_CT" = x"yes"], [
         [AC_MSG_ERROR([TPIPS not found, try using '--with-pips'])], [])
 
     AC_CONFIG_FILES([tools/ct/c_loop2/Makefile])
-    AC_CONFIG_FILES([tools/ct/c_loop2/c_loop2.sh],
-        [chmod +x tools/ct/c_loop2/c_loop2.sh])
+    AC_CONFIG_FILES([tools/ct/c_loop2/ct_c_loop2.sh],
+        [chmod +x tools/ct/c_loop2/ct_c_loop2.sh])
 
     ENABLE_CT=ct
     AC_CONFIG_FILES([tools/ct/Makefile])

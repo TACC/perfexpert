@@ -25,9 +25,12 @@
 # $HEADER$
 #
 
-dist_bin_SCRIPTS = c_loop2.sh
+dist_bin_SCRIPTS = ct_c_loop2.sh
 
 install-exec-local: install-dist_binSCRIPTS
-	$(MKDIR_P) $(libdir)
+	$(MKDIR_P) $(libdir)/
+
+install-exec-hook:
+	cd $(bindir); rm ct_c_loop2; $(LN_S) ct_c_loop2.sh ct_c_loop2
 
 # EOF
