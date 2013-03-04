@@ -918,6 +918,7 @@ static int test_one(test_t *test) {
     int  w_bytes = 0;
     int  rc = OPTTRAN_UNDEFINED;
     char temp_str[BUFFER_SIZE];
+    char temp_str2[BUFFER_SIZE];
     char buffer[BUFFER_SIZE];
 
 #define	PARENT_READ  pipe1[0]
@@ -945,7 +946,9 @@ static int test_one(test_t *test) {
     if (0 == pid) {
         /* Child */
         bzero(temp_str, BUFFER_SIZE);
-        sprintf(temp_str, "%s/%s", OPTTRAN_BINDIR, test->program);
+        bzero(temp_str2, BUFFER_SIZE);
+        sprintf(temp_str, "%s/pr_%s", OPTTRAN_BINDIR, test->program);
+        sprintf(temp_str2, "%pr_%s", test->program);
         OPTTRAN_OUTPUT_VERBOSE((10, "   running %s", _CYAN(temp_str)));
         
         close(PARENT_WRITE);
@@ -960,7 +963,7 @@ static int test_one(test_t *test) {
             return OPTTRAN_ERROR;
         }
 
-        execl(temp_str, test->program, NULL);
+        execl(temp_str, temp_str2, NULL);
         
         OPTTRAN_OUTPUT(("child process failed to run, check if program exists"));
         exit(127);

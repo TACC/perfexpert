@@ -30,9 +30,9 @@ CLEANFILES = y.tab.c y.tab.h lex.yy.c
 y.tab.c y.tab.h: c_loop1.y; $(YACC) -d $(srcdir)/c_loop1.y
 lex.yy.c: c_loop1.l; $(LEX) $(srcdir)/c_loop1.l
 
-bin_PROGRAMS = c_loop1
+bin_PROGRAMS = pr_c_loop1
 
-c_loop1_SOURCES = y.tab.c lex.yy.c
-c_loop1_CFLAGS = -O3
+pr_c_loop1_SOURCES = y.tab.c lex.yy.c
+pr_c_loop1_CFLAGS = -O3
 
 # EOF
