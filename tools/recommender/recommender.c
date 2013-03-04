@@ -1052,6 +1052,10 @@ static int output_recommendations(void *not_used, int col_count,
         sprintf(temp_str, "WHERE rp.id_recommendation = %s;", col_values[2]);
         strcat(sql, temp_str);
 
+        OPTTRAN_OUTPUT_VERBOSE((10, "%s",
+                                _YELLOW("patterns for this recommendation")));
+        OPTTRAN_OUTPUT_VERBOSE((10, "   SQL: %s", _CYAN(sql)));
+
         if (SQLITE_OK != sqlite3_exec(globals.db, sql, output_patterns, NULL,
                                       &error_msg)) {
             fprintf(stderr, "Error: SQL error: %s\n", error_msg);
@@ -1075,6 +1079,10 @@ static int output_recommendations(void *not_used, int col_count,
         sprintf(temp_str, "WHERE rp.id_recommendation = %s;", col_values[2]);
         strcat(sql, temp_str);
         
+        OPTTRAN_OUTPUT_VERBOSE((10, "%s",
+                                _YELLOW("patterns for this recommendation")));
+        OPTTRAN_OUTPUT_VERBOSE((10, "   SQL: %s", _CYAN(sql)));
+
         if (SQLITE_OK != sqlite3_exec(globals.db, sql, output_patterns, NULL,
                                       &error_msg)) {
             fprintf(stderr, "Error: SQL error: %s\n", error_msg);
