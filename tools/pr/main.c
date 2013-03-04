@@ -581,7 +581,7 @@ static int parse_fragment_params(opttran_list_t *fragments_p, FILE *inputfile_p)
             bzero(fragment->function_name, strlen(node->value) + 1);
             strcpy(fragment->function_name, node->value);
             OPTTRAN_OUTPUT_VERBOSE((10, "(%d)  \\- %s [%s]", input_line,
-                                    _MAGENTA("type:"),
+                                    _MAGENTA("function name:"),
                                     fragment->function_name));
             free(node);
             continue;
