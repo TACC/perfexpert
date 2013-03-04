@@ -126,13 +126,17 @@ typedef struct transformation {
     volatile opttran_list_item_t *next;
     volatile opttran_list_item_t *prev;
     char *program;
+    char *fragment_file;
 } transformation_t;
 
 /** Structure to hold fragments */
 typedef struct fragment {
     volatile opttran_list_item_t *next;
     volatile opttran_list_item_t *prev;
-    char *fragment_file;
+    char *filename;
+    int  line_number;
+    char *code_type;
+    char *function_name;
     opttran_list_t transformations;
 } fragment_t;
 
