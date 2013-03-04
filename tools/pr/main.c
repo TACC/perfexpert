@@ -948,7 +948,7 @@ static int test_one(test_t *test) {
         bzero(temp_str, BUFFER_SIZE);
         bzero(temp_str2, BUFFER_SIZE);
         sprintf(temp_str, "%s/pr_%s", OPTTRAN_BINDIR, test->program);
-        sprintf(temp_str2, "%pr_%s", test->program);
+        sprintf(temp_str2, "pr_%s", test->program);
         OPTTRAN_OUTPUT_VERBOSE((10, "   running %s", _CYAN(temp_str)));
         
         close(PARENT_WRITE);
