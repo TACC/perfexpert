@@ -28,6 +28,7 @@ public abstract class AProfile {
     protected int codeLineNumber = 0;
     protected String codeType = null;
     protected String codeExtraInfo = null;
+    protected String codeProcedureName = null;
     
     // Which code does this profile belong to?
     public String getCodeSectionInfo() {
@@ -66,11 +67,19 @@ public abstract class AProfile {
     public String getCodeExtraInfo() {
         return this.codeExtraInfo;
     }
-    
+
     public void setCodeExtraInfo(String codeExtraInfo) {
         this.codeExtraInfo = codeExtraInfo;
     }
-    
+
+    public String getCodeProcedureName() {
+        return this.codeProcedureName;
+    }
+
+    public void setCodeProcedureName(String codeProcedureName) {
+        this.codeProcedureName = codeProcedureName;
+    }
+
     // Getters (and setters) for individual or all metrics
     public abstract double getMetric(String key);
     public abstract void setMetric(String key, double value);

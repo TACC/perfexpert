@@ -152,6 +152,7 @@ public class HPCToolkitPresentation {
                 System.out.println("code.filename=" + profile.getCodeFilename());
                 System.out.println("code.line_number=" + profile.getCodeLineNumber());
                 System.out.println("code.type=" + profile.getCodeType());
+                System.out.println("code.function_name=" + profile.getCodeProcedureName());
                 System.out.println("code.extra_info=" + profile.getCodeExtraInfo());
                 System.out.println("code.representativeness=" + doubleFormat.format(profile.getImportance()*100));
                 
