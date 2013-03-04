@@ -51,5 +51,3 @@ static int output_fragment(SgNode *node, Sg_File_Info *fileInfo,
 	                       segment_t *item);
 
 #endif /* TRAVERSAL_H */
-
-// EOF
