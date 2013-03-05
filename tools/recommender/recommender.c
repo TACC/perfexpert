@@ -588,10 +588,10 @@ static int parse_cli_params(int argc, char *argv[]) {
                             globals.use_stdin ? "yes" : "no"));
     OPTTRAN_OUTPUT_VERBOSE((10, "   Use OPTTRAN?           %s",
                             globals.use_opttran ? "yes" : "no"));
-    OPTTRAN_OUTPUT_VERBOSE((10, "   Recommendation count:  %d",
-                            globals.rec_count));
     OPTTRAN_OUTPUT_VERBOSE((10, "   OPTTRAN PID:           %llu",
                             globals.opttran_pid));
+    OPTTRAN_OUTPUT_VERBOSE((10, "   OPTTRAN directory:     %s",
+                            globals.opttrandir ? globals.opttrandir : "(null)"));
     OPTTRAN_OUTPUT_VERBOSE((10, "   Input file:            %s",
                             globals.inputfile ? globals.inputfile : "(null)"));
     OPTTRAN_OUTPUT_VERBOSE((10, "   Output file:           %s",
@@ -604,8 +604,8 @@ static int parse_cli_params(int argc, char *argv[]) {
                             globals.use_temp_metrics ? "yes" : "no"));
     OPTTRAN_OUTPUT_VERBOSE((10, "   Metrics table:         %s",
                             globals.metrics_table ? globals.metrics_table : "(null)"));
-    OPTTRAN_OUTPUT_VERBOSE((10, "   OPTTRAN directory:     %s",
-                            globals.opttrandir ? globals.opttrandir : "(null)"));
+    OPTTRAN_OUTPUT_VERBOSE((10, "   Recommendation count:  %d",
+                            globals.rec_count));
     OPTTRAN_OUTPUT_VERBOSE((10, "   Source file:           %s",
                             globals.source_file ? globals.source_file : "(null)"));
 

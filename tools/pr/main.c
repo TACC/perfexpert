@@ -416,27 +416,29 @@ static int parse_cli_params(int argc, char *argv[]) {
     }
     OPTTRAN_OUTPUT_VERBOSE((4, "=== %s", _BLUE("CLI params")));
     OPTTRAN_OUTPUT_VERBOSE((10, "Summary of selected options:"));
-    OPTTRAN_OUTPUT_VERBOSE((10, "   Verbose:          %s",
+    OPTTRAN_OUTPUT_VERBOSE((10, "   Verbose:           %s",
                             globals.verbose ? "yes" : "no"));
-    OPTTRAN_OUTPUT_VERBOSE((10, "   Verbose level:    %d",
+    OPTTRAN_OUTPUT_VERBOSE((10, "   Verbose level:     %d",
                             globals.verbose_level));
-    OPTTRAN_OUTPUT_VERBOSE((10, "   Colorful verbose? %s",
+    OPTTRAN_OUTPUT_VERBOSE((10, "   Colorful verbose?  %s",
                             globals.colorful ? "yes" : "no"));
-    OPTTRAN_OUTPUT_VERBOSE((10, "   Use STDOUT?       %s",
+    OPTTRAN_OUTPUT_VERBOSE((10, "   Use STDOUT?        %s",
                             globals.use_stdout ? "yes" : "no"));
-    OPTTRAN_OUTPUT_VERBOSE((10, "   Use STDIN?        %s",
+    OPTTRAN_OUTPUT_VERBOSE((10, "   Use STDIN?         %s",
                             globals.use_stdin ? "yes" : "no"));
-    OPTTRAN_OUTPUT_VERBOSE((10, "   Input file:       %s",
+    OPTTRAN_OUTPUT_VERBOSE((10, "   Input file:        %s",
                             globals.inputfile ? globals.inputfile : "(null)"));
-    OPTTRAN_OUTPUT_VERBOSE((10, "   Output file:      %s",
+    OPTTRAN_OUTPUT_VERBOSE((10, "   Output file:       %s",
                             globals.outputfile ? globals.outputfile : "(null)"));
-    OPTTRAN_OUTPUT_VERBOSE((10, "   Test all?         %s",
+    OPTTRAN_OUTPUT_VERBOSE((10, "   Test all?          %s",
                             globals.testall ? "yes" : "no"));
-    OPTTRAN_OUTPUT_VERBOSE((10, "   Use OPTTRAN?      %s",
+    OPTTRAN_OUTPUT_VERBOSE((10, "   Use OPTTRAN?       %s",
                             globals.use_opttran ? "yes" : "no"));
-    OPTTRAN_OUTPUT_VERBOSE((10, "   OPTTRAN PID:      %llu",
+    OPTTRAN_OUTPUT_VERBOSE((10, "   OPTTRAN PID:       %llu",
                             globals.opttran_pid));
-    OPTTRAN_OUTPUT_VERBOSE((10, "   Database file:    %s",
+    OPTTRAN_OUTPUT_VERBOSE((10, "   OPTTRAN directory: %s",
+                            globals.opttrandir ? globals.opttrandir : "(null)"));
+    OPTTRAN_OUTPUT_VERBOSE((10, "   Database file:     %s",
                             globals.dbfile ? globals.dbfile : "(null)"));
 
     /* Not using OPTTRAN_OUTPUT_VERBOSE because I want only one line */
@@ -738,6 +740,10 @@ static int parse_fragment_params(opttran_list_t *fragments_p, FILE *inputfile_p)
     return OPTTRAN_SUCCESS;
 }
 
+// TODO: the behaviour of this function when not using the --testall argument is
+//       wrong. Tests should stop when there is a postive result of a test for
+//       each fragment. Currently, all tests are stoping when one tests results
+//       positive.
 /* test_recognizers */
 static int test_recognizers(opttran_list_t *fragments_p) {
     recommendation_t *recommendation;
@@ -968,7 +974,7 @@ static int test_one(test_t *test) {
         close(CHILD_READ);
         close(CHILD_WRITE);
         
-        /* Open input file and sent if to the child process */
+        /* Open input file and send it to the child process */
         if (-1 == (file = open(test->fragment_file, O_RDONLY))) {
             OPTTRAN_OUTPUT(("%s (%s)",
                             _ERROR("Error: unable to open fragment file"),
