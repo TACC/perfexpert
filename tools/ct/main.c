@@ -34,6 +34,7 @@ extern "C" {
 #include <stdlib.h>
 #include <string.h>
 #include <getopt.h>
+#include <fcntl.h>
 #include <inttypes.h>
 
 #if HAVE_SQLITE3 == 1
@@ -127,6 +128,10 @@ int main(int argc, char** argv) {
     }
 
     /* Apply transformation */
+    if (OPTTRAN_SUCCESS != apply_transformations(fragments)) {
+        OPTTRAN_OUTPUT(("%s", _ERROR("Error: applying transformations")));
+        exit(OPTTRAN_ERROR);
+    }
 
     /* Output results */
     
@@ -328,25 +333,27 @@ static int parse_cli_params(int argc, char *argv[]) {
     }
     OPTTRAN_OUTPUT_VERBOSE((4, "=== %s", _BLUE("CLI params")));
     OPTTRAN_OUTPUT_VERBOSE((10, "Summary of selected options:"));
-    OPTTRAN_OUTPUT_VERBOSE((10, "   Verbose:          %s",
+    OPTTRAN_OUTPUT_VERBOSE((10, "   Verbose:           %s",
                             globals.verbose ? "yes" : "no"));
-    OPTTRAN_OUTPUT_VERBOSE((10, "   Verbose level:    %d",
+    OPTTRAN_OUTPUT_VERBOSE((10, "   Verbose level:     %d",
                             globals.verbose_level));
-    OPTTRAN_OUTPUT_VERBOSE((10, "   Colorful verbose? %s",
+    OPTTRAN_OUTPUT_VERBOSE((10, "   Colorful verbose?  %s",
                             globals.colorful ? "yes" : "no"));
-    OPTTRAN_OUTPUT_VERBOSE((10, "   Use STDOUT?       %s",
+    OPTTRAN_OUTPUT_VERBOSE((10, "   Use STDOUT?        %s",
                             globals.use_stdout ? "yes" : "no"));
-    OPTTRAN_OUTPUT_VERBOSE((10, "   Use STDIN?        %s",
+    OPTTRAN_OUTPUT_VERBOSE((10, "   Use STDIN?         %s",
                             globals.use_stdin ? "yes" : "no"));
-    OPTTRAN_OUTPUT_VERBOSE((10, "   Input file:       %s",
+    OPTTRAN_OUTPUT_VERBOSE((10, "   Input file:        %s",
                             globals.inputfile ? globals.inputfile : "(null)"));
-    OPTTRAN_OUTPUT_VERBOSE((10, "   Output file:      %s",
+    OPTTRAN_OUTPUT_VERBOSE((10, "   Output file:       %s",
                             globals.outputfile ? globals.outputfile : "(null)"));
-    OPTTRAN_OUTPUT_VERBOSE((10, "   Use OPTTRAN?      %s",
+    OPTTRAN_OUTPUT_VERBOSE((10, "   Use OPTTRAN?       %s",
                             globals.use_opttran ? "yes" : "no"));
-    OPTTRAN_OUTPUT_VERBOSE((10, "   OPTTRAN PID:      %llu",
+    OPTTRAN_OUTPUT_VERBOSE((10, "   OPTTRAN PID:       %llu",
                             globals.opttran_pid));
-    OPTTRAN_OUTPUT_VERBOSE((10, "   Database file:    %s",
+    OPTTRAN_OUTPUT_VERBOSE((10, "   OPTTRAN directory: %s",
+                            globals.opttrandir ? globals.opttrandir : "(null)"));
+    OPTTRAN_OUTPUT_VERBOSE((10, "   Database file:     %s",
                             globals.dbfile ? globals.dbfile : "(null)"));
 
     /* Not using OPTTRAN_OUTPUT_VERBOSE because I want only one line */
@@ -595,6 +602,241 @@ static int database_connect(void) {
     return OPTTRAN_SUCCESS;
 }
 #endif
+
+// TODO: the behaviour of this function when not using the --applyall argument
+//       is wrong. Transformations apply should stop when it is possible to
+//       apply the first transformation for each code fragment. Currently, all
+//       transformations are stoping when one is possible.
+/* apply_transformations */
+static int apply_transformations(opttran_list_t *fragments_p) {
+    transformation_t *transformation;
+    fragment_t *fragment;
+    opttran_list_t *transfs;
+    transf_t *transf;
+
+    transfs = (opttran_list_t *)malloc(sizeof(opttran_list_t));
+    if (NULL == transfs) {
+        OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
+        exit(OPTTRAN_ERROR);
+    }
+    opttran_list_construct(transfs);
+
+    OPTTRAN_OUTPUT_VERBOSE((4, "=== %s", _BLUE("Applying transformations")));
+
+    OPTTRAN_OUTPUT_VERBOSE((8, "creating a list of transformations to apply..."));
+
+    /* Create a list of all pattern recognizers we have to test */
+    fragment = (fragment_t *)opttran_list_get_first(fragments_p);
+    while ((opttran_list_item_t *)fragment != &(fragments_p->sentinel)) {
+        /* For all code fragments ... */
+        transformation = (transformation_t *)opttran_list_get_first(&(fragment->transformations));
+        while ((opttran_list_item_t *)transformation != &(fragment->transformations.sentinel)) {
+            /* For all transformations ... */
+            transf = (transf_t *)malloc(sizeof(transf_t));
+            if (NULL == transf) {
+                OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
+                exit(OPTTRAN_ERROR);
+            }
+            opttran_list_item_construct((opttran_list_item_t *)transf);
+
+            transf->program       = transformation->program;
+            transf->fragment_file = transformation->fragment_file;
+            transf->filename      = fragment->filename;
+            transf->line_number   = fragment->line_number;
+            transf->code_type     = fragment->code_type;
+            transf->function_name = fragment->function_name;
+            transf->transf_result = OPTTRAN_UNDEFINED;
+
+            OPTTRAN_OUTPUT_VERBOSE((10, "[%s] %s", transf->program,
+                                    transf->fragment_file));
+
+            /* Add this item to to-'tests' */
+            opttran_list_append(transfs, (opttran_list_item_t *)transf);
+
+            transformation = (transformation_t *)opttran_list_get_next(transformation);
+        }
+        fragment = (fragment_t *)opttran_list_get_next(fragment);
+    }
+    OPTTRAN_OUTPUT_VERBOSE((8, "...done!"));
+
+    /* Print a summary of 'tests' */
+    OPTTRAN_OUTPUT_VERBOSE((4, "%d %s", opttran_list_get_size(transfs),
+                            _GREEN("possible transformation(s) found")));
+
+    /* Apply the transformations */
+    transf = (transf_t *)opttran_list_get_first(transfs);
+    while ((opttran_list_item_t *)transf != &(transfs->sentinel)) {
+        if (OPTTRAN_SUCCESS != apply_one(transf)) {
+            OPTTRAN_OUTPUT(("   %s [%s] >> [%s]", _RED("Error: running test"),
+                            transf->program, transf->fragment_file));
+        }
+
+        switch (transf->transf_result) {
+            case OPTTRAN_UNDEFINED:
+                OPTTRAN_OUTPUT_VERBOSE((8, "   %s [%s] >> [%s]",
+                                        _BOLDRED("UNDEF"), transf->program,
+                                        transf->fragment_file));
+                break;
+
+            case OPTTRAN_FAILURE:
+                OPTTRAN_OUTPUT_VERBOSE((8, "   %s  [%s] >> [%s]",
+                                        _ERROR("FAIL"), transf->program,
+                                        transf->fragment_file));
+                break;
+
+            case OPTTRAN_SUCCESS:
+                OPTTRAN_OUTPUT_VERBOSE((8, "   %s    [%s] >> [%s]",
+                                        _BOLDGREEN("OK"), transf->program,
+                                        transf->fragment_file));
+                break;
+
+            case OPTTRAN_ERROR:
+                OPTTRAN_OUTPUT_VERBOSE((8, "   %s [%s] >> [%s]",
+                                        _BOLDYELLOW("ERROR"), transf->program,
+                                        transf->fragment_file));
+                break;
+
+            default:
+                break;
+        }
+
+        /* Break the loop if 'testall' is not set */
+//        if ((0 == globals.testall) &&
+//            (OPTTRAN_SUCCESS == transf->transf_result)) {
+//            OPTTRAN_OUTPUT_VERBOSE((7, "   %s",
+//                                    _YELLOW("transformation applied")));
+//            break;
+//        }
+
+        /* Move on to the next test... */
+        transf = (transf_t *)opttran_list_get_next(transf);
+    }
+    /* Free 'transfs' structure' */
+    while (OPTTRAN_FALSE == opttran_list_is_empty(transfs)) {
+        transf = (transf_t *)opttran_list_get_first(transfs);
+        opttran_list_remove_item(transfs, (opttran_list_item_t *)transf);
+        free(transf);
+    }
+    opttran_list_destruct(transfs);
+    free(transfs);
+
+    OPTTRAN_OUTPUT_VERBOSE((4, "==="));
+
+    return OPTTRAN_SUCCESS;
+}
+
+/* apply_one */
+static int apply_one(transf_t *transf) {
+    int  pid = 0;
+    int  rc = OPTTRAN_UNDEFINED;
+    char temp_str[BUFFER_SIZE];
+    char buffer[BUFFER_SIZE];
+
+    /* Forking child */
+    pid = fork();
+    if (-1 == pid) {
+        OPTTRAN_OUTPUT(("%s", _ERROR("Error: unable to fork")));
+        return OPTTRAN_ERROR;
+    }
+
+    if (0 == pid) {
+        /* Child */
+        char argv[20][PARAM_SIZE];
+
+        bzero(temp_str, BUFFER_SIZE);
+        sprintf(temp_str, "%s/ct_%s", OPTTRAN_BINDIR, transf->program);
+
+        /* Set the code transformer arguments. Ok, we have to define an
+         * interface to code transformers. Here is a simple one. Each code
+         * transformer will be called using the following arguments:
+         *
+         * -c TYPE      Code type, basically there are two options: "loop" and
+         *              "function"
+         * -d           Enable debug mode and write LOG to FILE defined with -o
+         * -f FUNCTION  Function name were code bottleneck belongs to
+         * -l LINE      Line number ideintified by HPCtoolkit/PerfExpert/etc...
+         * -o FILE      Output file, considering that output is only verbose
+         *              messages, not code
+         * -p NAME      Project name, which is the name of the recognizer
+         * -r FILE      File (maybe link) containing the transformation result
+         * -s FILE      Source file
+         * -w DIR       Use DIR as work directory
+         */
+        bzero(argv, PARAM_SIZE * 20);
+        sprintf(argv[0], "ct_%s", transf->program);
+        sprintf(argv[1], "-c");
+        sprintf(argv[2], "%s", transf->code_type);
+        sprintf(argv[3], "-d");
+        sprintf(argv[4], "-f");
+        sprintf(argv[5], "%s", transf->function_name);
+        sprintf(argv[6], "-l");
+        sprintf(argv[7], "%d", transf->line_number);
+        sprintf(argv[8], "-o");
+        sprintf(argv[9], "%s_%d.%s.transformer_output", transf->filename,
+                transf->line_number, transf->program);
+        sprintf(argv[10], "-p");
+        sprintf(argv[11], "%s", transf->program);
+        sprintf(argv[12], "-r");
+        sprintf(argv[13], "%s_%d.%s.transformer_result", transf->filename,
+                transf->line_number, transf->program);
+        sprintf(argv[14], "-s");
+        sprintf(argv[15], "../%s/%s", OPTTRAN_SOURCE_DIR, transf->filename);
+        sprintf(argv[16], "-w");
+        sprintf(argv[17], "%s/%s", globals.opttrandir, OPTTRAN_FRAGMENTS_DIR);
+
+        /* Call the code transformer */
+        OPTTRAN_OUTPUT_VERBOSE((10, "%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s",
+                                _CYAN("   running"), temp_str,
+                                argv[0],  argv[1],  argv[2],  argv[3],  argv[4],
+                                argv[5],  argv[6],  argv[7],  argv[8],  argv[9],
+                                argv[10], argv[11], argv[12], argv[13],
+                                argv[14], argv[15], argv[16], argv[17]));
+
+        // TODO: this is ridiculous. I have to change it to execp, but I'm too
+        //       tired to do this now.
+        execl(temp_str, argv[0], argv[1], argv[2], argv[3], argv[4], argv[5],
+              argv[6], argv[7], argv[8], argv[9], argv[10], argv[11], argv[12],
+              argv[13], argv[14], argv[15], argv[16], argv[17], NULL);
+
+        OPTTRAN_OUTPUT(("child process failed to run, check if program exists"));
+        exit(127);
+    } else {
+        /* Parent */
+        wait(&rc);
+        OPTTRAN_OUTPUT_VERBOSE((10, "   result  %s %d", _CYAN("return code"),
+                                rc >> 8));
+    }
+
+    /* Evaluating the result */
+    switch (rc >> 8) {
+        /* The transformation was possible */
+        case 0:
+            transf->transf_result = OPTTRAN_SUCCESS;
+            break;
+
+        /* The transformation was not possible */
+        case 255:
+            transf->transf_result = OPTTRAN_ERROR;
+            break;
+
+        /* Error during fork() or waitpid() */
+        case -1:
+            transf->transf_result = OPTTRAN_FAILURE;
+            break;
+
+        /* Execution failed */
+        case 127:
+            transf->transf_result = OPTTRAN_FAILURE;
+            break;
+
+        /* Not sure what happened */
+        default:
+            transf->transf_result = OPTTRAN_UNDEFINED;
+            break;
+    }
+
+    return OPTTRAN_SUCCESS;
+}
 
 #ifdef __cplusplus
 }

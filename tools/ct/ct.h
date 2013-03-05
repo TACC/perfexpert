@@ -58,15 +58,6 @@ extern "C" {
 #include <stdio.h> /* To use FILE type on globals */
 #endif
 
-/** Buffers size, will be used for:
- * - parsing INPUT file
- * - maybe something else
- */
-#define BUFFER_SIZE 4096
-
-/** Default values for some parameters */
-#define RECOMMENDATION_DB "recommendation.db"
-
 /** Structure to hold global variables */
 typedef struct {
     int  verbose;
@@ -110,7 +101,7 @@ static struct option long_options[] = {
     {"colorful",        no_argument,       NULL, 'c'},
     {"opttran",         required_argument, NULL, 'a'},
 #if HAVE_SQLITE3 == 1
-    {"pid",             required_argument, NULL, 'p'},
+    {"opttranid",       required_argument, NULL, 'p'},
 #endif
     {0, 0, 0, 0}
 };
@@ -120,6 +111,19 @@ typedef struct node {
     char *key;
     char *value;
 } node_t;
+
+/** Ninja structure to hold a list of transformations to apply */
+typedef struct transf {
+    volatile opttran_list_item_t *next;
+    volatile opttran_list_item_t *prev;
+    char *program;
+    char *fragment_file;
+    char *filename;
+    int  line_number;
+    char *code_type;
+    char *function_name;
+    int  transf_result;
+} transf_t;
 
 /** Structure to hold transformations */
 typedef struct transformation {
@@ -146,6 +150,8 @@ static int  parse_env_vars(void);
 static int  parse_cli_params(int argc, char *argv[]);
 static int  parse_transformation_params(opttran_list_t *segments_p,
                                         FILE *inputfile_p);
+static int  apply_transformations(opttran_list_t *fragments_p);
+static int  apply_one(transf_t *transf);
 #if HAVE_SQLITE3 == 1
 static int  database_connect(void);
 #endif
