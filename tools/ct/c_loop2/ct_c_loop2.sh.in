@@ -31,94 +31,144 @@
 #
 # Help    1234567890123456789012345678901234567890123456789012345678901234567890
 showhelp() {
-    echo "Usage: c_loop2.sh -d -p NAME -s FILE -f FUNCTION"
+    echo "Usage: c_loop2.sh -dh -f FUNCTION -p NAME -s FILE [-o FILE -r FILE]"
     echo
-    echo "  -p NAME     Use NAME as project directory name for the transformation"
-    echo "  -s FILE     Use FILE to define the source code to be transformed"
     echo "  -f FUNCTION Apply the loop transformations on function FUNCTION"
+    echo "  -o FILE     Use FILE as default output for verbose messages"
+    echo "  -p NAME     Use NAME as project directory name for the transformation"
+    echo "  -r FILE     Use FILE as output for transformed code"
+    echo "  -s FILE     Use FILE to define the source code to be transformed"
+    echo "  -w DIR      Use DIR as work directory"
     echo "  -d          Enable debug"
     echo "  -h          Show this message"
 }
 
+debug="no"
+
 # Parse params
-eval set -- $(getopt -n $0 -o "f:s:p:hd" -- "$@")
+eval set -- $(getopt -n $0 -o "c:df:hl:o:p:r:s:w:" -- "$@")
 declare s p h d
 while [ $# -gt 0 ]; do
     case "$1" in
-        -f) shift; function="$1"; shift;;
-        -s) shift; source="$1"; shift;;
-        -p) shift; project="$1"; shift;;
+        -c) shift; shift;;
         -d) debug=yes; shift;;
+        -f) shift; function="$1"; shift;;
         -h) showhelp; exit 1;;
+        -l) shift; shift;;
+        -o) shift; output="$1"; shift;;
+        -p) shift; project="$1"; shift;;
+        -r) shift; result="$1"; shift;;
+        -s) shift; source="$1"; shift;;
+        -w) shift; workdir="$1"; shift;;
         --) shift;;
         -*) echo "[c_loop2.sh] Error: unrecognized option: $1"; showhelp; exit 1;;
     esac
 done
 
-# Is debug enabled?
+# If debug is enabled set output file
 if [ x"${debug}" == x"yes" ]; then
-    echo "[c_loop2.sh] Project: ${project}"
-    echo "[c_loop2.sh] Source:  ${source}"
+    if [ x"${output}" == x"" ]; then
+        echo "[c_loop2.sh] Error: debug enable but output file not specified"
+    else
+        OUTPUTFILE="${output}"
+    fi
+else
+    OUTPUTFILE=/dev/stdout
 fi
 
-# Sanity check: -p and -s are mandatory
+# Clear output file
+echo "" > ${OUTPUTFILE}
+
+# Goto to workdir directory
+if [ x"${workdir}" != x"" ]; then
+    echo "[c_loop2.sh] Workdir: ${workdir}" > ${workdir}/${OUTPUTFILE}
+    cd ${workdir}
+fi
+
+# Is debug enabled?
+if [ x"${debug}" == x"yes" ]; then
+    echo "[c_loop2.sh] Project:  ${project}"  >> ${OUTPUTFILE}
+    echo "[c_loop2.sh] Source:   ${source}"   >> ${OUTPUTFILE}
+    echo "[c_loop2.sh] Function: ${function}" >> ${OUTPUTFILE}
+    echo "[c_loop2.sh] Output:   ${output}"   >> ${OUTPUTFILE}
+    echo "[c_loop2.sh] Workdir:  ${workdir}"  >> ${OUTPUTFILE}
+    echo "[c_loop2.sh] Result:   ${result}"   >> ${OUTPUTFILE}
+    echo "[c_loop2.sh] Debug:    ${debug}"    >> ${OUTPUTFILE}
+fi
+
+# Sanity check: -f, -p and -s are mandatory
 if [ x"${source}" == x"" ]; then
-    echo "[c_loop2.sh] Error: source file not defined"
+    echo "[c_loop2.sh] Error: source file not defined" >> ${OUTPUTFILE}
     showhelp
     exit 1
 fi
 if [ x"${project}" == x"" ]; then
-    echo "[c_loop2.sh] Error: project name not defined"
+    echo "[c_loop2.sh] Error: project name not defined" >> ${OUTPUTFILE}
     showhelp
     exit 1
 fi
 if [ x"${function}" == x"" ]; then
-    echo "[c_loop2.sh] Error: function name not defined"
+    echo "[c_loop2.sh] Error: function name not defined" >> ${OUTPUTFILE}
     showhelp
     exit 1
 fi
 
 # Sanity check: source file should exists
 if [ ! -f ${source} ]; then
-    echo "[c_loop2.sh] Error: could not find the source file: ${source}"
+    echo "[c_loop2.sh] Error: could not find the source file: ${source}" >> ${OUTPUTFILE}
     exit 1
 fi
 # Sanity check: project directory should not exists
 if [ -d ${project}.database ]; then
-    echo "[c_loop2.sh] Error: project directory already exists: ${project}"
+    echo "[c_loop2.sh] Error: project directory already exists: ${project}" >> ${OUTPUTFILE}
     exit 1
 fi
 
 ###############################################################################
 # Create TPIPS script file
 #
-if [ ! -f "${project}.tpips" ]; then
-    echo "[c_loop2.sh] Warning: there is already a script with this name: ${project}.tpips"
-    echo "[c_loop2.sh]          existing script will be renamed to ${project}.tpips.old"
-    mv ${project}.tpips ${project}.tpips.old
+TMP=`mktemp -u ${project}_XXXXXX` || exit 1
+
+if [ -f "${TMP}.tpips" -a x"${debug}" == x"yes" ]; then
+    echo "[c_loop2.sh] Warning: there is already a script with this name: ${TMP}.tpips" >> ${OUTPUTFILE}
+    echo "[c_loop2.sh]          existing script will be renamed to ${TMP}.tpips.old" >> ${OUTPUTFILE}
+    mv ${TMP}.tpips ${TMP}.tpips.old
 fi
-echo "setproperty ABORT_ON_USER_ERROR TRUE"                  > ${project}.tpips
-echo "create ${project} ${source}"                          >> ${project}.tpips
-echo "activate INTERPROCEDURAL_SUMMARY_PRECONDITION"        >> ${project}.tpips
-echo "activate TRANSFORMERS_INTER_FULL"                     >> ${project}.tpips
-echo "activate PRECONDITIONS_INTER_FULL"                    >> ${project}.tpips
-echo "setproperty SEMANTICS_FIX_POINT_OPERATOR \"derivative\"" >> ${project}.tpips
-echo "module ${function}"                                   >> ${project}.tpips
-echo "apply LOOP_INTERCHANGE"                               >> ${project}.tpips
-echo "loop_10"                                              >> ${project}.tpips
-echo "apply UNSPLIT[%PROGRAM]"                              >> ${project}.tpips
-echo "close"                                                >> ${project}.tpips
-echo "quit"                                                 >> ${project}.tpips
+
+echo "setproperty ABORT_ON_USER_ERROR TRUE"                  > ${TMP}.tpips
+echo "delete ${TMP}"                                        >> ${TMP}.tpips
+echo "create ${TMP} ${source}"                              >> ${TMP}.tpips
+echo "activate INTERPROCEDURAL_SUMMARY_PRECONDITION"        >> ${TMP}.tpips
+echo "activate TRANSFORMERS_INTER_FULL"                     >> ${TMP}.tpips
+echo "activate PRECONDITIONS_INTER_FULL"                    >> ${TMP}.tpips
+echo "setproperty SEMANTICS_FIX_POINT_OPERATOR \"derivative\"" >> ${TMP}.tpips
+echo "module ${function}"                                   >> ${TMP}.tpips
+echo "apply LOOP_INTERCHANGE"                               >> ${TMP}.tpips
+echo "loop_10"                                              >> ${TMP}.tpips
+echo "apply UNSPLIT[%PROGRAM]"                              >> ${TMP}.tpips
+echo "close"                                                >> ${TMP}.tpips
+echo "quit"                                                 >> ${TMP}.tpips
 
 ###############################################################################
 # Run TPIPS script
 #
-command="@TPIPS_PROGRAM@ ${project}.tpips"
+command="@TPIPS_PROGRAM@ ${TMP}.tpips &>> ${OUTPUTFILE}"
+
+if [ x"${debug}" == x"yes" ]; then
+    echo "[c_loop2.sh] Running: ${command}" >> ${OUTPUTFILE}
+fi
 
 eval ${command}
 
+# Create a link to the result file or die!
 if [ "0" != ${?} ]; then
-    echo "[c_loop2.sh] Error: TPIPS execution failed"
+    echo "[c_loop2.sh] Error: TPIPS execution failed" >> ${OUTPUTFILE}
+    exit 1
+else
+    if [ x"${debug}" == x"yes" ]; then
+        echo "[c_loop2.sh] Linking: [${result}]->[${TMP}.database/${function}/${function}.pre.c]" >> ${OUTPUTFILE}
+    fi
+    ln -s ${TMP}.database/${function}/${function}.pre.c ${result}
 fi
 
 exit 0
