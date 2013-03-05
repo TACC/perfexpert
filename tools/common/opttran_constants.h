@@ -50,6 +50,25 @@ extern "C" {
 #define OPTTRAN_TRUE   1 /**< used to return boolean values */
 #define OPTTRAN_FALSE  0 /**< used to return boolean values */
 
+/** Buffers size, will be used for:
+ * - parsing INPUT file
+ * - parsing metrics file
+ * - storing SQL statements (including the 'functions')
+ * - maybe something else
+ */
+#define BUFFER_SIZE       4096
+#define MAX_FRAGMENT_DATA 1048576
+#define PARAM_SIZE        128
+
+/** Default values for some parameters */
+#define RECOMMENDATION_DB     "recommendation.db"
+#define OPTTRAN_RECO_FILE     "recommendations.txt"
+#define OPTTRAN_PR_FILE       "transformations.txt"
+#define OPTTRAN_FRAGMENTS_DIR "fragments"
+#define OPTTRAN_SOURCE_DIR    "source"
+#define METRICS_TABLE         "metric"
+#define METRICS_FILE          "recommender-metrics.txt"
+
 #ifdef __cplusplus
 }
 #endif
