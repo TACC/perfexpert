@@ -58,17 +58,6 @@ extern "C" {
 #include <stdio.h> /* To use FILE type on globals */
 #endif
 
-/** Buffers size, will be used for:
- * - parsing INPUT file
- * - maybe something else
- */
-#define BUFFER_SIZE 4096
-
-/** Default values for some parameters */
-#define RECOMMENDATION_DB "recommendation.db"
-#define OPTTRAN_PR_FILE   "transformations.txt"
-#define MAX_FRAGMENT_DATA 1048576
-
 /** Structure to hold global variables */
 typedef struct {
     int  verbose;
@@ -114,7 +103,7 @@ static struct option long_options[] = {
     {"testall",         no_argument,       NULL, 't'},
     {"opttran",         required_argument, NULL, 'a'},
 #if HAVE_SQLITE3 == 1
-    {"pid",             required_argument, NULL, 'p'},
+    {"opttranid",       required_argument, NULL, 'p'},
 #endif
     {0, 0, 0, 0}
 };

@@ -60,22 +60,6 @@ extern "C" {
 #include <stdio.h> /* To use FILE type on globals */
 #endif
 
-/** Buffers size, will be used for:
- * - parsing INPUT file
- * - parsing metrics file
- * - storing SQL statements (including the 'functions')
- * - maybe something else
- */
-#define BUFFER_SIZE 4096
-
-/** Default values for some parameters */
-#define RECOMMENDATION_DB       "recommendation.db"
-#define METRICS_TABLE           "metric"
-#define METRICS_FILE            "recommender-metrics.txt"
-#define OPTTRAN_RECO_FILE       "recommendations.txt"
-#define OPTTRAN_FRAGMENTS_DIR   "fragments"
-#define OPTTRAN_SOURCE_DIR      "source"
-
 /** Structure to hold global variables */
 typedef struct {
     int  verbose;
