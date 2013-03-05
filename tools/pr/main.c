@@ -740,8 +740,6 @@ static int parse_fragment_params(opttran_list_t *fragments_p, FILE *inputfile_p)
 
 /* test_recognizers */
 static int test_recognizers(opttran_list_t *fragments_p) {
-    opttran_list_t *recommendations;
-    opttran_list_t *recognizers;
     recommendation_t *recommendation;
     recognizer_t *recognizer;
     fragment_t *fragment;
@@ -763,13 +761,11 @@ static int test_recognizers(opttran_list_t *fragments_p) {
     fragment = (fragment_t *)opttran_list_get_first(fragments_p);
     while ((opttran_list_item_t *)fragment != &(fragments_p->sentinel)) {
         /* For all code fragments ... */
-        recommendations = (opttran_list_t *)&(fragment->recommendations);
         recommendation = (recommendation_t *)opttran_list_get_first(&(fragment->recommendations));
-        while ((opttran_list_item_t *)recommendation != &(recommendations->sentinel)) {
+        while ((opttran_list_item_t *)recommendation != &(fragment->recommendations.sentinel)) {
             /* For all recommendations ... */
-            recognizers = (opttran_list_t *)&(recommendation->recognizers);
             recognizer = (recognizer_t *)opttran_list_get_first(&(recommendation->recognizers));
-            while ((opttran_list_item_t *)recognizer != &(recognizers->sentinel)) {
+            while ((opttran_list_item_t *)recognizer != &(recommendation->recognizers.sentinel)) {
                 /* For all fragment recognizers ... */
                 test = (test_t *)malloc(sizeof(test_t));
                 if (NULL == test) {
@@ -897,7 +893,7 @@ static int test_recognizers(opttran_list_t *fragments_p) {
     while (OPTTRAN_FALSE == opttran_list_is_empty(tests)) {
         test = (test_t *)opttran_list_get_first(tests);
         opttran_list_remove_item(tests, (opttran_list_item_t *)test);
-        free(test); // Some version of GCC will complain about this
+        free(test);
     }
     opttran_list_destruct(tests);
     // TODO: in case of empty lists (no recognizers) this causes a segfault :-/
