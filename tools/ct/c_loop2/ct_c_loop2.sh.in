@@ -39,6 +39,7 @@ showhelp() {
     echo "  -r FILE     Use FILE as output for transformed code"
     echo "  -s FILE     Use FILE to define the source code to be transformed"
     echo "  -w DIR      Use DIR as work directory"
+    echo "  -l LINE     Apply the transformation for the loop on LINE line #"
     echo "  -d          Enable debug"
     echo "  -h          Show this message"
 }
@@ -54,7 +55,7 @@ while [ $# -gt 0 ]; do
         -d) debug=yes; shift;;
         -f) shift; function="$1"; shift;;
         -h) showhelp; exit 1;;
-        -l) shift; shift;;
+        -l) shift; linenumber="$1"; shift;;
         -o) shift; output="$1"; shift;;
         -p) shift; project="$1"; shift;;
         -r) shift; result="$1"; shift;;
@@ -143,7 +144,7 @@ echo "activate PRECONDITIONS_INTER_FULL"                    >> ${TMP}.tpips
 echo "setproperty SEMANTICS_FIX_POINT_OPERATOR \"derivative\"" >> ${TMP}.tpips
 echo "module ${function}"                                   >> ${TMP}.tpips
 echo "apply LOOP_INTERCHANGE"                               >> ${TMP}.tpips
-echo "loop_10"                                              >> ${TMP}.tpips
+echo "loop_${linenumber}"                                   >> ${TMP}.tpips
 echo "apply UNSPLIT[%PROGRAM]"                              >> ${TMP}.tpips
 echo "close"                                                >> ${TMP}.tpips
 echo "quit"                                                 >> ${TMP}.tpips
