@@ -504,10 +504,10 @@ AC_SUBST([ENABLE_CT])
 #------------------------------------------------------------------------------
 # Enable/Disable 'opttran_cr'
 #
-AC_MSG_CHECKING([whether to enable OptTran Code Re-Assembler])
+AC_MSG_CHECKING([whether to enable OptTran Code Remounter])
 AC_ARG_ENABLE([opttran_cr],
     [AS_HELP_STRING([--disable-opttran_cr],
-        [Enable/Disable the code re-assembler tool [default=enabled]])],
+        [Enable/Disable the code remounter tool [default=enabled]])],
     [ENABLE_OPTTRAN_CR=$enableval], [ENABLE_OPTTRAN_CR=no])
 
 AS_IF([test x"$ENABLE_OPTTRAN_CR" = x"yes"], [
@@ -549,7 +549,7 @@ AC_MSG_NOTICE([ PerfExpert:                $ENABLE_OPTTRAN_PERFEXPERT  ])
 AC_MSG_NOTICE([ Optimizations Recommender: $ENABLE_OPTTRAN_RECOMMENDER ])
 AC_MSG_NOTICE([ Code Pattern Recognizer:   $ENABLE_OPTTRAN_PR          ])
 AC_MSG_NOTICE([ Code Transformer:          $ENABLE_OPTTRAN_CT          ])
-AC_MSG_NOTICE([ Code Re-Assembler:         $ENABLE_OPTTRAN_CR          ])
+AC_MSG_NOTICE([ Code Remounter:            $ENABLE_OPTTRAN_CR          ])
 AC_MSG_NOTICE([                                                        ])
 AC_MSG_NOTICE([ Debug mode: $ENABLE_DEBUG                              ])
 AC_MSG_NOTICE([ PAPI:       $HAVE_PAPI_HEADER                          ])
