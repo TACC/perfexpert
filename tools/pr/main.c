@@ -740,10 +740,6 @@ static int parse_fragment_params(opttran_list_t *fragments_p, FILE *inputfile_p)
     return OPTTRAN_SUCCESS;
 }
 
-// TODO: the behaviour of this function when not using the --testall argument is
-//       wrong. Tests should stop when there is a postive result of a test for
-//       each fragment. Currently, all tests are stoping when one tests results
-//       positive.
 /* test_recognizers */
 static int test_recognizers(opttran_list_t *fragments_p) {
     recommendation_t *recommendation;
@@ -751,6 +747,7 @@ static int test_recognizers(opttran_list_t *fragments_p) {
     fragment_t *fragment;
     opttran_list_t *tests;
     test_t *test;
+    int fragment_id = 0;
 
     tests = (opttran_list_t *)malloc(sizeof(opttran_list_t));
     if (NULL == tests) {
@@ -767,6 +764,7 @@ static int test_recognizers(opttran_list_t *fragments_p) {
     fragment = (fragment_t *)opttran_list_get_first(fragments_p);
     while ((opttran_list_item_t *)fragment != &(fragments_p->sentinel)) {
         /* For all code fragments ... */
+        fragment_id++;
         recommendation = (recommendation_t *)opttran_list_get_first(&(fragment->recommendations));
         while ((opttran_list_item_t *)recommendation != &(fragment->recommendations.sentinel)) {
             /* For all recommendations ... */
@@ -782,6 +780,7 @@ static int test_recognizers(opttran_list_t *fragments_p) {
                 test->program = recognizer->program;
                 test->fragment_file = fragment->fragment_file;
                 test->test_result = &(recognizer->test_result);
+                test->fragment_id = fragment_id;
 
                 OPTTRAN_OUTPUT_VERBOSE((10, "[%s] %s", test->program,
                                         test->fragment_file));
@@ -849,8 +848,18 @@ static int test_recognizers(opttran_list_t *fragments_p) {
                             _GREEN("test(s) should be run")));
 
     /* Run the tests */
+    fragment_id = 0;
     test = (test_t *)opttran_list_get_first(tests);
     while ((opttran_list_item_t *)test != &(tests->sentinel)) {
+        *(test->test_result) = OPTTRAN_UNDEFINED;
+        /* Skip this test if 'testall' is not set */
+        if ((0 == globals.testall) && (fragment_id >= test->fragment_id)) {
+            OPTTRAN_OUTPUT(("   %s [%s] >> [%s]", _RED("Skiping test"),
+                            test->program, test->fragment_file));
+            test = (test_t *)opttran_list_get_next(test);
+            continue;
+        }
+
         if (OPTTRAN_SUCCESS != test_one(test)) {
             OPTTRAN_OUTPUT(("   %s [%s] >> [%s]", _RED("Error: running test"),
                             test->program, test->fragment_file));
@@ -873,6 +882,7 @@ static int test_recognizers(opttran_list_t *fragments_p) {
                 OPTTRAN_OUTPUT_VERBOSE((8, "   %s    [%s] >> [%s]",
                                         _BOLDGREEN("OK"), test->program,
                                         test->fragment_file));
+                fragment_id = test->fragment_id;
                 break;
                 
             case OPTTRAN_ERROR:
@@ -883,13 +893,6 @@ static int test_recognizers(opttran_list_t *fragments_p) {
                 
             default:
                 break;
-        }
-        
-        /* Break the loop if 'testall' is not set */
-        if ((0 == globals.testall) &&
-            (OPTTRAN_SUCCESS == (int)*(test->test_result))) {
-            OPTTRAN_OUTPUT_VERBOSE((7, "   %s", _YELLOW("passed test")));
-            break;
         }
         
         /* Move on to the next test... */

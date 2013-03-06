@@ -121,6 +121,7 @@ typedef struct test {
     char *program;
     char *fragment_file;
     int  *test_result;
+    int  fragment_id;
 } test_t;
 
 /** Structure to hold recognizers */
