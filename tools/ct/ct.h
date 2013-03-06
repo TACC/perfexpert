@@ -121,11 +121,13 @@ typedef struct transf {
     volatile opttran_list_item_t *prev;
     char *program;
     char *fragment_file;
+    int  fragment_line_number;
     char *filename;
     int  line_number;
     char *code_type;
     char *function_name;
-    int  transf_result;
+    int  *transf_result;
+    char **transf_function;
     int  fragment_id;
 } transf_t;
 
@@ -135,6 +137,9 @@ typedef struct transformation {
     volatile opttran_list_item_t *prev;
     char *program;
     char *fragment_file;
+    int  line_number;
+    int  transf_result;
+    char *transf_function;
 } transformation_t;
 
 /** Structure to hold fragments */
@@ -156,6 +161,7 @@ static int  parse_transformation_params(opttran_list_t *segments_p,
                                         FILE *inputfile_p);
 static int  apply_transformations(opttran_list_t *fragments_p);
 static int  apply_one(transf_t *transf);
+static int  output_results(opttran_list_t *fragments_p);
 #if HAVE_SQLITE3 == 1
 static int  database_connect(void);
 #endif
