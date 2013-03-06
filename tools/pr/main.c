@@ -854,7 +854,7 @@ static int test_recognizers(opttran_list_t *fragments_p) {
         *(test->test_result) = OPTTRAN_UNDEFINED;
         /* Skip this test if 'testall' is not set */
         if ((0 == globals.testall) && (fragment_id >= test->fragment_id)) {
-            OPTTRAN_OUTPUT(("   %s [%s] >> [%s]", _RED("Skiping test"),
+            OPTTRAN_OUTPUT(("   %s  [%s] >> [%s]", _MAGENTA("SKIP"),
                             test->program, test->fragment_file));
             test = (test_t *)opttran_list_get_next(test);
             continue;
