@@ -57,6 +57,7 @@ OPTTRAN_PERFEXPERT_RUN_EXP="${OPTTRAN_BINDIR}/perfexpert_run_exp"
 OPTTRAN_PERFEXPERT="${OPTTRAN_BINDIR}/perfexpert"
 OPTTRAN_RECOMMENDER="${OPTTRAN_BINDIR}/recommender"
 OPTTRAN_PR="${OPTTRAN_BINDIR}/opttran_pr"
+OPTTRAN_CT="${OPTTRAN_BINDIR}/opttran_ct"
 
 ###############################################################################
 # Set 'perfexpert_run_exp' up
@@ -171,6 +172,33 @@ OPTTRAN_PR_CMD+=" --opttran ${OPTTRAN_DIR}"
 OPTTRAN_PR_CMD+=" > ${OPTTRAN_DIR}/opttran_pr.output"
 
 ###############################################################################
+# Set 'opttran_ct' up
+#
+# Usage: opttran_ct -i|-f file [-o file] [-vch] [-l level] [-a dir] [-d database] [-p pid]
+# -i --stdin           Use STDIN as input for patterns
+# -f --inputfile       Use 'file' as input for patterns
+# -o --outputfile      Use 'file' as output (default stdout)
+# -a --opttran         Create OptTran (automatic performance optimization) files
+#                      into 'dir' directory (default: create no OptTran files).
+#                      This argument overwrites -o (no output on STDOUT, except
+#                      for verbose messages)
+# -d --database        Select the recommendation database file
+#                      (default: /home/fialho/opttran/var/recommendation.db)
+# -p --opttranid       Use 'pid' to log on DB consecutive calls to Recommender
+# -v --verbose         Enable verbose mode using default verbose level (5)
+# -l --verbose_level   Enable verbose mode using a specific verbose level (1-10)
+# -c --colorful        Enable colors on verbose mode, no weird characters will
+#                      appear on output files
+# -h --help            Show this message
+#
+OPTTRAN_CT_CMD="${OPTTRAN_CT}"
+OPTTRAN_CT_CMD+=" --verbose_level 10"
+OPTTRAN_CT_CMD+=" --colorful"
+OPTTRAN_CT_CMD+=" --inputfile ${OPTTRAN_DIR}/transformations.txt"
+OPTTRAN_CT_CMD+=" --opttran ${OPTTRAN_DIR}"
+OPTTRAN_CT_CMD+=" > ${OPTTRAN_DIR}/opttran_ct.output"
+
+###############################################################################
 # Let's run these tools!
 #
 
@@ -251,6 +279,19 @@ else
     exit 1
 fi
 
+# Run the Code Transformer
+echo -n "[opttran] Applying code transformations..."
+if [ x"${DEBUG}" == x"yes" ]; then
+    echo "Running: ${OPTTRAN_CT_CMD}" >> ${LOGFILE}
+fi
+eval ${OPTTRAN_CT_CMD}
+if [ 0 == $? ]; then
+    echo " ok!"
+else
+    echo " fail :("
+    echo "ERROR: running OptTran:CT" >> ${LOGFILE}
+    exit 1
+fi
 
 
 
