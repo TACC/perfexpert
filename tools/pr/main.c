@@ -1119,6 +1119,9 @@ static int output_results(opttran_list_t *fragments_p) {
                         fprintf(globals.outputfile_FP,
                                 "recommender.code_fragment=%s\n",
                                 fragment->outer_loop_fragment_file);
+                        fprintf(globals.outputfile_FP,
+                                "recommender.line_number=%d\n",
+                                fragment->outer_loop);
                         fprintf(globals.outputfile_FP, "pr.transformation=%s\n",
                                 recognizer->program);
                     }
@@ -1128,6 +1131,9 @@ static int output_results(opttran_list_t *fragments_p) {
                         fprintf(globals.outputfile_FP,
                                 "recommender.code_fragment=%s\n",
                                 fragment->outer_outer_loop_fragment_file);
+                        fprintf(globals.outputfile_FP,
+                                "recommender.line_number=%d\n",
+                                fragment->outer_outer_loop);
                         fprintf(globals.outputfile_FP, "pr.transformation=%s\n",
                                 recognizer->program);
                     }
