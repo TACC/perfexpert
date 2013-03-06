@@ -64,6 +64,7 @@ extern "C" {
 #define RECOMMENDATION_DB     "recommendation.db"
 #define OPTTRAN_RECO_FILE     "recommendations.txt"
 #define OPTTRAN_PR_FILE       "transformations.txt"
+#define OPTTRAN_CT_FILE       "functions.txt"
 #define OPTTRAN_FRAGMENTS_DIR "fragments"
 #define OPTTRAN_SOURCE_DIR    "source"
 #define METRICS_TABLE         "metric"
