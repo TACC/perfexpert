@@ -100,6 +100,7 @@ extern globals_t globals; /**< Variable to hold global options */
  */
 static struct option long_options[] = {
     {"verbose_level",   required_argument, NULL, 'l'},
+    {"verbose",         no_argument,       NULL, 'v'},
     {"stdin",           no_argument,       NULL, 'i'},
     {"inputfile",       required_argument, NULL, 'f'},
     {"help",            no_argument,       NULL, 'h'},
