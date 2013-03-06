@@ -52,7 +52,7 @@ install-exec-local:
 		>> $(top_builddir)/warnings_recommender; fi
 	$(INSTALL) -b -m 644 recommendation.db $(localstatedir)/
 	rm recommendation.db
-	$(INSTALL) -m 644 $(top_srcdir)/contrib/recommender-metrics.txt \
+	$(INSTALL) -m 644 $(top_srcdir)/contrib/recommendation-metrics.txt \
 		$(sysconfdir)/
 	$(INSTALL) -m 644 $(top_srcdir)/contrib/recommendation.db.txt \
 		$(datadir)/$(PACKAGE_NAME)/
