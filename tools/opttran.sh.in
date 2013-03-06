@@ -69,6 +69,7 @@ OPTTRAN_PERFEXPERT="${OPTTRAN_BINDIR}/perfexpert"
 OPTTRAN_RECOMMENDER="${OPTTRAN_BINDIR}/recommender"
 OPTTRAN_PR="${OPTTRAN_BINDIR}/opttran_pr"
 OPTTRAN_CT="${OPTTRAN_BINDIR}/opttran_ct"
+OPTTRAN_CR="${OPTTRAN_BINDIR}/opttran_cr"
 
 ###############################################################################
 # Set 'perfexpert_run_exp' up
@@ -180,7 +181,7 @@ OPTTRAN_RECOMMENDER_CMD+=" > ${OPTTRAN_DIR}/recommender.output"
 OPTTRAN_PR_CMD="${OPTTRAN_PR}"
 OPTTRAN_PR_CMD+=" --verbose_level 10"
 OPTTRAN_PR_CMD+=" --colorful"
-OPTTRAN_PR_CMD+=" --inputfile ${OPTTRAN_DIR}/recommendations.txt"
+OPTTRAN_PR_CMD+=" --inputfile ${OPTTRAN_DIR}/opttran_recommendations.txt"
 OPTTRAN_PR_CMD+=" --testall"
 OPTTRAN_PR_CMD+=" --opttran ${OPTTRAN_DIR}"
 OPTTRAN_PR_CMD+=" > ${OPTTRAN_DIR}/opttran_pr.output"
@@ -211,9 +212,21 @@ OPTTRAN_PR_CMD+=" > ${OPTTRAN_DIR}/opttran_pr.output"
 OPTTRAN_CT_CMD="${OPTTRAN_CT}"
 OPTTRAN_CT_CMD+=" --verbose_level 10"
 OPTTRAN_CT_CMD+=" --colorful"
-OPTTRAN_CT_CMD+=" --inputfile ${OPTTRAN_DIR}/transformations.txt"
+OPTTRAN_CT_CMD+=" --inputfile ${OPTTRAN_DIR}/opttran_transformations.txt"
 OPTTRAN_CT_CMD+=" --opttran ${OPTTRAN_DIR}"
 OPTTRAN_CT_CMD+=" > ${OPTTRAN_DIR}/opttran_ct.output"
+
+###############################################################################
+# Set 'opttran_cr' up
+#
+
+#
+OPTTRAN_CR_CMD="${OPTTRAN_CR}"
+OPTTRAN_CR_CMD+=" --verbose_level 10"
+OPTTRAN_CR_CMD+=" --colorful"
+OPTTRAN_CR_CMD+=" --inputfile ${OPTTRAN_DIR}/opttran_functions.txt"
+OPTTRAN_CR_CMD+=" --opttran ${OPTTRAN_DIR}"
+OPTTRAN_CR_CMD+=" > ${OPTTRAN_DIR}/opttran_cr.output"
 
 ###############################################################################
 # Let's run these tools!
@@ -231,7 +244,7 @@ if [ x"${DEBUG}" == x"yes" ]; then
 fi
 
 # Run PerfExpert (run_exp)
-echo -n "[opttran.sh] Running PerfExpert: measurements phase (this could take a while)..."
+echo -n "[opttran.sh] Step 1 of 6: Running PerfExpert measurements phase (this could take a while)..."
 if [ x"${DEBUG}" == x"yes" ]; then
     echo "[opttran.sh] Running: ${OPTTRAN_PERFEXPERT_RUN_EXP_CMD}" >> ${LOGFILE}
 fi
@@ -245,7 +258,7 @@ else
 fi
 
 # Run PerfExpert (analysis)
-echo -n "[opttran.sh] Running PerfExpert: analysis phase..."
+echo -n "[opttran.sh] Step 2 of 6: Running PerfExpert analysis phase..."
 if [ x"${DEBUG}" == x"yes" ]; then
     echo "[opttran.sh] Running: ${OPTTRAN_PERFEXPERT_CMD}" >> ${LOGFILE}
 fi
@@ -268,7 +281,7 @@ if [ 0 != $? ]; then
 fi
 
 # Run Recommender
-echo -n "[opttran.sh] Looking for recommendations..."
+echo -n "[opttran.sh] Step 3 of 6: Looking for recommendations..."
 if [ x"${DEBUG}" == x"yes" ]; then
     echo "[opttran.sh] Running: ${OPTTRAN_RECOMMENDER_CMD}" >> ${LOGFILE}
 fi
@@ -282,7 +295,7 @@ else
 fi
 
 # Run the Pattern Recognizer
-echo -n "[opttran.sh] Test the feasibility of recommendations..."
+echo -n "[opttran.sh] Step 4 of 6: Testing feasibility of recommendations..."
 if [ x"${DEBUG}" == x"yes" ]; then
     echo "[opttran.sh] Running: ${OPTTRAN_PR_CMD}" >> ${LOGFILE}
 fi
@@ -296,7 +309,7 @@ else
 fi
 
 # Run the Code Transformer
-echo -n "[opttran.sh] Applying code transformations..."
+echo -n "[opttran.sh] Step 5 of 6: Applying code transformations..."
 if [ x"${DEBUG}" == x"yes" ]; then
     echo "[opttran.sh] Running: ${OPTTRAN_CT_CMD}" >> ${LOGFILE}
 fi
@@ -306,6 +319,20 @@ if [ 0 == $? ]; then
 else
     echo " fail :("
     echo "[opttran.sh] ERROR: running OptTran:CT" >> ${LOGFILE}
+    exit 1
+fi
+
+# Run the Code Remounter
+echo -n "[opttran.sh] Step 6 of 6: Remounting application source code..."
+    if [ x"${DEBUG}" == x"yes" ]; then
+    echo "[opttran.sh] Running: ${OPTTRAN_CR_CMD}" >> ${LOGFILE}
+fi
+eval ${OPTTRAN_CR_CMD}
+if [ 0 == $? ]; then
+    echo " ok!"
+else
+    echo " fail :("
+    echo "[opttran.sh] ERROR: running OptTran:CR" >> ${LOGFILE}
     exit 1
 fi
 
