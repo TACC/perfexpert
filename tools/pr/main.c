@@ -1049,6 +1049,7 @@ static int test_one(test_t *test) {
     return OPTTRAN_SUCCESS;
 }
 
+// TODO: check that data is being recorded correclty on DB
 /* output results */
 static int output_results(opttran_list_t *fragments_p) {
     opttran_list_t *recommendations;
