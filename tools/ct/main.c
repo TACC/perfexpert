@@ -67,6 +67,7 @@ int main(int argc, char** argv) {
         .outputfile       = NULL,   // char *
         .outputfile_FP    = stdout, // FILE *
         .opttrandir       = NULL,   // char *
+        .transfall        = 0,      // int
 #if HAVE_SQLITE3 == 1
         .opttran_pid      = (unsigned long long int)getpid(), // int
 #endif
@@ -173,6 +174,8 @@ static void show_help(void) {
     printf("                       into 'dir' directory (default: create no OptTran files).\n");
     printf("                       This argument overwrites -o (no output on STDOUT, except\n");
     printf("                       for verbose messages)\n");
+    printf("  -t --transfall       Apply all possible transformation to each fragments (not\n");
+    printf("                       recommended, some transformations are not compatible)\n");
 #if HAVE_SQLITE3 == 1
     printf("  -d --database        Select the recommendation database file\n");
     printf("                       (default: %s/%s)\n", OPTTRAN_VARDIR, RECOMMENDATION_DB);
@@ -323,6 +326,13 @@ static int parse_cli_params(int argc, char *argv[]) {
                                         globals.opttrandir));
                 break;
 
+            /* Apply all possible transformations for each code fragment? */
+            case 't':
+                globals.transfall = 1;
+                OPTTRAN_OUTPUT_VERBOSE((10, "option 't' set"));
+                break;
+
+
             /* Unknown option */
             case '?':
                 show_help();
@@ -353,6 +363,8 @@ static int parse_cli_params(int argc, char *argv[]) {
                             globals.opttran_pid));
     OPTTRAN_OUTPUT_VERBOSE((10, "   OPTTRAN directory: %s",
                             globals.opttrandir ? globals.opttrandir : "(null)"));
+    OPTTRAN_OUTPUT_VERBOSE((10, "   Apply all transf.? %s",
+                            globals.transfall ? "yes" : "no"));
     OPTTRAN_OUTPUT_VERBOSE((10, "   Database file:     %s",
                             globals.dbfile ? globals.dbfile : "(null)"));
 
@@ -603,16 +615,13 @@ static int database_connect(void) {
 }
 #endif
 
-// TODO: the behaviour of this function when not using the --applyall argument
-//       is wrong. Transformations apply should stop when it is possible to
-//       apply the first transformation for each code fragment. Currently, all
-//       transformations are stoping when one is possible.
 /* apply_transformations */
 static int apply_transformations(opttran_list_t *fragments_p) {
     transformation_t *transformation;
     fragment_t *fragment;
     opttran_list_t *transfs;
     transf_t *transf;
+    int fragment_id = 0;
 
     transfs = (opttran_list_t *)malloc(sizeof(opttran_list_t));
     if (NULL == transfs) {
@@ -629,6 +638,7 @@ static int apply_transformations(opttran_list_t *fragments_p) {
     fragment = (fragment_t *)opttran_list_get_first(fragments_p);
     while ((opttran_list_item_t *)fragment != &(fragments_p->sentinel)) {
         /* For all code fragments ... */
+        fragment_id++;
         transformation = (transformation_t *)opttran_list_get_first(&(fragment->transformations));
         while ((opttran_list_item_t *)transformation != &(fragment->transformations.sentinel)) {
             /* For all transformations ... */
@@ -646,6 +656,7 @@ static int apply_transformations(opttran_list_t *fragments_p) {
             transf->code_type     = fragment->code_type;
             transf->function_name = fragment->function_name;
             transf->transf_result = OPTTRAN_UNDEFINED;
+            transf->fragment_id   = fragment_id;
 
             OPTTRAN_OUTPUT_VERBOSE((10, "[%s] %s", transf->program,
                                     transf->fragment_file));
@@ -664,49 +675,51 @@ static int apply_transformations(opttran_list_t *fragments_p) {
                             _GREEN("possible transformation(s) found")));
 
     /* Apply the transformations */
+    fragment_id = 0;
     transf = (transf_t *)opttran_list_get_first(transfs);
     while ((opttran_list_item_t *)transf != &(transfs->sentinel)) {
+        transf->transf_result = OPTTRAN_UNDEFINED;
+        /* Skip this test if 'transfall' is not set */
+        if ((0 == globals.transfall) && (fragment_id >= transf->fragment_id)) {
+            OPTTRAN_OUTPUT(("   %s [%s] >> [%s]", _RED("Skiping transformation"),
+                            transf->program, transf->filename));
+            transf = (transf_t *)opttran_list_get_next(transf);
+            continue;
+        }
+
         if (OPTTRAN_SUCCESS != apply_one(transf)) {
             OPTTRAN_OUTPUT(("   %s [%s] >> [%s]", _RED("Error: running test"),
-                            transf->program, transf->fragment_file));
+                            transf->program, transf->filename));
         }
 
         switch (transf->transf_result) {
             case OPTTRAN_UNDEFINED:
                 OPTTRAN_OUTPUT_VERBOSE((8, "   %s [%s] >> [%s]",
                                         _BOLDRED("UNDEF"), transf->program,
-                                        transf->fragment_file));
+                                        transf->filename));
                 break;
 
             case OPTTRAN_FAILURE:
                 OPTTRAN_OUTPUT_VERBOSE((8, "   %s  [%s] >> [%s]",
                                         _ERROR("FAIL"), transf->program,
-                                        transf->fragment_file));
+                                        transf->filename));
                 break;
 
             case OPTTRAN_SUCCESS:
                 OPTTRAN_OUTPUT_VERBOSE((8, "   %s    [%s] >> [%s]",
                                         _BOLDGREEN("OK"), transf->program,
-                                        transf->fragment_file));
+                                        transf->filename));
                 break;
 
             case OPTTRAN_ERROR:
                 OPTTRAN_OUTPUT_VERBOSE((8, "   %s [%s] >> [%s]",
                                         _BOLDYELLOW("ERROR"), transf->program,
-                                        transf->fragment_file));
+                                        transf->filename));
                 break;
 
             default:
                 break;
         }
-
-        /* Break the loop if 'testall' is not set */
-//        if ((0 == globals.testall) &&
-//            (OPTTRAN_SUCCESS == transf->transf_result)) {
-//            OPTTRAN_OUTPUT_VERBOSE((7, "   %s",
-//                                    _YELLOW("transformation applied")));
-//            break;
-//        }
 
         /* Move on to the next test... */
         transf = (transf_t *)opttran_list_get_next(transf);

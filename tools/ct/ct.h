@@ -70,6 +70,7 @@ typedef struct {
     int  colorful;
     int  use_opttran;
     char *opttrandir;
+    int  transfall;
 #if HAVE_SQLITE3 == 1
     char *dbfile;
     sqlite3 *db;
@@ -94,12 +95,14 @@ extern globals_t globals; /**< Variable to hold global options */
  */
 static struct option long_options[] = {
     {"verbose_level",   required_argument, NULL, 'l'},
+    {"verbose",         no_argument,       NULL, 'v'},
     {"stdin",           no_argument,       NULL, 'i'},
     {"inputfile",       required_argument, NULL, 'f'},
     {"help",            no_argument,       NULL, 'h'},
     {"outputfile",      required_argument, NULL, 'o'},
     {"colorful",        no_argument,       NULL, 'c'},
     {"opttran",         required_argument, NULL, 'a'},
+    {"transfall",       no_argument,       NULL, 't'},
 #if HAVE_SQLITE3 == 1
     {"opttranid",       required_argument, NULL, 'p'},
 #endif
@@ -123,6 +126,7 @@ typedef struct transf {
     char *code_type;
     char *function_name;
     int  transf_result;
+    int  fragment_id;
 } transf_t;
 
 /** Structure to hold transformations */
