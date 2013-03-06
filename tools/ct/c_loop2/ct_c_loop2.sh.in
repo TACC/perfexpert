@@ -76,13 +76,12 @@ else
     OUTPUTFILE=/dev/stdout
 fi
 
-# Clear output file
-echo "" > ${OUTPUTFILE}
-
-# Goto to workdir directory
+# Clean output file and go to workdir directory
 if [ x"${workdir}" != x"" ]; then
     echo "[c_loop2.sh] Workdir: ${workdir}" > ${workdir}/${OUTPUTFILE}
     cd ${workdir}
+else
+    echo -n "" > ${OUTPUTFILE}
 fi
 
 # Is debug enabled?
@@ -165,7 +164,7 @@ if [ "0" != ${?} ]; then
     echo "[c_loop2.sh] Error: TPIPS execution failed" >> ${OUTPUTFILE}
     exit 1
 else
-    if [ x"${result}" != x"" ]; them
+    if [ x"${result}" != x"" ]; then
         if [ x"${debug}" == x"yes" ]; then
             echo "[c_loop2.sh] Linking: [${result}]->[${TMP}.database/${function}/${function}.pre.c]" >> ${OUTPUTFILE}
         fi
