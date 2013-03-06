@@ -1,4 +1,4 @@
-Input file: "teste/perfexpert-experiment.xml"
+Input file: "example/perfexpert-experiment.xml"
 %
 code.section_info=Loop in function compute() at mm_naive.c:11
 code.filename=mm_naive.c
