@@ -1,20 +1,18 @@
 % recommendation for mm_naive.c:11
 code.filename=mm_naive.c
 code.line_number=11
-recommender.recommendation_id=31
-recommender.recognizer_id=1
-recommender.recognizer=c_loop1
-recommender.recognizer_id=2
-recommender.recognizer=f_loop1
-recommender.recommendation_id=4
-recommender.recommendation_id=39
-recommender.code_fragment=teste/fragments/mm_naive.c_11
-% recommendation for mm_naive.c:7
-code.filename=mm_naive.c
-code.line_number=7
+code.type=loop
+code.function_name=compute
+code.loop_depth=3
 recommender.recommendation_id=31
 recommender.recognizer_id=1
 recommender.recognizer=c_loop2
+recommender.recognizer_id=2
+recommender.recognizer=f_loop2
 recommender.recommendation_id=4
 recommender.recommendation_id=39
-recommender.code_fragment=teste/fragments/mm_naive.c_7
+recommender.code_fragment=teste/fragments/mm_naive.c_11
+code.outer_loop=10
+recommender.outer_loop_fragment=teste/fragments/mm_naive.c_10
+code.outer_outer_loop=9
+recommender.outer_outer_loop_fragment=teste/fragments/mm_naive.c_9
