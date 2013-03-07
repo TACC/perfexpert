@@ -80,6 +80,8 @@ int open_rose(void) {
 
 int close_rose(void) {
     // TODO: should find a way to free 'userProject'
+    OPTTRAN_OUTPUT_VERBOSE((7, "=== %s", _BLUE((char *)"Closing Rose")));
+
     return OPTTRAN_SUCCESS;
 }
 
@@ -175,6 +177,40 @@ int extract_source(void) {
     // TODO: should find a way to free 'file'
 
     OPTTRAN_OUTPUT_VERBOSE((7, "==="));
+
+    return OPTTRAN_SUCCESS;
+}
+
+static int output_fragment(SgNode *node, Sg_File_Info *fileInfo,
+                           segment_t *item) {
+    char *fragment_file = NULL;
+    FILE *fragment_file_FP;
+
+    fragment_file = (char *)malloc(strlen(globals.opttrandir) +
+                                   strlen(OPTTRAN_FRAGMENTS_DIR) +
+                                   strlen(item->filename) + 10);
+    if (NULL == fragment_file) {
+        OPTTRAN_OUTPUT(("%s", _ERROR((char *)"Error: out of memory")));
+        return OPTTRAN_ERROR;
+    }
+    bzero(fragment_file, (strlen(globals.opttrandir) +
+                          strlen(OPTTRAN_FRAGMENTS_DIR) +
+                          strlen(item->filename) + 10));
+    sprintf(fragment_file, "%s/%s/%s_%d", globals.opttrandir,
+            OPTTRAN_FRAGMENTS_DIR, item->filename, fileInfo->get_line());
+    OPTTRAN_OUTPUT_VERBOSE((8, "extracting it to (%s)", fragment_file));
+
+    fragment_file_FP = fopen(fragment_file, "w+");
+    if (NULL == fragment_file_FP) {
+        OPTTRAN_OUTPUT(("%s (%s)", _ERROR((char *)"error opening file"),
+                        _ERROR(fragment_file)));
+        return OPTTRAN_ERROR;
+    }
+    fprintf(fragment_file_FP, "%s", node->unparseToCompleteString().c_str());
+    fclose(fragment_file_FP);
+
+    /* Clean up */
+    free(fragment_file);
 
     return OPTTRAN_SUCCESS;
 }
@@ -367,40 +403,6 @@ void recommenderTraversal::visit(SgNode *node) {
 
         output_fragment(node, fileInfo, item);
     }
-}
-
-static int output_fragment(SgNode *node, Sg_File_Info *fileInfo,
-                           segment_t *item) {
-    char *fragment_file = NULL;
-    FILE *fragment_file_FP;
-
-    fragment_file = (char *)malloc(strlen(globals.opttrandir) +
-                                   strlen(OPTTRAN_FRAGMENTS_DIR) +
-                                   strlen(item->filename) + 10);
-    if (NULL == fragment_file) {
-        OPTTRAN_OUTPUT(("%s", _ERROR((char *)"Error: out of memory")));
-        return OPTTRAN_ERROR;
-    }
-    bzero(fragment_file, (strlen(globals.opttrandir) +
-                          strlen(OPTTRAN_FRAGMENTS_DIR) +
-                          strlen(item->filename) + 10));
-    sprintf(fragment_file, "%s/%s/%s_%d", globals.opttrandir,
-            OPTTRAN_FRAGMENTS_DIR, item->filename, fileInfo->get_line());
-    OPTTRAN_OUTPUT_VERBOSE((8, "extracting it to (%s)", fragment_file));
-
-    fragment_file_FP = fopen(fragment_file, "w+");
-    if (NULL == fragment_file_FP) {
-        OPTTRAN_OUTPUT(("%s (%s)", _ERROR((char *)"error opening file"),
-                        _ERROR(fragment_file)));
-        return OPTTRAN_ERROR;
-    }
-    fprintf(fragment_file_FP, "%s", node->unparseToCompleteString().c_str());
-    fclose(fragment_file_FP);
-
-    /* Clean up */
-    free(fragment_file);
-
-    return OPTTRAN_SUCCESS;
 }
 
 void recommenderTraversal::atTraversalStart() {

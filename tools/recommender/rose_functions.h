@@ -37,6 +37,11 @@
 #include <sage3.h>
 #endif
 
+#ifndef RECOMMENDER_H_
+#include "recommender.h"
+#endif
+
+/* Maximum size for loop labels */
 #define OPTTRAN_LOOP_LABEL 16
 
 class recommenderTraversal : public AstSimpleProcessing {
