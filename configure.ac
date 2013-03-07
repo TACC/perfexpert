@@ -502,24 +502,27 @@ AS_IF([test x"$ENABLE_OPTTRAN_CT" = x"yes"], [
 AC_SUBST([ENABLE_CT])
 
 #------------------------------------------------------------------------------
-# Enable/Disable 'opttran_cr'
+# Enable/Disable 'opttran_ci'
 #
-AC_MSG_CHECKING([whether to enable OptTran Code Remounter])
-AC_ARG_ENABLE([opttran_cr],
-    [AS_HELP_STRING([--disable-opttran_cr],
-        [Enable/Disable the code remounter tool [default=enabled]])],
-    [ENABLE_OPTTRAN_CR=$enableval], [ENABLE_OPTTRAN_CR=no])
+AC_MSG_CHECKING([whether to enable OptTran Code Integrator])
+AC_ARG_ENABLE([opttran_ci],
+    [AS_HELP_STRING([--disable-opttran_ci],
+        [Enable/Disable the code integrator tool [default=enabled]])],
+    [ENABLE_OPTTRAN_CI=$enableval], [ENABLE_OPTTRAN_CI=yes])
 
-AS_IF([test x"$ENABLE_OPTTRAN_CR" = x"yes"], [
+AS_IF([test x"$ENABLE_OPTTRAN_CI" = x"yes"], [
     AC_MSG_RESULT(yes)
 
-    ENABLE_CR=cr
-    AC_CONFIG_FILES([tools/cr/Makefile])
+    AS_IF([test x"$WITH_ROSE_SUPPORT" = x"no"],
+        [AC_MSG_ERROR([ROSE not found, try using '--with-rose'])], [])
+
+    ENABLE_CI=ci
+    AC_CONFIG_FILES([tools/ci/Makefile])
 ], [
     AC_MSG_RESULT(no)
-    ENABLE_CR=
+    ENABLE_CI=
 ])
-AC_SUBST([ENABLE_CR])
+AC_SUBST([ENABLE_CI])
 
 #------------------------------------------------------------------------------
 # Do we have all the tools? So generate the ninja-super-power-script opttran.sh
@@ -549,7 +552,7 @@ AC_MSG_NOTICE([ PerfExpert:                $ENABLE_OPTTRAN_PERFEXPERT  ])
 AC_MSG_NOTICE([ Optimizations Recommender: $ENABLE_OPTTRAN_RECOMMENDER ])
 AC_MSG_NOTICE([ Code Pattern Recognizer:   $ENABLE_OPTTRAN_PR          ])
 AC_MSG_NOTICE([ Code Transformer:          $ENABLE_OPTTRAN_CT          ])
-AC_MSG_NOTICE([ Code Remounter:            $ENABLE_OPTTRAN_CR          ])
+AC_MSG_NOTICE([ Code Integrator:           $ENABLE_OPTTRAN_CI          ])
 AC_MSG_NOTICE([                                                        ])
 AC_MSG_NOTICE([ Debug mode: $ENABLE_DEBUG                              ])
 AC_MSG_NOTICE([ PAPI:       $HAVE_PAPI_HEADER                          ])
