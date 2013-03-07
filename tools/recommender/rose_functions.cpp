@@ -232,7 +232,7 @@ void recommenderTraversal::visit(SgNode *node) {
         (fileInfo->get_line() == item->line_number)) {
         /* Found a Fortran loop on the exact line number */
         node_found = 1;
-        SageInterface::attachComment(f_loop, "OPTTRAN working here");
+        attachComment(f_loop, "OPTTRAN working here");
     }
 
     /* Find code fragment for bottlenecks type 'loop' in C */
@@ -391,7 +391,7 @@ void recommenderTraversal::visit(SgNode *node) {
         (fileInfo->get_line() == item->line_number)) {
         /* found a function on the exact line number */
         node_found = 1;
-        SageInterface::attachComment(function, "OPTTRAN working here");
+        attachComment(function, "OPTTRAN working here");
     }
 
     /* Extract code fragment */
