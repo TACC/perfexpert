@@ -25,15 +25,15 @@
 # $HEADER$
 #
 
-bin_PROGRAMS = opttran_cr
+bin_PROGRAMS = opttran_ci
 
-opttran_cr_SOURCES = main.c
-opttran_cr_CPPFLAGS = -I$(srcdir)/../common
-opttran_cr_CFLAGS = -O3
+opttran_ci_SOURCES = main.c
+opttran_ci_CPPFLAGS = -I$(srcdir)/../common
+opttran_ci_CFLAGS = -O3
 
 install-data-local:
 	$(MKDIR_P) $(datadir)/$(PACKAGE_NAME)
-	$(INSTALL) -m 644 $(top_srcdir)/contrib/opttran_cr-input_example.txt \
+	$(INSTALL) -m 644 $(top_srcdir)/contrib/opttran_ci-input_example.txt \
 		$(datadir)/$(PACKAGE_NAME)/
 
 # EOF

@@ -38,7 +38,7 @@ extern "C" {
 
 /* OptTran headers */
 #include "config.h"
-#include "cr.h"
+#include "ci.h"
 #include "opttran_output.h"
 #include "opttran_util.h"
 
@@ -47,6 +47,9 @@ globals_t globals; // Variable to hold global options, this one is OK
 
 /* main, life starts here */
 int main(int argc, char** argv) {
+    opttran_list_t *functions;
+    function_t *function = NULL;
+
     /* Set default values for globals */
     globals = (globals_t) {
         .verbose          = 0,      // int
@@ -59,15 +62,6 @@ int main(int argc, char** argv) {
         .opttrandir       = NULL,   // char *
         .colorful         = 0       // int
     };
-    globals.dbfile = (char *)malloc(strlen(RECOMMENDATION_DB) +
-                                    strlen(OPTTRAN_VARDIR) + 2);
-    if (NULL == globals.dbfile) {
-        OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
-        exit(OPTTRAN_ERROR);
-    }
-    bzero(globals.dbfile,
-          strlen(RECOMMENDATION_DB) + strlen(OPTTRAN_VARDIR) + 2);
-    sprintf(globals.dbfile, "%s/%s", OPTTRAN_VARDIR, RECOMMENDATION_DB);
 
     /* Parse command-line parameters */
     if (OPTTRAN_SUCCESS != parse_cli_params(argc, argv)) {
@@ -76,16 +70,16 @@ int main(int argc, char** argv) {
     }
 
     /* Create the list of fragments */
-    fragments = (opttran_list_t *)malloc(sizeof(opttran_list_t));
-    if (NULL == fragments) {
+    functions = (opttran_list_t *)malloc(sizeof(opttran_list_t));
+    if (NULL == functions) {
         OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
         exit(OPTTRAN_ERROR);
     }
-    opttran_list_construct(fragments);
+    opttran_list_construct(functions);
 
     /* Parse input parameters */
     if (1 == globals.use_stdin) {
-        if (OPTTRAN_SUCCESS != parse_transformation_params(fragments, stdin)) {
+        if (OPTTRAN_SUCCESS != parse_transformation_params(functions, stdin)) {
             OPTTRAN_OUTPUT(("%s", _ERROR("Error: parsing input params")));
             exit(OPTTRAN_ERROR);
         }
@@ -100,7 +94,7 @@ int main(int argc, char** argv) {
                                 globals.inputfile));
                 return OPTTRAN_ERROR;
             } else {
-                if (OPTTRAN_SUCCESS != parse_transformation_params(fragments,
+                if (OPTTRAN_SUCCESS != parse_transformation_params(functions,
                                                                    inputfile_FP)) {
                     OPTTRAN_OUTPUT(("%s",
                                     _ERROR("Error: parsing input params")));
@@ -114,91 +108,21 @@ int main(int argc, char** argv) {
         }
     }
 
-    /* Apply transformation */
-    if (OPTTRAN_SUCCESS != apply_transformations(fragments)) {
-        OPTTRAN_OUTPUT(("%s", _ERROR("Error: applying transformations")));
-        exit(OPTTRAN_ERROR);
-    }
+    /* Integrate functions */
 
     /* Output results */
-    if (1 == globals.use_opttran) {
-        globals.use_stdout = 0;
-
-        if (NULL == globals.opttrandir) {
-            globals.opttrandir = (char *)malloc(strlen("./opttran-") + 8);
-            if (NULL == globals.opttrandir) {
-                OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
-                exit(OPTTRAN_ERROR);
-            }
-            bzero(globals.opttrandir, strlen("./opttran-" + 8));
-            sprintf(globals.opttrandir, "./opttran-%d", getpid());
-        }
-        OPTTRAN_OUTPUT_VERBOSE((7, "using (%s) as output directory",
-                                globals.opttrandir));
-
-        if (OPTTRAN_ERROR == opttran_util_make_path(globals.opttrandir, 0755)) {
-            OPTTRAN_OUTPUT(("%s",
-                            _ERROR("Error: cannot create opttran directory")));
-            exit(OPTTRAN_ERROR);
-        }
-
-        globals.outputfile = (char *)malloc(strlen(globals.opttrandir) +
-                                            strlen(OPTTRAN_CT_FILE) + 1);
-        if (NULL == globals.outputfile) {
-            OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
-            exit(OPTTRAN_ERROR);
-        }
-        bzero(globals.outputfile, strlen(globals.opttrandir) +
-              strlen(OPTTRAN_PR_FILE) + 1);
-        strcat(globals.outputfile, globals.opttrandir);
-        strcat(globals.outputfile, "/");
-        strcat(globals.outputfile, OPTTRAN_CT_FILE);
-        OPTTRAN_OUTPUT_VERBOSE((7, "printing OPTTRAN output to (%s)",
-                                globals.opttrandir));
-    }
-
-    if (0 == globals.use_stdout) {
-        OPTTRAN_OUTPUT_VERBOSE((7, "printing test results to file (%s)",
-                                globals.outputfile));
-        globals.outputfile_FP = fopen(globals.outputfile, "w+");
-        if (NULL == globals.outputfile_FP) {
-            OPTTRAN_OUTPUT(("%s (%s)",
-                            _ERROR("Error: unable to open output file"),
-                            globals.outputfile));
-            return OPTTRAN_ERROR;
-        }
-    } else {
-        OPTTRAN_OUTPUT_VERBOSE((7, "printing test results to STDOUT"));
-    }
-
-    if (OPTTRAN_SUCCESS != output_results(fragments)) {
-        OPTTRAN_OUTPUT(("%s", _ERROR("Error: outputting results")));
-        exit(OPTTRAN_ERROR);
-    }
-    if (0 == globals.use_stdout) {
-        fclose(globals.outputfile_FP);
-    }
 
     /* Free memory */
-    while (OPTTRAN_FALSE == opttran_list_is_empty(fragments)) {
-        fragment = (fragment_t *)opttran_list_get_first(fragments);
-        opttran_list_remove_item(fragments, (opttran_list_item_t *)fragment);
-        while (OPTTRAN_FALSE == opttran_list_is_empty(&(fragment->transformations))) {
-            transformation = (transformation_t *)opttran_list_get_first(&(fragment->transformations));
-            opttran_list_remove_item(&(fragment->transformations),
-                                     (opttran_list_item_t *)transformation);
-            free(transformation->program);
-            free(transformation->fragment_file);
-            free(transformation);
-        }
-        free(fragment);
+    while (OPTTRAN_FALSE == opttran_list_is_empty(functions)) {
+        function = (function_t *)opttran_list_get_first(functions);
+        opttran_list_remove_item(functions, (opttran_list_item_t *)function);
+        free(function->source_file);
+        free(function->function_name);
+        free(function->replacement_file);
+        free(function);
     }
-    opttran_list_destruct(fragments);
-    free(fragments);
-    free(globals.dbfile);
-    if (1 == globals.use_opttran) {
-        free(globals.outputfile);
-    }
+    opttran_list_destruct(functions);
+    free(functions);
 
     return OPTTRAN_SUCCESS;
 }
@@ -208,7 +132,7 @@ static void show_help(void) {
     OPTTRAN_OUTPUT_VERBOSE((10, "printing help"));
 
     /*      12345678901234567890123456789012345678901234567890123456789012345678901234567890 */
-    printf("Usage: opttran_cr -i|-f file [-vch] [-l level] [-a dir]");
+    printf("Usage: opttran_ci -i|-f file [-vch] [-l level] [-a dir]");
     printf("\n");
     printf("  -i --stdin           Use STDIN as input for patterns\n");
     printf("  -f --inputfile       Use 'file' as input for patterns\n");
@@ -376,10 +300,9 @@ static int parse_cli_params(int argc, char *argv[]) {
 }
 
 /* parse_transformation_params */
-static int parse_transformation_params(opttran_list_t *fragments_p,
-                                           FILE *inputfile_p) {
-    fragment_t *fragment;
-    transformation_t *transformation;
+static int parse_transformation_params(opttran_list_t *functions_p,
+                                       FILE *inputfile_p) {
+    function_t *function;
     char buffer[BUFFER_SIZE];
     int  input_line = 0;
 
@@ -416,21 +339,23 @@ static int parse_transformation_params(opttran_list_t *fragments_p,
             char temp_str[BUFFER_SIZE];
 
             OPTTRAN_OUTPUT_VERBOSE((5, "(%d) --- %s", input_line,
-                                    _GREEN("new bottleneck found")));
+                                    _GREEN("new function found")));
 
             /* Create a list item for this code fragment */
-            fragment = (fragment_t *)malloc(sizeof(fragment_t));
-            if (NULL == fragment) {
+            function = (function_t *)malloc(sizeof(function_t));
+            if (NULL == function) {
                 OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
                 exit(OPTTRAN_ERROR);
             }
-            opttran_list_item_construct((opttran_list_item_t *)fragment);
+            opttran_list_item_construct((opttran_list_item_t *)function);
 
             /* Initialize some elements on 'fragment' */
-            opttran_list_construct((opttran_list_t *)&(fragment->transformations));
+            function->source_file = NULL;
+            function->function_name = NULL;
+            function->replacement_file = NULL;
 
-            /* Add this item to 'fragments_p' */
-            opttran_list_append(fragments_p, (opttran_list_item_t *)fragment);
+            /* Add this item to 'functions_p' */
+            opttran_list_append(functions_p, (opttran_list_item_t *)function);
 
             continue;
         }
@@ -444,117 +369,52 @@ static int parse_transformation_params(opttran_list_t *fragments_p,
         node->key = strtok(strcpy((char*)(node + 1), buffer), "=\r\n");
         node->value = strtok(NULL, "\r\n");
 
+        code.filename=mm_naive.c
+        code.function_name=compute
+        opttran_ct.replacement_function=example/fragments/mm_naive.c_11.c_loop2.transformer_result
+
         /* Code param: code.filename */
         if (0 == strncmp("code.filename", node->key, 13)) {
-            fragment->filename = (char *)malloc(strlen(node->value) + 1);
-            if (NULL == fragment->filename) {
+            function->source_file = (char *)malloc(strlen(node->value) + 1);
+            if (NULL == function->source_file) {
                 OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
                 exit(OPTTRAN_ERROR);
             }
-            bzero(fragment->filename, strlen(node->value) + 1);
-            strcpy(fragment->filename, node->value);
+            bzero(function->source_file, strlen(node->value) + 1);
+            strcpy(function->source_file, node->value);
             OPTTRAN_OUTPUT_VERBOSE((10, "(%d) %s [%s]", input_line,
-                                    _MAGENTA("filename:"), fragment->filename));
-            free(node);
-            continue;
-        }
-        /* Code param: code.line_number */
-        if (0 == strncmp("code.line_number", node->key, 16)) {
-            fragment->line_number = atoi(node->value);
-            OPTTRAN_OUTPUT_VERBOSE((10, "(%d) %s [%d]", input_line,
-                                    _MAGENTA("line number:"),
-                                    fragment->line_number));
-            free(node);
-            continue;
-        }
-        /* Code param: code.type */
-        if (0 == strncmp("code.type", node->key, 9)) {
-            fragment->code_type = (char *)malloc(strlen(node->value) + 1);
-            if (NULL == fragment->code_type) {
-                OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
-                exit(OPTTRAN_ERROR);
-            }
-            bzero(fragment->code_type, strlen(node->value) + 1);
-            strcpy(fragment->code_type, node->value);
-            OPTTRAN_OUTPUT_VERBOSE((10, "(%d) %s [%s]", input_line,
-                                    _MAGENTA("type:"), fragment->code_type));
+                                    _MAGENTA("source file:"),
+                                    function->source_file));
             free(node);
             continue;
         }
         /* Code param: code.function_name */
         if (0 == strncmp("code.function_name", node->key, 18)) {
-            fragment->function_name = (char *)malloc(strlen(node->value) + 1);
-            if (NULL == fragment->function_name) {
+            function->function_name = (char *)malloc(strlen(node->value) + 1);
+            if (NULL == function->function_name) {
                 OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
                 exit(OPTTRAN_ERROR);
             }
-            bzero(fragment->function_name, strlen(node->value) + 1);
-            strcpy(fragment->function_name, node->value);
+            bzero(function->function_name, strlen(node->value) + 1);
+            strcpy(function->function_name, node->value);
             OPTTRAN_OUTPUT_VERBOSE((10, "(%d) %s [%s]", input_line,
                                     _MAGENTA("function name:"),
-                                    fragment->function_name));
+                                    function->function_name));
             free(node);
             continue;
         }
-
-        /* OK, now it is time to check which parameter is this, and add it to
-         * 'patterns'. I expect that for each 'recommender.code_fragment' will
-         * have a correspondent 'pr.transformation'. The code fragment should
-         * become first.
-         */
-
-        /* Code param: recommender.code_fragment */
-        if (0 == strncmp("recommender.code_fragment", node->key, 25)) {
-            transformation = (transformation_t *)malloc(sizeof(transformation_t));
-            if (NULL == transformation) {
+        /* Code param: opttran_ct.replacement_function */
+        if (0 == strncmp("opttran_ct.replacement_function", node->key, 31)) {
+            function->replacement_file = (char *)malloc(strlen(node->value) + 1);
+            if (NULL == function->replacement_file) {
                 OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
                 exit(OPTTRAN_ERROR);
             }
-            opttran_list_item_construct((opttran_list_item_t *)transformation);
-            opttran_list_append((opttran_list_t *)&(fragment->transformations),
-                                (opttran_list_item_t *)transformation);
-
-            transformation->program = NULL;
-            transformation->fragment_file = NULL;
-            transformation->transf_function = NULL;
-            transformation->line_number = 0;
-            transformation->transf_result = OPTTRAN_UNDEFINED;
-
-            transformation->fragment_file = (char *)malloc(strlen(node->value) + 1);
-            if (NULL == transformation->fragment_file) {
-                OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
-                exit(OPTTRAN_ERROR);
-            }
-            bzero(transformation->fragment_file, strlen(node->value) + 1);
-            strcpy(transformation->fragment_file, node->value);
-            OPTTRAN_OUTPUT_VERBOSE((10, "(%d) %s  [%s]", input_line,
-                                    _MAGENTA("fragment file:"),
-                                    transformation->fragment_file));
-            free(node);
-            continue;
-        }
-        /* Code param: recommender.line_number */
-        if (0 == strncmp("recommender.line_number", node->key, 23)) {
-            transformation->line_number = atoi(node->value);
-            OPTTRAN_OUTPUT_VERBOSE((10, "(%d) %s [%d]", input_line,
-                                    _MAGENTA("line number:"),
-                                    transformation->line_number));
-            free(node);
-            continue;
-        }
-        /* Code param: pr.transformation */
-        if (0 == strncmp("pr.transformation", node->key, 17)) {
-            transformation->program = (char *)malloc(strlen(node->value) + 1);
-            if (NULL == transformation->program) {
-                OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
-                exit(OPTTRAN_ERROR);
-            }
-
-            bzero(transformation->program, strlen(node->value) + 1);
-            strcpy(transformation->program, node->value);
+            bzero(function->replacement_file, strlen(node->value) + 1);
+            strcpy(function->replacement_file, node->value);
             OPTTRAN_OUTPUT_VERBOSE((10, "(%d) %s [%s]", input_line,
-                                    _YELLOW("transformation:"),
-                                    transformation->program));
+                                    _MAGENTA("type:"),
+                                    function->replacement_file));
             free(node);
             continue;
         }
@@ -568,18 +428,14 @@ static int parse_transformation_params(opttran_list_t *fragments_p,
     }
 
     /* print a summary of 'fragments' */
-    OPTTRAN_OUTPUT_VERBOSE((4, "%d %s", opttran_list_get_size(fragments_p),
-                            _GREEN("code bottleneck(s) found")));
+    OPTTRAN_OUTPUT_VERBOSE((4, "%d %s", opttran_list_get_size(functions_p),
+                            _GREEN("function(s) found")));
 
-    fragment = (fragment_t *)opttran_list_get_first(fragments_p);
-    while ((opttran_list_item_t *)fragment != &(fragments_p->sentinel)) {
-        transformation = (transformation_t *)opttran_list_get_first(&(fragment->transformations));
-        while ((opttran_list_item_t *)transformation != &(fragment->transformations.sentinel)) {
-            OPTTRAN_OUTPUT_VERBOSE((4, "   [%s] [%s]", transformation->program,
-                                    transformation->fragment_file));
-            transformation = (transformation_t *)opttran_list_get_next(transformation);
-        }
-        fragment = (fragment_t *)opttran_list_get_next(fragment);
+    function = (function_t *)opttran_list_get_first(functions_p);
+    while ((opttran_list_item_t *)function != &(functions_p->sentinel)) {
+        OPTTRAN_OUTPUT_VERBOSE((4, "   [%s] [%s]", function->source_file,
+                                function->function_name));
+        function = (function_t *)opttran_list_get_next(function);
     }
 
     OPTTRAN_OUTPUT_VERBOSE((4, "==="));
