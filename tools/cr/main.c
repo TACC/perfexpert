@@ -36,28 +36,17 @@ extern "C" {
 #include <getopt.h>
 #include <inttypes.h>
 
-#if HAVE_SQLITE3 == 1
-/* Utility headers */
-#include <sqlite3.h>
-#endif
-
 /* OptTran headers */
 #include "config.h"
-#include "ct.h"
+#include "cr.h"
 #include "opttran_output.h"
 #include "opttran_util.h"
 
 /* Global variables, try to not create them! */
 globals_t globals; // Variable to hold global options, this one is OK
 
-// TODO: check for memory de-alocation on this entire code
-
 /* main, life starts here */
 int main(int argc, char** argv) {
-    fragment_t *fragment;
-    opttran_list_t *fragments;
-    transformation_t *transformation;
-
     /* Set default values for globals */
     globals = (globals_t) {
         .verbose          = 0,      // int
@@ -68,10 +57,6 @@ int main(int argc, char** argv) {
         .outputfile       = NULL,   // char *
         .outputfile_FP    = stdout, // FILE *
         .opttrandir       = NULL,   // char *
-        .transfall        = 0,      // int
-#if HAVE_SQLITE3 == 1
-        .opttran_pid      = (unsigned long long int)getpid(), // int
-#endif
         .colorful         = 0       // int
     };
     globals.dbfile = (char *)malloc(strlen(RECOMMENDATION_DB) +
@@ -223,25 +208,12 @@ static void show_help(void) {
     OPTTRAN_OUTPUT_VERBOSE((10, "printing help"));
 
     /*      12345678901234567890123456789012345678901234567890123456789012345678901234567890 */
-    printf("Usage: opttran_ct -i|-f file [-o file] [-vch] [-l level] [-a dir]");
-#if HAVE_SQLITE3 == 1
-    printf(" [-d database] [-p pid]");
-#endif
+    printf("Usage: opttran_cr -i|-f file [-vch] [-l level] [-a dir]");
     printf("\n");
     printf("  -i --stdin           Use STDIN as input for patterns\n");
     printf("  -f --inputfile       Use 'file' as input for patterns\n");
-    printf("  -o --outputfile      Use 'file' as output (default stdout)\n");
     printf("  -a --opttran         Create OptTran (automatic performance optimization) files\n");
     printf("                       into 'dir' directory (default: create no OptTran files).\n");
-    printf("                       This argument overwrites -o (no output on STDOUT, except\n");
-    printf("                       for verbose messages)\n");
-    printf("  -t --transfall       Apply all possible transformation to each fragments (not\n");
-    printf("                       recommended, some transformations are not compatible)\n");
-#if HAVE_SQLITE3 == 1
-    printf("  -d --database        Select the recommendation database file\n");
-    printf("                       (default: %s/%s)\n", OPTTRAN_VARDIR, RECOMMENDATION_DB);
-    printf("  -p --opttranid       Use 'pid' to log on DB consecutive calls to Recommender\n");
-#endif
     printf("  -v --verbose         Enable verbose mode using default verbose level (5)\n");
     printf("  -l --verbose_level   Enable verbose mode using a specific verbose level (1-10)\n");
     printf("  -c --colorful        Enable colors on verbose mode, no weird characters will\n");
@@ -290,13 +262,9 @@ static int parse_cli_params(int argc, char *argv[]) {
 
     while (1) {
         /* get parameter */
-#if HAVE_SQLITE3 == 1
-        parameter = getopt_long(argc, argv, "a:cvhif:l:o:p:t", long_options,
+        parameter = getopt_long(argc, argv, "a:cvhif:l:", long_options,
                                 &option_index);
-#else
-        parameter = getopt_long(argc, argv, "a:cvhif:l:o:t", long_options,
-                                &option_index);
-#endif
+
         /* Detect the end of the options */
         if (-1 == parameter) {
             break;
@@ -330,21 +298,7 @@ static int parse_cli_params(int argc, char *argv[]) {
                 }
                 OPTTRAN_OUTPUT_VERBOSE((10, "option 'v' set"));
                 break;
-#if HAVE_SQLITE3 == 1
-            /* Which database file? */
-            case 'd':
-                globals.dbfile = optarg;
-                OPTTRAN_OUTPUT_VERBOSE((10, "option 'd' set [%s]",
-                                        globals.dbfile));
-                break;
 
-            /* Specify OptTran PID */
-            case 'p':
-                globals.opttran_pid = strtoull(optarg, (char **)NULL, 10);
-                OPTTRAN_OUTPUT_VERBOSE((10, "option 'p' set [%llu]",
-                                        globals.opttran_pid));
-                break;
-#endif
             /* Activate colorful mode */
             case 'c':
                 globals.colorful = 1;
@@ -370,14 +324,6 @@ static int parse_cli_params(int argc, char *argv[]) {
                                         globals.inputfile));
                 break;
 
-            /* Use output file? */
-            case 'o':
-                globals.use_stdout = 0;
-                globals.outputfile = optarg;
-                OPTTRAN_OUTPUT_VERBOSE((10, "option 'o' set [%s]",
-                                        globals.outputfile));
-                break;
-
             /* Use opttran? */
             case 'a':
                 globals.use_opttran = 1;
@@ -386,13 +332,6 @@ static int parse_cli_params(int argc, char *argv[]) {
                 OPTTRAN_OUTPUT_VERBOSE((10, "option 'a' set [%s]",
                                         globals.opttrandir));
                 break;
-
-            /* Apply all possible transformations for each code fragment? */
-            case 't':
-                globals.transfall = 1;
-                OPTTRAN_OUTPUT_VERBOSE((10, "option 't' set"));
-                break;
-
 
             /* Unknown option */
             case '?':
@@ -416,18 +355,12 @@ static int parse_cli_params(int argc, char *argv[]) {
                             globals.use_stdin ? "yes" : "no"));
     OPTTRAN_OUTPUT_VERBOSE((10, "   Input file:        %s",
                             globals.inputfile ? globals.inputfile : "(null)"));
-    OPTTRAN_OUTPUT_VERBOSE((10, "   Output file:       %s",
-                            globals.outputfile ? globals.outputfile : "(null)"));
     OPTTRAN_OUTPUT_VERBOSE((10, "   Use OPTTRAN?       %s",
                             globals.use_opttran ? "yes" : "no"));
     OPTTRAN_OUTPUT_VERBOSE((10, "   OPTTRAN PID:       %llu",
                             globals.opttran_pid));
     OPTTRAN_OUTPUT_VERBOSE((10, "   OPTTRAN directory: %s",
                             globals.opttrandir ? globals.opttrandir : "(null)"));
-    OPTTRAN_OUTPUT_VERBOSE((10, "   Apply all transf.? %s",
-                            globals.transfall ? "yes" : "no"));
-    OPTTRAN_OUTPUT_VERBOSE((10, "   Database file:     %s",
-                            globals.dbfile ? globals.dbfile : "(null)"));
 
     /* Not using OPTTRAN_OUTPUT_VERBOSE because I want only one line */
     if (8 <= globals.verbose_level) {
@@ -444,7 +377,7 @@ static int parse_cli_params(int argc, char *argv[]) {
 
 /* parse_transformation_params */
 static int parse_transformation_params(opttran_list_t *fragments_p,
-                                       FILE *inputfile_p) {
+                                           FILE *inputfile_p) {
     fragment_t *fragment;
     transformation_t *transformation;
     char buffer[BUFFER_SIZE];
@@ -651,349 +584,6 @@ static int parse_transformation_params(opttran_list_t *fragments_p,
 
     OPTTRAN_OUTPUT_VERBOSE((4, "==="));
 
-    return OPTTRAN_SUCCESS;
-}
-
-#if HAVE_SQLITE3 == 1
-/* database_connect */
-static int database_connect(void) {
-    OPTTRAN_OUTPUT_VERBOSE((4, "=== %s", _BLUE("Connecting to database")));
-
-    /* Connect to the DB */
-    if (NULL == globals.dbfile) {
-        globals.dbfile = "./recommendation.db";
-    }
-    if (-1 == access(globals.dbfile, F_OK)) {
-        OPTTRAN_OUTPUT(("%s (%s)",
-                        _ERROR("Error: recommendation database doesn't exist"),
-                        globals.dbfile));
-        return OPTTRAN_ERROR;
-    }
-    if (-1 == access(globals.dbfile, R_OK)) {
-        OPTTRAN_OUTPUT(("%s (%s)",
-                        _ERROR("Error: you don't have permission to read"),
-                        globals.dbfile));
-        return OPTTRAN_ERROR;
-    }
-
-    if (SQLITE_OK != sqlite3_open(globals.dbfile, &(globals.db))) {
-        OPTTRAN_OUTPUT(("%s (%s), %s", _ERROR("Error: openning database"),
-                        globals.dbfile, sqlite3_errmsg(globals.db)));
-        sqlite3_close(globals.db);
-        exit(OPTTRAN_ERROR);
-    } else {
-        OPTTRAN_OUTPUT_VERBOSE((4, "connected to %s", globals.dbfile));
-    }
-    return OPTTRAN_SUCCESS;
-}
-#endif
-
-/* apply_transformations */
-static int apply_transformations(opttran_list_t *fragments_p) {
-    transformation_t *transformation;
-    fragment_t *fragment;
-    opttran_list_t *transfs;
-    transf_t *transf;
-    int fragment_id = 0;
-
-    transfs = (opttran_list_t *)malloc(sizeof(opttran_list_t));
-    if (NULL == transfs) {
-        OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
-        exit(OPTTRAN_ERROR);
-    }
-    opttran_list_construct(transfs);
-
-    OPTTRAN_OUTPUT_VERBOSE((4, "=== %s", _BLUE("Applying transformations")));
-
-    OPTTRAN_OUTPUT_VERBOSE((8, "creating a list of transformations to apply..."));
-
-    /* Create a list of all pattern recognizers we have to test */
-    fragment = (fragment_t *)opttran_list_get_first(fragments_p);
-    while ((opttran_list_item_t *)fragment != &(fragments_p->sentinel)) {
-        /* For all code fragments ... */
-        fragment_id++;
-        transformation = (transformation_t *)opttran_list_get_first(&(fragment->transformations));
-        while ((opttran_list_item_t *)transformation != &(fragment->transformations.sentinel)) {
-            /* For all transformations ... */
-            transf = (transf_t *)malloc(sizeof(transf_t));
-            if (NULL == transf) {
-                OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
-                exit(OPTTRAN_ERROR);
-            }
-            opttran_list_item_construct((opttran_list_item_t *)transf);
-
-            transf->program              = transformation->program;
-            transf->fragment_file        = transformation->fragment_file;
-            transf->fragment_line_number = transformation->line_number;
-            transf->filename             = fragment->filename;
-            transf->line_number          = fragment->line_number;
-            transf->code_type            = fragment->code_type;
-            transf->function_name        = fragment->function_name;
-            transf->transf_result        = &(transformation->transf_result);
-            transf->transf_function      = &(transformation->transf_function);
-            transf->fragment_id          = fragment_id;
-
-            OPTTRAN_OUTPUT_VERBOSE((10, "[%s] %s", transf->program,
-                                    transf->fragment_file));
-
-            /* Add this item to to-'tests' */
-            opttran_list_append(transfs, (opttran_list_item_t *)transf);
-
-            transformation = (transformation_t *)opttran_list_get_next(transformation);
-        }
-        fragment = (fragment_t *)opttran_list_get_next(fragment);
-    }
-    OPTTRAN_OUTPUT_VERBOSE((8, "...done!"));
-
-    /* Print a summary of 'tests' */
-    OPTTRAN_OUTPUT_VERBOSE((4, "%d %s", opttran_list_get_size(transfs),
-                            _GREEN("possible transformation(s) found")));
-
-    /* Apply the transformations */
-    fragment_id = 0;
-    transf = (transf_t *)opttran_list_get_first(transfs);
-    while ((opttran_list_item_t *)transf != &(transfs->sentinel)) {
-        *(transf->transf_result) = OPTTRAN_UNDEFINED;
-        /* Skip this test if 'transfall' is not set */
-        if ((0 == globals.transfall) && (fragment_id >= transf->fragment_id)) {
-            OPTTRAN_OUTPUT(("   %s  [%s] >> [%s]", _MAGENTA("SKIP"),
-                            transf->program, transf->filename));
-            transf = (transf_t *)opttran_list_get_next(transf);
-            continue;
-        }
-
-        if (OPTTRAN_SUCCESS != apply_one(transf)) {
-            OPTTRAN_OUTPUT(("   %s [%s] >> [%s]",
-                            _RED("Error: running code transformer"),
-                            transf->program, transf->filename));
-        }
-
-        switch ((int)*(transf->transf_result)) {
-            case OPTTRAN_UNDEFINED:
-                OPTTRAN_OUTPUT_VERBOSE((8, "   %s [%s] >> [%s]",
-                                        _BOLDRED("UNDEF"), transf->program,
-                                        transf->filename));
-                break;
-
-            case OPTTRAN_FAILURE:
-                OPTTRAN_OUTPUT_VERBOSE((8, "   %s  [%s] >> [%s]",
-                                        _ERROR("FAIL"), transf->program,
-                                        transf->filename));
-                break;
-
-            case OPTTRAN_SUCCESS:
-                OPTTRAN_OUTPUT_VERBOSE((8, "   %s    [%s] >> [%s]",
-                                        _BOLDGREEN("OK"), transf->program,
-                                        transf->filename));
-                fragment_id = transf->fragment_id;
-                break;
-
-            case OPTTRAN_ERROR:
-                OPTTRAN_OUTPUT_VERBOSE((8, "   %s [%s] >> [%s]",
-                                        _BOLDYELLOW("ERROR"), transf->program,
-                                        transf->filename));
-                break;
-
-            default:
-                break;
-        }
-
-        /* Move on to the next test... */
-        transf = (transf_t *)opttran_list_get_next(transf);
-    }
-    /* Free 'transfs' structure' */
-    while (OPTTRAN_FALSE == opttran_list_is_empty(transfs)) {
-        transf = (transf_t *)opttran_list_get_first(transfs);
-        opttran_list_remove_item(transfs, (opttran_list_item_t *)transf);
-        free(transf);
-    }
-    opttran_list_destruct(transfs);
-    free(transfs);
-
-    OPTTRAN_OUTPUT_VERBOSE((4, "==="));
-
-    return OPTTRAN_SUCCESS;
-}
-
-/* apply_one */
-static int apply_one(transf_t *transf) {
-    int  pid = 0;
-    int  rc = OPTTRAN_UNDEFINED;
-    char temp_str[BUFFER_SIZE];
-    char temp_str2[BUFFER_SIZE];
-    char buffer[BUFFER_SIZE];
-
-    char argv[20][PARAM_SIZE];
-
-    bzero(temp_str, BUFFER_SIZE);
-    sprintf(temp_str, "%s/ct_%s", OPTTRAN_BINDIR, transf->program);
-
-    /* Set the code transformer arguments. Ok, we have to define an
-     * interface to code transformers. Here is a simple one. Each code
-     * transformer will be called using the following arguments:
-     *
-     * -c TYPE      Code type, basically there are two options: "loop" and
-     *              "function"
-     * -d           Enable debug mode and write LOG to FILE defined with -o
-     * -f FUNCTION  Function name were code bottleneck belongs to
-     * -l LINE      Line number identified by HPCtoolkit/PerfExpert/etc...
-     * -o FILE      Output file, considering that output is only verbose
-     *              messages, not code
-     * -p NAME      Project name, which is the name of the recognizer
-     * -r FILE      File (maybe link) containing the transformation result
-     * -s FILE      Source file
-     * -w DIR       Use DIR as work directory
-     */
-    bzero(argv, PARAM_SIZE * 20);
-    sprintf(argv[0], "ct_%s", transf->program);
-    sprintf(argv[1], "-c");
-    sprintf(argv[2], "%s", transf->code_type);
-    sprintf(argv[3], "-d");
-    sprintf(argv[4], "-f");
-    sprintf(argv[5], "%s", transf->function_name);
-    sprintf(argv[6], "-l");
-    sprintf(argv[7], "%d", transf->fragment_line_number);
-    sprintf(argv[8], "-o");
-    sprintf(argv[9], "%s_%d.%s.transformer_output", transf->filename,
-            transf->line_number, transf->program);
-    sprintf(argv[10], "-p");
-    sprintf(argv[11], "%s", transf->program);
-    sprintf(argv[12], "-r");
-    sprintf(argv[13], "%s_%d.%s.transformer_result", transf->filename,
-            transf->line_number, transf->program);
-    sprintf(argv[14], "-s");
-    sprintf(argv[15], "../%s/%s", OPTTRAN_SOURCE_DIR, transf->filename);
-    sprintf(argv[16], "-w");
-    sprintf(argv[17], "%s/%s", globals.opttrandir, OPTTRAN_FRAGMENTS_DIR);
-
-    /* Setting the output */
-    *(transf->transf_function) = (char *)malloc(strlen(argv[17]) +
-                                                strlen(argv[13]) + 2);
-    if (NULL == transf->transf_function) {
-        OPTTRAN_OUTPUT(("%s", _ERROR("Error: out of memory")));
-        exit(OPTTRAN_ERROR);
-    }
-    bzero(*(transf->transf_function), (strlen(argv[17]) +
-                                       strlen(argv[13]) + 2));
-    sprintf(*(transf->transf_function), "%s/%s", argv[17], argv[13]);
-
-    OPTTRAN_OUTPUT_VERBOSE((10, "   output  %s",
-                            _CYAN(*(transf->transf_function))));
-
-    /* Set the command line */
-    bzero(temp_str2, BUFFER_SIZE);
-    sprintf(temp_str2,
-            "%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s",
-            temp_str, argv[0], argv[1], argv[2], argv[3], argv[4], argv[5],
-            argv[6], argv[7], argv[8], argv[9], argv[10], argv[11],
-            argv[12], argv[13], argv[14], argv[15], argv[16], argv[17]);
-    OPTTRAN_OUTPUT_VERBOSE((10, "   running %s", _CYAN(temp_str2)));
-
-    /* Forking child */
-    pid = fork();
-    if (-1 == pid) {
-        OPTTRAN_OUTPUT(("%s", _ERROR("Error: unable to fork")));
-        return OPTTRAN_ERROR;
-    }
-
-    if (0 == pid) {
-        /* Child: Call the code transformer */
-        // TODO: this is ridiculous. I have to change it to execp, but I'm too
-        //       tired to do it now.
-        execl(temp_str, argv[0], argv[1], argv[2], argv[3], argv[4], argv[5],
-              argv[6], argv[7], argv[8], argv[9], argv[10], argv[11], argv[12],
-              argv[13], argv[14], argv[15], argv[16], argv[17], NULL);
-
-        OPTTRAN_OUTPUT(("child process failed to run, check if program exists"));
-        exit(127);
-    } else {
-        /* Parent */
-        wait(&rc);
-        OPTTRAN_OUTPUT_VERBOSE((10, "   result  %s %d", _CYAN("return code"),
-                                rc >> 8));
-    }
-
-    /* Evaluating the result */
-    switch (rc >> 8) {
-        /* The transformation was possible */
-        case 0:
-            *(transf->transf_result) = OPTTRAN_SUCCESS;
-            break;
-
-        /* The transformation was not possible */
-        case 255:
-            *(transf->transf_result) = OPTTRAN_ERROR;
-            break;
-
-        /* Error during fork() or waitpid() */
-        case -1:
-            *(transf->transf_result) = OPTTRAN_FAILURE;
-            break;
-
-        /* Execution failed */
-        case 127:
-            *(transf->transf_result) = OPTTRAN_FAILURE;
-            break;
-
-        /* Not sure what happened */
-        default:
-            *(transf->transf_result) = OPTTRAN_UNDEFINED;
-            break;
-    }
-
-    return OPTTRAN_SUCCESS;
-}
-
-// TODO: insert results on DB
-/* output results */
-static int output_results(opttran_list_t *fragments_p) {
-    transformation_t *transformation;
-    fragment_t *fragment;
-
-    OPTTRAN_OUTPUT_VERBOSE((4, "=== %s", _BLUE("Outputting results")));
-
-    /* Output transformation results */
-    fragment = (fragment_t *)opttran_list_get_first(fragments_p);
-    while ((opttran_list_item_t *)fragment != &(fragments_p->sentinel)) {
-        /* For all code fragments ... */
-        transformation = (transformation_t *)opttran_list_get_first(&(fragment->transformations));
-        while ((opttran_list_item_t *)transformation != &(fragment->transformations.sentinel)) {
-            /* For all transformations ... */
-            if (OPTTRAN_SUCCESS == transformation->transf_result) {
-                if (0 == globals.use_stdout) {
-                    fprintf(globals.outputfile_FP,
-                            "%% function replacement for %s:%d\n",
-                            fragment->filename, fragment->line_number);
-                    fprintf(globals.outputfile_FP, "code.filename=%s\n",
-                            fragment->filename);
-                    fprintf(globals.outputfile_FP, "code.function_name=%s\n",
-                            fragment->function_name);
-                    fprintf(globals.outputfile_FP,
-                            "opttran_ct.replacement_function=%s\n",
-                            transformation->transf_function);
-                } else {
-                    fprintf(globals.outputfile_FP,
-                            "#--------------------------------------------------\n");
-                    fprintf(globals.outputfile_FP,
-                            "# Function replacement for %s:%d\n",
-                            fragment->filename, fragment->line_number);
-                    fprintf(globals.outputfile_FP,
-                            "#--------------------------------------------------\n");
-                    fprintf(globals.outputfile_FP, "Filename : %s\n",
-                            fragment->filename);
-                    fprintf(globals.outputfile_FP, "Function Name: %s\n",
-                            fragment->function_name);
-                    fprintf(globals.outputfile_FP,
-                            "Replacement Function Filename : %s\n",
-                            transformation->transf_function);
-                }
-            }
-            transformation = (transformation_t *)opttran_list_get_next(transformation);
-        }
-        fragment = (fragment_t *)opttran_list_get_next(fragment);
-    }
-
-    OPTTRAN_OUTPUT_VERBOSE((4, "==="));
     return OPTTRAN_SUCCESS;
 }
 
