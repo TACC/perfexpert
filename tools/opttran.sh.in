@@ -69,7 +69,7 @@ OPTTRAN_PERFEXPERT="${OPTTRAN_BINDIR}/perfexpert"
 OPTTRAN_RECOMMENDER="${OPTTRAN_BINDIR}/recommender"
 OPTTRAN_PR="${OPTTRAN_BINDIR}/opttran_pr"
 OPTTRAN_CT="${OPTTRAN_BINDIR}/opttran_ct"
-OPTTRAN_CR="${OPTTRAN_BINDIR}/opttran_cr"
+OPTTRAN_CI="${OPTTRAN_BINDIR}/opttran_ci"
 
 ###############################################################################
 # Set 'perfexpert_run_exp' up
@@ -217,16 +217,25 @@ OPTTRAN_CT_CMD+=" --opttran ${OPTTRAN_DIR}"
 OPTTRAN_CT_CMD+=" > ${OPTTRAN_DIR}/opttran_ct.output"
 
 ###############################################################################
-# Set 'opttran_cr' up
+# Set 'opttran_ci' up
 #
-
+# Usage: opttran_ci -i|-f file [-vch] [-l level] [-a dir]
+# -i --stdin           Use STDIN as input for patterns
+# -f --inputfile       Use 'file' as input for patterns
+# -a --opttran         Create OptTran (automatic performance optimization) files
+#                      into 'dir' directory (default: create no OptTran files).
+# -v --verbose         Enable verbose mode using default verbose level (5)
+# -l --verbose_level   Enable verbose mode using a specific verbose level (1-10)
+# -c --colorful        Enable colors on verbose mode, no weird characters will
+#                      appear on output files
+# -h --help            Show this message
 #
-OPTTRAN_CR_CMD="${OPTTRAN_CR}"
-OPTTRAN_CR_CMD+=" --verbose_level 10"
-OPTTRAN_CR_CMD+=" --colorful"
-OPTTRAN_CR_CMD+=" --inputfile ${OPTTRAN_DIR}/opttran_functions.txt"
-OPTTRAN_CR_CMD+=" --opttran ${OPTTRAN_DIR}"
-OPTTRAN_CR_CMD+=" > ${OPTTRAN_DIR}/opttran_cr.output"
+OPTTRAN_CI_CMD="${OPTTRAN_CI}"
+OPTTRAN_CI_CMD+=" --verbose_level 10"
+OPTTRAN_CI_CMD+=" --colorful"
+OPTTRAN_CI_CMD+=" --inputfile ${OPTTRAN_DIR}/opttran_functions.txt"
+OPTTRAN_CI_CMD+=" --opttran ${OPTTRAN_DIR}"
+OPTTRAN_CI_CMD+=" > ${OPTTRAN_DIR}/opttran_ci.output"
 
 ###############################################################################
 # Let's run these tools!
@@ -322,17 +331,17 @@ else
     exit 1
 fi
 
-# Run the Code Remounter
-echo -n "[opttran.sh] Step 6 of 6: Remounting application source code..."
+# Run the Code Integrator
+echo -n "[opttran.sh] Step 6 of 6: Integrating application source code..."
     if [ x"${DEBUG}" == x"yes" ]; then
-    echo "[opttran.sh] Running: ${OPTTRAN_CR_CMD}" >> ${LOGFILE}
+    echo "[opttran.sh] Running: ${OPTTRAN_CI_CMD}" >> ${LOGFILE}
 fi
-eval ${OPTTRAN_CR_CMD}
+eval ${OPTTRAN_CI_CMD}
 if [ 0 == $? ]; then
     echo " ok!"
 else
     echo " fail :("
-    echo "[opttran.sh] ERROR: running OptTran:CR" >> ${LOGFILE}
+    echo "[opttran.sh] ERROR: running OptTran:CI" >> ${LOGFILE}
     exit 1
 fi
 
