@@ -50,6 +50,8 @@ extern globals_t globals; // globals was defined on 'recommender.c'
 
 SgProject *userProject;
 
+// TODO: it will be nice and polite to add some ROSE_ASSERT to this code
+
 int open_rose(void) {
     char **files = NULL;
 
