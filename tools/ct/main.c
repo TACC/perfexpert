@@ -964,7 +964,8 @@ static int output_results(opttran_list_t *fragments_p) {
                     fprintf(globals.outputfile_FP,
                             "%% function replacement for %s:%d\n",
                             fragment->filename, fragment->line_number);
-                    fprintf(globals.outputfile_FP, "code.filename=%s\n",
+                    fprintf(globals.outputfile_FP, "code.filename=%s/%s/%s\n",
+                            globals.opttrandir, OPTTRAN_SOURCE_DIR,
                             fragment->filename);
                     fprintf(globals.outputfile_FP, "code.function_name=%s\n",
                             fragment->function_name);
