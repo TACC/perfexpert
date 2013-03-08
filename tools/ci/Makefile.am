@@ -27,7 +27,7 @@
 
 bin_PROGRAMS = opttran_ci
 
-opttran_ci_SOURCES = main.c
+opttran_ci_SOURCES = main.c rose_functions.cpp
 opttran_ci_CPPFLAGS = -I$(srcdir)/../common
 opttran_ci_CFLAGS = -O3
 

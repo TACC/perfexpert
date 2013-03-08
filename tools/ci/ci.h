@@ -59,8 +59,7 @@ typedef struct {
     int  use_stdin;
     int  use_stdout;
     char *inputfile;
-    char *outputfile;
-    FILE *outputfile_FP;
+    char *outputdir;
     int  colorful;
     int  use_opttran;
     char *opttrandir;
@@ -89,6 +88,7 @@ static struct option long_options[] = {
     {"help",            no_argument,       NULL, 'h'},
     {"colorful",        no_argument,       NULL, 'c'},
     {"opttran",         required_argument, NULL, 'a'},
+    {"outputdir",       required_argument, NULL, 'o'},
     {0, 0, 0, 0}
 };
 
@@ -105,6 +105,8 @@ typedef struct function {
     char *source_file;
     char *function_name;
     char *replacement_file;
+    int  line_number;
+    void *node;
 } function_t;
 
 /* Function declarations */
@@ -113,6 +115,9 @@ static int  parse_env_vars(void);
 static int  parse_cli_params(int argc, char *argv[]);
 static int  parse_transformation_params(opttran_list_t *segments_p,
                                         FILE *inputfile_p);
+int open_rose(char *source_file);
+int close_rose(void);
+int replace_function(function_t *function);
 
 #ifdef __cplusplus
 }

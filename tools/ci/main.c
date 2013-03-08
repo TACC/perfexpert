@@ -52,21 +52,24 @@ int main(int argc, char** argv) {
 
     /* Set default values for globals */
     globals = (globals_t) {
-        .verbose          = 0,      // int
-        .verbose_level    = 0,      // int
-        .use_stdin        = 0,      // int
-        .use_stdout       = 1,      // int
-        .inputfile        = NULL,   // char *
-        .outputfile       = NULL,   // char *
-        .outputfile_FP    = stdout, // FILE *
-        .opttrandir       = NULL,   // char *
-        .colorful         = 0       // int
+        .verbose       = 0,    // int
+        .verbose_level = 0,    // int
+        .use_stdin     = 0,    // int
+        .use_stdout    = 1,    // int
+        .inputfile     = NULL, // char *
+        .outputdir     = NULL, // char *
+        .opttrandir    = NULL, // char *
+        .colorful      = 0     // int
     };
 
     /* Parse command-line parameters */
     if (OPTTRAN_SUCCESS != parse_cli_params(argc, argv)) {
         OPTTRAN_OUTPUT(("%s", _ERROR("Error: parsing command line arguments")));
         exit(OPTTRAN_ERROR);
+    }
+    if (NULL == globals.outputdir) {
+        OPTTRAN_OUTPUT(("%s", _ERROR("Error: undefined output directory")));
+        show_help();
     }
 
     /* Create the list of fragments */
@@ -108,9 +111,40 @@ int main(int argc, char** argv) {
         }
     }
 
-    /* Integrate functions */
+    /* Integrate functions: 4 steps */
+    /* Step 1: open ROSE */
+    function = (function_t *)opttran_list_get_first(functions);
+    if (OPTTRAN_ERROR == open_rose(function->source_file)) {
+        OPTTRAN_OUTPUT(("%s",
+                        _ERROR("Error: starting Rose")));
+        exit(OPTTRAN_ERROR);
+    }
 
-    /* Output results */
+    /* Step 2: replace functions */
+    function = (function_t *)opttran_list_get_first(functions);
+
+    OPTTRAN_OUTPUT_VERBOSE((7, "%s", _YELLOW("replacing functions")));
+
+    while ((opttran_list_item_t *)function != &(functions->sentinel)) {
+        if (OPTTRAN_ERROR == replace_function(function)) {
+            OPTTRAN_OUTPUT(("%s (%s at %s)",
+                            _ERROR("Error: replacing function"),
+                            function->function_name,
+                            function->source_file));
+            exit(OPTTRAN_ERROR);
+        }
+        function = (function_t *)opttran_list_get_next(function);
+    }
+
+    /* Step 3: output modified code */
+    // TODO: call 'output_modified_code'
+
+    /* Step 4: close rose */
+    if (OPTTRAN_ERROR == close_rose()) {
+        OPTTRAN_OUTPUT(("%s",
+                        _ERROR("Error: closing Rose")));
+        exit(OPTTRAN_ERROR);
+    }
 
     /* Free memory */
     while (OPTTRAN_FALSE == opttran_list_is_empty(functions)) {
@@ -186,7 +220,7 @@ static int parse_cli_params(int argc, char *argv[]) {
 
     while (1) {
         /* get parameter */
-        parameter = getopt_long(argc, argv, "a:cvhif:l:", long_options,
+        parameter = getopt_long(argc, argv, "a:cvhif:l:o:", long_options,
                                 &option_index);
 
         /* Detect the end of the options */
@@ -248,6 +282,13 @@ static int parse_cli_params(int argc, char *argv[]) {
                                         globals.inputfile));
                 break;
 
+            /* Output directory */
+            case 'o':
+                globals.outputdir = optarg;
+                OPTTRAN_OUTPUT_VERBOSE((10, "option 'o' set [%s]",
+                                        globals.outputdir));
+                break;
+                
             /* Use opttran? */
             case 'a':
                 globals.use_opttran = 1;
@@ -279,10 +320,10 @@ static int parse_cli_params(int argc, char *argv[]) {
                             globals.use_stdin ? "yes" : "no"));
     OPTTRAN_OUTPUT_VERBOSE((10, "   Input file:        %s",
                             globals.inputfile ? globals.inputfile : "(null)"));
+    OPTTRAN_OUTPUT_VERBOSE((10, "   Output directory:  %s",
+                            globals.outputdir));
     OPTTRAN_OUTPUT_VERBOSE((10, "   Use OPTTRAN?       %s",
                             globals.use_opttran ? "yes" : "no"));
-    OPTTRAN_OUTPUT_VERBOSE((10, "   OPTTRAN PID:       %llu",
-                            globals.opttran_pid));
     OPTTRAN_OUTPUT_VERBOSE((10, "   OPTTRAN directory: %s",
                             globals.opttrandir ? globals.opttrandir : "(null)"));
 
@@ -368,10 +409,6 @@ static int parse_transformation_params(opttran_list_t *functions_p,
         bzero(node, sizeof(node_t) + strlen(buffer) + 1);
         node->key = strtok(strcpy((char*)(node + 1), buffer), "=\r\n");
         node->value = strtok(NULL, "\r\n");
-
-        code.filename=mm_naive.c
-        code.function_name=compute
-        opttran_ct.replacement_function=example/fragments/mm_naive.c_11.c_loop2.transformer_result
 
         /* Code param: code.filename */
         if (0 == strncmp("code.filename", node->key, 13)) {
