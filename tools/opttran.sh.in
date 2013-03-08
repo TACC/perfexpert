@@ -38,18 +38,30 @@
 # Parsing options
 #
 # -q quiet
-# -a opttran working dir
 # -s source file
 # -v enable verbose debug
-# -b binary program file
+# -b binary program file (not sure if it is necessary)
 
 OPTTRAN_DIR="teste"
 USER_BINARY="mm_naive"
 USER_SOURCE="mm_naive.c"
 DEBUG="yes"
-#LOGFILE="/dev/stdout"
-#LOGFILE="/dev/null"
-LOGFILE="teste/opttran.log"
+#VERBOSE="/dev/null"
+VERBOSE="/dev/stdout"
+LOGFILE="${OPTTRAN_DIR}/opttran.log"
+OPTTRAN_CI_OUTPUT_DIR="${OPTTRAN_DIR}/fragments/1"
+
+
+
+
+
+
+
+
+
+
+
+
 
 ###############################################################################
 # Script variables
@@ -91,7 +103,7 @@ OPTTRAN_PERFEXPERT_RUN_EXP_CMD+=" -t ${OPTTRAN_DIR}"
 OPTTRAN_PERFEXPERT_RUN_EXP_CMD+=" -g"
 OPTTRAN_PERFEXPERT_RUN_EXP_CMD+=" -o ${OPTTRAN_DIR}/perfexpert-experiment.xml"
 OPTTRAN_PERFEXPERT_RUN_EXP_CMD+=" ${USER_BINARY}"
-OPTTRAN_PERFEXPERT_RUN_EXP_CMD+=" > ${OPTTRAN_DIR}/perfexpert_run_exp.output"
+OPTTRAN_PERFEXPERT_RUN_EXP_CMD+=" &> ${OPTTRAN_DIR}/perfexpert_run_exp.output"
 
 ###############################################################################
 # Set 'perfexpert' up
@@ -115,7 +127,7 @@ OPTTRAN_PERFEXPERT_CMD+=" --recommend"
 OPTTRAN_PERFEXPERT_CMD+=" --opttran"
 OPTTRAN_PERFEXPERT_CMD+=" 0.1"
 OPTTRAN_PERFEXPERT_CMD+=" ${OPTTRAN_DIR}/perfexpert-experiment.xml"
-OPTTRAN_PERFEXPERT_CMD+=" > ${OPTTRAN_DIR}/perfexpert.output"
+OPTTRAN_PERFEXPERT_CMD+=" &> ${OPTTRAN_DIR}/perfexpert.output"
 
 ###############################################################################
 # Set 'recommender' up
@@ -153,7 +165,7 @@ OPTTRAN_RECOMMENDER_CMD+=" --inputfile ${OPTTRAN_DIR}/perfexpert.output"
 OPTTRAN_RECOMMENDER_CMD+=" --colorful"
 OPTTRAN_RECOMMENDER_CMD+=" --opttran ${OPTTRAN_DIR}"
 OPTTRAN_RECOMMENDER_CMD+=" --sourcefile ${USER_SOURCE}"
-OPTTRAN_RECOMMENDER_CMD+=" > ${OPTTRAN_DIR}/recommender.output"
+OPTTRAN_RECOMMENDER_CMD+=" &> ${OPTTRAN_DIR}/recommender.output"
 
 ###############################################################################
 # Set 'opttran_pr' up
@@ -184,7 +196,7 @@ OPTTRAN_PR_CMD+=" --colorful"
 OPTTRAN_PR_CMD+=" --inputfile ${OPTTRAN_DIR}/opttran_recommendations.txt"
 OPTTRAN_PR_CMD+=" --testall"
 OPTTRAN_PR_CMD+=" --opttran ${OPTTRAN_DIR}"
-OPTTRAN_PR_CMD+=" > ${OPTTRAN_DIR}/opttran_pr.output"
+OPTTRAN_PR_CMD+=" &> ${OPTTRAN_DIR}/opttran_pr.output"
 
 ###############################################################################
 # Set 'opttran_ct' up
@@ -214,14 +226,15 @@ OPTTRAN_CT_CMD+=" --verbose_level 10"
 OPTTRAN_CT_CMD+=" --colorful"
 OPTTRAN_CT_CMD+=" --inputfile ${OPTTRAN_DIR}/opttran_transformations.txt"
 OPTTRAN_CT_CMD+=" --opttran ${OPTTRAN_DIR}"
-OPTTRAN_CT_CMD+=" > ${OPTTRAN_DIR}/opttran_ct.output"
+OPTTRAN_CT_CMD+=" &> ${OPTTRAN_DIR}/opttran_ct.output"
 
 ###############################################################################
 # Set 'opttran_ci' up
 #
-# Usage: opttran_ci -i|-f file [-vch] [-l level] [-a dir]
+# Usage: opttran_ci -i|-f file -o dir [-vch] [-l level] [-a dir]
 # -i --stdin           Use STDIN as input for patterns
 # -f --inputfile       Use 'file' as input for patterns
+# -o --outputdir       Use 'dir' as outpur directory for integrated source code
 # -a --opttran         Create OptTran (automatic performance optimization) files
 #                      into 'dir' directory (default: create no OptTran files).
 # -v --verbose         Enable verbose mode using default verbose level (5)
@@ -235,16 +248,17 @@ OPTTRAN_CI_CMD+=" --verbose_level 10"
 OPTTRAN_CI_CMD+=" --colorful"
 OPTTRAN_CI_CMD+=" --inputfile ${OPTTRAN_DIR}/opttran_functions.txt"
 OPTTRAN_CI_CMD+=" --opttran ${OPTTRAN_DIR}"
-OPTTRAN_CI_CMD+=" > ${OPTTRAN_DIR}/opttran_ci.output"
+OPTTRAN_CI_CMD+=" --outputdir ${OPTTRAN_CI_OUTPUT_DIR}"
+OPTTRAN_CI_CMD+=" &> ${OPTTRAN_DIR}/opttran_ci.output"
 
 ###############################################################################
-# Let's run these tools!
+# It's time to make magic...
 #
 
 # Create OPTTRAN dir
 eval @MKDIR_P@ ${OPTTRAN_DIR}
 if [ 0 != $? ]; then
-    echo "[opttran.sh] unable to create OPTTRAN directory (${OPTTRAN_DIR})"
+    echo "[opttran.sh] Error: unable to create OPTTRAN directory (${OPTTRAN_DIR})"
     exit 1
 fi
 if [ x"${DEBUG}" == x"yes" ]; then
@@ -253,30 +267,32 @@ if [ x"${DEBUG}" == x"yes" ]; then
 fi
 
 # Run PerfExpert (run_exp)
-echo -n "[opttran.sh] Step 1 of 6: Running PerfExpert measurements phase (this could take a while)..."
+echo -n "[opttran.sh] Step 1 of 6: Running PerfExpert measurements phase (this could take a while)..." >> ${VERBOSE}
 if [ x"${DEBUG}" == x"yes" ]; then
     echo "[opttran.sh] Running: ${OPTTRAN_PERFEXPERT_RUN_EXP_CMD}" >> ${LOGFILE}
 fi
 eval ${OPTTRAN_PERFEXPERT_RUN_EXP_CMD}
 if [ 0 == $? ]; then
-    echo " ok!"
+    echo " ok!" >> ${VERBOSE}
 else
-    echo " fail :("
-    echo "[opttran.sh] ERROR: running PerfExpert (run_exp)" >> ${LOGFILE}
+    echo " fail :(" >> ${VERBOSE}
+    echo "[opttran.sh] Error: running PerfExpert (run_exp)" >> ${LOGFILE}
+    echo "[opttran.sh] Error: running PerfExpert (run_exp)"
     exit 1
 fi
 
 # Run PerfExpert (analysis)
-echo -n "[opttran.sh] Step 2 of 6: Running PerfExpert analysis phase..."
+echo -n "[opttran.sh] Step 2 of 6: Running PerfExpert analysis phase..." >> ${VERBOSE}
 if [ x"${DEBUG}" == x"yes" ]; then
     echo "[opttran.sh] Running: ${OPTTRAN_PERFEXPERT_CMD}" >> ${LOGFILE}
 fi
 eval ${OPTTRAN_PERFEXPERT_CMD}
 if [ 0 == $? ]; then
-    echo " ok!"
+    echo " ok!" >> ${VERBOSE}
 else
-    echo " fail :("
-    echo "[opttran.sh] ERROR: running PerfExpert (analysis)" >> ${LOGFILE}
+    echo " fail :(" >> ${VERBOSE}
+    echo "[opttran.sh] Error: running PerfExpert (analysis)" >> ${LOGFILE}
+    echo "[opttran.sh] Error: running PerfExpert (analysis)"
     exit 1
 fi
 
@@ -286,65 +302,66 @@ if [ x"${DEBUG}" == x"yes" ]; then
 fi
 eval mv perfexpert.log ${OPTTRAN_DIR}/
 if [ 0 != $? ]; then
-    echo "[opttran.sh] ERROR: unable to move perfexpert.log" >> ${LOGFILE}
+    echo "[opttran.sh] Error: unable to move perfexpert.log" >> ${LOGFILE}
 fi
 
 # Run Recommender
-echo -n "[opttran.sh] Step 3 of 6: Looking for recommendations..."
+echo -n "[opttran.sh] Step 3 of 6: Looking for recommendations..." >> ${VERBOSE}
 if [ x"${DEBUG}" == x"yes" ]; then
     echo "[opttran.sh] Running: ${OPTTRAN_RECOMMENDER_CMD}" >> ${LOGFILE}
 fi
 eval ${OPTTRAN_RECOMMENDER_CMD}
 if [ 0 == $? ]; then
-    echo " ok!"
+    echo " ok!" >> ${VERBOSE}
 else
-    echo " fail :("
-    echo "[opttran.sh] ERROR: running Recommender" >> ${LOGFILE}
+    echo " fail :(" >> ${VERBOSE}
+    echo "[opttran.sh] Error: running Recommender" >> ${LOGFILE}
+    echo "[opttran.sh] Error: running Recommender"
     exit 1
 fi
 
 # Run the Pattern Recognizer
-echo -n "[opttran.sh] Step 4 of 6: Testing feasibility of recommendations..."
+echo -n "[opttran.sh] Step 4 of 6: Testing feasibility of recommendations..." >> ${VERBOSE}
 if [ x"${DEBUG}" == x"yes" ]; then
     echo "[opttran.sh] Running: ${OPTTRAN_PR_CMD}" >> ${LOGFILE}
 fi
 eval ${OPTTRAN_PR_CMD}
 if [ 0 == $? ]; then
-    echo " ok!"
+    echo " ok!" >> ${VERBOSE}
 else
-    echo " fail :("
-    echo "[opttran.sh] ERROR: running OptTran:PR" >> ${LOGFILE}
+    echo " fail :(" >> ${VERBOSE}
+    echo "[opttran.sh] Error: running OptTran:PR" >> ${LOGFILE}
+    echo "[opttran.sh] Error: running OptTran:PR"
     exit 1
 fi
 
 # Run the Code Transformer
-echo -n "[opttran.sh] Step 5 of 6: Applying code transformations..."
+echo -n "[opttran.sh] Step 5 of 6: Applying code transformations..." >> ${VERBOSE}
 if [ x"${DEBUG}" == x"yes" ]; then
     echo "[opttran.sh] Running: ${OPTTRAN_CT_CMD}" >> ${LOGFILE}
 fi
 eval ${OPTTRAN_CT_CMD}
 if [ 0 == $? ]; then
-    echo " ok!"
+    echo " ok!" >> ${VERBOSE}
 else
-    echo " fail :("
-    echo "[opttran.sh] ERROR: running OptTran:CT" >> ${LOGFILE}
+    echo " fail :(" >> ${VERBOSE}
+    echo "[opttran.sh] Error: running OptTran:CT" >> ${LOGFILE}
+    echo "[opttran.sh] Error: running OptTran:CT"
     exit 1
 fi
 
 # Run the Code Integrator
-echo -n "[opttran.sh] Step 6 of 6: Integrating application source code..."
-    if [ x"${DEBUG}" == x"yes" ]; then
+echo -n "[opttran.sh] Step 6 of 6: Integrating application source code..." >> ${VERBOSE}
+if [ x"${DEBUG}" == x"yes" ]; then
     echo "[opttran.sh] Running: ${OPTTRAN_CI_CMD}" >> ${LOGFILE}
 fi
 eval ${OPTTRAN_CI_CMD}
 if [ 0 == $? ]; then
-    echo " ok!"
+    echo " ok!" >> ${VERBOSE}
 else
-    echo " fail :("
-    echo "[opttran.sh] ERROR: running OptTran:CI" >> ${LOGFILE}
+    echo " fail :(" >> ${VERBOSE}
+    echo "[opttran.sh] Error: running OptTran:CI" >> ${LOGFILE}
+    echo "[opttran.sh] Error: running OptTran:CI"
     exit 1
 fi
-
-
-
 
