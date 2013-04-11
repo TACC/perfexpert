@@ -70,7 +70,6 @@ public class HPCToolkitParser extends AParser {
         if (sourceURI.substring(0, fileIndex).equals("file")) {
             String filename = sourceURI.substring("file://".length());
             String convertedFilename = filename + ".converted";
-            Process p;
             StringBuilder err = new StringBuilder();
             
             // Check if File exists
@@ -90,21 +89,29 @@ public class HPCToolkitParser extends AParser {
                     return null;
                 }
 
-                p = new ProcessBuilder("/bin/sh", HPCDataLocation + "/../bin/hpcdata.sh",
-                                       "-o=" + convertedFilename,
-                                       filename).start();
+                Process p;
+                ProcessBuilder pb;
+                pb = new ProcessBuilder("/bin/sh",
+                                        HPCDataLocation + "/../bin/hpcdata.sh",
+                                        "-o=" + convertedFilename,
+                                        filename).start();
+                p = pb.start();
                 
                 // Check if there were errors
                 byte [] byteArray = new byte [1024];
                 while (p.getErrorStream().read(byteArray) > 0)
                     err.append(new String(byteArray));
-                
-                if (new String(err).contains("Exception")) {
+
+                String errString = err.toString();
+                if (errString.contains("Exception") ||
+                    errString.contains("Error")) {
                     log.error("Error converting input file \"" + filename +
-                              "\":\n" + err);
+                              "\":\n" + errString);
+                    log.debug("Conversion program was started as: " +
+                              pb.command());
                     return profiles;
                 } else {
-                    log.debug("Conversion complete");
+                    log.debug("Conversion complete with message: " + errString);
                     System.out.println("Input file: \"" + filename + "\"");
                 }
             }
