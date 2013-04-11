@@ -82,4 +82,4 @@ else
 fi
 
 export PERFEXPERT_HPCDATA_HOME="${LIBDIR}"
-java ${LOG4J} -cp ${CLASSPATH} edu.utexas.tacc.perfexpert.PerfExpert ${*}
+JAVA_TOOL_OPTIONS="-Xms256M -Xmx1G" java ${LOG4J} -cp ${CLASSPATH} edu.utexas.tacc.perfexpert.PerfExpert ${*}
