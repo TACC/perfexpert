@@ -93,8 +93,7 @@ public class HPCToolkitParser extends AParser {
                 ProcessBuilder pb;
                 pb = new ProcessBuilder("/bin/sh",
                                         HPCDataLocation + "/../bin/hpcdata.sh",
-                                        "-o=" + convertedFilename,
-                                        filename).start();
+                                        "-o=" + convertedFilename, filename);
                 p = pb.start();
                 
                 // Check if there were errors
