@@ -1,4 +1,3 @@
-#!/bin/sh
 #
 # Copyright (c) 2013  University of Texas at Austin. All rights reserved.
 #
@@ -26,11 +25,7 @@
 # $HEADER$
 #
 
-# Run autoreconf
-mkdir -p m4
-mkdir -p config
-aclocal -I m4 --install
-autoreconf -ivf --warnings=all,no-obsolete,no-override -I config
-# autoreconf --install
+lib_LTLIBRARIES = libmrt.la
+libmrt_la_SOURCES = mrt.c
 
 # EOF

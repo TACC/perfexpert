@@ -25,6 +25,8 @@
 # $HEADER$
 #
 
+ACLOCAL_AMFLAGS = -I m4
+
 SUBDIRS = tools
 
 install-data-hook:

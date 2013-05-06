@@ -29,8 +29,8 @@
 AC_PREREQ(2.63)
 
 # Define the package name, version, author, etc.
-AC_INIT([opttran], [0.1], [Leonardo Fialho: fialho@utexas.edu],
-    [opttran.tar.gz], [http://www.tacc.com.br/opttran/])
+AC_INIT([perfexpert], [0.1], [Leonardo Fialho: fialho@utexas.edu],
+    [perfexpert.tar.gz], [http://www.tacc.com.br/perfexpert/])
 AC_COPYRIGHT([University of Texas at Austin])
 AC_REVISION([$Revision: 0.1 $])
 
@@ -62,6 +62,10 @@ AC_PROG_CXX
 AC_PROG_MKDIR_P
 AC_PROG_LN_S
 AC_PROG_INSTALL
+
+# Minst (MACPO) requires Libtool
+AC_CONFIG_MACRO_DIR([m4])
+LT_INIT
 
 # Checks for typedefs, structures, and compiler characteristics
 AC_C_INLINE
@@ -155,7 +159,7 @@ AC_CHECK_HEADER([fcntl.h],     [], [AC_MSG_ERROR([not found: fcntl.h])])
 AC_CHECK_HEADER([sys/wait.h],  [], [AC_MSG_ERROR([not found: sys/wait.h])])
 
 #------------------------------------------------------------------------------
-# Checks for SQLite headers, lib and program (optional except for recommender)
+# Checks for SQLite headers, lib and program
 #
 AC_CHECK_LIB([sqlite3], [sqlite3_open, sqlite3_close, sqlite3_exec,
     sqlite3_free, sqlite3_errmsg], [],
@@ -172,7 +176,7 @@ AC_CHECK_HEADER([sqlite3.h], [
 AC_PATH_TOOL([SQLITE3_PROGRAM], [sqlite3], [no])
 
 #------------------------------------------------------------------------------
-# Checks for PIPS, optionally, using an argument (optional except for opttran_ct)
+# Checks for PIPS, optionally, using an argument (required for opttran_ct)
 #
 AC_ARG_WITH([pips],
     [AS_HELP_STRING([--with-pips],
@@ -352,12 +356,12 @@ AM_CONDITIONAL([WITH_ROSE_SUPPORT], [test x"$WITH_ROSE_SUPPORT" = x"yes"])
 #------------------------------------------------------------------------------
 # Enable/Disable 'perfexpert'
 #
-AC_MSG_CHECKING([whether to enable PerfExpert])
 AC_ARG_ENABLE([perfexpert],
     [AS_HELP_STRING([--disable-perfexpert],
         [Enable/Disable the application profiler tool [default=enabled]])],
     [ENABLE_OPTTRAN_PERFEXPERT=$enableval], [ENABLE_OPTTRAN_PERFEXPERT=yes])
 
+AC_MSG_CHECKING([whether to enable PerfExpert])
 AS_IF([test x"$ENABLE_OPTTRAN_PERFEXPERT" = x"yes"], [
     AC_MSG_RESULT([yes])
 
@@ -420,6 +424,31 @@ AS_IF([test x"$ENABLE_OPTTRAN_PERFEXPERT" = x"yes"], [
 AC_SUBST([ENABLE_HOUND])
 AC_SUBST([ENABLE_SNIFFER])
 AC_SUBST([ENABLE_PERFEXPERT])
+
+#------------------------------------------------------------------------------
+# Enable/Disable 'minst' (MACPO)
+#
+AC_ARG_ENABLE([minst],
+    [AS_HELP_STRING([--disable-minst],
+        [Enable/Disable the data access instrumentation tool [default=enabled]])],
+    [ENABLE_OPTTRAN_MINST=$enableval], [ENABLE_OPTTRAN_MINST=yes])
+
+AC_MSG_CHECKING([whether to enable Minst (MACPO)])
+AS_IF([test x"$ENABLE_OPTTRAN_MINST" = x"yes"], [
+    AC_MSG_RESULT([yes])
+
+    # ROSE is required
+    AS_IF([test x"$WITH_ROSE_SUPPORT" = x"no"],
+        [AC_MSG_ERROR([ROSE not found, try using '--with-rose'])], [])
+
+    ENABLE_MINST=minst
+    AC_CONFIG_FILES([tools/minst/Makefile])
+    AC_CONFIG_FILES([tools/minst/libmrt/Makefile])
+], [
+    AC_MSG_RESULT([no])
+    ENABLE_MINST=
+])
+AC_SUBST([ENABLE_MINST])
 
 #------------------------------------------------------------------------------
 # Enable/Disable 'recommender'
@@ -486,6 +515,7 @@ AC_ARG_ENABLE([opttran_ct],
 AS_IF([test x"$ENABLE_OPTTRAN_CT" = x"yes"], [
     AC_MSG_RESULT([yes])
 
+    # PIPS is required
     AS_IF([test x"$TPIPS_PROGRAM" = x"no"],
         [AC_MSG_ERROR([TPIPS not found, try using '--with-pips'])], [])
 
@@ -513,6 +543,7 @@ AC_ARG_ENABLE([opttran_ci],
 AS_IF([test x"$ENABLE_OPTTRAN_CI" = x"yes"], [
     AC_MSG_RESULT(yes)
 
+    # ROSE is required
     AS_IF([test x"$WITH_ROSE_SUPPORT" = x"no"],
         [AC_MSG_ERROR([ROSE not found, try using '--with-rose'])], [])
 
@@ -549,6 +580,7 @@ AC_CONFIG_FILES([tools/opttran.sh], [chmod +x tools/opttran.sh])
 AC_OUTPUT
 AC_MSG_NOTICE([========================================================])
 AC_MSG_NOTICE([ PerfExpert:                $ENABLE_OPTTRAN_PERFEXPERT  ])
+AC_MSG_NOTICE([ Minst (MACPO):             $ENABLE_OPTTRAN_MINST       ])
 AC_MSG_NOTICE([ Optimizations Recommender: $ENABLE_OPTTRAN_RECOMMENDER ])
 AC_MSG_NOTICE([ Code Pattern Recognizer:   $ENABLE_OPTTRAN_PR          ])
 AC_MSG_NOTICE([ Code Transformer:          $ENABLE_OPTTRAN_CT          ])

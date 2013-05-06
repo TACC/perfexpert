@@ -1,4 +1,3 @@
-#!/bin/sh
 #
 # Copyright (c) 2013  University of Texas at Austin. All rights reserved.
 #
@@ -26,11 +25,13 @@
 # $HEADER$
 #
 
-# Run autoreconf
-mkdir -p m4
-mkdir -p config
-aclocal -I m4 --install
-autoreconf -ivf --warnings=all,no-obsolete,no-override -I config
-# autoreconf --install
+SUBDIRS = libmrt
+
+bin_PROGRAMS = minst
+
+minst_SOURCES = minst.cpp instrumentor.cpp main.cpp splitter.cpp scourer.cpp \
+	expander.cpp stream_counter.cpp
+minst_CPPFLAGS = -I$(srcdir)/../common
+minst_CFLAGS = 
 
 # EOF
