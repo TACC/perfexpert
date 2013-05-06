@@ -43,6 +43,7 @@ tools you will need:
     - M4,       1.4.13 or newer (ftp://ftp.gnu.org/gnu/m4/)
     - Autoconf  2.63 or newer   (ftp://ftp.gnu.org/gnu/autoconf/)
     - Automake  1.11.1 or newer (ftp://ftp.gnu.org/gnu/automake/)
+    - Libtool   2.2.6b or newer (ftp://ftp.gnu.org/gnu/libtool/)
 
 If you have all these GNU tools, to generate the 'configure' script just run:
 

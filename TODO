@@ -25,18 +25,9 @@
 # $HEADER$
 #
 
-2013 05 06 - Adding Minst (MACPO) to the tool chain
-
-2013 02 02 - First version added to the git control version system
-
-Known issues:
-
- - if the recommendation database exists, the installation script generates an
-   warning message to replace the current installed database
-   
- - the lcpi.properties may be slight different from one machine to other,
-   therefore, PerfExpert may output some warnings when using the
-   perfexper-experiment.xml example file from contrib (or $prefix/share/opttran)
-   directory
+1) Include externals: PIPS, ROSE, HPCToolKit, ...
+2) Create documentation
+3) Create a Test Suite
+4) Generate performance improvement graphs automatically
 
 EOF
