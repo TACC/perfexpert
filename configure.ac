@@ -184,7 +184,7 @@ AC_ARG_WITH([pips],
         necessary if it is in the PATH). TPIPS (one of the PIPS binaries) is
         necessary to compile OptTran:CT])], [
     PIPS_PATH="$withval"
-    AC_PATH_TOOL([TPIPS_PROGRAM], [tpips], [no], [$PIPS_PATH])
+    AC_PATH_TOOL([TPIPS_PROGRAM], [tpips], [no], [$PIPS_PATH/bin])
     AS_IF([test x"$TPIPS_PROGRAM" = x"no"],
         [AC_MSG_ERROR([TPIPS not found in $PIPS_PATH])])], [
     AC_PATH_TOOL([TPIPS_PROGRAM], [tpips], [no])])
@@ -237,15 +237,14 @@ AC_ARG_WITH([papi-include],
 AC_CHECK_LIB([papi], [PAPI_library_init, PAPI_add_event,
     PAPI_create_eventset, PAPI_get_event_info, PAPI_event_name_to_code,
     PAPI_query_event], [], [HAVE_PAPI_LIB=no])
-AC_CHECK_HEADER([papi.h], [HAVE_PAPI_HEADER=yes], [HAVE_PAPI_HEADER=no])
+AS_IF([test x"$HAVE_PAPI_LIB" == x"no"],
+    [AC_MSG_ERROR([libpapi not found])], [])
 
-AS_IF([test x"HAVE_PAPI_LIB" == x"no"], [], [
-    AS_IF([test x"HAVE_PAPI_HEADER" == x"yes"], [
-        AC_DEFINE([HAVE_PAPI], [1], [PAPI support])
-    ], [
-        AC_DEFINE([HAVE_PAPI], [0], [PAPI support])
-    ])
-])
+AC_CHECK_HEADER([papi.h], [HAVE_PAPI_HEADER=yes], [HAVE_PAPI_HEADER=no])
+AS_IF([test x"$HAVE_PAPI_HEADER" == x"no"],
+    [AC_MSG_ERROR([papi.h not found])], [])
+
+AC_DEFINE([HAVE_PAPI], [1], [PAPI support])
 
 #------------------------------------------------------------------------------
 # Find HPCToolkit programs, optionally, using an argument
@@ -255,15 +254,15 @@ AC_ARG_WITH([hpctoolkit],
         [Use this argument to set where HPCTollkit binaries are
         installed (not necessary if they are in the PATH)])], [
     HPCTOOLKIT_PATH="$withval"
-    AC_PATH_TOOL([HPCSTRUCT_PROGRAM], [hpcstruct], [no], [$HPCTOOLKIT_PATH])
-    AC_PATH_TOOL([HPCRUN_PROGRAM],    [hpcrun],    [no], [$HPCTOOLKIT_PATH])
-    AC_PATH_TOOL([HPCPROF_PROGRAM],   [hpcprof],   [no], [$HPCTOOLKIT_PATH])
+    AC_PATH_TOOL([HPCSTRUCT_PROGRAM], [hpcstruct], [no], [$HPCTOOLKIT_PATH/bin])
+    AC_PATH_TOOL([HPCRUN_PROGRAM],    [hpcrun],    [no], [$HPCTOOLKIT_PATH/bin])
+    AC_PATH_TOOL([HPCPROF_PROGRAM],   [hpcprof],   [no], [$HPCTOOLKIT_PATH/bin])
     AS_IF([test x"$HPCSTRUCT_PROGRAM" = x"no"],
-        [AC_MSG_ERROR([hpcstruct not found in $HPCTOOLKIT_PATH])])
+        [AC_MSG_ERROR([hpcstruct not found in $HPCTOOLKIT_PATH/bin])])
     AS_IF([test x"$HPCRUN_PROGRAM" = x"no"],
-        [AC_MSG_ERROR([hpcrun not found in $HPCTOOLKIT_PATH])])
+        [AC_MSG_ERROR([hpcrun not found in $HPCTOOLKIT_PATH/bin])])
     AS_IF([test x"$HPCPROF_PROGRAM" = x"no"],
-        [AC_MSG_ERROR([hpcprof not found in $HPCTOOLKIT_PATH])])
+        [AC_MSG_ERROR([hpcprof not found in $HPCTOOLKIT_PATH/bin])])
 ], [
     AC_PATH_TOOL([HPCSTRUCT_PROGRAM], [hpcstruct], [no])
     AC_PATH_TOOL([HPCRUN_PROGRAM],    [hpcrun],    [no])
