@@ -30,11 +30,13 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <fcntl.h>
 
 /* Utility headers */
 #include <rose.h>
 #include <sage3.h>
+
+/* sys/stat.h (and hence fcntl.h) needs to be included after rose.h */
+#include <fcntl.h>
 
 /* OptTran headers */
 #include "config.h"
