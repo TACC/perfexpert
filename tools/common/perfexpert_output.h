@@ -36,8 +36,8 @@
  * $HEADER$
  */
 
-#ifndef OPTTRAN_OUTPUT_H_
-#define OPTTRAN_OUTPUT_H_
+#ifndef PERFEXPERT_OUTPUT_H_
+#define PERFEXPERT_OUTPUT_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -66,13 +66,13 @@ extern "C" {
 /**
  *  Main macro for use in sending debugging output to screen.
  *
- *  @see opttran_output()
+ *  @see perfexpert_output()
  */
-#ifndef OPTTRAN_OUTPUT
-#define OPTTRAN_OUTPUT(a) output a
+#ifndef OUTPUT
+#define OUTPUT(a) output a
 #endif
-#ifndef OPTTRAN_OUTPUT_VERBOSE
-#define OPTTRAN_OUTPUT_VERBOSE(a) output_verbose a
+#ifndef OUTPUT_VERBOSE
+#define OUTPUT_VERBOSE(a) output_verbose a
 #endif
 
 #ifndef PROGRAM_PREFIX
@@ -128,9 +128,9 @@ static char* colorful(int attr, int fg, int bg, char* str) {
 
 /**
  * Global function to send output to screen. This function should never be
- * called directly. The macro OPTTRAN_OUTPUT should be called instead. Use this
- * funtion for error messages. Debug and informational messages should use
- * output_verbose().
+ * called directly. The macro OUTPUT should be called instead. Use this function
+ * for error messages. Debug and informational messages should use
+ * OUTPUT_VERBOSE().
  *
  * @param[in] *format Formatted string output conversion
  */
@@ -163,9 +163,9 @@ static void output(const char *format, ...) {
 
 /**
  * Global function to send output to screen. This function should never be
- * called directly. The macro OPTTRAN_OUTPUT should be called instead. Use this
+ * called directly. The macro OUTPUT_VERBOSE should be called instead. Use this
  * function for debug and informational messages. Error messages should use
- * output().
+ * OUTPUT().
  *
  * @param[in] level   Starting debug level from where this message should be
  *                    outputted
@@ -204,4 +204,4 @@ static void output_verbose(int level, const char *format, ...) {
 }
 #endif
 
-#endif /* OPTTRAN_OUTPUT_H */
+#endif /* PERFEXPERT_OUTPUT_H */

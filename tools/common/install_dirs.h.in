@@ -32,15 +32,15 @@
 extern "C" {
 #endif
     
-#define OPTTRAN_PREFIX      "@prefix@"
+#define PERFEXPERT_PREFIX "@prefix@"
 /** Executables that users can run */
-#define OPTTRAN_BINDIR      "@prefix@/bin"
+#define PERFEXPERT_BINDIR "@prefix@/bin"
 /** JAR files */
-#define OPTTRAN_LIBDIR      "@prefix@/lib"
+#define PERFEXPERT_LIBDIR "@prefix@/lib"
 /** Configuration files */
-#define OPTTRAN_ETCDIR      "@prefix@/etc"
+#define PERFEXPERT_ETCDIR "@prefix@/etc"
 /** Recommendation database */
-#define OPTTRAN_VARDIR      "@prefix@/var"
+#define PERFEXPERT_VARDIR "@prefix@/var"
 
 #ifdef __cplusplus
 }

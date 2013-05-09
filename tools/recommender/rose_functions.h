@@ -42,7 +42,7 @@
 #endif
 
 /* Maximum size for loop labels */
-#define OPTTRAN_LOOP_LABEL 16
+#define PERFEXPERT_LOOP_LABEL 16
 
 class recommenderTraversal : public AstSimpleProcessing {
     public :

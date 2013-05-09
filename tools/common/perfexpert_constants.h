@@ -25,8 +25,8 @@
  * $HEADER$
  */
 
-#ifndef OPTTRAN_CONSTANTS_H_
-#define OPTTRAN_CONSTANTS_H_
+#ifndef PERFEXPERT_CONSTANTS_H_
+#define PERFEXPERT_CONSTANTS_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -38,17 +38,17 @@ extern "C" {
  * it is possible to combine more than one error code in the return value.
  */
 
-/** OPTTRAN_UNDEFINED should be used when it is not an error */
-#define OPTTRAN_UNDEFINED -2
-/** OPTTRAN_FAILURE should be used when an error is -1 */
-#define OPTTRAN_FAILURE   -1
-/** OPTTRAN_SUCCESS should be used in case of success */
-#define OPTTRAN_SUCCESS    0
-/** OPTTRAN_ERROR should be used in case of general error */
-#define OPTTRAN_ERROR      1
+/** PERFEXPERT_UNDEFINED should be used when it is not an error */
+#define PERFEXPERT_UNDEFINED -2
+/** PERFEXPERT_FAILURE should be used when an error is -1 */
+#define PERFEXPERT_FAILURE   -1
+/** PERFEXPERT_SUCCESS should be used in case of success */
+#define PERFEXPERT_SUCCESS    0
+/** PERFEXPERT_ERROR should be used in case of general error */
+#define PERFEXPERT_ERROR      1
 
-#define OPTTRAN_TRUE   1 /**< used to return boolean values */
-#define OPTTRAN_FALSE  0 /**< used to return boolean values */
+#define PERFEXPERT_TRUE   1 /**< used to return boolean values */
+#define PERFEXPERT_FALSE  0 /**< used to return boolean values */
 
 /** Buffers size, will be used for:
  * - parsing INPUT file
@@ -61,17 +61,17 @@ extern "C" {
 #define PARAM_SIZE        128
 
 /** Default values for some parameters */
-#define RECOMMENDATION_DB     "recommendation.db"
-#define OPTTRAN_RECO_FILE     "opttran_recommendations.txt"
-#define OPTTRAN_PR_FILE       "opttran_transformations.txt"
-#define OPTTRAN_CT_FILE       "opttran_functions.txt"
-#define OPTTRAN_FRAGMENTS_DIR "fragments"
-#define OPTTRAN_SOURCE_DIR    "source"
-#define METRICS_TABLE         "metric"
-#define METRICS_FILE          "recommender-metrics.txt"
+#define RECOMMENDATION_DB           "recommendation.db"
+#define PERFEXPERT_RECO_FILE        "perfexpert_recommendations.txt"
+#define PERFEXPERT_PR_FILE          "perfexpert_transformations.txt"
+#define PERFEXPERT_CT_FILE          "perfexpert_functions.txt"
+#define PERFEXPERT_FRAGMENTS_DIR    "fragments"
+#define PERFEXPERT_SOURCE_DIR       "source"
+#define METRICS_TABLE               "metric"
+#define METRICS_FILE                "recommender-metrics.txt"
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* OPTTRAN_CONSTANTS_H */
+#endif /* PERFEXPERT_CONSTANTS_H */

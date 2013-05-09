@@ -36,12 +36,12 @@ extern "C" {
 #include "install_dirs.h"
 #endif
 
-#ifndef OPTTRAN_CONSTANTS_H_
-#include "opttran_constants.h"
+#ifndef PERFEXPERT_CONSTANTS_H_
+#include "perfexpert_constants.h"
 #endif
 
-#ifndef OPTTRAN_LIST_H_
-#include "opttran_list.h"
+#ifndef PERFEXPERT_LIST_H_
+#include "perfexpert_list.h"
 #endif
 
 #ifndef _SQLITE3_H_
@@ -72,7 +72,7 @@ typedef struct {
     FILE *outputfile_FP;
     char *dbfile;
     sqlite3 *db;
-    char *opttrandir;
+    char *workdir;
     char *metrics_file;
     int  use_temp_metrics;
     char *metrics_table;
@@ -85,14 +85,14 @@ typedef struct {
 
 extern globals_t globals; /**< Variable to hold global options */
 
-/* WARNING: to include opttran_output.h globals have to be defined first */
+/* WARNING: to include perfexpert_output.h globals have to be defined first */
 #ifdef PROGRAM_PREFIX
 #undef PROGRAM_PREFIX
 #endif
 #define PROGRAM_PREFIX "[recommender]"
     
-#ifndef OPTTRAN_OUTPUT_H
-#include "opttran_output.h"
+#ifndef PERFEXPERT_OUTPUT_H
+#include "perfexpert_output.h"
 #endif
 
 /** Structure to handle command line arguments. Try to keep the content of
@@ -124,8 +124,8 @@ typedef struct node {
 
 /** Structure to hold recommendation selecting functions */
 typedef struct function {
-    volatile opttran_list_item_t *next;
-    volatile opttran_list_item_t *prev;
+    volatile perfexpert_list_item_t *next;
+    volatile perfexpert_list_item_t *prev;
     int id;
     char *desc;
     char statement[BUFFER_SIZE];
@@ -133,8 +133,8 @@ typedef struct function {
 
 /** Structure to hold code segments */
 typedef struct segment {
-    volatile opttran_list_item_t *next; /** Pointer to next list item */
-    volatile opttran_list_item_t *prev; /** Pointer to previous list item */
+    volatile perfexpert_list_item_t *next; /** Pointer to next list item */
+    volatile perfexpert_list_item_t *prev; /** Pointer to previous list item */
     char   *filename;
     int    line_number;
     char   *type;
@@ -143,7 +143,7 @@ typedef struct segment {
     double loop_depth;
     double representativeness;
     int    rowid;
-    opttran_list_t functions;
+    perfexpert_list_t functions;
     int    outer_loop;
     int    outer_outer_loop;
     char   *function_name; // Should add functiona_name to DB?
@@ -155,7 +155,7 @@ static void show_help(void);
 static int  parse_env_vars(void);
 static int  parse_cli_params(int argc, char *argv[]);
 static int  parse_metrics_file(void);
-static int  parse_segment_params(opttran_list_t *segments_p, FILE *inputfile_p);
+static int  parse_segment_params(perfexpert_list_t *segments_p, FILE *inputfile_p);
 static int  get_rowid(void *rowid, int col_count, char **col_values,
                       char **col_names);
 static int  get_weight(void *weight, int col_count, char **col_values,

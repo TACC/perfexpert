@@ -25,8 +25,8 @@
  * $HEADER$
  */
 
-#ifndef OPTTRAN_UTIL_H_
-#define OPTTRAN_UTIL_H_
+#ifndef PERFEXPERT_UTIL_H_
+#define PERFEXPERT_UTIL_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -48,16 +48,16 @@ extern "C" {
 #include <string.h>
 #endif
 
-#ifndef OPTTRAN_CONSTANTS_H
-#include "opttran_constants.h"
+#ifndef PERFEXPERT_CONSTANTS_H
+#include "perfexpert_constants.h"
 #endif
 
-#ifndef OPTTRAN_OUTPUT_H
-#include "opttran_output.h"
+#ifndef PERFEXPERT_OUTPUT_H
+#include "perfexpert_output.h"
 #endif
 
 /* make_path: create an entire directory tree (if needed), like 'mkdir -p' */
-static int opttran_util_make_path(char *path, int nmode) {
+static int perfexpert_util_make_path(char *path, int nmode) {
     int oumask;
     char *p = NULL;
     char *npath = NULL;
@@ -66,25 +66,24 @@ static int opttran_util_make_path(char *path, int nmode) {
     /* Check if we can create such directory */
     if (0 == stat(path, &sb)) {
         if (0 == S_ISDIR (sb.st_mode)) {
-            OPTTRAN_OUTPUT(("%s '%s'",
-                            _ERROR((char *)"file exists but is not a directory"),
-                            path));
-            return OPTTRAN_ERROR;
+            OUTPUT(("%s '%s'",
+                    _ERROR((char *)"file exists but is not a directory"), path));
+            return PERFEXPERT_ERROR;
         }
         if (chmod(path, nmode)) {
-            OPTTRAN_OUTPUT(("%s %s: %s", _ERROR((char *)"system error"), path,
-                            strerror(errno)));
-            return OPTTRAN_ERROR;
+            OUTPUT(("%s %s: %s", _ERROR((char *)"system error"), path,
+                    strerror(errno)));
+            return PERFEXPERT_ERROR;
         }
-        return OPTTRAN_SUCCESS;
+        return PERFEXPERT_SUCCESS;
     }
     
     /* Save a copy, so we can write to it */
     npath = (char *)malloc(strlen(path) + 1);
     bzero(npath, strlen(path) + 1);
     if (NULL == npath) {
-        OPTTRAN_OUTPUT(("%s", _ERROR((char *)"Error: out of memory")));
-        exit(OPTTRAN_ERROR);
+        OUTPUT(("%s", _ERROR((char *)"Error: out of memory")));
+        exit(PERFEXPERT_ERROR);
     }
     strncpy(npath, path, strlen(path));
     
@@ -98,17 +97,17 @@ static int opttran_util_make_path(char *path, int nmode) {
         *p = '\0';
         if (0 != stat(npath, &sb)) {
             if (mkdir(npath, nmode)) {
-                OPTTRAN_OUTPUT(("%s '%s': %s",
-                                _ERROR((char *)"cannot create directory"), npath,
-                                strerror(errno)));
+                OUTPUT(("%s '%s': %s",
+                        _ERROR((char *)"cannot create directory"), npath,
+                        strerror(errno)));
                 free(npath);
-                return OPTTRAN_ERROR;
+                return PERFEXPERT_ERROR;
             }
         } else if (0 == S_ISDIR(sb.st_mode)) {
-            OPTTRAN_OUTPUT(("'%s': %s", npath,
-                            _ERROR((char *)"file exists but is not a directory")));
+            OUTPUT(("'%s': %s", npath,
+                    _ERROR((char *)"file exists but is not a directory")));
             free (npath);
-            return OPTTRAN_ERROR;
+            return PERFEXPERT_ERROR;
         }
         *p++ = '/'; /* restore slash */
         while ('/' == *p) {
@@ -118,18 +117,18 @@ static int opttran_util_make_path(char *path, int nmode) {
     
     /* Create the final directory component */
     if (stat(npath, &sb) && mkdir(npath, nmode)) {
-        OPTTRAN_OUTPUT(("%s '%s': %s", _ERROR((char *)"cannot create directory"),
-                        npath, strerror(errno)));
+        OUTPUT(("%s '%s': %s", _ERROR((char *)"cannot create directory"),
+                npath, strerror(errno)));
         free(npath);
-        return OPTTRAN_ERROR;
+        return PERFEXPERT_ERROR;
     }
 
     free(npath);
-    return OPTTRAN_SUCCESS;
+    return PERFEXPERT_SUCCESS;
 }
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* OPTTRAN_UTIL_H */
+#endif /* PERFEXPERT_UTIL_H */
