@@ -12,14 +12,4 @@ typedef struct
 
 extern __indigo_namespace_struct const __indigo;
 
-#if 0
-class __indigo
-{
-	public:
-	enum { SUCCESS=0, ERR_PARAMS, ERR_MEM };
-
-	static int record(void*);
-};
-#endif
-
 #endif	/* LIBMRT_H_ */
