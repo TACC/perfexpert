@@ -1,0 +1,50 @@
+#!@BASH_PROGRAM@
+#
+# $HEADER$
+#
+
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+BINDIR=@bindir@
+INCDIR=@includedir@
+LIBDIR=@libdir@
+ABS_BUILDDIR=@abs_builddir@
+
+# Try to find the minst executable
+if [ -f ${BINDIR}/minst ]; then
+    # Probable location after install
+    MINST_PATH="${BINDIR}/minst"
+elif [ -f ${ABS_BUILDDIR}/minst ]; then
+    # Probable location before install
+    MINST_PATH="${ABS_BUILDDIR}/minst"
+else
+    echo "Unable to find the minst executable"
+    exit 1
+fi
+
+# Try to find the path to the mrt.h header file
+if [ -f ${INCDIR}/mrt.h ]; then
+    # Probable location after install
+    MRT_INCLUDE_DIR="${INCDIR}"
+elif [ -f ${ABS_BUILDDIR}/libmrt/mrt.h ]; then
+    # Probable location before install
+    MRT_INCLUDE_DIR="${ABS_BUILDDIR}/libmrt"
+else
+    echo "Unable to find the mrt.h header file"
+    exit 1
+fi
+
+# Try to find the path to libmrt
+if [ -f ${LIBDIR}/mrt.h ]; then
+    # Probable location after install
+    MRT_LIB_DIR="${LIBDIR}"
+elif [ -f ${ABS_BUILDDIR}/libmrt/libmrt.a ]; then
+    # Probable location before install
+    MRT_LIB_DIR="${ABS_BUILDDIR}/libmrt"
+else
+    echo "Unable to find libmrt"
+    exit 1
+fi
+
+# Finally, invoke the minst executable
+${MINST_PATH} -I${MRT_INCLUDE_DIR} -L${MRT_LIB_DIR} -lmrt $*

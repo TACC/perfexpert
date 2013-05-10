@@ -442,6 +442,8 @@ AS_IF([test x"$ENABLE_OPTTRAN_MINST" = x"yes"], [
 
     ENABLE_MINST=minst
     AC_CONFIG_FILES([tools/minst/Makefile])
+    AC_CONFIG_FILES([tools/minst/macpo.sh],
+        [chmod +x tools/minst/macpo.sh])
     AC_CONFIG_FILES([tools/minst/libmrt/Makefile])
 ], [
     AC_MSG_RESULT([no])
