@@ -27,5 +27,6 @@
 
 lib_LTLIBRARIES = libmrt.la
 libmrt_la_SOURCES = mrt.c
+include_HEADERS = mrt.h
 
 # EOF
