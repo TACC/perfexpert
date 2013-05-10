@@ -25,8 +25,8 @@
 # $HEADER$
 #
 
-lib_LTLIBRARIES = libmrt.la
-libmrt_la_SOURCES = mrt.c
+lib_LIBRARIES = libmrt.a
+libmrt_a_SOURCES = mrt.c
 include_HEADERS = mrt.h
 
 # EOF
