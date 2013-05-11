@@ -35,7 +35,7 @@ else
 fi
 
 # Try to find the path to libmrt
-if [ -f ${LIBDIR}/mrt.h ]; then
+if [ -f ${LIBDIR}/libmrt.a ]; then
     # Probable location after install
     MRT_LIB_DIR="${LIBDIR}"
 elif [ -f ${ABS_BUILDDIR}/libmrt/libmrt.a ]; then
