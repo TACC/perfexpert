@@ -6,13 +6,14 @@
 
 class MINST : public AstTopDownProcessing<attrib>
 {
+	short lang;
 	short action;
 	int line_number;
 	std::string inst_func;
 	public:
-		MINST(short _action, int _line_number, std::string _inst_func)
+		MINST(short _lang, short _action, int _line_number, std::string _inst_func)
 		{
-			action=_action, line_number=_line_number, inst_func=_inst_func;
+			lang=_lang, action=_action, line_number=_line_number, inst_func=_inst_func;
 		}
 
 		virtual attrib evaluateInheritedAttribute(SgNode* node, attrib attr);

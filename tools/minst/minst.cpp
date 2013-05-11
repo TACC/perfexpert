@@ -29,7 +29,7 @@ attrib MINST::evaluateInheritedAttribute(SgNode* node, attrib attr)
 		return attr;
 
 	// Add header file for indigo's record function
-	if (isSgGlobal(node))
+	if (isSgGlobal(node) && lang != LANG_FORTRAN)
 		insertHeader("mrt.h", PreprocessingInfo::after, false, (SgGlobal*) node);
 
 	// Check if this is the function that we are told to instrument
@@ -46,7 +46,7 @@ attrib MINST::evaluateInheritedAttribute(SgNode* node, attrib attr)
 
 		if (action == ACTION_INSTRUMENT)
 		{
-			instrumentor_t inst;
+			instrumentor_t inst(lang);
 			inst.traverse(node, attr);
 		}
 	}
@@ -60,7 +60,7 @@ attrib MINST::evaluateInheritedAttribute(SgNode* node, attrib attr)
 
 			if (action == ACTION_INSTRUMENT)
 			{
-				instrumentor_t inst;
+				instrumentor_t inst(lang);
 				inst.traverse(node, attr);
 			}
 			else if (action == ACTION_SPLIT_LOOP)

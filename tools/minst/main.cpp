@@ -7,10 +7,6 @@
 int parseMinstArgument(char* arg, options_t& options)
 {
 	char* eq = strchr(arg, '=');
-/*
-	if (!eq || !*(++eq))	// No '=' sign or end of string after '=' sign
-		return -ERR_PARAMS;
-*/
 
 	char opt[16];
 	char* colon = strchr(arg, ':');
@@ -99,9 +95,22 @@ int main (int argc, char *argv[])
 		std::string filename = file->get_file_info()->get_filenameString();
 		std::string basename = filename.substr(filename.find_last_of("/"));
 
-		// Start the traversal!
-		MINST traversal (options.action, options.loopInfo.line_number, inst_function);
-		traversal.traverseWithinFile (file, attr);
+		short lang=-1;
+		if (file->get_C_only())
+			lang = LANG_C;
+		else if (file->get_Cxx_only())
+			lang = LANG_CXX;
+		else if (file->get_Fortran_only())
+			lang = LANG_FORTRAN;
+
+		if (lang == -1 && !file->get_compileOnly())
+			std::cerr << "Unrecognized source language in " << filename << "\n";
+		else
+		{
+			// Start the traversal!
+			MINST traversal (lang, options.action, options.loopInfo.line_number, inst_function);
+			traversal.traverseWithinFile (file, attr);
+		}
 	}
 
 	// FIXME: ROSE tests seem to be broken, operand of AddressOfOp is not allowed to be an l-value

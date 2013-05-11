@@ -7,6 +7,11 @@
 using namespace SageBuilder;
 using namespace SageInterface;
 
+instrumentor_t::instrumentor_t(short _lang)
+{
+	lang=_lang;
+}
+
 void instrumentor_t::atTraversalStart()
 {
 	stream_list.clear();
@@ -88,12 +93,13 @@ attrib instrumentor_t::evaluateInheritedAttribute(SgNode* node, attrib attr)
 				idx = stream_list.size()-1;
 			}
 
-			// FIXME: Cast operations don't seem to work with Fortran code
-			SgExpression* castExpr = buildCastExp (buildAddressOfOp((SgExpression*) node), buildPointerType(buildVoidType()));
+			SgExpression* expr = NULL;
 			std::vector<SgExpression*> expr_vector;
-			expr_vector.push_back(castExpr);
-
-			SgExprStatement* fCall = buildFunctionCallStmt(SgName("__indigo.record"), buildVoidType(), buildExprListExp(expr_vector), containingBB);
+			// If not Fortran, cast the address to a void pointer
+			expr = lang!=LANG_FORTRAN ? buildCastExp (buildAddressOfOp((SgExpression*) node), buildPointerType(buildVoidType())) : (SgExpression*) node;
+			expr_vector.push_back(expr);
+			std::string indigo__record = lang!=LANG_FORTRAN ? "indigo__record_" : "indigo__record";
+			SgExprStatement* fCall = buildFunctionCallStmt(SgName(indigo__record), buildVoidType(), buildExprListExp(expr_vector), containingBB);
 			insertStatementBefore(containingExprStmt, fCall);
 
 			// Reset this attribute for any child expressions
