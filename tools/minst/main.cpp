@@ -88,11 +88,6 @@ int main (int argc, char *argv[])
 	SgProject *project = frontend (arguments);
 	ROSE_ASSERT (project != NULL);
 
-	if (project->numberOfFiles() == 0)
-	{
-		// TODO: This is the link step, recover variable and function indices from .*.mi files based on input arguments
-	}
-
 	// Initializing attributes
 	attrib attr(TYPE_UNKNOWN, FALSE, inst_function, options.loopInfo.line_number);
 
@@ -103,9 +98,6 @@ int main (int argc, char *argv[])
 		SgSourceFile* file = isSgSourceFile(*it);
 		std::string filename = file->get_file_info()->get_filenameString();
 		std::string basename = filename.substr(filename.find_last_of("/"));
-
-		// TODO: Create a new file (.<filename>.mi) that has the variable and function indices
-		// std::cout << "file: " << basename.substr(0, basename.find_last_of(".")) << std::endl;
 
 		// Start the traversal!
 		MINST traversal (options.action, options.loopInfo.line_number, inst_function);

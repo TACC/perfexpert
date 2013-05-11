@@ -65,11 +65,11 @@ attrib MINST::evaluateInheritedAttribute(SgNode* node, attrib attr)
 			}
 			else if (action == ACTION_SPLIT_LOOP)
 			{
-				expander_t inst;
-				inst.traverse(node, attr);
+				expander_t expander;
+				expander.traverse(node, attr);
 
-				splitter_t inst_2;
-				inst_2.traverse(node, attr);
+				splitter_t splitter;
+				splitter.traverse(node, attr);
 			}
 		}
 	}
