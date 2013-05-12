@@ -33,21 +33,47 @@ attrib MINST::evaluateInheritedAttribute(SgNode* node, attrib attr)
 		insertHeader("mrt.h", PreprocessingInfo::after, false, (SgGlobal*) node);
 
 	// Check if this is the function that we are told to instrument
-	if (isSgFunctionDefinition(node) && line_number == 0)
+	if (isSgFunctionDefinition(node))
 	{
 		std::string demangled_name = demangle_function_name((SgFunctionDefinition*) node);
-		if (!function_match(demangled_name, inst_func.c_str()))
+		if (function_match(demangled_name, "main"))
 		{
-			attr.skip = TRUE;
-			return attr;
+			// Found main, now insert calls to indigo__init() and indigo__create_map()
+			SgBasicBlock* body = ((SgFunctionDefinition*) node)->get_body();
+
+			// Skip over the initial variable declarations and `IMPLICIT' statements
+			SgStatement *statement=NULL;
+			SgStatementPtrList& stmts = body->get_statements();
+			for (SgStatementPtrList::iterator it=stmts.begin(); it!=stmts.end(); it++)
+			{
+				statement=*it;
+
+				if (!isSgImplicitStatement(statement) && !isSgVariableDeclaration(statement))
+					break;
+			}
+
+			ROSE_ASSERT(statement!=NULL);
+
+			std::string indigo__init = lang!=LANG_FORTRAN ? "indigo__init_" : "indigo__init";
+			SgExprStatement* fCall = buildFunctionCallStmt(SgName(indigo__init), buildVoidType(), NULL, body);
+			insertStatementBefore(statement, fCall);
 		}
 
-		std::cerr << "Operating on function " << demangled_name << std::endl;
-
-		if (action == ACTION_INSTRUMENT)
+		if (line_number == 0)
 		{
-			instrumentor_t inst(lang);
-			inst.traverse(node, attr);
+			if (!function_match(demangled_name, inst_func.c_str()))
+			{
+				attr.skip = TRUE;
+				return attr;
+			}
+
+			std::cerr << "Operating on function " << demangled_name << std::endl;
+
+			if (action == ACTION_INSTRUMENT)
+			{
+				instrumentor_t inst(lang);
+				inst.traverse(node, attr);
+			}
 		}
 	}
 	else if (line_number != 0 && isSgLocatedNode(node))	// We have to instrument some loops
