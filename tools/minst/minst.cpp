@@ -55,8 +55,11 @@ attrib MINST::evaluateInheritedAttribute(SgNode* node, attrib attr)
 			ROSE_ASSERT(statement!=NULL);
 
 			std::string indigo__init = lang!=LANG_FORTRAN ? "indigo__init_" : "indigo__init";
-			SgExprStatement* fCall = buildFunctionCallStmt(SgName(indigo__init), buildVoidType(), NULL, body);
-			insertStatementBefore(statement, fCall);
+			std::string indigo__create_map = lang!=LANG_FORTRAN ? "indigo__create_map_" : "indigo__create_map";
+			SgExprStatement* init_call = buildFunctionCallStmt(SgName(indigo__init), buildVoidType(), NULL, body);
+			SgExprStatement* map_call  = buildFunctionCallStmt(SgName(indigo__create_map), buildVoidType(), NULL, body);
+			insertStatementBefore(statement, init_call);
+			insertStatementAfter (init_call, map_call);
 		}
 
 		if (line_number == 0)
