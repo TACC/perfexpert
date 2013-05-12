@@ -20,7 +20,8 @@ static volatile sig_atomic_t sleeping=0, access_count=0;
 static int fd=-1, sleep_sec=0, new_sleep_sec=1, *intel_apic_mapping=NULL;
 static node_t terminal_node;
 
-int indigo_init();
+void indigo__init_();
+static void indigo__exit();
 
 static inline int getCoreID();
 

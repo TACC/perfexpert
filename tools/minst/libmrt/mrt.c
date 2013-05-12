@@ -89,7 +89,8 @@ static inline void fill_struct(int read_write, int line_number, size_t p, int va
 	node.mem_info.var_idx = var_idx;
 	node.mem_info.line_number = line_number;
 
-	addToList(node);
+	if (fd >= 0)
+		write(fd, &node, sizeof(node_t));
 }
 
 inline void indigo__record_c(int read_write, int line_number, void* addr, int var_idx)
@@ -147,7 +148,7 @@ static void signalHandler(int sig)
 	}
 }
 
-int indigo_init()
+void indigo__init_()
 {
 	int i;
 
@@ -249,6 +250,11 @@ int indigo_init()
 		itimer_new.it_value.tv_usec = AWAKE_USEC;
 		setitimer(ITIMER_PROF, &itimer_new, &itimer_old);
 	}
-
-	return 0;
 }
+
+static void indigo__exit()
+{
+	if (fd >= 0)	close(fd);
+	if (intel_apic_mapping)	free(intel_apic_mapping);
+}
+
