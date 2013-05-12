@@ -1,4 +1,8 @@
 
+// For CPU_ZERO and CPU_SET
+#define	_GNU_SOURCE
+#include <sched.h>
+
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,6 +12,8 @@
 #include "mrt.h"
 #include "cpuid.h"
 #include "record.h"
+
+static short proc = PROC_UNKNOWN;
 
 static int getCoreID()
 {

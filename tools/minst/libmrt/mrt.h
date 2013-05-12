@@ -2,7 +2,8 @@
 #ifndef	LIBMRT_H_
 #define	LIBMRT_H_
 
-#include "cpuid.h"
+#include <signal.h>
+
 #include "record.h"
 
 #define	DATANODE_SIZE	1024
@@ -15,7 +16,6 @@
 static long numCores = 0;
 static __thread int coreID=-1;
 static char szFilename[256]={0};
-static short proc = PROC_UNKNOWN;
 static volatile sig_atomic_t sleeping=0, access_count=0;
 static int fd=-1, sleep_sec=0, new_sleep_sec=1, *intel_apic_mapping=NULL;
 static node_t terminal_node;
