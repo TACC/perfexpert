@@ -59,11 +59,6 @@ attrib instrumentor_t::evaluateInheritedAttribute(SgNode* node, attrib attr)
 			return attr;
 		}
 
-		Sg_File_Info* fileInfo = ((SgLocatedNode*) node)->get_file_info();
-
-		int line_number = fileInfo->get_line();
-		const char* szfilename = fileInfo->get_filenameString().c_str();
-
 		SgBasicBlock* containingBB = getEnclosingNode<SgBasicBlock>(node);
 		SgExprStatement* containingExprStmt = getEnclosingNode<SgExprStatement>(node);
 
@@ -93,12 +88,30 @@ attrib instrumentor_t::evaluateInheritedAttribute(SgNode* node, attrib attr)
 				idx = stream_list.size()-1;
 			}
 
-			SgExpression* expr = NULL;
+			Sg_File_Info *fileInfo = Sg_File_Info::generateFileInfoForTransformationNode(
+					((SgLocatedNode*) node)->get_file_info()->get_filenameString());
+
+			int line_number=0;
+			SgStatement *stmt = getEnclosingNode<SgStatement>(node);
+			if (stmt)	line_number = stmt->get_file_info()->get_raw_line();
+
+			SgExpression* param_addr=NULL;
+			SgIntVal *param_line_number=NULL, *param_idx=NULL, *param_read_write=NULL;
+
+			param_line_number = new SgIntVal(fileInfo, line_number);
+			param_idx = new SgIntVal(fileInfo, idx);
+			param_read_write = new SgIntVal(fileInfo, attr.read);
+
 			std::vector<SgExpression*> expr_vector;
 			// If not Fortran, cast the address to a void pointer
-			expr = lang!=LANG_FORTRAN ? buildCastExp (buildAddressOfOp((SgExpression*) node), buildPointerType(buildVoidType())) : (SgExpression*) node;
-			expr_vector.push_back(expr);
-			std::string indigo__record = lang!=LANG_FORTRAN ? "indigo__record_" : "indigo__record";
+			param_addr = lang!=LANG_FORTRAN ? buildCastExp (buildAddressOfOp((SgExpression*) node), buildPointerType(buildVoidType())) : (SgExpression*) node;
+
+			expr_vector.push_back(param_read_write);
+			expr_vector.push_back(param_line_number);
+			expr_vector.push_back(param_addr);
+			expr_vector.push_back(param_idx);
+
+			std::string indigo__record = lang!=LANG_FORTRAN ? "indigo__record_c" : "indigo__record_f";
 			SgExprStatement* fCall = buildFunctionCallStmt(SgName(indigo__record), buildVoidType(), buildExprListExp(expr_vector), containingBB);
 			insertStatementBefore(containingExprStmt, fCall);
 
