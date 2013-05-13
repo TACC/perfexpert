@@ -85,7 +85,7 @@ attrib MINST::evaluateInheritedAttribute(SgNode* node, attrib attr)
 			{
 				statement=*it;
 
-				if (!isSgImplicitStatement(statement) && !isSgVariableDeclaration(statement))
+				if (!isSgImplicitStatement(statement) && !isSgDeclarationStatement(statement))
 					break;
 			}
 
