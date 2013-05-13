@@ -22,6 +22,7 @@ class MINST : public AstTopDownProcessing<attrib>
 		}
 
 		void insert_map_function(SgNode* node);
+		void insert_map_prototype(SgNode* node);
 
 		virtual void atTraversalEnd();
 		virtual void atTraversalStart();

@@ -22,9 +22,21 @@ bool function_match(const std::string demangled_name, const char* szSearchString
 	return strstr(szfunction_name, szSearchString) == szfunction_name;
 }
 
+void MINST::insert_map_prototype(SgNode* node)
+{
+	SgFunctionDeclaration *func_decl;
+	const char* func_name = "indigo__create_map";
+
+	if (!SageInterface::is_Fortran_language())
+	{
+		func_decl = SageBuilder::buildDefiningFunctionDeclaration(func_name, buildVoidType(), buildFunctionParameterList(), global_node);
+		fdecl = SageBuilder::buildNondefiningFunctionDeclaration(func_decl, global_node);
+	}
+}
+
 void MINST::insert_map_function(SgNode* node)
 {
-	SgFunctionDeclaration *func_decl, *decl;
+	SgFunctionDeclaration *func_decl;
 	SgProcedureHeaderStatement* header;
 	const char* func_name = "indigo__create_map";
 
@@ -34,10 +46,7 @@ void MINST::insert_map_function(SgNode* node)
 		func_decl = isSgFunctionDeclaration(header);
 	}
 	else
-	{
 		func_decl = SageBuilder::buildDefiningFunctionDeclaration(func_name, buildVoidType(), buildFunctionParameterList(), global_node);
-		fdecl = SageBuilder::buildNondefiningFunctionDeclaration(func_decl, global_node);
-	}
 
 	appendStatement(func_decl, global_node);
 }
@@ -97,6 +106,8 @@ attrib MINST::evaluateInheritedAttribute(SgNode* node, attrib attr)
 			SgExprStatement* map_call  = buildFunctionCallStmt(SgName(indigo__create_map), buildVoidType(), NULL, body);
 			insertStatementBefore(statement, init_call);
 			insertStatementAfter (init_call, map_call);
+
+			insert_map_prototype(node);
 		}
 
 		if (line_number == 0)
