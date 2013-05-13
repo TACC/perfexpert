@@ -2,6 +2,7 @@
 #ifndef	LIBMRT_H_
 #define	LIBMRT_H_
 
+#include <stdlib.h>
 #include <signal.h>
 
 #include "record.h"
