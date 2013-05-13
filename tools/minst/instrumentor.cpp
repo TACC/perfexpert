@@ -17,7 +17,7 @@ void instrumentor_t::atTraversalStart()
 	stream_list.clear();
 }
 
-std::vector<std::string>& instrumentor_t::getStreamList()
+std::vector<std::string>& instrumentor_t::get_stream_list()
 {
 	return stream_list;
 }
@@ -119,7 +119,6 @@ attrib instrumentor_t::evaluateInheritedAttribute(SgNode* node, attrib attr)
 			attr.skip = false;
 		}
 	}
-	else
 
 	return attr;
 }

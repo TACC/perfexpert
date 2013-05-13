@@ -14,8 +14,7 @@ class instrumentor_t : public AstTopDownProcessing<attrib>
 		instrumentor_t (short _lang);
 		virtual attrib evaluateInheritedAttribute(SgNode* node, attrib attr);
 		virtual void atTraversalStart();
-
-		std::vector<std::string>& getStreamList();
+		std::vector<std::string>& get_stream_list();
 };
 
 #endif	/* INSTRUMENTOR_H_ */

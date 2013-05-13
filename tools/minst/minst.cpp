@@ -22,21 +22,58 @@ bool function_match(const std::string demangled_name, const char* szSearchString
 	return strstr(szfunction_name, szSearchString) == szfunction_name;
 }
 
+void MINST::insert_map_function(SgNode* node)
+{
+	SgFunctionDeclaration *func_decl, *decl;
+	SgProcedureHeaderStatement* header;
+	const char* func_name = "indigo__create_map";
+
+	if (SageInterface::is_Fortran_language())
+	{
+		header = SageBuilder::buildProcedureHeaderStatement(func_name, buildVoidType(), buildFunctionParameterList(), SgProcedureHeaderStatement::e_subroutine_subprogram_kind, global_node);
+		func_decl = isSgFunctionDeclaration(header);
+	}
+	else
+	{
+		func_decl = SageBuilder::buildDefiningFunctionDeclaration(func_name, buildVoidType(), buildFunctionParameterList(), global_node);
+		fdecl = SageBuilder::buildNondefiningFunctionDeclaration(func_decl, global_node);
+	}
+
+	appendStatement(func_decl, global_node);
+}
+
+void MINST::atTraversalStart()
+{
+	global_node=NULL, fdecl=NULL, bb=NULL;
+}
+
+void MINST::atTraversalEnd()
+{
+	if (global_node && fdecl)
+		global_node->prepend_declaration(fdecl);
+}
+
 attrib MINST::evaluateInheritedAttribute(SgNode* node, attrib attr)
 {
+	std::vector<std::string> stream_list;
+
 	// If explicit instructions to skip this node, then just return
 	if (attr.skip)
 		return attr;
 
 	// Add header file for indigo's record function
-	if (isSgGlobal(node) && lang != LANG_FORTRAN)
-		insertHeader("mrt.h", PreprocessingInfo::after, false, (SgGlobal*) node);
+	if (isSgGlobal(node))
+	{
+		global_node = static_cast<SgGlobal*>(node);
+		if (lang != LANG_FORTRAN && action == ACTION_INSTRUMENT)
+			insertHeader("mrt.h", PreprocessingInfo::after, false, global_node);
+	}
 
 	// Check if this is the function that we are told to instrument
 	if (isSgFunctionDefinition(node))
 	{
 		std::string demangled_name = demangle_function_name((SgFunctionDefinition*) node);
-		if (function_match(demangled_name, "main"))
+		if (function_match(demangled_name, "main") && action == ACTION_INSTRUMENT)
 		{
 			// Found main, now insert calls to indigo__init() and indigo__create_map()
 			SgBasicBlock* body = ((SgFunctionDefinition*) node)->get_body();
@@ -55,7 +92,7 @@ attrib MINST::evaluateInheritedAttribute(SgNode* node, attrib attr)
 			ROSE_ASSERT(statement!=NULL);
 
 			std::string indigo__init = lang!=LANG_FORTRAN ? "indigo__init_" : "indigo__init";
-			std::string indigo__create_map = lang!=LANG_FORTRAN ? "indigo__create_map_" : "indigo__create_map";
+			std::string indigo__create_map = "indigo__create_map";
 			SgExprStatement* init_call = buildFunctionCallStmt(SgName(indigo__init), buildVoidType(), NULL, body);
 			SgExprStatement* map_call  = buildFunctionCallStmt(SgName(indigo__create_map), buildVoidType(), NULL, body);
 			insertStatementBefore(statement, init_call);
@@ -74,8 +111,12 @@ attrib MINST::evaluateInheritedAttribute(SgNode* node, attrib attr)
 
 			if (action == ACTION_INSTRUMENT)
 			{
+				// We found the function that we wanted to instrument, now insert the indigo__create_map_() function in this file
+				insert_map_function(node);
+
 				instrumentor_t inst(lang);
 				inst.traverse(node, attr);
+				stream_list = inst.get_stream_list();
 			}
 		}
 	}
@@ -89,8 +130,12 @@ attrib MINST::evaluateInheritedAttribute(SgNode* node, attrib attr)
 
 			if (action == ACTION_INSTRUMENT)
 			{
+				// We found the loop that we wanted to instrument, now insert the indigo__create_map_() function in this file
+				insert_map_function(node);
+
 				instrumentor_t inst(lang);
 				inst.traverse(node, attr);
+				stream_list = inst.get_stream_list();
 			}
 			else if (action == ACTION_SPLIT_LOOP)
 			{
