@@ -46,5 +46,44 @@ else
     exit 1
 fi
 
+mktemp=`which mktemp`
+if [ -n "$mktemp" ]
+then
+	tmp_minst=`mktemp --tmpdir -t macpo.XXXXX`
+	tmp_gfort=`mktemp --tmpdir -t macpo.XXXXX`
+else
+	tmp_minst=/tmp/macpo.minst
+	tmp_gfort=/tmp/macpo.gfort
+fi
+
 # Finally, invoke the minst executable
-${MINST_PATH} -I${MRT_INCLUDE_DIR} -L${MRT_LIB_DIR} $* -lmrt -lgfortran
+${MINST_PATH} -I${MRT_INCLUDE_DIR} -L${MRT_LIB_DIR} $* -lmrt &> "$tmp_minst"
+
+if [ $? != 0 ]
+then
+	# try running with gfortran
+	if [ -z "${GNU_FORTRAN_COMPILER}" ]
+	then
+		GNU_FORTRAN_COMPILER=`which gfortran`
+	fi
+
+	if [ -n "$GNU_FORTRAN_COMPILER" -a -f "$GNU_FORTRAN_COMPILER" ]
+	then
+		"$GNU_FORTRAN_COMPILER" -L${MRT_LIB_DIR} $* -lmrt &> "$tmp_gfort"
+
+		# If this also resulted in an error, show the original minst error
+		if [ $? != 0 ]
+		then
+			cat "$tmp_minst"
+		else
+			cat "$tmp_gfort"
+		fi
+	else
+		cat "$tmp_minst"
+	fi
+else
+	cat "$tmp_minst"
+fi
+
+# Clean up
+rm -f "$tmp_minst" "$tmp_gfort" 2>/dev/null
