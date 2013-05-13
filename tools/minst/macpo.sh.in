@@ -47,4 +47,4 @@ else
 fi
 
 # Finally, invoke the minst executable
-${MINST_PATH} -I${MRT_INCLUDE_DIR} -L${MRT_LIB_DIR} $* -lmrt
+${MINST_PATH} -I${MRT_INCLUDE_DIR} -L${MRT_LIB_DIR} $* -lmrt -lgfortran
