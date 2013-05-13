@@ -115,5 +115,5 @@ int main (int argc, char *argv[])
 
 	// FIXME: ROSE tests seem to be broken, operand of AddressOfOp is not allowed to be an l-value
 	// AstTests::runAllTests (project);
-	return backend (project);
+	return backend (project) == 0 ? 0 : 1;
 }
