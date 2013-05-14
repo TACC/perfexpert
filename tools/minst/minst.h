@@ -6,7 +6,6 @@
 
 class MINST : public AstTopDownProcessing<attrib>
 {
-	short lang;
 	short action;
 	int line_number;
 	std::string inst_func;
@@ -17,10 +16,7 @@ class MINST : public AstTopDownProcessing<attrib>
 	SgFunctionDeclaration *def_decl, *non_def_decl;
 
 	public:
-		MINST(short _lang, short _action, int _line_number, std::string _inst_func)
-		{
-			lang=_lang, action=_action, line_number=_line_number, inst_func=_inst_func;
-		}
+		MINST(short _action, int _line_number, std::string _inst_func);
 
 		void insert_map_function(SgNode* node);
 		void insert_map_prototype(SgNode* node);

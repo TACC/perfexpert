@@ -4,17 +4,25 @@
 
 #include "generic_defs.h"
 
+typedef struct
+{
+	SgBasicBlock* bb;
+	SgExprStatement* exprStmt;
+	std::vector<SgExpression*> params;
+} inst_info_t;
+
 class instrumentor_t : public AstTopDownProcessing<attrib>
 {
 	private:
-		short lang;
 		std::vector<std::string> stream_list;
+		std::vector<inst_info_t> inst_info_list;
 
 	public:
-		instrumentor_t (short _lang);
+		std::vector<std::string>& get_stream_list();
+
 		virtual attrib evaluateInheritedAttribute(SgNode* node, attrib attr);
 		virtual void atTraversalStart();
-		std::vector<std::string>& get_stream_list();
+		virtual void atTraversalEnd();
 };
 
 #endif	/* INSTRUMENTOR_H_ */

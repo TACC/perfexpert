@@ -43,6 +43,8 @@ int parseMinstArgument(char* arg, options_t& options)
 		options.action = ACTION_INSTRUMENT;
 	else if (strcmp(opt, "loopsplit") == 0)
 		options.action = ACTION_SPLIT_LOOP;
+	else if (strcmp(opt, "noinst") == 0)
+		options.action = ACTION_NONE;
 	else	return -ERR_PARAMS;
 
 	return SUCCESS;
@@ -71,49 +73,45 @@ int main (int argc, char *argv[])
 		else	arguments.push_back(argv[i]);
 	}
 
-	// Check if at least a function or a loop was specified on the command line
-	if (!options.functionInfo.function && !options.loopInfo.function)
+	// Check if we have explicit instructions not to change anything
+	if (options.action != ACTION_NONE)
 	{
-		fprintf (stderr, "USAGE: %s <options>\n", argv[0]);
-		fprintf (stderr, "Did not find valid options on the command line\n");
-		return -ERR_PARAMS;
-	}
-
-	char* inst_function = options.loopInfo.function ? options.loopInfo.function : options.functionInfo.function;
-
-	SgProject *project = frontend (arguments);
-	ROSE_ASSERT (project != NULL);
-
-	// Initializing attributes
-	attrib attr(TYPE_UNKNOWN, FALSE, inst_function, options.loopInfo.line_number);
-
-	// Loop over each file
-	SgFilePtrList files = project->get_fileList();
-	for (SgFilePtrList::iterator it=files.begin(); it!=files.end(); it++)
-	{
-		SgSourceFile* file = isSgSourceFile(*it);
-		std::string filename = file->get_file_info()->get_filenameString();
-		std::string basename = filename.substr(filename.find_last_of("/"));
-
-		short lang=-1;
-		if (file->get_C_only())
-			lang = LANG_C;
-		else if (file->get_Cxx_only())
-			lang = LANG_CXX;
-		else if (file->get_Fortran_only())
-			lang = LANG_FORTRAN;
-
-		if (lang == -1 && !file->get_compileOnly())
-			std::cerr << "Unrecognized source language in " << filename << "\n";
-		else
+		// Check if at least a function or a loop was specified on the command line
+		if (!options.functionInfo.function && !options.loopInfo.function)
 		{
+			fprintf (stderr, "USAGE: %s <options>\n", argv[0]);
+			fprintf (stderr, "Did not find valid options on the command line\n");
+			return -ERR_PARAMS;
+		}
+
+		char* inst_function = options.loopInfo.function ? options.loopInfo.function : options.functionInfo.function;
+
+		SgProject *project = frontend (arguments);
+		ROSE_ASSERT (project != NULL);
+
+		// Initializing attributes
+		attrib attr(TYPE_UNKNOWN, FALSE, inst_function, options.loopInfo.line_number);
+
+		// Loop over each file
+		SgFilePtrList files = project->get_fileList();
+		for (SgFilePtrList::iterator it=files.begin(); it!=files.end(); it++)
+		{
+			SgSourceFile* file = isSgSourceFile(*it);
+			std::string filename = file->get_file_info()->get_filenameString();
+			std::string basename = filename.substr(filename.find_last_of("/"));
+
 			// Start the traversal!
-			MINST traversal (lang, options.action, options.loopInfo.line_number, inst_function);
+			MINST traversal (options.action, options.loopInfo.line_number, inst_function);
 			traversal.traverseWithinFile (file, attr);
 		}
-	}
 
-	// FIXME: ROSE tests seem to be broken, operand of AddressOfOp is not allowed to be an l-value
-	// AstTests::runAllTests (project);
-	return backend (project) == 0 ? 0 : 1;
+		// FIXME: ROSE tests seem to be broken, operand of AddressOfOp is not allowed to be an l-value
+		// AstTests::runAllTests (project);
+		return backend (project) == 0 ? 0 : 1;
+	}
+	else
+	{
+		SgProject *project = frontend (arguments);
+		return backend (project) == 0 ? 0 : 1;
+	}
 }

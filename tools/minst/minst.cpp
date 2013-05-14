@@ -22,6 +22,11 @@ bool function_match(const std::string demangled_name, const char* szSearchString
 	return strstr(szfunction_name, szSearchString) == szfunction_name;
 }
 
+MINST::MINST(short _action, int _line_number, std::string _inst_func)
+{
+	action=_action, line_number=_line_number, inst_func=_inst_func;
+}
+
 void MINST::insert_map_prototype(SgNode* node)
 {
 	const char* func_name = "indigo__create_map";
@@ -100,7 +105,7 @@ attrib MINST::evaluateInheritedAttribute(SgNode* node, attrib attr)
 		file_info = Sg_File_Info::generateFileInfoForTransformationNode(
 				((SgLocatedNode*) node)->get_file_info()->get_filenameString());
 
-		if (lang != LANG_FORTRAN && action == ACTION_INSTRUMENT)
+		if (!SageInterface::is_Fortran_language() && action == ACTION_INSTRUMENT)
 			insertHeader("mrt.h", PreprocessingInfo::after, false, global_node);
 	}
 
@@ -126,7 +131,7 @@ attrib MINST::evaluateInheritedAttribute(SgNode* node, attrib attr)
 
 			ROSE_ASSERT(statement!=NULL);
 
-			std::string indigo__init = lang!=LANG_FORTRAN ? "indigo__init_" : "indigo__init";
+			std::string indigo__init = SageInterface::is_Fortran_language() ? "indigo__init" : "indigo__init_";
 			std::string indigo__create_map = "indigo__create_map";
 			SgExprStatement* init_call = buildFunctionCallStmt(SgName(indigo__init), buildVoidType(), NULL, body);
 			SgExprStatement* map_call  = buildFunctionCallStmt(SgName(indigo__create_map), buildVoidType(), NULL, body);
@@ -151,7 +156,7 @@ attrib MINST::evaluateInheritedAttribute(SgNode* node, attrib attr)
 				// We found the function that we wanted to instrument, now insert the indigo__create_map_() function in this file
 				insert_map_function(node);
 
-				instrumentor_t inst(lang);
+				instrumentor_t inst;
 				inst.traverse(node, attr);
 				stream_list = inst.get_stream_list();
 			}
@@ -170,7 +175,7 @@ attrib MINST::evaluateInheritedAttribute(SgNode* node, attrib attr)
 				// We found the loop that we wanted to instrument, now insert the indigo__create_map_() function in this file
 				insert_map_function(node);
 
-				instrumentor_t inst(lang);
+				instrumentor_t inst;
 				inst.traverse(node, attr);
 				stream_list = inst.get_stream_list();
 			}

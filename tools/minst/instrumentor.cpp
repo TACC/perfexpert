@@ -7,14 +7,36 @@
 using namespace SageBuilder;
 using namespace SageInterface;
 
-instrumentor_t::instrumentor_t(short _lang)
-{
-	lang=_lang;
-}
-
 void instrumentor_t::atTraversalStart()
 {
 	stream_list.clear();
+	inst_info_list.clear();
+}
+
+void instrumentor_t::atTraversalEnd()
+{
+	std::string indigo__record = SageInterface::is_Fortran_language() ? "indigo__record_f" : "indigo__record_c";
+	for (std::vector<inst_info_t>::iterator it=inst_info_list.begin(); it!=inst_info_list.end(); it++)
+	{
+		inst_info_t& inst_info = *it;
+
+		SgNode* parent = inst_info.bb->get_parent();
+		if (isSgIfStmt(parent))
+		{
+			SgIfStmt* if_node = static_cast<SgIfStmt*>(parent);
+			if_node->set_use_then_keyword(true);
+			if_node->set_has_end_statement(true);
+		}
+
+		SgExprStatement* fCall = buildFunctionCallStmt(
+				SgName(indigo__record),
+				buildVoidType(),
+				buildExprListExp(inst_info.params),
+				inst_info.bb
+		);
+
+		insertStatementBefore(inst_info.exprStmt, fCall);
+	}
 }
 
 std::vector<std::string>& instrumentor_t::get_stream_list()
@@ -95,25 +117,21 @@ attrib instrumentor_t::evaluateInheritedAttribute(SgNode* node, attrib attr)
 			SgStatement *stmt = getEnclosingNode<SgStatement>(node);
 			if (stmt)	line_number = stmt->get_file_info()->get_raw_line();
 
-			SgExpression* param_addr=NULL;
-			SgIntVal *param_line_number=NULL, *param_idx=NULL, *param_read_write=NULL;
-
-			param_line_number = new SgIntVal(fileInfo, line_number);
-			param_idx = new SgIntVal(fileInfo, idx);
-			param_read_write = new SgIntVal(fileInfo, attr.read);
-
-			std::vector<SgExpression*> expr_vector;
 			// If not Fortran, cast the address to a void pointer
-			param_addr = lang!=LANG_FORTRAN ? buildCastExp (buildAddressOfOp((SgExpression*) node), buildPointerType(buildVoidType())) : (SgExpression*) node;
+			SgExpression *param_addr = SageInterface::is_Fortran_language() ? (SgExpression*) node : buildCastExp (buildAddressOfOp((SgExpression*) node), buildPointerType(buildVoidType()));
 
-			expr_vector.push_back(param_read_write);
-			expr_vector.push_back(param_line_number);
-			expr_vector.push_back(param_addr);
-			expr_vector.push_back(param_idx);
+			SgIntVal* param_line_number = new SgIntVal(fileInfo, line_number);
+			SgIntVal* param_idx = new SgIntVal(fileInfo, idx);
+			SgIntVal* param_read_write = new SgIntVal(fileInfo, attr.read);
 
-			std::string indigo__record = lang!=LANG_FORTRAN ? "indigo__record_c" : "indigo__record_f";
-			SgExprStatement* fCall = buildFunctionCallStmt(SgName(indigo__record), buildVoidType(), buildExprListExp(expr_vector), containingBB);
-			insertStatementBefore(containingExprStmt, fCall);
+			inst_info_t inst_info;
+			inst_info.bb = containingBB;
+			inst_info.exprStmt = containingExprStmt;
+			inst_info.params.push_back(param_read_write);
+			inst_info.params.push_back(param_line_number);
+			inst_info.params.push_back(param_addr);
+			inst_info.params.push_back(param_idx);
+			inst_info_list.push_back(inst_info);
 
 			// Reset this attribute for any child expressions
 			attr.skip = false;
