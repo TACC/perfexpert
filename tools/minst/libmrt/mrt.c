@@ -71,46 +71,6 @@ static int getCoreID()
 	return coreID;
 }
 
-static inline void fill_struct(int read_write, int line_number, size_t p, int var_idx)
-{
-	// If this process was never supposed to record stats
-	// or if the file-open failed, then return
-	if (fd < 0)	return;
-
-	if (sleeping == 1 || access_count >= 131072)	// 131072 is 128*1024 (power of two)
-		return;
-
-	size_t address = (size_t) p >> 6;	// Shift six bits to right so that we can track cache line assuming cache line size is 64 bytes
-
-	node_t node;
-	node.type_message = MSG_MEM_INFO;
-	node.coreID = getCoreID();
-
-	node.mem_info.read_write = read_write;
-	node.mem_info.address = address;
-	node.mem_info.var_idx = var_idx;
-	node.mem_info.line_number = line_number;
-
-	if (fd >= 0)
-		write(fd, &node, sizeof(node_t));
-}
-
-inline void indigo__record_c(int read_write, int line_number, void* addr, int var_idx)
-{
-	fprintf (stderr, "r/w: %d, line_number: %d, addr: %p, var_idx: %d\n", read_write, line_number, addr, var_idx);
-	exit(1);
-
-	fill_struct(read_write, line_number, (size_t) addr, var_idx);
-}
-
-inline void indigo__record_f_(int *read_write, int *line_number, void* addr, int *var_idx)
-{
-	fprintf (stderr, "r/w: %d, line_number: %d, addr: %p, var_idx: %d\n", *read_write, *line_number, addr, *var_idx);
-	exit(1);
-
-	fill_struct(*read_write, *line_number, (size_t) addr, *var_idx);
-}
-
 static void signalHandler(int sig)
 {
 	// Reset the signal handler
@@ -226,7 +186,7 @@ void indigo__init_()
 	// Output file
 	char szFilename[32];
 	sprintf (szFilename, "reuser.%d.out", (int) getpid());
-	fd = open(szFilename, O_CREAT | O_APPEND | O_WRONLY | O_TRUNC);
+	fd = open(szFilename, O_CREAT | O_APPEND | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP);
 	if (fd < 0)
 		perror("MACPO :: Error opening log for writing");
 
@@ -253,6 +213,8 @@ void indigo__init_()
 		itimer_new.it_value.tv_usec = AWAKE_USEC;
 		setitimer(ITIMER_PROF, &itimer_new, &itimer_old);
 	}
+
+	atexit(indigo__exit);
 }
 
 static void indigo__exit()
@@ -261,6 +223,45 @@ static void indigo__exit()
 	if (intel_apic_mapping)	free(intel_apic_mapping);
 }
 
-void indigo__write_idx_(int idx, char* var_name)
+static inline void fill_struct(int read_write, int line_number, size_t p, int var_idx)
 {
+	// If this process was never supposed to record stats
+	// or if the file-open failed, then return
+	if (fd < 0)	return;
+
+	if (sleeping == 1 || access_count >= 131072)	// 131072 is 128*1024 (power of two)
+		return;
+
+	size_t address = (size_t) p >> 6;	// Shift six bits to right so that we can track cache line assuming cache line size is 64 bytes
+
+	node_t node;
+	node.type_message = MSG_MEM_INFO;
+	node.coreID = getCoreID();
+
+	node.mem_info.read_write = read_write;
+	node.mem_info.address = address;
+	node.mem_info.var_idx = var_idx;
+	node.mem_info.line_number = line_number;
+
+	write(fd, &node, sizeof(node_t));
+}
+
+inline void indigo__record_c(int read_write, int line_number, void* addr, int var_idx)
+{
+	if (fd >= 0)	fill_struct(read_write, line_number, (size_t) addr, var_idx);
+}
+
+inline void indigo__record_f_(int *read_write, int *line_number, void* addr, int *var_idx)
+{
+	if (fd >= 0)	fill_struct(*read_write, *line_number, (size_t) addr, *var_idx);
+}
+
+void indigo__write_idx_(char* var_name)
+{
+	node_t node;
+	node.type_message = MSG_STREAM_INFO;
+	strncpy(node.stream_info.stream_name, var_name, STREAM_LENGTH-1);
+	node.stream_info.stream_name[STREAM_LENGTH-1] = '\0';
+
+	write(fd, &node, sizeof(node_t));
 }

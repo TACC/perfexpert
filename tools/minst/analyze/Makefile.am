@@ -25,13 +25,9 @@
 # $HEADER$
 #
 
-SUBDIRS = libmrt analyze
-
-bin_PROGRAMS = minst
-dist_bin_SCRIPTS = macpo.sh
-
-minst_SOURCES = minst.cpp instrumentor.cpp main.cpp splitter.cpp scourer.cpp \
-	expander.cpp stream_counter.cpp
-minst_CXXFLAGS = -Wno-deprecated -I$(srcdir)/common
+bin_PROGRAMS = analyze
+analyze_SOURCES = main.cpp
+analyze_CXXFLAGS = -I$(srcdir)/../common -Wno-deprecated -I/scratch/cluster/ashay/apps/sparsehash/include -fopenmp
+analyze_LDFLAGS = -lgmp -fopenmp
 
 # EOF

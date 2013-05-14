@@ -7,11 +7,10 @@
 
 #include "record.h"
 
-#define	DATANODE_SIZE	1024
 #define	AWAKE_SEC		0
 
 #ifndef	AWAKE_USEC
-#define	AWAKE_USEC		500000
+#define	AWAKE_USEC		12500
 #endif
 
 static long numCores = 0;
@@ -24,7 +23,7 @@ static node_t terminal_node;
 void indigo__init_();
 static void indigo__exit();
 
-void indigo__write_idx_(int idx, char* var_name);
+void indigo__write_idx_(char* var_name);
 
 static inline int getCoreID();
 
