@@ -226,7 +226,7 @@ void indigo__init_()
 	// Output file
 	char szFilename[32];
 	sprintf (szFilename, "reuser.%d.out", (int) getpid());
-	fd = open(szFilename, O_APPEND | O_WRONLY);
+	fd = open(szFilename, O_CREAT | O_APPEND | O_WRONLY | O_TRUNC);
 	if (fd < 0)
 		perror("MACPO :: Error opening log for writing");
 
