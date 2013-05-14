@@ -7,7 +7,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
+#include <unistd.h>
 #include <sys/time.h>
+#include <sys/types.h>
 
 #include "mrt.h"
 #include "cpuid.h"
@@ -222,7 +224,8 @@ void indigo__init_()
 	terminal_node.type_message = MSG_TERMINAL;
 
 	// Output file
-	char* szfilename = "reuser.out";
+	char szFilename[32];
+	sprintf (szFilename, "resuer.%d.out", (int) getpid());
 	fd = open(szFilename, O_APPEND | O_WRONLY);
 	if (fd < 0)
 		perror("MACPO :: Error opening log for writing");
