@@ -24,48 +24,71 @@ bool function_match(const std::string demangled_name, const char* szSearchString
 
 void MINST::insert_map_prototype(SgNode* node)
 {
-	SgFunctionDeclaration *func_decl;
 	const char* func_name = "indigo__create_map";
 
 	if (!SageInterface::is_Fortran_language())
 	{
-		func_decl = SageBuilder::buildDefiningFunctionDeclaration(func_name, buildVoidType(), buildFunctionParameterList(), global_node);
-		fdecl = SageBuilder::buildNondefiningFunctionDeclaration(func_decl, global_node);
+		SgFunctionDeclaration *decl;
+		decl = SageBuilder::buildDefiningFunctionDeclaration(func_name, buildVoidType(), buildFunctionParameterList(), global_node);
+		non_def_decl = SageBuilder::buildNondefiningFunctionDeclaration(decl, global_node);
 	}
 }
 
 void MINST::insert_map_function(SgNode* node)
 {
-	SgFunctionDeclaration *func_decl;
 	SgProcedureHeaderStatement* header;
 	const char* func_name = "indigo__create_map";
 
 	if (SageInterface::is_Fortran_language())
 	{
 		header = SageBuilder::buildProcedureHeaderStatement(func_name, buildVoidType(), buildFunctionParameterList(), SgProcedureHeaderStatement::e_subroutine_subprogram_kind, global_node);
-		func_decl = isSgFunctionDeclaration(header);
+		def_decl = isSgFunctionDeclaration(header);
 	}
 	else
-		func_decl = SageBuilder::buildDefiningFunctionDeclaration(func_name, buildVoidType(), buildFunctionParameterList(), global_node);
+		def_decl = SageBuilder::buildDefiningFunctionDeclaration(func_name, buildVoidType(), buildFunctionParameterList(), global_node);
 
-	appendStatement(func_decl, global_node);
+	appendStatement(def_decl, global_node);
 }
 
 void MINST::atTraversalStart()
 {
-	global_node=NULL, fdecl=NULL, bb=NULL;
+	stream_list.clear();
+	global_node=NULL, non_def_decl=NULL, def_decl=NULL, file_info=NULL;
 }
 
 void MINST::atTraversalEnd()
 {
-	if (global_node && fdecl)
-		global_node->prepend_declaration(fdecl);
+	if (global_node && non_def_decl)
+		global_node->prepend_declaration(non_def_decl);
+
+	if (def_decl)
+	{
+		SgBasicBlock* bb = def_decl->get_definition()->get_body();
+		if (bb && stream_list.size() > 0)
+		{
+			int idx=0;
+			std::string indigo__write_idx = SageInterface::is_Fortran_language() ? "indigo__write_idx" : "indigo__write_idx_";
+			for (std::vector<std::string>::iterator it=stream_list.begin(); it!=stream_list.end(); it++,idx++)
+			{
+				// Add a call to indigo__write_idx() and place it in the basic block bb
+				std::string stream_name = *it;
+
+				SgIntVal* param_idx = new SgIntVal(file_info, idx);
+				SgStringVal* param_stream_name = new SgStringVal(file_info, stream_name);
+
+				std::vector<SgExpression*> expr_vector;
+				expr_vector.push_back(param_idx);
+				expr_vector.push_back(param_stream_name);
+
+				SgExprStatement* write_idx_call = buildFunctionCallStmt(SgName(indigo__write_idx), buildVoidType(), buildExprListExp(expr_vector), bb);
+				bb->append_statement(write_idx_call);
+			}
+		}
+	}
 }
 
 attrib MINST::evaluateInheritedAttribute(SgNode* node, attrib attr)
 {
-	std::vector<std::string> stream_list;
-
 	// If explicit instructions to skip this node, then just return
 	if (attr.skip)
 		return attr;
@@ -74,6 +97,9 @@ attrib MINST::evaluateInheritedAttribute(SgNode* node, attrib attr)
 	if (isSgGlobal(node))
 	{
 		global_node = static_cast<SgGlobal*>(node);
+		file_info = Sg_File_Info::generateFileInfoForTransformationNode(
+				((SgLocatedNode*) node)->get_file_info()->get_filenameString());
+
 		if (lang != LANG_FORTRAN && action == ACTION_INSTRUMENT)
 			insertHeader("mrt.h", PreprocessingInfo::after, false, global_node);
 	}

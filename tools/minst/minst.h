@@ -10,10 +10,11 @@ class MINST : public AstTopDownProcessing<attrib>
 	short action;
 	int line_number;
 	std::string inst_func;
+	std::vector<std::string> stream_list;
 
-	SgBasicBlock* bb;
 	SgGlobal* global_node;
-	SgFunctionDeclaration *fdecl;
+	Sg_File_Info* file_info;
+	SgFunctionDeclaration *def_decl, *non_def_decl;
 
 	public:
 		MINST(short _lang, short _action, int _line_number, std::string _inst_func)

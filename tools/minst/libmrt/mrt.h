@@ -24,6 +24,8 @@ static node_t terminal_node;
 void indigo__init_();
 static void indigo__exit();
 
+void indigo__write_idx_(int idx, char* var_name);
+
 static inline int getCoreID();
 
 static inline void signalHandler(int sig);

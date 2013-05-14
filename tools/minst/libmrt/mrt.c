@@ -258,3 +258,6 @@ static void indigo__exit()
 	if (intel_apic_mapping)	free(intel_apic_mapping);
 }
 
+void indigo__write_idx_(int idx, char* var_name)
+{
+}
