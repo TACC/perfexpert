@@ -71,15 +71,18 @@ void MINST::atTraversalEnd()
 		SgBasicBlock* bb = def_decl->get_definition()->get_body();
 		if (bb && stream_list.size() > 0)
 		{
-			std::string indigo__write_idx = SageInterface::is_Fortran_language() ? "indigo__write_idx" : "indigo__write_idx_";
+			std::string indigo__write_idx = SageInterface::is_Fortran_language() ? "indigo__write_idx_f" : "indigo__write_idx_c";
 			for (std::vector<std::string>::iterator it=stream_list.begin(); it!=stream_list.end(); it++)
 			{
-				// Add a call to indigo__write_idx() and place it in the basic block bb
+				// Add a call to indigo__write_idx_[fc]() and place it in the basic block bb
 				std::string stream_name = *it;
 
 				std::vector<SgExpression*> expr_vector;
 				SgStringVal* param_stream_name = new SgStringVal(file_info, stream_name);
 				expr_vector.push_back(param_stream_name);
+
+				SgIntVal* param_length = new SgIntVal(file_info, stream_name.size());
+				expr_vector.push_back(param_length);
 
 				SgExprStatement* write_idx_call = buildFunctionCallStmt(SgName(indigo__write_idx), buildVoidType(), buildExprListExp(expr_vector), bb);
 				bb->append_statement(write_idx_call);

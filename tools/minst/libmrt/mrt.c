@@ -256,12 +256,21 @@ inline void indigo__record_f_(int *read_write, int *line_number, void* addr, int
 	if (fd >= 0)	fill_struct(*read_write, *line_number, (size_t) addr, *var_idx);
 }
 
-void indigo__write_idx_(char* var_name)
+void indigo__write_idx_c(char* var_name, int length)
 {
 	node_t node;
 	node.type_message = MSG_STREAM_INFO;
-	strncpy(node.stream_info.stream_name, var_name, STREAM_LENGTH-1);
-	node.stream_info.stream_name[STREAM_LENGTH-1] = '\0';
+#define	indigo__MIN(a,b)	(a) < (b) ? (a) : (b)
+	int dst_len = indigo__MIN(STREAM_LENGTH-1, length);
+#undef indigo__MIN
+
+	strncpy(node.stream_info.stream_name, var_name, dst_len);
+	node.stream_info.stream_name[dst_len] = '\0';
 
 	write(fd, &node, sizeof(node_t));
+}
+
+void indigo__write_idx_f_(char* var_name, int* length)
+{
+	indigo__write_idx_c(var_name, *length);
 }
