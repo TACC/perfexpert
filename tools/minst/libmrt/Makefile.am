@@ -25,7 +25,10 @@
 # $HEADER$
 #
 
-lib_LTLIBRARIES = libmrt.la
-libmrt_la_SOURCES = mrt.c
+lib_LIBRARIES = libmrt.a
+libmrt_a_SOURCES = mrt.c
+include_HEADERS = mrt.h ../common/record.h
+
+libmrt_a_CFLAGS = -I$(srcdir) -I$(srcdir)/../common
 
 # EOF

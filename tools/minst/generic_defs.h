@@ -2,10 +2,9 @@
 #ifndef	GENERIC_DEFS_H_
 #define	GENERIC_DEFS_H_
 
-enum { FALSE=0, TRUE=1 };
+enum { FALSE=0, TRUE };
 enum { SUCCESS=0, ERR_PARAMS };
-enum { TYPE_UNKNOWN=0, TYPE_READ, TYPE_WRITE };
-enum { ACTION_INSTRUMENT=0, ACTION_SPLIT_LOOP };
+enum { ACTION_INSTRUMENT=0, ACTION_SPLIT_LOOP, ACTION_NONE };
 
 typedef	unsigned char	BOOL;
 

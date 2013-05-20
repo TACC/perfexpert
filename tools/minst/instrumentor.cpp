@@ -1,10 +1,49 @@
 
+#include <algorithm>
 #include <rose.h>
 
+#include "record.h"
 #include "instrumentor.h"
 
 using namespace SageBuilder;
 using namespace SageInterface;
+
+void instrumentor_t::atTraversalStart()
+{
+	stream_list.clear();
+	inst_info_list.clear();
+}
+
+void instrumentor_t::atTraversalEnd()
+{
+	std::string indigo__record = SageInterface::is_Fortran_language() ? "indigo__record_f" : "indigo__record_c";
+	for (std::vector<inst_info_t>::iterator it=inst_info_list.begin(); it!=inst_info_list.end(); it++)
+	{
+		inst_info_t& inst_info = *it;
+
+		SgNode* parent = inst_info.bb->get_parent();
+		if (isSgIfStmt(parent))
+		{
+			SgIfStmt* if_node = static_cast<SgIfStmt*>(parent);
+			if_node->set_use_then_keyword(true);
+			if_node->set_has_end_statement(true);
+		}
+
+		SgExprStatement* fCall = buildFunctionCallStmt(
+				SgName(indigo__record),
+				buildVoidType(),
+				buildExprListExp(inst_info.params),
+				inst_info.bb
+		);
+
+		insertStatementBefore(inst_info.exprStmt, fCall);
+	}
+}
+
+std::vector<std::string>& instrumentor_t::get_stream_list()
+{
+	return stream_list;
+}
 
 attrib instrumentor_t::evaluateInheritedAttribute(SgNode* node, attrib attr)
 {
@@ -18,6 +57,9 @@ attrib instrumentor_t::evaluateInheritedAttribute(SgNode* node, attrib attr)
 	if (parent && isSgAssignOp(parent))
 		attr.read = parent->getChildIndex(node) == 0 ? TYPE_WRITE : TYPE_READ;
 
+	if (parent && isSgCompoundAssignOp(parent))
+		attr.read = parent->getChildIndex(node) == 0 ? TYPE_READ_AND_WRITE : TYPE_READ;
+
 	// LHS operand of PntrArrRefExp is always skipped
 	if (parent && isSgPntrArrRefExp(parent) && parent->getChildIndex(node) == 0)
 	{
@@ -27,7 +69,7 @@ attrib instrumentor_t::evaluateInheritedAttribute(SgNode* node, attrib attr)
 
 	// RHS operand of PntrArrRefExp is always read and never written
 	if (parent && isSgPntrArrRefExp(parent) && parent->getChildIndex(node) > 0)
-		attr.read = true;
+		attr.read = TYPE_READ;
 
 	if (attr.read != TYPE_UNKNOWN	// Are we sure whether this is a read or a write operation?
 		&& isSgPntrArrRefExp(node)	// Is this an array reference statement?
@@ -40,45 +82,57 @@ attrib instrumentor_t::evaluateInheritedAttribute(SgNode* node, attrib attr)
 			return attr;
 		}
 
-		Sg_File_Info* fileInfo = ((SgLocatedNode*) node)->get_file_info();
-
-		int line_number = fileInfo->get_line();
-		const char* szfilename = fileInfo->get_filenameString().c_str();
-
 		SgBasicBlock* containingBB = getEnclosingNode<SgBasicBlock>(node);
 		SgExprStatement* containingExprStmt = getEnclosingNode<SgExprStatement>(node);
 
 		if (containingBB && containingExprStmt)
 		{
 			std::string stream_name = node->unparseToString();
-			if (stream_name.at(stream_name.length()-1) == ']')
+			while (stream_name.at(stream_name.length()-1) == ']')
 			{
 				// Strip off the last [.*]
 				unsigned index = stream_name.find_last_of('[');
 				stream_name = stream_name.substr(0, index);
 			}
 
-
 			// For fortran array notation
-			if (stream_name.at(stream_name.length()-1) == ')')
+			while (stream_name.at(stream_name.length()-1) == ')')
 			{
 				// Strip off the last [.*]
 				unsigned index = stream_name.find_last_of('(');
 				stream_name = stream_name.substr(0, index);
 			}
 
-			// TODO: Count streams only when asked
-			// std::cout << "Name: " << stream_name << std::endl;
+			std::vector<std::string>::iterator iter = std::find(stream_list.begin(), stream_list.end(), stream_name);
+			size_t idx = std::distance(stream_list.begin(), iter);
+			if (idx == stream_list.size())
+			{
+				stream_list.push_back(stream_name);
+				idx = stream_list.size()-1;
+			}
 
-/*
-			// FIXME: Cast operations don't seem to work with Fortran code
-			SgExpression* castExpr = buildCastExp (buildAddressOfOp((SgExpression*) node), buildPointerType(buildVoidType()));
-			std::vector<SgExpression*> expr_vector;
-			expr_vector.push_back(castExpr);
+			Sg_File_Info *fileInfo = Sg_File_Info::generateFileInfoForTransformationNode(
+					((SgLocatedNode*) node)->get_file_info()->get_filenameString());
 
-			SgExprStatement* fCall = buildFunctionCallStmt(attr.fName, buildVoidType(), buildExprListExp(expr_vector), containingBB);
-			insertStatementBefore(containingExprStmt, fCall);
-*/
+			int line_number=0;
+			SgStatement *stmt = getEnclosingNode<SgStatement>(node);
+			if (stmt)	line_number = stmt->get_file_info()->get_raw_line();
+
+			// If not Fortran, cast the address to a void pointer
+			SgExpression *param_addr = SageInterface::is_Fortran_language() ? (SgExpression*) node : buildCastExp (buildAddressOfOp((SgExpression*) node), buildPointerType(buildVoidType()));
+
+			SgIntVal* param_line_number = new SgIntVal(fileInfo, line_number);
+			SgIntVal* param_idx = new SgIntVal(fileInfo, idx);
+			SgIntVal* param_read_write = new SgIntVal(fileInfo, attr.read);
+
+			inst_info_t inst_info;
+			inst_info.bb = containingBB;
+			inst_info.exprStmt = containingExprStmt;
+			inst_info.params.push_back(param_read_write);
+			inst_info.params.push_back(param_line_number);
+			inst_info.params.push_back(param_addr);
+			inst_info.params.push_back(param_idx);
+			inst_info_list.push_back(inst_info);
 
 			// Reset this attribute for any child expressions
 			attr.skip = false;

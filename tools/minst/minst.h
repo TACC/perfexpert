@@ -9,11 +9,20 @@ class MINST : public AstTopDownProcessing<attrib>
 	short action;
 	int line_number;
 	std::string inst_func;
+	std::vector<std::string> stream_list;
+
+	SgGlobal* global_node;
+	Sg_File_Info* file_info;
+	SgFunctionDeclaration *def_decl, *non_def_decl;
+
 	public:
-		MINST(short _action, int _line_number, std::string _inst_func)
-		{
-			action=_action, line_number=_line_number, inst_func=_inst_func;
-		}
+		MINST(short _action, int _line_number, std::string _inst_func);
+
+		void insert_map_function(SgNode* node);
+		void insert_map_prototype(SgNode* node);
+
+		virtual void atTraversalEnd();
+		virtual void atTraversalStart();
 
 		virtual attrib evaluateInheritedAttribute(SgNode* node, attrib attr);
 };

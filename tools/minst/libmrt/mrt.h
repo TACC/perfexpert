@@ -2,24 +2,36 @@
 #ifndef	LIBMRT_H_
 #define	LIBMRT_H_
 
-/* Trying to recreate namespaces in C */
-/* Based from: http://stackoverflow.com/questions/389827/namespaces-in-c */
+#include <stdlib.h>
+#include <signal.h>
 
-typedef struct
-{
-	int (*const record) (void*);
-} __indigo_namespace_struct;
+#include "record.h"
 
-extern __indigo_namespace_struct const __indigo;
+#define	AWAKE_SEC		0
 
-#if 0
-class __indigo
-{
-	public:
-	enum { SUCCESS=0, ERR_PARAMS, ERR_MEM };
-
-	static int record(void*);
-};
+#ifndef	AWAKE_USEC
+#define	AWAKE_USEC		12500
 #endif
+
+static long numCores = 0;
+static __thread int coreID=-1;
+static char szFilename[256]={0};
+static volatile sig_atomic_t sleeping=0, access_count=0;
+static int fd=-1, sleep_sec=0, new_sleep_sec=1, *intel_apic_mapping=NULL;
+static node_t terminal_node;
+
+void indigo__init_();
+static void indigo__exit();
+
+void indigo__write_idx_c(char* var_name, int length);
+void indigo__write_idx_f_(char* var_name, int* length);
+
+static inline int getCoreID();
+
+static inline void signalHandler(int sig);
+static inline void fill_struct(int read_write, int line_number, size_t p, int var_idx);
+
+inline void indigo__record_c(int read_write, int line_number, void* addr, int var_idx);
+inline void indigo__record_f_(int* read_write, int* line_number, void* addr, int* var_idx);
 
 #endif	/* LIBMRT_H_ */

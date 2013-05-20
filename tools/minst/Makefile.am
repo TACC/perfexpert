@@ -25,13 +25,13 @@
 # $HEADER$
 #
 
-SUBDIRS = libmrt
+SUBDIRS = libmrt analyze
 
 bin_PROGRAMS = minst
+dist_bin_SCRIPTS = macpo.sh
 
 minst_SOURCES = minst.cpp instrumentor.cpp main.cpp splitter.cpp scourer.cpp \
 	expander.cpp stream_counter.cpp
-minst_CPPFLAGS = -I$(srcdir)/../common
-minst_CFLAGS = 
+minst_CXXFLAGS = -Wno-deprecated -I$(srcdir)/common
 
 # EOF
