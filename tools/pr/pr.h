@@ -69,12 +69,12 @@ typedef struct {
     FILE *outputfile_FP;
     int  colorful;
     int  testall;
-    int  use_opttran;
-    char *opttrandir;
+    int  automatic;
+    char *workdir;
 #if HAVE_SQLITE3 == 1
     char *dbfile;
     sqlite3 *db;
-    unsigned long long int opttran_pid;
+    unsigned long long int perfexpert_pid;
 #endif
 } globals_t;
 
@@ -102,9 +102,9 @@ static struct option long_options[] = {
     {"outputfile",      required_argument, NULL, 'o'},
     {"colorful",        no_argument,       NULL, 'c'},
     {"testall",         no_argument,       NULL, 't'},
-    {"opttran",         required_argument, NULL, 'a'},
+    {"automatic",       required_argument, NULL, 'a'},
 #if HAVE_SQLITE3 == 1
-    {"opttranid",       required_argument, NULL, 'p'},
+    {"perfexpert_pid",  required_argument, NULL, 'p'},
 #endif
     {0, 0, 0, 0}
 };
