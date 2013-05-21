@@ -56,7 +56,5 @@ install-exec-local:
 		$(sysconfdir)/
 	$(INSTALL) -m 644 $(top_srcdir)/contrib/recommendation.db.txt \
 		$(datadir)/$(PACKAGE_NAME)/
-	$(INSTALL) -m 644 $(top_srcdir)/contrib/recommender-input_example.txt \
-		$(datadir)/$(PACKAGE_NAME)/
 
 # EOF
