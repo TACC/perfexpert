@@ -25,11 +25,11 @@
 # $HEADER$
 #
 
-bin_PROGRAMS = pr
+bin_PROGRAMS = perfexpert_pr
 
-pr_SOURCES = main.c
-pr_CPPFLAGS = -I$(srcdir)/../common
-pr_CFLAGS = -O3
+perfexpert_pr_SOURCES = main.c
+perfexpert_pr_CPPFLAGS = -I$(srcdir)/../common
+perfexpert_pr_CFLAGS = -O3
 
 SUBDIRS = c_loop1 c_loop2
 

@@ -77,7 +77,7 @@ perfexpert_run_exp() {
 analyzer() {
     ANALYZER_CMD="${ANALYZER}"
     ANALYZER_CMD+=" --recommend"
-    ANALYZER_CMD+=" --automatic"
+    ANALYZER_CMD+=" --opttran"
     ANALYZER_CMD+=" 0.1"
     ANALYZER_CMD+=" ${WORKDIR}/perfexpert-experiment.xml"
     ANALYZER_CMD+=" &> ${WORKDIR}/analyzer.output.txt"
@@ -162,10 +162,10 @@ perfexpert_pr() {
 
     echo -n "[perfexpert.sh] Step 5 of 7: Testing feasibility of recommendations..." >> ${VERBOSE}
     if [ x"${DEBUG}" == x"yes" ]; then
-        echo "[perfexpert.sh] Running: ${PR_CMD}" >> ${LOGFILE}
+        echo "[perfexpert.sh] Running: ${PERFEXPERT_PR_CMD}" >> ${LOGFILE}
     fi
 
-    eval ${PR_CMD}
+    eval ${PERFEXPERT_PR_CMD}
 
     if [ 0 == $? ]; then
         echo " ok!" >> ${VERBOSE}
@@ -174,7 +174,7 @@ perfexpert_pr() {
         echo "[perfexpert.sh] Error: running PerfExpert:PR, calling recommender" >> ${LOGFILE}
         echo "[perfexpert.sh] Sorry, we ran out of automatic transformations."
         echo "[perfexpert.sh] Here are some optimizations we recommend:"
-        ${PERFEXPERT_RECOMMENDER} --inputfile ${WORKDIR}/perfexpert.output.txt
+        ${RECOMMENDER} --inputfile ${WORKDIR}/analyzer.output.txt
         exit 1
     fi
 }
@@ -191,10 +191,10 @@ perfexpert_ct() {
     echo -n "[perfexpert.sh] Step 6 of 7: Applying code transformations..." >> ${VERBOSE}
 
     if [ x"${DEBUG}" == x"yes" ]; then
-        echo "[perfexpert.sh] Running: ${CT_CMD}" >> ${LOGFILE}
+        echo "[perfexpert.sh] Running: ${PERFEXPERT_CT_CMD}" >> ${LOGFILE}
     fi
 
-    eval ${CT_CMD}
+    eval ${PERFEXPERT_CT_CMD}
 
     if [ 0 == $? ]; then
         echo " ok!" >> ${VERBOSE}
@@ -208,21 +208,21 @@ fi
 
 ###############################################################################
 perfexpert_ci() {
-    CI_CMD="${PERFEXPERT_CI}"
-    CI_CMD+=" --verbose_level 10"
-    CI_CMD+=" --colorful"
-    CI_CMD+=" --inputfile ${WORKDIR}/perfexpert_functions.txt"
-    CI_CMD+=" --automatic ${WORKDIR}"
-    CI_CMD+=" --outputdir ${CI_OUTPUT_DIR}"
-    CI_CMD+=" &> ${WORKDIR}/perfexpert_ci.output.txt"
+    PERFEXPERT_CI_CMD="${PERFEXPERT_CI}"
+    PERFEXPERT_CI_CMD+=" --verbose_level 10"
+    PERFEXPERT_CI_CMD+=" --colorful"
+    PERFEXPERT_CI_CMD+=" --inputfile ${WORKDIR}/perfexpert_functions.txt"
+    PERFEXPERT_CI_CMD+=" --automatic ${WORKDIR}"
+    PERFEXPERT_CI_CMD+=" --outputdir ${CI_OUTPUT_DIR}"
+    PERFEXPERT_CI_CMD+=" &> ${WORKDIR}/perfexpert_ci.output.txt"
 
     echo -n "[perfexpert.sh] Step 7 of 7: Integrating source code..." >> ${VERBOSE}
 
     if [ x"${DEBUG}" == x"yes" ]; then
-        echo "[perfexpert.sh] Running: ${CI_CMD}" >> ${LOGFILE}
+        echo "[perfexpert.sh] Running: ${PERFEXPERT_CI_CMD}" >> ${LOGFILE}
     fi
 
-    eval ${CI_CMD}
+    eval ${PERFEXPERT_CI_CMD}
 
     if [ 0 == $? ]; then
         echo " ok!" >> ${VERBOSE}
