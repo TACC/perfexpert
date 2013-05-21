@@ -384,7 +384,7 @@ static void show_help(void) {
     printf("  -s --sourcefile      Use 'file' to extract source code fragments identified as\n");
     printf("                       bootleneck by PerfExpert (this option sets -a argument)\n");
 #endif
-    printf("  -p --opttranid       Use 'pid' to identify consecutive calls to Recommender.\n");
+    printf("  -p --perfexpert_pid  Use 'pid' to identify consecutive calls to Recommender.\n");
     printf("                       This argument is set automatically when using OptTran\n");
     printf("  -v --verbose         Enable verbose mode using default verbose level (5)\n");
     printf("  -l --verbose_level   Enable verbose mode using a specific verbose level (1-10)\n");
@@ -1359,7 +1359,7 @@ static int select_recommendations(segment_t *segment) {
 
     OUTPUT_VERBOSE((7, "==="));
     
-    return PERFEXPERTSUCCESS;
+    return PERFEXPERT_SUCCESS;
 }
 
 #ifdef __cplusplus

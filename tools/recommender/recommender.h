@@ -80,7 +80,7 @@ typedef struct {
     char *source_file;
     int  rec_count;
     char *fragments_dir;
-    unsigned long long int opttran_pid;
+    unsigned long long int perfexpert_pid;
 } globals_t;
 
 extern globals_t globals; /**< Variable to hold global options */
@@ -112,7 +112,7 @@ static struct option long_options[] = {
     {"newmetrics",      no_argument,       NULL, 'n'},
     {"colorful",        no_argument,       NULL, 'c'},
     {"sourcefile",      required_argument, NULL, 's'},
-    {"opttranid",       required_argument, NULL, 'p'},
+    {"perfexpert_pid",  required_argument, NULL, 'p'},
     {0, 0, 0, 0}
 };
 
