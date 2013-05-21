@@ -33,9 +33,4 @@ perfexpert_ct_CFLAGS = -O3
 
 SUBDIRS = c_loop2
 
-install-data-local:
-	$(MKDIR_P) $(datadir)/$(PACKAGE_NAME)
-	$(INSTALL) -m 644 $(top_srcdir)/contrib/perfexpert_ct-input_example.txt \
-		$(datadir)/$(PACKAGE_NAME)/
-
 # EOF
