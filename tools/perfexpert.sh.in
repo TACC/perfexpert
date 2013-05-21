@@ -77,7 +77,7 @@ perfexpert_run_exp() {
 perfexpert() {
     ANALYZER_CMD="${ANALYZER}"
     ANALYZER_CMD+=" --recommend"
-    ANALYZER_CMD+=" --opttran"
+    ANALYZER_CMD+=" --automatic"
     ANALYZER_CMD+=" 0.1"
     ANALYZER_CMD+=" ${WORKDIR}/perfexpert-experiment.xml"
     ANALYZER_CMD+=" &> ${WORKDIR}/perfexpert.output.txt"
@@ -128,7 +128,7 @@ recommender() {
     RECOMMENDER_CMD+=" --verbose_level 10"
     RECOMMENDER_CMD+=" --inputfile ${WORKDIR}/perfexpert.output.txt"
     RECOMMENDER_CMD+=" --colorful"
-    RECOMMENDER_CMD+=" --opttran ${WORKDIR}"
+    RECOMMENDER_CMD+=" --automatic ${WORKDIR}"
     RECOMMENDER_CMD+=" --sourcefile ${USER_SOURCE}"
     RECOMMENDER_CMD+=" &> ${WORKDIR}/recommender.output.txt"
 
@@ -155,10 +155,10 @@ perfexpert_pr() {
     PERFEXPERT_PR_CMD="${PERFEXPERT_PR}"
     PERFEXPERT_PR_CMD+=" --verbose_level 10"
     PERFEXPERT_PR_CMD+=" --colorful"
-    PERFEXPERT_PR_CMD+=" --inputfile ${WORKDIR}/opttran_recommendations.txt"
+    PERFEXPERT_PR_CMD+=" --inputfile ${WORKDIR}/perfexpert_recommendations.txt"
     PERFEXPERT_PR_CMD+=" --testall"
-    PERFEXPERT_PR_CMD+=" --opttran ${WORKDIR}"
-    PERFEXPERT_PR_CMD+=" &> ${WORKDIR}/opttran_pr.output.txt"
+    PERFEXPERT_PR_CMD+=" --automatic ${WORKDIR}"
+    PERFEXPERT_PR_CMD+=" &> ${WORKDIR}/perfexpert_pr.output.txt"
 
     echo -n "[perfexpert.sh] Step 5 of 7: Testing feasibility of recommendations..." >> ${VERBOSE}
     if [ x"${DEBUG}" == x"yes" ]; then
@@ -184,9 +184,9 @@ perfexpert_ct() {
     PERFEXPERT_CT_CMD="${PERFEXPERT_CT}"
     PERFEXPERT_CT_CMD+=" --verbose_level 10"
     PERFEXPERT_CT_CMD+=" --colorful"
-    PERFEXPERT_CT_CMD+=" --inputfile ${WORKDIR}/opttran_transformations.txt"
-    PERFEXPERT_CT_CMD+=" --opttran ${WORKDIR}"
-    PERFEXPERT_CT_CMD+=" &> ${WORKDIR}/opttran_ct.output.txt"
+    PERFEXPERT_CT_CMD+=" --inputfile ${WORKDIR}/perfexpert_transformations.txt"
+    PERFEXPERT_CT_CMD+=" --automatic ${WORKDIR}"
+    PERFEXPERT_CT_CMD+=" &> ${WORKDIR}/perfexpert_ct.output.txt"
 
     echo -n "[perfexpert.sh] Step 6 of 7: Applying code transformations..." >> ${VERBOSE}
 
@@ -212,7 +212,7 @@ perfexpert_ci() {
     CI_CMD+=" --verbose_level 10"
     CI_CMD+=" --colorful"
     CI_CMD+=" --inputfile ${WORKDIR}/perfexpert_functions.txt"
-    CI_CMD+=" --opttran ${WORKDIR}"
+    CI_CMD+=" --automatic ${WORKDIR}"
     CI_CMD+=" --outputdir ${CI_OUTPUT_DIR}"
     CI_CMD+=" &> ${WORKDIR}/perfexpert_ci.output.txt"
 
