@@ -80,7 +80,7 @@ perfexpert() {
     ANALYZER_CMD+=" --automatic"
     ANALYZER_CMD+=" 0.1"
     ANALYZER_CMD+=" ${WORKDIR}/perfexpert-experiment.xml"
-    ANALYZER_CMD+=" &> ${WORKDIR}/perfexpert.output.txt"
+    ANALYZER_CMD+=" &> ${WORKDIR}/analyzer.output.txt"
 
     echo -n "[perfexpert.sh] Step 2 of 7: Running PerfExpert analysis phase..." >> ${VERBOSE}
 
@@ -102,7 +102,7 @@ perfexpert() {
     ANALYZER_CMD2="${ANALYZER}"
     ANALYZER_CMD2+=" 0.1"
     ANALYZER_CMD2+=" ${WORKDIR}/perfexpert-experiment.xml"
-    ANALYZER_CMD2+=" &> ${WORKDIR}/perfexpert_analysis.output.txt"
+    ANALYZER_CMD2+=" &> ${WORKDIR}/analyzer2.output.txt"
 
     echo -n "[perfexpert.sh] Step 3 of 7: Running PerfExpert second analysis phase..." >> ${VERBOSE}
 
@@ -126,7 +126,7 @@ perfexpert() {
 recommender() {
     RECOMMENDER_CMD="${RECOMMENDER}"
     RECOMMENDER_CMD+=" --verbose_level 10"
-    RECOMMENDER_CMD+=" --inputfile ${WORKDIR}/perfexpert.output.txt"
+    RECOMMENDER_CMD+=" --inputfile ${WORKDIR}/analyzer.output.txt"
     RECOMMENDER_CMD+=" --colorful"
     RECOMMENDER_CMD+=" --automatic ${WORKDIR}"
     RECOMMENDER_CMD+=" --sourcefile ${USER_SOURCE}"
