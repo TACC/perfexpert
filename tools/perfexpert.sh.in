@@ -74,7 +74,7 @@ perfexpert_run_exp() {
 }
 
 ###############################################################################
-perfexpert() {
+analyzer() {
     ANALYZER_CMD="${ANALYZER}"
     ANALYZER_CMD+=" --recommend"
     ANALYZER_CMD+=" --automatic"
@@ -85,10 +85,10 @@ perfexpert() {
     echo -n "[perfexpert.sh] Step 2 of 7: Running PerfExpert analysis phase..." >> ${VERBOSE}
 
     if [ x"${DEBUG}" == x"yes" ]; then
-        echo "[perfexpert.sh] Running: ${PERFEXPERT_CMD}" >> ${LOGFILE}
+        echo "[perfexpert.sh] Running: ${ANALYZER_CMD}" >> ${LOGFILE}
     fi
 
-    eval ${PERFEXPERT_CMD}
+    eval ${ANALYZER_CMD}
 
     if [ 0 == $? ]; then
         echo " ok!" >> ${VERBOSE}
@@ -107,10 +107,10 @@ perfexpert() {
     echo -n "[perfexpert.sh] Step 3 of 7: Running PerfExpert second analysis phase..." >> ${VERBOSE}
 
     if [ x"${DEBUG}" == x"yes" ]; then
-        echo "[perfexpert.sh] Running: ${PERFEXPERT_CMD2}" >> ${LOGFILE}
+        echo "[perfexpert.sh] Running: ${ANALYZER_CMD2}" >> ${LOGFILE}
     fi
 
-    eval ${PERFEXPERT_CMD2}
+    eval ${ANALYZER_CMD2}
 
     if [ 0 == $? ]; then
         echo " ok!" >> ${VERBOSE}
@@ -377,7 +377,7 @@ while [ 1 ]; do
     # Run the tools
     compile
     perfexpert_run_exp
-    perfexpert
+    analyzer
     recommender
     perfexpert_pr
     perfexpert_ct
