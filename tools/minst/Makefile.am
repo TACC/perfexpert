@@ -20,7 +20,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with PerfExpert. If not, see <http://www.gnu.org/licenses/>.
 #
-# Author: Leonardo Fialho
+# Author: Leonardo Fialho and Ashay Rane
 #
 # $HEADER$
 #
