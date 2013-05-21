@@ -25,8 +25,9 @@
 # $HEADER$
 #
 
+2013 05 21 - Renaming PerfExpert to Analyzer and OptTran to PerfExpert
+2013 05 20 - The workflow script now iterates more than one optimization cycle
 2013 05 06 - Adding Minst (MACPO) to the tool chain
-
 2013 02 02 - First version added to the git control version system
 
 Known issues:
@@ -36,7 +37,7 @@ Known issues:
    
  - the lcpi.properties may be slight different from one machine to other,
    therefore, PerfExpert may output some warnings when using the
-   perfexper-experiment.xml example file from contrib (or $prefix/share/opttran)
+   perfexpert-experiment.xml example file from contrib
    directory
 
 EOF
