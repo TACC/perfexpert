@@ -36,7 +36,7 @@ extern "C" {
 #include <getopt.h>
 #include <inttypes.h>
 
-/* OptTran headers */
+/* PerfExpert headers */
 #include "config.h"
 #include "ci.h"
 #include "perfexpert_output.h"
@@ -58,7 +58,7 @@ int main(int argc, char** argv) {
         .use_stdout    = 1,    // int
         .inputfile     = NULL, // char *
         .outputdir     = NULL, // char *
-        .opttrandir    = NULL, // char *
+        .workdir       = NULL, // char *
         .colorful      = 0     // int
     };
 
@@ -165,8 +165,8 @@ static void show_help(void) {
     printf("\n");
     printf("  -i --stdin           Use STDIN as input for patterns\n");
     printf("  -f --inputfile       Use 'file' as input for patterns\n");
-    printf("  -a --opttran         Create OptTran (automatic performance optimization) files\n");
-    printf("                       into 'dir' directory (default: create no OptTran files).\n");
+    printf("  -a --automatic       Use automatic performance optimization and create files\n");
+    printf("                       into 'dir' directory (default: off).\n");
     printf("  -v --verbose         Enable verbose mode using default verbose level (5)\n");
     printf("  -l --verbose_level   Enable verbose mode using a specific verbose level (1-10)\n");
     printf("  -c --colorful        Enable colors on verbose mode, no weird characters will\n");
@@ -281,12 +281,12 @@ static int parse_cli_params(int argc, char *argv[]) {
                 OUTPUT_VERBOSE((10, "option 'o' set [%s]", globals.outputdir));
                 break;
                 
-            /* Use opttran? */
+            /* Use automatic optimization? */
             case 'a':
-                globals.use_opttran = 1;
+                globals.automatic = 1;
                 globals.use_stdout = 0;
-                globals.opttrandir = optarg;
-                OUTPUT_VERBOSE((10, "option 'a' set [%s]", globals.opttrandir));
+                globals.workdir = optarg;
+                OUTPUT_VERBOSE((10, "option 'a' set [%s]", globals.workdir));
                 break;
 
             /* Unknown option */
@@ -299,24 +299,24 @@ static int parse_cli_params(int argc, char *argv[]) {
     }
     OUTPUT_VERBOSE((4, "=== %s", _BLUE("CLI params")));
     OUTPUT_VERBOSE((10, "Summary of selected options:"));
-    OUTPUT_VERBOSE((10, "   Verbose:           %s",
+    OUTPUT_VERBOSE((10, "   Verbose:                    %s",
                     globals.verbose ? "yes" : "no"));
-    OUTPUT_VERBOSE((10, "   Verbose level:     %d",
+    OUTPUT_VERBOSE((10, "   Verbose level:              %d",
                     globals.verbose_level));
-    OUTPUT_VERBOSE((10, "   Colorful verbose?  %s",
+    OUTPUT_VERBOSE((10, "   Colorful verbose?           %s",
                     globals.colorful ? "yes" : "no"));
-    OUTPUT_VERBOSE((10, "   Use STDOUT?        %s",
+    OUTPUT_VERBOSE((10, "   Use STDOUT?                 %s",
                     globals.use_stdout ? "yes" : "no"));
-    OUTPUT_VERBOSE((10, "   Use STDIN?         %s",
+    OUTPUT_VERBOSE((10, "   Use STDIN?                  %s",
                     globals.use_stdin ? "yes" : "no"));
-    OUTPUT_VERBOSE((10, "   Input file:        %s",
+    OUTPUT_VERBOSE((10, "   Input file:                 %s",
                     globals.inputfile ? globals.inputfile : "(null)"));
-    OUTPUT_VERBOSE((10, "   Output directory:  %s",
+    OUTPUT_VERBOSE((10, "   Output directory:           %s",
                     globals.outputdir));
-    OUTPUT_VERBOSE((10, "   Use OPTTRAN?       %s",
-                    globals.use_opttran ? "yes" : "no"));
-    OUTPUT_VERBOSE((10, "   OPTTRAN directory: %s",
-                    globals.opttrandir ? globals.opttrandir : "(null)"));
+    OUTPUT_VERBOSE((10, "   Use automatic optimization? %s",
+                    globals.automatic ? "yes" : "no"));
+    OUTPUT_VERBOSE((10, "   Temporary directory:        %s",
+                    globals.workdir ? globals.workdir : "(null)"));
 
     /* Not using OUTPUT_VERBOSE because I want only one line */
     if (8 <= globals.verbose_level) {

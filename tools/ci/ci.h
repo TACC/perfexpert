@@ -61,8 +61,8 @@ typedef struct {
     char *inputfile;
     char *outputdir;
     int  colorful;
-    int  use_opttran;
-    char *opttrandir;
+    int  automatic;
+    char *workdir;
 } globals_t;
 
 extern globals_t globals; /**< Variable to hold global options */
@@ -71,7 +71,7 @@ extern globals_t globals; /**< Variable to hold global options */
 #ifdef PROGRAM_PREFIX
 #undef PROGRAM_PREFIX
 #endif
-#define PROGRAM_PREFIX "[opttran:ci]"
+#define PROGRAM_PREFIX "[perfexpert:ci]"
 
 #ifndef PERFEXPERT_OUTPUT_H
 #include "perfexpert_output.h"
@@ -87,7 +87,7 @@ static struct option long_options[] = {
     {"inputfile",       required_argument, NULL, 'f'},
     {"help",            no_argument,       NULL, 'h'},
     {"colorful",        no_argument,       NULL, 'c'},
-    {"opttran",         required_argument, NULL, 'a'},
+    {"automatic",       required_argument, NULL, 'a'},
     {"outputdir",       required_argument, NULL, 'o'},
     {0, 0, 0, 0}
 };

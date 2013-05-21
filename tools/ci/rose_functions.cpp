@@ -38,7 +38,7 @@
 /* sys/stat.h (and hence fcntl.h) needs to be included after rose.h */
 #include <fcntl.h>
 
-/* OptTran headers */
+/* PerfExpert headers */
 #include "config.h"
 #include "ci.h"
 #include "perfexpert_output.h"
@@ -228,9 +228,9 @@ static int insert_function(function_t *function) {
 
         if (function->line_number == line_number) {
             fprintf(new_source_file_FP,
-                    "/* OPTTRAN: the following function was changed. Don't");
+                    "/* PERFEXPERT: the following function was changed. Don't");
             fprintf(new_source_file_FP,
-                    " worry, we created a\n *          copy of your old ");
+                    " worry, we created a\n *             copy of your old ");
             fprintf(new_source_file_FP,
                     "function. You will find it just after this one.\n */\n");
 
@@ -239,17 +239,17 @@ static int insert_function(function_t *function) {
             }
 
             fprintf(new_source_file_FP,
-                    "/* OPTTRAN: the following function is a copy of your old");
+                    "/* PERFEXPERT: the following function is a copy of your ");
             fprintf(new_source_file_FP,
-                    " '%s' function.\n *          It is safe to remove this ",
+                    "old '%s' function.\n *             It is safe to remove ",
                     (char *)function->function_name);
             fprintf(new_source_file_FP,
-                    "function and also any other function\n *          ");
+                    "this function and also any other function\n *             ");
             fprintf(new_source_file_FP,
-                    "starting with 'OPTTRAN' unless your original source code");
+                    "starting with 'PERFEXPERT' unless your original source ");
             fprintf(new_source_file_FP,
-                    " have\n *          functions that starts with 'OPTTRAN',");
-            fprintf(new_source_file_FP, " which is weird.\n */\n");
+                    "code have\n *             functions that starts with ");
+            fprintf(new_source_file_FP, "'PERFEXPERT', which is weird.\n */\n");
         }
         fprintf(new_source_file_FP, "%s", buffer);
         bzero(buffer, BUFFER_SIZE);
