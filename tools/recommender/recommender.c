@@ -71,7 +71,7 @@ int recommender_main(int argc, char** argv) {
         .colorful         = 0,                    // int
         .source_file      = NULL,                 // char *
         .metrics_table    = METRICS_TABLE,        // char *
-        .opttran_pid      = (unsigned long long int)getpid(), // int
+        .perfexpert_pid      = (unsigned long long int)getpid(), // int
         .fragments_dir    = NULL,                 // char *
         .rec_count        = 3                     // int
     };
@@ -159,27 +159,29 @@ int recommender_main(int argc, char** argv) {
     }
 
     /* Select/output recommendations for each code bottleneck (5 steps) */
-    /* Step 1: Print to a file or STDOUT is ok? Was OPTTRAN chosen? */
+    /* Step 1: Print to a file or STDOUT is ok? Was automatic optimization
+     *         chosen?
+     */
     OUTPUT_VERBOSE((7, "=== %s", _BLUE("STEP 1")));
 
     if (1 == globals.use_opttran) {
         globals.use_stdout = 0;
 
         if (NULL == globals.workdir) {
-            globals.workdir = (char *)malloc(strlen("./opttran-") + 8);
+            globals.workdir = (char *)malloc(strlen("./perfexpert-") + 8);
             if (NULL == globals.workdir) {
                 OUTPUT(("%s", _ERROR("Error: out of memory")));
                 exit(PERFEXPERT_ERROR);
             }
-            bzero(globals.workdir, strlen("./opttran-" + 8));
-            sprintf(globals.workdir, "./opttran-%d", getpid());
+            bzero(globals.workdir, strlen("./perfexpert-" + 8));
+            sprintf(globals.workdir, "./perfexpert-%d", getpid());
         }
         OUTPUT_VERBOSE((7, "using (%s) as output directory",
                         globals.workdir));
 
         if (PERFEXPERT_ERROR == perfexpert_util_make_path(globals.workdir,
                                                           0755)) {
-            OUTPUT(("%s", _ERROR("Error: cannot create opttran directory")));
+            OUTPUT(("%s", _ERROR("Error: cannot create temporary directory")));
             exit(PERFEXPERT_ERROR);
         }
         
@@ -194,7 +196,7 @@ int recommender_main(int argc, char** argv) {
         strcat(globals.outputfile, globals.workdir);
         strcat(globals.outputfile, "/");
         strcat(globals.outputfile, PERFEXPERT_RECO_FILE);
-        OUTPUT_VERBOSE((7, "printing OPTTRAN output to (%s)",
+        OUTPUT_VERBOSE((7, "printing output to (%s)",
                         globals.workdir));
     }
     if (0 == globals.use_stdout) {
@@ -233,7 +235,7 @@ int recommender_main(int argc, char** argv) {
 
         /* Open ROSE */
         if (PERFEXPERT_ERROR == open_rose()) {
-            OUTPUT(("%s", _ERROR("Error: starting Rose, disabling OPTTRAN")));
+            OUTPUT(("%s", _ERROR("Error: starting Rose, disabling automatic optimization")));
             globals.use_opttran = 0;
         }
     }
@@ -540,7 +542,7 @@ static int parse_cli_params(int argc, char *argv[]) {
                                 globals.metrics_file));
                 break;
                 
-            /* Specify OptTran PID */
+            /* Specify PerfExpert PID */
             case 'p':
                 globals.perfexpert_pid = strtoull(optarg, (char **)NULL, 10);
                 OUTPUT_VERBOSE((10, "option 'p' set [%llu]",
@@ -569,8 +571,8 @@ static int parse_cli_params(int argc, char *argv[]) {
     OUTPUT_VERBOSE((10, "   Use STDOUT?            %s", globals.use_stdout ? "yes" : "no"));
     OUTPUT_VERBOSE((10, "   Use STDIN?             %s", globals.use_stdin ? "yes" : "no"));
     OUTPUT_VERBOSE((10, "   Use OPTTRAN?           %s", globals.use_opttran ? "yes" : "no"));
-    OUTPUT_VERBOSE((10, "   OPTTRAN PID:           %llu", globals.opttran_pid));
-    OUTPUT_VERBOSE((10, "   OPTTRAN directory:     %s", globals.workdir ? globals.workdir : "(null)"));
+    OUTPUT_VERBOSE((10, "   PerfExpert PID:        %llu", globals.perfexpert_pid));
+    OUTPUT_VERBOSE((10, "   Temporary directory:   %s", globals.workdir ? globals.workdir : "(null)"));
     OUTPUT_VERBOSE((10, "   Input file:            %s", globals.inputfile ? globals.inputfile : "(null)"));
     OUTPUT_VERBOSE((10, "   Output file:           %s", globals.outputfile ? globals.outputfile : "(null)"));
     OUTPUT_VERBOSE((10, "   Database file:         %s", globals.dbfile ? globals.dbfile : "(null)"));
@@ -772,10 +774,10 @@ static int parse_segment_params(perfexpert_list_t *segments_p, FILE *inputfile_p
                 item->rowid = rowid;
             }
 
-            /* Set OptTran PID for the new segment */
+            /* Set PerfExpert PID for the new segment */
             bzero(sql, BUFFER_SIZE);
             sprintf(sql, "UPDATE %s SET pid=%llu WHERE id=%d;",
-                    globals.metrics_table, globals.opttran_pid, rowid);
+                    globals.metrics_table, globals.perfexpert_pid, rowid);
             if (SQLITE_OK != sqlite3_exec(globals.db, sql, NULL, NULL,
                                           &error_msg)) {
                 fprintf(stderr, "Error: SQL error: %s\n", error_msg);
@@ -971,7 +973,7 @@ static int output_patterns(void *weight, int col_count, char **col_values,
             fprintf(globals.outputfile_FP, "%s ", col_values[0]);
         }
     } else {
-        /* OptTran output */
+        /* PerfExpert output */
         if ((NULL != col_values[0]) && (NULL != col_values[1])) {
             fprintf(globals.outputfile_FP, "recommender.recognizer_id=%s\n",
                     col_values[1]);
@@ -1031,7 +1033,7 @@ static int output_recommendations(void *not_used, int col_count,
         fprintf(globals.outputfile_FP, "\n");
         fprintf(globals.outputfile_FP, "Code example:\n%s\n", col_values[3]);
     } else {
-        /* OptTran output */
+        /* PerfExpert output */
         fprintf(globals.outputfile_FP, "recommender.recommendation_id=%s\n",
                 col_values[2]);
         /* Find the patterns available for this recommendation id */
