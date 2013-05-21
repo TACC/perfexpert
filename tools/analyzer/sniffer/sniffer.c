@@ -645,7 +645,7 @@ int main(int argc, char* argv []) {
 
     PAPI_event_name_to_code("PAPI_TOT_INS", &papi_tot_ins_code);
 
-    fp = fopen("analyzer_run_exp.sh_header", "w");
+    fp = fopen("perfexpert_run_exp.sh_header", "w");
     if (NULL == fp) {
         fprintf(stderr,
                 "Could not open file analyzer_run_exp.sh_header for writing\n");
