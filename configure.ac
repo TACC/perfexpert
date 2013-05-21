@@ -177,13 +177,13 @@ AC_CHECK_HEADER([sqlite3.h], [
 AC_PATH_TOOL([SQLITE3_PROGRAM], [sqlite3], [no])
 
 #------------------------------------------------------------------------------
-# Checks for PIPS, optionally, using an argument (required for opttran_ct)
+# Checks for PIPS, optionally, using an argument (required for perfexpert_ct)
 #
 AC_ARG_WITH([pips],
     [AS_HELP_STRING([--with-pips],
-        [Use this argument to set where PIPS binries are installed (not
-        necessary if it is in the PATH). TPIPS (one of the PIPS binaries) is
-        necessary to compile OptTran:CT])], [
+        [Use this argument to set where PIPS binaries are installed (not
+        necessary if it is in the PATH). TPIPS (one of PIPS binaries) is
+        necessary to compile PerfExpert:CT])], [
     PIPS_PATH="$withval"
     AC_PATH_TOOL([TPIPS_PROGRAM], [tpips], [no], [$PIPS_PATH/bin])
     AS_IF([test x"$TPIPS_PROGRAM" = x"no"],
@@ -292,8 +292,8 @@ AC_ARG_WITH([rose],
     [AS_HELP_STRING([--with-rose],
         [support to Rose Compiler @<:@default=no@:>@ which enables some
         advanced features on the Optimization Recommender tool, as well is
-        required to enable OptTran:CT (Code Transformer tool), and
-        OptTran:CR (Code Re-Assembler tool). Use this argument to set Rose
+        required to enable PerfExpert:CT (Code Transformer tool), and
+        PerfExpert:CI (Code Integrator tool). Use this argument to set Rose
         prefix path (where Rose libraries and include directories are
         located), if you do that there is no need to set neither
         '--with-rose-libs' nor '--with-rose-include'])], [
@@ -359,10 +359,10 @@ AM_CONDITIONAL([WITH_ROSE_SUPPORT], [test x"$WITH_ROSE_SUPPORT" = x"yes"])
 AC_ARG_ENABLE([analyzer],
     [AS_HELP_STRING([--disable-analyzer],
         [Enable/Disable the application profiler tool [default=enabled]])],
-    [ENABLE_OPTTRAN_ANALYZER=$enableval], [ENABLE_OPTTRAN_ANALYZER=yes])
+    [ENABLE_ANALYZER=$enableval], [ENABLE_ANALYZER=yes])
 
 AC_MSG_CHECKING([whether to enable Analyzer])
-AS_IF([test x"$ENABLE_OPTTRAN_ANALYZER" = x"yes"], [
+AS_IF([test x"$ENABLE_ANALYZER" = x"yes"], [
     AC_MSG_RESULT([yes])
 
     # Apache ANT is required
@@ -431,10 +431,10 @@ AC_SUBST([ENABLE_ANALYZER])
 AC_ARG_ENABLE([minst],
     [AS_HELP_STRING([--disable-minst],
         [Enable/Disable the data access instrumentation tool [default=enabled]])],
-    [ENABLE_OPTTRAN_MINST=$enableval], [ENABLE_OPTTRAN_MINST=yes])
+    [ENABLE_MINST=$enableval], [ENABLE_MINST=yes])
 
 AC_MSG_CHECKING([whether to enable Minst (MACPO)])
-AS_IF([test x"$ENABLE_OPTTRAN_MINST" = x"yes"], [
+AS_IF([test x"$ENABLE_MINST" = x"yes"], [
     AC_MSG_RESULT([yes])
 
     # ROSE is required
@@ -459,10 +459,10 @@ AC_SUBST([ENABLE_MINST])
 AC_ARG_ENABLE([recommender],
     [AS_HELP_STRING([--disable-recommender],
         [Enable/Disable the optimization recommender tool [default=enabled]])],
-    [ENABLE_OPTTRAN_RECOMMENDER=$enableval], [ENABLE_OPTTRAN_RECOMMENDER=yes])
+    [ENABLE_RECOMMENDER=$enableval], [ENABLE_RECOMMENDER=yes])
 
 AC_MSG_CHECKING([whether to enable the Optimization Recommender])
-AS_IF([test x"$ENABLE_OPTTRAN_RECOMMENDER" = x"yes"], [
+AS_IF([test x"$ENABLE_RECOMMENDER" = x"yes"], [
     AC_MSG_RESULT([yes])
 
     # SQLite is required
@@ -478,18 +478,18 @@ AS_IF([test x"$ENABLE_OPTTRAN_RECOMMENDER" = x"yes"], [
 AC_SUBST([ENABLE_RECOMMENDER])
 
 #------------------------------------------------------------------------------
-# Enable/Disable 'opttran_pr'
+# Enable/Disable 'perfexpert_pr'
 #
 # It looks like there is a bug while checking for LEX which makes the LEX check
 # result appears before the result message (yes/no).
 #
-AC_ARG_ENABLE([opttran_pr],
-    [AS_HELP_STRING([--disable-opttran_pr],
+AC_ARG_ENABLE([perfexpert_pr],
+    [AS_HELP_STRING([--disable-perfexpert_pr],
         [Enable/Disable the pattern recognizer tool [default=enabled]])],
-    [ENABLE_OPTTRAN_PR=$enableval], [ENABLE_OPTTRAN_PR=yes])
+    [ENABLE_PR=$enableval], [ENABLE_PR=yes])
 
-AC_MSG_CHECKING([whether to enable OptTran Pattern Recognizer])
-AS_IF([test x"$ENABLE_OPTTRAN_PR" = x"yes"], [
+AC_MSG_CHECKING([whether to enable PerfExpert Pattern Recognizer])
+AS_IF([test x"$ENABLE_PR" = x"yes"], [
     AC_MSG_RESULT([yes])
 
     # Check for Lex/Flex and Yacc/Bison
@@ -507,15 +507,15 @@ AS_IF([test x"$ENABLE_OPTTRAN_PR" = x"yes"], [
 AC_SUBST([ENABLE_PR])
 
 #------------------------------------------------------------------------------
-# Enable/Disable 'opttran_ct'
+# Enable/Disable 'perfexpert_ct'
 #
-AC_MSG_CHECKING([whether to enable OptTran Code Transformer])
-AC_ARG_ENABLE([opttran_ct],
-    [AS_HELP_STRING([--disable-opttran_ct],
+AC_MSG_CHECKING([whether to enable PerfExpert Code Transformer])
+AC_ARG_ENABLE([perfexpert_ct],
+    [AS_HELP_STRING([--disable-perfexpert_ct],
         [Enable/Disable the code transformer tool [default=enabled]])],
-    [ENABLE_OPTTRAN_CT=$enableval], [ENABLE_OPTTRAN_CT=yes])
+    [ENABLE_CT=$enableval], [ENABLE_CT=yes])
 
-AS_IF([test x"$ENABLE_OPTTRAN_CT" = x"yes"], [
+AS_IF([test x"$ENABLE_CT" = x"yes"], [
     AC_MSG_RESULT([yes])
 
     # PIPS is required
@@ -535,15 +535,15 @@ AS_IF([test x"$ENABLE_OPTTRAN_CT" = x"yes"], [
 AC_SUBST([ENABLE_CT])
 
 #------------------------------------------------------------------------------
-# Enable/Disable 'opttran_ci'
+# Enable/Disable 'perfexpert_ci'
 #
-AC_MSG_CHECKING([whether to enable OptTran Code Integrator])
-AC_ARG_ENABLE([opttran_ci],
-    [AS_HELP_STRING([--disable-opttran_ci],
+AC_MSG_CHECKING([whether to enable PerfExpert Code Integrator])
+AC_ARG_ENABLE([perfexpert_ci],
+    [AS_HELP_STRING([--disable-perfexpert_ci],
         [Enable/Disable the code integrator tool [default=enabled]])],
-    [ENABLE_OPTTRAN_CI=$enableval], [ENABLE_OPTTRAN_CI=yes])
+    [ENABLE_CI=$enableval], [ENABLE_CI=yes])
 
-AS_IF([test x"$ENABLE_OPTTRAN_CI" = x"yes"], [
+AS_IF([test x"$ENABLE_CI" = x"yes"], [
     AC_MSG_RESULT(yes)
 
     # ROSE is required
@@ -559,7 +559,7 @@ AS_IF([test x"$ENABLE_OPTTRAN_CI" = x"yes"], [
 AC_SUBST([ENABLE_CI])
 
 #------------------------------------------------------------------------------
-# Do we have all the tools? So generate the ninja-super-power-script opttran.sh
+# Do we have all the tools? So generate the ninja-super-power-script perfexpert.sh
 #
 #AS_IF([test x"$ENABLE_OPTTRAN_ANALYZER" = x"yes"], [
 #    AS_IF([test x"$ENABLE_OPTTRAN_RECOMMENDER" = x"yes"], [
@@ -582,12 +582,12 @@ AC_CONFIG_FILES([tools/opttran.sh], [chmod +x tools/opttran.sh])
 #
 AC_OUTPUT
 AC_MSG_NOTICE([========================================================])
-AC_MSG_NOTICE([ Analyzer:                  $ENABLE_OPTTRAN_ANALYZER    ])
-AC_MSG_NOTICE([ Minst (MACPO):             $ENABLE_OPTTRAN_MINST       ])
-AC_MSG_NOTICE([ Optimizations Recommender: $ENABLE_OPTTRAN_RECOMMENDER ])
-AC_MSG_NOTICE([ Code Pattern Recognizer:   $ENABLE_OPTTRAN_PR          ])
-AC_MSG_NOTICE([ Code Transformer:          $ENABLE_OPTTRAN_CT          ])
-AC_MSG_NOTICE([ Code Integrator:           $ENABLE_OPTTRAN_CI          ])
+AC_MSG_NOTICE([ Analyzer:                  $ENABLE_ANALYZER            ])
+AC_MSG_NOTICE([ Minst (MACPO):             $ENABLE_MINST               ])
+AC_MSG_NOTICE([ Optimizations Recommender: $ENABLE_RECOMMENDER         ])
+AC_MSG_NOTICE([ Code Pattern Recognizer:   $ENABLE_PR                  ])
+AC_MSG_NOTICE([ Code Transformer:          $ENABLE_CT                  ])
+AC_MSG_NOTICE([ Code Integrator:           $ENABLE_CI                  ])
 AC_MSG_NOTICE([                                                        ])
 AC_MSG_NOTICE([ Debug mode: $ENABLE_DEBUG                              ])
 AC_MSG_NOTICE([ PAPI:       $HAVE_PAPI_HEADER                          ])
@@ -605,7 +605,7 @@ AC_MSG_NOTICE([ CXXFLAGS=$CXXFLAGS                                     ])
 AC_MSG_NOTICE([ LDFLAGS=$LDFLAGS                                       ])
 AC_MSG_NOTICE([ LIBS=$LIBS                                             ])
 AS_IF([test x"$HOST_OS" != x"linux"], [
-    AS_IF([test x"$ENABLE_OPTTRAN_ANALYZER" = x"yes"], [
+    AS_IF([test x"$ENABLE_ANALYZER" = x"yes"], [
         AC_MSG_NOTICE([========================================================])
         AC_MSG_NOTICE([                    !!! WARNING !!!                     ])
         AC_MSG_NOTICE([                                                        ])
