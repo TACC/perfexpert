@@ -36,12 +36,12 @@ extern "C" {
 #include "install_dirs.h"
 #endif
 
-#ifndef OPTTRAN_CONSTANTS_H_
-#include "opttran_constants.h"
+#ifndef PERFEXPERT_CONSTANTS_H_
+#include "perfexpert_constants.h"
 #endif
 
-#ifndef OPTTRAN_LIST_H_
-#include "opttran_list.h"
+#ifndef PERFEXPERT_LIST_H_
+#include "perfexpert_list.h"
 #endif
 
 #if HAVE_SQLITE3 == 1
@@ -69,25 +69,25 @@ typedef struct {
     FILE *outputfile_FP;
     int  colorful;
     int  use_opttran;
-    char *opttrandir;
+    char *workdir;
     int  transfall;
 #if HAVE_SQLITE3 == 1
     char *dbfile;
     sqlite3 *db;
-    unsigned long long int opttran_pid;
+    unsigned long long int perfexpert_pid;
 #endif
 } globals_t;
 
 extern globals_t globals; /**< Variable to hold global options */
 
-/* WARNING: to include opttran_output.h globals have to be defined first */
+/* WARNING: to include perfexpert_output.h globals have to be defined first */
 #ifdef PROGRAM_PREFIX
 #undef PROGRAM_PREFIX
 #endif
-#define PROGRAM_PREFIX "[opttran:ct]"
+#define PROGRAM_PREFIX "[perfexpert:ct]"
 
-#ifndef OPTTRAN_OUTPUT_H
-#include "opttran_output.h"
+#ifndef PERFEXPERT_OUTPUT_H
+#include "perfexpert_output.h"
 #endif
 
 /** Structure to handle command line arguments. Try to keep the content of
@@ -104,7 +104,7 @@ static struct option long_options[] = {
     {"opttran",         required_argument, NULL, 'a'},
     {"transfall",       no_argument,       NULL, 't'},
 #if HAVE_SQLITE3 == 1
-    {"opttranid",       required_argument, NULL, 'p'},
+    {"perfexpert_pid",  required_argument, NULL, 'p'},
 #endif
     {0, 0, 0, 0}
 };
@@ -117,8 +117,8 @@ typedef struct node {
 
 /** Ninja structure to hold a list of transformations to apply */
 typedef struct transf {
-    volatile opttran_list_item_t *next;
-    volatile opttran_list_item_t *prev;
+    volatile perfexpert_list_item_t *next;
+    volatile perfexpert_list_item_t *prev;
     char *program;
     char *fragment_file;
     int  fragment_line_number;
@@ -133,8 +133,8 @@ typedef struct transf {
 
 /** Structure to hold transformations */
 typedef struct transformation {
-    volatile opttran_list_item_t *next;
-    volatile opttran_list_item_t *prev;
+    volatile perfexpert_list_item_t *next;
+    volatile perfexpert_list_item_t *prev;
     char *program;
     char *fragment_file;
     int  line_number;
@@ -144,24 +144,24 @@ typedef struct transformation {
 
 /** Structure to hold fragments */
 typedef struct fragment {
-    volatile opttran_list_item_t *next;
-    volatile opttran_list_item_t *prev;
+    volatile perfexpert_list_item_t *next;
+    volatile perfexpert_list_item_t *prev;
     char *filename;
     int  line_number;
     char *code_type;
     char *function_name;
-    opttran_list_t transformations;
+    perfexpert_list_t transformations;
 } fragment_t;
 
 /* Function declarations */
 static void show_help(void);
 static int  parse_env_vars(void);
 static int  parse_cli_params(int argc, char *argv[]);
-static int  parse_transformation_params(opttran_list_t *segments_p,
+static int  parse_transformation_params(perfexpert_list_t *segments_p,
                                         FILE *inputfile_p);
-static int  apply_transformations(opttran_list_t *fragments_p);
+static int  apply_transformations(perfexpert_list_t *fragments_p);
 static int  apply_one(transf_t *transf);
-static int  output_results(opttran_list_t *fragments_p);
+static int  output_results(perfexpert_list_t *fragments_p);
 #if HAVE_SQLITE3 == 1
 static int  database_connect(void);
 #endif
