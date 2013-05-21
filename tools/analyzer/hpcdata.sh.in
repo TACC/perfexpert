@@ -26,6 +26,8 @@
 # $HEADER$
 #
 
+prefix="@prefix@"
+exec_prefix="@exec_prefix@"
 LIBDIR=@libdir@
 ABS_BUILDDIR=@abs_builddir@
 ABS_TOP_SRCDIR=@abs_top_srcdir@
