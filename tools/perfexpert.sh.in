@@ -34,7 +34,6 @@
 # 4) ...
 
 ###############################################################################
-<<<<<<< HEAD:tools/opttran.sh.in
 #         12345678901234567890123456789012345678901234567890123456789012345678901234567890
 showHelp() {
     echo "Usage: opttran [-ghvq] [-w DIR] [-s FILE] program_executable [program_arguments]"
@@ -144,12 +143,10 @@ ANALYZER_RUN_EXP_CMD+=" -g"
 ANALYZER_RUN_EXP_CMD+=" -o ${WORKDIR}/perfexpert-experiment.xml"
 ANALYZER_RUN_EXP_CMD+=" ${USER_BINARY}"
 ANALYZER_RUN_EXP_CMD+=" &> ${WORKDIR}/analyzer_run_exp.output"
->>>>>>> bb5b994266e61416c518dd212821f7e4594bea4c:tools/perfexpert.sh.in
 
 ###############################################################################
 perfexpert() {
 #
-<<<<<<< HEAD:tools/opttran.sh.in
 # Set 'perfexpert' up
 #
 OPTTRAN_PERFEXPERT_CMD="${OPTTRAN_PERFEXPERT}"
