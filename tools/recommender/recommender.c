@@ -60,7 +60,7 @@ int recommender_main(int argc, char** argv) {
         .verbose_level    = 0,                    // int
         .use_stdin        = 0,                    // int
         .use_stdout       = 1,                    // int
-        .use_opttran      = 0,                    // int
+        .automatic      = 0,                    // int
         .inputfile        = NULL,                 // char *
         .outputfile       = PERFEXPERT_RECO_FILE, // char *
         .outputfile_FP    = stdout,               // FILE *
@@ -164,7 +164,7 @@ int recommender_main(int argc, char** argv) {
      */
     OUTPUT_VERBOSE((7, "=== %s", _BLUE("STEP 1")));
 
-    if (1 == globals.use_opttran) {
+    if (1 == globals.automatic) {
         globals.use_stdout = 0;
 
         if (NULL == globals.workdir) {
@@ -212,7 +212,7 @@ int recommender_main(int argc, char** argv) {
         OUTPUT_VERBOSE((7, "printing recommendation to STDOUT"));
     }
 #if HAVE_ROSE == 1
-    if ((1 == globals.use_opttran) && (NULL != globals.source_file)) {
+    if ((1 == globals.automatic) && (NULL != globals.source_file)) {
         globals.fragments_dir = (char *)malloc(strlen(globals.workdir) +
                                                strlen(PERFEXPERT_FRAGMENTS_DIR) +
                                                10);
@@ -236,7 +236,7 @@ int recommender_main(int argc, char** argv) {
         /* Open ROSE */
         if (PERFEXPERT_ERROR == open_rose()) {
             OUTPUT(("%s", _ERROR("Error: starting Rose, disabling automatic optimization")));
-            globals.use_opttran = 0;
+            globals.automatic = 0;
         }
     }
 #endif
@@ -248,7 +248,7 @@ int recommender_main(int argc, char** argv) {
     while ((perfexpert_list_item_t *)item != &(segments->sentinel)) {
         OUTPUT_VERBOSE((4, "%s (%s:%d)", _YELLOW("selecting recommendation for"),
                         item->filename, item->line_number));
-        if (1 == globals.use_opttran) {
+        if (1 == globals.automatic) {
             fprintf(globals.outputfile_FP, "%% recommendation for %s:%d\n",
                     item->filename, item->line_number);
             fprintf(globals.outputfile_FP, "code.filename=%s\n",
@@ -277,14 +277,14 @@ int recommender_main(int argc, char** argv) {
             exit(PERFEXPERT_ERROR);
         }
         
-        if (0 == globals.use_opttran) {
+        if (0 == globals.automatic) {
             fprintf(globals.outputfile_FP, "\n");
         }
         
         /* Step 4: extract fragments */
         OUTPUT_VERBOSE((7, "=== %s", _BLUE("STEP 4")));
 #if HAVE_ROSE == 1
-        if ((1 == globals.use_opttran) && (NULL != globals.source_file)) {
+        if ((1 == globals.automatic) && (NULL != globals.source_file)) {
             /* Hey ROSE, here we go... */
             if (PERFEXPERT_ERROR == extract_fragment(item)) {
                 OUTPUT(("%s (%s:%d)", _ERROR("Error: extracting fragments for"),
@@ -307,7 +307,7 @@ int recommender_main(int argc, char** argv) {
     }
     sqlite3_close(globals.db);
 #if HAVE_ROSE == 1
-    if ((1 == globals.use_opttran) && (NULL != globals.source_file)) {
+    if ((1 == globals.automatic) && (NULL != globals.source_file)) {
         /* Output source code */
         if (PERFEXPERT_SUCCESS != extract_source()) {
             OUTPUT(("%s", _ERROR("Error: extracting source code")));
@@ -342,7 +342,7 @@ int recommender_main(int argc, char** argv) {
     perfexpert_list_destruct(segments);
     free(segments);
     
-    if (1 == globals.use_opttran) {
+    if (1 == globals.automatic) {
         free(globals.outputfile);
         if (NULL != globals.source_file) {
             free(globals.fragments_dir);
@@ -379,15 +379,16 @@ static void show_help(void) {
     printf("                       %s/%s\n", PERFEXPERT_ETCDIR, METRICS_FILE);
     printf("  -r --recommendations Number of recommendation to show\n");
 #if HAVE_ROSE == 1
-    printf("  -a --opttran         Create OptTran (automatic performance optimization) files\n");
-    printf("                       into 'dir' directory (default: create no OptTran files).\n");
+    printf("  -a --automatic       Use automatic performance optimization and create files\n");
+    printf("                       into 'dir' directory (default: off).\n");
     printf("                       This argument overwrites -o (no output on STDOUT, except\n");
     printf("                       for verbose messages)\n");
     printf("  -s --sourcefile      Use 'file' to extract source code fragments identified as\n");
     printf("                       bootleneck by PerfExpert (this option sets -a argument)\n");
 #endif
     printf("  -p --perfexpert_pid  Use 'pid' to identify consecutive calls to Recommender.\n");
-    printf("                       This argument is set automatically when using OptTran\n");
+    printf("                       This argument is set automatically when using the\n");
+    printf("                       perfexpert.sh workflow script\n");
     printf("  -v --verbose         Enable verbose mode using default verbose level (5)\n");
     printf("  -l --verbose_level   Enable verbose mode using a specific verbose level (1-10)\n");
     printf("  -c --colorful        Enable colors on verbose mode, no weird characters will\n");
@@ -507,9 +508,9 @@ static int parse_cli_params(int argc, char *argv[]) {
                 OUTPUT_VERBOSE((10, "option 'o' set [%s]", globals.outputfile));
                 break;
 #if HAVE_ROSE == 1
-            /* Use opttran? */
+            /* Use automatic performance optimization? */
             case 'a':
-                globals.use_opttran = 1;
+                globals.automatic = 1;
                 globals.use_stdout = 0;
                 globals.workdir = optarg;
                 OUTPUT_VERBOSE((10, "option 'a' set [%s]", globals.workdir));
@@ -517,7 +518,7 @@ static int parse_cli_params(int argc, char *argv[]) {
 
             /* Specify the source */
             case 's':
-                globals.use_opttran = 1;
+                globals.automatic = 1;
                 globals.source_file = optarg;
                 OUTPUT_VERBOSE((10, "option 's' set [%s]", globals.source_file));
                 break;
@@ -565,22 +566,38 @@ static int parse_cli_params(int argc, char *argv[]) {
     }
     OUTPUT_VERBOSE((4, "=== %s", _BLUE("CLI params")));
     OUTPUT_VERBOSE((10, "Summary of selected options:"));
-    OUTPUT_VERBOSE((10, "   Verbose:               %s", globals.verbose ? "yes" : "no"));
-    OUTPUT_VERBOSE((10, "   Verbose level:         %d", globals.verbose_level));
-    OUTPUT_VERBOSE((10, "   Colorful verbose?      %s", globals.colorful ? "yes" : "no"));
-    OUTPUT_VERBOSE((10, "   Use STDOUT?            %s", globals.use_stdout ? "yes" : "no"));
-    OUTPUT_VERBOSE((10, "   Use STDIN?             %s", globals.use_stdin ? "yes" : "no"));
-    OUTPUT_VERBOSE((10, "   Use OPTTRAN?           %s", globals.use_opttran ? "yes" : "no"));
-    OUTPUT_VERBOSE((10, "   PerfExpert PID:        %llu", globals.perfexpert_pid));
-    OUTPUT_VERBOSE((10, "   Temporary directory:   %s", globals.workdir ? globals.workdir : "(null)"));
-    OUTPUT_VERBOSE((10, "   Input file:            %s", globals.inputfile ? globals.inputfile : "(null)"));
-    OUTPUT_VERBOSE((10, "   Output file:           %s", globals.outputfile ? globals.outputfile : "(null)"));
-    OUTPUT_VERBOSE((10, "   Database file:         %s", globals.dbfile ? globals.dbfile : "(null)"));
-    OUTPUT_VERBOSE((10, "   Metrics file:          %s", globals.metrics_file ? globals.metrics_file : "(null)"));
-    OUTPUT_VERBOSE((10, "   Use temporary metrics: %s", globals.use_temp_metrics ? "yes" : "no"));
-    OUTPUT_VERBOSE((10, "   Metrics table:         %s", globals.metrics_table ? globals.metrics_table : "(null)"));
-    OUTPUT_VERBOSE((10, "   Recommendation count:  %d", globals.rec_count));
-    OUTPUT_VERBOSE((10, "   Source file:           %s", globals.source_file ? globals.source_file : "(null)"));
+    OUTPUT_VERBOSE((10, "   Verbose:                    %s",
+                    globals.verbose ? "yes" : "no"));
+    OUTPUT_VERBOSE((10, "   Verbose level:              %d",
+                    globals.verbose_level));
+    OUTPUT_VERBOSE((10, "   Colorful verbose?           %s",
+                    globals.colorful ? "yes" : "no"));
+    OUTPUT_VERBOSE((10, "   Use STDOUT?                 %s",
+                    globals.use_stdout ? "yes" : "no"));
+    OUTPUT_VERBOSE((10, "   Use STDIN?                  %s",
+                    globals.use_stdin ? "yes" : "no"));
+    OUTPUT_VERBOSE((10, "   Use automatic optimization? %s",
+                    globals.automatic ? "yes" : "no"));
+    OUTPUT_VERBOSE((10, "   PerfExpert PID:             %llu",
+                    globals.perfexpert_pid));
+    OUTPUT_VERBOSE((10, "   Temporary directory:        %s",
+                    globals.workdir ? globals.workdir : "(null)"));
+    OUTPUT_VERBOSE((10, "   Input file:                 %s",
+                    globals.inputfile ? globals.inputfile : "(null)"));
+    OUTPUT_VERBOSE((10, "   Output file:                %s",
+                    globals.outputfile ? globals.outputfile : "(null)"));
+    OUTPUT_VERBOSE((10, "   Database file:              %s",
+                    globals.dbfile ? globals.dbfile : "(null)"));
+    OUTPUT_VERBOSE((10, "   Metrics file:               %s",
+                    globals.metrics_file ? globals.metrics_file : "(null)"));
+    OUTPUT_VERBOSE((10, "   Use temporary metrics:      %s",
+                    globals.use_temp_metrics ? "yes" : "no"));
+    OUTPUT_VERBOSE((10, "   Metrics table:              %s",
+                    globals.metrics_table ? globals.metrics_table : "(null)"));
+    OUTPUT_VERBOSE((10, "   Recommendation count:       %d",
+                    globals.rec_count));
+    OUTPUT_VERBOSE((10, "   Source file:                %s",
+                    globals.source_file ? globals.source_file : "(null)"));
 
     /* Not using OUTPUT_VERBOSE because I want only one line */
     if (8 <= globals.verbose_level) {
@@ -967,7 +984,7 @@ static int get_weight(void *weight, int col_count, char **col_values,
 /* output_patterns */
 static int output_patterns(void *weight, int col_count, char **col_values,
                            char **col_names) {
-    if (0 == globals.use_opttran) {
+    if (0 == globals.automatic) {
         /* Pretty print for the user */
         if (NULL != col_values[0]) {
             fprintf(globals.outputfile_FP, "%s ", col_values[0]);
@@ -998,7 +1015,7 @@ static int output_recommendations(void *not_used, int col_count,
      */
     OUTPUT_VERBOSE((7, "%s", _GREEN("new recommendation found")));
     
-    if (0 == globals.use_opttran) {
+    if (0 == globals.automatic) {
         /* Pretty print for the user */
         fprintf(globals.outputfile_FP, "#\n# This is a possible recommendation");
         fprintf(globals.outputfile_FP, " for this code segment\n#\n");

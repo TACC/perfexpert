@@ -66,7 +66,7 @@ typedef struct {
     int  verbose_level;
     int  use_stdin;
     int  use_stdout;
-    int  use_opttran;
+    int  automatic;
     char *inputfile;
     char *outputfile;
     FILE *outputfile_FP;
@@ -106,7 +106,7 @@ static struct option long_options[] = {
     {"help",            no_argument,       NULL, 'h'},
     {"database",        required_argument, NULL, 'd'},
     {"outputfile",      required_argument, NULL, 'o'},
-    {"opttran",         required_argument, NULL, 'a'},
+    {"automatic",       required_argument, NULL, 'a'},
     {"recommendations", required_argument, NULL, 'r'},
     {"metricfile",      required_argument, NULL, 'm'},
     {"newmetrics",      no_argument,       NULL, 'n'},
