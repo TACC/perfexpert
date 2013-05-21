@@ -391,13 +391,13 @@ AS_IF([test x"$ENABLE_ANALYZER" = x"yes"], [
         AS_IF([test x"$HPCPROF_PROGRAM" = x"no"],
             [AC_MSG_ERROR([hpcprof not found, try using '--with-hpctoolkit'])])
 
-        # Generate hound and sniffer Makefiles and also analyzer_run_exp.sh
+        # Generate hound and sniffer Makefiles and also perfexpert_run_exp.sh
         ENABLE_HOUND=hound
         ENABLE_SNIFFER=sniffer
         AC_CONFIG_FILES([tools/analyzer/hound/Makefile])
         AC_CONFIG_FILES([tools/analyzer/sniffer/Makefile])
-        AC_CONFIG_FILES([tools/analyzer/sniffer/analyzer_run_exp.sh_template],
-            [chmod +x tools/analyzer/sniffer/analyzer_run_exp.sh_template])
+        AC_CONFIG_FILES([tools/analyzer/sniffer/perfexpert_run_exp.sh_template],
+            [chmod +x tools/analyzer/sniffer/perfexpert_run_exp.sh_template])
     ], [
         # Disable hound and sniffer
         ENABLE_HOUND=
