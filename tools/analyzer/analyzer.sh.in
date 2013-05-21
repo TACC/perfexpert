@@ -26,10 +26,7 @@
 # $HEADER$
 #
 
-PREFIX=@prefix@
-exec_prefix=${PREFIX}
 LIBDIR=@libdir@
-BINDIR=@bindir@
 ABS_BUILDDIR=@abs_builddir@
 ABS_TOP_SRCDIR=@abs_top_srcdir@
 
