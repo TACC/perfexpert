@@ -566,7 +566,7 @@ AC_SUBST([ENABLE_CI])
 #        AS_IF([test x"$ENABLE_OPTTRAN_PR" = x"yes"], [
 #            AS_IF([test x"$ENABLE_OPTTRAN_CT" = x"yes"], [
 #                AS_IF([test x"$ENABLE_OPTTRAN_CR" = x"yes"], [
-AC_CONFIG_FILES([tools/opttran.sh], [chmod +x tools/opttran.sh])
+AC_CONFIG_FILES([tools/perfexpert.sh], [chmod +x tools/perfexpert.sh])
 #                    WITH_OPTTRAN_SUPPORT=yes
 #                ], [
 #                    WITH_OPTTRAN_SUPPORT=no
