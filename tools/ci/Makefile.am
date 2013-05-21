@@ -25,15 +25,15 @@
 # $HEADER$
 #
 
-bin_PROGRAMS = opttran_ci
+bin_PROGRAMS = perfexpert_ci
 
-opttran_ci_SOURCES = main.c rose_functions.cpp
-opttran_ci_CPPFLAGS = -I$(srcdir)/../common
-opttran_ci_CFLAGS = -O3
+perfexpert_ci_SOURCES = main.c rose_functions.cpp
+perfexpert_ci_CPPFLAGS = -I$(srcdir)/../common
+perfexpert_ci_CFLAGS = -O3
 
 install-data-local:
 	$(MKDIR_P) $(datadir)/$(PACKAGE_NAME)
-	$(INSTALL) -m 644 $(top_srcdir)/contrib/opttran_ci-input_example.txt \
+	$(INSTALL) -m 644 $(top_srcdir)/contrib/perfexpert_ci-input_example.txt \
 		$(datadir)/$(PACKAGE_NAME)/
 
 # EOF

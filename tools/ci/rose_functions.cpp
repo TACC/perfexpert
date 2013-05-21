@@ -41,8 +41,8 @@
 /* OptTran headers */
 #include "config.h"
 #include "ci.h"
-#include "opttran_output.h"
-#include "opttran_util.h"
+#include "perfexpert_output.h"
+#include "perfexpert_util.h"
 #include "rose_functions.h"
 
 using namespace std;
@@ -58,17 +58,17 @@ SgProject *userProject;
 int open_rose(char *source_file) {
     char **files = NULL;
 
-    OPTTRAN_OUTPUT_VERBOSE((7, "=== %s", _BLUE((char *)"Opening Rose")));
+    OUTPUT_VERBOSE((7, "=== %s", _BLUE((char *)"Opening Rose")));
 
     /* Fill 'files', aka **argv */
     files = (char **)malloc(sizeof(char *) * 3);
-    files[0] = (char *)malloc(sizeof("opttran_ci") + 1);
+    files[0] = (char *)malloc(sizeof("perfexpert_ci") + 1);
     if (NULL == files[0]) {
-        OPTTRAN_OUTPUT(("%s", _ERROR((char *)"Error: out of memory")));
-        return OPTTRAN_ERROR;
+        OUTPUT(("%s", _ERROR((char *)"Error: out of memory")));
+        return PERFEXPERT_ERROR;
     }
-    bzero(files[0], sizeof("opttran_ci") + 1);
-    snprintf(files[0], sizeof("opttran_ci"), "opttran_ci");
+    bzero(files[0], sizeof("perfexpert_ci") + 1);
+    snprintf(files[0], sizeof("perfexpert_ci"), "perfexpert_ci");
     files[1] = source_file;
     files[2] = NULL;
 
@@ -77,27 +77,27 @@ int open_rose(char *source_file) {
     ROSE_ASSERT(userProject != NULL);
 
     /* Create directory for files in this project */
-    if (OPTTRAN_ERROR == opttran_util_make_path(globals.outputdir, 0755)) {
-        OPTTRAN_OUTPUT(("%s", _ERROR((char *)"Error: cannot create source directory")));
-        return OPTTRAN_ERROR;
+    if (PERFEXPERT_ERROR == perfexpert_util_make_path(globals.outputdir, 0755)) {
+        OUTPUT(("%s", _ERROR((char *)"Error: cannot create source directory")));
+        return PERFEXPERT_ERROR;
     } else {
-        OPTTRAN_OUTPUT_VERBOSE((4, "source code will be put into (%s)",
-                                globals.outputdir));
+        OUTPUT_VERBOSE((4, "source code will be put into (%s)",
+                        globals.outputdir));
     }
 
     /* I believe now it is OK to free 'argv' */
     free(files[0]);
     free(files);
 
-    return OPTTRAN_SUCCESS;
+    return PERFEXPERT_SUCCESS;
 }
 
 int close_rose(void) {
     // TODO: should find a way to free 'userProject'
 
-    OPTTRAN_OUTPUT_VERBOSE((7, "=== %s", _BLUE((char *)"Closing Rose")));
+    OUTPUT_VERBOSE((7, "=== %s", _BLUE((char *)"Closing Rose")));
 
-    return OPTTRAN_SUCCESS;
+    return PERFEXPERT_SUCCESS;
 }
 
 int replace_function(function_t *function) {
@@ -125,23 +125,22 @@ int replace_function(function_t *function) {
         destination_file = (char *)malloc(strlen(globals.outputdir) + 3 +
                                           strlen(file->get_sourceFileNameWithoutPath().c_str()));
         if (NULL == destination_file) {
-            OPTTRAN_OUTPUT(("%s", _ERROR((char *)"Error: out of memory")));
-            return OPTTRAN_ERROR;
+            OUTPUT(("%s", _ERROR((char *)"Error: out of memory")));
+            return PERFEXPERT_ERROR;
         }
         bzero(destination_file, (strlen(globals.outputdir) + 3 +
                                  strlen(file->get_sourceFileNameWithoutPath().c_str())));
         sprintf(destination_file, "%s/%s", globals.outputdir,
                 file->get_sourceFileNameWithoutPath().c_str());
 
-        OPTTRAN_OUTPUT_VERBOSE((10, "   extracting (%s)",
-                                (char *)destination_file));
+        OUTPUT_VERBOSE((10, "   extracting (%s)", (char *)destination_file));
 
         destination_file_FP = fopen(destination_file, "w+");
         if (NULL == destination_file_FP) {
-            OPTTRAN_OUTPUT(("%s (%s)", _ERROR((char *)"error opening file"),
-                            _ERROR(destination_file)));
+            OUTPUT(("%s (%s)", _ERROR((char *)"error opening file"),
+                    _ERROR(destination_file)));
             free(destination_file);
-            return OPTTRAN_ERROR;
+            return PERFEXPERT_ERROR;
         }
 
         /* Output source code */
@@ -156,31 +155,29 @@ int replace_function(function_t *function) {
     function->source_file = (char *)malloc(strlen(destination_file) + 1);
     bzero(function->source_file, strlen(destination_file) + 1);
     if (NULL == function->source_file) {
-        OPTTRAN_OUTPUT(("%s", _ERROR((char *)"Error: out of memory")));
-        return OPTTRAN_ERROR;
+        OUTPUT(("%s", _ERROR((char *)"Error: out of memory")));
+        return PERFEXPERT_ERROR;
     }
     strncpy(function->source_file, destination_file, strlen(destination_file));
 
     /* Append replacement function to source files */
-    if (OPTTRAN_ERROR == insert_function(function)) {
-        OPTTRAN_OUTPUT_VERBOSE((8, "   %s [%s] %s at line %d",
-                                _BOLDRED((char *)"FAIL"),
-                                (char *)function->source_file,
-                                (char *)function->function_name,
-                                function->line_number));
+    if (PERFEXPERT_ERROR == insert_function(function)) {
+        OUTPUT_VERBOSE((8, "   %s [%s] %s at line %d", _BOLDRED((char *)"FAIL"),
+                        (char *)function->source_file,
+                        (char *)function->function_name,
+                        function->line_number));
     } else {
-        OPTTRAN_OUTPUT_VERBOSE((8, "   %s   [%s] %s at line %d",
-                                _BOLDGREEN((char *)"OK"),
-                                (char *)function->source_file,
-                                (char *)function->function_name,
-                                function->line_number));
+        OUTPUT_VERBOSE((8, "   %s   [%s] %s at line %d",
+                        _BOLDGREEN((char *)"OK"), (char *)function->source_file,
+                        (char *)function->function_name,
+                        function->line_number));
     }
 
     /* Clean up */
     free(destination_file);
     // TODO: should find a way to free 'file'
 
-    return OPTTRAN_SUCCESS;
+    return PERFEXPERT_SUCCESS;
 }
 
 static int insert_function(function_t *function) {
@@ -194,34 +191,34 @@ static int insert_function(function_t *function) {
 
     /* Open replacement file */
     if (NULL == (replacement_file_FP = fopen(function->replacement_file, "r"))) {
-        OPTTRAN_OUTPUT(("%s (%s)",
-                        _ERROR((char *)"Error: unable to open function replacement file"),
-                        function->replacement_file));
-        return OPTTRAN_ERROR;
+        OUTPUT(("%s (%s)",
+                _ERROR((char *)"Error: unable to open function replacement file"),
+                function->replacement_file));
+        return PERFEXPERT_ERROR;
     }
 
     /* Open source code file */
     if (NULL == (source_file_FP = fopen(function->source_file, "r"))) {
-        OPTTRAN_OUTPUT(("%s (%s)",
-                        _ERROR((char *)"Error: unable to open source code file"),
-                        function->source_file));
-        return OPTTRAN_ERROR;
+        OUTPUT(("%s (%s)",
+                _ERROR((char *)"Error: unable to open source code file"),
+                function->source_file));
+        return PERFEXPERT_ERROR;
     }
 
     /* Open new source code file */
     new_source_file = (char *)malloc(strlen(function->source_file) + 5);
     if (NULL == new_source_file) {
-        OPTTRAN_OUTPUT(("%s", _ERROR((char *)"Error: out of memory")));
-        return OPTTRAN_ERROR;
+        OUTPUT(("%s", _ERROR((char *)"Error: out of memory")));
+        return PERFEXPERT_ERROR;
     }
     bzero(new_source_file, strlen(function->source_file) + 5);
     sprintf(new_source_file, "%s.new", function->source_file);
 
     if (NULL == (new_source_file_FP = fopen(new_source_file, "w"))) {
-        OPTTRAN_OUTPUT(("%s (%s)",
-                        _ERROR((char *)"Error: unable to open temporary file"),
-                        new_source_file));
-        return OPTTRAN_ERROR;
+        OUTPUT(("%s (%s)",
+                _ERROR((char *)"Error: unable to open temporary file"),
+                new_source_file));
+        return PERFEXPERT_ERROR;
     }
 
     /* Read replacement file and append it to source file */
@@ -263,7 +260,7 @@ static int insert_function(function_t *function) {
     fclose(new_source_file_FP);
     fclose(replacement_file_FP);
 
-    return OPTTRAN_SUCCESS;
+    return PERFEXPERT_SUCCESS;
 }
 
 static SgFunctionSymbol* build_new_function_declaration(SgStatement* statementLocation,
@@ -333,17 +330,17 @@ void ciTraversal::visit(SgNode *node) {
 
     /* Find the function declaration */
     if ((NULL != (function_declaration = isSgFunctionDeclaration(node))) &&
-        (0 == strcmp(function_declaration->get_name().str(), item->function_name))) {
+        (0 == strcmp(function_declaration->get_name().str(),
+                     item->function_name))) {
         ROSE_ASSERT(NULL != function_declaration);
 
-        OPTTRAN_OUTPUT_VERBOSE((10, "   [%s] declaration at line %d",
-                                item->function_name, fileInfo->get_line()));
+        OUTPUT_VERBOSE((10, "   [%s] declaration at line %d",
+                        item->function_name, fileInfo->get_line()));
 
         /* Rename the old function */
         function_name_new = (char *)malloc(strlen(item->function_name) + 10);
         bzero(function_name_new, strlen(item->function_name) + 10);
-        sprintf(function_name_new, "OPTTRAN_%s",
-                item->function_name);
+        sprintf(function_name_new, "PERFEXPERT_%s", item->function_name);
         SgName name = function_name_new;
         function_declaration->set_name(name);
 
@@ -372,9 +369,8 @@ void ciTraversal::visit(SgNode *node) {
                 (0 == strcmp(function_declaration->get_name().str(),
                              function_name_new))) {
 
-                OPTTRAN_OUTPUT_VERBOSE((10, "   [%s] call at line %d",
-                                        item->function_name,
-                                        fileInfo->get_line()));
+                OUTPUT_VERBOSE((10, "   [%s] call at line %d",
+                                item->function_name, fileInfo->get_line()));
 
                 /* This function call should points to a new symbol */
 

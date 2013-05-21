@@ -36,12 +36,12 @@ extern "C" {
 #include "install_dirs.h"
 #endif
 
-#ifndef OPTTRAN_CONSTANTS_H_
-#include "opttran_constants.h"
+#ifndef PERFEXPERT_CONSTANTS_H_
+#include "perfexpert_constants.h"
 #endif
 
-#ifndef OPTTRAN_LIST_H_
-#include "opttran_list.h"
+#ifndef PERFEXPERT_LIST_H_
+#include "perfexpert_list.h"
 #endif
 
 #ifndef _GETOPT_H_
@@ -67,14 +67,14 @@ typedef struct {
 
 extern globals_t globals; /**< Variable to hold global options */
 
-/* WARNING: to include opttran_output.h globals have to be defined first */
+/* WARNING: to include perfexpert_output.h globals have to be defined first */
 #ifdef PROGRAM_PREFIX
 #undef PROGRAM_PREFIX
 #endif
 #define PROGRAM_PREFIX "[opttran:ci]"
 
-#ifndef OPTTRAN_OUTPUT_H
-#include "opttran_output.h"
+#ifndef PERFEXPERT_OUTPUT_H
+#include "perfexpert_output.h"
 #endif
 
 /** Structure to handle command line arguments. Try to keep the content of
@@ -100,8 +100,8 @@ typedef struct node {
 
 /** Structure to hold function/code replacements */
 typedef struct function {
-    volatile opttran_list_item_t *next;
-    volatile opttran_list_item_t *prev;
+    volatile perfexpert_list_item_t *next;
+    volatile perfexpert_list_item_t *prev;
     char *source_file;
     char *function_name;
     char *replacement_file;
@@ -113,7 +113,7 @@ typedef struct function {
 static void show_help(void);
 static int  parse_env_vars(void);
 static int  parse_cli_params(int argc, char *argv[]);
-static int  parse_transformation_params(opttran_list_t *segments_p,
+static int  parse_transformation_params(perfexpert_list_t *segments_p,
                                         FILE *inputfile_p);
 int open_rose(char *source_file);
 int close_rose(void);
