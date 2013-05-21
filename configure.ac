@@ -559,23 +559,9 @@ AS_IF([test x"$ENABLE_CI" = x"yes"], [
 AC_SUBST([ENABLE_CI])
 
 #------------------------------------------------------------------------------
-# Do we have all the tools? So generate the ninja-super-power-script perfexpert.sh
+# Generate the ninja-super-power-script perfexpert.sh
 #
-#AS_IF([test x"$ENABLE_OPTTRAN_ANALYZER" = x"yes"], [
-#    AS_IF([test x"$ENABLE_OPTTRAN_RECOMMENDER" = x"yes"], [
-#        AS_IF([test x"$ENABLE_OPTTRAN_PR" = x"yes"], [
-#            AS_IF([test x"$ENABLE_OPTTRAN_CT" = x"yes"], [
-#                AS_IF([test x"$ENABLE_OPTTRAN_CR" = x"yes"], [
 AC_CONFIG_FILES([tools/perfexpert.sh], [chmod +x tools/perfexpert.sh])
-#                    WITH_OPTTRAN_SUPPORT=yes
-#                ], [
-#                    WITH_OPTTRAN_SUPPORT=no
-#                ])
-#            ])
-#        ])
-#    ])
-#])
-#AC_SUBST([WITH_OPTTRAN_SUPPORT])
 
 #------------------------------------------------------------------------------
 # Generate output files
@@ -591,7 +577,9 @@ AC_MSG_NOTICE([ Code Integrator:           $ENABLE_CI                  ])
 AC_MSG_NOTICE([                                                        ])
 AC_MSG_NOTICE([ Debug mode: $ENABLE_DEBUG                              ])
 AC_MSG_NOTICE([ PAPI:       $HAVE_PAPI_HEADER                          ])
-AC_MSG_NOTICE([ HPCToolkit: $HPCRUN_PROGRAM, $HPCSTRUCT_PROGRAM, $HPCPROF_PROGRAM])
+AC_MSG_NOTICE([ HPCToolkit: $HPCRUN_PROGRAM                            ])
+AC_MSG_NOTICE([             $HPCSTRUCT_PROGRAM                         ])
+AC_MSG_NOTICE([             $HPCPROF_PROGRAM                           ])
 AC_MSG_NOTICE([ SQLite3:    $WITH_SQLITE3_SUPPORT                      ])
 AC_MSG_NOTICE([ Rose:       $WITH_ROSE                                 ])
 AC_MSG_NOTICE([ Java VM:    $WITH_JVM                                  ])
