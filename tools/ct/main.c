@@ -134,7 +134,7 @@ int main(int argc, char** argv) {
     }
 
     /* Output results */
-    if (1 == globals.use_opttran) {
+    if (1 == globals.automatic) {
         globals.use_stdout = 0;
 
         if (NULL == globals.workdir) {
@@ -206,7 +206,7 @@ int main(int argc, char** argv) {
     perfexpert_list_destruct(fragments);
     free(fragments);
     free(globals.dbfile);
-    if (1 == globals.use_opttran) {
+    if (1 == globals.automatic) {
         free(globals.outputfile);
     }
 
@@ -226,8 +226,8 @@ static void show_help(void) {
     printf("  -i --stdin           Use STDIN as input for patterns\n");
     printf("  -f --inputfile       Use 'file' as input for patterns\n");
     printf("  -o --outputfile      Use 'file' as output (default stdout)\n");
-    printf("  -a --opttran         Create OptTran (automatic performance optimization) files\n");
-    printf("                       into 'dir' directory (default: create no OptTran files).\n");
+    printf("  -a --automatic       Use automatic performance optimization and create files\n");
+    printf("                       into 'dir' directory (default: off).\n");
     printf("                       This argument overwrites -o (no output on STDOUT, except\n");
     printf("                       for verbose messages)\n");
     printf("  -t --transfall       Apply all possible transformation to each fragments (not\n");
@@ -373,7 +373,7 @@ static int parse_cli_params(int argc, char *argv[]) {
 
             /* Use automatic optimization? */
             case 'a':
-                globals.use_opttran = 1;
+                globals.automatic = 1;
                 globals.use_stdout = 0;
                 globals.workdir = optarg;
                 OUTPUT_VERBOSE((10, "option 'a' set [%s]", globals.workdir));
@@ -396,29 +396,29 @@ static int parse_cli_params(int argc, char *argv[]) {
     }
     OUTPUT_VERBOSE((4, "=== %s", _BLUE("CLI params")));
     OUTPUT_VERBOSE((10, "Summary of selected options:"));
-    OUTPUT_VERBOSE((10, "   Verbose:           %s",
+    OUTPUT_VERBOSE((10, "   Verbose:                    %s",
                     globals.verbose ? "yes" : "no"));
-    OUTPUT_VERBOSE((10, "   Verbose level:     %d",
+    OUTPUT_VERBOSE((10, "   Verbose level:              %d",
                     globals.verbose_level));
-    OUTPUT_VERBOSE((10, "   Colorful verbose?  %s",
+    OUTPUT_VERBOSE((10, "   Colorful verbose?           %s",
                     globals.colorful ? "yes" : "no"));
-    OUTPUT_VERBOSE((10, "   Use STDOUT?        %s",
+    OUTPUT_VERBOSE((10, "   Use STDOUT?                 %s",
                     globals.use_stdout ? "yes" : "no"));
-    OUTPUT_VERBOSE((10, "   Use STDIN?         %s",
+    OUTPUT_VERBOSE((10, "   Use STDIN?                  %s",
                     globals.use_stdin ? "yes" : "no"));
-    OUTPUT_VERBOSE((10, "   Input file:        %s",
+    OUTPUT_VERBOSE((10, "   Input file:                 %s",
                     globals.inputfile ? globals.inputfile : "(null)"));
-    OUTPUT_VERBOSE((10, "   Output file:       %s",
+    OUTPUT_VERBOSE((10, "   Output file:                %s",
                     globals.outputfile ? globals.outputfile : "(null)"));
-    OUTPUT_VERBOSE((10, "   Use automatic optimization?       %s",
-                    globals.use_opttran ? "yes" : "no"));
-    OUTPUT_VERBOSE((10, "   PerfExpert PID:       %llu",
+    OUTPUT_VERBOSE((10, "   Use automatic optimization? %s",
+                    globals.automatic ? "yes" : "no"));
+    OUTPUT_VERBOSE((10, "   PerfExpert PID:             %llu",
                     globals.perfexpert_pid));
-    OUTPUT_VERBOSE((10, "   Temporary directory: %s",
+    OUTPUT_VERBOSE((10, "   Temporary directory:        %s",
                     globals.workdir ? globals.workdir : "(null)"));
-    OUTPUT_VERBOSE((10, "   Apply all transf.? %s",
+    OUTPUT_VERBOSE((10, "   Apply all transf.?          %s",
                     globals.transfall ? "yes" : "no"));
-    OUTPUT_VERBOSE((10, "   Database file:     %s",
+    OUTPUT_VERBOSE((10, "   Database file:              %s",
                     globals.dbfile ? globals.dbfile : "(null)"));
 
     /* Not using OUTPUT_VERBOSE because I want only one line */

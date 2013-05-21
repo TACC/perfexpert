@@ -68,7 +68,7 @@ typedef struct {
     char *outputfile;
     FILE *outputfile_FP;
     int  colorful;
-    int  use_opttran;
+    int  automatic;
     char *workdir;
     int  transfall;
 #if HAVE_SQLITE3 == 1
@@ -101,7 +101,7 @@ static struct option long_options[] = {
     {"help",            no_argument,       NULL, 'h'},
     {"outputfile",      required_argument, NULL, 'o'},
     {"colorful",        no_argument,       NULL, 'c'},
-    {"opttran",         required_argument, NULL, 'a'},
+    {"automatic",       required_argument, NULL, 'a'},
     {"transfall",       no_argument,       NULL, 't'},
 #if HAVE_SQLITE3 == 1
     {"perfexpert_pid",  required_argument, NULL, 'p'},
