@@ -324,18 +324,6 @@ if [ ${#} -lt 1 ]; then
     exit 1
 fi
 
-# Parsing options
-#
-# -q quiet
-# -s source file
-# -v enable verbose debug
-# -b binary program file (not sure if it is necessary)
-
-WORKDIR="teste"
-USER_BINARY="mm_naive"
-USER_SOURCE="mm_naive.c"
-CI_OUTPUT_DIR="${WORKDIR}/fragments/1"
-
 ###############################################################################
 # Script variables
 #
@@ -363,7 +351,7 @@ while [ 1 ]; do
     # Which round is this? Update variables!
     ROUND=$(($ROUND + 1))
     WORKDIR="${ORIGINAL_WORKDIR}/${ROUND}"
-    PERFEXPERT_CI_OUTPUT_DIR="${WORKDIR}/fragments/new"
+    CI_OUTPUT_DIR="${WORKDIR}/fragments/new"
 
     # Create temporary dir
     eval @MKDIR_P@ ${WORKDIR}
@@ -382,7 +370,7 @@ while [ 1 ]; do
         echo "[perfexpert.sh] USER_BINARY=${USER_BINARY}" >> ${LOGFILE}
         echo "[perfexpert.sh] WORKDIR=${WORKDIR}" >> ${LOGFILE}
         echo "[perfexpert.sh] LOGFILE=${WORKDIR}/perfexpert.log" >> ${LOGFILE}
-        echo "[perfexpert.sh] PERFEXPERT_CI_OUTPUT_DIR=${PERFEXPERT_CI_OUTPUT_DIR}" >> ${LOGFILE}
+        echo "[perfexpert.sh] CI_OUTPUT_DIR=${CI_OUTPUT_DIR}" >> ${LOGFILE}
         echo "[perfexpert.sh]" >> ${LOGFILE}
     fi
 
@@ -395,8 +383,8 @@ while [ 1 ]; do
     perfexpert_ct
     perfexpert_ci
 
-    echo "[perfexpert.sh] The new source code is in: ${PERFEXPERT_CI_OUTPUT_DIR}"
+    echo "[perfexpert.sh] The new source code is in: ${CI_OUTPUT_DIR}"
 
-    mv ${PERFEXPERT_CI_OUTPUT_DIR}/${USER_SOURCE}.new ${PERFEXPERT_CI_OUTPUT_DIR}/${USER_SOURCE}
-    USER_SOURCE="${PERFEXPERT_CI_OUTPUT_DIR}/${USER_SOURCE}"
+    mv ${CI_OUTPUT_DIR}/${USER_SOURCE}.new ${CI_OUTPUT_DIR}/${USER_SOURCE}
+    USER_SOURCE="${CI_OUTPUT_DIR}/${USER_SOURCE}"
 done
