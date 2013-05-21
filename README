@@ -5,20 +5,20 @@
 #
 # Additional copyrights may follow
 #
-# This file is part of OptTran and PerfExpert.
+# This file is part of PerfExpert.
 #
-# OptTran as well PerfExpert are free software: you can redistribute it and/or
-# modify it under the terms of the GNU Lesser General Public License as
-# published by the Free Software Foundation, either version 3 of the License,
-# or (at your option) any later version.
+# PerfExpert is free software: you can redistribute it and/or modify it under
+# the terms of the GNU Lesser General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option) any
+# later version.
 #
-# OptTran and PerfExpert are distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
-# General Public License for more details.
+# PerfExpert is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+# A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+# details.
 #
 # You should have received a copy of the GNU Lesser General Public License
-# along with OptTran or PerfExpert. If not, see <http://www.gnu.org/licenses/>.
+# along with PerfExpert. If not, see <http://www.gnu.org/licenses/>.
 #
 # Author: Leonardo Fialho
 #
@@ -43,6 +43,7 @@ tools you will need:
     - M4,       1.4.13 or newer (ftp://ftp.gnu.org/gnu/m4/)
     - Autoconf  2.63 or newer   (ftp://ftp.gnu.org/gnu/autoconf/)
     - Automake  1.11.1 or newer (ftp://ftp.gnu.org/gnu/automake/)
+    - Libtool   2.2.6b or newer (ftp://ftp.gnu.org/gnu/libtool/)
 
 If you have all these GNU tools, to generate the 'configure' script just run:
 

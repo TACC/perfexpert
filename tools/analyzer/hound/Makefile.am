@@ -25,26 +25,19 @@
 # $HEADER$
 #
 
-This static checker identifies is the given C source code is a valid perfect
-nested iteration statement (FOR, DO and WHILE).
+bin_PROGRAMS = hound
+hound_SOURCES = hound.c
 
-Software requirements:
+# Overwrite CFLAGS from 'configure'
+if ENABLE_DEBUG
+    AM_CFLAGS = -fPIC -DDEBUG_PRINT -g
+else
+    AM_CFLAGS = -fPIC
+endif
 
-	GNU Bison  (http://ftp.gnu.org/gnu/bison/)
-	GNU Flex   (http://flex.sourceforge.net/)
+install-exec-local:
+	./hound > machine.properties
+	$(MKDIR_P) $(sysconfdir)
+	$(INSTALL) -m 644 machine.properties $(sysconfdir)/
 
-Compiling instructions:
-
-	$ make
-
-Compiling instructions without Makefile:
-
-	$ yacc -d c_loop2.y
-	$ lex c_loop2.l
-	$ gcc -o c_loop2 lex.yy.c y.tab.c
-
-Using instruction:
-
-	$ ./c_loop2 < c_loop2_example.c
-
-EOF.
+# EOF

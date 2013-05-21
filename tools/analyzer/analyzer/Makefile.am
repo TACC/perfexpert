@@ -25,26 +25,16 @@
 # $HEADER$
 #
 
-This static checker identifies is the given C source code is a valid perfect
-nested iteration statement (FOR, DO and WHILE).
+# The following commands should use TAB, not SPACES
+all:
+	$(ANT_PROGRAM) -f build.xml
 
-Software requirements:
+clean-local:
+	rm perfexpert.jar
+	rm -rf edu
 
-	GNU Bison  (http://ftp.gnu.org/gnu/bison/)
-	GNU Flex   (http://flex.sourceforge.net/)
+install-exec-local: all
+	$(MKDIR_P) $(libdir)/
+	$(INSTALL) -m 644 perfexpert.jar $(libdir)/
 
-Compiling instructions:
-
-	$ make
-
-Compiling instructions without Makefile:
-
-	$ yacc -d c_loop2.y
-	$ lex c_loop2.l
-	$ gcc -o c_loop2 lex.yy.c y.tab.c
-
-Using instruction:
-
-	$ ./c_loop2 < c_loop2_example.c
-
-EOF.
+# EOF

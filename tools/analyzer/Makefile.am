@@ -5,20 +5,20 @@
 #
 # Additional copyrights may follow
 #
-# This file is part of OptTran and PerfExpert.
+# This file is part of PerfExpert.
 #
-# OptTran as well PerfExpert are free software: you can redistribute it and/or
-# modify it under the terms of the GNU Lesser General Public License as
-# published by the Free Software Foundation, either version 3 of the License,
-# or (at your option) any later version.
+# PerfExpert is free software: you can redistribute it and/or modify it under
+# the terms of the GNU Lesser General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option) any
+# later version.
 #
-# OptTran and PerfExpert are distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
-# General Public License for more details.
+# PerfExpert is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+# A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+# details.
 #
 # You should have received a copy of the GNU Lesser General Public License
-# along with OptTran or PerfExpert. If not, see <http://www.gnu.org/licenses/>.
+# along with PerfExpert. If not, see <http://www.gnu.org/licenses/>.
 #
 # Author: Leonardo Fialho
 #
@@ -27,9 +27,9 @@
 
 # perfexpert_run_exp will be installed by sniffer
 
-SUBDIRS = argp hpcdata perfexpert $(ENABLE_HOUND) $(ENABLE_SNIFFER)
+SUBDIRS = argp hpcdata analyzer $(ENABLE_HOUND) $(ENABLE_SNIFFER)
 
-dist_bin_SCRIPTS = hpcdata.sh perfexpert.sh
+dist_bin_SCRIPTS = hpcdata.sh analyzer.sh
 
 install-exec-local: install-dist_binSCRIPTS
 
@@ -45,6 +45,6 @@ install-data-local:
 
 install-exec-hook:
 	cd $(bindir); rm hpcdata; $(LN_S) hpcdata.sh hpcdata
-	cd $(bindir); rm perfexpert; $(LN_S) perfexpert.sh perfexpert
+	cd $(bindir); rm analyzer; $(LN_S) analyzer.sh analyzer
 
 # EOF

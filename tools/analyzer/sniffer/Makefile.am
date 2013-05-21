@@ -25,26 +25,21 @@
 # $HEADER$
 #
 
-This static checker identifies is the given C source code is a valid perfect
-nested iteration statement (FOR, DO and WHILE).
+bin_PROGRAMS = sniffer
+sniffer_SOURCES = sniffer.c
+sniffer_CFLAGS = -O3
 
-Software requirements:
+install-exec-local:
+	./sniffer
+	$(MKDIR_P) $(sysconfdir)
+	$(INSTALL) -m 644 lcpi.properties $(sysconfdir)/
+	echo "#!$(BASH_PROGRAM)" > analyzer_run_exp.sh
+	cat $(srcdir)/analyzer_run_exp.sh_license >> analyzer_run_exp.sh
+	cat analyzer_run_exp.sh_header >> analyzer_run_exp.sh
+	cat analyzer_run_exp.sh_template >> analyzer_run_exp.sh
+	$(INSTALL) -m 755 analyzer_run_exp.sh $(bindir)/
 
-	GNU Bison  (http://ftp.gnu.org/gnu/bison/)
-	GNU Flex   (http://flex.sourceforge.net/)
+install-exec-hook:
+	cd $(bindir); rm analyzer_run_exp; $(LN_S) analyzer_run_exp.sh analyzer_run_exp
 
-Compiling instructions:
-
-	$ make
-
-Compiling instructions without Makefile:
-
-	$ yacc -d c_loop2.y
-	$ lex c_loop2.l
-	$ gcc -o c_loop2 lex.yy.c y.tab.c
-
-Using instruction:
-
-	$ ./c_loop2 < c_loop2_example.c
-
-EOF.
+# EOF

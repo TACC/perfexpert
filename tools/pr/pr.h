@@ -5,20 +5,20 @@
  *
  * Additional copyrights may follow
  *
- * This file is part of OptTran and PerfExpert.
+ * This file is part of PerfExpert.
  *
- * OptTran as well PerfExpert are free software: you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * PerfExpert is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation, either version 3 of the License, or (at your option) any
+ * later version.
  *
- * OptTran and PerfExpert are distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
- * General Public License for more details.
+ * PerfExpert is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+ * A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+ * details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with OptTran or PerfExpert. If not, see <http://www.gnu.org/licenses/>.
+ * along with PerfExpert. If not, see <http://www.gnu.org/licenses/>.
  *
  * Author: Leonardo Fialho
  *
@@ -36,12 +36,12 @@ extern "C" {
 #include "install_dirs.h"
 #endif
 
-#ifndef OPTTRAN_CONSTANTS_H_
-#include "opttran_constants.h"
+#ifndef PERFEXPERT_CONSTANTS_H_
+#include "perfexpert_constants.h"
 #endif
 
-#ifndef OPTTRAN_LIST_H_
-#include "opttran_list.h"
+#ifndef PERFEXPERT_LIST_H_
+#include "perfexpert_list.h"
 #endif
 
 #if HAVE_SQLITE3 == 1
@@ -80,14 +80,14 @@ typedef struct {
 
 extern globals_t globals; /**< Variable to hold global options */
 
-/* WARNING: to include opttran_output.h globals have to be defined first */
+/* WARNING: to include perfepxert_output.h globals have to be defined first */
 #ifdef PROGRAM_PREFIX
 #undef PROGRAM_PREFIX
 #endif
-#define PROGRAM_PREFIX "[opttran:pr]"
+#define PROGRAM_PREFIX "[pr]"
 
-#ifndef OPTTRAN_OUTPUT_H
-#include "opttran_output.h"
+#ifndef PERFEXPERT_OUTPUT_H
+#include "perfexpert_output.h"
 #endif
 
 /** Structure to handle command line arguments. Try to keep the content of
@@ -117,8 +117,8 @@ typedef struct node {
 
 /** Ninja structure to hold a list of tests to perform */
 typedef struct test {
-    volatile opttran_list_item_t *next;
-    volatile opttran_list_item_t *prev;
+    volatile perfexpert_list_item_t *next;
+    volatile perfexpert_list_item_t *prev;
     char *program;
     char *fragment_file;
     int  *test_result;
@@ -127,8 +127,8 @@ typedef struct test {
 
 /** Structure to hold recognizers */
 typedef struct recognizer {
-    volatile opttran_list_item_t *next;
-    volatile opttran_list_item_t *prev;
+    volatile perfexpert_list_item_t *next;
+    volatile perfexpert_list_item_t *prev;
     int  id;
     char *program;
     int  test_result;
@@ -138,16 +138,16 @@ typedef struct recognizer {
 
 /** Structure to hold recommendations */
 typedef struct recommendation {
-    volatile opttran_list_item_t *next;
-    volatile opttran_list_item_t *prev;
+    volatile perfexpert_list_item_t *next;
+    volatile perfexpert_list_item_t *prev;
     int id;
-    opttran_list_t recognizers;
+    perfexpert_list_t recognizers;
 } recommendation_t;
 
 /** Structure to hold code transformation patterns */
 typedef struct fragment {
-    volatile opttran_list_item_t *next; /** Pointer to next list item */
-    volatile opttran_list_item_t *prev; /** Pointer to previous list item */
+    volatile perfexpert_list_item_t *next; /** Pointer to next list item */
+    volatile perfexpert_list_item_t *prev; /** Pointer to previous list item */
     char   *filename;
     int    line_number;
     char   *code_type;
@@ -158,17 +158,18 @@ typedef struct fragment {
     int    outer_outer_loop;
     char   *outer_outer_loop_fragment_file;
     char   *function_name;
-    opttran_list_t recommendations;
+    perfexpert_list_t recommendations;
 } fragment_t;
 
 /* Function declarations */
 static void show_help(void);
 static int  parse_env_vars(void);
 static int  parse_cli_params(int argc, char *argv[]);
-static int  parse_fragment_params(opttran_list_t *segments_p, FILE *inputfile_p);
-static int  test_recognizers(opttran_list_t *fragments_p);
+static int  parse_fragment_params(perfexpert_list_t *segments_p,
+                                  FILE *inputfile_p);
+static int  test_recognizers(perfexpert_list_t *fragments_p);
 static int  test_one(test_t *test);
-static int  output_results(opttran_list_t *fragments_p);
+static int  output_results(perfexpert_list_t *fragments_p);
 #if HAVE_SQLITE3 == 1
 static int  database_connect(void);
 #endif

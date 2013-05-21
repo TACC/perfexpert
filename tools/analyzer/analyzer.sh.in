@@ -6,20 +6,20 @@
 #
 # Additional copyrights may follow
 #
-# This file is part of OptTran and PerfExpert.
+# This file is part of PerfExpert.
 #
-# OptTran as well PerfExpert are free software: you can redistribute it and/or
-# modify it under the terms of the GNU Lesser General Public License as
-# published by the Free Software Foundation, either version 3 of the License,
-# or (at your option) any later version.
+# PerfExpert is free software: you can redistribute it and/or modify it under
+# the terms of the GNU Lesser General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option) any
+# later version.
 #
-# OptTran and PerfExpert are distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
-# General Public License for more details.
+# PerfExpert is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+# A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+# details.
 #
 # You should have received a copy of the GNU Lesser General Public License
-# along with OptTran or PerfExpert. If not, see <http://www.gnu.org/licenses/>.
+# along with PerfExpert. If not, see <http://www.gnu.org/licenses/>.
 #
 # Author: Ashay Rane and Leonardo Fialho
 #
@@ -29,18 +29,19 @@
 PREFIX=@prefix@
 exec_prefix=${PREFIX}
 LIBDIR=@libdir@
+BINDIR=@bindir@
 ABS_BUILDDIR=@abs_builddir@
 ABS_TOP_SRCDIR=@abs_top_srcdir@
 
-# Try to find hpcdata.jar
-if [ -f ${LIBDIR}/hpcdata.jar ]; then
+# Try to find perfexpert.jar
+if [ -f ${LIBDIR}/perfexpert.jar ]; then
     # Probable location after install
-    CLASSPATH="${LIBDIR}/hpcdata.jar"
-elif [ -f ${ABS_BUILDDIR}/hpcdata.jar ]; then
+    CLASSPATH="${LIBDIR}/perfexpert.jar"
+elif [ -f ${ABS_BUILDDIR}/perfexpert.jar ]; then
     # Probable location before install
-    CLASSPATH="${ABS_BUILDDIR}/hpcdata.jar"
+    CLASSPATH="${ABS_BUILDDIR}/perfexpert.jar"
 else
-    echo "Unable to find HPCdata JAR file"
+    echo "Unable to find PerfExpert JAR file"
     exit 1
 fi
 
@@ -80,4 +81,5 @@ else
     exit 1
 fi
 
-JAVA_TOOL_OPTIONS="-Xms256M -Xmx1G" java ${LOG4J} -cp ${CLASSPATH} edu.utexas.tacc.hpcdata.HPCData ${*};
+export PERFEXPERT_HPCDATA_HOME="${LIBDIR}"
+JAVA_TOOL_OPTIONS="-Xms256M -Xmx1G" java ${LOG4J} -cp ${CLASSPATH} edu.utexas.tacc.perfexpert.PerfExpert ${*}

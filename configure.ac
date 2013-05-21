@@ -5,22 +5,23 @@
 #
 # Additional copyrights may follow
 #
-# This file is part of OptTran and PerfExpert.
+# This file is part of PerfExpert.
 #
-# OptTran as well PerfExpert are free software: you can redistribute it and/or
-# modify it under the terms of the GNU Lesser General Public License as
-# published by the Free Software Foundation, either version 3 of the License,
-# or (at your option) any later version.
+# PerfExpert is free software: you can redistribute it and/or modify it under
+# the terms of the GNU Lesser General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option) any
+# later version.
 #
-# OptTran and PerfExpert are distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
-# General Public License for more details.
+# PerfExpert is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+# A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+# details.
 #
 # You should have received a copy of the GNU Lesser General Public License
-# along with OptTran or PerfExpert. If not, see <http://www.gnu.org/licenses/>.
+# along with PerfExpert. If not, see <http://www.gnu.org/licenses/>.
 #
 # Author: Leonardo Fialho
+#         Ashay Rane
 #
 # $HEADER$
 #------------------------------------------------------------------------------
@@ -190,13 +191,13 @@ AC_ARG_WITH([pips],
     AC_PATH_TOOL([TPIPS_PROGRAM], [tpips], [no])])
 
 #------------------------------------------------------------------------------
-# Find Apache ANT, optionally, using an argument (required for PerfExpert)
+# Find Apache ANT, optionally, using an argument (required for Analyzer)
 #
 AC_ARG_WITH([apache-ant],
     [AS_HELP_STRING([--with-apache-ant],
         [Use this argument to set where Apache Ant program is installed (not
         necessary if it is in the PATH). Ant is necessary to compile
-        PerfExpert])], [
+        Analyzer])], [
     ANT_PATH="$withval"
     AC_PATH_TOOL([ANT_PROGRAM], [ant], [no], [$ANT_PATH])
     AS_IF([test x"$ANT_PROGRAM" = x"no"],
@@ -211,7 +212,7 @@ AS_IF([test x"$BASH_PROGRAM" == x"no"],
     [AC_MSG_ERROR([Most of our scripts require the Bash shell.])], [])
 
 #------------------------------------------------------------------------------
-# Check for PAPI, optionally, using an argument (required for PerfExpert)
+# Check for PAPI, optionally, using an argument (required for Analyzer)
 #
 AC_ARG_WITH([papi],
     [AS_HELP_STRING([--with-papi],
@@ -353,15 +354,15 @@ AS_IF([test x"$WITH_ROSE" == x"yes"], [
 AM_CONDITIONAL([WITH_ROSE_SUPPORT], [test x"$WITH_ROSE_SUPPORT" = x"yes"])
 
 #------------------------------------------------------------------------------
-# Enable/Disable 'perfexpert'
+# Enable/Disable 'analyzer'
 #
-AC_ARG_ENABLE([perfexpert],
-    [AS_HELP_STRING([--disable-perfexpert],
+AC_ARG_ENABLE([analyzer],
+    [AS_HELP_STRING([--disable-analyzer],
         [Enable/Disable the application profiler tool [default=enabled]])],
-    [ENABLE_OPTTRAN_PERFEXPERT=$enableval], [ENABLE_OPTTRAN_PERFEXPERT=yes])
+    [ENABLE_OPTTRAN_ANALYZER=$enableval], [ENABLE_OPTTRAN_ANALYZER=yes])
 
-AC_MSG_CHECKING([whether to enable PerfExpert])
-AS_IF([test x"$ENABLE_OPTTRAN_PERFEXPERT" = x"yes"], [
+AC_MSG_CHECKING([whether to enable Analyzer])
+AS_IF([test x"$ENABLE_OPTTRAN_ANALYZER" = x"yes"], [
     AC_MSG_RESULT([yes])
 
     # Apache ANT is required
@@ -390,39 +391,39 @@ AS_IF([test x"$ENABLE_OPTTRAN_PERFEXPERT" = x"yes"], [
         AS_IF([test x"$HPCPROF_PROGRAM" = x"no"],
             [AC_MSG_ERROR([hpcprof not found, try using '--with-hpctoolkit'])])
 
-        # Generate hound and sniffer Makefiles and also perfexpert_run_exp.sh
+        # Generate hound and sniffer Makefiles and also analyzer_run_exp.sh
         ENABLE_HOUND=hound
         ENABLE_SNIFFER=sniffer
-        AC_CONFIG_FILES([tools/perfexpert/hound/Makefile])
-        AC_CONFIG_FILES([tools/perfexpert/sniffer/Makefile])
-        AC_CONFIG_FILES([tools/perfexpert/sniffer/perfexpert_run_exp.sh_template],
-            [chmod +x tools/perfexpert/sniffer/perfexpert_run_exp.sh_template])
+        AC_CONFIG_FILES([tools/analyzer/hound/Makefile])
+        AC_CONFIG_FILES([tools/analyzer/sniffer/Makefile])
+        AC_CONFIG_FILES([tools/analyzer/sniffer/analyzer_run_exp.sh_template],
+            [chmod +x tools/analyzer/sniffer/analyzer_run_exp.sh_template])
     ], [
         # Disable hound and sniffer
         ENABLE_HOUND=
         ENABLE_SNIFFER=
     ])
 
-    # Generate Makefiles for perfexpert
-    ENABLE_PERFEXPERT=perfexpert
-    AC_CONFIG_FILES([tools/perfexpert/Makefile])
-    AC_CONFIG_FILES([tools/perfexpert/hpcdata.sh],
-        [chmod +x tools/perfexpert/hpcdata.sh])
-    AC_CONFIG_FILES([tools/perfexpert/perfexpert.sh],
-        [chmod +x tools/perfexpert/perfexpert.sh])
-    AC_CONFIG_FILES([tools/perfexpert/argp/Makefile])
-    AC_CONFIG_FILES([tools/perfexpert/argp/build.xml])
-    AC_CONFIG_FILES([tools/perfexpert/hpcdata/Makefile])
-    AC_CONFIG_FILES([tools/perfexpert/hpcdata/build.xml])
-    AC_CONFIG_FILES([tools/perfexpert/perfexpert/Makefile])
-    AC_CONFIG_FILES([tools/perfexpert/perfexpert/build.xml])
+    # Generate Makefiles for Analyzer
+    ENABLE_ANALYZER=analyzer
+    AC_CONFIG_FILES([tools/analyzer/Makefile])
+    AC_CONFIG_FILES([tools/analyzer/hpcdata.sh],
+        [chmod +x tools/analyzer/hpcdata.sh])
+    AC_CONFIG_FILES([tools/analyzer/analyzer.sh],
+        [chmod +x tools/analyzer/analyzer.sh])
+    AC_CONFIG_FILES([tools/analyzer/argp/Makefile])
+    AC_CONFIG_FILES([tools/analyzer/argp/build.xml])
+    AC_CONFIG_FILES([tools/analyzer/hpcdata/Makefile])
+    AC_CONFIG_FILES([tools/analyzer/hpcdata/build.xml])
+    AC_CONFIG_FILES([tools/analyzer/analyzer/Makefile])
+    AC_CONFIG_FILES([tools/analyzer/analyzer/build.xml])
 ], [
     AC_MSG_RESULT([no])
-    ENABLE_PERFEXPERT=
+    ENABLE_ANALYZER=
 ])
 AC_SUBST([ENABLE_HOUND])
 AC_SUBST([ENABLE_SNIFFER])
-AC_SUBST([ENABLE_PERFEXPERT])
+AC_SUBST([ENABLE_ANALYZER])
 
 #------------------------------------------------------------------------------
 # Enable/Disable 'minst' (MACPO)
@@ -560,7 +561,7 @@ AC_SUBST([ENABLE_CI])
 #------------------------------------------------------------------------------
 # Do we have all the tools? So generate the ninja-super-power-script opttran.sh
 #
-#AS_IF([test x"$ENABLE_OPTTRAN_PERFEXPERT" = x"yes"], [
+#AS_IF([test x"$ENABLE_OPTTRAN_ANALYZER" = x"yes"], [
 #    AS_IF([test x"$ENABLE_OPTTRAN_RECOMMENDER" = x"yes"], [
 #        AS_IF([test x"$ENABLE_OPTTRAN_PR" = x"yes"], [
 #            AS_IF([test x"$ENABLE_OPTTRAN_CT" = x"yes"], [
@@ -581,7 +582,7 @@ AC_CONFIG_FILES([tools/opttran.sh], [chmod +x tools/opttran.sh])
 #
 AC_OUTPUT
 AC_MSG_NOTICE([========================================================])
-AC_MSG_NOTICE([ PerfExpert:                $ENABLE_OPTTRAN_PERFEXPERT  ])
+AC_MSG_NOTICE([ Analyzer:                  $ENABLE_OPTTRAN_ANALYZER    ])
 AC_MSG_NOTICE([ Minst (MACPO):             $ENABLE_OPTTRAN_MINST       ])
 AC_MSG_NOTICE([ Optimizations Recommender: $ENABLE_OPTTRAN_RECOMMENDER ])
 AC_MSG_NOTICE([ Code Pattern Recognizer:   $ENABLE_OPTTRAN_PR          ])
@@ -604,15 +605,15 @@ AC_MSG_NOTICE([ CXXFLAGS=$CXXFLAGS                                     ])
 AC_MSG_NOTICE([ LDFLAGS=$LDFLAGS                                       ])
 AC_MSG_NOTICE([ LIBS=$LIBS                                             ])
 AS_IF([test x"$HOST_OS" != x"linux"], [
-    AS_IF([test x"$ENABLE_OPTTRAN_PERFEXPERT" = x"yes"], [
+    AS_IF([test x"$ENABLE_OPTTRAN_ANALYZER" = x"yes"], [
         AC_MSG_NOTICE([========================================================])
         AC_MSG_NOTICE([                    !!! WARNING !!!                     ])
         AC_MSG_NOTICE([                                                        ])
-        AC_MSG_NOTICE([ Since you are not running Linux, Perfexpert is unable  ])
-        AC_MSG_NOTICE([ to characterize you machine (using hound tool) neither ])
-        AC_MSG_NOTICE([ to generate LCPI configuration file (sniffer tool).    ])
-        AC_MSG_NOTICE([ Thus, 'perfexpert_run' script will not be available    ])
-        AC_MSG_NOTICE([ to you. However, if you want to run PerfExpert on this ])
+        AC_MSG_NOTICE([ Since you are not running Linux, Analyzer is unable to ])
+        AC_MSG_NOTICE([ characterize you machine (using hound tool) neither to ])
+        AC_MSG_NOTICE([ generate LCPI configuration file (sniffer tool). Thus, ])
+        AC_MSG_NOTICE([ 'analyzer_run' script will not be available to you.    ])
+        AC_MSG_NOTICE([ However, if you want to run Analyzer on this           ])
         AC_MSG_NOTICE([ installation just to analyze an experiment file you're ])
         AC_MSG_NOTICE([ planning to run on another host you just have to copy  ])
         AC_MSG_NOTICE([ the lcpi.properties and machine.properties files from  ])
