@@ -215,12 +215,12 @@ static int insert_function(function_t *function) {
         return OPTTRAN_ERROR;
     }
     bzero(new_source_file, strlen(function->source_file) + 5);
-    sprintf(new_source_file, "%s.tmp", function->source_file);
+    sprintf(new_source_file, "%s.new", function->source_file);
 
     if (NULL == (new_source_file_FP = fopen(new_source_file, "w"))) {
         OPTTRAN_OUTPUT(("%s (%s)",
                         _ERROR((char *)"Error: unable to open temporary file"),
-                        function->source_file));
+                        new_source_file));
         return OPTTRAN_ERROR;
     }
 
