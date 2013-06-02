@@ -4,20 +4,18 @@
 
 #include <argp.h>
      
-struct argp_option options[6] =
+struct argp_option options[5] =
 {
-	{ "vars", 'v', NULL, 0, "Print reuse distances of variables", 0 },
-	{ "stride", 's', NULL, 0, "Analyze strides of variables", 0 },
 	{ "debug", 'd', NULL, 0, "Output debug information", 0 },
-	{ "callgraph", 'c', "DOT_FILE", 0, "Specify DOT file containing call graph", 0 },
-	{ "function", 'f', "FUNCTION", 0, "Analyze FUNCTION and its children", 0 },
+	{ "pretty-print", 'p', NULL, 0, "Print output in a more friendly format", 0 },
 	{ 0, 0, 0, 0, 0, 0 }
 };
 
 struct arg_info
 {
-	char *location, *callgraph, *function;
-	short showVars, showDebug, showStride;
+	bool pprint;
+	char *location;
+	short showDebug;
 };
 
 static error_t parse_opt(int key, char* arg, struct argp_state *state)
@@ -26,11 +24,8 @@ static error_t parse_opt(int key, char* arg, struct argp_state *state)
 
 	switch(key)
 	{
-		case 'c':	info->callgraph = arg;	break;
-		case 'f':	info->function = arg;	break;
-		case 'v':	info->showVars = 1;	break;
-		case 'd':	info->showDebug = 1;	break;
-		case 's':	info->showStride = 1;	break;
+		case 'p':	info->pprint = true;		break;
+		case 'd':	info->showDebug = true;		break;
 
 		case ARGP_KEY_ARG:
 			if (state->arg_num >= 1)
