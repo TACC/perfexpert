@@ -103,11 +103,25 @@ fi
 
 program_name=${1}
 
-arguments=""
-shift
-if [ "x${*}" != "x" ]; then
-    arguments=${*}
-fi
+# Ignore taskset, numactl, ibrun
+for arg in $@
+do
+	# Get just the filename
+	arg_string=`basename "${arg}" 2>/dev/null`
+
+	# Guard against possibly empty string being encountered here
+	if [ -n "${arg_string}" ]
+	then
+		# Check if the argument is not taskset, not numactl, is a file and is executable
+		if [ "${arg_string}" != "taskset" -a "${arg_string}" != "numactl" -a -f "${arg_string}" -a -x "${arg_string}" ]
+		then
+			program_name="${arg_string}"
+			break
+		fi
+	fi
+done
+
+cmdline=${*}
 
 # If it is in ${PATH}, form the absolute path
 fullPath=`which ${program_name} 2>/dev/null`
@@ -181,7 +195,7 @@ debug_file="analyzer_debug.out"
 # Run experiments with different configurations
 for index in $(seq 0 $((${#experiment[@]}-1))); do
     echo "[analyzer] Program execution #$((${index}+1)) of ${#experiment[@]}"
-    cmd="@HPCRUN_PROGRAM@ ${experiment[${index}]} --output ${tempdir}/measurements ${program_name} ${arguments}"
+    cmd="@HPCRUN_PROGRAM@ ${experiment[${index}]} --output ${tempdir}/measurements ${cmdline}"
     eval ${cmd}
 
     if [ ${debug} == "true" -a ${?} != "0" ]; then
@@ -203,7 +217,7 @@ for index in $(seq 0 $((${#experiment[@]}-1))); do
         eval ${dbg_cmd}
 
         echo "[analyzer] Collecting debug information from hpcrun monitor..."
-        dbg_cmd="@HPCRUN_PROGRAM@ --monitor-debug ${experiment[${index}]} --output ${tempdir}/measurements ${program_name} ${arguments} 2>> ${debug_file} 1>/dev/null"
+        dbg_cmd="@HPCRUN_PROGRAM@ --monitor-debug ${experiment[${index}]} --output ${tempdir}/measurements ${cmdline} 2>> ${debug_file} 1>/dev/null"
         echo -e "\n[analyzer] Command: ${dbg_cmd}\n" >> ${debug_file}
         eval ${dbg_cmd}
 
