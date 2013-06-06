@@ -60,6 +60,12 @@ attrib instrumentor_t::evaluateInheritedAttribute(SgNode* node, attrib attr)
 	if (parent && isSgCompoundAssignOp(parent))
 		attr.read = parent->getChildIndex(node) == 0 ? TYPE_READ_AND_WRITE : TYPE_READ;
 
+	if (parent && (isSgPlusPlusOp(parent) || isSgMinusMinusOp(parent)) && attr.read == TYPE_UNKNOWN)
+		attr.read = TYPE_READ_AND_WRITE;
+
+	if (parent && (isSgUnaryOp(parent) || isSgBinaryOp(parent)) && attr.read == TYPE_UNKNOWN)
+		attr.read = TYPE_READ;
+
 	// LHS operand of PntrArrRefExp is always skipped
 	if (parent && isSgPntrArrRefExp(parent) && parent->getChildIndex(node) == 0)
 	{
