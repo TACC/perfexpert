@@ -9,19 +9,6 @@
 using namespace SageBuilder;
 using namespace SageInterface;
 
-std::string demangle_function_name(SgFunctionDefinition* def)
-{
-	if (!def)	return "";
-
-	return StringUtility::demangledName(def->get_mangled_name().getString());
-}
-
-bool function_match(const std::string demangled_name, const char* szSearchString)
-{
-	const char* szfunction_name = demangled_name.c_str();
-	return strstr(szfunction_name, szSearchString) == szfunction_name;
-}
-
 MINST::MINST(short _action, int _line_number, std::string _inst_func)
 {
 	action=_action, line_number=_line_number, inst_func=_inst_func;
@@ -111,8 +98,8 @@ attrib MINST::evaluateInheritedAttribute(SgNode* node, attrib attr)
 	// Check if this is the function that we are told to instrument
 	if (isSgFunctionDefinition(node))
 	{
-		std::string demangled_name = demangle_function_name((SgFunctionDefinition*) node);
-		if (function_match(demangled_name, "main") && action == ACTION_INSTRUMENT)
+		std::string function_name = ((SgFunctionDefinition*) node)->get_declaration()->get_name();
+		if (function_name == "main" && action == ACTION_INSTRUMENT)
 		{
 			// Found main, now insert calls to indigo__init() and indigo__create_map()
 			SgBasicBlock* body = ((SgFunctionDefinition*) node)->get_body();
@@ -142,13 +129,13 @@ attrib MINST::evaluateInheritedAttribute(SgNode* node, attrib attr)
 
 		if (line_number == 0)
 		{
-			if (!function_match(demangled_name, inst_func.c_str()))
+			if (function_name != inst_func)
 			{
 				attr.skip = TRUE;
 				return attr;
 			}
 
-			std::cerr << "Operating on function " << demangled_name << std::endl;
+			std::cerr << "Operating on function " << function_name << std::endl;
 
 			if (action == ACTION_INSTRUMENT)
 			{
@@ -167,7 +154,8 @@ attrib MINST::evaluateInheritedAttribute(SgNode* node, attrib attr)
 		if (_line_number == line_number && (isSgFortranDo(node) || isSgForStatement(node) || isSgWhileStmt(node) || isSgDoWhileStmt(node)))
 		{
 			SgFunctionDefinition* def = getEnclosingNode<SgFunctionDefinition>(node);
-			std::cerr << (action == ACTION_INSTRUMENT ? "Instrumenting" : "Splitting") << " loop in function " << demangle_function_name(def) << " at line " << _line_number << std::endl;
+			std::string function_name = def->get_declaration()->get_name();
+			std::cerr << (action == ACTION_INSTRUMENT ? "Instrumenting" : "Splitting") << " loop in function " << function_name << " at line " << _line_number << std::endl;
 
 			if (action == ACTION_INSTRUMENT)
 			{
