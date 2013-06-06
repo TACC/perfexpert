@@ -23,15 +23,15 @@ static node_t terminal_node;
 void indigo__init_();
 static void indigo__exit();
 
-void indigo__write_idx_c(char* var_name, int length);
-void indigo__write_idx_f_(char* var_name, int* length);
+void indigo__write_idx_c(const char* var_name, const int length);
+void indigo__write_idx_f_(const char* var_name, const int* length);
 
 static inline int getCoreID();
 
 static inline void signalHandler(int sig);
 static inline void fill_struct(int read_write, int line_number, size_t p, int var_idx);
 
-inline void indigo__record_c(int read_write, int line_number, void* addr, int var_idx);
-inline void indigo__record_f_(int* read_write, int* line_number, void* addr, int* var_idx);
+void indigo__record_c(int read_write, int line_number, void* addr, int var_idx);
+void indigo__record_f_(int* read_write, int* line_number, void* addr, int* var_idx);
 
 #endif	/* LIBMRT_H_ */

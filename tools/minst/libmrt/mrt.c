@@ -256,7 +256,7 @@ inline void indigo__record_f_(int *read_write, int *line_number, void* addr, int
 	if (fd >= 0)	fill_struct(*read_write, *line_number, (size_t) addr, *var_idx);
 }
 
-void indigo__write_idx_c(char* var_name, int length)
+void indigo__write_idx_c(const char* var_name, const int length)
 {
 	node_t node;
 	node.type_message = MSG_STREAM_INFO;
@@ -270,7 +270,7 @@ void indigo__write_idx_c(char* var_name, int length)
 	write(fd, &node, sizeof(node_t));
 }
 
-void indigo__write_idx_f_(char* var_name, int* length)
+void indigo__write_idx_f_(const char* var_name, const int* length)
 {
 	indigo__write_idx_c(var_name, *length);
 }
