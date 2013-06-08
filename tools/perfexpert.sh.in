@@ -36,14 +36,18 @@
 ###############################################################################
 #         12345678901234567890123456789012345678901234567890123456789012345678901234567890
 showHelp() {
-    echo "Usage: perfexpert [-ghvq] [-w DIR] [-s FILE] program_executable [program_arguments]"
+    echo "Usage: perfexpert [-ghmvq] [-w DIR] [-s FILE] program_executable [program_arguments]"
     echo
     echo "  -s --source FILE    Use FILE as the source code"
+    echo "  -m --makefile       Use 'make' to compile source code"
     echo "  -q --quiet          Disable verbose mode"
     echo "  -v --verbose        Enable verbose mode"
     echo "  -w --workdir DIR    Use DIR as temporary directory"
     echo "  -g --left-garbage   Do not remove the temporary directory"
     echo "  -h --help           Show this message"
+    echo ""
+    echo "  Use CC, CFLAGS and LDFLAGS to select compiler and compilation and linkage flags"
+    echo ""
 }
 
 ###############################################################################
@@ -298,6 +302,7 @@ eval set -- $args
 # Default values
 DEBUG="yes"
 LEFT_GARBAGE="no"
+VERBOSE="/dev/stdout"
 
 while getopts ":s:w:hgmqvr" option 2>/dev/null; do
     case $option in
@@ -311,10 +316,12 @@ while getopts ":s:w:hgmqvr" option 2>/dev/null; do
 
         q)
         DEBUG="no"
+        VERBOSE="/dev/null"
         ;;
 
         v)
         DEBUG="yes"
+        VERBOSE="/dev/stdout"
         ;;
 
         h)
@@ -344,7 +351,6 @@ shift $(($OPTIND - 1))
 
 USER_BINARY=${*}
 
-VERBOSE="/dev/stdout"
 LOGFILE="${WORKDIR}/perfexpert.log"
 ROUND=0
 ORIGINAL_WORKDIR="${WORKDIR}"
