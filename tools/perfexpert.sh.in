@@ -156,14 +156,6 @@ recommender() {
 }
 
 ###############################################################################
-recommender_output() {
-        echo "[perfexpert.sh] Sorry, we ran out of automatic transformations."
-        echo "[perfexpert.sh] Here are some optimizations we recommend:"
-        ${RECOMMENDER} --inputfile ${WORKDIR}/analyzer.output.txt
-        exit 1
-}
-
-###############################################################################
 perfexpert_pr() {
     PERFEXPERT_PR_CMD="${PERFEXPERT_PR}"
     PERFEXPERT_PR_CMD+=" --verbose_level 10"
@@ -186,7 +178,11 @@ perfexpert_pr() {
         echo " fail :(" >> ${VERBOSE}
         echo "[perfexpert.sh] Error: running PerfExpert:PR" >> ${LOGFILE}
         echo "[perfexpert.sh] Error: running PerfExpert:PR"
-        recommender_output()
+
+        echo "[perfexpert.sh] Sorry, we ran out of automatic transformations."
+        echo "[perfexpert.sh] Here are some optimizations we recommend:"
+        ${RECOMMENDER} --inputfile ${WORKDIR}/analyzer.output.txt
+        exit 1
     fi
 }
 
@@ -210,11 +206,15 @@ perfexpert_ct() {
     if [ 0 == $? ]; then
         echo " ok!" >> ${VERBOSE}
     else
-    echo " fail :(" >> ${VERBOSE}
-    echo "[perfexpert.sh] Error: running CT" >> ${LOGFILE}
-    echo "[perfexpert.sh] Error: running CT"
-    recommender_output()
-fi
+        echo " fail :(" >> ${VERBOSE}
+        echo "[perfexpert.sh] Error: running CT" >> ${LOGFILE}
+        echo "[perfexpert.sh] Error: running CT"
+
+        echo "[perfexpert.sh] Sorry, we ran out of automatic transformations."
+        echo "[perfexpert.sh] Here are some optimizations we recommend:"
+        ${RECOMMENDER} --inputfile ${WORKDIR}/analyzer.output.txt
+        exit 1
+    fi
 }
 
 ###############################################################################
@@ -241,7 +241,11 @@ perfexpert_ci() {
         echo " fail :(" >> ${VERBOSE}
         echo "[perfexpert.sh] Error: running CI" >> ${LOGFILE}
         echo "[perfexpert.sh] Error: running CI"
-        recommender_output()
+
+        echo "[perfexpert.sh] Sorry, we ran out of automatic transformations."
+        echo "[perfexpert.sh] Here are some optimizations we recommend:"
+        ${RECOMMENDER} --inputfile ${WORKDIR}/analyzer.output.txt
+        exit 1
     fi
 }
 
