@@ -43,11 +43,11 @@
 extern "C" {
 #endif
     
-#ifndef	_STDIO_H_
+#ifndef	_STDIO_H
 #include <stdio.h>
 #endif
 
-#ifndef _STDLIB_H_
+#ifndef _STDLIB_H
 #include <stdlib.h>
 #endif
 
@@ -55,11 +55,11 @@ extern "C" {
 #include <stdarg.h>
 #endif
 
-#ifndef _STRING_H_
+#ifndef _STRING_H
 #include <string.h>
 #endif
 
-#ifndef _UNISTD_H_
+#ifndef _UNISTD_H
 #include <unistd.h>
 #endif
 

@@ -44,8 +44,12 @@ extern "C" {
 #include <errno.h>
 #endif
 
-#ifndef _STRING_H_
+#ifndef _STRING_H
 #include <string.h>
+#endif
+
+#ifndef _STDLIB_H
+#include <stdlib.h>
 #endif
 
 #ifndef PERFEXPERT_CONSTANTS_H
@@ -77,16 +81,20 @@ static int perfexpert_util_make_path(char *path, int nmode) {
         }
         return PERFEXPERT_SUCCESS;
     }
-    
+
     /* Save a copy, so we can write to it */
+    printf("\nFUDEU 1 (%s)\n", path);
     npath = (char *)malloc(strlen(path) + 1);
-    bzero(npath, strlen(path) + 1);
+    printf("\nFUDEU 2\n");
     if (NULL == npath) {
         OUTPUT(("%s", _ERROR((char *)"Error: out of memory")));
         exit(PERFEXPERT_ERROR);
     }
+    printf("\nFUDEU 3\n");
+    bzero(npath, strlen(path) + 1);
+    printf("\nFUDEU 4\n");
     strncpy(npath, path, strlen(path));
-    
+
     /* Check whether or not we need to do anything with intermediate dirs */
     /* Skip leading slashes */
     p = npath;

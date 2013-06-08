@@ -186,7 +186,7 @@ int recommender_main(int argc, char** argv) {
         }
         
         globals.outputfile = (char *)malloc(strlen(globals.workdir) +
-                                            strlen(PERFEXPERT_RECO_FILE) + 1);
+                                            strlen(PERFEXPERT_RECO_FILE) + 2);
         if (NULL == globals.outputfile) {
             OUTPUT(("%s", _ERROR("Error: out of memory")));
             exit(PERFEXPERT_ERROR);

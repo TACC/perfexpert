@@ -73,7 +73,7 @@ extern "C" {
 #include "perfexpert_constants.h"
 #endif
 
-#ifndef _STDLIB_H_
+#ifndef _STDLIB_H
 #include <stdlib.h>
 #endif
 
