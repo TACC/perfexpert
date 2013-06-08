@@ -185,10 +185,24 @@ void indigo__init_()
 
 	// Output file
 	char szFilename[32];
-	sprintf (szFilename, "reuser.%d.out", (int) getpid());
+	sprintf (szFilename, "macpo.%d.out", (int) getpid());
 	fd = open(szFilename, O_CREAT | O_APPEND | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP);
 	if (fd < 0)
+	{
 		perror("MACPO :: Error opening log for writing");
+		exit(1);
+	}
+
+	if (access("macpo.out", F_OK) == 0)
+	{
+		// file exists, remove it
+		if (unlink("macpo.out") == -1)
+			perror ("MACPO :: Failed to remove macpo.out");
+	}
+
+	// Now create the symlink
+	if (symlink(szFilename, "macpo.out") == -1)
+		perror ("MACPO :: Failed to create symlink \"macpo.out\"");
 
 	// Set up the signal handler
 	signal(SIGPROF, signalHandler);
