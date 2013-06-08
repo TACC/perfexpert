@@ -83,16 +83,12 @@ static int perfexpert_util_make_path(char *path, int nmode) {
     }
 
     /* Save a copy, so we can write to it */
-    printf("\nFUDEU 1 (%s)\n", path);
     npath = (char *)malloc(strlen(path) + 1);
-    printf("\nFUDEU 2\n");
     if (NULL == npath) {
         OUTPUT(("%s", _ERROR((char *)"Error: out of memory")));
         exit(PERFEXPERT_ERROR);
     }
-    printf("\nFUDEU 3\n");
     bzero(npath, strlen(path) + 1);
-    printf("\nFUDEU 4\n");
     strncpy(npath, path, strlen(path));
 
     /* Check whether or not we need to do anything with intermediate dirs */

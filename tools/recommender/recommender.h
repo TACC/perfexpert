@@ -80,6 +80,7 @@ typedef struct {
     char *source_file;
     int  rec_count;
     char *fragments_dir;
+    char recommendations;
     unsigned long long int perfexpert_pid;
 } globals_t;
 

@@ -105,6 +105,7 @@ static struct option long_options[] = {
     {"automatic",       required_argument, NULL, 'a'},
 #if HAVE_SQLITE3 == 1
     {"perfexpert_pid",  required_argument, NULL, 'p'},
+    {"database",        required_argument, NULL, 'd'},
 #endif
     {0, 0, 0, 0}
 };

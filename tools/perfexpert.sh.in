@@ -88,7 +88,7 @@ analyzer() {
     ANALYZER_CMD="${ANALYZER}"
     ANALYZER_CMD+=" --recommend"
     ANALYZER_CMD+=" --opttran"
-    ANALYZER_CMD+=" 0.1"
+    ANALYZER_CMD+=" ${THRESHOLD}"
     ANALYZER_CMD+=" ${WORKDIR}/perfexpert-experiment.xml"
     ANALYZER_CMD+=" &> ${WORKDIR}/analyzer.output.txt"
 
@@ -116,7 +116,7 @@ analyzer() {
     fi
 
     ANALYZER_CMD2="${ANALYZER}"
-    ANALYZER_CMD2+=" 0.05"
+    ANALYZER_CMD2+=" ${THRESHOLD}"
     ANALYZER_CMD2+=" ${WORKDIR}/perfexpert-experiment.xml"
     ANALYZER_CMD2+=" &> ${WORKDIR}/analyzer2.output.txt"
 
@@ -142,6 +142,8 @@ analyzer() {
         echo "[perfexpert.sh] Error: running PerfExpert (2nd analyzer)"
         exit 1
     fi
+
+    rm perfexpert.log # This is not our log, is the old PerfExpert log
 }
 
 ###############################################################################
@@ -165,10 +167,15 @@ recommender() {
 
     eval ${RECOMMENDER_CMD}
 
-    if [ 0 == $? ]; then
+    RC=$?
+    if [ 0 == ${RC} ]; then
         if [ x"${VERBOSE}" == x"yes" ]; then
             echo " ok!"
         fi
+    elif [ 2 == ${RC} ]; then
+        echo " no :("
+        echo "[perfexpert.sh] Sorry, we have no recommendations for this code"
+        exit 0
     else
         if [ x"${VERBOSE}" == x"yes" ]; then
             echo " fail :("
@@ -187,6 +194,7 @@ perfexpert_pr() {
     PERFEXPERT_PR_CMD+=" --inputfile ${WORKDIR}/perfexpert_recommendations.txt"
     PERFEXPERT_PR_CMD+=" --testall"
     PERFEXPERT_PR_CMD+=" --automatic ${WORKDIR}"
+    PERFEXPERT_PR_CMD+=" --database $HOME/var/recommendation.db"
     PERFEXPERT_PR_CMD+=" &> ${WORKDIR}/perfexpert_pr.output.txt"
 
     if [ x"${VERBOSE}" == x"yes" ]; then
@@ -212,8 +220,12 @@ perfexpert_pr() {
         #echo "[perfexpert.sh] Error: running PerfExpert:PR"
 
         echo "[perfexpert.sh] Sorry, we ran out of automatic transformations."
+        echo "[perfexpert.sh] Here are our analysis for the code bottlenecks:"
+        cat ${WORKDIR}/analyzer2.output.txt
+        echo "[perfexpert.sh]"
         echo "[perfexpert.sh] Here are some optimizations we recommend:"
-        ${RECOMMENDER} --inputfile ${WORKDIR}/analyzer.output.txt
+        ${RECOMMENDER} --inputfile ${WORKDIR}/analyzer.output.txt \
+                       --database $HOME/var/recommendation.db
         exit 1
     fi
 }
@@ -249,8 +261,12 @@ perfexpert_ct() {
         echo "[perfexpert.sh] Error: running CT"
 
         echo "[perfexpert.sh] Sorry, we ran out of automatic transformations."
+        echo "[perfexpert.sh] Here are our analysis for the code bottlenecks:"
+        cat ${WORKDIR}/analyzer2.output.txt
+        echo "[perfexpert.sh]"
         echo "[perfexpert.sh] Here are some optimizations we recommend:"
-        ${RECOMMENDER} --inputfile ${WORKDIR}/analyzer.output.txt
+        ${RECOMMENDER} --inputfile ${WORKDIR}/analyzer.output.txt \
+                       --database $HOME/var/recommendation.db
         exit 1
     fi
 }
@@ -287,8 +303,12 @@ perfexpert_ci() {
         echo "[perfexpert.sh] Error: running CI"
 
         echo "[perfexpert.sh] Sorry, we ran out of automatic transformations."
+        echo "[perfexpert.sh] Here are our analysis for the code bottlenecks:"
+        cat ${WORKDIR}/analyzer2.output.txt
+        echo "[perfexpert.sh]"
         echo "[perfexpert.sh] Here are some optimizations we recommend:"
-        ${RECOMMENDER} --inputfile ${WORKDIR}/analyzer.output.txt
+        ${RECOMMENDER} --inputfile ${WORKDIR}/analyzer.output.txt \
+                       --database $HOME/var/recommendation.db
         exit 1
     fi
 }
@@ -296,7 +316,7 @@ perfexpert_ci() {
 ###############################################################################
 compile() {
     # Compilation flags
-    CFLAGS+=" -g -O3 "
+    CFLAGS+=" -g -O3 -fno-inline "
 
     if [ x"${USE_MAKEFILE}" == x"yes" ]; then
         COMPILE_CMD="make"
@@ -343,6 +363,7 @@ for arg; do
         --workdir)      args="${args}-w ";;
         --recommend)    args="${args}-r ";;
         --makefile)     args="${args}-m ";;
+        --threshold)    args="${args}-t ";;
 
         # pass through anything else
         *) [[ "${arg:0:1}" == "-" ]] || delim="\""
@@ -356,8 +377,18 @@ eval set -- $args
 # Default values
 DEBUG="yes"
 LEFT_GARBAGE="no"
+VERBOSE="yes"
+THRESHOLD="0.1"
+CC="${CC}"
+CFLAGS="${CFLAGS}"
+LDFLAGS="${LDFLAGS}"
 
-while getopts ":s:w:hgmqvr" option 2>/dev/null; do
+# Select compiler
+if [ x"${CC}" == x"" ]; then
+    CC="gcc"
+fi
+
+while getopts ":s:w:hgmqvrt:" option 2>/dev/null; do
     case $option in
         s)
         USER_SOURCE="${OPTARG[@]}"
@@ -392,6 +423,10 @@ while getopts ":s:w:hgmqvr" option 2>/dev/null; do
         LEFT_GARBAGE="yes"
         ;;
 
+        t)
+        THRESHOLD="${OPTARG[@]}"
+        ;;
+
         *)
         echo "[perfexpert.sh] Error: unrecognized option: ${OPTARG}"
         exit 1
@@ -402,23 +437,16 @@ shift $(($OPTIND - 1))
 
 USER_BINARY=${*}
 
-LOGFILE="${WORKDIR}/perfexpert.log"
-ROUND=0
-ORIGINAL_WORKDIR="${WORKDIR}"
-CC="${CC}"
-CFLAGS="${CFLAGS}"
-LDFLAGS="${LDFLAGS}"
-
-# Select compiler
-if [ x"${CC}" == x"" ]; then
-    CC="gcc"
-fi
-
 # Sanity checks
 if [ ${#} -lt 1 ]; then
     showHelp
     exit 1
 fi
+
+if [ x"${WORKDIR}" == x ]; then
+    WORKDIR=`mktemp -d perfexpert-temp-XXXXXXX`
+fi
+LOGFILE="${WORKDIR}/perfexpert.log"
 
 ###############################################################################
 # Script variables
@@ -444,8 +472,6 @@ PERFEXPERT_CI="${PERFEXPERT_BINDIR}/perfexpert_ci"
 # Standard PerfExpert run
 #
 if [ x"${USER_SOURCE}" == x ]; then
-    WORKDIR="${ORIGINAL_WORKDIR}"
-
     # Create temporary dir
     eval @MKDIR_P@ ${WORKDIR}
     if [ 0 != $? ]; then
@@ -459,11 +485,10 @@ if [ x"${USER_SOURCE}" == x ]; then
 
     if [ x"${DEBUG}" == x"yes" ]; then
         echo "[perfexpert.sh] DEBUG=${DEBUG}" >> ${LOGFILE}
-        echo "[perfexpert.sh] USER_SOURCE=${USER_SOURCE}" >> ${LOGFILE}
         echo "[perfexpert.sh] USER_BINARY=${USER_BINARY}" >> ${LOGFILE}
         echo "[perfexpert.sh] WORKDIR=${WORKDIR}" >> ${LOGFILE}
         echo "[perfexpert.sh] LOGFILE=${WORKDIR}/perfexpert.log" >> ${LOGFILE}
-        echo "[perfexpert.sh] CI_OUTPUT_DIR=${CI_OUTPUT_DIR}" >> ${LOGFILE}
+        echo "[perfexpert.sh] THRESHOLD=${THRESHOLD}" >> ${LOGFILE}
         echo "[perfexpert.sh]" >> ${LOGFILE}
     fi
 
@@ -471,12 +496,13 @@ if [ x"${USER_SOURCE}" == x ]; then
     analyzer
 
     if [ x"${SHOW_RECOMMENDATIONS}" == x"yes" ]; then
-        ${RECOMMENDER} --inputfile ${WORKDIR}/analyzer.output.txt
+        ${RECOMMENDER} --inputfile ${WORKDIR}/analyzer.output.txt \
+                       --database $HOME/var/recommendation.db
     else
         cat ${WORKDIR}/analyzer2.output.txt
     fi
 
-    if [ x"LEFT_GARBAGE" == x"no" ]; then
+    if [ x"${LEFT_GARBAGE}" == x"no" ]; then
         rm -rf ${WORKDIR}
     fi
 
@@ -486,6 +512,9 @@ fi
 ###############################################################################
 # Automatic optimization run
 #
+ORIGINAL_WORKDIR="${WORKDIR}"
+ROUND=0
+
 while [ 1 ]; do
     # Which round is this? Update variables!
     ROUND=$(($ROUND + 1))
@@ -509,6 +538,7 @@ while [ 1 ]; do
         echo "[perfexpert.sh] USER_BINARY=${USER_BINARY}" >> ${LOGFILE}
         echo "[perfexpert.sh] WORKDIR=${WORKDIR}" >> ${LOGFILE}
         echo "[perfexpert.sh] LOGFILE=${WORKDIR}/perfexpert.log" >> ${LOGFILE}
+        echo "[perfexpert.sh] THRESHOLD=${THRESHOLD}" >> ${LOGFILE}
         echo "[perfexpert.sh] CI_OUTPUT_DIR=${CI_OUTPUT_DIR}" >> ${LOGFILE}
         echo "[perfexpert.sh]" >> ${LOGFILE}
     fi
@@ -527,3 +557,4 @@ while [ 1 ]; do
     mv ${CI_OUTPUT_DIR}/${USER_SOURCE}.new ${CI_OUTPUT_DIR}/${USER_SOURCE}
     USER_SOURCE="${CI_OUTPUT_DIR}/${USER_SOURCE}"
 done
+

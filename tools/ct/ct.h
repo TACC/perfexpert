@@ -50,11 +50,11 @@ extern "C" {
 #endif
 #endif
 
-#ifndef _GETOPT_H_
+#ifndef _GETOPT_H
 #include <getopt.h> /* To parse command line arguments */
 #endif
 
-#ifndef	_STDIO_H_
+#ifndef	_STDIO_H
 #include <stdio.h> /* To use FILE type on globals */
 #endif
 

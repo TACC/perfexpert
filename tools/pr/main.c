@@ -159,13 +159,13 @@ int main(int argc, char** argv) {
         }
 
         globals.outputfile = (char *)malloc(strlen(globals.workdir) +
-                                            strlen(PERFEXPERT_PR_FILE) + 1);
+                                            strlen(PERFEXPERT_PR_FILE) + 2);
         if (NULL == globals.outputfile) {
             OUTPUT(("%s", _ERROR("Error: out of memory")));
             exit(PERFEXPERT_ERROR);
         }
         bzero(globals.outputfile, strlen(globals.workdir) +
-              strlen(PERFEXPERT_PR_FILE) + 1);
+              strlen(PERFEXPERT_PR_FILE) + 2);
         strcat(globals.outputfile, globals.workdir);
         strcat(globals.outputfile, "/");
         strcat(globals.outputfile, PERFEXPERT_PR_FILE);
@@ -219,7 +219,6 @@ int main(int argc, char** argv) {
     }
     perfexpert_list_destruct(fragments);
     free(fragments);
-    free(globals.dbfile);
     if (1 == globals.automatic) {
         free(globals.outputfile);
     }
@@ -299,7 +298,7 @@ static int parse_cli_params(int argc, char *argv[]) {
     while (1) {
         /* get parameter */
 #if HAVE_SQLITE3 == 1
-        parameter = getopt_long(argc, argv, "a:cvhif:l:o:p:t", long_options,
+        parameter = getopt_long(argc, argv, "a:cd:vhif:l:o:p:t", long_options,
                                 &option_index);
 #else
         parameter = getopt_long(argc, argv, "a:cvhif:l:o:t", long_options,
@@ -732,16 +731,17 @@ static int test_recognizers(perfexpert_list_t *fragments_p) {
     recommendation_t *recommendation;
     recognizer_t *recognizer;
     fragment_t *fragment;
-    perfexpert_list_t *tests;
+//    perfexpert_list_t *tests;
+    perfexpert_list_t tests;
     test_t *test;
     int fragment_id = 0;
 
-    tests = (perfexpert_list_t *)malloc(sizeof(perfexpert_list_t));
-    if (NULL == tests) {
-        OUTPUT(("%s", _ERROR("Error: out of memory")));
-        exit(PERFEXPERT_ERROR);
-    }
-    perfexpert_list_construct(tests);
+//    tests = (perfexpert_list_t *)malloc(sizeof(perfexpert_list_t));
+//    if (NULL == tests) {
+//        OUTPUT(("%s", _ERROR("Error: out of memory")));
+//        exit(PERFEXPERT_ERROR);
+//    }
+    perfexpert_list_construct(&tests);
 
     OUTPUT_VERBOSE((4, "=== %s", _BLUE("Testing pattern recognizers")));
 
@@ -773,7 +773,7 @@ static int test_recognizers(perfexpert_list_t *fragments_p) {
                                 test->fragment_file));
 
                 /* Add this item to to-'tests' */
-                perfexpert_list_append(tests, (perfexpert_list_item_t *)test);
+                perfexpert_list_append(&tests, (perfexpert_list_item_t *)test);
 
                 /* It we're testing for a loop, check for the outer loop */
                 if ((0 == strncmp("loop", fragment->code_type, 4)) &&
@@ -796,7 +796,7 @@ static int test_recognizers(perfexpert_list_t *fragments_p) {
                                     test->fragment_file));
 
                     /* Add this item to to-'tests' */
-                    perfexpert_list_append(tests, (perfexpert_list_item_t *)test);
+                    perfexpert_list_append(&tests, (perfexpert_list_item_t *)test);
                     
                     /* And test for the outer outer loop too */
                     if ((3 <= fragment->loop_depth) &&
@@ -818,7 +818,7 @@ static int test_recognizers(perfexpert_list_t *fragments_p) {
                                         test->fragment_file));
 
                         /* Add this item to to-'tests' */
-                        perfexpert_list_append(tests, (perfexpert_list_item_t *)test);
+                        perfexpert_list_append(&tests, (perfexpert_list_item_t *)test);
                     }
                 }
                 recognizer = (recognizer_t *)perfexpert_list_get_next(recognizer);
@@ -830,65 +830,68 @@ static int test_recognizers(perfexpert_list_t *fragments_p) {
     OUTPUT_VERBOSE((8, "...done!"));
 
     /* Print a summary of 'tests' */
-    OUTPUT_VERBOSE((4, "%d %s", perfexpert_list_get_size(tests),
+    OUTPUT_VERBOSE((4, "%d %s", perfexpert_list_get_size(&tests),
                     _GREEN("test(s) should be run")));
 
-    /* Run the tests */
-    fragment_id = 0;
-    test = (test_t *)perfexpert_list_get_first(tests);
-    while ((perfexpert_list_item_t *)test != &(tests->sentinel)) {
-        *(test->test_result) = PERFEXPERT_UNDEFINED;
-        /* Skip this test if 'testall' is not set */
-        if ((0 == globals.testall) && (fragment_id >= test->fragment_id)) {
-            OUTPUT(("   %s  [%s] >> [%s]", _MAGENTA("SKIP"),
-                    test->program, test->fragment_file));
-            test = (test_t *)perfexpert_list_get_next(test);
-            continue;
-        }
+    if (0 < perfexpert_list_get_size(&tests)) {
 
-        if (PERFEXPERT_SUCCESS != test_one(test)) {
-            OUTPUT(("   %s [%s] >> [%s]", _RED("Error: running test"),
-                    test->program, test->fragment_file));
-        }
+        /* Run the tests */
+        fragment_id = 0;
+        test = (test_t *)perfexpert_list_get_first(&tests);
+        while ((perfexpert_list_item_t *)test != &(tests.sentinel)) {
+            *(test->test_result) = PERFEXPERT_UNDEFINED;
+            /* Skip this test if 'testall' is not set */
+            if ((0 == globals.testall) && (fragment_id >= test->fragment_id)) {
+                OUTPUT(("   %s  [%s] >> [%s]", _MAGENTA("SKIP"),
+                        test->program, test->fragment_file));
+                test = (test_t *)perfexpert_list_get_next(test);
+                continue;
+            }
 
-        switch ((int)*(test->test_result)) {
-            case PERFEXPERT_UNDEFINED:
-                OUTPUT_VERBOSE((8, "   %s [%s] >> [%s]", _BOLDRED("UNDEF"),
-                                test->program, test->fragment_file));
-                break;
+            if (PERFEXPERT_SUCCESS != test_one(test)) {
+                OUTPUT(("   %s [%s] >> [%s]", _RED("Error: running test"),
+                        test->program, test->fragment_file));
+            }
 
-            case PERFEXPERT_FAILURE:
-                OUTPUT_VERBOSE((8, "   %s  [%s] >> [%s]", _ERROR("FAIL"),
-                                test->program, test->fragment_file));
-                break;
+            switch ((int)*(test->test_result)) {
+                case PERFEXPERT_UNDEFINED:
+                    OUTPUT_VERBOSE((8, "   %s [%s] >> [%s]", _BOLDRED("UNDEF"),
+                                    test->program, test->fragment_file));
+                    break;
+
+                case PERFEXPERT_FAILURE:
+                    OUTPUT_VERBOSE((8, "   %s  [%s] >> [%s]", _ERROR("FAIL"),
+                                    test->program, test->fragment_file));
+                    break;
                 
-            case PERFEXPERT_SUCCESS:
-                OUTPUT_VERBOSE((8, "   %s    [%s] >> [%s]", _BOLDGREEN("OK"),
-                                test->program, test->fragment_file));
-                fragment_id = test->fragment_id;
-                break;
+                case PERFEXPERT_SUCCESS:
+                    OUTPUT_VERBOSE((8, "   %s    [%s] >> [%s]", _BOLDGREEN("OK"),
+                                    test->program, test->fragment_file));
+                    fragment_id = test->fragment_id;
+                    break;
                 
-            case PERFEXPERT_ERROR:
-                OUTPUT_VERBOSE((8, "   %s [%s] >> [%s]", _BOLDYELLOW("ERROR"),
-                                test->program, test->fragment_file));
-                break;
+                case PERFEXPERT_ERROR:
+                    OUTPUT_VERBOSE((8, "   %s [%s] >> [%s]", _BOLDYELLOW("ERROR"),
+                                    test->program, test->fragment_file));
+                    break;
                 
-            default:
-                break;
-        }
+                default:
+                    break;
+            }
         
-        /* Move on to the next test... */
-        test = (test_t *)perfexpert_list_get_next(test);
+            /* Move on to the next test... */
+            test = (test_t *)perfexpert_list_get_next(test);
+        }
+        /* Free 'tests' structure' */
+        while (PERFEXPERT_FALSE == perfexpert_list_is_empty(&tests)) {
+            test = (test_t *)perfexpert_list_get_first(&tests);
+            perfexpert_list_remove_item(&tests, (perfexpert_list_item_t *)test);
+            free(test);
+        }
     }
-    /* Free 'tests' structure' */
-    while (PERFEXPERT_FALSE == perfexpert_list_is_empty(tests)) {
-        test = (test_t *)perfexpert_list_get_first(tests);
-        perfexpert_list_remove_item(tests, (perfexpert_list_item_t *)test);
-        free(test);
-    }
-    perfexpert_list_destruct(tests);
-    // TODO: in case of empty lists (no recognizers) this causes a segfault :-/
-    free(tests);
+    
+    perfexpert_list_destruct(&tests);
+    //free(tests);
 
     OUTPUT_VERBOSE((4, "==="));
 

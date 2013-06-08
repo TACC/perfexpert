@@ -155,13 +155,13 @@ int main(int argc, char** argv) {
         }
 
         globals.outputfile = (char *)malloc(strlen(globals.workdir) +
-                                            strlen(PERFEXPERT_CT_FILE) + 1);
+                                            strlen(PERFEXPERT_CT_FILE) + 2);
         if (NULL == globals.outputfile) {
             OUTPUT(("%s", _ERROR("Error: out of memory")));
             exit(PERFEXPERT_ERROR);
         }
         bzero(globals.outputfile, strlen(globals.workdir) +
-              strlen(PERFEXPERT_PR_FILE) + 1);
+              strlen(PERFEXPERT_CT_FILE) + 2);
         strcat(globals.outputfile, globals.workdir);
         strcat(globals.outputfile, "/");
         strcat(globals.outputfile, PERFEXPERT_CT_FILE);
@@ -205,7 +205,6 @@ int main(int argc, char** argv) {
     }
     perfexpert_list_destruct(fragments);
     free(fragments);
-    free(globals.dbfile);
     if (1 == globals.automatic) {
         free(globals.outputfile);
     }
@@ -682,16 +681,17 @@ static int database_connect(void) {
 static int apply_transformations(perfexpert_list_t *fragments_p) {
     transformation_t *transformation;
     fragment_t *fragment;
-    perfexpert_list_t *transfs;
+//    perfexpert_list_t *transfs;
+    perfexpert_list_t transfs;
     transf_t *transf;
     int fragment_id = 0;
 
-    transfs = (perfexpert_list_t *)malloc(sizeof(perfexpert_list_t));
-    if (NULL == transfs) {
-        OUTPUT(("%s", _ERROR("Error: out of memory")));
-        exit(PERFEXPERT_ERROR);
-    }
-    perfexpert_list_construct(transfs);
+//    transfs = (perfexpert_list_t *)malloc(sizeof(perfexpert_list_t));
+//    if (NULL == transfs) {
+//        OUTPUT(("%s", _ERROR("Error: out of memory")));
+//        exit(PERFEXPERT_ERROR);
+//    }
+    perfexpert_list_construct(&transfs);
 
     OUTPUT_VERBOSE((4, "=== %s", _BLUE("Applying transformations")));
 
@@ -727,7 +727,7 @@ static int apply_transformations(perfexpert_list_t *fragments_p) {
                             transf->fragment_file));
 
             /* Add this item to to-'tests' */
-            perfexpert_list_append(transfs, (perfexpert_list_item_t *)transf);
+            perfexpert_list_append(&transfs, (perfexpert_list_item_t *)transf);
 
             transformation = (transformation_t *)perfexpert_list_get_next(transformation);
         }
@@ -736,68 +736,70 @@ static int apply_transformations(perfexpert_list_t *fragments_p) {
     OUTPUT_VERBOSE((8, "...done!"));
 
     /* Print a summary of 'tests' */
-    OUTPUT_VERBOSE((4, "%d %s", perfexpert_list_get_size(transfs),
+    OUTPUT_VERBOSE((4, "%d %s", perfexpert_list_get_size(&transfs),
                     _GREEN("possible transformation(s) found")));
 
-    /* Apply the transformations */
-    fragment_id = 0;
-    transf = (transf_t *)perfexpert_list_get_first(transfs);
-    while ((perfexpert_list_item_t *)transf != &(transfs->sentinel)) {
-        *(transf->transf_result) = PERFEXPERT_UNDEFINED;
-        /* Skip this test if 'transfall' is not set */
-        if ((0 == globals.transfall) && (fragment_id >= transf->fragment_id)) {
-            OUTPUT(("   %s  [%s] >> [%s]", _MAGENTA("SKIP"), transf->program,
-                    transf->filename));
+    if (0 < perfexpert_list_get_size(&transfs)) {
+   
+        /* Apply the transformations */
+        fragment_id = 0;
+        transf = (transf_t *)perfexpert_list_get_first(&transfs);
+        while ((perfexpert_list_item_t *)transf != &(transfs.sentinel)) {
+            *(transf->transf_result) = PERFEXPERT_UNDEFINED;
+            /* Skip this test if 'transfall' is not set */
+            if ((0 == globals.transfall) && (fragment_id >= transf->fragment_id)) {
+                OUTPUT(("   %s  [%s] >> [%s]", _MAGENTA("SKIP"), transf->program,
+                        transf->filename));
+                transf = (transf_t *)perfexpert_list_get_next(transf);
+                continue;
+            }
+
+            if (PERFEXPERT_SUCCESS != apply_one(transf)) {
+                OUTPUT(("   %s [%s] >> [%s]",
+                        _RED("Error: running code transformer"), transf->program,
+                        transf->filename));
+            }
+
+            switch ((int)*(transf->transf_result)) {
+                case PERFEXPERT_UNDEFINED:
+                    OUTPUT_VERBOSE((8, "   %s [%s] >> [%s]", _BOLDRED("UNDEF"),
+                                    transf->program, transf->filename));
+                    break;
+
+                case PERFEXPERT_FAILURE:
+                    OUTPUT_VERBOSE((8, "   %s  [%s] >> [%s]", _ERROR("FAIL"),
+                                    transf->program, transf->filename));
+                    break;
+
+                case PERFEXPERT_SUCCESS:
+                    OUTPUT_VERBOSE((8, "   %s    [%s] >> [%s]", _BOLDGREEN("OK"),
+                                    transf->program, transf->filename));
+                    fragment_id = transf->fragment_id;
+                    break;
+
+                case PERFEXPERT_ERROR:
+                    OUTPUT_VERBOSE((8, "   %s [%s] >> [%s]", _BOLDYELLOW("ERROR"),
+                                transf->program, transf->filename));
+                    break;
+
+                default:
+                    break;
+            }
+
+            /* Move on to the next test... */
             transf = (transf_t *)perfexpert_list_get_next(transf);
-            continue;
         }
-
-        if (PERFEXPERT_SUCCESS != apply_one(transf)) {
-            OUTPUT(("   %s [%s] >> [%s]",
-                    _RED("Error: running code transformer"), transf->program,
-                    transf->filename));
+        /* Free 'transfs' structure' */
+        while (PERFEXPERT_FALSE == perfexpert_list_is_empty(&transfs)) {
+            transf = (transf_t *)perfexpert_list_get_first(&transfs);
+            perfexpert_list_remove_item(&transfs, (perfexpert_list_item_t *)transf);
+            free(transf);
         }
-
-        switch ((int)*(transf->transf_result)) {
-            case PERFEXPERT_UNDEFINED:
-                OUTPUT_VERBOSE((8, "   %s [%s] >> [%s]", _BOLDRED("UNDEF"),
-                                transf->program, transf->filename));
-                break;
-
-            case PERFEXPERT_FAILURE:
-                OUTPUT_VERBOSE((8, "   %s  [%s] >> [%s]", _ERROR("FAIL"),
-                                transf->program, transf->filename));
-                break;
-
-            case PERFEXPERT_SUCCESS:
-                OUTPUT_VERBOSE((8, "   %s    [%s] >> [%s]", _BOLDGREEN("OK"),
-                                transf->program, transf->filename));
-                fragment_id = transf->fragment_id;
-                break;
-
-            case PERFEXPERT_ERROR:
-                OUTPUT_VERBOSE((8, "   %s [%s] >> [%s]", _BOLDYELLOW("ERROR"),
-                                transf->program, transf->filename));
-                break;
-
-            default:
-                break;
-        }
-
-        /* Move on to the next test... */
-        transf = (transf_t *)perfexpert_list_get_next(transf);
     }
-    /* Free 'transfs' structure' */
-    while (PERFEXPERT_FALSE == perfexpert_list_is_empty(transfs)) {
-        transf = (transf_t *)perfexpert_list_get_first(transfs);
-        perfexpert_list_remove_item(transfs, (perfexpert_list_item_t *)transf);
-        free(transf);
-    }
-    perfexpert_list_destruct(transfs);
-    free(transfs);
 
+    perfexpert_list_destruct(&transfs);
+//    free(transfs);
     OUTPUT_VERBOSE((4, "==="));
-
     return PERFEXPERT_SUCCESS;
 }
 

@@ -53,6 +53,7 @@ int recommender_main(int argc, char** argv) {
     perfexpert_list_t *segments;
     segment_t *item;
     function_t *function;
+    int rc;
     
     /* Set default values for globals */
     globals = (globals_t) {
@@ -60,7 +61,7 @@ int recommender_main(int argc, char** argv) {
         .verbose_level    = 0,                    // int
         .use_stdin        = 0,                    // int
         .use_stdout       = 1,                    // int
-        .automatic      = 0,                    // int
+        .automatic        = 0,                    // int
         .inputfile        = NULL,                 // char *
         .outputfile       = PERFEXPERT_RECO_FILE, // char *
         .outputfile_FP    = stdout,               // FILE *
@@ -73,7 +74,8 @@ int recommender_main(int argc, char** argv) {
         .metrics_table    = METRICS_TABLE,        // char *
         .perfexpert_pid      = (unsigned long long int)getpid(), // int
         .fragments_dir    = NULL,                 // char *
-        .rec_count        = 3                     // int
+        .rec_count        = 3,                    // int
+        .recommendations  = 0                     // int
     };
     globals.dbfile = (char *)malloc(strlen(RECOMMENDATION_DB) +
                                     strlen(PERFEXPERT_VARDIR) + 2);
@@ -146,7 +148,7 @@ int recommender_main(int argc, char** argv) {
                 return PERFEXPERT_ERROR;
             } else {
                 if (PERFEXPERT_SUCCESS != parse_segment_params(segments,
-                                                            inputfile_FP)) {
+                                                               inputfile_FP)) {
                     OUTPUT(("%s", _ERROR("Error: parsing input params")));
                     exit(PERFEXPERT_ERROR);
                 }
@@ -192,7 +194,7 @@ int recommender_main(int argc, char** argv) {
             exit(PERFEXPERT_ERROR);
         }
         bzero(globals.outputfile, strlen(globals.workdir) +
-              strlen(PERFEXPERT_RECO_FILE) + 1);
+              strlen(PERFEXPERT_RECO_FILE) + 2);
         strcat(globals.outputfile, globals.workdir);
         strcat(globals.outputfile, "/");
         strcat(globals.outputfile, PERFEXPERT_RECO_FILE);
@@ -272,9 +274,16 @@ int recommender_main(int argc, char** argv) {
         /* Step 3: query DB for recommendations */
         OUTPUT_VERBOSE((7, "=== %s", _BLUE("STEP 3")));
 
-        if (PERFEXPERT_SUCCESS != select_recommendations(item)) {
-            OUTPUT(("%s", _ERROR("Error: selecting recommendations")));
-            exit(PERFEXPERT_ERROR);
+        if (rc = select_recommendations(item)) {
+            if (PERFEXPERT_ERROR == rc) {
+                OUTPUT(("%s", _ERROR("Error: selecting recommendations")));
+                exit(PERFEXPERT_ERROR);
+            }
+
+            if (PERFEXPERT_NO_REC == rc) {
+                OUTPUT(("%s", _ERROR("Sorry, we have no recommendations.")));
+                exit(PERFEXPERT_NO_REC);
+            }
         }
         
         if (0 == globals.automatic) {
@@ -1015,6 +1024,9 @@ static int output_recommendations(void *not_used, int col_count,
      */
     OUTPUT_VERBOSE((7, "%s", _GREEN("new recommendation found")));
     
+    /* Increase the recommendations counter */
+    globals.recommendations++;
+
     if (0 == globals.automatic) {
         /* Pretty print for the user */
         fprintf(globals.outputfile_FP, "#\n# This is a possible recommendation");
@@ -1378,7 +1390,12 @@ static int select_recommendations(segment_t *segment) {
 
     OUTPUT_VERBOSE((7, "==="));
     
-    return PERFEXPERT_SUCCESS;
+    /* If there was not recommendations, exit with an error */
+    if (0 == globals.recommendations) {
+        return PERFEXPERT_NO_REC;
+    } else {
+        return PERFEXPERT_SUCCESS;
+    }
 }
 
 #ifdef __cplusplus

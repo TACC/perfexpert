@@ -225,15 +225,6 @@ void recommenderTraversal::visit(SgNode *node) {
 
     fileInfo = node->get_file_info();
 
-    /* Find code fragment for bottlenecks type 'loop' in Fortran */
-    if ((NULL != (f_loop = isSgFortranDo(node))) &&
-        (0 == strncmp("loop", item->type, 4)) &&
-        (fileInfo->get_line() == item->line_number)) {
-        /* Found a Fortran loop on the exact line number */
-        node_found = 1;
-        attachComment(f_loop, "PerfExpert working here");
-    }
-
     /* Find code fragment for bottlenecks type 'loop' in C */
     if ((NULL != (c_loop = isSgForStatement(node))) &&
         (0 == strncmp("loop", item->type, 4)) &&
@@ -395,7 +386,6 @@ void recommenderTraversal::visit(SgNode *node) {
     if (1 == node_found) {
         OUTPUT_VERBOSE((8, "found a (%s) on (%s:%d)", node->sage_class_name(),
                         fileInfo->get_filename(), fileInfo->get_line()));
-
         output_fragment(node, fileInfo, item);
     }
 }
