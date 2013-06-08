@@ -757,7 +757,7 @@ int main(int argc, char* argv[])
 			float l2_reuse = 100.0 * ptr->reuse[1] / reuse;
 			float l3_reuse = 100.0 * ptr->reuse[2] / reuse;
 
-			if (info.pprint)
+			if (!info.bot)
 			{
 				int i, max;
 				printf ("================================================================================\n");

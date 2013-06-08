@@ -7,13 +7,13 @@
 struct argp_option options[5] =
 {
 	{ "debug", 'd', NULL, 0, "Output debug information", 0 },
-	{ "pretty-print", 'p', NULL, 0, "Print output in a more friendly format", 0 },
+	{ "iamabot", 'b', NULL, 0, "Print output in an easy-to-parse format", 0 },
 	{ 0, 0, 0, 0, 0, 0 }
 };
 
 struct arg_info
 {
-	bool pprint;
+	bool bot;
 	char *location;
 	short showDebug;
 };
@@ -24,7 +24,7 @@ static error_t parse_opt(int key, char* arg, struct argp_state *state)
 
 	switch(key)
 	{
-		case 'p':	info->pprint = true;		break;
+		case 'b':	info->bot = true;		break;
 		case 'd':	info->showDebug = true;		break;
 
 		case ARGP_KEY_ARG:
