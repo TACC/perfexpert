@@ -41,7 +41,7 @@ showHelp() {
     echo "  -s --source FILE    Use FILE as the source code"
     echo "  -m --makefile       Use 'make' to compile source code"
     echo "  -q --quiet          Disable verbose mode"
-    echo "  -v --verbose        Enable verbose mode"
+    echo "  -v --verbose        Enable verbose mode (default)"
     echo "  -w --workdir DIR    Use DIR as temporary directory"
     echo "  -g --left-garbage   Do not remove the temporary directory"
     echo "  -h --help           Show this message"
@@ -59,7 +59,9 @@ perfexpert_run_exp() {
     PERFEXPERT_RUN_EXP_CMD+=" ${USER_BINARY}"
     PERFEXPERT_RUN_EXP_CMD+=" &> ${WORKDIR}/perfexpert_run_exp.output.txt"
 
-    echo -n "[perfexpert.sh] Step 1 of 7: Running PerfExpert measurements phase (this could take a while)..." >> ${VERBOSE}
+    if [ x"${VERBOSE}" == x"yes" ]; then
+        echo -n "[perfexpert.sh] Step 1 of 7: Running PerfExpert measurements phase (this could take a while)..."
+    fi
 
     if [ x"${DEBUG}" == x"yes" ]; then
         echo "[perfexpert.sh] Running: ${PERFEXPERT_RUN_EXP_CMD}" >> ${LOGFILE}
@@ -68,9 +70,13 @@ perfexpert_run_exp() {
     eval ${PERFEXPERT_RUN_EXP_CMD}
 
     if [ 0 == $? ]; then
-        echo " ok!" >> ${VERBOSE}
+        if [ x"${VERBOSE}" == x"yes" ]; then
+            echo " ok!"
+        fi
     else
-        echo " fail :(" >> ${VERBOSE}
+        if [ x"${VERBOSE}" == x"yes" ]; then
+            echo " fail :("
+        fi
         echo "[perfexpert.sh] Error: running PerfExpert (run_exp)" >> ${LOGFILE}
         echo "[perfexpert.sh] Error: running PerfExpert (run_exp)"
         exit 1
@@ -86,7 +92,9 @@ analyzer() {
     ANALYZER_CMD+=" ${WORKDIR}/perfexpert-experiment.xml"
     ANALYZER_CMD+=" &> ${WORKDIR}/analyzer.output.txt"
 
-    echo -n "[perfexpert.sh] Step 2 of 7: Running PerfExpert analysis phase..." >> ${VERBOSE}
+    if [ x"${VERBOSE}" == x"yes" ]; then
+        echo -n "[perfexpert.sh] Step 2 of 7: Running PerfExpert analysis phase..."
+    fi
 
     if [ x"${DEBUG}" == x"yes" ]; then
         echo "[perfexpert.sh] Running: ${ANALYZER_CMD}" >> ${LOGFILE}
@@ -95,9 +103,13 @@ analyzer() {
     eval ${ANALYZER_CMD}
 
     if [ 0 == $? ]; then
-        echo " ok!" >> ${VERBOSE}
-    else
-        echo " fail :(" >> ${VERBOSE}
+        if [ x"${VERBOSE}" == x"yes" ]; then
+            echo " ok!"
+        fi
+    else 
+        if [ x"${VERBOSE}" == x"yes" ]; then
+            echo " fail :("
+        fi
         echo "[perfexpert.sh] Error: running PerfExpert (analyzer)" >> ${LOGFILE}
         echo "[perfexpert.sh] Error: running PerfExpert (analyzer)"
         exit 1
@@ -108,7 +120,9 @@ analyzer() {
     ANALYZER_CMD2+=" ${WORKDIR}/perfexpert-experiment.xml"
     ANALYZER_CMD2+=" &> ${WORKDIR}/analyzer2.output.txt"
 
-    echo -n "[perfexpert.sh] Step 3 of 7: Running PerfExpert second analysis phase..." >> ${VERBOSE}
+    if [ x"${VERBOSE}" == x"yes" ]; then
+        echo -n "[perfexpert.sh] Step 3 of 7: Running PerfExpert second analysis phase..."
+    fi
 
     if [ x"${DEBUG}" == x"yes" ]; then
         echo "[perfexpert.sh] Running: ${ANALYZER_CMD2}" >> ${LOGFILE}
@@ -117,9 +131,13 @@ analyzer() {
     eval ${ANALYZER_CMD2}
 
     if [ 0 == $? ]; then
-        echo " ok!" >> ${VERBOSE}
+        if [ x"${VERBOSE}" == x"yes" ]; then
+            echo " ok!"
+        fi
     else
-        echo " fail :(" >> ${VERBOSE}
+        if [ x"${VERBOSE}" == x"yes" ]; then
+            echo " fail :("
+        fi
         echo "[perfexpert.sh] Error: running PerfExpert (2nd analyzer)" >> ${LOGFILE}
         echo "[perfexpert.sh] Error: running PerfExpert (2nd analyzer)"
         exit 1
@@ -137,7 +155,9 @@ recommender() {
     RECOMMENDER_CMD+=" --database $HOME/var/recommendation.db"
     RECOMMENDER_CMD+=" &> ${WORKDIR}/recommender.output.txt"
 
-    echo -n "[perfexpert.sh] Step 4 of 7: Looking for recommendations..." >> ${VERBOSE}
+    if [ x"${VERBOSE}" == x"yes" ]; then
+        echo -n "[perfexpert.sh] Step 4 of 7: Looking for recommendations..."
+    fi
 
     if [ x"${DEBUG}" == x"yes" ]; then
         echo "[perfexpert.sh] Running: ${RECOMMENDER_CMD}" >> ${LOGFILE}
@@ -146,9 +166,13 @@ recommender() {
     eval ${RECOMMENDER_CMD}
 
     if [ 0 == $? ]; then
-        echo " ok!" >> ${VERBOSE}
+        if [ x"${VERBOSE}" == x"yes" ]; then
+            echo " ok!"
+        fi
     else
-        echo " fail :(" >> ${VERBOSE}
+        if [ x"${VERBOSE}" == x"yes" ]; then
+            echo " fail :("
+        fi
         echo "[perfexpert.sh] Error: running Recommender" >> ${LOGFILE}
         echo "[perfexpert.sh] Error: running Recommender"
         exit 1
@@ -165,7 +189,10 @@ perfexpert_pr() {
     PERFEXPERT_PR_CMD+=" --automatic ${WORKDIR}"
     PERFEXPERT_PR_CMD+=" &> ${WORKDIR}/perfexpert_pr.output.txt"
 
-    echo -n "[perfexpert.sh] Step 5 of 7: Testing feasibility of recommendations..." >> ${VERBOSE}
+    if [ x"${VERBOSE}" == x"yes" ]; then
+        echo -n "[perfexpert.sh] Step 5 of 7: Testing feasibility of recommendations..."
+    fi
+
     if [ x"${DEBUG}" == x"yes" ]; then
         echo "[perfexpert.sh] Running: ${PERFEXPERT_PR_CMD}" >> ${LOGFILE}
     fi
@@ -173,11 +200,16 @@ perfexpert_pr() {
     eval ${PERFEXPERT_PR_CMD}
 
     if [ 0 == $? ]; then
-        echo " ok!" >> ${VERBOSE}
+        if [ x"${VERBOSE}" == x"yes" ]; then
+            echo " ok!"
+        fi
     else
-        echo " fail :(" >> ${VERBOSE}
+        if [ x"${VERBOSE}" == x"yes" ]; then
+            echo " fail :("
+        fi
+
         echo "[perfexpert.sh] Error: running PerfExpert:PR" >> ${LOGFILE}
-        echo "[perfexpert.sh] Error: running PerfExpert:PR"
+        #echo "[perfexpert.sh] Error: running PerfExpert:PR"
 
         echo "[perfexpert.sh] Sorry, we ran out of automatic transformations."
         echo "[perfexpert.sh] Here are some optimizations we recommend:"
@@ -195,7 +227,9 @@ perfexpert_ct() {
     PERFEXPERT_CT_CMD+=" --automatic ${WORKDIR}"
     PERFEXPERT_CT_CMD+=" &> ${WORKDIR}/perfexpert_ct.output.txt"
 
-    echo -n "[perfexpert.sh] Step 6 of 7: Applying code transformations..." >> ${VERBOSE}
+    if [ x"${VERBOSE}" == x"yes" ]; then
+        echo -n "[perfexpert.sh] Step 6 of 7: Applying code transformations..."
+    fi
 
     if [ x"${DEBUG}" == x"yes" ]; then
         echo "[perfexpert.sh] Running: ${PERFEXPERT_CT_CMD}" >> ${LOGFILE}
@@ -204,9 +238,13 @@ perfexpert_ct() {
     eval ${PERFEXPERT_CT_CMD}
 
     if [ 0 == $? ]; then
-        echo " ok!" >> ${VERBOSE}
+        if [ x"${VERBOSE}" == x"yes" ]; then
+            echo " ok!"
+        fi
     else
-        echo " fail :(" >> ${VERBOSE}
+        if [ x"${VERBOSE}" == x"yes" ]; then
+            echo " fail :("
+        fi
         echo "[perfexpert.sh] Error: running CT" >> ${LOGFILE}
         echo "[perfexpert.sh] Error: running CT"
 
@@ -227,7 +265,9 @@ perfexpert_ci() {
     PERFEXPERT_CI_CMD+=" --outputdir ${CI_OUTPUT_DIR}"
     PERFEXPERT_CI_CMD+=" &> ${WORKDIR}/perfexpert_ci.output.txt"
 
-    echo -n "[perfexpert.sh] Step 7 of 7: Integrating source code..." >> ${VERBOSE}
+    if [ x"${VERBOSE}" == x"yes" ]; then
+        echo -n "[perfexpert.sh] Step 7 of 7: Integrating source code..."
+    fi
 
     if [ x"${DEBUG}" == x"yes" ]; then
         echo "[perfexpert.sh] Running: ${PERFEXPERT_CI_CMD}" >> ${LOGFILE}
@@ -236,9 +276,13 @@ perfexpert_ci() {
     eval ${PERFEXPERT_CI_CMD}
 
     if [ 0 == $? ]; then
-        echo " ok!" >> ${VERBOSE}
+        if [ x"${VERBOSE}" == x"yes" ]; then
+            echo " ok!"
+        fi
     else
-        echo " fail :(" >> ${VERBOSE}
+        if [ x"${VERBOSE}" == x"yes" ]; then
+            echo " fail :("
+        fi
         echo "[perfexpert.sh] Error: running CI" >> ${LOGFILE}
         echo "[perfexpert.sh] Error: running CI"
 
@@ -260,7 +304,9 @@ compile() {
         COMPILE_CMD="${CC} ${CFLAGS} -o ${USER_BINARY} ${USER_SOURCE}"
     fi
 
-    echo -n "[perfexpert.sh] Compiling..." >> ${VERBOSE}
+    if [ x"${VERBOSE}" == x"yes" ]; then
+        echo -n "[perfexpert.sh] Compiling..."
+    fi
 
     if [ x"${DEBUG}" == x"yes" ]; then
         echo "[perfexpert.sh] Running: ${COMPILE_CMD}" >> ${LOGFILE}
@@ -269,9 +315,13 @@ compile() {
     eval ${COMPILE_CMD}
 
     if [ 0 == $? ]; then
-        echo " ok!" >> ${VERBOSE}
+        if [ x"${VERBOSE}" == x"yes" ]; then
+            echo " ok!"
+        fi
     else
-        echo " fail :(" >> ${VERBOSE}
+        if [ x"${VERBOSE}" == x"yes" ]; then
+            echo " fail :("
+        if
         echo "[perfexpert.sh] Error: compiling code" >> ${LOGFILE}
         echo "[perfexpert.sh] Error: compiling code"
         exit 1
@@ -306,7 +356,6 @@ eval set -- $args
 # Default values
 DEBUG="yes"
 LEFT_GARBAGE="no"
-VERBOSE="/dev/stdout"
 
 while getopts ":s:w:hgmqvr" option 2>/dev/null; do
     case $option in
@@ -319,13 +368,11 @@ while getopts ":s:w:hgmqvr" option 2>/dev/null; do
         ;;
 
         q)
-        DEBUG="no"
-        VERBOSE="/dev/null"
+        VERBOSE="no"
         ;;
 
         v)
-        DEBUG="yes"
-        VERBOSE="/dev/stdout"
+        VERBOSE="yes"
         ;;
 
         h)
