@@ -321,7 +321,7 @@ compile() {
     else
         if [ x"${VERBOSE}" == x"yes" ]; then
             echo " fail :("
-        if
+        fi
         echo "[perfexpert.sh] Error: compiling code" >> ${LOGFILE}
         echo "[perfexpert.sh] Error: compiling code"
         exit 1
