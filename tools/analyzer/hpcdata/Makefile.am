@@ -27,7 +27,7 @@
 
 # The following commands should use TAB, not SPACES
 all:
-	$(ANT_PROGRAM) -f build.xml
+	JAVA_TOOL_OPTIONS="-Xms256M -Xmx1G" $(ANT_PROGRAM) -f build.xml
 
 clean-local:
 	rm hpcdata.jar
