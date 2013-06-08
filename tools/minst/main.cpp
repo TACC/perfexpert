@@ -63,7 +63,7 @@ int main (int argc, char *argv[])
 
 	for (int i=1; i<argc; i++)
 	{
-		if (strstr(argv[i], "--minst:") == argv[i])	// If "--minst:" was found at the start of argv[i]
+		if (strstr(argv[i], "--macpo:") == argv[i])	// If "--macpo:" was found at the start of argv[i]
 		{
 			if (parseMinstArgument(argv[i], options) == -ERR_PARAMS)
 			{
