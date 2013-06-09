@@ -34,6 +34,7 @@ omp_lock_t var_lock;
 varMetrics* varMetricsHead = NULL;
 
 std::map<long, std::string> var_idx;
+metadata_info_t metadata_info={0};
 
 bool sort_function(stride_info_t v1, stride_info_t v2)
 {
@@ -531,6 +532,10 @@ chunk** readRecords(FILE* fp, short* setCounter, bool debugFlag /*, std::tr1::un
 
 		switch(dataNode.type_message)
 		{
+			case MSG_METADATA:
+				metadata_info = dataNode.metadata_info;
+				break;
+
 			case MSG_STREAM_INFO:
 				char stream_name[STREAM_LENGTH];
 				dst_len = MIN(STREAM_LENGTH-1, strlen(dataNode.stream_info.stream_name));
@@ -645,7 +650,21 @@ int main(int argc, char* argv[])
 	fclose(fp);
 
 	// Printing the header
-	printf ("=== MACPO ===\n");
+	if (metadata_info.binary_name[0] != (char) 0)
+	{
+		if (!info.bot)
+			printf ("MACPO :: Analyzing logs created from the binary %s at %02d/%02d/%04d %02d:%02d:%02d\n\n", metadata_info.binary_name, metadata_info.month, metadata_info.day, metadata_info.year, metadata_info.hour, metadata_info.min, metadata_info.sec);
+		else
+		{
+			printf ("macpo.binary_name=%s\n", metadata_info.binary_name);
+			printf ("macpo.month=%d\n", metadata_info.month);
+			printf ("macpo.day=%d\n", metadata_info.day);
+			printf ("macpo.year=%d\n", metadata_info.year);
+			printf ("macpo.hour=%d\n", metadata_info.hour);
+			printf ("macpo.min=%d\n", metadata_info.min);
+			printf ("macpo.sec=%d\n", metadata_info.sec);
+		}
+	}
 
 	// Print stream count (and if forced or count less than the threshold, then print stream names as well).
 	print_streams(info.bot, info.stream_names);

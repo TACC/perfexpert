@@ -3,6 +3,7 @@
 #define	_GNU_SOURCE
 #include <sched.h>
 
+#include <time.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -203,6 +204,30 @@ void indigo__init_()
 	// Now create the symlink
 	if (symlink(szFilename, "macpo.out") == -1)
 		perror ("MACPO :: Failed to create symlink \"macpo.out\"");
+
+	// Now that we are done handling the critical stuff, write the metadata log to the macpo.out file
+	node_t node;
+	node.type_message = MSG_METADATA;
+	size_t exe_path_len = readlink ("/proc/self/exe", node.metadata_info.binary_name, STRING_LENGTH-1);
+	if (exe_path_len == -1)
+		perror ("MACPO :: Failed to read name of the binary from /proc/self/exe");
+	else
+	{
+		// Write the terminating character
+		node.metadata_info.binary_name[exe_path_len]='\0';
+
+		time_t t;
+		time(&t);
+		struct tm *ltm = localtime(&t);
+
+		node.metadata_info.day = ltm->tm_mday;
+		node.metadata_info.month = ltm->tm_mon+1;
+		node.metadata_info.year = ltm->tm_year+1900;
+		node.metadata_info.hour = ltm->tm_hour;
+		node.metadata_info.min = ltm->tm_min;
+		node.metadata_info.sec = ltm->tm_sec;
+		write(fd, &node, sizeof(node_t));
+	}
 
 	// Set up the signal handler
 	signal(SIGPROF, signalHandler);
