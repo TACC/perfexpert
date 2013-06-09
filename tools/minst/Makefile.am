@@ -32,6 +32,6 @@ dist_bin_SCRIPTS = macpo.sh
 
 minst_SOURCES = minst.cpp instrumentor.cpp main.cpp splitter.cpp scourer.cpp \
 	expander.cpp stream_counter.cpp
-minst_CXXFLAGS = -Wno-deprecated -I$(srcdir)/common
+minst_CXXFLAGS = -Wno-deprecated 
 
 # EOF

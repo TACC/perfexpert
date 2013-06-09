@@ -228,7 +228,7 @@ static int insert_function(function_t *function) {
 
         if (function->line_number == line_number) {
             fprintf(new_source_file_FP,
-                    "/* PERFEXPERT: the following function was changed. Don't");
+                    "/* PERFEXPERT: the following function has changed. Don't");
             fprintf(new_source_file_FP,
                     " worry, we created a\n *             copy of your old ");
             fprintf(new_source_file_FP,

@@ -48,6 +48,8 @@ extern "C" {
 #define PERFEXPERT_ERROR      1
 /** PERFEXPERT_NO_REC should be used when we run out of recommendation */
 #define PERFEXPERT_NO_REC     2
+/** PERFEXPERT_NO_PAT should be used when PR does not recognize any transformation */
+#define PERFEXPERT_NO_PAT     3
 
 #define PERFEXPERT_TRUE   1 /**< used to return boolean values */
 #define PERFEXPERT_FALSE  0 /**< used to return boolean values */

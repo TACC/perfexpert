@@ -1,7 +1,7 @@
 
 #include <rose.h>
 
-#include "record.h"
+#include "./common/record.h"
 #include "expander.h"
 #include "scourer.h"
 

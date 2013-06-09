@@ -14,7 +14,7 @@
 
 #include <ext/hash_map>
 
-#include "record.h"
+#include "../common/record.h"
 
 #include "avl.h"
 #include "avl_code.h"

@@ -36,7 +36,8 @@
 ###############################################################################
 #         12345678901234567890123456789012345678901234567890123456789012345678901234567890
 showHelp() {
-    echo "Usage: perfexpert [-ghmvq] [-w DIR] [-s FILE] program_executable [program_arguments]"
+    echo "Usage: perfexpert [-ghmvq] [-w DIR] [-s FILE] [-r COUNT] "
+    echo "                   program_executable [program_arguments]"
     echo
     echo "  -s --source FILE    Use FILE as the source code"
     echo "  -m --makefile       Use 'make' to compile source code"
@@ -45,8 +46,9 @@ showHelp() {
     echo "  -w --workdir DIR    Use DIR as temporary directory"
     echo "  -g --left-garbage   Do not remove the temporary directory"
     echo "  -h --help           Show this message"
+    echo "  -r --recommend      Use COUNT as the number of recommendation to show"
     echo ""
-    echo "  Use CC, CFLAGS and LDFLAGS to select compiler and compilation and linkage flags"
+    echo "  Use CC, CFLAGS and LDFLAGS to select compiler and compilation/linkage flags"
     echo ""
 }
 
@@ -155,6 +157,7 @@ recommender() {
     RECOMMENDER_CMD+=" --automatic ${WORKDIR}"
     RECOMMENDER_CMD+=" --sourcefile ${USER_SOURCE}"
     RECOMMENDER_CMD+=" --database $HOME/var/recommendation.db"
+    RECOMMENDER_CMD+=" --recommendations ${REC_COUNT}"
     RECOMMENDER_CMD+=" &> ${WORKDIR}/recommender.output.txt"
 
     if [ x"${VERBOSE}" == x"yes" ]; then
@@ -175,6 +178,8 @@ recommender() {
     elif [ 2 == ${RC} ]; then
         echo " no :("
         echo "[perfexpert.sh] Sorry, we have no recommendations for this code"
+        echo "[perfexpert.sh] Here are our analysis for the code bottlenecks:"
+        cat ${WORKDIR}/analyzer2.output.txt
         exit 0
     else
         if [ x"${VERBOSE}" == x"yes" ]; then
@@ -207,25 +212,31 @@ perfexpert_pr() {
 
     eval ${PERFEXPERT_PR_CMD}
 
-    if [ 0 == $? ]; then
+    RC=$?
+    if [ 0 == ${RC} ]; then
         if [ x"${VERBOSE}" == x"yes" ]; then
             echo " ok!"
         fi
+    elif [ 3 == ${RC} ]; then
+        echo " no :("
+        echo "[perfexpert.sh] Sorry, no pattern recognizer matched this code fragment"
+        echo "[perfexpert.sh] Here are our analysis for the code bottlenecks:"
+        cat ${WORKDIR}/analyzer2.output.txt
+        echo
+        echo
+        echo
+        echo "[perfexpert.sh] Here are some optimizations we recommend:"
+        ${RECOMMENDER} --inputfile ${WORKDIR}/analyzer.output.txt \
+                       --database $HOME/var/recommendation.db \
+                       --recommendations ${REC_COUNT}
+        exit 0
     else
         if [ x"${VERBOSE}" == x"yes" ]; then
             echo " fail :("
         fi
 
         echo "[perfexpert.sh] Error: running PerfExpert:PR" >> ${LOGFILE}
-        #echo "[perfexpert.sh] Error: running PerfExpert:PR"
-
-        echo "[perfexpert.sh] Sorry, we ran out of automatic transformations."
-        echo "[perfexpert.sh] Here are our analysis for the code bottlenecks:"
-        cat ${WORKDIR}/analyzer2.output.txt
-        echo "[perfexpert.sh]"
-        echo "[perfexpert.sh] Here are some optimizations we recommend:"
-        ${RECOMMENDER} --inputfile ${WORKDIR}/analyzer.output.txt \
-                       --database $HOME/var/recommendation.db
+        echo "[perfexpert.sh] Error: running PerfExpert:PR"
         exit 1
     fi
 }
@@ -263,10 +274,13 @@ perfexpert_ct() {
         echo "[perfexpert.sh] Sorry, we ran out of automatic transformations."
         echo "[perfexpert.sh] Here are our analysis for the code bottlenecks:"
         cat ${WORKDIR}/analyzer2.output.txt
-        echo "[perfexpert.sh]"
+        echo
+        echo
+        echo
         echo "[perfexpert.sh] Here are some optimizations we recommend:"
         ${RECOMMENDER} --inputfile ${WORKDIR}/analyzer.output.txt \
-                       --database $HOME/var/recommendation.db
+                       --database $HOME/var/recommendation.db \
+                       --recommendations ${REC_COUNT}
         exit 1
     fi
 }
@@ -305,10 +319,13 @@ perfexpert_ci() {
         echo "[perfexpert.sh] Sorry, we ran out of automatic transformations."
         echo "[perfexpert.sh] Here are our analysis for the code bottlenecks:"
         cat ${WORKDIR}/analyzer2.output.txt
-        echo "[perfexpert.sh]"
+        echo
+        echo
+        echo
         echo "[perfexpert.sh] Here are some optimizations we recommend:"
         ${RECOMMENDER} --inputfile ${WORKDIR}/analyzer.output.txt \
-                       --database $HOME/var/recommendation.db
+                       --database $HOME/var/recommendation.db \
+                       --recommendations ${REC_COUNT}
         exit 1
     fi
 }
@@ -318,14 +335,15 @@ compile() {
     # Compilation flags
     CFLAGS+=" -g -O3 -fno-inline "
 
+    if [ x"${VERBOSE}" == x"yes" ]; then
+        echo -n "[perfexpert.sh] Compiling..."
+    fi
+
     if [ x"${USE_MAKEFILE}" == x"yes" ]; then
+        echo
         COMPILE_CMD="make"
     else
         COMPILE_CMD="${CC} ${CFLAGS} -o ${USER_BINARY} ${USER_SOURCE}"
-    fi
-
-    if [ x"${VERBOSE}" == x"yes" ]; then
-        echo -n "[perfexpert.sh] Compiling..."
     fi
 
     if [ x"${DEBUG}" == x"yes" ]; then
@@ -382,13 +400,14 @@ THRESHOLD="0.1"
 CC="${CC}"
 CFLAGS="${CFLAGS}"
 LDFLAGS="${LDFLAGS}"
+REC_COUNT=3
 
 # Select compiler
 if [ x"${CC}" == x"" ]; then
     CC="gcc"
 fi
 
-while getopts ":s:w:hgmqvrt:" option 2>/dev/null; do
+while getopts ":s:w:hgmqvr:t:" option 2>/dev/null; do
     case $option in
         s)
         USER_SOURCE="${OPTARG[@]}"
@@ -413,6 +432,7 @@ while getopts ":s:w:hgmqvrt:" option 2>/dev/null; do
 
         r)
         SHOW_RECOMMENDATIONS="yes"
+        REC_COUNT="${OPTARG[@]}"
         ;;
 
         m)
@@ -489,6 +509,7 @@ if [ x"${USER_SOURCE}" == x ]; then
         echo "[perfexpert.sh] WORKDIR=${WORKDIR}" >> ${LOGFILE}
         echo "[perfexpert.sh] LOGFILE=${WORKDIR}/perfexpert.log" >> ${LOGFILE}
         echo "[perfexpert.sh] THRESHOLD=${THRESHOLD}" >> ${LOGFILE}
+        echo "[perfexpert.sh] REC_COUNT=${REC_COUNT}" >> ${LOGFILE}
         echo "[perfexpert.sh]" >> ${LOGFILE}
     fi
 
@@ -497,7 +518,8 @@ if [ x"${USER_SOURCE}" == x ]; then
 
     if [ x"${SHOW_RECOMMENDATIONS}" == x"yes" ]; then
         ${RECOMMENDER} --inputfile ${WORKDIR}/analyzer.output.txt \
-                       --database $HOME/var/recommendation.db
+                       --database $HOME/var/recommendation.db \
+                       --recommendations ${REC_COUNT}
     else
         cat ${WORKDIR}/analyzer2.output.txt
     fi
@@ -539,6 +561,7 @@ while [ 1 ]; do
         echo "[perfexpert.sh] WORKDIR=${WORKDIR}" >> ${LOGFILE}
         echo "[perfexpert.sh] LOGFILE=${WORKDIR}/perfexpert.log" >> ${LOGFILE}
         echo "[perfexpert.sh] THRESHOLD=${THRESHOLD}" >> ${LOGFILE}
+        echo "[perfexpert.sh] REC_COUNT=${REC_COUNT}" >> ${LOGFILE}
         echo "[perfexpert.sh] CI_OUTPUT_DIR=${CI_OUTPUT_DIR}" >> ${LOGFILE}
         echo "[perfexpert.sh]" >> ${LOGFILE}
     fi
@@ -557,4 +580,3 @@ while [ 1 ]; do
     mv ${CI_OUTPUT_DIR}/${USER_SOURCE}.new ${CI_OUTPUT_DIR}/${USER_SOURCE}
     USER_SOURCE="${CI_OUTPUT_DIR}/${USER_SOURCE}"
 done
-

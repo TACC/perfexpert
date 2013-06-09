@@ -60,6 +60,7 @@ int main(int argc, char** argv) {
     fragment_t *fragment;
     recommendation_t *recommendation;
     recognizer_t *recognizer;
+    int rc;
     
     /* Set default values for globals */
     globals = (globals_t) {
@@ -131,9 +132,16 @@ int main(int argc, char** argv) {
     }
 
     /* Test the pattern recognizers */
-    if (PERFEXPERT_SUCCESS != test_recognizers(fragments)) {
-        OUTPUT(("%s", _ERROR("Error: testing pattern recognizers")));
-        exit(PERFEXPERT_ERROR);
+    if (rc = test_recognizers(fragments)) {
+        if (PERFEXPERT_ERROR == rc) {
+            OUTPUT(("%s", _ERROR("Error: testing pattern recognizers")));
+            exit(PERFEXPERT_ERROR);
+        }
+
+        if (PERFEXPERT_NO_PAT == rc) {
+            OUTPUT(("%s", _GREEN("Sorry, no pattern recognizer matches")));
+            exit(PERFEXPERT_NO_PAT);
+        }
     }
 
     /* Output results */
@@ -735,6 +743,7 @@ static int test_recognizers(perfexpert_list_t *fragments_p) {
     perfexpert_list_t tests;
     test_t *test;
     int fragment_id = 0;
+    int positive_tests = 0;
 
 //    tests = (perfexpert_list_t *)malloc(sizeof(perfexpert_list_t));
 //    if (NULL == tests) {
@@ -868,6 +877,7 @@ static int test_recognizers(perfexpert_list_t *fragments_p) {
                     OUTPUT_VERBOSE((8, "   %s    [%s] >> [%s]", _BOLDGREEN("OK"),
                                     test->program, test->fragment_file));
                     fragment_id = test->fragment_id;
+                    positive_tests++;
                     break;
                 
                 case PERFEXPERT_ERROR:
@@ -895,7 +905,11 @@ static int test_recognizers(perfexpert_list_t *fragments_p) {
 
     OUTPUT_VERBOSE((4, "==="));
 
-    return PERFEXPERT_SUCCESS;
+    if (0 == positive_tests) {
+        return PERFEXPERT_NO_PAT;
+    } else {
+        return PERFEXPERT_SUCCESS;        
+    }
 }
 
 /* test_one */

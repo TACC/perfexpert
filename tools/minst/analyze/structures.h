@@ -8,7 +8,7 @@
 #include <ext/hash_map>
 
 #include "cache_config.h"
-#include "record.h"
+#include "../common/record.h"
 
 #define	STRING_LEN	32
 #define CHUNK_SIZE	10240

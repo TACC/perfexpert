@@ -54,6 +54,7 @@ int recommender_main(int argc, char** argv) {
     segment_t *item;
     function_t *function;
     int rc;
+    int we_have_recommendations = 0;
     
     /* Set default values for globals */
     globals = (globals_t) {
@@ -281,10 +282,15 @@ int recommender_main(int argc, char** argv) {
             }
 
             if (PERFEXPERT_NO_REC == rc) {
-                OUTPUT(("%s", _ERROR("Sorry, we have no recommendations.")));
-                exit(PERFEXPERT_NO_REC);
+                OUTPUT(("%s", _GREEN("Sorry, we have no recommendations")));
+
+                /* Move to the next code bottleneck */
+                item = (segment_t *)perfexpert_list_get_next(item);
+                continue;
             }
         }
+
+        we_have_recommendations = 1;
         
         if (0 == globals.automatic) {
             fprintf(globals.outputfile_FP, "\n");
@@ -306,6 +312,10 @@ int recommender_main(int argc, char** argv) {
 #endif
         /* Move to the next code bottleneck */
         item = (segment_t *)perfexpert_list_get_next(item);
+    }
+
+    if (0 == we_have_recommendations) {
+        exit(PERFEXPERT_NO_REC);
     }
 
     /* Step 5: If we are using an output file, close it! (also close DB) */
@@ -1163,6 +1173,9 @@ static int select_recommendations(segment_t *segment) {
     char temp_str[BUFFER_SIZE];
     double weight = 0;
 
+    /* Reset the number of recommendations */
+    globals.recommendations = 0;
+
     perfexpert_list_construct((perfexpert_list_t *) &(segment->functions));
     
     OUTPUT_VERBOSE((7, "=== %s", _BLUE("Querying recommendation DB")));
@@ -1260,7 +1273,7 @@ static int select_recommendations(segment_t *segment) {
                  * their types are SQLITE_INTEGER and SQLITE_FLOAT respectivelly
                  */
                 if (SQLITE_INTEGER != sqlite3_column_type(statement, 0)) {
-                    OUTPUT(("%s", _ERROR("The first column of a recommendation function returned a type different than double. The result of this function will be ignored.")));
+                    OUTPUT(("%s", _ERROR("The first column of a recommendation function returned a type different than integer. The result of this function will be ignored.")));
                     continue;
                 }
                 if (SQLITE_FLOAT != sqlite3_column_type(statement, 1)) {
@@ -1341,7 +1354,7 @@ static int select_recommendations(segment_t *segment) {
     }
 
     /* Calculate the normalized rank of recommendations, should use weights? */
-    // TODO: someday, I will add the weighting system here
+    // TODO: someday, I will add the weighting system here (Leo)
 
     /* Select top-N recommendations, output them besides the pattern */
     bzero(sql, BUFFER_SIZE);

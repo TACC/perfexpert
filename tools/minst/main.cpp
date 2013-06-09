@@ -2,7 +2,7 @@
 #include <rose.h>
 #include <stdio.h>
 
-#include "record.h"
+#include "./common/record.h"
 #include "minst.h"
 
 int parseMinstArgument(char* arg, options_t& options)

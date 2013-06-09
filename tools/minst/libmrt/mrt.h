@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <signal.h>
 
-#include "record.h"
+#include "../common/record.h"
 
 #define	AWAKE_SEC		0
 
