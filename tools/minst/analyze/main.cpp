@@ -644,6 +644,9 @@ int main(int argc, char* argv[])
 	if (info.showDebug)	fprintf (stderr, "Finished reading all records...\n");
 	fclose(fp);
 
+	// Printing the header
+	printf ("=== MACPO ===\n");
+
 	// Print stream count (and if forced or count less than the threshold, then print stream names as well).
 	print_streams(info.bot, info.stream_names);
 
@@ -800,44 +803,23 @@ int main(int argc, char* argv[])
 				int i, max;
 				printf ("\n================================================================================\n");
 				printf ("Var \"%s\", seen %ld times, estimated to cost %.2f cycles on every access\n", var_name.c_str(), ptr->tot_count, avg_cpa);
-				if (stride_list.size() > 0)
+
+				long count_sum=0;
+				for (int i=0; i<3 && i<stride_list.size(); i++)
+					count_sum += stride_list[i].second;
+
+				if (count_sum > 0)
 				{
-					long total=0, stride_count=0;
-					printf ("stacked chart for strides ");
-					switch(stride_list.size())
-					{
-						case 1:
-							printf ("a=%03ld", stride_list[0].first);
-							stride_count = stride_list[0].second;
-							break;
-						case 2:
-							printf ("a=%03ld,b=%03ld", stride_list[0].first, stride_list[1].first);
-							stride_count = stride_list[0].second + stride_list[1].second;
-							break;
-
-						case 3:
-						default:
-							printf ("a=%03ld,b=%03ld,c=%03ld", stride_list[0].first, stride_list[1].first, stride_list[2].first);
-							stride_count = stride_list[0].second + stride_list[1].second + stride_list[2].second;
-							break;
-					}
-					printf (": [");
-
-					// Draw the stacked plot using ASCII art
-					for (i=0; i<3 && i<stride_list.size(); i++)
-					{
-						max = ceil(40.0f*((float) stride_list[i].second)/stride_count);
-						for (int j=0; j<max; j++)
-							printf ("%c", 'a'+i);
-
-						total += max;
-					}
-
-					while (total++ < 40)
-						printf (" ");
-
-					printf ("]\n\n");
+					for (int i=0; i<3 && i<stride_list.size(); i++)
+						printf ("Stride of %ld cache lines was observed %ld times (%.2f%%).\n", stride_list[i].first, stride_list[i].second, ((float) stride_list[i].second) / count_sum * 100.0f);
 				}
+				else
+				{
+					for (int i=0; i<3 && i<stride_list.size(); i++)
+						printf ("Stride of %ld cache lines was observed %ld times.\n", stride_list[i].first, stride_list[i].second);
+				}
+
+				printf ("\n");
 
 				printf ("Level 1 data cache conflicts = %.2f%% [", l1_conflict_ratio);
 				max = ceil(40.0f*((float) l1_conflict_ratio)/100.0f);
