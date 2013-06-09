@@ -25,6 +25,8 @@
 
 #include "set-associative-mapping.h"
 
+#define	STREAM_PRINT_THRESHOLD	5
+
 typedef std::pair<long,long> stride_info_t;
 typedef std::vector<stride_info_t> stride_list_t;
 
@@ -589,6 +591,39 @@ chunk** readRecords(FILE* fp, short* setCounter, bool debugFlag /*, std::tr1::un
 	return recordChunks;
 }
 
+void print_streams(bool bot)
+{
+	if (!bot)
+	{
+		printf ("Total number of streams: %ld", var_idx.size());
+		if (var_idx.size() > 0 && var_idx.size() < STREAM_PRINT_THRESHOLD)
+		{
+			printf (" [ ");
+			std::map<long, std::string>::iterator it;
+			for (it=var_idx.begin(); it!=var_idx.end(); it++)
+				printf ("%s ", it->second.c_str());
+			printf ("]");
+		}
+
+		printf ("\n");
+	}
+	else
+	{
+		printf ("macpo.stream_count=%ld\n", var_idx.size());
+		printf ("macpo.stream_list=");
+
+		long ctr=0, len=var_idx.size();
+		std::map<long, std::string>::iterator it;
+		for (it=var_idx.begin(); it!=var_idx.end(); it++,ctr++)
+		{
+			if (ctr!=len-1)	printf ("%s,", it->second.c_str());
+			else			printf ("%s", it->second.c_str());
+		}
+
+		printf ("\n");
+	}
+}
+
 int main(int argc, char* argv[])
 {
 	struct arg_info info;
@@ -608,6 +643,9 @@ int main(int argc, char* argv[])
 
 	if (info.showDebug)	fprintf (stderr, "Finished reading all records...\n");
 	fclose(fp);
+
+	// Print stream count (and if forced or count less than the threshold, then print stream names as well).
+	print_streams(info.bot);
 
 	omp_init_lock(&var_lock);
 
@@ -760,7 +798,7 @@ int main(int argc, char* argv[])
 			if (!info.bot)
 			{
 				int i, max;
-				printf ("================================================================================\n");
+				printf ("\n================================================================================\n");
 				printf ("Var \"%s\", seen %ld times, estimated to cost %.2f cycles on every access\n", var_name.c_str(), ptr->tot_count, avg_cpa);
 				if (stride_list.size() > 0)
 				{
@@ -860,7 +898,7 @@ int main(int argc, char* argv[])
 					printf (" ");
 
 				printf ("]\n");
-				printf ("================================================================================\n\n");
+				printf ("================================================================================\n");
 			}
 			else
 			{
