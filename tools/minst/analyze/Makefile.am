@@ -25,10 +25,10 @@
 # $HEADER$
 #
 
-bin_PROGRAMS = analyze
-analyze_SOURCES = main.cpp
-analyze_CXXFLAGS = -I$(srcdir)/../common -Wno-deprecated \
+bin_PROGRAMS = macpo-analyze
+macpo_analyze_SOURCES = main.cpp
+macpo_analyze_CXXFLAGS = -I$(srcdir)/../common -Wno-deprecated \
 	-I/scratch/cluster/ashay/apps/sparsehash/include -fopenmp
-analyze_LDFLAGS = -lgmp -fopenmp
+macpo_analyze_LDFLAGS = -lgmp -fopenmp
 
 # EOF
