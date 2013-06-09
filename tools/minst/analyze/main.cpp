@@ -912,13 +912,13 @@ int main(int argc, char* argv[])
 				// printf ("%s.avg_dist=%.2f\n", var_name.c_str(), ptr->tot_dist /((double) ptr->tot_count));
 				printf ("%s.count=%ld\n", var_name.c_str(), ptr->tot_count);
 				printf ("%s.avg_cpa=%.2f\n", var_name.c_str(), avg_cpa);
-				printf ("%s.l1_conflict_ratio=%.0f%%\n", var_name.c_str(), l1_conflict_ratio);
-				printf ("%s.l2_conflict_ratio=%.0f%%\n", var_name.c_str(), l2_conflict_ratio);
-				// printf ("%s.l3_conflict_ratio=%.0f%%\n", var_name.c_str(), 100.0 * (1-ptr->l3_hit / ((double) (ptr->l3_hit + ptr->l3_miss))));
+				printf ("%s.l1_conflict_ratio=%.0f\n", var_name.c_str(), l1_conflict_ratio);
+				printf ("%s.l2_conflict_ratio=%.0f\n", var_name.c_str(), l2_conflict_ratio);
+				// printf ("%s.l3_conflict_ratio=%.0f\n", var_name.c_str(), 100.0 * (1-ptr->l3_hit / ((double) (ptr->l3_hit + ptr->l3_miss))));
 				printf ("%s.numa_conflict_ratio=%.0f\n", var_name.c_str(), numa_conflict_ratio);
-				printf ("%s.l1_reuse=%.0f%%\n", var_name.c_str(), l1_reuse);
-				printf ("%s.l2_reuse=%.0f%%\n", var_name.c_str(), l2_reuse);
-				printf ("%s.l3_reuse=%.0f%%\n", var_name.c_str(), l3_reuse);
+				printf ("%s.l1_reuse=%.0f\n", var_name.c_str(), l1_reuse);
+				printf ("%s.l2_reuse=%.0f\n", var_name.c_str(), l2_reuse);
+				printf ("%s.l3_reuse=%.0f\n", var_name.c_str(), l3_reuse);
 			}
 		}
 
