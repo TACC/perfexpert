@@ -591,12 +591,12 @@ chunk** readRecords(FILE* fp, short* setCounter, bool debugFlag /*, std::tr1::un
 	return recordChunks;
 }
 
-void print_streams(bool bot)
+void print_streams(bool bot, bool stream_names)
 {
 	if (!bot)
 	{
 		printf ("Total number of streams: %ld", var_idx.size());
-		if (var_idx.size() > 0 && var_idx.size() < STREAM_PRINT_THRESHOLD)
+		if ((var_idx.size() > 0 && var_idx.size() < STREAM_PRINT_THRESHOLD) || stream_names)
 		{
 			printf (" [ ");
 			std::map<long, std::string>::iterator it;
@@ -645,7 +645,7 @@ int main(int argc, char* argv[])
 	fclose(fp);
 
 	// Print stream count (and if forced or count less than the threshold, then print stream names as well).
-	print_streams(info.bot);
+	print_streams(info.bot, info.stream_names);
 
 	omp_init_lock(&var_lock);
 

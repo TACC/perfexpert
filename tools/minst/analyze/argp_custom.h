@@ -4,18 +4,18 @@
 
 #include <argp.h>
      
-struct argp_option options[5] =
+struct argp_option options[4] =
 {
 	{ "debug", 'd', NULL, 0, "Output debug information", 0 },
 	{ "iamabot", 'b', NULL, 0, "Print output in an easy-to-parse format", 0 },
+	{ "stream-names", 's', NULL, 0, "Print all streams in the output, even if there are more than 5 streams", 0 },
 	{ 0, 0, 0, 0, 0, 0 }
 };
 
 struct arg_info
 {
-	bool bot;
 	char *location;
-	short showDebug;
+	bool bot, showDebug, stream_names;
 };
 
 static error_t parse_opt(int key, char* arg, struct argp_state *state)
@@ -26,6 +26,7 @@ static error_t parse_opt(int key, char* arg, struct argp_state *state)
 	{
 		case 'b':	info->bot = true;		break;
 		case 'd':	info->showDebug = true;		break;
+		case 's':	info->stream_names = true;		break;
 
 		case ARGP_KEY_ARG:
 			if (state->arg_num >= 1)
