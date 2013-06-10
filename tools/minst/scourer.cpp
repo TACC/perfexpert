@@ -1,7 +1,7 @@
 
 #include <rose.h>
 
-#include "./common/record.h"
+#include "macpo_record.h"
 #include "scourer.h"
 
 using namespace SageBuilder;

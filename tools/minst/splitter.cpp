@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <rose.h>
 
-#include "./common/record.h"
+#include "macpo_record.h"
 #include "splitter.h"
 #include "stream_counter.h"
 

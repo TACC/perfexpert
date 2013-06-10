@@ -2,7 +2,7 @@
 #include <set>
 #include <rose.h>
 
-#include "./common/record.h"
+#include "macpo_record.h"
 #include "stream_counter.h"
 
 using namespace SageBuilder;

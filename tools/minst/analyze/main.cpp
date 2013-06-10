@@ -14,7 +14,7 @@
 
 #include <ext/hash_map>
 
-#include "../common/record.h"
+#include "macpo_record.h"
 
 #include "avl.h"
 #include "avl_code.h"

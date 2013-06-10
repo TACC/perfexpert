@@ -14,7 +14,7 @@
 
 #include "mrt.h"
 #include "cpuid.h"
-#include "record.h"
+#include "macpo_record.h"
 
 static short proc = PROC_UNKNOWN;
 

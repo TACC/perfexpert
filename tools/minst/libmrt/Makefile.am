@@ -27,7 +27,7 @@
 
 lib_LIBRARIES = libmrt.a
 libmrt_a_SOURCES = mrt.c
-include_HEADERS = mrt.h ../common/record.h
+include_HEADERS = mrt.h ../common/macpo_record.h
 
 libmrt_a_CFLAGS = -I$(srcdir) -I$(srcdir)/../common
 

@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <rose.h>
 
-#include "./common/record.h"
+#include "macpo_record.h"
 #include "instrumentor.h"
 
 using namespace SageBuilder;
