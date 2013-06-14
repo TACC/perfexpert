@@ -177,6 +177,20 @@ AC_CHECK_HEADER([sqlite3.h], [
 AC_PATH_TOOL([SQLITE3_PROGRAM], [sqlite3], [no])
 
 #------------------------------------------------------------------------------
+# Checks for GNU Multiple Precision Arithmetic Library
+#
+AC_CHECK_LIB([gmp], [mpf_init, mpf_clear], [],
+    [AC_MSG_ERROR([GMP library (GNU Multiple Precision Arithmetic Library) not found])])
+
+AC_CHECK_HEADER([gmp.h], [
+    WITH_GMP_SUPPORT=yes
+    AC_DEFINE([HAVE_GMP], [1], [GNU Multiple Precision Arithmetic Library support])
+], [
+    WITH_GMP_SUPPORT=no
+    AC_DEFINE([HAVE_GMP], [0], [GNU Multiple Precision Arithmetic Library support])
+])
+
+#------------------------------------------------------------------------------
 # Checks for PIPS, optionally, using an argument (required for perfexpert_ct)
 #
 AC_ARG_WITH([pips],
