@@ -30,5 +30,6 @@ bin_PROGRAMS = perfexpert_ci
 perfexpert_ci_SOURCES = main.c rose_functions.cpp
 perfexpert_ci_CPPFLAGS = -I$(srcdir)/../common
 perfexpert_ci_CFLAGS = -O3
+perfexpert_ci_LDFLAGS = -lrose -ljvm
 
 # EOF

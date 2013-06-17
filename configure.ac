@@ -50,7 +50,7 @@ AM_INIT_AUTOMAKE([foreign -Wall -Werror])
 m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 
 # Just to have a cleaner output during 'make'
-AM_SILENT_RULES([yes])
+# AM_SILENT_RULES([yes])
 
 # We need some work here to save hound from -O2 on CFLAGS. This overwrites any
 # user-defined CFLAGS :-/
@@ -163,7 +163,7 @@ AC_CHECK_HEADER([sys/wait.h],  [], [AC_MSG_ERROR([not found: sys/wait.h])])
 # Checks for SQLite headers, lib and program
 #
 AC_CHECK_LIB([sqlite3], [sqlite3_open, sqlite3_close, sqlite3_exec,
-    sqlite3_free, sqlite3_errmsg], [],
+    sqlite3_free, sqlite3_errmsg], [WITH_SQLITE3_SUPPORT=yes],
     [AC_MSG_ERROR([SQLite3 library not found])])
 
 AC_CHECK_HEADER([sqlite3.h], [
@@ -179,7 +179,7 @@ AC_PATH_TOOL([SQLITE3_PROGRAM], [sqlite3], [no])
 #------------------------------------------------------------------------------
 # Checks for GNU Multiple Precision Arithmetic Library
 #
-AC_CHECK_LIB([gmp], [mpf_init, mpf_clear], [],
+AC_CHECK_LIB([gmp], [__gmpf_init, __gmpf_clear], [WITH_GMP_SUPPORT=yes],
     [AC_MSG_ERROR([GMP library (GNU Multiple Precision Arithmetic Library) not found])])
 
 AC_CHECK_HEADER([gmp.h], [
@@ -251,13 +251,11 @@ AC_ARG_WITH([papi-include],
 # Checks for PAPI library and header file
 AC_CHECK_LIB([papi], [PAPI_library_init, PAPI_add_event,
     PAPI_create_eventset, PAPI_get_event_info, PAPI_event_name_to_code,
-    PAPI_query_event], [], [HAVE_PAPI_LIB=no])
-AS_IF([test x"$HAVE_PAPI_LIB" == x"no"],
-    [AC_MSG_ERROR([libpapi not found])], [])
+    PAPI_query_event], [HAVE_PAPI_LIB=yes],
+    [AC_MSG_ERROR([libpapi not found])])
 
-AC_CHECK_HEADER([papi.h], [HAVE_PAPI_HEADER=yes], [HAVE_PAPI_HEADER=no])
-AS_IF([test x"$HAVE_PAPI_HEADER" == x"no"],
-    [AC_MSG_ERROR([papi.h not found])], [])
+AC_CHECK_HEADER([papi.h], [HAVE_PAPI_HEADER=yes],
+    [AC_MSG_ERROR([papi.h not found])])
 
 AC_DEFINE([HAVE_PAPI], [1], [PAPI support])
 
@@ -290,13 +288,17 @@ AC_ARG_WITH([hpctoolkit],
 AC_ARG_WITH([jvm],
     [AS_HELP_STRING([--with-jvm], [JVM is required when Rose is selected,
         use this argument to set JVM library path])], [
-    WITH_JVM_LIBS=$withval
-    LDFLAGS+=" -L$WITH_JVM_LIBS"
+    WITH_JVM_LIB=$withval
+    LDFLAGS+=" -L$WITH_JVM_LIB"
+    AC_SUBST(JVM_LIB, $WITH_JVM_LIB)
 
     # A random number of C symbols of JVM library
-    AC_CHECK_LIB([jvm], [JVM_InitializeCompiler, JVM_Open, JVM_Close], [],
+    AC_CHECK_LIB([jvm], [JVM_InitializeCompiler, JVM_Open, JVM_Close],
+        [WITH_JVM=yes],
         [AC_MSG_ERROR([Java Virtual Machine (JVM) library not found!])])
-    WITH_JVM=yes], [WITH_JVM=no]
+    WITH_JVM=yes
+], [
+    WITH_JVM=no]
 )
 
 #------------------------------------------------------------------------------
@@ -351,9 +353,9 @@ AS_IF([test x"$WITH_ROSE" == x"yes"], [
     LDFLAGS+=" -L$WITH_ROSE_LIBS"
 
     # A random number of C symbols of Rose library
-    AC_CHECK_LIB([rose], [node_has_side_effects, add_to_scopes_list,
-        copy_node, node_complete_object_type, set_node_operator],
-        [], [AC_MSG_ERROR([Rose library not found!])])
+    #AC_CHECK_LIB([rose], [node_has_side_effects, add_to_scopes_list,
+    #    copy_node, node_complete_object_type, set_node_operator],
+    #    [WITH_ROSE=yes], [AC_MSG_ERROR([Rose library not found!])])
 
     # How the hell I can make the rose.h header check work?
     #AC_CHECK_HEADER([rose.h], [], [AC_MSG_ERROR([not found: rose.h])])

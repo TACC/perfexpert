@@ -30,6 +30,7 @@ bin_PROGRAMS = perfexpert_pr
 perfexpert_pr_SOURCES = main.c
 perfexpert_pr_CPPFLAGS = -I$(srcdir)/../common
 perfexpert_pr_CFLAGS = -O3
+perfexpert_pr_LDFLAGS = -lsqlite3
 
 SUBDIRS = c_loop1 c_loop2
 

@@ -28,6 +28,7 @@
 bin_PROGRAMS = sniffer
 sniffer_SOURCES = sniffer.c
 sniffer_CFLAGS = -O3
+sniffer_LDFLAGS = -lpapi
 
 install-exec-local:
 	./sniffer
