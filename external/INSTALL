@@ -1,7 +1,7 @@
 mkdir -p $HOME/test
 
 export PATH=$HOME/test/bin:$PATH
-export LD_LIBRAY_PATH=$HOME/test/lib/$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=$HOME/test/lib:$LD_LIBRARY_PATH
 
 # HPCToolKit and its dependencies...
 
@@ -114,9 +114,8 @@ make install
 cd ../../
 rm -rf gmp-5.1.2/
 
-# Ant is missing. After checking Ant we are ready to compile PerfExpert
-
-
-
 tar -xzvf ./apache-ant-1.9.1-bin.tar.gz
-mv apache-ant-1.9.1 $(install_dir)/ant
+export ANT_HOME=`pwd`/apache-ant-1.9.1
+
+
+
