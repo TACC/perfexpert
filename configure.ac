@@ -33,7 +33,7 @@ AC_PREREQ(2.63)
 AC_INIT([perfexpert], [0.1], [Leonardo Fialho: fialho@utexas.edu],
     [perfexpert.tar.gz], [http://www.tacc.com.br/perfexpert/])
 AC_COPYRIGHT([University of Texas at Austin])
-AC_REVISION([$Revision: 0.1 $])
+AC_REVISION([$Revision: 4.0 $])
 
 # Used by autotools
 AC_CONFIG_AUX_DIR(config)
@@ -87,11 +87,13 @@ AS_CASE([${host}],
     [*-*-darwin*], [
         AC_DEFINE([OS_MACOS], [1], [The host OS is OSX])
         AC_MSG_RESULT([you are a happy Mac user, I suppose...])
-        HOST_OS=darwin],
+        HOST_OS=darwin
+        AC_MSG_ERROR([...but we do not support OSX])],
     [*-*-freebsd*], [
         AC_DEFINE([OS_FREEBSD], [1], [The host OS is FreeBSD])
         AC_MSG_RESULT([hum... Are you happy with whis FreeBSD?])
-        HOST_OS=freebsd],
+        HOST_OS=freebsd
+        AC_MSG_ERROR([...but we do not support FreeBSD])],
     [*-*-linux*], [
         AC_DEFINE([OS_LINUX], [1], [The host OS is Linux])
         AC_MSG_RESULT([one more geek using Linux])
@@ -99,15 +101,18 @@ AS_CASE([${host}],
     [*-*-netbsd*], [
         AC_DEFINE([OS_NETBSD], [1], [The host OS is NetBSD])
         AC_MSG_RESULT([really? There is at least one NetBSD user in the world!])
-        HOST_OS=netbsd],
+        HOST_OS=netbsd
+        AC_MSG_ERROR([...but we do not support NetBSD])],
     [*-*-solaris2*], [
         AC_DEFINE([OS_SOLARIS], [1], [The host OS is Solaris])
         AC_MSG_RESULT([I understand, you are stucked on Solaris, right?])
-        HOST_OS=solaris],
+        HOST_OS=solaris
+        AC_MSG_ERROR([...but we do not support Solaris])],
     [*-*-mingw* | *-*-cygwin*], [
         AC_DEFINE([OS_WINDOWS], [1], [The host OS is Windows])
         AC_MSG_RESULT([I will pray for you, Windows user :-/])
-        HOST_OS=cygwin],
+        HOST_OS=cygwin
+        AC_MSG_ERROR([...but we do not support M$ Windows])],
     [AC_MSG_RESULT([Unsupported operating system: ${host}])
      HOST_OS=unknown
 ])
@@ -368,6 +373,22 @@ AS_IF([test x"$WITH_ROSE" == x"yes"], [
 ])
 
 AM_CONDITIONAL([WITH_ROSE_SUPPORT], [test x"$WITH_ROSE_SUPPORT" = x"yes"])
+
+#------------------------------------------------------------------------------
+# Checks for Google's SparseHash headers
+#
+AC_LANG([C++])
+
+AC_CHECK_HEADER([google/sparse_hash_map], [
+    WITH_GSH_SUPPORT=yes
+    AC_DEFINE([HAVE_GSH], [1], [Google's SparseHash])
+], [
+    WITH_GSH_SUPPORT=no
+    AC_DEFINE([HAVE_GSH], [0], [Google's SparseHash])
+    AC_MSG_ERROR([Google's SparseHash not found, try setting -I<path> using CPPFLAGS])
+])
+
+AC_LANG([C])
 
 #------------------------------------------------------------------------------
 # Enable/Disable 'analyzer'

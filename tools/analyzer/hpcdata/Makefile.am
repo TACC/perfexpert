@@ -30,7 +30,7 @@ all:
 	JAVA_TOOL_OPTIONS="-Xms256M -Xmx1G" $(ANT_PROGRAM) -f build.xml
 
 clean-local:
-	rm hpcdata.jar
+	rm -rf hpcdata.jar
 	rm -rf edu
 
 install-exec-local: all

@@ -30,7 +30,7 @@ all:
 	JAVA_TOOL_OPTIONS="-Xms256M -Xmx1G" $(ANT_PROGRAM) -f build.xml
 
 clean-local:
-	rm argp-1.0.jar
+	rm -rf argp-1.0.jar
 	rm -rf edu
 
 install-exec-local: all
