@@ -541,7 +541,14 @@ chunk** readRecords(FILE* fp, short* setCounter, bool debugFlag /*, std::tr1::un
 				dst_len = MIN(STREAM_LENGTH-1, strlen(dataNode.stream_info.stream_name));
 				strncpy(stream_name, dataNode.stream_info.stream_name, dst_len);
 				stream_name[dst_len] = '\0';
-				var_idx[stream_count++] = stream_name;
+				if (stream_count > 0)
+				{
+					if (var_idx[stream_count-1] != stream_name)
+						var_idx[stream_count++] = stream_name;
+				}
+				else
+					var_idx[stream_count++] = stream_name;
+
 				break;
 
 			case MSG_MEM_INFO:
