@@ -1,10 +1,17 @@
-mkdir -p $HOME/test
+#!/bin/bash
 
-export PATH=$HOME/test/bin:$PATH
-export LD_LIBRARY_PATH=$HOME/test/lib:$LD_LIBRARY_PATH
+INSTALL_DIR="${HOME}/perfexpert"
+PAPI_DIR="${TACC_PAPI_DIR}"
+
+mkdir -p ${INSTALL_DIR}
+
+export PATH=${INSTALL_DIR}/bin:$PATH
+export LD_LIBRARY_PATH=${INSTALL_DIR}/lib:/usr/java/jdk1.7.0_21/jre/lib/amd64/server:$LD_LIBRARY_PATH
 
 # HPCToolKit and its dependencies...
 
+echo "Package: HPCToolKit (externals)"
+date
 tar -xzvf ./hpctoolkit-externals-5.3.2-r4197.tar.gz
 cd hpctoolkit-externals-5.3.2-r4197/
 mkdir _build
@@ -13,12 +20,14 @@ cd _build
 make
 cd ../../
 
+echo "Package: HPCToolKit"
+date
 tar -xzvf ./hpctoolkit-5.3.2-r4197.tar.gz
 cd hpctoolkit-5.3.2-r4197/
 mkdir _build
 cd _build
 module load papi
-../configure --prefix=$HOME/test --with-externals=../../hpctoolkit-externals-5.3.2-r4197/_build/ --with-papi=$TACC_PAPI_DIR
+../configure --prefix=${INSTALL_DIR} --with-externals=../../hpctoolkit-externals-5.3.2-r4197/_build/ --with-papi=${PAPI_DIR}
 make install
 cd ../../
 rm -rf hpctoolkit-5.3.2-r4197/
@@ -26,96 +35,130 @@ rm -rf hpctoolkit-externals-5.3.2-r4197/
 
 # ROSE and its dependencies...
 
+echo "Package: BOOST"
+date
 tar -xzvf ./boost_1_47_0.tar.gz
 cd boost_1_47_0/
 ./bootstrap.sh
-./b2 install --prefix=$HOME/test
+./b2 install --prefix=${INSTALL_DIR}
 cd ../
 rm -rf boost_1_47_0/
 
+echo "Package: ROSE"
+date
 tar -xzvf ./rose-0.9.5a-without-EDG-20584.tar.gz
 cd rose-0.9.5a-20584/
 mkdir _build
 cd _build
-../configure --prefix=$HOME/test --with-boost=$HOME/test --disable-tutorial-directory --disable-projects-directory --disable-tests-directory
-JAVA_TOOL_OPTIONS="-Xms256M -Xmx1G" make
+../configure --prefix=${INSTALL_DIR} --with-boost=${INSTALL_DIR} --disable-tutorial-directory \
+  --disable-projects-directory --disable-tests-directory --disable-opencl --disable-php \
+  --disable-cuda --disable-java --disable-binary-analysis
+JAVA_TOOL_OPTIONS="-Xms256M -Xmx1G" make install
 cd ../../
 rm -rf rose-0.9.5a-20584/
 
 # PIPS and its dependencies...
 
+echo "Package: cproto"
+date
 tar -xzvf ./cproto.tar.gz
 cd cproto-4.7j/
 mkdir _build
 cd _build
-../configure --prefix=$HOME/test
+../configure --prefix=${INSTALL_DIR}
 make install
 cd ../../
-rm -rf cproto-4.7j/
+rm -rf cproto-4.7j/                                                                                                                                                                                                         
 
-tar -xzvf ./polylib-5.22.5.tar.gz
-cd polylib-5.22.5/
-mkdir _build
+echo "Package: Polylib"
+date
+tar -xzvf ./polylib-5.22.5.tar.gz                                                                                                                                                                                           
+cd polylib-5.22.5/                                                                                                                                                                                                          
+mkdir _build                                                                                                                                                                                                                
 cd _build
-../configure --prefix=$HOME/test
-make install
+../configure --prefix=${INSTALL_DIR}                                                                                                                                                                                        
+make install                                                                                                                                                                                                                
 cd ../../
-rm -rf polylib-5.22.5/
+rm -rf polylib-5.22.5/                                                                                                                                                                                                      
 
-tar -xzvf ./newgen-0.1.tar.gz
-cd newgen-0.1/
-autoreconf --install
-mkdir _build
+echo "Package: NewGen"
+date
+tar -xzvf ./newgen-0.1.tar.gz                                                                                                                                                                                               
+cd newgen-0.1/                                                                                                                                                                                                              
+autoreconf --install                                                                                                                                                                                                        
+mkdir _build                                                                                                                                                                                                                
 cd _build
-../configure --disable-static --prefix=$HOME/test
-make install
+../configure --disable-static --prefix=${INSTALL_DIR}                                                                                                                                                                       
+make install                                                                                                                                                                                                                
 cd ../../
-rm -rf newgen-0.1/
+rm -rf newgen-0.1/                                                                                                                                                                                                          
 
-tar -xzvf ./linear-0.1.tar.gz
-cd linear-0.1
-autoreconf --install
-mkdir _build
+echo "Package: Linear"
+date
+tar -xzvf ./linear-0.1.tar.gz                                                                                                                                                                                               
+cd linear-0.1                                                                                                                                                                                                               
+autoreconf --install                                                                                                                                                                                                        
+mkdir _build                                                                                                                                                                                                                
 cd _build
-../configure --disable-static --prefix=$HOME/test PKG_CONFIG_PATH=$HOME/test/lib/pkgconfig:$PKG_CONFIG_PATH
-make install
+../configure --disable-static --prefix=${INSTALL_DIR} PKG_CONFIG_PATH=${INSTALL_DIR}/lib/pkgconfig:$PKG_CONFIG_PATH                                                                                                         
+make install                                                                                                                                                                                                                
 cd ../../
-rm -rf linear-0.1/
+rm -rf linear-0.1/                                                                                                                                                                                                          
 
-tar -xzvf ./pips-0.1.tar.gz
-cd pips-0.1/
-autoreconf --install
-mkdir _build
+echo "Package: PIPS"
+date
+tar -xzvf ./pips-0.1.tar.gz                                                                                                                                                                                                 
+cd pips-0.1/                                                                                                                                                                                                                
+autoreconf --install                                                                                                                                                                                                        
+mkdir _build                                                                                                                                                                                                                
 cd _build
-../configure --disable-static --prefix=$HOME/test PKG_CONFIG_PATH=$HOME/test/lib/pkgconfig:$PKG_CONFIG_PATH
-make install
+../configure --disable-static --prefix=${INSTALL_DIR} PKG_CONFIG_PATH=${INSTALL_DIR}/lib/pkgconfig:$PKG_CONFIG_PATH                                                                                                         
+make install                                                                                                                                                                                                                
 cd ../../
-rm -rf pips-0.1/
+rm -rf pips-0.1/                                                                                                                                                                                                            
 
-# PerfExpert and its dependencies...
+# PerfExpert dependencies...                                                                                                                                                                                        
 
-tar -xzvf ./sparsehash-2.0.2.tar.gz
-cd sparsehash-2.0.2/
-mkdir _build
+echo "Package: Google SparseHash"
+date
+tar -xzvf ./sparsehash-2.0.2.tar.gz                                                                                                                                                                                         
+cd sparsehash-2.0.2/                                                                                                                                                                                                        
+mkdir _build                                                                                                                                                                                                                
 cd _build
-../configure --prefix=$HOME/test
-make install
+../configure --prefix=${INSTALL_DIR}                                                                                                                                                                                        
+make install                                                                                                                                                                                                                
 cd ../../
-rm -rf sparsehash-2.0.2/
+rm -rf sparsehash-2.0.2/                                                                                                                                                                                                    
 
-tar -xzvf ./gmp-5.1.2.tar.gz
-cd gmp-5.1.2/
-mkdir _build
+echo "Package: GMP"
+date
+tar -xzvf ./gmp-5.1.2.tar.gz                                                                                                                                                                                                
+cd gmp-5.1.2/                                                                                                                                                                                                               
+mkdir _build                                                                                                                                                                                                                
 cd _build
-../configure --prefix=$HOME/test
+../configure --prefix=${INSTALL_DIR}                                                                                                                                                                                        
 make
 make check
-make install
+make install                                                                                                                                                                                                                
 cd ../../
-rm -rf gmp-5.1.2/
+rm -rf gmp-5.1.2/                                                                                                                                                                                                           
 
-tar -xzvf ./apache-ant-1.9.1-bin.tar.gz
-export ANT_HOME=`pwd`/apache-ant-1.9.1
+# Already present on Stampede
+#
+# echo "Package: hwlock"
+# date
+# tar -xzvf hwloc-1.7.1.tar.gz
+# cd hwloc-1.7.1/
+# mkdir _build
+# cd _build
+# ../configure --prefix=$HOME/perfexpert
+# make install
+# cd ../../
+# rm -rf hwloc-1.7.1/
 
+echo "Package: Apache ANT"
+date
+tar -xzvf ./apache-ant-1.9.1-bin.tar.gz                                                                                                                                                                                     
+export ANT_HOME=`pwd`/apache-ant-1.9.1   
 
 

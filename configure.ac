@@ -182,6 +182,120 @@ AC_CHECK_HEADER([sqlite3.h], [
 AC_PATH_TOOL([SQLITE3_PROGRAM], [sqlite3], [no])
 
 #------------------------------------------------------------------------------
+# Support to JVM (optional), using an argument
+#
+AC_ARG_WITH([jvm],
+    [AS_HELP_STRING([--with-jvm], [JVM is required when Rose is selected,
+        use this argument to set JVM library path])], [
+    WITH_JVM_LIB=$withval
+    LDFLAGS+=" -L$WITH_JVM_LIB"
+    AC_SUBST(JVM_LIB, $WITH_JVM_LIB)
+
+    # A random number of C symbols of JVM library
+    AC_CHECK_LIB([jvm], [JVM_InitializeCompiler, JVM_Open, JVM_Close],
+        [WITH_JVM=yes],
+        [AC_MSG_ERROR([Java Virtual Machine (JVM) library not found!])])
+    WITH_JVM=yes
+], [
+    WITH_JVM=no]
+)
+
+#------------------------------------------------------------------------------
+# Check for PAPI, optionally, using an argument (required for Analyzer)
+#
+AC_ARG_WITH([papi],
+    [AS_HELP_STRING([--with-papi],
+        [Use this argument to set PAPI prefix path (where PAPI library
+        and include directories are located), if you do that there is no
+        need to set neither '--with-papi-lib' nor '--with-papi-include'.
+        This argument is not necessary if PAPI is installed into default
+        directories ('/usr' and '/usr/local')])], [
+    CPPFLAGS+=" -I$withval/include"
+    LDFLAGS+=" -L$withval/lib"], [])
+
+AC_ARG_WITH([papi-lib],
+    [AS_HELP_STRING([--with-papi-lib],
+        [use this argument to set PAPI library path (it overwrites
+        '--with-papi' argument)])], [LDFLAGS+=" -L$withval"], [])
+
+AC_ARG_WITH([papi-include],
+    [AS_HELP_STRING([--with-papi-include],
+        [use this argument to set PAPI include path (it overwrites
+        '--with-papi' argument)])], [CPPFLAGS+=" -I$withval"], [])
+
+# Checks for PAPI library and header file
+AC_CHECK_LIB([papi], [PAPI_library_init, PAPI_add_event,
+    PAPI_create_eventset, PAPI_get_event_info, PAPI_event_name_to_code,
+    PAPI_query_event], [HAVE_PAPI_LIB=yes],
+    [AC_MSG_ERROR([libpapi not found])])
+
+AC_CHECK_HEADER([papi.h], [HAVE_PAPI_HEADER=yes],
+    [AC_MSG_ERROR([papi.h not found])])
+
+AC_DEFINE([HAVE_PAPI], [1], [PAPI support])
+
+#------------------------------------------------------------------------------
+# Most scripts require Bash shell
+#
+AC_PATH_TOOL([BASH_PROGRAM], [bash], [no])
+AS_IF([test x"$BASH_PROGRAM" == x"no"],
+    [AC_MSG_ERROR([Most of our scripts require the Bash shell.])], [])
+
+#------------------------------------------------------------------------------
+# From this point, we can install all the dependencies
+#
+#AC_ARG_ENABLE([make-all-deps],
+#    [AS_HELP_STRING([--enable-make-all-deps],
+#        [Use this argument to install all dependecies, such as ROSE, PIPS, GMP,
+#        HPCToolKit, Google SparseHash, and their dependencies. Unfortunatelly,
+#        we cannot install PAPI, SQLite3 and JAVA for you])], [
+#    MAKE_ROSE=yes
+#    MAKE_PIPS=yes
+#    MAKE_HPCTOOLKIT=yes
+#    MAKE_GMP=yes
+#    MAKE_GSH=yes
+#], [])
+
+#AC_ARG_ENABLE([make-rose],
+#    [AS_HELP_STRING([--enable-make-rose],
+#        [Use this argument to install ROSE])],
+#    [MAKE_ROSE=yes], [])
+
+#AC_ARG_ENABLE([make-pips],
+#    [AS_HELP_STRING([--enable-make-pips],
+#        [Use this argument to install PIPS])],
+#    [MAKE_PIPS=yes], [])
+
+#AC_ARG_ENABLE([make-hpctoolkit],
+#    [AS_HELP_STRING([--enable-make-hpctoolkit],
+#        [Use this argument to install HPCToolKit])],
+#    [MAKE_HPCTOOLKIT=yes], [])
+
+#AC_ARG_ENABLE([make-gmp],
+#    [AS_HELP_STRING([--enable-make-gmp],
+#        [Use this argument to install GNU Multiple Precision Arithmetic Library])],
+#    [MAKE_GMP=yes], [])
+
+#AC_ARG_ENABLE([make-gsh],
+#    [AS_HELP_STRING([--enable-make-gsh],
+#        [Use this argument to install Google's Sparsehash heders])],
+#    [MAKE_GSH=yes], [])
+
+#AC_ARG_ENABLE([ant],
+#    [AS_HELP_STRING([--enable-ant],
+#        [Use this argument if you do not have Apache ANT installed])],
+#    [MAKE_ANT=yes], [])
+
+#AC_CONFIG_FILES([external/Makefile])
+
+#AM_CONDITIONAL([MAKE_ROSE],       [test x"$MAKE_ROSE" = x"yes"])
+#AM_CONDITIONAL([MAKE_PISP],       [test x"$MAKE_PIPS" = x"yes"])
+#AM_CONDITIONAL([MAKE_HPCTOOLKIT], [test x"$MAKE_HPCTOOLKIT" = x"yes"])
+#AM_CONDITIONAL([MAKE_GMP],        [test x"$MAKE_GMP" = x"yes"])
+#AM_CONDITIONAL([MAKE_GSH],        [test x"$MAKE_GSH" = x"yes"])
+#AM_CONDITIONAL([MAKE_ANT],        [test x"$MAKE_ANT" = x"yes"])
+
+#------------------------------------------------------------------------------
 # Checks for GNU Multiple Precision Arithmetic Library
 #
 AC_CHECK_LIB([gmp], [__gmpf_init, __gmpf_clear], [WITH_GMP_SUPPORT=yes],
@@ -220,49 +334,8 @@ AC_ARG_WITH([apache-ant],
     ANT_PATH="$withval"
     AC_PATH_TOOL([ANT_PROGRAM], [ant], [no], [$ANT_PATH])
     AS_IF([test x"$ANT_PROGRAM" = x"no"],
-        [AC_MSG_ERROR([Ant not found in $ANT_PATH])])], [
+        [AC_MSG_ERROR([Ant not found in $ANT_PATH, try --enable-ant])])], [
         AC_PATH_TOOL([ANT_PROGRAM], [ant], [no])])
-
-#------------------------------------------------------------------------------
-# Most scripts require Bash shell
-#
-AC_PATH_TOOL([BASH_PROGRAM], [bash], [no])
-AS_IF([test x"$BASH_PROGRAM" == x"no"],
-    [AC_MSG_ERROR([Most of our scripts require the Bash shell.])], [])
-
-#------------------------------------------------------------------------------
-# Check for PAPI, optionally, using an argument (required for Analyzer)
-#
-AC_ARG_WITH([papi],
-    [AS_HELP_STRING([--with-papi],
-        [Use this argument to set PAPI prefix path (where PAPI library
-        and include directories are located), if you do that there is no
-        need to set neither '--with-papi-lib' nor '--with-papi-include'.
-        This argument is not necessary if PAPI is installed into default
-        directories ('/usr' and '/usr/local')])], [
-    CPPFLAGS+=" -I$withval/include"
-    LDFLAGS+=" -L$withval/lib"], [])
-
-AC_ARG_WITH([papi-lib],
-    [AS_HELP_STRING([--with-papi-lib],
-        [use this argument to set PAPI library path (it overwrites
-        '--with-papi' argument)])], [LDFLAGS+=" -L$withval"], [])
-
-AC_ARG_WITH([papi-include],
-    [AS_HELP_STRING([--with-papi-include],
-        [use this argument to set PAPI include path (it overwrites
-        '--with-papi' argument)])], [CPPFLAGS+=" -I$withval"], [])
-
-# Checks for PAPI library and header file
-AC_CHECK_LIB([papi], [PAPI_library_init, PAPI_add_event,
-    PAPI_create_eventset, PAPI_get_event_info, PAPI_event_name_to_code,
-    PAPI_query_event], [HAVE_PAPI_LIB=yes],
-    [AC_MSG_ERROR([libpapi not found])])
-
-AC_CHECK_HEADER([papi.h], [HAVE_PAPI_HEADER=yes],
-    [AC_MSG_ERROR([papi.h not found])])
-
-AC_DEFINE([HAVE_PAPI], [1], [PAPI support])
 
 #------------------------------------------------------------------------------
 # Find HPCToolkit programs, optionally, using an argument
@@ -288,34 +361,15 @@ AC_ARG_WITH([hpctoolkit],
 ])
 
 #------------------------------------------------------------------------------
-# Support to JVM (optional), using an argument
-#
-AC_ARG_WITH([jvm],
-    [AS_HELP_STRING([--with-jvm], [JVM is required when Rose is selected,
-        use this argument to set JVM library path])], [
-    WITH_JVM_LIB=$withval
-    LDFLAGS+=" -L$WITH_JVM_LIB"
-    AC_SUBST(JVM_LIB, $WITH_JVM_LIB)
-
-    # A random number of C symbols of JVM library
-    AC_CHECK_LIB([jvm], [JVM_InitializeCompiler, JVM_Open, JVM_Close],
-        [WITH_JVM=yes],
-        [AC_MSG_ERROR([Java Virtual Machine (JVM) library not found!])])
-    WITH_JVM=yes
-], [
-    WITH_JVM=no]
-)
-
-#------------------------------------------------------------------------------
-# Support to Rose Compiler (optional), using an argument
+# Support to ROSE Compiler (optional), using an argument
 #
 AC_ARG_WITH([rose],
     [AS_HELP_STRING([--with-rose],
         [support to Rose Compiler @<:@default=no@:>@ which enables some
         advanced features on the Optimization Recommender tool, as well is
         required to enable PerfExpert:CT (Code Transformer tool), and
-        PerfExpert:CI (Code Integrator tool). Use this argument to set Rose
-        prefix path (where Rose libraries and include directories are
+        PerfExpert:CI (Code Integrator tool). Use this argument to set ROSE
+        prefix path (where ROSE libraries and include directories are
         located), if you do that there is no need to set neither
         '--with-rose-libs' nor '--with-rose-include'])], [
     WITH_ROSE_LIBS=$withval/lib
@@ -327,40 +381,40 @@ AC_ARG_WITH([rose],
 
 AC_ARG_WITH([rose-libs],
     [AS_HELP_STRING([--with-rose-libs],
-        [support to Rose Compiler @<:@default=no@:>@, use this argument to
-        set Rose library path (it overwrites '--with-rose' argument)])], [
+        [support to ROSE Compiler @<:@default=no@:>@, use this argument to
+        set ROSE library path (it overwrites '--with-rose' argument)])], [
     WITH_ROSE_LIBS=$withval
     WITH_ROSE=yes], [])
 
 AC_ARG_WITH([rose-include],
     [AS_HELP_STRING([--with-rose-include],
-        [support to Rose Compiler @<:@default=no@:>@, use this argument to
-        set Rose include path (it overwrites '--with-rose' argument)])], [
+        [support to ROSE Compiler @<:@default=no@:>@, use this argument to
+        set ROSE include path (it overwrites '--with-rose' argument)])], [
     WITH_ROSE_INCLUDE=$withval
     WITH_ROSE=yes], [])
 
 AS_IF([test x"$WITH_ROSE" == x"yes"], [
     # Rose requires JVM, so...
     AS_IF([test x"$WITH_JVM" == x"no"], [
-        AC_MSG_ERROR([Rose requires a JVM, use '--with-jvm' to define it])], [])
+        AC_MSG_ERROR([ROSE requires a JVM, use '--with-jvm' to define it])], [])
 
     AS_IF([test x"$WITH_ROSE_LIBS" = x""], [
-        AC_MSG_ERROR([You chose to enable Rose support but Rose library path
+        AC_MSG_ERROR([You chose to enable ROSE support but ROSE library path
             was not defined. Use '--with-rose-libs=path' or
             '--with-rose=prefix' to define it])], [])
 
     AS_IF([test x"$WITH_ROSE_INCLUDE" = x""], [
-        AC_MSG_ERROR([You chose to enable Rose support but Rose include path
+        AC_MSG_ERROR([You chose to enable ROSE support but ROSE include path
             was not defined. Use '--with-rose-include=path' or
             '--with-rose=prefix' to define it])], [])
 
     CPPFLAGS+=" -I$WITH_ROSE_INCLUDE"
     LDFLAGS+=" -L$WITH_ROSE_LIBS"
 
-    # A random number of C symbols of Rose library
+    # A random number of C symbols of ROSE library
     #AC_CHECK_LIB([rose], [node_has_side_effects, add_to_scopes_list,
     #    copy_node, node_complete_object_type, set_node_operator],
-    #    [WITH_ROSE=yes], [AC_MSG_ERROR([Rose library not found!])])
+    #    [WITH_ROSE=yes], [AC_MSG_ERROR([ROSE library not found!])])
 
     # How the hell I can make the rose.h header check work?
     #AC_CHECK_HEADER([rose.h], [], [AC_MSG_ERROR([not found: rose.h])])
@@ -377,7 +431,8 @@ AM_CONDITIONAL([WITH_ROSE_SUPPORT], [test x"$WITH_ROSE_SUPPORT" = x"yes"])
 #------------------------------------------------------------------------------
 # Checks for Google's SparseHash headers
 #
-AC_LANG([C++])
+#AC_LANG([C++])
+AC_LANG_PUSH([C++])
 
 AC_CHECK_HEADER([google/sparse_hash_map], [
     WITH_GSH_SUPPORT=yes
@@ -388,7 +443,8 @@ AC_CHECK_HEADER([google/sparse_hash_map], [
     AC_MSG_ERROR([Google's SparseHash not found, try setting -I<path> using CPPFLAGS])
 ])
 
-AC_LANG([C])
+#AC_LANG([C])
+AC_LANG_POP
 
 #------------------------------------------------------------------------------
 # Enable/Disable 'analyzer'
@@ -535,8 +591,7 @@ AS_IF([test x"$ENABLE_PR" = x"yes"], [
 
     ENABLE_PR=pr
     AC_CONFIG_FILES([tools/pr/Makefile])
-    AC_CONFIG_FILES([tools/pr/c_loop1/Makefile])
-    AC_CONFIG_FILES([tools/pr/c_loop2/Makefile])
+    AC_CONFIG_FILES([tools/pr/nested_c_loops/Makefile])
 ], [
     AC_MSG_RESULT([no])
     ENABLE_PR=
@@ -559,9 +614,9 @@ AS_IF([test x"$ENABLE_CT" = x"yes"], [
     AS_IF([test x"$TPIPS_PROGRAM" = x"no"],
         [AC_MSG_ERROR([TPIPS not found, try using '--with-pips'])], [])
 
-    AC_CONFIG_FILES([tools/ct/c_loop2/Makefile])
-    AC_CONFIG_FILES([tools/ct/c_loop2/ct_c_loop2.sh],
-        [chmod +x tools/ct/c_loop2/ct_c_loop2.sh])
+    AC_CONFIG_FILES([tools/ct/c_loop_interchange/Makefile])
+    AC_CONFIG_FILES([tools/ct/c_loop_interchange/ct_c_loop_interchange.sh],
+        [chmod +x tools/ct/c_loop_interchange/ct_c_loop_interchange.sh])
 
     ENABLE_CT=ct
     AC_CONFIG_FILES([tools/ct/Makefile])
