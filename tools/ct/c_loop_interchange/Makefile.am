@@ -25,26 +25,13 @@
 # $HEADER$
 #
 
-This static checker identifies is the given C source code is a valid perfect
-nested iteration statement (FOR, DO and WHILE).
+dist_bin_SCRIPTS = ct_c_loop_interchange.sh
 
-Software requirements:
+install-exec-local: install-dist_binSCRIPTS
+	$(MKDIR_P) $(libdir)/
 
-	GNU Bison  (http://ftp.gnu.org/gnu/bison/)
-	GNU Flex   (http://flex.sourceforge.net/)
+install-exec-hook:
+	cd $(bindir); rm ct_c_loop_interchange; \
+	$(LN_S) ct_c_loop_interchange.sh ct_c_loop_interchange
 
-Compiling instructions:
-
-	$ make
-
-Compiling instructions without Makefile:
-
-	$ yacc -d c_loop2.y
-	$ lex c_loop2.l
-	$ gcc -o c_loop2 lex.yy.c y.tab.c
-
-Using instruction:
-
-	$ ./c_loop2 < c_loop2_example.c
-
-EOF.
+# EOF
