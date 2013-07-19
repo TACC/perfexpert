@@ -31,6 +31,6 @@ perfexpert_ct_SOURCES = main.c
 perfexpert_ct_CPPFLAGS = -I$(srcdir)/../common
 perfexpert_ct_CFLAGS = -O3
 
-SUBDIRS = c_loop2
+SUBDIRS = c_loop_interchange
 
 # EOF

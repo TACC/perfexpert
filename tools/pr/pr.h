@@ -137,12 +137,21 @@ typedef struct recognizer {
     int  test3_result;
 } recognizer_t;
 
+/** Structure to hold transformers */
+typedef struct transformer {
+    volatile perfexpert_list_item_t *next;
+    volatile perfexpert_list_item_t *prev;
+    int  id;
+    char *program;
+    perfexpert_list_t recognizers;
+} transformer_t;
+
 /** Structure to hold recommendations */
 typedef struct recommendation {
     volatile perfexpert_list_item_t *next;
     volatile perfexpert_list_item_t *prev;
     int id;
-    perfexpert_list_t recognizers;
+    perfexpert_list_t transformers;
 } recommendation_t;
 
 /** Structure to hold code transformation patterns */

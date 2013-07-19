@@ -115,7 +115,8 @@ attrib MINST::evaluateInheritedAttribute(SgNode* node, attrib attr)
 					break;
 			}
 
-			ROSE_ASSERT(statement!=NULL);
+			if(statement == NULL)
+				return attr;
 
 			std::string indigo__init = SageInterface::is_Fortran_language() ? "indigo__init" : "indigo__init_";
 			std::string indigo__create_map = "indigo__create_map";

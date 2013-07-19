@@ -27,6 +27,7 @@
 
 ACLOCAL_AMFLAGS = -I m4
 
+# SUBDIRS = external tools
 SUBDIRS = tools
 
 install-data-hook:
