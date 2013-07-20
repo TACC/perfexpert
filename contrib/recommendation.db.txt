@@ -31,11 +31,13 @@
 DROP TABLE IF EXISTS "category";
 DROP TABLE IF EXISTS "recommendation";
 DROP TABLE IF EXISTS "pattern";
+DROP TABLE IF EXISTS "transformation";
+DROP TABLE IF EXISTS "transformation_pattern";
 DROP TABLE IF EXISTS "language";
 DROP TABLE IF EXISTS "architecture";
 DROP TABLE IF EXISTS "function";
 DROP TABLE IF EXISTS "recommendation_architecture";
-DROP TABLE IF EXISTS "recommendation_pattern";
+DROP TABLE IF EXISTS "recommendation_transformation";
 DROP TABLE IF EXISTS "recommendation_category";
 DROP TABLE IF EXISTS "recommendation_function";
 DROP TABLE IF EXISTS "metric";
@@ -83,6 +85,17 @@ CREATE TABLE "pattern" (
         REFERENCES "language" ("id")
 );
 
+CREATE TABLE "transformation" (
+    "id" INTEGER NOT NULL,
+    "language" INTEGER NOT NULL,
+    "transformer" TEXT(256) NOT NULL,
+    "desc" TEXT(1024) NOT NULL,
+    PRIMARY KEY ("id") ,
+    CONSTRAINT "fk_transformation_language"
+        FOREIGN KEY ("language")
+        REFERENCES "language" ("id")
+);
+
 CREATE TABLE "language" (
     "id" INTEGER NOT NULL,
     "desc" TEXT(256) NOT NULL,
@@ -116,14 +129,26 @@ CREATE TABLE "recommendation_architecture" (
         REFERENCES "architecture" ("id")
 );
 
-CREATE TABLE "recommendation_pattern" (
+CREATE TABLE "recommendation_transformation" (
     "id_recommendation" INTEGER NOT NULL,
-    "id_pattern" INTEGER NOT NULL,
-    PRIMARY KEY(id_recommendation, id_pattern),
-    CONSTRAINT "fk_recommendation_pattern_recommendation" 
+    "id_transformation" INTEGER NOT NULL,
+    PRIMARY KEY(id_recommendation, id_transformation),
+    CONSTRAINT "fk_recommendation_transformation_recommendation" 
         FOREIGN KEY ("id_recommendation") 
         REFERENCES "recommendation" ("id"),
-    CONSTRAINT "fk_recommendation_pattern_pattern" 
+    CONSTRAINT "fk_recommendation_transformation_transformation" 
+        FOREIGN KEY ("id_transformation") 
+        REFERENCES "transformation" ("id")
+);
+
+CREATE TABLE "transformation_pattern" (
+    "id_transformation" INTEGER NOT NULL,
+    "id_pattern" INTEGER NOT NULL,
+    PRIMARY KEY(id_transformation, id_pattern),
+    CONSTRAINT "fk_transformation_pattern_transformation" 
+        FOREIGN KEY ("id_transformation") 
+        REFERENCES "transformation" ("id"),
+    CONSTRAINT "fk_transformation_pattern_pattern" 
         FOREIGN KEY ("id_pattern") 
         REFERENCES "pattern" ("id")
 );
@@ -270,11 +295,6 @@ INSERT INTO [category] ([id], [short], [desc]) VALUES
     (8, 'fpt-fast', 'bad float point instuctions (fast FP)');
 INSERT INTO [category] ([id], [short], [desc]) VALUES 
     (9, 'fpt-slow', 'bad float point instuctions (slow FP)');
-
-INSERT INTO [pattern] ([id], [language], [recognizer], [desc]) VALUES
-    (1, 1, 'c_loop2', '2 perfect nested loops');
-INSERT INTO [pattern] ([id], [language], [recognizer], [desc]) VALUES
-    (2, 2, 'f_loop2', '2 perfect nested loops');
 
 INSERT INTO [recommendation] ([id], [desc], [reason], [example], [loop]) VALUES (1,
     'eliminate common subexpressions involving memory accesses',
@@ -879,8 +899,19 @@ INSERT INTO [recommendation_category] ([id_recommendation], [id_category]) VALUE
 INSERT INTO [recommendation_category] ([id_recommendation], [id_category]) VALUES (41, 3);
 INSERT INTO [recommendation_category] ([id_recommendation], [id_category]) VALUES (42, 3);
 
-INSERT INTO [recommendation_pattern] ([id_recommendation], [id_pattern]) VALUES (31, 1);
-INSERT INTO [recommendation_pattern] ([id_recommendation], [id_pattern]) VALUES (31, 2);
+INSERT INTO [pattern] ([id], [language], [recognizer], [desc]) VALUES
+    (1, 1, 'nested_c_loops', 'recognize two or more perfect nested loops');
+
+INSERT INTO [transformation] ([id], [language], [transformer], [desc]) VALUES
+    (1, 1, 'c_loop_interchange', 'interchange two perfect nested loops');
+INSERT INTO [transformation] ([id], [language], [transformer], [desc]) VALUES
+    (2, 1, 'c_loop_tiling', 'tile two perfect nested loops');
+
+INSERT INTO [recommendation_transformation] ([id_recommendation], [id_transformation]) VALUES (31, 1);
+-- we need a recommendation for loop tiling, the one we have is tiling AND interchange
+
+INSERT INTO [transformation_pattern] ([id_transformation], [id_pattern]) VALUES (1, 1);
+INSERT INTO [transformation_pattern] ([id_transformation], [id_pattern]) VALUES (2, 1);
 
 --
 -- AustoSCOPE recommendation selection algorithm
