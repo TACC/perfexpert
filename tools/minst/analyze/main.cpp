@@ -794,7 +794,7 @@ int main(int argc, char* argv[])
 	varMetrics* ptr = varMetricsHead;
 	while (ptr)
 	{
-		if (ptr->tot_count > 1024)
+		if (ptr->tot_count > 500)
 		{
 			std::string var_name = var_idx[ptr->vIndex];
 			double reuse = ptr->reuse[0] + ptr->reuse[1] + ptr->reuse[2];
