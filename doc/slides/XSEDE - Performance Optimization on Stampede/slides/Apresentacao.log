@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-2.4-1.40.13 (TeX Live 2012/Debian) (format=latex 2013.7.20)  21 JUL 2013 12:49
+This is pdfTeX, Version 3.1415926-2.4-1.40.13 (TeX Live 2012/Debian) (format=pdflatex 2013.7.20)  21 JUL 2013 14:47
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -85,7 +85,7 @@ Package: geometry 2010/09/12 v5.6 Page Geometry
 
 (/usr/share/texlive/texmf-dist/tex/generic/oberdiek/ifpdf.sty
 Package: ifpdf 2011/01/30 v2.3 Provides the ifpdf switch (HO)
-Package ifpdf Info: pdfTeX in PDF mode is not detected.
+Package ifpdf Info: pdfTeX in PDF mode is detected.
 )
 (/usr/share/texlive/texmf-dist/tex/generic/oberdiek/ifvtex.sty
 Package: ifvtex 2010/03/01 v1.5 Detect VTeX and its facilities (HO)
@@ -131,10 +131,18 @@ Package: trig 1999/03/16 v1.09 sin cos tan (DPC)
 (/usr/share/texlive/texmf-dist/tex/latex/latexconfig/graphics.cfg
 File: graphics.cfg 2010/04/23 v1.9 graphics configuration of TeX Live
 )
-Package graphics Info: Driver file: dvips.def on input line 91.
+Package graphics Info: Driver file: pdftex.def on input line 91.
 
-(/usr/share/texlive/texmf-dist/tex/latex/graphics/dvips.def
-File: dvips.def 1999/02/16 v3.0i Driver-dependant file (DPC,SPQR)
+(/usr/share/texlive/texmf-dist/tex/latex/pdftex-def/pdftex.def
+File: pdftex.def 2011/05/27 v0.06d Graphics/color for pdfTeX
+
+(/usr/share/texlive/texmf-dist/tex/generic/oberdiek/infwarerr.sty
+Package: infwarerr 2010/04/08 v1.3 Providing info/warning/error messages (HO)
+)
+(/usr/share/texlive/texmf-dist/tex/generic/oberdiek/ltxcmds.sty
+Package: ltxcmds 2011/11/09 v1.22 LaTeX kernel commands for general use (HO)
+)
+\Gread@gobject=\count105
 ))
 \Gin@req@height=\dimen127
 \Gin@req@width=\dimen128
@@ -173,22 +181,21 @@ Package: pgfsys 2010/06/30 v2.10 (rcs-revision 1.37)
 \pgf@yc=\dimen136
 \w@pgf@writea=\write3
 \r@pgf@reada=\read1
-\c@pgf@counta=\count105
-\c@pgf@countb=\count106
-\c@pgf@countc=\count107
-\c@pgf@countd=\count108
+\c@pgf@counta=\count106
+\c@pgf@countb=\count107
+\c@pgf@countc=\count108
+\c@pgf@countd=\count109
 
 (/usr/share/texmf/tex/generic/pgf/systemlayer/pgf.cfg
 File: pgf.cfg 2008/05/14  (rcs-revision 1.7)
 )
-Package pgfsys Info: Driver file for pgf: pgfsys-dvips.def on input line 900.
+Package pgfsys Info: Driver file for pgf: pgfsys-pdftex.def on input line 900.
 
-(/usr/share/texmf/tex/generic/pgf/systemlayer/pgfsys-dvips.def
-File: pgfsys-dvips.def 2008/04/03  (rcs-revision 1.20)
+(/usr/share/texmf/tex/generic/pgf/systemlayer/pgfsys-pdftex.def
+File: pgfsys-pdftex.def 2009/05/22  (rcs-revision 1.26)
 
-(/usr/share/texmf/tex/generic/pgf/systemlayer/pgfsys-common-postscript.def
-File: pgfsys-common-postscript.def 2008/10/01  (rcs-revision 1.22)
-\pgf@objectcount=\count109
+(/usr/share/texmf/tex/generic/pgf/systemlayer/pgfsys-common-pdf.def
+File: pgfsys-common-pdf.def 2008/05/19  (rcs-revision 1.10)
 )))
 (/usr/share/texmf/tex/generic/pgf/systemlayer/pgfsyssoftpath.code.tex
 File: pgfsyssoftpath.code.tex 2008/07/18  (rcs-revision 1.7)
@@ -204,7 +211,7 @@ Package: xcolor 2007/01/21 v2.11 LaTeX color extensions (UK)
 (/usr/share/texlive/texmf-dist/tex/latex/latexconfig/color.cfg
 File: color.cfg 2007/01/18 v1.5 color configuration of teTeX/TeXLive
 )
-Package xcolor Info: Driver file: dvips.def on input line 225.
+Package xcolor Info: Driver file: pdftex.def on input line 225.
 
 (/usr/share/texlive/texmf-dist/tex/latex/colortbl/colortbl.sty
 Package: colortbl 2012/02/13 v1.0a Color table columns (DPC)
@@ -222,6 +229,7 @@ Package: array 2008/09/09 v2.4c Tabular extension package (FMi)
 )
 \rownum=\count112
 Package xcolor Info: Model `cmy' substituted by `cmy0' on input line 1337.
+Package xcolor Info: Model `hsb' substituted by `rgb' on input line 1341.
 Package xcolor Info: Model `RGB' extended on input line 1353.
 Package xcolor Info: Model `HTML' substituted by `rgb' on input line 1355.
 Package xcolor Info: Model `Hsb' substituted by `hsb' on input line 1356.
@@ -347,8 +355,8 @@ Package: hobsub-hyperref 2012/05/28 v1.13 Bundle oberdiek, subset hyperref (HO)
 (/usr/share/texlive/texmf-dist/tex/generic/oberdiek/hobsub-generic.sty
 Package: hobsub-generic 2012/05/28 v1.13 Bundle oberdiek, subset generic (HO)
 Package: hobsub 2012/05/28 v1.13 Construct package bundles (HO)
-Package: infwarerr 2010/04/08 v1.3 Providing info/warning/error messages (HO)
-Package: ltxcmds 2011/11/09 v1.22 LaTeX kernel commands for general use (HO)
+Package hobsub Info: Skipping package `infwarerr' (already loaded).
+Package hobsub Info: Skipping package `ltxcmds' (already loaded).
 Package: ifluatex 2010/03/01 v1.3 Provides the ifluatex switch (HO)
 Package ifluatex Info: LuaTeX not detected.
 Package hobsub Info: Skipping package `ifvtex' (already loaded).
@@ -366,7 +374,7 @@ Package: pdftexcmds 2011/11/29 v0.20 Utility functions of pdfTeX for LuaTeX (HO
 Package pdftexcmds Info: LuaTeX not detected.
 Package pdftexcmds Info: \pdf@primitive is available.
 Package pdftexcmds Info: \pdf@ifprimitive is available.
-Package pdftexcmds Info: \pdfdraftmode is ignored in DVI mode.
+Package pdftexcmds Info: \pdfdraftmode found.
 Package: pdfescape 2011/11/25 v1.13 Implements pdfTeX's escape features (HO)
 Package: bigintcalc 2012/04/08 v1.3 Expandable calculations on big integers (HO
 )
@@ -435,17 +443,10 @@ Package hyperref Message: Stopped early.
 
 )
 
-Package hyperref Message: Driver (default): hdvips.
+Package hyperref Message: Driver (autodetected): hpdftex.
 
-(/usr/share/texlive/texmf-dist/tex/latex/hyperref/hdvips.def
-File: hdvips.def 2012/05/13 v6.82q Hyperref driver for dvips
-
-(/usr/share/texlive/texmf-dist/tex/latex/hyperref/pdfmark.def
-File: pdfmark.def 2012/05/13 v6.82q Hyperref definitions for pdfmark specials
-\pdf@docset=\toks25
-\pdf@box=\box40
-\pdf@toks=\toks26
-\pdf@defaulttoks=\toks27
+(/usr/share/texlive/texmf-dist/tex/latex/hyperref/hpdftex.def
+File: hpdftex.def 2012/05/13 v6.82q Hyperref driver for pdfTeX
 \Fld@listcount=\count125
 \c@bookmark@seq@number=\count126
 
@@ -453,7 +454,7 @@ File: pdfmark.def 2012/05/13 v6.82q Hyperref definitions for pdfmark specials
 Package: rerunfilecheck 2011/04/15 v1.7 Rerun checks for auxiliary files (HO)
 Package uniquecounter Info: New unique counter `rerunfilecheck' on input line 2
 82.
-)))
+))
 (/usr/share/texmf/tex/latex/beamer/base/beamerbaserequires.sty
 Package: beamerbaserequires 2010/05/01  (rcs-revision efa082c6111d)
 
@@ -468,7 +469,7 @@ Package: amssymb 2009/06/22 v3.00
 
 (/usr/share/texlive/texmf-dist/tex/latex/amsfonts/amsfonts.sty
 Package: amsfonts 2009/06/22 v3.00 Basic AMSFonts support
-\@emptytoks=\toks28
+\@emptytoks=\toks25
 \symAMSa=\mathgroup4
 \symAMSb=\mathgroup5
 LaTeX Font Info:    Overwriting math alphabet `\mathfrak' in version `bold'
@@ -506,9 +507,9 @@ Package: beamerbasesection 2010/06/17  (rcs-revision e0d9401bb743)
 )
 (/usr/share/texmf/tex/latex/beamer/base/beamerbaseframe.sty
 Package: beamerbaseframe 2010/06/06  (rcs-revision bff0a9294b45)
-\beamer@framebox=\box41
-\beamer@frametitlebox=\box42
-\beamer@zoombox=\box43
+\beamer@framebox=\box40
+\beamer@frametitlebox=\box41
+\beamer@zoombox=\box42
 \beamer@zoomcount=\count134
 \beamer@zoomframecount=\count135
 \beamer@frametextheight=\dimen166
@@ -517,7 +518,7 @@ Package: beamerbaseframe 2010/06/06  (rcs-revision bff0a9294b45)
 \beamer@framebottomskip=\skip49
 \beamer@frametopskipautobreak=\skip50
 \beamer@framebottomskipautobreak=\skip51
-\beamer@envbody=\toks29
+\beamer@envbody=\toks26
 \c@framenumber=\count137
 )
 (/usr/share/texmf/tex/latex/beamer/base/beamerbaseverbatim.sty
@@ -526,40 +527,40 @@ Package: beamerbaseverbatim 2010/05/01  (rcs-revision efa082c6111d)
 )
 (/usr/share/texmf/tex/latex/beamer/base/beamerbaseframesize.sty
 Package: beamerbaseframesize 2010/06/27  (rcs-revision 6baa2d92e6f1)
-\beamer@splitbox=\box44
+\beamer@splitbox=\box43
 \beamer@autobreakcount=\count138
 \beamer@autobreaklastheight=\dimen167
-\beamer@frametitletoks=\toks30
-\beamer@framesubtitletoks=\toks31
+\beamer@frametitletoks=\toks27
+\beamer@framesubtitletoks=\toks28
 )
 (/usr/share/texmf/tex/latex/beamer/base/beamerbaseframecomponents.sty
 Package: beamerbaseframecomponents 2010/07/12  (rcs-revision 09e82992d9b1)
-\beamer@footins=\box45
+\beamer@footins=\box44
 )
 (/usr/share/texmf/tex/latex/beamer/base/beamerbasecolor.sty
 Package: beamerbasecolor 2010/06/06  (rcs-revision d1a9b48be06d)
 )
 (/usr/share/texmf/tex/latex/beamer/base/beamerbasenotes.sty
 Package: beamerbasenotes 2010/05/01  (rcs-revision efa082c6111d)
-\beamer@frameboxcopy=\box46
+\beamer@frameboxcopy=\box45
 )
 (/usr/share/texmf/tex/latex/beamer/base/beamerbasetoc.sty
 Package: beamerbasetoc 2010/06/11  (rcs-revision 242ecaa6783b)
 )
 (/usr/share/texmf/tex/latex/beamer/base/beamerbasetemplates.sty
 Package: beamerbasetemplates 2010/05/01  (rcs-revision efa082c6111d)
-\beamer@sbttoks=\toks32
+\beamer@sbttoks=\toks29
 
 (/usr/share/texmf/tex/latex/beamer/base/beamerbaseauxtemplates.sty
 Package: beamerbaseauxtemplates 2010/05/01  (rcs-revision efa082c6111d)
 
 (/usr/share/texmf/tex/latex/beamer/base/beamerbaseboxes.sty
 Package: beamerbaseboxes 2010/05/01  (rcs-revision efa082c6111d)
-\bmb@box=\box47
-\bmb@colorbox=\box48
-\bmb@boxshadow=\box49
-\bmb@boxshadowball=\box50
-\bmb@boxshadowballlarge=\box51
+\bmb@box=\box46
+\bmb@colorbox=\box47
+\bmb@boxshadow=\box48
+\bmb@boxshadowball=\box49
+\bmb@boxshadowballlarge=\box50
 \bmb@temp=\dimen168
 \bmb@dima=\dimen169
 \bmb@dimb=\dimen170
@@ -572,7 +573,7 @@ Package: beamerbaselocalstructure 2010/06/01  (rcs-revision 81f9e33f7cc2)
 
 (/usr/share/texlive/texmf-dist/tex/latex/tools/enumerate.sty
 Package: enumerate 1999/03/05 v3.00 enumerate extensions (DPC)
-\@enLab=\toks33
+\@enLab=\toks30
 )
 \c@figure=\count139
 \c@table=\count140
@@ -595,7 +596,7 @@ Package: amstext 2000/06/29 v2.01
 
 (/usr/share/texlive/texmf-dist/tex/latex/amsmath/amsgen.sty
 File: amsgen.sty 1999/11/30 v2.0
-\@emptytoks=\toks34
+\@emptytoks=\toks31
 \ex@=\dimen173
 ))
 (/usr/share/texlive/texmf-dist/tex/latex/amsmath/amsbsy.sty
@@ -615,8 +616,8 @@ LaTeX Info: Redefining \overline on input line 307.
 LaTeX Info: Redefining \ldots on input line 379.
 LaTeX Info: Redefining \dots on input line 382.
 LaTeX Info: Redefining \cdots on input line 467.
-\Mathstrutbox@=\box52
-\strutbox@=\box53
+\Mathstrutbox@=\box51
+\strutbox@=\box52
 \big@size=\dimen175
 LaTeX Font Info:    Redeclaring font encoding OML on input line 567.
 LaTeX Font Info:    Redeclaring font encoding OMS on input line 568.
@@ -625,35 +626,35 @@ LaTeX Font Info:    Redeclaring font encoding OMS on input line 568.
 \dotsspace@=\muskip11
 \c@parentequation=\count148
 \dspbrk@lvl=\count149
-\tag@help=\toks35
+\tag@help=\toks32
 \row@=\count150
 \column@=\count151
 \maxfields@=\count152
-\andhelp@=\toks36
+\andhelp@=\toks33
 \eqnshift@=\dimen176
 \alignsep@=\dimen177
 \tagshift@=\dimen178
 \tagwidth@=\dimen179
 \totwidth@=\dimen180
 \lineht@=\dimen181
-\@envbody=\toks37
+\@envbody=\toks34
 \multlinegap=\skip55
 \multlinetaggap=\skip56
-\mathdisplay@stack=\toks38
+\mathdisplay@stack=\toks35
 LaTeX Info: Redefining \[ on input line 2666.
 LaTeX Info: Redefining \] on input line 2667.
 )
 (/usr/share/texlive/texmf-dist/tex/latex/amscls/amsthm.sty
 Package: amsthm 2009/07/02 v2.20.1
-\thm@style=\toks39
-\thm@bodyfont=\toks40
-\thm@headfont=\toks41
-\thm@notefont=\toks42
-\thm@headpunct=\toks43
+\thm@style=\toks36
+\thm@bodyfont=\toks37
+\thm@headfont=\toks38
+\thm@notefont=\toks39
+\thm@headpunct=\toks40
 \thm@preskip=\skip57
 \thm@postskip=\skip58
 \thm@headsep=\skip59
-\dth@everypar=\toks44
+\dth@everypar=\toks41
 )
 \c@theorem=\count153
 )
@@ -688,6 +689,17 @@ Package: beamerthemeboxes 2010/06/17  (rcs-revision d02a7cf4d8ae)
 \beamer@currentbox=\count155
 \beamer@footboxes=\count156
 \beamer@footboxsizes=\dimen187
+) (/usr/share/texlive/texmf-dist/tex/latex/fancyvrb/fancyvrb.sty
+Package: fancyvrb 2008/02/07
+
+Style option: `fancyvrb' v2.7a, with DG/SPQR fixes, and firstline=lastline fix 
+<2008/02/07> (tvz)
+\FV@CodeLineNo=\count157
+\FV@InFile=\read2
+\FV@TabBox=\box53
+\c@FancyVerbLine=\count158
+\FV@StepNumber=\count159
+\FV@OutFile=\write5
 ) (/usr/share/texmf/tex/latex/pgf/frontendlayer/tikz.sty
 (/usr/share/texmf/tex/latex/pgf/basiclayer/pgf.sty
 Package: pgf 2008/01/15 v2.10 (rcs-revision 1.12)
@@ -714,15 +726,15 @@ Package: pgfcomp-version-1-18 2007/07/23 v2.10 (rcs-revision 1.1)
 Package: pgffor 2010/03/23 v2.10 (rcs-revision 1.18)
 \pgffor@iter=\dimen190
 \pgffor@skip=\dimen191
-\pgffor@stack=\toks45
-\pgffor@toks=\toks46
+\pgffor@stack=\toks42
+\pgffor@toks=\toks43
 ))
 (/usr/share/texmf/tex/generic/pgf/frontendlayer/tikz/tikz.code.tex
 Package: tikz 2010/10/13 v2.10 (rcs-revision 1.76)
 
 (/usr/share/texmf/tex/generic/pgf/libraries/pgflibraryplothandlers.code.tex
 File: pgflibraryplothandlers.code.tex 2010/05/31 v2.10 (rcs-revision 1.15)
-\pgf@plot@mark@count=\count157
+\pgf@plot@mark@count=\count160
 \pgfplotmarksize=\dimen192
 )
 \tikz@lastx=\dimen193
@@ -733,18 +745,18 @@ File: pgflibraryplothandlers.code.tex 2010/05/31 v2.10 (rcs-revision 1.15)
 \tikzsiblingdistance=\dimen198
 \tikz@figbox=\box55
 \tikz@tempbox=\box56
-\tikztreelevel=\count158
-\tikznumberofchildren=\count159
-\tikznumberofcurrentchild=\count160
-\tikz@fig@count=\count161
+\tikztreelevel=\count161
+\tikznumberofchildren=\count162
+\tikznumberofcurrentchild=\count163
+\tikz@fig@count=\count164
 
 (/usr/share/texmf/tex/generic/pgf/modules/pgfmodulematrix.code.tex
 File: pgfmodulematrix.code.tex 2010/08/24  (rcs-revision 1.4)
-\pgfmatrixcurrentrow=\count162
-\pgfmatrixcurrentcolumn=\count163
-\pgf@matrix@numberofcolumns=\count164
+\pgfmatrixcurrentrow=\count165
+\pgfmatrixcurrentcolumn=\count166
+\pgf@matrix@numberofcolumns=\count167
 )
-\tikz@expandcount=\count165
+\tikz@expandcount=\count168
 
 (/usr/share/texmf/tex/generic/pgf/frontendlayer/tikz/libraries/tikzlibrarytopat
 hs.code.tex
@@ -876,12 +888,12 @@ Package: textpos 2012/06/01 1.7h, absolute positioning of text on the page
 \TP@absmargin=\dimen203
 Grid set 16 x 16 = 22.7622pt x 17.07166pt
 \TPboxrulesize=\dimen204
-\TP@tbargs=\toks47
+\TP@tbargs=\toks44
 \TP@prevdepth=\dimen205
 ) (/usr/share/texlive/texmf-dist/tex/latex/base/inputenc.sty
 Package: inputenc 2008/03/30 v1.1d Input encoding file
-\inpenc@prehook=\toks48
-\inpenc@posthook=\toks49
+\inpenc@prehook=\toks45
+\inpenc@posthook=\toks46
 
 (/usr/share/texlive/texmf-dist/tex/latex/base/applemac.def
 File: applemac.def 2008/03/30 v1.1d Input encoding file
@@ -891,23 +903,23 @@ Package: pgfpages 2004/11/05 ver 0.01
 
 (/usr/share/texlive/texmf-dist/tex/latex/tools/calc.sty
 Package: calc 2007/08/22 v4.3 Infix arithmetic (KKT,FJ)
-\calc@Acount=\count166
-\calc@Bcount=\count167
+\calc@Acount=\count169
+\calc@Bcount=\count170
 \calc@Adimen=\dimen206
 \calc@Bdimen=\dimen207
 \calc@Askip=\skip60
 \calc@Bskip=\skip61
 LaTeX Info: Redefining \setlength on input line 76.
 LaTeX Info: Redefining \addtolength on input line 77.
-\calc@Ccount=\count168
+\calc@Ccount=\count171
 \calc@Cskip=\skip62
 )
-\pgf@logicalpages=\count169
-\pgf@firstshipout=\count170
-\pgf@lastshipout=\count171
-\pgf@currentshipout=\count172
-\pgf@cpn=\count173
-\pgf@shipoutnextto=\count174
+\pgf@logicalpages=\count172
+\pgf@firstshipout=\count173
+\pgf@lastshipout=\count174
+\pgf@currentshipout=\count175
+\pgf@cpn=\count176
+\pgf@shipoutnextto=\count177
 \pgfphysicalheight=\dimen208
 \pgfphysicalwidth=\dimen209
 \pgfpages@shipoutbox=\box78
@@ -918,29 +930,29 @@ LaTeX Info: Redefining \addtolength on input line 77.
 (./Apresentacao.aux)
 \openout1 = `Apresentacao.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 24.
-LaTeX Font Info:    ... okay on input line 24.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 24.
-LaTeX Font Info:    ... okay on input line 24.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 24.
-LaTeX Font Info:    ... okay on input line 24.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 24.
-LaTeX Font Info:    ... okay on input line 24.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 24.
-LaTeX Font Info:    ... okay on input line 24.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 24.
-LaTeX Font Info:    ... okay on input line 24.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 24.
-LaTeX Font Info:    ... okay on input line 24.
-LaTeX Font Info:    Try loading font information for OT1+lmss on input line 24.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 25.
+LaTeX Font Info:    ... okay on input line 25.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 25.
+LaTeX Font Info:    ... okay on input line 25.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 25.
+LaTeX Font Info:    ... okay on input line 25.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 25.
+LaTeX Font Info:    ... okay on input line 25.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 25.
+LaTeX Font Info:    ... okay on input line 25.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 25.
+LaTeX Font Info:    ... okay on input line 25.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 25.
+LaTeX Font Info:    ... okay on input line 25.
+LaTeX Font Info:    Try loading font information for OT1+lmss on input line 25.
 
  (/usr/share/texmf/tex/latex/lm/ot1lmss.fd
 File: ot1lmss.fd 2009/10/30 v1.6 Font defs for Latin Modern
 )
 *geometry* driver: auto-detecting
-*geometry* detected driver: dvips
+*geometry* detected driver: pdftex
 *geometry* verbose mode - [ preamble ] result:
-* driver: dvips
+* driver: pdftex
 * paper: custom
 * layout: <same size as paper>
 * layoutoffset:(h,v)=(0.0pt,0.0pt)
@@ -971,9 +983,37 @@ File: ot1lmss.fd 2009/10/30 v1.6 Font defs for Latin Modern
 * \@reversemarginfalse
 * (1in=72.27pt=25.4mm, 1cm=28.453pt)
 
+(/usr/share/texlive/texmf-dist/tex/context/base/supp-pdf.mkii
+[Loading MPS to PDF converter (version 2006.09.02).]
+\scratchcounter=\count178
+\scratchdimen=\dimen211
+\scratchbox=\box79
+\nofMPsegments=\count179
+\nofMParguments=\count180
+\everyMPshowfont=\toks47
+\MPscratchCnt=\count181
+\MPscratchDim=\dimen212
+\MPnumerator=\count182
+\makeMPintoPDFobject=\count183
+\everyMPtoPDFconversion=\toks48
+) (/usr/share/texlive/texmf-dist/tex/latex/oberdiek/epstopdf-base.sty
+Package: epstopdf-base 2010/02/09 v2.5 Base part for package epstopdf
+
+(/usr/share/texlive/texmf-dist/tex/latex/oberdiek/grfext.sty
+Package: grfext 2010/08/19 v1.1 Manage graphics extensions (HO)
+)
+Package grfext Info: Graphics extension search list:
+(grfext)             [.png,.pdf,.jpg,.mps,.jpeg,.jbig2,.jb2,.PNG,.PDF,.JPG,.JPE
+G,.JBIG2,.JB2,.eps]
+(grfext)             \AppendGraphicsExtensions on input line 452.
+
+(/usr/share/texlive/texmf-dist/tex/latex/latexconfig/epstopdf-sys.cfg
+File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Liv
+e
+))
 ABD: EveryShipout initializing macros
-\AtBeginShipoutBox=\box79
-Package hyperref Info: Link coloring OFF on input line 24.
+\AtBeginShipoutBox=\box80
+Package hyperref Info: Link coloring OFF on input line 25.
 
 (/usr/share/texlive/texmf-dist/tex/latex/hyperref/nameref.sty
 Package: nameref 2010/04/30 v2.40 Cross-referencing by name of section
@@ -981,49 +1021,49 @@ Package: nameref 2010/04/30 v2.40 Cross-referencing by name of section
 (/usr/share/texlive/texmf-dist/tex/generic/oberdiek/gettitlestring.sty
 Package: gettitlestring 2010/12/03 v1.4 Cleanup title references (HO)
 )
-\c@section@level=\count175
+\c@section@level=\count184
 )
-LaTeX Info: Redefining \ref on input line 24.
-LaTeX Info: Redefining \pageref on input line 24.
-LaTeX Info: Redefining \nameref on input line 24.
+LaTeX Info: Redefining \ref on input line 25.
+LaTeX Info: Redefining \pageref on input line 25.
+LaTeX Info: Redefining \nameref on input line 25.
 \symnumbers=\mathgroup6
 \sympureletters=\mathgroup7
 LaTeX Font Info:    Overwriting math alphabet `\mathrm' in version `normal'
-(Font)                  OT1/lmr/m/n --> OT1/lmr/m/n on input line 24.
-LaTeX Font Info:    Redeclaring math alphabet \mathbf on input line 24.
+(Font)                  OT1/lmr/m/n --> OT1/lmr/m/n on input line 25.
+LaTeX Font Info:    Redeclaring math alphabet \mathbf on input line 25.
 LaTeX Font Info:    Overwriting math alphabet `\mathbf' in version `normal'
-(Font)                  OT1/lmr/bx/n --> OT1/lmr/bx/n on input line 24.
+(Font)                  OT1/lmr/bx/n --> OT1/lmr/bx/n on input line 25.
 LaTeX Font Info:    Overwriting math alphabet `\mathbf' in version `bold'
-(Font)                  OT1/lmr/bx/n --> OT1/lmr/bx/n on input line 24.
-LaTeX Font Info:    Redeclaring math alphabet \mathsf on input line 24.
+(Font)                  OT1/lmr/bx/n --> OT1/lmr/bx/n on input line 25.
+LaTeX Font Info:    Redeclaring math alphabet \mathsf on input line 25.
 LaTeX Font Info:    Overwriting math alphabet `\mathsf' in version `normal'
-(Font)                  OT1/lmss/m/n --> OT1/lmss/m/n on input line 24.
+(Font)                  OT1/lmss/m/n --> OT1/lmss/m/n on input line 25.
 LaTeX Font Info:    Overwriting math alphabet `\mathsf' in version `bold'
-(Font)                  OT1/lmss/bx/n --> OT1/lmss/m/n on input line 24.
-LaTeX Font Info:    Redeclaring math alphabet \mathit on input line 24.
+(Font)                  OT1/lmss/bx/n --> OT1/lmss/m/n on input line 25.
+LaTeX Font Info:    Redeclaring math alphabet \mathit on input line 25.
 LaTeX Font Info:    Overwriting math alphabet `\mathit' in version `normal'
-(Font)                  OT1/lmr/m/it --> OT1/lmr/m/it on input line 24.
+(Font)                  OT1/lmr/m/it --> OT1/lmr/m/it on input line 25.
 LaTeX Font Info:    Overwriting math alphabet `\mathit' in version `bold'
-(Font)                  OT1/lmr/bx/it --> OT1/lmr/m/it on input line 24.
-LaTeX Font Info:    Redeclaring math alphabet \mathtt on input line 24.
+(Font)                  OT1/lmr/bx/it --> OT1/lmr/m/it on input line 25.
+LaTeX Font Info:    Redeclaring math alphabet \mathtt on input line 25.
 LaTeX Font Info:    Overwriting math alphabet `\mathtt' in version `normal'
-(Font)                  OT1/lmtt/m/n --> OT1/lmtt/m/n on input line 24.
+(Font)                  OT1/lmtt/m/n --> OT1/lmtt/m/n on input line 25.
 LaTeX Font Info:    Overwriting math alphabet `\mathtt' in version `bold'
-(Font)                  OT1/lmtt/m/n --> OT1/lmtt/m/n on input line 24.
+(Font)                  OT1/lmtt/m/n --> OT1/lmtt/m/n on input line 25.
 LaTeX Font Info:    Overwriting symbol font `numbers' in version `bold'
-(Font)                  OT1/lmr/m/n --> OT1/lmr/bx/n on input line 24.
+(Font)                  OT1/lmr/m/n --> OT1/lmr/bx/n on input line 25.
 LaTeX Font Info:    Overwriting symbol font `pureletters' in version `bold'
-(Font)                  OT1/lmr/m/it --> OT1/lmr/bx/it on input line 24.
+(Font)                  OT1/lmr/m/it --> OT1/lmr/bx/it on input line 25.
 LaTeX Font Info:    Overwriting math alphabet `\mathrm' in version `bold'
-(Font)                  OT1/lmr/bx/n --> OT1/lmr/bx/n on input line 24.
+(Font)                  OT1/lmr/bx/n --> OT1/lmr/bx/n on input line 25.
 LaTeX Font Info:    Overwriting math alphabet `\mathbf' in version `bold'
-(Font)                  OT1/lmr/bx/n --> OT1/lmr/bx/n on input line 24.
+(Font)                  OT1/lmr/bx/n --> OT1/lmr/bx/n on input line 25.
 LaTeX Font Info:    Overwriting math alphabet `\mathsf' in version `bold'
-(Font)                  OT1/lmss/m/n --> OT1/lmss/bx/n on input line 24.
+(Font)                  OT1/lmss/m/n --> OT1/lmss/bx/n on input line 25.
 LaTeX Font Info:    Overwriting math alphabet `\mathit' in version `bold'
-(Font)                  OT1/lmr/m/it --> OT1/lmr/bx/it on input line 24.
+(Font)                  OT1/lmr/m/it --> OT1/lmr/bx/it on input line 25.
 LaTeX Font Info:    Overwriting math alphabet `\mathtt' in version `bold'
-(Font)                  OT1/lmtt/m/n --> OT1/lmtt/bx/n on input line 24.
+(Font)                  OT1/lmtt/m/n --> OT1/lmtt/bx/n on input line 25.
 
 (/usr/share/texmf/tex/latex/beamer/base/translator/dicts/translator-basic-dicti
 onary/translator-basic-dictionary-English.dict
@@ -1050,185 +1090,160 @@ tionary/translator-theorem-dictionary-English.dict
 Dictionary: translator-theorem-dictionary, Language: English 
 ) (./Apresentacao.nav)
 
-Package pgf Warning: File "figures/tacc" not found when defining image "logo_TA
-CC".
-(pgf)                Tried all extensions in ".epsi:.eps:.ps:" on input line 27
-.
-
-
-Package pgf Warning: Missing height for image "logo_TACC" ("figures/tacc") in d
-raft mode.
-(pgf)                Using 1cm instead on input line 27.
-
-
-Package pgf Warning: File "figures/ut" not found when defining image "logo_UT".
-
-(pgf)                Tried all extensions in ".epsi:.eps:.ps:" on input line 28
-.
-
-
-Package pgf Warning: Missing height for image "logo_UT" ("figures/ut") in draft
- mode.
-(pgf)                Using 1cm instead on input line 28.
-
-
-Package pgf Warning: File "figures/tacc" not found when defining image "logo_TA
-CC_small".
-(pgf)                Tried all extensions in ".epsi:.eps:.ps:" on input line 29
-.
-
-
-Package pgf Warning: Missing height for image "logo_TACC_small" ("figures/tacc"
-) in draft mode.
-(pgf)                Using 1cm instead on input line 29.
-
-
-Package pgf Warning: File "figures/ut" not found when defining image "logo_UT_s
-mall".
-(pgf)                Tried all extensions in ".epsi:.eps:.ps:" on input line 30
-.
-
-
-Package pgf Warning: Missing height for image "logo_UT_small" ("figures/ut") in
- draft mode.
-(pgf)                Using 1cm instead on input line 30.
-
-
 Package pgf Warning: File "figures/configuration" not found when defining image
  "configuration".
-(pgf)                Tried all extensions in ".epsi:.eps:.ps:" on input line 31
-.
+(pgf)                Tried all extensions in ".pdf:.jpg:.jpeg:.png:" on input l
+ine 32.
 
 
 Package pgf Warning: Missing height for image "configuration" ("figures/configu
 ration") in draft mode.
-(pgf)                Using 1cm instead on input line 31.
+(pgf)                Using 1cm instead on input line 32.
 
 [1
 
-]
-LaTeX Font Info:    Try loading font information for OT1+lmr on input line 51.
+{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map} <./figures/tacc.pdf> <./fig
+ures/ut.pdf>]
+LaTeX Font Info:    Try loading font information for OT1+lmr on input line 52.
  (/usr/share/texmf/tex/latex/lm/ot1lmr.fd
 File: ot1lmr.fd 2009/10/30 v1.6 Font defs for Latin Modern
 )
-LaTeX Font Info:    Try loading font information for OML+lmm on input line 51.
+LaTeX Font Info:    Try loading font information for OML+lmm on input line 52.
 
 (/usr/share/texmf/tex/latex/lm/omllmm.fd
 File: omllmm.fd 2009/10/30 v1.6 Font defs for Latin Modern
 )
-LaTeX Font Info:    Try loading font information for OMS+lmsy on input line 51.
+LaTeX Font Info:    Try loading font information for OMS+lmsy on input line 52.
 
 
 (/usr/share/texmf/tex/latex/lm/omslmsy.fd
 File: omslmsy.fd 2009/10/30 v1.6 Font defs for Latin Modern
 )
-LaTeX Font Info:    Try loading font information for OMX+lmex on input line 51.
+LaTeX Font Info:    Try loading font information for OMX+lmex on input line 52.
 
 
 (/usr/share/texmf/tex/latex/lm/omxlmex.fd
 File: omxlmex.fd 2009/10/30 v1.6 Font defs for Latin Modern
 )
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <8> on input line 51.
+(Font)              <8> on input line 52.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <6> on input line 51.
+(Font)              <6> on input line 52.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <5> on input line 51.
-LaTeX Font Info:    Try loading font information for U+msa on input line 51.
+(Font)              <5> on input line 52.
+LaTeX Font Info:    Try loading font information for U+msa on input line 52.
 
 (/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2009/06/22 v3.00 AMS symbols A
 )
-LaTeX Font Info:    Try loading font information for U+msb on input line 51.
+LaTeX Font Info:    Try loading font information for U+msb on input line 52.
 
 (/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2009/06/22 v3.00 AMS symbols B
 ) [2
 
-] [3
+ <./figures/tacc.pdf> <./figures/ut.pdf>] [3
 
 ]
-File: figures/cpu-mem-speed.eps Graphic file (type eps)
+Package epstopdf Info: Source file: <figures/cpu-mem-speed.eps>
+(epstopdf)                    date: 2013-07-21 09:44:19
+(epstopdf)                    size: 984146 bytes
+(epstopdf)             Output file: <figures/cpu-mem-speed-eps-converted-to.pdf
+>
+(epstopdf)             Command: <repstopdf --outfile=figures/cpu-mem-speed-eps-
+converted-to.pdf figures/cpu-mem-speed.eps>
+(epstopdf)             \includegraphics on input line 80.
+runsystem(repstopdf --outfile=figures/cpu-mem-speed-eps-converted-to.pdf figure
+s/cpu-mem-speed.eps)...executed safely (allowed).
 
-<figures/cpu-mem-speed.eps> [4
+Package epstopdf Info: Result file: <figures/cpu-mem-speed-eps-converted-to.pdf
+>
+(epstopdf)                    date: 2013-07-21 14:47:09
+(epstopdf)                    size: 47045 bytes.
 
-] [5
+<figures/cpu-mem-speed-eps-converted-to.pdf, id=113, 388.45125pt x 247.92625pt>
+File: figures/cpu-mem-speed-eps-converted-to.pdf Graphic file (type pdf)
+<use figures/cpu-mem-speed-eps-converted-to.pdf>
+Package pdftex.def Info: figures/cpu-mem-speed-eps-converted-to.pdf used on inp
+ut line 80.
+(pdftex.def)             Requested size: 153.64493pt x 98.06409pt.
+ [4
+
+ <./figures/cpu-mem-speed-eps-converted-to.pdf>]
+Package epstopdf Info: Source file: <figures/cpu-mem-speed.eps>
+(epstopdf)                    date: 2013-07-21 09:44:19
+(epstopdf)                    size: 984146 bytes
+(epstopdf)             Output file: <figures/cpu-mem-speed-eps-converted-to.pdf
+>
+(epstopdf)                    date: 2013-07-21 14:47:09
+(epstopdf)                    size: 47045 bytes
+(epstopdf)             Command: <repstopdf --outfile=figures/cpu-mem-speed-eps-
+converted-to.pdf figures/cpu-mem-speed.eps>
+(epstopdf)             \includegraphics on input line 80.
+Package epstopdf Info: Output file is already uptodate.
+File: figures/cpu-mem-speed-eps-converted-to.pdf Graphic file (type pdf)
+ <use figures/cpu-mem-speed-eps-converted-to.pdf>
+Package pdftex.def Info: figures/cpu-mem-speed-eps-converted-to.pdf used on inp
+ut line 80.
+(pdftex.def)             Requested size: 153.64493pt x 98.06409pt.
+ [5
 
 ]
-LaTeX Font Info:    Try loading font information for OT1+lmtt on input line 96.
+LaTeX Font Info:    Try loading font information for OT1+lmtt on input line 89.
 
- (/usr/share/texmf/tex/latex/lm/ot1lmtt.fd
+
+(/usr/share/texmf/tex/latex/lm/ot1lmtt.fd
 File: ot1lmtt.fd 2009/10/30 v1.6 Font defs for Latin Modern
 )
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <10.95> on input line 96.
-
-[6
+(Font)              <10.95> on input line 89.
+ [6
 
 ] [7
 
 ] [8
 
-] [9
+]
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <14.4> on input line 121.
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <10> on input line 121.
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <7> on input line 121.
+ [9
 
 ]
-File: figures/macpo-workflow.eps Graphic file (type eps)
- <figures/macpo-workflow.eps> [10
+Package epstopdf Info: Source file: <figures/macpo-workflow.eps>
+(epstopdf)                    date: 2013-07-21 09:52:32
+(epstopdf)                    size: 1388262 bytes
+(epstopdf)             Output file: <figures/macpo-workflow-eps-converted-to.pd
+f>
+(epstopdf)             Command: <repstopdf --outfile=figures/macpo-workflow-eps
+-converted-to.pdf figures/macpo-workflow.eps>
+(epstopdf)             \includegraphics on input line 138.
+runsystem(repstopdf --outfile=figures/macpo-workflow-eps-converted-to.pdf figur
+es/macpo-workflow.eps)...executed safely (allowed).
 
-] [11
+Package epstopdf Info: Result file: <figures/macpo-workflow-eps-converted-to.pd
+f>
+(epstopdf)                    date: 2013-07-21 14:47:13
+(epstopdf)                    size: 53282 bytes.
+
+<figures/macpo-workflow-eps-converted-to.pdf, id=274, 391.4625pt x 210.7875pt>
+File: figures/macpo-workflow-eps-converted-to.pdf Graphic file (type pdf)
+
+<use figures/macpo-workflow-eps-converted-to.pdf>
+Package pdftex.def Info: figures/macpo-workflow-eps-converted-to.pdf used on in
+put line 138.
+(pdftex.def)             Requested size: 307.28987pt x 165.47177pt.
+ [10
+
+ <./figures/macpo-workflow-eps-converted-to.pdf>] [11
 
 ]
 \openout4 = `Apresentacao.vrb'.
 
- (./Apresentacao.vrb
-Overfull \hbox (141.11134pt too wide) in paragraph at lines 14--14
-[]\OT1/lmtt/m/n/10.95 Var "counts", seen 1668 times, estimated to cost 147.12 c
-ycles on every access[] 
- []
-
-
-Overfull \hbox (26.13667pt too wide) in paragraph at lines 14--14
-[]\OT1/lmtt/m/n/10.95 Stride of 0 cache lines was observed 1585 times (100.00%)
-.[] 
- []
-
-
-Overfull \hbox (152.60881pt too wide) in paragraph at lines 14--14
-[]\OT1/lmtt/m/n/10.95 Level 1 data cache conflicts = 78.22% [##################
-##############        ][] 
- []
-
-
-Overfull \hbox (152.60881pt too wide) in paragraph at lines 14--14
-[]\OT1/lmtt/m/n/10.95 Level 2 data cache conflicts = 63.37% [##################
-########              ][] 
- []
-
-
-Overfull \hbox (152.60881pt too wide) in paragraph at lines 14--14
-[]\OT1/lmtt/m/n/10.95 NUMA data conflicts = 43.56%          [##################
-                      ][] 
- []
-
-
-Overfull \hbox (164.10628pt too wide) in paragraph at lines 14--14
-[]\OT1/lmtt/m/n/10.95 Level 1 data cache reuse factor = 97.0% [################
-####################### ][] 
- []
-
-
-Overfull \hbox (158.35754pt too wide) in paragraph at lines 14--14
-[]\OT1/lmtt/m/n/10.95 Level 2 data cache reuse factor = 3.0% [##               
-                       ][] 
- []
-
-
-Overfull \hbox (158.35754pt too wide) in paragraph at lines 14--14
-[]\OT1/lmtt/m/n/10.95 Level 3 data cache reuse factor = 0.0% [                 
-                       ][] 
- []
-
-) [12
+ (./Apresentacao.vrb) [12
 
 ] [13
 
@@ -1236,9 +1251,9 @@ Overfull \hbox (158.35754pt too wide) in paragraph at lines 14--14
 \openout4 = `Apresentacao.vrb'.
 
  (./Apresentacao.vrb
-Overfull \hbox (175.60374pt too wide) in paragraph at lines 13--13
-[]\OT1/lmtt/m/n/10.95 # Compile the application using macpo.sh and either --mac
-po:function or --macpo:loop[] 
+Overfull \hbox (12.9592pt too wide) in paragraph at lines 14--14
+[]\OT1/lmtt/m/n/10 # Specify code section using --macpo:function or --macpo:loo
+p[] 
  []
 
 ) [14
@@ -1248,26 +1263,20 @@ po:function or --macpo:loop[]
 ]
 \openout4 = `Apresentacao.vrb'.
 
- (./Apresentacao.vrb
-Overfull \hbox (129.61388pt too wide) in paragraph at lines 4--6
-[][]\OT1/lmtt/m/n/10.95 Var "counts", seen 1073 times, estimated to cost 8.98 c
-ycles on every access 
- []
-
-) [16
+ (./Apresentacao.vrb) [16
 
 ]
 \openout4 = `Apresentacao.vrb'.
 
  (./Apresentacao.vrb
-Overfull \hbox (14.6392pt too wide) in paragraph at lines 4--7
+Overfull \hbox (14.6392pt too wide) in paragraph at lines 4--6
 [][]\OT1/lmtt/m/n/10.95 Stride of 0 cache lines was observed 983 times (97.62%)
 . 
  []
 
 
-Overfull \hbox (3.14174pt too wide) in paragraph at lines 4--7
-[]\OT1/lmtt/m/n/10.95 Stride of 2 cache lines was observed 24 times (2.38%). 
+Overfull \hbox (3.14174pt too wide) in paragraph at lines 4--6
+[]\OT1/lmtt/m/n/10.95 Stride of 2 cache lines was observed 24 times (2.38%).  
  []
 
 ) [17
@@ -1275,94 +1284,40 @@ Overfull \hbox (3.14174pt too wide) in paragraph at lines 4--7
 ]
 \openout4 = `Apresentacao.vrb'.
 
- (./Apresentacao.vrb
-Overfull \hbox (152.60881pt too wide) in paragraph at lines 4--7
-[][]\OT1/lmtt/m/n/10.95 Level 1 data cache conflicts = 78.22% [################
-################        ] 
- []
-
-
-Overfull \hbox (152.60881pt too wide) in paragraph at lines 4--7
-[]\OT1/lmtt/m/n/10.95 Level 2 data cache conflicts = 63.37% [##################
-########              ] 
- []
-
-) [18
+ (./Apresentacao.vrb) [18
 
 ]
 \openout4 = `Apresentacao.vrb'.
 
- (./Apresentacao.vrb
-Overfull \hbox (152.60881pt too wide) in paragraph at lines 4--6
-[][]\OT1/lmtt/m/n/10.95 NUMA data conflicts = 43.56%          [################
-##                      ] 
- []
-
-) [19
+ (./Apresentacao.vrb) [19
 
 ]
 \openout4 = `Apresentacao.vrb'.
 
- (./Apresentacao.vrb
-Overfull \hbox (164.10628pt too wide) in paragraph at lines 4--8
-[][]\OT1/lmtt/m/n/10.95 Level 1 data cache reuse factor = 94.1% [##############
-########################  ] 
- []
-
-
-Overfull \hbox (158.35754pt too wide) in paragraph at lines 4--8
-[]\OT1/lmtt/m/n/10.95 Level 2 data cache reuse factor = 5.9% [###              
-                       ] 
- []
-
-
-Overfull \hbox (158.35754pt too wide) in paragraph at lines 4--8
-[]\OT1/lmtt/m/n/10.95 Level 3 data cache reuse factor = 0.0% [                 
-                       ] 
- []
-
-) [20
+ (./Apresentacao.vrb) [20
 
 ] [21
 
-]
-Overfull \hbox (53.78546pt too wide) in paragraph at lines 296--296
-\OT1/lmtt/m/n/10.95 cs.utexas.edu/users/ashay/xsede-2013/sample-programs.tar.gz
-  
- []
+] [22
 
-[22
+]
+\openout4 = `Apresentacao.vrb'.
+
+ (./Apresentacao.vrb) [23
 
 ]
 \openout4 = `Apresentacao.vrb'.
 
  (./Apresentacao.vrb
-Overfull \hbox (37.63414pt too wide) in paragraph at lines 16--16
-[]\OT1/lmtt/m/n/10.95 x = random_numbers[(i+thread_info->tid)%RANDOM_BUFFER_SIZ
-E];[] 
+Overfull \hbox (12.9592pt too wide) in paragraph at lines 12--12
+[]\OT1/lmtt/m/n/10 # Specify code section using --macpo:function or --macpo:loo
+p[] 
  []
 
 
-Overfull \hbox (49.1316pt too wide) in paragraph at lines 16--16
-[]\OT1/lmtt/m/n/10.95 y = random_numbers[(1+i+thread_info->tid)%RANDOM_BUFFER_S
-IZE];[] 
- []
-
-) [23
-
-]
-\openout4 = `Apresentacao.vrb'.
-
- (./Apresentacao.vrb
-Overfull \hbox (164.10628pt too wide) in paragraph at lines 11--11
-[]\OT1/lmtt/m/n/10.95 # Compile the application using macpo.sh and either --mac
-po:function or macpo:loop[] 
- []
-
-
-Overfull \hbox (49.1316pt too wide) in paragraph at lines 11--11
-[]\OT1/lmtt/m/n/10.95 macpo.sh --macpo:function=thread_func source.c compute.c 
--o mm[] 
+Overfull \hbox (18.20918pt too wide) in paragraph at lines 12--12
+[]\OT1/lmtt/m/n/10 macpo.sh --macpo:function=thread_func source.c compute.c -o 
+mm[] 
  []
 
 ) [24
@@ -1371,51 +1326,9 @@ Overfull \hbox (49.1316pt too wide) in paragraph at lines 11--11
 \openout4 = `Apresentacao.vrb'.
 
  (./Apresentacao.vrb
-Overfull \hbox (141.11134pt too wide) in paragraph at lines 15--15
-[]\OT1/lmtt/m/n/10.95 Var "counts", seen 1668 times, estimated to cost 147.12 c
-ycles on every access[] 
- []
-
-
-Overfull \hbox (26.13667pt too wide) in paragraph at lines 15--15
+Overfull \hbox (26.13667pt too wide) in paragraph at lines 17--17
 []\OT1/lmtt/m/n/10.95 Stride of 0 cache lines was observed 1585 times (100.00%)
 .[] 
- []
-
-
-Overfull \hbox (152.60881pt too wide) in paragraph at lines 15--15
-[]\OT1/lmtt/m/n/10.95 Level 1 data cache conflicts = 78.22% [##################
-##############        ][] 
- []
-
-
-Overfull \hbox (152.60881pt too wide) in paragraph at lines 15--15
-[]\OT1/lmtt/m/n/10.95 Level 2 data cache conflicts = 63.37% [##################
-########              ][] 
- []
-
-
-Overfull \hbox (152.60881pt too wide) in paragraph at lines 15--15
-[]\OT1/lmtt/m/n/10.95 NUMA data conflicts = 43.56%          [##################
-                      ][] 
- []
-
-
-Overfull \hbox (164.10628pt too wide) in paragraph at lines 15--15
-[]\OT1/lmtt/m/n/10.95 Level 1 data cache reuse factor = 97.0% [################
-####################### ][] 
- []
-
-
-Overfull \hbox (158.35754pt too wide) in paragraph at lines 15--15
-[]\OT1/lmtt/m/n/10.95 Level 2 data cache reuse factor = 3.0% [##               
-                       ][] 
- []
-
-
-Overfull \hbox (158.35754pt too wide) in paragraph at lines 15--15
-[]\OT1/lmtt/m/n/10.95 Level 3 data cache reuse factor = 0.0% [                 
-                       ][] 
  []
 
 ) [25
@@ -1426,57 +1339,15 @@ Overfull \hbox (158.35754pt too wide) in paragraph at lines 15--15
 \openout4 = `Apresentacao.vrb'.
 
  (./Apresentacao.vrb
-Overfull \hbox (129.61388pt too wide) in paragraph at lines 16--16
-[]\OT1/lmtt/m/n/10.95 Var "counts", seen 1073 times, estimated to cost 8.98 cyc
-les on every access[] 
- []
-
-
-Overfull \hbox (14.6392pt too wide) in paragraph at lines 16--16
+Overfull \hbox (14.6392pt too wide) in paragraph at lines 18--18
 []\OT1/lmtt/m/n/10.95 Stride of 0 cache lines was observed 983 times (97.62%).[
 ] 
  []
 
 
-Overfull \hbox (3.14174pt too wide) in paragraph at lines 16--16
+Overfull \hbox (3.14174pt too wide) in paragraph at lines 18--18
 []\OT1/lmtt/m/n/10.95 Stride of 2 cache lines was observed 24 times (2.38%).[] 
 
- []
-
-
-Overfull \hbox (146.86008pt too wide) in paragraph at lines 16--16
-[]\OT1/lmtt/m/n/10.95 Level 1 data cache conflicts = 0.00% [                   
-                     ][] 
- []
-
-
-Overfull \hbox (146.86008pt too wide) in paragraph at lines 16--16
-[]\OT1/lmtt/m/n/10.95 Level 2 data cache conflicts = 0.00% [                   
-                     ][] 
- []
-
-
-Overfull \hbox (146.86008pt too wide) in paragraph at lines 16--16
-[]\OT1/lmtt/m/n/10.95 NUMA data conflicts = 0.00%          [                   
-                     ][] 
- []
-
-
-Overfull \hbox (164.10628pt too wide) in paragraph at lines 16--16
-[]\OT1/lmtt/m/n/10.95 Level 1 data cache reuse factor = 94.1% [################
-######################  ][] 
- []
-
-
-Overfull \hbox (158.35754pt too wide) in paragraph at lines 16--16
-[]\OT1/lmtt/m/n/10.95 Level 2 data cache reuse factor = 5.9% [###              
-                       ][] 
- []
-
-
-Overfull \hbox (158.35754pt too wide) in paragraph at lines 16--16
-[]\OT1/lmtt/m/n/10.95 Level 3 data cache reuse factor = 0.0% [                 
-                       ][] 
  []
 
 ) [27
@@ -1487,43 +1358,57 @@ Overfull \hbox (158.35754pt too wide) in paragraph at lines 16--16
 \openout4 = `Apresentacao.vrb'.
 
  (./Apresentacao.vrb
-Overfull \hbox (164.10628pt too wide) in paragraph at lines 11--11
-[]\OT1/lmtt/m/n/10.95 Compile the application using macpo.sh and either --macpo
-:function or --macpo:loop[] 
+Overfull \hbox (12.9592pt too wide) in paragraph at lines 12--12
+[]\OT1/lmtt/m/n/10 # Specify code section using --macpo:function or --macpo:loo
+p[] 
  []
 
 
-Overfull \hbox (49.1316pt too wide) in paragraph at lines 11--11
-[]\OT1/lmtt/m/n/10.95 macpo.sh --macpo:function=thread_func source.c compute.c 
--o mm[] 
+Overfull \hbox (18.20918pt too wide) in paragraph at lines 12--12
+[]\OT1/lmtt/m/n/10 macpo.sh --macpo:function=thread_func source.c compute.c -o 
+mm[] 
  []
 
 ) [29
 
 ]
-\tf@nav=\write5
-\openout5 = `Apresentacao.nav'.
+\tf@nav=\write6
+\openout6 = `Apresentacao.nav'.
 
-\tf@toc=\write6
-\openout6 = `Apresentacao.toc'.
+\tf@toc=\write7
+\openout7 = `Apresentacao.toc'.
 
-\tf@snm=\write7
-\openout7 = `Apresentacao.snm'.
+\tf@snm=\write8
+\openout8 = `Apresentacao.snm'.
 
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 409.
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 409.
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 413.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 413.
  (./Apresentacao.aux)
-Package atveryend Info: Empty hook `AtVeryEndDocument' on input line 409.
-Package atveryend Info: Empty hook `AtEndAfterFileList' on input line 409.
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 409.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 413.
+Package atveryend Info: Empty hook `AtEndAfterFileList' on input line 413.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 413.
  ) 
 Here is how much of TeX's memory you used:
- 19742 strings out of 495060
- 394838 string characters out of 3182053
- 511386 words of memory out of 3000000
- 22403 multiletter control sequences out of 15000+200000
- 67928 words of font info for 54 fonts, out of 3000000 for 9000
+ 20702 strings out of 495059
+ 409363 string characters out of 3182030
+ 518912 words of memory out of 3000000
+ 23271 multiletter control sequences out of 15000+200000
+ 92948 words of font info for 73 fonts, out of 3000000 for 9000
  14 hyphenation exceptions out of 8191
- 55i,14n,56p,417b,738s stack positions out of 5000i,500n,10000p,200000b,50000s
+ 55i,14n,56p,417b,756s stack positions out of 5000i,500n,10000p,200000b,50000s
+{/usr/share/texmf/fonts/enc/dvips/lm/lm-rmtt.enc}{/usr/share/texmf/fonts/enc/
+dvips/lm/lm-mathsy.enc}{/usr/share/texmf/fonts/enc/dvips/lm/lm-rm.enc}</usr/sha
+re/texmf/fonts/type1/public/lm/lmss10.pfb></usr/share/texmf/fonts/type1/public/
+lm/lmss12.pfb></usr/share/texmf/fonts/type1/public/lm/lmss8.pfb></usr/share/tex
+mf/fonts/type1/public/lm/lmssbx10.pfb></usr/share/texmf/fonts/type1/public/lm/l
+msy10.pfb></usr/share/texmf/fonts/type1/public/lm/lmtt10.pfb></usr/share/texmf/
+fonts/type1/public/lm/lmtt8.pfb></usr/share/texlive/texmf-dist/fonts/type1/publ
+ic/amsfonts/symbols/msam10.pfb></usr/share/texlive/texmf-dist/fonts/type1/publi
+c/amsfonts/symbols/msam7.pfb>
+Output written on Apresentacao.pdf (29 pages, 367277 bytes).
+PDF statistics:
+ 831 PDF objects out of 1000 (max. 8388607)
+ 767 compressed objects within 8 object streams
+ 60 named destinations out of 1000 (max. 500000)
+ 63 words of extra memory for PDF output out of 10000 (max. 10000000)
 
-Output written on Apresentacao.dvi (29 pages, 261948 bytes).

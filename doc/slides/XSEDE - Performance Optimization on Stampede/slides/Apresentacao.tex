@@ -2,6 +2,7 @@
 %\usetheme{TACC}
 \usetheme{boxes}
 
+\usepackage{fancyvrb}
 \usepackage{tikz}
 \usetikzlibrary{automata,shapes,arrows}
 \usepackage{lmodern}
@@ -31,8 +32,8 @@
 \pgfdeclareimage[interpolate=true,width=6cm]{configuration}{figures/configuration}
 
 %------------------------------------------------------------
-\title{\textbf{\LARGE Performance Optimization\\with PerfExpert and MACPO\\}}
-\date{\textbf{\Huge ICS 2013} \\ \ \\ \ \\ \pgfuseimage{logo_TACC} \ \ \pgfuseimage{logo_UT}}
+\title{\textbf{\LARGE Performance Optimization\\for Stampede\\}}
+\date{\textbf{\Huge XSEDE 2013} \\ \ \\ \ \\ \pgfuseimage{logo_TACC} \ \ \pgfuseimage{logo_UT}}
 \logo{\pgfuseimage{logo_TACC_small} \ \ \ \pgfuseimage{logo_UT_small}}
 \frame[plain]{\titlepage}
 
@@ -41,36 +42,36 @@
 % \subsection{Agenda}
 
 \frame{\frametitle{Agenda}
-	\begin{itemize}
-		\item Why another performance tool?
-		\item What is MACPO?
-		\item What does MACPO tell you?
-		\item How to use MACPO?
+	~\\\begin{itemize}
+		\item Why another performance tool?\\~\\
+		\item What is MACPO?\\~\\
+		\item What does MACPO tell you?\\~\\
+		\item How to use MACPO?\\~\\
 		\item Details of MACPO metrics
 	\end{itemize}
 }
 
 \frame{\frametitle{State of the art}
-	\begin{itemize}
-		\item Modern processors can record performance events
-		\item Performance events provide fairly accurate view of CPU execution
-		\item Various tools exist to correlate perormance events to user code
-		\item Examples: PerfExpert, TAU, HPCToolkit, VTune, Scalasca, etc.
+	~\\\begin{itemize}
+		\item Modern processors can record performance events\\~\\
+		\item Performance events provide accurate view of CPU execution\\~\\
+		\item Various tools exist to correlate perormance events to user code\\~\\
+		\item Ex: PerfExpert, TAU, HPCToolkit, VTune, Scalasca, etc.
 	\end{itemize}
 }
 
-\frame{\frametitle{But memory is a bigger problem}
-  \begin{columns}[T]
+\frame{\frametitle{But memory is a bigger problem than CPU}
+  ~\\\begin{columns}[T]
     \begin{column}{.5\textwidth}
      \begin{block}{}
-	\includegraphics[width=\textwidth]{figures/cpu-mem-speed.eps}\\\small Source: Computer Architecture: A Quantitative Approach, 4th Edition by Hennessy and Patterson
+	\includegraphics[width=\textwidth]{figures/cpu-mem-speed.eps}\\~\\\tiny Source: Computer Architecture: A Quantitative Approach, 4th Edition by Hennessy and Patterson
 % Your text here
     \end{block}
-    \end{column}
+    \end{column}\pause
     \begin{column}{.5\textwidth}
     \begin{block}{}
 	\begin{itemize}
-		\item For data-intensive applications, application performance usually dependent on memory and not the processor.
+		\item For data-intensive applications, application performance usually dependent on memory and not the processor.\\~\\
 		\item Performance events provide a CPU-centric, not a memory-centric view.
 	\end{itemize}
     \end{block}
@@ -78,26 +79,18 @@
   \end{columns}
 }
 
-\frame{\frametitle{Performance counter info is limited}
-	\begin{itemize}
-		\item Performance events are too-fine grained for memory profiling
-		\item Some performance events are ambiguous to interpret
-		\item Performance event measurements cannot be scoped to just the important variables
-	\end{itemize}
-}
-
-\frame{\frametitle{Fine-grain measurements}
-	\begin{itemize}
-		\item Performance events are measured on execution of each instruction
-		\item \texttt{mov ah, 16} causes cache miss $\Rightarrow$ increment cache miss counter
-		\item But memory is optimized for stream traffic and regular accesses (locality, bandwidth, reuse)
+\frame{\frametitle{Limitations for performance events:\\\#1: Fine-grain measurements}
+	~\\\begin{itemize}
+		\item Performance events are measured on execution of each instruction\\~\\
+		\item \colorbox{blue}{\textcolor{white}{\texttt{mov ah, 16}}} causes cache miss $\Rightarrow$ increment cache miss counter\\~\\
+		\item But memory is optimized for stream traffic and regular accesses (locality, bandwidth, reuse)\\~\\
 		\item Hence gap between measurements and optimization techniques
 	\end{itemize}
 }
 
-\frame{\frametitle{Ambiguous interpretation}
-	\begin{itemize}
-		\item Same symptoms but different root causes
+\frame{\frametitle{Limitations for performance events:\\\#2: Ambiguous interpretation}
+	~\\\begin{itemize}
+		\item Same symptoms but different root causes\\~\\
 		\item For instance, L3 cache misses could mean any of the following:
 		\begin{itemize}
 			\item Capacity misses (cold cache)
@@ -107,48 +100,49 @@
 	\end{itemize}
 }
 
-\frame{\frametitle{Little or no scoping}
-	\begin{itemize}
-		\item Performance events are triggered for all instructions
-		\item Hence all memory accesses are profiled\\
-		\item But information about only specific data structures is desirable
+\frame{\frametitle{Limitations for performance events:\\\#3: Little or no scoping}
+	~\\\begin{itemize}
+		\item Performance events are triggered for all instructions\\~\\
+		\item Hence all memory accesses are profiled\\~\\
+		\item But information about only specific data structures is desirable\\~\\
 		\item Can greatly speed up problem resolution
 	\end{itemize}
 }
 
-\frame{\frametitle{Hence, MACPO}
+\frame{\frametitle{Hence, MACPO\\\underline{M}emory \underline{A}ccess \underline{C}entric \underline{P}erformance \underline{O}ptimization}
 	\begin{itemize}
-		\item \underline{M}emory \underline{A}ccess \underline{C}entric \underline{P}erformance \underline{O}ptimization
-		\item Performance tool that analyzes memory access patterns to find sources of inefficiency
-		\item Used as part of the compilation process
-		\item Tracks accesses to arrays and structures within a function
-		\item Tags each such access with source code location and other data
-		\item Analyzes accesses to see if access patterns can be improved
-		\item Works with C, C++ and Fortran code [+ Pthreads, OpenMP, MPI]
+		\item Analyzes access patterns to find sources of inefficiency\\~\\
+		\item Used as part of the compilation process\\~\\
+		\item Tracks accesses to arrays and structures within a function\\~\\
+		\item Tags each such access with source code location\\~\\
+		\item Analyzes accesses to see if access patterns can be improved\\~\\
+		\item Works with C, C++ and Fortran code [+ Pthreads, OpenMP]
 	\end{itemize}
 }
 
 \frame{\frametitle{MACPO workflow}
-	\begin{columns}[T]
-		\begin{column}{.5\textwidth}
-	\begin{block}{}
-		\includegraphics[width=\textwidth]{figures/macpo-workflow.eps}
-	\end{block}
-	\end{column}
-	\begin{column}{.5\textwidth}
-	\begin{block}{}
-		Combines information from compiler, architecture and from simulation
-	\end{block}
-	\end{column}
-	\end{columns}
+	\includegraphics[width=\textwidth]{figures/macpo-workflow.eps}\\
+	Combines information from compiler, architecture and simulation
+%	\begin{columns}[T]
+%		\begin{column}{.5\textwidth}
+%	\begin{block}{}
+%		\includegraphics[width=\textwidth]{figures/macpo-workflow.eps}
+%	\end{block}
+%	\end{column}
+%	\begin{column}{.5\textwidth}
+%	\begin{block}{}
+%		Combines information from compiler, architecture and from simulation
+%	\end{block}
+%	\end{column}
+%	\end{columns}
 }
 
 \frame{\frametitle{What does MACPO tell you?}
-	For each important variable, MACPO shows:
+	~\\For each important variable, MACPO shows:\\~\\
 	\begin{itemize}
-		\item Access strides and the frequency of occurence
-		\item Presence or absence of cache thrashing and the frequency
-		\item NUMA misses
+		\item Access strides and the frequency of occurence\\~\\
+		\item Presence or absence of cache thrashing and the frequency\\~\\
+		\item NUMA misses\\~\\
 		\item Reuse factors for data caches
 	\end{itemize}
 }
@@ -156,7 +150,7 @@
 \begin{frame}[fragile]
 \frametitle{Sample output}
 %\frame{\frametitle{Sample output}
-	\begin{verbatim}
+	~\\\scriptsize\begin{Verbatim}[xleftmargin=-7mm]
 Var "counts", seen 1668 times, estimated to cost 147.12 cycles on every access
 Stride of 0 cache lines was observed 1585 times (100.00%).
 
@@ -167,14 +161,14 @@ NUMA data conflicts = 43.56%          [##################                      ]
 Level 1 data cache reuse factor = 97.0% [####################################### ]
 Level 2 data cache reuse factor = 3.0% [##                                      ]
 Level 3 data cache reuse factor = 0.0% [                                        ]
-	\end{verbatim}
+	\end{Verbatim}
 %}
 \end{frame}
 
 \frame{\frametitle{How to use MACPO?}
-	\begin{itemize}
-		\item Compile application using \texttt{macpo.sh}
-		\item Run application as usual
+	~\\\begin{itemize}
+		\item Compile application using \colorbox{blue}{\textcolor{white}{\texttt{macpo.sh}}}\\~\\
+		\item Run application as usual\\~\\
 		\item Analyze macpo logs using macpo-analyze
 	\end{itemize}
 }
@@ -182,8 +176,9 @@ Level 3 data cache reuse factor = 0.0% [                                        
 \begin{frame}[fragile]
 \frametitle{How to use MACPO?}
 %\frame{\frametitle{How to use MACPO?}
-\begin{verbatim}
-# Compile the application using macpo.sh and either --macpo:function or --macpo:loop
+~\\\small\begin{verbatim}
+# Compile the application using macpo.sh
+# Specify code section using --macpo:function or --macpo:loop
 macpo.sh --macpo:function=thread_func -c mcpi.cc
 macpo.sh --macpo:function=thread_func -o mcpi mcpi.o
 
@@ -197,10 +192,10 @@ macpo-analyze macpo.out
 \end{frame}
 
 \frame{\frametitle{Understanding MACPO metrics}
-	\begin{itemize}
-		\item Access strides
-		\item Cache conflicts
-		\item NUMA misses
+	~\\\begin{itemize}
+		\item Access strides\\~\\
+		\item Cache conflicts\\~\\
+		\item NUMA misses\\~\\
 		\item Reuse factor for data caches
 	\end{itemize}
 }
@@ -208,10 +203,11 @@ macpo-analyze macpo.out
 \begin{frame}[fragile]
 \frametitle{Metric \#1: Cycles per access}
 %\frame{\frametitle{Metric #1: Cycles per access}
-	Example:\\
-	\verb|Var "counts", seen 1073 times, estimated to cost 8.98 cycles on every access|
-	\begin{itemize}
-		\item Provides esimate of performance impact of accesses to variable
+	~\\Example:\\
+	\verb|Var "counts", seen 1073 times,|
+	\verb|estimated to cost 8.98 cycles on every access|
+	\\~\\\begin{itemize}
+		\item Provides esimate of performance impact of accesses to variable\\~\\
 		\item Can be used to rule-out variables from further consideration
 	\end{itemize}
 %}
@@ -220,11 +216,11 @@ macpo-analyze macpo.out
 \begin{frame}[fragile]
 \frametitle{Metric \#2: Access strides}
 %\frame{\frametitle{Metric #1: Cycles per access}
-	Example:\\
+	~\\Example:\\
 	\verb|Stride of 0 cache lines was observed 983 times (97.62%).|
 	\verb|Stride of 2 cache lines was observed 24 times (2.38%).|
-	\begin{itemize}
-		\item Programs that have unit strides or small regular stride values generally execute fast
+	\\~\\\begin{itemize}
+		\item Programs that have unit strides or small regular stride values generally execute fast\\~\\
 		\item If stide value is high, look for inverted loops affecting the row-major or column-major ordering
 	\end{itemize}
 %}
@@ -233,11 +229,11 @@ macpo-analyze macpo.out
 \begin{frame}[fragile]
 \frametitle{Metric \#3: Cache conflicts}
 %\frame{\frametitle{Metric #1: Cycles per access}
-	Example:\\
-	\verb|Level 1 data cache conflicts = 78.22% [################################        ]|
-	\verb|Level 2 data cache conflicts = 63.37% [##########################              ]|
-	\begin{itemize}
-		\item Indicates multiple cores writing to the same cache line
+	~\\Example:\\
+	\verb|Level 1 data cache conflicts = 78.22%|
+	\verb|Level 2 data cache conflicts = 63.37%|
+	\\~\\\begin{itemize}
+		\item Indicates multiple cores writing to the same cache line\\~\\
 		\item Add dummy bytes to the array so that each processor writes to a different cache line
 	\end{itemize}
 %}
@@ -246,10 +242,10 @@ macpo-analyze macpo.out
 \begin{frame}[fragile]
 \frametitle{Metric \#4: NUMA misses}
 %\frame{\frametitle{Metric #1: Cycles per access}
-	Example:\\
-	\verb|NUMA data conflicts = 43.56%          [##################                      ]|
-	\begin{itemize}
-		\item NUMA misses generally arise from one processor initializing all of the shared memory
+	~\\Example:\\
+	\verb|NUMA data conflicts = 43.56%|
+	\\~\\\begin{itemize}
+		\item NUMA misses generally arise from one processor initializing all of the shared memory\\~\\
 		\item To eliminate NUMA misses, have each processor initialize it's portion of shared memory
 	\end{itemize}
 %}
@@ -258,23 +254,23 @@ macpo-analyze macpo.out
 \begin{frame}[fragile]
 \frametitle{Metric \#5: Reuse factors}
 %\frame{\frametitle{Metric #1: Cycles per access}
-	Example:\\
-	\verb|Level 1 data cache reuse factor = 94.1% [######################################  ]|
-	\verb|Level 2 data cache reuse factor = 5.9% [###                                     ]|
-	\verb|Level 3 data cache reuse factor = 0.0% [                                        ]|
-	\begin{itemize}
-		\item Reuse factor indicates the number of times a cache was reused before it was evicted
+	~\\Example:\\
+	\verb|Level 1 data cache reuse factor = 94.1%|
+	\verb|Level 2 data cache reuse factor = 5.9%|
+	\verb|Level 3 data cache reuse factor = 0.0%|
+	\\~\\\begin{itemize}
+		\item Reuse factor indicates the number of times a cache was reused before it was evicted\\~\\
 		\item Improve reuse factors by using techniques to improve locality
 	\end{itemize}
 %}
 \end{frame}
 
 \frame{\frametitle{Summary}
-	\begin{itemize}
-		\item MACPO is a tool to analyze memory access patterns
-		\item NOT a replacement for PerfExpert. Instead, complements PerfExpert's diagnosis.
-		\item Allows collection of memory traces for arrays and structures
-		\item Analyzes traces offline to calculate performance metrics
+	~\\\begin{itemize}
+		\item MACPO is a tool to analyze memory access patterns\\~\\
+		\item NOT a replacement for PerfExpert. Instead, complements PerfExpert's diagnosis.\\~\\
+		\item Allows collection of memory traces for arrays and structures\\~\\
+		\item Analyzes traces offline to calculate performance metrics\\~\\
 		\item This is an early release, so help us squash the bugs! :)
 	\end{itemize}
 }
@@ -282,15 +278,15 @@ macpo-analyze macpo.out
 \section{Hands-on MACPO}
 
 \frame{\frametitle{Sample application}
-	\begin{itemize}
-		\item Monte-Carlo computation of Pi
-		\item Source code online at: \texttt{cs.utexas.edu/users/ashay/xsede-2013/sample-programs.tar.gz}
-		\item Uses basic C++, parallelized using Pthreads
+	~\\\begin{itemize}
+		\item Monte-Carlo computation of Pi\\~\\
+		\item Source code online at: \texttt{http://goo.gl/uEVrh}\\~\\
+		\item Uses basic C++, parallelized using Pthreads\\~\\
 		\item Tasks performed by each thread:
 		\begin{itemize}
 			\item Generates a buffer of random numbers
-			\item For each pair of random numbers, calculates \texttt{z}
-			\item Checks a condition on \texttt{z}, based on the result increments a counter
+			\item For each pair of random numbers, calculates \colorbox{blue}{\textcolor{white}{\texttt{z}}}
+			\item Checks a condition on \colorbox{blue}{\textcolor{white}{\texttt{z}}}, based on the result increments a counter
 		\end{itemize}
 	\end{itemize}
 }
@@ -298,26 +294,29 @@ macpo-analyze macpo.out
 \begin{frame}[fragile]
 \frametitle{Thread function}
 	\begin{verbatim}
+int t;
 float x, y, z;
 thread_info_t* thread_info = (thread_info_t*) arg;
 for (int repeat=0; repeat<REPEAT_COUNT; repeat++)
 {
-	for (int i=0; i<ITERATIONS; i++)
-	{
-		x = random_numbers[(i+thread_info->tid)%RANDOM_BUFFER_SIZE];
-		y = random_numbers[(1+i+thread_info->tid)%RANDOM_BUFFER_SIZE];
+  for (int i=0; i<ITERATIONS; i++)
+  {
+    t = i+thread_info->tid;
+    x = random_numbers[t%RANDOM_BUFFER_SIZE];
+    y = random_numbers[(1+t)%RANDOM_BUFFER_SIZE];
 
-		z = x*x + y*y;
-		if (z < 1) counts[thread_info->tid]++;
-	}
+    z = x*x + y*y;
+    if (z < 1) counts[thread_info->tid]++;
+  }
 }
 	\end{verbatim}
 \end{frame}
 
 \begin{frame}[fragile]
 \frametitle{MACPO commands for sample code}
-	\begin{verbatim}
-# Compile the application using macpo.sh and either --macpo:function or macpo:loop
+	~\\\small\begin{verbatim}
+# Compile the application using macpo.sh
+# Specify code section using --macpo:function or --macpo:loop
 macpo.sh --macpo:function=thread_func source.c compute.c -o mm
 
 # Run the application as usual
@@ -329,63 +328,68 @@ macpo-analyze macpo.out
 \end{frame}
 
 \begin{frame}[fragile]
-\frametitle{MACPO analysis output}
+\frametitle{MACPO analysis output (truncated)}
 	\begin{verbatim}
 macpo-analyze macpo.out
 	
-Var "counts", seen 1668 times, estimated to cost 147.12 cycles on every access
+Var "counts", seen 1668 times,
+estimated to cost 147.12 cycles on every access
+
 Stride of 0 cache lines was observed 1585 times (100.00%).
 
-Level 1 data cache conflicts = 78.22% [################################        ]
-Level 2 data cache conflicts = 63.37% [##########################              ]
-NUMA data conflicts = 43.56%          [##################                      ]
+Level 1 data cache conflicts = 78.22%
+Level 2 data cache conflicts = 63.37%
+NUMA data conflicts = 43.56%
 
-Level 1 data cache reuse factor = 97.0% [####################################### ]
-Level 2 data cache reuse factor = 3.0% [##                                      ]
-Level 3 data cache reuse factor = 0.0% [                                        ]
+Level 1 data cache reuse factor = 97.0%
+Level 2 data cache reuse factor = 3.0%
+Level 3 data cache reuse factor = 0.0%
 	\end{verbatim}
 \end{frame}
 
 \frame{\frametitle{Problem resolution}
-	\begin{itemize}
-		\item MACPO shows cache thrashing for \texttt{counts} variable.
-		\item Solution: Add dummy bytes, thus all processors write to different cache lines
+	~\\\begin{itemize}
+		\item MACPO shows cache thrashing for \colorbox{blue}{\textcolor{white}{\texttt{counts}}} variable.\\~\\
+		\item Solution: Add dummy bytes, thus all processors write to different cache lines\\~\\
 		\item Optimized code in \texttt{monte-carlo-v2.cc}
 	\end{itemize}
 }
 
 \begin{frame}[fragile]
-\frametitle{MACPO analysis output for optimized code}
+\frametitle{MACPO analysis output for optimized code (truncated)}
 	\begin{verbatim}
 macpo-analyze macpo.out
 	
-Var "counts", seen 1073 times, estimated to cost 8.98 cycles on every access
+Var "counts", seen 1073 times,
+estimated to cost 8.98 cycles on every access
+
 Stride of 0 cache lines was observed 983 times (97.62%).
 Stride of 2 cache lines was observed 24 times (2.38%).
 
-Level 1 data cache conflicts = 0.00% [                                        ]
-Level 2 data cache conflicts = 0.00% [                                        ]
-NUMA data conflicts = 0.00%          [                                        ]
+Level 1 data cache conflicts = 0.00%
+Level 2 data cache conflicts = 0.00%
+NUMA data conflicts = 0.00%
 
-Level 1 data cache reuse factor = 94.1% [######################################  ]
-Level 2 data cache reuse factor = 5.9% [###                                     ]
-Level 3 data cache reuse factor = 0.0% [                                        ]
+Level 1 data cache reuse factor = 94.1%
+Level 2 data cache reuse factor = 5.9%
+Level 3 data cache reuse factor = 0.0%
 	\end{verbatim}
 \end{frame}
 
 \frame{\frametitle{Review}
-	\begin{itemize}
-		\item Compiled application using \texttt{macpo.sh}
-		\item Discovered cache thrashing for the \texttt{counts} array
-		\item Padding the array reduced cache conflicts from ~70\% to 0\%
-		\item Execution time improved from 9.14s to 3.17s (65\% improvement)
+	~\\\begin{itemize}
+		\item Compiled application using \colorbox{blue}{\textcolor{white}{\texttt{macpo.sh}}}\\~\\
+		\item Discovered cache thrashing for the \colorbox{blue}{\textcolor{white}{\texttt{counts}}} array\\~\\
+		\item Padding the array reduced cache conflicts from 70\% to 0\%\\~\\
+		\item Execution time: 9.14s to 3.17s (65\% improvement)
 	\end{itemize}
 }
 
 \begin{frame}[fragile]
 \frametitle{Summary of MACPO instructions}
-	\begin{verbatim}
-Compile the application using macpo.sh and either --macpo:function or --macpo:loop
+	~\\\small\begin{verbatim}
+# Compile the application using macpo.sh
+# Specify code section using --macpo:function or --macpo:loop
 macpo.sh --macpo:function=thread_func source.c compute.c -o mm
 
 # Run the application as usual
