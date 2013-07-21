@@ -1,0 +1,11 @@
+\frametitle {Summary of MACPO instructions}
+\begin{verbatim}
+Compile the application using macpo.sh and either --macpo:function or --macpo:loop
+macpo.sh --macpo:function=thread_func source.c compute.c -o mm
+
+# Run the application as usual
+./mm
+
+# Post-process logs to get analysis output
+macpo-analyze macpo.out
+\end{verbatim}
