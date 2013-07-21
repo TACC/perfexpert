@@ -1,0 +1,30 @@
+% Copyright 2007 by Till Tantau
+%
+% This file may be distributed and/or modified
+%
+% 1. under the LaTeX Project Public License and/or
+% 2. under the GNU Public License.
+%
+% See the file doc/licenses/LICENSE for more details.
+
+\ProvidesPackageRCS $Header: /cvsroot/latex-beamer/latex-beamer/themes/theme/beamerthemeTACC.sty,v 1.9 2007/01/28 20:48:30 tantau Exp $
+
+\mode<presentation>
+
+% to insert frame numbers
+\newcommand*\oldmacro{}
+\let\oldmacro\insertshortauthor% save previous definition
+\renewcommand*\insertshortauthor{%
+  \oldmacro\,\,\,\insertframenumber\,/\,\inserttotalframenumber}
+
+\useoutertheme[subsection=false]{smoothbars}
+\useinnertheme[shadow=true]{rounded}
+\usecolortheme{orchid}
+\usecolortheme{whale}
+
+\setbeamerfont{block title}{size={}}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}[frame number]
+
+\mode
+<all>
