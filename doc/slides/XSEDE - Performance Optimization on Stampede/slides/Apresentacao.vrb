@@ -1,6 +1,7 @@
 \frametitle {Summary of MACPO instructions}
-\begin{verbatim}
-Compile the application using macpo.sh and either --macpo:function or --macpo:loop
+~\\\small\begin{verbatim}
+# Compile the application using macpo.sh
+# Specify code section using --macpo:function or --macpo:loop
 macpo.sh --macpo:function=thread_func source.c compute.c -o mm
 
 # Run the application as usual
