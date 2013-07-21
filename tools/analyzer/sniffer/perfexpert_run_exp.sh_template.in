@@ -93,15 +93,15 @@ if [ ${#} -lt 1 ]; then
 fi
 
 if [ "x${structureSet}" == "xtrue" ]; then
-    hpcstruct_file=${structure}
-    if [ ! -f ${hpcstruct_file} ]; then
+    hpcstruct_file="${structure}"
+    if [ ! -f "${hpcstruct_file}" ]; then
         echo "[analyzer] Error: could not find hpcstruct file: ${hpcstruct_file}"
         exit 1
     fi
     echo "[analyzer] Using existing structure file: ${hpcstruct_file}"
 fi
 
-program_name=${1}
+program_name="${1}"
 
 # Ignore taskset, numactl, ibrun
 for arg in $@
@@ -127,18 +127,18 @@ cmdline=${*}
 fullPath=`which ${program_name} 2>/dev/null`
 if [ ${?} -ne 0 ]; then
     # Try checking if the file is in the current directory
-    if [ -x ./${program_name} ]; then
-        fullPath=./${program_name}
+    if [ -x "./${program_name}" ]; then
+        fullPath="./${program_name}"
     else
         # Instead of raising an error, use the program name as it is
-        fullPath=${program_name}
+        fullPath="${program_name}"
     fi
 fi
 
 # Set the original variable back
-program_name=${fullPath}
+program_name="${fullPath}"
 
-if [ ! -f ${program_name} ]; then
+if [ ! -f "${program_name}" ]; then
     echo "[analyzer] Error: could not run file: ${program_name}"
     exit 1
 fi
@@ -179,11 +179,11 @@ rm -rf ${tempdir}/hpcprof.output
 # Check if we received the HPCStruct file as a parameter
 if [ "x${hpcstruct_file}" != "x" ]; then
     # If yes, use it
-    cp ${hpcstruct_file} ${tempdir}/hpcstruct
+    cp "${hpcstruct_file}" "${tempdir}/hpcstruct"
 else
     # Else generate it
     echo -n "[analyzer] Generating program structure using hpcstruct..."
-    @HPCSTRUCT_PROGRAM@ --output ${tempdir}/hpcstruct ${program_name}
+    @HPCSTRUCT_PROGRAM@ --output "${tempdir}/hpcstruct" "${program_name}"
     echo " done!"
 fi
 
@@ -201,16 +201,16 @@ for index in $(seq 0 $((${#experiment[@]}-1))); do
     if [ ${debug} == "true" -a ${?} != "0" ]; then
         echo "[analyzer] Looks like the previous command failed to terminate cleanly, switching to debug mode..."
 
-        rm -f ${debug_file}
+        rm -f "${debug_file}"
 
         echo "[analyzer] Collecting information about OS and processor..."
 
-        uname -a >> ${debug_file} 2>&1
-        echo >> ${debug_file}
-        cat /proc/cpuinfo >> ${debug_file} 2>&1
+        uname -a >> "${debug_file}" 2>&1
+        echo >> "${debug_file}"
+        cat /proc/cpuinfo >> "${debug_file}" 2>&1
 
-        echo -e "[analyzer] Command: ${cmd}\n" >> ${debug_file}
-        echo -e "[analyzer] run\nbt\nthread apply all bt\nquit" > ${tempdir}/stacktraces.cmd
+        echo -e "[analyzer] Command: ${cmd}\n" >> "${debug_file}"
+        echo -e "[analyzer] run\nbt\nthread apply all bt\nquit" > "${tempdir}/stacktraces.cmd"
 
         echo "[analyzer] Collecting stack trace..."
         dbg_cmd="gdb --command=${tempdir}/stacktraces.cmd --args /bin/sh ${cmd} 2>> ${debug_file} 1>/dev/null"
@@ -218,7 +218,7 @@ for index in $(seq 0 $((${#experiment[@]}-1))); do
 
         echo "[analyzer] Collecting debug information from hpcrun monitor..."
         dbg_cmd="@HPCRUN_PROGRAM@ --monitor-debug ${experiment[${index}]} --output ${tempdir}/measurements ${cmdline} 2>> ${debug_file} 1>/dev/null"
-        echo -e "\n[analyzer] Command: ${dbg_cmd}\n" >> ${debug_file}
+        echo -e "\n[analyzer] Command: ${dbg_cmd}\n" >> "${debug_file}"
         eval ${dbg_cmd}
 
         echo "[analyzer] Debug information collected in ./${debug_file}, please send this file to the Analyzer group for review. Thanks!"
@@ -226,7 +226,7 @@ for index in $(seq 0 $((${#experiment[@]}-1))); do
         # Clean up
         rm -rf core
         if [ "x${left_garbage}" == "xfalse" ]; then
-            rm -rf ${tempdir}
+            rm -rf "${tempdir}"
         else
             echo "[analyzer] Temporary files are available on '${tempdir}' directory"
         fi
@@ -237,16 +237,16 @@ done
 # HPCTOOLKIT: SUMMARIZING RESULTS (HPCPROF)
 #
 echo -n "[analyzer] Finished all measurements, summarizing the results..."
-@HPCPROF_PROGRAM@ --force-metric --metric=thread --struct ${tempdir}/hpcstruct --output ${tempdir}/database ${tempdir}/measurements &> ${tempdir}/hpcprof.output
+@HPCPROF_PROGRAM@ --force-metric --metric=thread --struct "${tempdir}/hpcstruct" --output "${tempdir}/database" "${tempdir}/measurements" &> "${tempdir}/hpcprof.output"
 returnCode=${?}
 
 if [ "x${returnCode}" != "x0" ]; then
     echo "error!"
-    cat ${tempdir}/hpcprof.output
+    cat "${tempdir}/hpcprof.output"
 
     # Clean up
     if [ "x${left_garbage}" == "xfalse" ]; then
-        rm -rf ${tempdir}
+        rm -rf "${tempdir}"
     else
         echo "[analyzer] Temporary files are available on '${tempdir}' directory"
     fi
@@ -254,11 +254,11 @@ else
     echo " done!"
 
     # Get the final experiment.xml here
-    cp ${tempdir}/database/experiment.xml ./${output_filename}
+    cp "${tempdir}/database/experiment.xml" "./${output_filename}"
 
     # Clean up
     if [ "x${left_garbage}" == "xfalse" ]; then
-        rm -rf ${tempdir}
+        rm -rf "${tempdir}"
     else
         echo "[analyzer] Temporary files are available on '${tempdir}' directory"
     fi
