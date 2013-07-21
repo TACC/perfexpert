@@ -1,0 +1,23 @@
+\beamer@endinputifotherversion {3.26pt}
+\beamer@sectionintoc {1}{Introduction}{2}{0}{1}
+\beamer@subsectionintoc {1}{1}{Agenda}{3}{0}{1}
+\beamer@subsectionintoc {1}{2}{Overview}{7}{0}{1}
+\beamer@subsectionintoc {1}{3}{Introduction}{26}{0}{1}
+\beamer@sectionintoc {2}{PerfExpert}{51}{0}{2}
+\beamer@subsectionintoc {2}{1}{What PerfExpert can provide to you?}{52}{0}{2}
+\beamer@subsectionintoc {2}{2}{Demo: PerfExpert}{65}{0}{2}
+\beamer@subsectionintoc {2}{3}{How PerfExpert does that?}{66}{0}{2}
+\beamer@subsectionintoc {2}{4}{Extending PerfExpert}{112}{0}{2}
+\beamer@subsectionintoc {2}{5}{Hands on Tutorial: PerfExpert}{131}{0}{2}
+\beamer@subsectionintoc {2}{6}{Morning Closure}{133}{0}{2}
+\beamer@sectionintoc {3}{MACPO}{136}{0}{3}
+\beamer@subsectionintoc {3}{1}{What PerfExpert can provide to you?}{137}{0}{3}
+\beamer@subsectionintoc {3}{2}{Demo: MACPO}{137}{0}{3}
+\beamer@subsectionintoc {3}{3}{How MACPO does that?}{138}{0}{3}
+\beamer@subsectionintoc {3}{4}{Hands on Tutorial: MACPO}{138}{0}{3}
+\beamer@subsectionintoc {3}{5}{Enhancing PerfExpert with MACPO analysis}{138}{0}{3}
+\beamer@sectionintoc {4}{GPU/Accelerators}{138}{0}{4}
+\beamer@subsectionintoc {4}{1}{GPU/Accelerators}{139}{0}{4}
+\beamer@subsectionintoc {4}{2}{Selecting code segments to run on GPUs/accelerators}{173}{0}{4}
+\beamer@sectionintoc {5}{Closure}{173}{0}{5}
+\beamer@subsectionintoc {5}{1}{Afternoon Closure}{174}{0}{5}

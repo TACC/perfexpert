@@ -5,10 +5,16 @@ PAPI_DIR="${TACC_PAPI_DIR}"
 
 mkdir -p ${INSTALL_DIR}
 
-export PATH=${INSTALL_DIR}/bin:$PATH
-export LD_LIBRARY_PATH=${INSTALL_DIR}/lib:/usr/java/jdk1.7.0_21/jre/lib/amd64/server:$LD_LIBRARY_PATH
+export JAVA_HOME=/home1/02204/fialho/work/src/perfexpert/external/jdk1.7.0_25
+export JAVA_BINDIR=$JAVA_HOME/bin
+export JAVA_ROOT=$JAVA_HOME
+export JDK_HOME=$JAVA_HOME
+export SDK_HOME=$JAVA_HOME
+export JRE_HOME=$JAVA_HOME/jre
+export PATH=$PATH:$JAVA_BINDIR:$JAVA_HOME/jre/bin
 
-# HPCToolKit and its dependencies...
+export PATH=${INSTALL_DIR}/bin:$PATH
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${INSTALL_DIR}/lib:$JRE_HOME/lib/amd64/server/
 
 echo "Package: HPCToolKit (externals)"
 date
@@ -30,10 +36,8 @@ module load papi
 ../configure --prefix=${INSTALL_DIR} --with-externals=../../hpctoolkit-externals-5.3.2-r4197/_build/ --with-papi=${PAPI_DIR}
 make install
 cd ../../
-rm -rf hpctoolkit-5.3.2-r4197/
-rm -rf hpctoolkit-externals-5.3.2-r4197/
-
-# ROSE and its dependencies...
+# rm -rf hpctoolkit-5.3.2-r4197/
+# rm -rf hpctoolkit-externals-5.3.2-r4197/
 
 echo "Package: BOOST"
 date
@@ -42,7 +46,7 @@ cd boost_1_47_0/
 ./bootstrap.sh
 ./b2 install --prefix=${INSTALL_DIR}
 cd ../
-rm -rf boost_1_47_0/
+# rm -rf boost_1_47_0/
 
 echo "Package: ROSE"
 date
@@ -52,12 +56,10 @@ mkdir _build
 cd _build
 ../configure --prefix=${INSTALL_DIR} --with-boost=${INSTALL_DIR} --disable-tutorial-directory \
   --disable-projects-directory --disable-tests-directory --disable-opencl --disable-php \
-  --disable-cuda --disable-java --disable-binary-analysis
+  --disable-cuda --disable-binary-analysis --disable-java --with-gomp_omp_runtime_library=/opt/apps/gcc/4.6.3/lib64/
 JAVA_TOOL_OPTIONS="-Xms256M -Xmx1G" make install
 cd ../../
-rm -rf rose-0.9.5a-20584/
-
-# PIPS and its dependencies...
+# rm -rf rose-0.9.5a-20584/
 
 echo "Package: cproto"
 date
@@ -68,83 +70,80 @@ cd _build
 ../configure --prefix=${INSTALL_DIR}
 make install
 cd ../../
-rm -rf cproto-4.7j/                                                                                                                                                                                                         
+# rm -rf cproto-4.7j/
 
 echo "Package: Polylib"
 date
-tar -xzvf ./polylib-5.22.5.tar.gz                                                                                                                                                                                           
-cd polylib-5.22.5/                                                                                                                                                                                                          
-mkdir _build                                                                                                                                                                                                                
+tar -xzvf ./polylib-5.22.5.tar.gz
+cd polylib-5.22.5/
+mkdir _build
 cd _build
-../configure --prefix=${INSTALL_DIR}                                                                                                                                                                                        
-make install                                                                                                                                                                                                                
+../configure --prefix=${INSTALL_DIR}
+make install
 cd ../../
-rm -rf polylib-5.22.5/                                                                                                                                                                                                      
+# rm -rf polylib-5.22.5/
 
 echo "Package: NewGen"
 date
-tar -xzvf ./newgen-0.1.tar.gz                                                                                                                                                                                               
-cd newgen-0.1/                                                                                                                                                                                                              
-autoreconf --install                                                                                                                                                                                                        
-mkdir _build                                                                                                                                                                                                                
+tar -xzvf ./newgen-0.1.tar.gz
+cd newgen-0.1/
+autoreconf --install
+mkdir _build
 cd _build
-../configure --disable-static --prefix=${INSTALL_DIR}                                                                                                                                                                       
-make install                                                                                                                                                                                                                
+../configure --disable-static --prefix=${INSTALL_DIR}
+make install
 cd ../../
-rm -rf newgen-0.1/                                                                                                                                                                                                          
+# rm -rf newgen-0.1/
 
 echo "Package: Linear"
 date
-tar -xzvf ./linear-0.1.tar.gz                                                                                                                                                                                               
-cd linear-0.1                                                                                                                                                                                                               
-autoreconf --install                                                                                                                                                                                                        
-mkdir _build                                                                                                                                                                                                                
+tar -xzvf ./linear-0.1.tar.gz
+cd linear-0.1
+autoreconf --install
+mkdir _build
 cd _build
-../configure --disable-static --prefix=${INSTALL_DIR} PKG_CONFIG_PATH=${INSTALL_DIR}/lib/pkgconfig:$PKG_CONFIG_PATH                                                                                                         
-make install                                                                                                                                                                                                                
+../configure --disable-static --prefix=${INSTALL_DIR} PKG_CONFIG_PATH=${INSTALL_DIR}/lib/pkgconfig:$PKG_CONFIG_PATH
+make install
 cd ../../
-rm -rf linear-0.1/                                                                                                                                                                                                          
+# rm -rf linear-0.1/
 
 echo "Package: PIPS"
 date
-tar -xzvf ./pips-0.1.tar.gz                                                                                                                                                                                                 
-cd pips-0.1/                                                                                                                                                                                                                
-autoreconf --install                                                                                                                                                                                                        
-mkdir _build                                                                                                                                                                                                                
+tar -xzvf ./pips-0.1.tar.gz
+cd pips-0.1/
+autoreconf --install
+mkdir _build
 cd _build
-../configure --disable-static --prefix=${INSTALL_DIR} PKG_CONFIG_PATH=${INSTALL_DIR}/lib/pkgconfig:$PKG_CONFIG_PATH                                                                                                         
-make install                                                                                                                                                                                                                
+../configure --disable-static --prefix=${INSTALL_DIR} PKG_CONFIG_PATH=${INSTALL_DIR}/lib/pkgconfig:$PKG_CONFIG_PATH
+make install
 cd ../../
-rm -rf pips-0.1/                                                                                                                                                                                                            
-
-# PerfExpert dependencies...                                                                                                                                                                                        
+# rm -rf pips-0.1/
 
 echo "Package: Google SparseHash"
 date
-tar -xzvf ./sparsehash-2.0.2.tar.gz                                                                                                                                                                                         
-cd sparsehash-2.0.2/                                                                                                                                                                                                        
-mkdir _build                                                                                                                                                                                                                
+tar -xzvf ./sparsehash-2.0.2.tar.gz
+cd sparsehash-2.0.2/
+mkdir _build
 cd _build
-../configure --prefix=${INSTALL_DIR}                                                                                                                                                                                        
-make install                                                                                                                                                                                                                
+../configure --prefix=${INSTALL_DIR}
+make install
 cd ../../
-rm -rf sparsehash-2.0.2/                                                                                                                                                                                                    
+# rm -rf sparsehash-2.0.2/
 
 echo "Package: GMP"
 date
-tar -xzvf ./gmp-5.1.2.tar.gz                                                                                                                                                                                                
-cd gmp-5.1.2/                                                                                                                                                                                                               
-mkdir _build                                                                                                                                                                                                                
+tar -xzvf ./gmp-5.1.2.tar.gz
+cd gmp-5.1.2/
+mkdir _build
 cd _build
-../configure --prefix=${INSTALL_DIR}                                                                                                                                                                                        
+../configure --prefix=${INSTALL_DIR}
 make
 make check
-make install                                                                                                                                                                                                                
+make install
 cd ../../
-rm -rf gmp-5.1.2/                                                                                                                                                                                                           
+# rm -rf gmp-5.1.2/
 
 # Already present on Stampede
-#
 # echo "Package: hwlock"
 # date
 # tar -xzvf hwloc-1.7.1.tar.gz
@@ -158,7 +157,7 @@ rm -rf gmp-5.1.2/
 
 echo "Package: Apache ANT"
 date
-tar -xzvf ./apache-ant-1.9.1-bin.tar.gz                                                                                                                                                                                     
-export ANT_HOME=`pwd`/apache-ant-1.9.1   
+tar -xzvf ./apache-ant-1.9.1-bin.tar.gz
+export ANT_HOME=`pwd`/apache-ant-1.9.1
 
 

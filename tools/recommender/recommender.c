@@ -711,6 +711,7 @@ static int parse_segment_params(perfexpert_list_t *segments_p, FILE *inputfile_p
     char sql[BUFFER_SIZE];
     char *error_msg = NULL;
     int  rowid = 0;
+    char *temp_str = NULL;
 
     OUTPUT_VERBOSE((4, "=== %s", _BLUE("Parsing measurements")));
     
@@ -906,6 +907,10 @@ static int parse_segment_params(perfexpert_list_t *segments_p, FILE *inputfile_p
         }
         /* Code param: code.function_name */
         if (0 == strncmp("code.function_name", node->key, 18)) {
+            /* Remove everyting after the '.' (for OMP functions) */
+            temp_str = node->value;
+            strsep(&temp_str, ".");
+
             item->function_name = (char *)malloc(strlen(node->value) + 1);
             if (NULL == item->function_name) {
                 OUTPUT(("%s", _ERROR("Error: out of memory")));

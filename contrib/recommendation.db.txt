@@ -903,11 +903,12 @@ INSERT INTO [pattern] ([id], [language], [recognizer], [desc]) VALUES
     (1, 1, 'nested_c_loops', 'recognize two or more perfect nested loops');
 
 INSERT INTO [transformation] ([id], [language], [transformer], [desc]) VALUES
-    (1, 1, 'c_loop_interchange', 'interchange two perfect nested loops');
+    (1, 1, 'loop_interchange', 'interchange two perfect nested loops');
 INSERT INTO [transformation] ([id], [language], [transformer], [desc]) VALUES
-    (2, 1, 'c_loop_tiling', 'tile two perfect nested loops');
+    (2, 1, 'loop_tiling', 'tile two perfect nested loops');
 
 INSERT INTO [recommendation_transformation] ([id_recommendation], [id_transformation]) VALUES (31, 1);
+INSERT INTO [recommendation_transformation] ([id_recommendation], [id_transformation]) VALUES (32, 1);
 -- we need a recommendation for loop tiling, the one we have is tiling AND interchange
 
 INSERT INTO [transformation_pattern] ([id_transformation], [id_pattern]) VALUES (1, 1);
