@@ -330,18 +330,18 @@ void recommenderTraversal::visit(SgNode *node) {
                                       "PERFEXPERT: grandparent loop of bottleneck");
 
                         /* Label the loop */
-                        label = NULL;
-                        scope = NULL;
-                        statement = NULL;
+                        //label = NULL;
+                        //scope = NULL;
+                        //statement = NULL;
 
-                        bzero(label_name, PERFEXPERT_LOOP_LABEL);
-                        sprintf(label_name, "loop_%d", grand_parent_info->get_line());
-                        SgName name_grandparent = label_name;
+                        //bzero(label_name, PERFEXPERT_LOOP_LABEL);
+                        //sprintf(label_name, "loop_%d", grand_parent_info->get_line());
+                        //SgName name_grandparent = label_name;
 
-                        label = buildLabelStatement(name_grandparent, statement,
-                                                    scope);
-                        insertStatementBefore(isSgStatement(grandparent_loop),
-                                              label);
+                        //label = buildLabelStatement(name_grandparent, statement,
+                        //                            scope);
+                        //insertStatementBefore(isSgStatement(grandparent_loop),
+                        //                      label);
                     }
                 } else {
                     attachComment(parent_loop, "PERFEXPERT: start work here");

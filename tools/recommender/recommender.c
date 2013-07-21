@@ -711,6 +711,7 @@ static int parse_segment_params(perfexpert_list_t *segments_p, FILE *inputfile_p
     char sql[BUFFER_SIZE];
     char *error_msg = NULL;
     int  rowid = 0;
+    char *temp_str = NULL;
 
     OUTPUT_VERBOSE((4, "=== %s", _BLUE("Parsing measurements")));
     
@@ -906,6 +907,10 @@ static int parse_segment_params(perfexpert_list_t *segments_p, FILE *inputfile_p
         }
         /* Code param: code.function_name */
         if (0 == strncmp("code.function_name", node->key, 18)) {
+            /* Remove everyting after the '.' (for OMP functions) */
+            temp_str = node->value;
+            strsep(&temp_str, ".");
+
             item->function_name = (char *)malloc(strlen(node->value) + 1);
             if (NULL == item->function_name) {
                 OUTPUT(("%s", _ERROR("Error: out of memory")));
@@ -1000,9 +1005,55 @@ static int get_weight(void *weight, int col_count, char **col_values,
     return PERFEXPERT_SUCCESS;
 }
 
-/* output_patterns */
-static int output_patterns(void *weight, int col_count, char **col_values,
-                           char **col_names) {
+/* output_transformers */
+static int output_transformers(void *weight, int col_count, char **col_values,
+                               char **col_names) {
+    char sql[BUFFER_SIZE];
+    char *error_msg = NULL;
+    char temp_str[BUFFER_SIZE];
+
+    if (0 == globals.automatic) {
+        /* Pretty print for the user */
+        if (NULL != col_values[0]) {
+            fprintf(globals.outputfile_FP, "%s ", col_values[0]);
+        }
+    } else {
+        /* PerfExpert output */
+        if ((NULL != col_values[0]) && (NULL != col_values[1])) {
+            fprintf(globals.outputfile_FP, "recommender.transformer_id=%s\n",
+                    col_values[1]);
+            fprintf(globals.outputfile_FP, "recommender.transformer=%s\n",
+                    col_values[0]);
+
+            /* Find the pattern recognizers for this transformer */
+            bzero(sql, BUFFER_SIZE);
+            strcat(sql, "SELECT p.recognizer, p.id FROM pattern AS p INNER JOIN");
+            strcat(sql, "\n                        ");
+            strcat(sql, "transformation_pattern AS tp ON p.id = tp.id_pattern");
+            strcat(sql, "\n                        ");
+            bzero(temp_str, BUFFER_SIZE);
+            sprintf(temp_str, "WHERE tp.id_transformation = %s;", col_values[1]);
+            strcat(sql, temp_str);
+
+            OUTPUT_VERBOSE((10, "%s",
+                            _YELLOW("Pattern recognizers for this transformation")));
+            OUTPUT_VERBOSE((10, "   SQL: %s", _CYAN(sql)));
+
+            if (SQLITE_OK != sqlite3_exec(globals.db, sql, output_recognizers,
+                                          NULL, &error_msg)) {
+                fprintf(stderr, "Error: SQL error: %s\n", error_msg);
+                sqlite3_free(error_msg);
+                sqlite3_close(globals.db);
+                exit(PERFEXPERT_ERROR);
+            }
+        }
+    }
+    return PERFEXPERT_SUCCESS;
+}
+
+/* output_recognizers */
+static int output_recognizers(void *weight, int col_count, char **col_values,
+                              char **col_names) {
     if (0 == globals.automatic) {
         /* Pretty print for the user */
         if (NULL != col_values[0]) {
@@ -1037,6 +1088,16 @@ static int output_recommendations(void *not_used, int col_count,
     /* Increase the recommendations counter */
     globals.recommendations++;
 
+    /* Find the patterns available for this recommendation id */
+    bzero(sql, BUFFER_SIZE);
+    strcat(sql, "SELECT t.transformer, t.id FROM transformation AS t INNER JOIN");
+    strcat(sql, "\n                        ");
+    strcat(sql, "recommendation_transformation AS rt ON t.id = rt.id_transformation");
+    strcat(sql, "\n                        ");
+    bzero(temp_str, BUFFER_SIZE);
+    sprintf(temp_str, "WHERE rt.id_recommendation = %s;", col_values[2]);
+    strcat(sql, temp_str);
+
     if (0 == globals.automatic) {
         /* Pretty print for the user */
         fprintf(globals.outputfile_FP, "#\n# This is a possible recommendation");
@@ -1047,22 +1108,12 @@ static int output_recommendations(void *not_used, int col_count,
                 col_values[0]);
         fprintf(globals.outputfile_FP, "Recommendation Reason: %s\n",
                 col_values[1]);
-        fprintf(globals.outputfile_FP, "Pattern Recognizers: ");
-
-        /* Find the patterns available for this recommendation id */
-        bzero(sql, BUFFER_SIZE);
-        strcat(sql, "SELECT p.recognizer FROM pattern AS p INNER JOIN");
-        strcat(sql, "\n                        ");
-        strcat(sql, "recommendation_pattern AS rp ON p.id = rp.id_pattern");
-        strcat(sql, "\n                        ");
-        bzero(temp_str, BUFFER_SIZE);
-        sprintf(temp_str, "WHERE rp.id_recommendation = %s;", col_values[2]);
-        strcat(sql, temp_str);
+        fprintf(globals.outputfile_FP, "Code transformers: ");
 
         OUTPUT_VERBOSE((10, "%s", _YELLOW("patterns for this recommendation")));
         OUTPUT_VERBOSE((10, "   SQL: %s", _CYAN(sql)));
 
-        if (SQLITE_OK != sqlite3_exec(globals.db, sql, output_patterns, NULL,
+        if (SQLITE_OK != sqlite3_exec(globals.db, sql, output_transformers, NULL,
                                       &error_msg)) {
             fprintf(stderr, "Error: SQL error: %s\n", error_msg);
             sqlite3_free(error_msg);
@@ -1075,20 +1126,12 @@ static int output_recommendations(void *not_used, int col_count,
         /* PerfExpert output */
         fprintf(globals.outputfile_FP, "recommender.recommendation_id=%s\n",
                 col_values[2]);
-        /* Find the patterns available for this recommendation id */
-        bzero(sql, BUFFER_SIZE);
-        strcat(sql, "SELECT p.recognizer, p.id FROM pattern AS p INNER JOIN");
-        strcat(sql, "\n                        ");
-        strcat(sql, "recommendation_pattern AS rp ON p.id = rp.id_pattern");
-        strcat(sql, "\n                        ");
-        bzero(temp_str, BUFFER_SIZE);
-        sprintf(temp_str, "WHERE rp.id_recommendation = %s;", col_values[2]);
-        strcat(sql, temp_str);
         
-        OUTPUT_VERBOSE((10, "%s", _YELLOW("patterns for this recommendation")));
+        OUTPUT_VERBOSE((10, "%s",
+                        _YELLOW("Code transformers for this recommendation")));
         OUTPUT_VERBOSE((10, "   SQL: %s", _CYAN(sql)));
 
-        if (SQLITE_OK != sqlite3_exec(globals.db, sql, output_patterns, NULL,
+        if (SQLITE_OK != sqlite3_exec(globals.db, sql, output_transformers, NULL,
                                       &error_msg)) {
             fprintf(stderr, "Error: SQL error: %s\n", error_msg);
             sqlite3_free(error_msg);

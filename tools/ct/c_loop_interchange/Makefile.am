@@ -25,26 +25,19 @@
 # $HEADER$
 #
 
-This static checker identifies is the given C source code is a valid iteration
-statement (FOR, DO and WHILE).
+bin_PROGRAMS = ct_loop_interchange
+ct_loop_interchange_SOURCES = ct_loop_interchange.cpp
+ct_loop_interchange_CPPFLAGS = -I$(srcdir)/../../common
+ct_loop_interchange_LDFLAGS = -lrose -ljvm
 
-Software requirements:
 
-	GNU Bison  (http://ftp.gnu.org/gnu/bison/)
-	GNU Flex   (http://flex.sourceforge.net/)
+dist_bin_SCRIPTS = ct_c_loop_interchange.sh
 
-Compiling instructions:
+install-exec-local: install-dist_binSCRIPTS
+	$(MKDIR_P) $(libdir)/
 
-	$ make
+install-exec-hook:
+	cd $(bindir); rm ct_c_loop_interchange; \
+	$(LN_S) ct_c_loop_interchange.sh ct_c_loop_interchange
 
-Compiling instructions without Makefile:
-
-	$ yacc -d c_loop1.y
-	$ lex c_loop1.l
-	$ gcc -o c_loop1 lex.yy.c y.tab.c
-
-Using instruction:
-
-	$ ./c_loop1 < c_loop1_example.c
-
-EOF.
+# EOF

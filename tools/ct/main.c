@@ -847,12 +847,15 @@ static int apply_one(transf_t *transf) {
     sprintf(argv[10], "-p");
     sprintf(argv[11], "%s", transf->program);
     sprintf(argv[12], "-r");
-    sprintf(argv[13], "%s_%d.%s.transformer_result", transf->filename,
-            transf->line_number, transf->program);
+    // sprintf(argv[13], "%s_%d.%s.transformer_result", transf->filename,
+    //         transf->line_number, transf->program);
+    sprintf(argv[13], "new_%s", transf->filename);
     sprintf(argv[14], "-s");
-    sprintf(argv[15], "../%s/%s", PERFEXPERT_SOURCE_DIR, transf->filename);
+    // sprintf(argv[15], "../%s/%s", PERFEXPERT_SOURCE_DIR, transf->filename);
+    sprintf(argv[15], "%s", transf->filename);
     sprintf(argv[16], "-w");
-    sprintf(argv[17], "%s/%s", globals.workdir, PERFEXPERT_FRAGMENTS_DIR);
+    // sprintf(argv[17], "%s/%s", globals.workdir, PERFEXPERT_FRAGMENTS_DIR);
+    sprintf(argv[17], "./");
 
     /* Setting the output */
     *(transf->transf_function) = (char *)malloc(strlen(argv[17]) +

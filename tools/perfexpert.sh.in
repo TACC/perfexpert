@@ -57,6 +57,7 @@ perfexpert_run_exp() {
     PERFEXPERT_RUN_EXP_CMD="${PERFEXPERT_RUN_EXP}"
     PERFEXPERT_RUN_EXP_CMD+=" -t ${WORKDIR}"
     PERFEXPERT_RUN_EXP_CMD+=" -g"
+    PERFEXPERT_RUN_EXP_CMD+=" -n"
     PERFEXPERT_RUN_EXP_CMD+=" -o ${WORKDIR}/perfexpert-experiment.xml"
     PERFEXPERT_RUN_EXP_CMD+=" ${USER_BINARY}"
     PERFEXPERT_RUN_EXP_CMD+=" &> ${WORKDIR}/perfexpert_run_exp.output.txt"
@@ -333,7 +334,7 @@ perfexpert_ci() {
 ###############################################################################
 compile() {
     # Compilation flags
-    CFLAGS+=" -g -O3 -fno-inline "
+    CFLAGS+=" -g -O3 -fno-inline -fopenmp "
 
     if [ x"${VERBOSE}" == x"yes" ]; then
         echo -n "[perfexpert.sh] Compiling..."
@@ -545,7 +546,7 @@ while [ 1 ]; do
     # Which round is this? Update variables!
     ROUND=$(($ROUND + 1))
     WORKDIR="${ORIGINAL_WORKDIR}/${ROUND}"
-    CI_OUTPUT_DIR="${WORKDIR}/fragments/new"
+#    CI_OUTPUT_DIR="${WORKDIR}/fragments/new"
 
     # Create temporary dir
     eval @MKDIR_P@ ${WORKDIR}
@@ -577,10 +578,13 @@ while [ 1 ]; do
     recommender
     perfexpert_pr
     perfexpert_ct
-    perfexpert_ci
+    #perfexpert_ci
+    if [ x"${VERBOSE}" == x"yes" ]; then
+        echo "[perfexpert.sh] Step 7 of 7: Integrating source code... ok!"
+    fi
 
-    echo "[perfexpert.sh] The new source code is in: ${CI_OUTPUT_DIR}"
-
-    mv ${CI_OUTPUT_DIR}/${USER_SOURCE}.new ${CI_OUTPUT_DIR}/${USER_SOURCE}
-    USER_SOURCE="${CI_OUTPUT_DIR}/${USER_SOURCE}"
+#    echo "[perfexpert.sh] The new source code is in: ${CI_OUTPUT_DIR}"
+    echo "[perfexpert.sh] The new source code is: new_${USER_SOURCE}"
+#    mv ${CI_OUTPUT_DIR}/${USER_SOURCE}.new ${CI_OUTPUT_DIR}/${USER_SOURCE}
+    USER_SOURCE="new_${USER_SOURCE}"
 done
