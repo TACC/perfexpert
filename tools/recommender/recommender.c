@@ -272,6 +272,20 @@ int recommender_main(int argc, char** argv) {
                     "#--------------------------------------------------\n");
         }
 
+#if HAVE_ROSE == 1
+        if ((1 == globals.automatic) && (NULL != globals.source_file)) {
+            /* Call MACPO script */
+            if ((1 == globals.macpo) && (0 == strcmp(globals.source_file, item->filename))) {
+                if (PERFEXPERT_ERROR == run_macpo(item)) {
+                    OUTPUT(("%s (%s)", _ERROR("Error: running MACPO script on"),
+                            item->function_name));
+                }
+            }
+        } else {
+            OUTPUT_VERBOSE((4, "%s",
+                            _YELLOW("source code not defined, can't run MACPO")));
+        }
+#endif
         /* Step 3: query DB for recommendations */
         OUTPUT_VERBOSE((7, "=== %s", _BLUE("STEP 3")));
 
@@ -404,6 +418,7 @@ static void show_help(void) {
     printf("                       for verbose messages)\n");
     printf("  -s --sourcefile      Use 'file' to extract source code fragments identified as\n");
     printf("                       bootleneck by PerfExpert (this option sets -a argument)\n");
+    printf("  -m --macpo           Enable MACPO, which add memory access centric analysis\n");
 #endif
     printf("  -p --perfexpert_pid  Use 'pid' to identify consecutive calls to Recommender.\n");
     printf("                       This argument is set automatically when using the\n");
@@ -456,7 +471,7 @@ static int parse_cli_params(int argc, char *argv[]) {
     while (1) {
         /* get parameter */
 #if HAVE_ROSE == 1
-        parameter = getopt_long(argc, argv, "cvhinm:l:f:d:o:a:s:p:r:",
+        parameter = getopt_long(argc, argv, "cvhinm:l:f:d:o:a:s:p:r:x",
                                 long_options, &option_index);
 #else
         parameter = getopt_long(argc, argv, "cvhinm:l:f:d:o:p:r:",
@@ -541,6 +556,12 @@ static int parse_cli_params(int argc, char *argv[]) {
                 globals.source_file = optarg;
                 OUTPUT_VERBOSE((10, "option 's' set [%s]", globals.source_file));
                 break;
+
+            /* Enable MACPO */
+            case 'x':
+                globals.macpo = 1;
+                OUTPUT_VERBOSE((10, "option 'x' set [%d]", globals.macpo));
+                break;
 #endif
             /* Which database file? */
             case 'd':
@@ -597,6 +618,8 @@ static int parse_cli_params(int argc, char *argv[]) {
                     globals.use_stdin ? "yes" : "no"));
     OUTPUT_VERBOSE((10, "   Use automatic optimization? %s",
                     globals.automatic ? "yes" : "no"));
+    OUTPUT_VERBOSE((10, "   Enable MACPO?               %s",
+                    globals.macpo ? "yes" : "no"));
     OUTPUT_VERBOSE((10, "   PerfExpert PID:             %llu",
                     globals.perfexpert_pid));
     OUTPUT_VERBOSE((10, "   Temporary directory:        %s",
@@ -1457,5 +1480,55 @@ static int select_recommendations(segment_t *segment) {
 #ifdef __cplusplus
 }
 #endif
+
+int run_macpo(segment_t *item) {
+    int  pid = 0;
+    int  rc = PERFEXPERT_UNDEFINED;
+    char temp_str[BUFFER_SIZE];
+    char temp_str2[BUFFER_SIZE];
+    char buffer[BUFFER_SIZE];
+
+    char argv[10][50];
+
+    bzero(temp_str, BUFFER_SIZE);
+    sprintf(temp_str, "%s/macpo.sh", PERFEXPERT_BINDIR);
+
+    bzero(argv, 50 * 10);
+    sprintf(argv[0], "macpo.sh");
+    sprintf(argv[1], "--macpo:function=%s", item->function_name);
+    sprintf(argv[2], "%s", globals.source_file);
+    sprintf(argv[3], "-fopenmp");
+    sprintf(argv[4], "-o");
+    sprintf(argv[5], "%s/macpo_bin", globals.workdir);
+
+    /* Set the command line */
+    bzero(temp_str2, BUFFER_SIZE);
+    sprintf(temp_str2, "%s %s %s %s %s %s %s", temp_str, argv[0], argv[1], argv[2],
+            argv[3], argv[4], argv[5]);
+    OUTPUT_VERBOSE((5, "   running %s", _CYAN(temp_str2)));
+
+    /* Forking child */
+    pid = fork();
+    if (-1 == pid) {
+        OUTPUT(("%s", _ERROR("Error: unable to fork")));
+        return PERFEXPERT_ERROR;
+    }
+
+    if (0 == pid) {
+        /* Child: Call the code transformer */
+        // TODO: this is ridiculous. I have to change it to execp, but I'm too
+        //       tired to do it now.
+        execl(temp_str, argv[0], argv[1], argv[2], argv[3], argv[4], argv[5], NULL);
+
+        OUTPUT(("child process failed to run, check if program exists"));
+        exit(127);
+    } else {
+        /* Parent */
+        wait(&rc);
+        OUTPUT_VERBOSE((10, "   result  %s %d", _CYAN("return code"), rc >> 8));
+    }
+
+    return PERFEXPERT_SUCCESS;
+}
 
 // EOF

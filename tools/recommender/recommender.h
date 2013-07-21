@@ -81,6 +81,7 @@ typedef struct {
     int  rec_count;
     char *fragments_dir;
     char recommendations;
+    int  macpo;
     unsigned long long int perfexpert_pid;
 } globals_t;
 
@@ -114,6 +115,7 @@ static struct option long_options[] = {
     {"colorful",        no_argument,       NULL, 'c'},
     {"sourcefile",      required_argument, NULL, 's'},
     {"perfexpert_pid",  required_argument, NULL, 'p'},
+    {"macpo",           no_argument,       NULL, 'x'},
     {0, 0, 0, 0}
 };
 
