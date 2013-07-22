@@ -24,6 +24,7 @@
 \author{\textbf{\Large Jim Browne, Leo Fialho and Ashay Rane}}
 \begin{document}
 
+\newcommand{\mytilde}{$\sim$}
 %------------------------------------------------------------
 \pgfdeclareimage[interpolate=true,width=5cm]{logo_TACC}{figures/tacc}
 \pgfdeclareimage[interpolate=true,width=5cm]{logo_UT}{figures/ut}
@@ -82,7 +83,7 @@
 \frame{\frametitle{Limitations for performance events:\\\#1: Fine-grain measurements}
 	~\\\begin{itemize}
 		\item Performance events are measured on execution of each instruction\\~\\
-		\item \colorbox{blue}{\textcolor{white}{\texttt{mov ah, 16}}} causes cache miss $\Rightarrow$ increment cache miss counter\\~\\
+		\item \colorbox{blue}{\textcolor{white}{\texttt{mov ah, [1234h]}}} causes cache miss,\\~~~~$\Rightarrow$ increment cache miss counter\\~\\
 		\item But memory is optimized for stream traffic and regular accesses (locality, bandwidth, reuse)\\~\\
 		\item Hence gap between measurements and optimization techniques
 	\end{itemize}
@@ -169,24 +170,23 @@ Level 3 data cache reuse factor = 0.0% [                                        
 	~\\\begin{itemize}
 		\item Compile application using \colorbox{blue}{\textcolor{white}{\texttt{macpo.sh}}}\\~\\
 		\item Run application as usual\\~\\
-		\item Analyze macpo logs using macpo-analyze
+		\item Analyze macpo logs using \colorbox{blue}{\textcolor{white}{\texttt{macpo-analyze}}}
 	\end{itemize}
 }
 
 \begin{frame}[fragile]
 \frametitle{How to use MACPO?}
 %\frame{\frametitle{How to use MACPO?}
-~\\\small\begin{verbatim}
+~\\\footnotesize\begin{verbatim}
 # Compile the application using macpo.sh
 # Specify code section using --macpo:function or --macpo:loop
-macpo.sh --macpo:function=thread_func -c mcpi.cc
-macpo.sh --macpo:function=thread_func -o mcpi mcpi.o
+$ macpo.sh --macpo:function=thread_func -o mcpi mcpi.cc -lpthread -lrt
 
 # Run the application as usual
-./mcpi
+$ ./mcpi
 
 # Post-process logs to get analysis output
-macpo-analyze macpo.out
+$ macpo-analyze macpo.out
 \end{verbatim}
 %}
 \end{frame}
@@ -271,7 +271,7 @@ macpo-analyze macpo.out
 		\item NOT a replacement for PerfExpert. Instead, complements PerfExpert's diagnosis.\\~\\
 		\item Allows collection of memory traces for arrays and structures\\~\\
 		\item Analyzes traces offline to calculate performance metrics\\~\\
-		\item This is an early release, so help us squash the bugs! :)
+		\item This is an early release, please help us squash the bugs! :)
 	\end{itemize}
 }
 
@@ -280,7 +280,7 @@ macpo-analyze macpo.out
 \frame{\frametitle{Sample application}
 	~\\\begin{itemize}
 		\item Monte-Carlo computation of Pi\\~\\
-		\item Source code online at: \texttt{http://goo.gl/uEVrh}\\~\\
+		\item Source code online at: \texttt{http://goo.gl/uEVrh}\\~~~~or at \texttt{{\mytilde}train300/sample-programs.tar.gz}\\~\\
 		\item Uses basic C++, parallelized using Pthreads\\~\\
 		\item Tasks performed by each thread:
 		\begin{itemize}
@@ -313,24 +313,30 @@ for (int repeat=0; repeat<REPEAT_COUNT; repeat++)
 \end{frame}
 
 \begin{frame}[fragile]
-\frametitle{MACPO commands for sample code}
-	~\\\small\begin{verbatim}
+\frametitle{Commands for sample code}
+	~\\\footnotesize\begin{verbatim}
+# Extract the source code into the local directory
+$ tar -xzf /home1/0003/train300/sample-programs.tar.gz
+
+# Switch to the directory that contains the Monte-Carlo Pi code
+cd sample-programs/monte-carlo/
+
 # Compile the application using macpo.sh
 # Specify code section using --macpo:function or --macpo:loop
-macpo.sh --macpo:function=thread_func source.c compute.c -o mm
+$ macpo.sh --macpo:function=thread_func monte-carlo.cc -o mm -lpthread -lrt
 
 # Run the application as usual
-./mm
+$ ./mm
 
 # Post-process logs to get analysis output
-macpo-analyze macpo.out
+$ macpo-analyze macpo.out
 	\end{verbatim}
 \end{frame}
 
 \begin{frame}[fragile]
 \frametitle{MACPO analysis output (truncated)}
 	\begin{verbatim}
-macpo-analyze macpo.out
+$ macpo-analyze macpo.out
 	
 Var "counts", seen 1668 times,
 estimated to cost 147.12 cycles on every access
@@ -358,7 +364,7 @@ Level 3 data cache reuse factor = 0.0%
 \begin{frame}[fragile]
 \frametitle{MACPO analysis output for optimized code (truncated)}
 	\begin{verbatim}
-macpo-analyze macpo.out
+$ macpo-analyze macpo.out
 	
 Var "counts", seen 1073 times,
 estimated to cost 8.98 cycles on every access
@@ -387,16 +393,22 @@ Level 3 data cache reuse factor = 0.0%
 
 \begin{frame}[fragile]
 \frametitle{Summary of MACPO instructions}
-	~\\\small\begin{verbatim}
+	~\\\footnotesize\begin{verbatim}
+# Extract the source code into the local directory
+$ tar -xzf /home1/0003/train300/sample-programs.tar.gz
+
+# Switch to the directory that contains the Monte-Carlo Pi code
+cd sample-programs/monte-carlo/
+
 # Compile the application using macpo.sh
 # Specify code section using --macpo:function or --macpo:loop
-macpo.sh --macpo:function=thread_func source.c compute.c -o mm
+$ macpo.sh --macpo:function=thread_func monte-carlo.cc -o mm -lpthread -lrt
 
 # Run the application as usual
-./mm
+$ ./mm
 
 # Post-process logs to get analysis output
-macpo-analyze macpo.out
+$ macpo-analyze macpo.out
 	\end{verbatim}
 \end{frame}
 
