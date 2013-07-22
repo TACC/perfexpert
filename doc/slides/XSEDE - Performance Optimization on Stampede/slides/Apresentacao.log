@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-2.4-1.40.13 (TeX Live 2012/Debian) (format=pdflatex 2013.7.20)  21 JUL 2013 14:47
+This is pdfTeX, Version 3.1415926-2.4-1.40.13 (TeX Live 2012/Debian) (format=pdflatex 2013.7.20)  21 JUL 2013 18:32
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1093,50 +1093,50 @@ Dictionary: translator-theorem-dictionary, Language: English
 Package pgf Warning: File "figures/configuration" not found when defining image
  "configuration".
 (pgf)                Tried all extensions in ".pdf:.jpg:.jpeg:.png:" on input l
-ine 32.
+ine 33.
 
 
 Package pgf Warning: Missing height for image "configuration" ("figures/configu
 ration") in draft mode.
-(pgf)                Using 1cm instead on input line 32.
+(pgf)                Using 1cm instead on input line 33.
 
 [1
 
 {/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map} <./figures/tacc.pdf> <./fig
 ures/ut.pdf>]
-LaTeX Font Info:    Try loading font information for OT1+lmr on input line 52.
+LaTeX Font Info:    Try loading font information for OT1+lmr on input line 53.
  (/usr/share/texmf/tex/latex/lm/ot1lmr.fd
 File: ot1lmr.fd 2009/10/30 v1.6 Font defs for Latin Modern
 )
-LaTeX Font Info:    Try loading font information for OML+lmm on input line 52.
+LaTeX Font Info:    Try loading font information for OML+lmm on input line 53.
 
 (/usr/share/texmf/tex/latex/lm/omllmm.fd
 File: omllmm.fd 2009/10/30 v1.6 Font defs for Latin Modern
 )
-LaTeX Font Info:    Try loading font information for OMS+lmsy on input line 52.
+LaTeX Font Info:    Try loading font information for OMS+lmsy on input line 53.
 
 
 (/usr/share/texmf/tex/latex/lm/omslmsy.fd
 File: omslmsy.fd 2009/10/30 v1.6 Font defs for Latin Modern
 )
-LaTeX Font Info:    Try loading font information for OMX+lmex on input line 52.
+LaTeX Font Info:    Try loading font information for OMX+lmex on input line 53.
 
 
 (/usr/share/texmf/tex/latex/lm/omxlmex.fd
 File: omxlmex.fd 2009/10/30 v1.6 Font defs for Latin Modern
 )
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <8> on input line 52.
+(Font)              <8> on input line 53.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <6> on input line 52.
+(Font)              <6> on input line 53.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <5> on input line 52.
-LaTeX Font Info:    Try loading font information for U+msa on input line 52.
+(Font)              <5> on input line 53.
+LaTeX Font Info:    Try loading font information for U+msa on input line 53.
 
 (/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2009/06/22 v3.00 AMS symbols A
 )
-LaTeX Font Info:    Try loading font information for U+msb on input line 52.
+LaTeX Font Info:    Try loading font information for U+msb on input line 53.
 
 (/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2009/06/22 v3.00 AMS symbols B
@@ -1150,22 +1150,18 @@ Package epstopdf Info: Source file: <figures/cpu-mem-speed.eps>
 (epstopdf)                    size: 984146 bytes
 (epstopdf)             Output file: <figures/cpu-mem-speed-eps-converted-to.pdf
 >
+(epstopdf)                    date: 2013-07-21 18:11:15
+(epstopdf)                    size: 47045 bytes
 (epstopdf)             Command: <repstopdf --outfile=figures/cpu-mem-speed-eps-
 converted-to.pdf figures/cpu-mem-speed.eps>
-(epstopdf)             \includegraphics on input line 80.
-runsystem(repstopdf --outfile=figures/cpu-mem-speed-eps-converted-to.pdf figure
-s/cpu-mem-speed.eps)...executed safely (allowed).
-
-Package epstopdf Info: Result file: <figures/cpu-mem-speed-eps-converted-to.pdf
->
-(epstopdf)                    date: 2013-07-21 14:47:09
-(epstopdf)                    size: 47045 bytes.
+(epstopdf)             \includegraphics on input line 81.
+Package epstopdf Info: Output file is already uptodate.
 
 <figures/cpu-mem-speed-eps-converted-to.pdf, id=113, 388.45125pt x 247.92625pt>
 File: figures/cpu-mem-speed-eps-converted-to.pdf Graphic file (type pdf)
 <use figures/cpu-mem-speed-eps-converted-to.pdf>
 Package pdftex.def Info: figures/cpu-mem-speed-eps-converted-to.pdf used on inp
-ut line 80.
+ut line 81.
 (pdftex.def)             Requested size: 153.64493pt x 98.06409pt.
  [4
 
@@ -1175,28 +1171,28 @@ Package epstopdf Info: Source file: <figures/cpu-mem-speed.eps>
 (epstopdf)                    size: 984146 bytes
 (epstopdf)             Output file: <figures/cpu-mem-speed-eps-converted-to.pdf
 >
-(epstopdf)                    date: 2013-07-21 14:47:09
+(epstopdf)                    date: 2013-07-21 18:11:15
 (epstopdf)                    size: 47045 bytes
 (epstopdf)             Command: <repstopdf --outfile=figures/cpu-mem-speed-eps-
 converted-to.pdf figures/cpu-mem-speed.eps>
-(epstopdf)             \includegraphics on input line 80.
+(epstopdf)             \includegraphics on input line 81.
 Package epstopdf Info: Output file is already uptodate.
 File: figures/cpu-mem-speed-eps-converted-to.pdf Graphic file (type pdf)
  <use figures/cpu-mem-speed-eps-converted-to.pdf>
 Package pdftex.def Info: figures/cpu-mem-speed-eps-converted-to.pdf used on inp
-ut line 80.
+ut line 81.
 (pdftex.def)             Requested size: 153.64493pt x 98.06409pt.
  [5
 
 ]
-LaTeX Font Info:    Try loading font information for OT1+lmtt on input line 89.
+LaTeX Font Info:    Try loading font information for OT1+lmtt on input line 90.
 
 
 (/usr/share/texmf/tex/latex/lm/ot1lmtt.fd
 File: ot1lmtt.fd 2009/10/30 v1.6 Font defs for Latin Modern
 )
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <10.95> on input line 89.
+(Font)              <10.95> on input line 90.
  [6
 
 ] [7
@@ -1205,11 +1201,11 @@ LaTeX Font Info:    External font `lmex10' loaded for size
 
 ]
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <14.4> on input line 121.
+(Font)              <14.4> on input line 122.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <10> on input line 121.
+(Font)              <10> on input line 122.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <7> on input line 121.
+(Font)              <7> on input line 122.
  [9
 
 ]
@@ -1218,23 +1214,19 @@ Package epstopdf Info: Source file: <figures/macpo-workflow.eps>
 (epstopdf)                    size: 1388262 bytes
 (epstopdf)             Output file: <figures/macpo-workflow-eps-converted-to.pd
 f>
+(epstopdf)                    date: 2013-07-21 18:11:18
+(epstopdf)                    size: 53282 bytes
 (epstopdf)             Command: <repstopdf --outfile=figures/macpo-workflow-eps
 -converted-to.pdf figures/macpo-workflow.eps>
-(epstopdf)             \includegraphics on input line 138.
-runsystem(repstopdf --outfile=figures/macpo-workflow-eps-converted-to.pdf figur
-es/macpo-workflow.eps)...executed safely (allowed).
-
-Package epstopdf Info: Result file: <figures/macpo-workflow-eps-converted-to.pd
-f>
-(epstopdf)                    date: 2013-07-21 14:47:13
-(epstopdf)                    size: 53282 bytes.
+(epstopdf)             \includegraphics on input line 139.
+Package epstopdf Info: Output file is already uptodate.
 
 <figures/macpo-workflow-eps-converted-to.pdf, id=274, 391.4625pt x 210.7875pt>
 File: figures/macpo-workflow-eps-converted-to.pdf Graphic file (type pdf)
 
 <use figures/macpo-workflow-eps-converted-to.pdf>
 Package pdftex.def Info: figures/macpo-workflow-eps-converted-to.pdf used on in
-put line 138.
+put line 139.
 (pdftex.def)             Requested size: 307.28987pt x 165.47177pt.
  [10
 
@@ -1251,9 +1243,9 @@ put line 138.
 \openout4 = `Apresentacao.vrb'.
 
  (./Apresentacao.vrb
-Overfull \hbox (12.9592pt too wide) in paragraph at lines 14--14
-[]\OT1/lmtt/m/n/10 # Specify code section using --macpo:function or --macpo:loo
-p[] 
+Overfull \hbox (23.45949pt too wide) in paragraph at lines 13--13
+[]\OT1/lmtt/m/n/9 $ macpo.sh --macpo:function=thread_func -o mcpi mcpi.cc -lpth
+read -lrt[] 
  []
 
 ) [14
@@ -1309,15 +1301,9 @@ Overfull \hbox (3.14174pt too wide) in paragraph at lines 4--6
 \openout4 = `Apresentacao.vrb'.
 
  (./Apresentacao.vrb
-Overfull \hbox (12.9592pt too wide) in paragraph at lines 12--12
-[]\OT1/lmtt/m/n/10 # Specify code section using --macpo:function or --macpo:loo
-p[] 
- []
-
-
-Overfull \hbox (18.20918pt too wide) in paragraph at lines 12--12
-[]\OT1/lmtt/m/n/10 macpo.sh --macpo:function=thread_func source.c compute.c -o 
-mm[] 
+Overfull \hbox (47.08444pt too wide) in paragraph at lines 18--18
+[]\OT1/lmtt/m/n/9 $ macpo.sh --macpo:function=thread_func monte-carlo.cc -o mm 
+-lpthread -lrt[] 
  []
 
 ) [24
@@ -1358,15 +1344,9 @@ Overfull \hbox (3.14174pt too wide) in paragraph at lines 18--18
 \openout4 = `Apresentacao.vrb'.
 
  (./Apresentacao.vrb
-Overfull \hbox (12.9592pt too wide) in paragraph at lines 12--12
-[]\OT1/lmtt/m/n/10 # Specify code section using --macpo:function or --macpo:loo
-p[] 
- []
-
-
-Overfull \hbox (18.20918pt too wide) in paragraph at lines 12--12
-[]\OT1/lmtt/m/n/10 macpo.sh --macpo:function=thread_func source.c compute.c -o 
-mm[] 
+Overfull \hbox (47.08444pt too wide) in paragraph at lines 18--18
+[]\OT1/lmtt/m/n/9 $ macpo.sh --macpo:function=thread_func monte-carlo.cc -o mm 
+-lpthread -lrt[] 
  []
 
 ) [29
@@ -1381,19 +1361,19 @@ mm[]
 \tf@snm=\write8
 \openout8 = `Apresentacao.snm'.
 
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 413.
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 413.
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 425.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 425.
  (./Apresentacao.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 413.
-Package atveryend Info: Empty hook `AtEndAfterFileList' on input line 413.
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 413.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 425.
+Package atveryend Info: Empty hook `AtEndAfterFileList' on input line 425.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 425.
  ) 
 Here is how much of TeX's memory you used:
- 20702 strings out of 495059
- 409363 string characters out of 3182030
+ 20707 strings out of 495059
+ 409414 string characters out of 3182030
  518912 words of memory out of 3000000
- 23271 multiletter control sequences out of 15000+200000
- 92948 words of font info for 73 fonts, out of 3000000 for 9000
+ 23274 multiletter control sequences out of 15000+200000
+ 95986 words of font info for 75 fonts, out of 3000000 for 9000
  14 hyphenation exceptions out of 8191
  55i,14n,56p,417b,756s stack positions out of 5000i,500n,10000p,200000b,50000s
 {/usr/share/texmf/fonts/enc/dvips/lm/lm-rmtt.enc}{/usr/share/texmf/fonts/enc/
@@ -1402,13 +1382,14 @@ re/texmf/fonts/type1/public/lm/lmss10.pfb></usr/share/texmf/fonts/type1/public/
 lm/lmss12.pfb></usr/share/texmf/fonts/type1/public/lm/lmss8.pfb></usr/share/tex
 mf/fonts/type1/public/lm/lmssbx10.pfb></usr/share/texmf/fonts/type1/public/lm/l
 msy10.pfb></usr/share/texmf/fonts/type1/public/lm/lmtt10.pfb></usr/share/texmf/
-fonts/type1/public/lm/lmtt8.pfb></usr/share/texlive/texmf-dist/fonts/type1/publ
-ic/amsfonts/symbols/msam10.pfb></usr/share/texlive/texmf-dist/fonts/type1/publi
-c/amsfonts/symbols/msam7.pfb>
-Output written on Apresentacao.pdf (29 pages, 367277 bytes).
+fonts/type1/public/lm/lmtt8.pfb></usr/share/texmf/fonts/type1/public/lm/lmtt9.p
+fb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/symbols/msam10.pf
+b></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/symbols/msam7.pfb>
+
+Output written on Apresentacao.pdf (29 pages, 391998 bytes).
 PDF statistics:
- 831 PDF objects out of 1000 (max. 8388607)
- 767 compressed objects within 8 object streams
+ 835 PDF objects out of 1000 (max. 8388607)
+ 770 compressed objects within 8 object streams
  60 named destinations out of 1000 (max. 500000)
  63 words of extra memory for PDF output out of 10000 (max. 10000000)
 
