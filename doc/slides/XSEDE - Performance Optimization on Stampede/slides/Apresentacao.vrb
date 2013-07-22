@@ -1,12 +1,18 @@
 \frametitle {Summary of MACPO instructions}
-~\\\small\begin{verbatim}
+~\\\footnotesize\begin{verbatim}
+# Extract the source code into the local directory
+$ tar -xzf /home1/0003/train300/sample-programs.tar.gz
+
+# Switch to the directory that contains the Monte-Carlo Pi code
+cd sample-programs/monte-carlo/
+
 # Compile the application using macpo.sh
 # Specify code section using --macpo:function or --macpo:loop
-macpo.sh --macpo:function=thread_func source.c compute.c -o mm
+$ macpo.sh --macpo:function=thread_func monte-carlo.cc -o mm -lpthread -lrt
 
 # Run the application as usual
-./mm
+$ ./mm
 
 # Post-process logs to get analysis output
-macpo-analyze macpo.out
+$ macpo-analyze macpo.out
 \end{verbatim}
