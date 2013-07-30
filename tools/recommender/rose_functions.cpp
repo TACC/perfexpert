@@ -52,13 +52,14 @@ SgProject *userProject;
 
 // TODO: it will be nice and polite to add some ROSE_ASSERT to this code
 
-int open_rose(void) {
+int open_rose(const char *source_file) {
     char **files = NULL;
 
     OUTPUT_VERBOSE((7, "=== %s", _BLUE((char *)"Opening Rose")));
 
     /* Fill 'files', aka **argv */
     files = (char **)malloc(sizeof(char *) * 3);
+
     files[0] = (char *)malloc(sizeof("recommender") + 1);
     if (NULL == files[0]) {
         OUTPUT(("%s", _ERROR((char *)"Error: out of memory")));
@@ -66,7 +67,15 @@ int open_rose(void) {
     }
     bzero(files[0], sizeof("recommender") + 1);
     snprintf(files[0], sizeof("recommender"), "recommender");
-    files[1] = globals.source_file;
+
+    files[1] = (char *)malloc(strlen(source_file) + 1);
+    if (NULL == files[1]) {
+        OUTPUT(("%s", _ERROR((char *)"Error: out of memory")));
+        return PERFEXPERT_ERROR;
+    }
+    bzero(files[1], strlen(source_file) + 1);
+    strncpy(files[1], source_file, strlen(source_file));
+
     files[2] = NULL;
 
     /* Load files and build AST */
@@ -88,12 +97,31 @@ int close_rose(void) {
 }
 
 int extract_fragment(segment_t *segment) {
+    char *fragments_dir = NULL;
     recommenderTraversal segmentTraversal;
 
     OUTPUT_VERBOSE((7, "=== %s (%s:%d) [%s]",
                     _BLUE((char *)"Extracting fragment from"),
                     segment->filename, segment->line_number, segment->type));
-    
+
+    /* Create the fragments directory */
+    fragments_dir = (char *)malloc(strlen(globals.workdir) +
+                                   strlen(PERFEXPERT_FRAGMENTS_DIR) + 2);
+    if (NULL == fragments_dir) {
+        OUTPUT(("%s", _ERROR((char *)"Error: out of memory")));
+        exit(PERFEXPERT_ERROR);
+    }
+    bzero(fragments_dir, strlen(globals.workdir) +
+          strlen(PERFEXPERT_FRAGMENTS_DIR) + 2);
+    sprintf(fragments_dir, "%s/%s", globals.workdir, PERFEXPERT_FRAGMENTS_DIR);
+    if (PERFEXPERT_ERROR == perfexpert_util_make_path(fragments_dir, 0755)) {
+        OUTPUT(("%s", _ERROR((char *)"Error: cannot create fragments dir")));
+        exit(PERFEXPERT_ERROR);
+    } else {
+        OUTPUT_VERBOSE((4, "fragments will be put in (%s)", fragments_dir));
+    }
+    free(fragments_dir);
+
     /* Build the traversal object and call the traversal function starting at
      * the project node of the AST, using a pre-order traversal
      */
@@ -105,86 +133,12 @@ int extract_fragment(segment_t *segment) {
     return PERFEXPERT_SUCCESS;
 }
 
-int extract_source(void) {
-    FILE *destination_file_FP;
-    char *destination_file = NULL;
-    char *source_dir = NULL;
-    SgSourceFile* file = NULL;
-    int fileNum;
-    int i;
-
-    OUTPUT_VERBOSE((7, "=== %s", _BLUE((char *)"Extracting source code")));
-
-    /* Create source directory */
-    source_dir = (char *)malloc(strlen(globals.workdir) +
-                                strlen(PERFEXPERT_SOURCE_DIR) + 10);
-    if (NULL == source_dir) {
-        OUTPUT(("%s", _ERROR((char *)"Error: out of memory")));
-        return PERFEXPERT_ERROR;
-    }
-    bzero(source_dir, (strlen(globals.workdir) +
-                       strlen(PERFEXPERT_SOURCE_DIR) + 10));
-    sprintf(source_dir, "%s/%s", globals.workdir, PERFEXPERT_SOURCE_DIR);
-    if (PERFEXPERT_ERROR == perfexpert_util_make_path(source_dir, 0755)) {
-        OUTPUT(("%s", _ERROR((char *)"Error: cannot create source directory")));
-        free(source_dir);
-        return PERFEXPERT_ERROR;
-    } else {
-        OUTPUT_VERBOSE((4, "source code will be put into (%s)", source_dir));
-    }
-
-    /* For each filename */
-    fileNum = userProject->numberOfFiles();
-    for (i = 0; i < fileNum; ++i) {
-        file = isSgSourceFile(userProject->get_fileList()[i]);
-
-        /* Open output file */
-        destination_file = (char *)malloc(strlen(source_dir) +
-                                          strlen(file->get_sourceFileNameWithoutPath().c_str())
-                                          + 3);
-        if (NULL == destination_file) {
-            OUTPUT(("%s", _ERROR((char *)"Error: out of memory")));
-            free(source_dir);
-            return PERFEXPERT_ERROR;
-        }
-        bzero(destination_file, (strlen(source_dir) +
-                                 strlen(file->get_sourceFileNameWithoutPath().c_str()) + 3));
-        sprintf(destination_file, "%s/%s", source_dir,
-                file->get_sourceFileNameWithoutPath().c_str());
-        OUTPUT_VERBOSE((8, "extracting it to (%s)", destination_file));
-
-        destination_file_FP = fopen(destination_file, "w+");
-        if (NULL == destination_file_FP) {
-            OUTPUT(("%s (%s)", _ERROR((char *)"error opening file"),
-                    _ERROR(destination_file)));
-            free(destination_file);
-            free(source_dir);
-            return PERFEXPERT_ERROR;
-        }
-
-        /* Output source code */
-        fprintf(destination_file_FP, "%s",
-                file->unparseToCompleteString().c_str());
-        
-        /* Close output file */
-        fclose(destination_file_FP);
-    }
-
-    /* Clean up */
-    free(destination_file);
-    free(source_dir);
-    // TODO: should find a way to free 'file'
-
-    OUTPUT_VERBOSE((7, "==="));
-
-    return PERFEXPERT_SUCCESS;
-}
-
 static int output_fragment(SgNode *node, Sg_File_Info *fileInfo,
                            segment_t *item) {
     char *fragment_file = NULL;
     FILE *fragment_file_FP;
 
+    /* Set fragment filename */
     fragment_file = (char *)malloc(strlen(globals.workdir) +
                                    strlen(PERFEXPERT_FRAGMENTS_DIR) +
                                    strlen(item->filename) + 10);
@@ -207,8 +161,6 @@ static int output_fragment(SgNode *node, Sg_File_Info *fileInfo,
     }
     fprintf(fragment_file_FP, "%s", node->unparseToCompleteString().c_str());
     fclose(fragment_file_FP);
-
-    /* Clean up */
     free(fragment_file);
 
     return PERFEXPERT_SUCCESS;
@@ -216,9 +168,12 @@ static int output_fragment(SgNode *node, Sg_File_Info *fileInfo,
 
 void recommenderTraversal::visit(SgNode *node) {
     Sg_File_Info *fileInfo = NULL;
+    Sg_File_Info *parent_info = NULL;
+    Sg_File_Info *grand_parent_info = NULL;
     SgFunctionDefinition *function = NULL;
     SgForStatement *c_loop = NULL;
-    SgFortranDo *f_loop = NULL;
+    SgForStatement *parent_loop = NULL;
+    SgForStatement *grandparent_loop = NULL;
     SgNode *grandparent = NULL;
     SgNode *parent = NULL;
     int node_found = 0;
@@ -229,15 +184,15 @@ void recommenderTraversal::visit(SgNode *node) {
     if ((NULL != (c_loop = isSgForStatement(node))) &&
         (0 == strncmp("loop", item->type, 4)) &&
         (fileInfo->get_line() == item->line_number)) {
-        SgLabelStatement *label = NULL;
-        SgScopeStatement *scope = NULL;
-        SgStatement *statement = NULL;
+        //SgLabelStatement *label = NULL;
+        //SgScopeStatement *scope = NULL;
+        //SgStatement *statement = NULL;
 
-        char label_name[PERFEXPERT_LOOP_LABEL];
-        bzero(label_name, PERFEXPERT_LOOP_LABEL);
-        sprintf(label_name, "loop_%d", fileInfo->get_line());
+        //char label_name[PERFEXPERT_LOOP_LABEL];
+        //bzero(label_name, PERFEXPERT_LOOP_LABEL);
+        //sprintf(label_name, "loop_%d", fileInfo->get_line());
 
-        SgName name = label_name;
+        //SgName name = label_name;
 
         /* Found a C loop on the exact line number */
         OUTPUT_VERBOSE((8, "found a (%s) on (%s:%d)", node->sage_class_name(),
@@ -248,15 +203,12 @@ void recommenderTraversal::visit(SgNode *node) {
             OUTPUT(("%s", _ERROR((char *)"Error: extracting fragment")));
             return;
         }
-        fprintf(globals.outputfile_FP, "recommender.code_fragment=%s/%s_%d\n",
-                globals.fragments_dir, item->filename, item->line_number);
+        fprintf(globals.outputfile_FP, "recommender.code_fragment=%s/%s/%s_%d\n",
+                globals.workdir, PERFEXPERT_FRAGMENTS_DIR, item->filename,
+                item->line_number);
 
         /* What is the loop detph and who is node's parent */
         if (2 <= item->loop_depth) {
-            SgForStatement *parent_loop = NULL;
-            SgForStatement *grandparent_loop = NULL;
-            Sg_File_Info *parent_info = NULL;
-            Sg_File_Info *grand_parent_info = NULL;
 
             parent = node->get_parent();
 
@@ -284,9 +236,9 @@ void recommenderTraversal::visit(SgNode *node) {
                 fprintf(globals.outputfile_FP, "code.outer_loop=%d\n",
                         item->outer_loop);
                 fprintf(globals.outputfile_FP,
-                        "recommender.outer_loop_fragment=%s/%s_%d\n",
-                        globals.fragments_dir, item->filename,
-                        parent_info->get_line());
+                        "recommender.outer_loop_fragment=%s/%s/%s_%d\n",
+                        globals.workdir, PERFEXPERT_FRAGMENTS_DIR,
+                        item->filename, parent_info->get_line());
 
                 /* What is the loop detph and who is node's grandparent */
                 if (3 <= item->loop_depth) {
@@ -319,15 +271,15 @@ void recommenderTraversal::visit(SgNode *node) {
                                 "code.outer_outer_loop=%d\n",
                                 item->outer_outer_loop);
                         fprintf(globals.outputfile_FP,
-                                "recommender.outer_outer_loop_fragment=%s/%s_%d\n",
-                                globals.fragments_dir, item->filename,
-                                grand_parent_info->get_line());
+                                "recommender.outer_outer_loop_fragment=%s/%s/%s_%d\n",
+                                globals.workdir, PERFEXPERT_FRAGMENTS_DIR,
+                                item->filename, grand_parent_info->get_line());
 
                         /* Add a comment to the loop */
-                        attachComment(grandparent_loop,
-                                      "PERFEXPERT: start work here");
-                        attachComment(grandparent_loop,
-                                      "PERFEXPERT: grandparent loop of bottleneck");
+                        //attachComment(grandparent_loop,
+                        //              "PERFEXPERT: start work here");
+                        //attachComment(grandparent_loop,
+                        //              "PERFEXPERT: grandparent loop of bottleneck");
 
                         /* Label the loop */
                         //label = NULL;
@@ -344,33 +296,33 @@ void recommenderTraversal::visit(SgNode *node) {
                         //                      label);
                     }
                 } else {
-                    attachComment(parent_loop, "PERFEXPERT: start work here");
+                //    attachComment(parent_loop, "PERFEXPERT: start work here");
                 }
                 /* Add a comment to the loop */
-                attachComment(parent_loop,
-                              "PERFEXPERT: parent loop of bottleneck");
+                //attachComment(parent_loop,
+                //              "PERFEXPERT: parent loop of bottleneck");
 
                 /* Label the loop */
-                label = NULL;
-                scope = NULL;
-                statement = NULL;
+                // label = NULL;
+                // scope = NULL;
+                // statement = NULL;
 
-                bzero(label_name, PERFEXPERT_LOOP_LABEL);
-                sprintf(label_name, "loop_%d", parent_info->get_line());
-                SgName name_parent = label_name;
+                // bzero(label_name, PERFEXPERT_LOOP_LABEL);
+                // sprintf(label_name, "loop_%d", parent_info->get_line());
+                // SgName name_parent = label_name;
 
-                label = buildLabelStatement(name_parent, statement, scope);
-                insertStatementBefore(isSgStatement(parent_loop), label);
+                // label = buildLabelStatement(name_parent, statement, scope);
+                // insertStatementBefore(isSgStatement(parent_loop), label);
             }
         } else {
-            attachComment(c_loop, "PERFEXPERT: start work here");
+            // attachComment(c_loop, "PERFEXPERT: start work here");
         }
         /* Add a comment to the loop */
-        attachComment(c_loop, "PERFEXPERT: bottleneck");
+        // attachComment(c_loop, "PERFEXPERT: bottleneck");
 
         /* Label the loop */
-        label = buildLabelStatement(name, statement, scope);
-        insertStatementBefore(isSgStatement(node), label);
+        // label = buildLabelStatement(name, statement, scope);
+        // insertStatementBefore(isSgStatement(node), label);
     }
 
     /* Find code fragments for bottlenecks type 'function' */
@@ -379,7 +331,7 @@ void recommenderTraversal::visit(SgNode *node) {
         (fileInfo->get_line() == item->line_number)) {
         /* found a function on the exact line number */
         node_found = 1;
-        attachComment(function, "PERFEXPERT working here");
+        // attachComment(function, "PERFEXPERT working here");
     }
 
     /* Extract code fragment */

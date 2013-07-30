@@ -58,26 +58,51 @@ int recommender_main(int argc, char** argv) {
     
     /* Set default values for globals */
     globals = (globals_t) {
-        .verbose          = 0,                    // int
-        .verbose_level    = 0,                    // int
-        .use_stdin        = 0,                    // int
-        .use_stdout       = 1,                    // int
-        .automatic        = 0,                    // int
-        .inputfile        = NULL,                 // char *
-        .outputfile       = PERFEXPERT_RECO_FILE, // char *
-        .outputfile_FP    = stdout,               // FILE *
-        .dbfile           = NULL,                 // char *
-        .workdir          = NULL,                 // char *
-        .metrics_file     = NULL,                 // char *
-        .use_temp_metrics = 0,                    // int
-        .colorful         = 0,                    // int
-        .source_file      = NULL,                 // char *
-        .metrics_table    = METRICS_TABLE,        // char *
-        .perfexpert_pid      = (unsigned long long int)getpid(), // int
-        .fragments_dir    = NULL,                 // char *
-        .rec_count        = 3,                    // int
-        .recommendations  = 0                     // int
+        .verbose_level    = 0,             // int
+        .inputfile        = NULL,          // char *
+        .inputfile_FP     = stdin,         // FILE *
+        .outputfile       = NULL,          // char *
+        .outputfile_FP    = stdout,        // FILE *
+        .dbfile           = NULL,          // char *
+        .workdir          = NULL,          // char *
+        .metrics_file     = NULL,          // char *
+        .use_temp_metrics = 0,             // int
+        .colorful         = 0,             // int
+        .metrics_table    = METRICS_TABLE, // char *
+        .perfexpert_pid   = (unsigned long long int)getpid(), // int
+        .rec_count        = 3,             // int
+        .recommendations  = 0              // int
     };
+
+    globals.metrics_file = (char *)malloc(strlen(METRICS_FILE) +
+                                          strlen(PERFEXPERT_ETCDIR) + 2);
+    if (NULL == globals.metrics_file) {
+        OUTPUT(("%s", _ERROR("Error: out of memory")));
+        exit(PERFEXPERT_ERROR);
+    }
+    bzero(globals.metrics_file, strlen(METRICS_FILE) +
+          strlen(PERFEXPERT_ETCDIR) + 2);
+    sprintf(globals.metrics_file, "%s/%s", PERFEXPERT_ETCDIR, METRICS_FILE);
+
+    /* Parse command-line parameters */
+    if (PERFEXPERT_SUCCESS != parse_cli_params(argc, argv)) {
+        OUTPUT(("%s", _ERROR("Error: parsing command line arguments")));
+        exit(PERFEXPERT_ERROR);
+    }
+
+    /* Create working directory */
+    if (NULL != globals.workdir) {
+        if (PERFEXPERT_ERROR == perfexpert_util_make_path(globals.workdir,
+                                                          0755)) {
+            OUTPUT(("%s", _ERROR("Error: cannot create working directory")));
+            exit(PERFEXPERT_ERROR);
+        } else {
+            OUTPUT_VERBOSE((7, "using (%s) as output directory",
+                            globals.workdir));
+        }
+    }
+
+    /* Connect to database */
     globals.dbfile = (char *)malloc(strlen(RECOMMENDATION_DB) +
                                     strlen(PERFEXPERT_VARDIR) + 2);
     if (NULL == globals.dbfile) {
@@ -88,23 +113,6 @@ int recommender_main(int argc, char** argv) {
           strlen(RECOMMENDATION_DB) + strlen(PERFEXPERT_VARDIR) + 2);
     sprintf(globals.dbfile, "%s/%s", PERFEXPERT_VARDIR, RECOMMENDATION_DB);
 
-    globals.metrics_file = (char *)malloc(strlen(METRICS_FILE) +
-                                          strlen(PERFEXPERT_ETCDIR) + 2);
-    if (NULL == globals.metrics_file) {
-        OUTPUT(("%s", _ERROR("Error: out of memory")));
-        exit(PERFEXPERT_ERROR);
-    }
-    bzero(globals.metrics_file,
-          strlen(METRICS_FILE) + strlen(PERFEXPERT_ETCDIR) + 2);
-    sprintf(globals.metrics_file, "%s/%s", PERFEXPERT_ETCDIR, METRICS_FILE);
-
-    /* Parse command-line parameters */
-    if (PERFEXPERT_SUCCESS != parse_cli_params(argc, argv)) {
-        OUTPUT(("%s", _ERROR("Error: parsing command line arguments")));
-        exit(PERFEXPERT_ERROR);
-    }
-    
-    /* Connect to database */
     if (PERFEXPERT_SUCCESS != database_connect()) {
         OUTPUT(("%s", _ERROR("Error: connecting to database")));
         exit(PERFEXPERT_ERROR);
@@ -119,90 +127,43 @@ int recommender_main(int argc, char** argv) {
     perfexpert_list_construct(segments);
     
     /* Define the temporary metrics table name */
+    /* Parse metrics file if 'm' is defined, this will create a temp table */
     if (1 == globals.use_temp_metrics) {
         globals.metrics_table = (char *)malloc(strlen("metrics_") + 6);
         sprintf(globals.metrics_table, "metrics_%d", (int)getpid());
-    }
-    
-    /* Parse metrics file if 'm' is defined, this will create a temp table */
-    if (1 == globals.use_temp_metrics) {
+
         if (PERFEXPERT_SUCCESS != parse_metrics_file()) {
             OUTPUT(("%s", _ERROR("Error: parsing metrics file")));
             exit(PERFEXPERT_ERROR);
         }
     }
     
+    /* Open input file */
+    if (NULL != globals.inputfile) {
+        if (NULL == (globals.inputfile_FP = fopen(globals.inputfile, "r"))) {
+            OUTPUT(("%s (%s)", _ERROR("Error: unable to open input file"),
+                    globals.inputfile));
+            return PERFEXPERT_ERROR;
+        }
+    }
+
     /* Parse input parameters */
-    if (1 == globals.use_stdin) {
-        if (PERFEXPERT_SUCCESS != parse_segment_params(segments, stdin)) {
-            OUTPUT(("%s", _ERROR("Error: parsing input params")));
-            exit(PERFEXPERT_ERROR);
-        }
-    } else {
-        if (NULL != globals.inputfile) {
-            FILE *inputfile_FP = NULL;
+    if (PERFEXPERT_SUCCESS != parse_segment_params(segments)) {
+        OUTPUT(("%s", _ERROR("Error: parsing input params")));
+        exit(PERFEXPERT_ERROR);
+    }
             
-            /* Open input file */
-            if (NULL == (inputfile_FP = fopen(globals.inputfile, "r"))) {
-                OUTPUT(("%s (%s)", _ERROR("Error: unable to open input file"),
-                        globals.inputfile));
-                return PERFEXPERT_ERROR;
-            } else {
-                if (PERFEXPERT_SUCCESS != parse_segment_params(segments,
-                                                               inputfile_FP)) {
-                    OUTPUT(("%s", _ERROR("Error: parsing input params")));
-                    exit(PERFEXPERT_ERROR);
-                }
-                fclose(inputfile_FP);
-            }
-        } else {
-            OUTPUT(("%s", _ERROR("Error: undefined input")));
-            show_help();
-        }
+    /* Close input file */
+    if (NULL != globals.inputfile) {
+        fclose(globals.inputfile_FP);
     }
 
     /* Select/output recommendations for each code bottleneck (5 steps) */
-    /* Step 1: Print to a file or STDOUT is ok? Was automatic optimization
-     *         chosen?
-     */
+
+    /* Step 1: Print to a file or STDOUT is? */
     OUTPUT_VERBOSE((7, "=== %s", _BLUE("STEP 1")));
 
-    if (1 == globals.automatic) {
-        globals.use_stdout = 0;
-
-        if (NULL == globals.workdir) {
-            globals.workdir = (char *)malloc(strlen("./perfexpert-") + 8);
-            if (NULL == globals.workdir) {
-                OUTPUT(("%s", _ERROR("Error: out of memory")));
-                exit(PERFEXPERT_ERROR);
-            }
-            bzero(globals.workdir, strlen("./perfexpert-" + 8));
-            sprintf(globals.workdir, "./perfexpert-%d", getpid());
-        }
-        OUTPUT_VERBOSE((7, "using (%s) as output directory",
-                        globals.workdir));
-
-        if (PERFEXPERT_ERROR == perfexpert_util_make_path(globals.workdir,
-                                                          0755)) {
-            OUTPUT(("%s", _ERROR("Error: cannot create temporary directory")));
-            exit(PERFEXPERT_ERROR);
-        }
-        
-        globals.outputfile = (char *)malloc(strlen(globals.workdir) +
-                                            strlen(PERFEXPERT_RECO_FILE) + 2);
-        if (NULL == globals.outputfile) {
-            OUTPUT(("%s", _ERROR("Error: out of memory")));
-            exit(PERFEXPERT_ERROR);
-        }
-        bzero(globals.outputfile, strlen(globals.workdir) +
-              strlen(PERFEXPERT_RECO_FILE) + 2);
-        strcat(globals.outputfile, globals.workdir);
-        strcat(globals.outputfile, "/");
-        strcat(globals.outputfile, PERFEXPERT_RECO_FILE);
-        OUTPUT_VERBOSE((7, "printing output to (%s)",
-                        globals.workdir));
-    }
-    if (0 == globals.use_stdout) {
+    if (NULL != globals.outputfile) {
         OUTPUT_VERBOSE((7, "printing recommendation to file (%s)",
                         globals.outputfile));
         globals.outputfile_FP = fopen(globals.outputfile, "w+");
@@ -214,44 +175,16 @@ int recommender_main(int argc, char** argv) {
     } else {
         OUTPUT_VERBOSE((7, "printing recommendation to STDOUT"));
     }
-#if HAVE_ROSE == 1
-    if ((1 == globals.automatic) && (NULL != globals.source_file)) {
-        globals.fragments_dir = (char *)malloc(strlen(globals.workdir) +
-                                               strlen(PERFEXPERT_FRAGMENTS_DIR) +
-                                               10);
-        if (NULL == globals.fragments_dir) {
-            OUTPUT(("%s", _ERROR((char *)"Error: out of memory")));
-            exit(PERFEXPERT_ERROR);
-        }
-        bzero(globals.fragments_dir, (strlen(globals.workdir) +
-                                      strlen(PERFEXPERT_FRAGMENTS_DIR) + 10));
-        sprintf(globals.fragments_dir, "%s/%s", globals.workdir,
-                PERFEXPERT_FRAGMENTS_DIR);
-        if (PERFEXPERT_ERROR == perfexpert_util_make_path(globals.fragments_dir,
-                                                          0755)) {
-            OUTPUT(("%s", _ERROR((char *)"Error: cannot create fragments directory")));
-            exit(PERFEXPERT_ERROR);
-        } else {
-            OUTPUT_VERBOSE((4, "code fragments will be put in (%s)",
-                            globals.fragments_dir));
-        }
-
-        /* Open ROSE */
-        if (PERFEXPERT_ERROR == open_rose()) {
-            OUTPUT(("%s", _ERROR("Error: starting Rose, disabling automatic optimization")));
-            globals.automatic = 0;
-        }
-    }
-#endif
 
     /* Step 2: For each code bottleneck... */
     OUTPUT_VERBOSE((7, "=== %s", _BLUE("STEP 2")));
 
     item = (segment_t *)perfexpert_list_get_first(segments);
     while ((perfexpert_list_item_t *)item != &(segments->sentinel)) {
-        OUTPUT_VERBOSE((4, "%s (%s:%d)", _YELLOW("selecting recommendation for"),
+        OUTPUT_VERBOSE((4, "%s (%s:%d)",
+                        _YELLOW("selecting recommendation for"),
                         item->filename, item->line_number));
-        if (1 == globals.automatic) {
+        if (NULL != globals.workdir) {
             fprintf(globals.outputfile_FP, "%% recommendation for %s:%d\n",
                     item->filename, item->line_number);
             fprintf(globals.outputfile_FP, "code.filename=%s\n",
@@ -272,20 +205,6 @@ int recommender_main(int argc, char** argv) {
                     "#--------------------------------------------------\n");
         }
 
-#if HAVE_ROSE == 1
-        if ((1 == globals.automatic) && (NULL != globals.source_file)) {
-            /* Call MACPO script */
-            if ((1 == globals.macpo) && (0 == strcmp(globals.source_file, item->filename))) {
-                if (PERFEXPERT_ERROR == run_macpo(item)) {
-                    OUTPUT(("%s (%s)", _ERROR("Error: running MACPO script on"),
-                            item->function_name));
-                }
-            }
-        } else {
-            OUTPUT_VERBOSE((4, "%s",
-                            _YELLOW("source code not defined, can't run MACPO")));
-        }
-#endif
         /* Step 3: query DB for recommendations */
         OUTPUT_VERBOSE((7, "=== %s", _BLUE("STEP 3")));
 
@@ -306,22 +225,29 @@ int recommender_main(int argc, char** argv) {
 
         we_have_recommendations = 1;
         
-        if (0 == globals.automatic) {
+        if (NULL == globals.workdir) {
             fprintf(globals.outputfile_FP, "\n");
         }
         
         /* Step 4: extract fragments */
         OUTPUT_VERBOSE((7, "=== %s", _BLUE("STEP 4")));
 #if HAVE_ROSE == 1
-        if ((1 == globals.automatic) && (NULL != globals.source_file)) {
+        if (NULL != globals.workdir) {
+            /* Open ROSE */
+            if (PERFEXPERT_ERROR == open_rose(item->filename)) {
+                OUTPUT(("%s", _ERROR("Error: starting Rose")));
+                exit(PERFEXPERT_ERROR);
+            }
             /* Hey ROSE, here we go... */
             if (PERFEXPERT_ERROR == extract_fragment(item)) {
                 OUTPUT(("%s (%s:%d)", _ERROR("Error: extracting fragments for"),
                         item->filename, item->line_number));
             }
-        } else {
-            OUTPUT_VERBOSE((4, "%s",
-                            _YELLOW("source code not defined, can't extract fragments")));
+            /* Close Rose */
+            if (PERFEXPERT_SUCCESS != close_rose()) {
+                OUTPUT(("%s", _ERROR("Error: closing Rose")));
+                exit(PERFEXPERT_ERROR);
+            }
         }
 #endif
         /* Move to the next code bottleneck */
@@ -335,56 +261,10 @@ int recommender_main(int argc, char** argv) {
     /* Step 5: If we are using an output file, close it! (also close DB) */
     OUTPUT_VERBOSE((7, "=== %s", _BLUE("STEP 5")));
 
-    if (0 == globals.use_stdout) {
+    if (NULL != globals.outputfile) {
         fclose(globals.outputfile_FP);
     }
     sqlite3_close(globals.db);
-#if HAVE_ROSE == 1
-    if ((1 == globals.automatic) && (NULL != globals.source_file)) {
-        /* Output source code */
-        if (PERFEXPERT_SUCCESS != extract_source()) {
-            OUTPUT(("%s", _ERROR("Error: extracting source code")));
-            exit(PERFEXPERT_ERROR);
-        }
-
-        /* Close Rose */
-        if (PERFEXPERT_SUCCESS != close_rose()) {
-            OUTPUT(("%s", _ERROR("Error: closing Rose")));
-            exit(PERFEXPERT_ERROR);
-        }
-    }
-#endif
-    /* Free segments (and all sub-element, including functions) structure */
-    while (PERFEXPERT_FALSE == perfexpert_list_is_empty(segments)) {
-        item = (segment_t *)perfexpert_list_get_first(segments);
-        perfexpert_list_remove_item(segments, (perfexpert_list_item_t *)item);
-        free(item->filename);
-        free(item->type);
-        free(item->extra_info);
-        free(item->section_info);
-        while (PERFEXPERT_FALSE ==
-               perfexpert_list_is_empty((perfexpert_list_t *)&(item->functions))) {
-            function = (function_t *)perfexpert_list_get_first((perfexpert_list_t *)&(item->functions));
-            free(function->desc);
-            perfexpert_list_item_destruct((perfexpert_list_item_t *)function);
-            free(function);
-        }
-        perfexpert_list_item_destruct((perfexpert_list_item_t *)item);
-        free(item); // Some version of GCC will complain about this
-    }
-    perfexpert_list_destruct(segments);
-    free(segments);
-    
-    if (1 == globals.automatic) {
-        free(globals.outputfile);
-        if (NULL != globals.source_file) {
-            free(globals.fragments_dir);
-        }
-    }
-    if (1 == globals.use_temp_metrics) {
-        free(globals.metrics_table);
-    }
-    // I hope I didn't left anything behind...
 
     return PERFEXPERT_SUCCESS;
 }
@@ -394,35 +274,27 @@ static void show_help(void) {
     OUTPUT_VERBOSE((10, "printing help"));
     
     /*      12345678901234567890123456789012345678901234567890123456789012345678901234567890 */
-    printf("Usage: recommender -i|-f file [-o file] [-d database] [-m file] [-nvch] [-p pid]\n");
-    printf("                   [-l level]");
+    printf("Usage: recommender -i|-f file [-l level] [-o file] [-d database] [-m file] \n");
+    printf("                   [-nvch] ");
 #if HAVE_ROSE == 1
-    printf(" [-a dir] [-s file]");
+    printf(" [-a workdir]");
 #endif
     printf("\n");
     printf("  -i --stdin           Use STDIN as input for performance measurements\n");
     printf("  -f --inputfile       Use 'file' as input for performance measurements\n");
-    printf("  -o --outputfile      Use 'file' as output for recommendations (default stdout)\n");
+    printf("  -o --outputfile      Use 'file' as output for recommendations (default: STDOUT)\n");
     printf("                       if the file exists its content will be overwritten\n");
     printf("  -d --database        Select the recommendation database file\n");
     printf("                       (default: %s/%s)\n", PERFEXPERT_VARDIR, RECOMMENDATION_DB);
-    printf("  -m --metricfile      Use 'file' to define metrics different from the default\n");
+    printf("  -m --metricsfile     Use 'file' to define metrics different from the default\n");
     printf("  -n --newmetrics      Do not use the system metrics table. A temporary table\n");
     printf("                       will be created using the default metrics file:\n");
     printf("                       %s/%s\n", PERFEXPERT_ETCDIR, METRICS_FILE);
     printf("  -r --recommendations Number of recommendation to show\n");
 #if HAVE_ROSE == 1
     printf("  -a --automatic       Use automatic performance optimization and create files\n");
-    printf("                       into 'dir' directory (default: off).\n");
-    printf("                       This argument overwrites -o (no output on STDOUT, except\n");
-    printf("                       for verbose messages)\n");
-    printf("  -s --sourcefile      Use 'file' to extract source code fragments identified as\n");
-    printf("                       bootleneck by PerfExpert (this option sets -a argument)\n");
-    printf("  -m --macpo           Enable MACPO, which add memory access centric analysis\n");
+    printf("                       into 'workdir' directory (default: off).\n");
 #endif
-    printf("  -p --perfexpert_pid  Use 'pid' to identify consecutive calls to Recommender.\n");
-    printf("                       This argument is set automatically when using the\n");
-    printf("                       perfexpert.sh workflow script\n");
     printf("  -v --verbose         Enable verbose mode using default verbose level (5)\n");
     printf("  -l --verbose_level   Enable verbose mode using a specific verbose level (1-10)\n");
     printf("  -c --colorful        Enable colors on verbose mode, no weird characters will\n");
@@ -441,16 +313,67 @@ static int parse_env_vars(void) {
     // TODO: add here all the parameter we have for command line arguments
     char *temp_str;
     
-    /* Get the variables */
-    temp_str = getenv("PERFEXPERT_VERBOSE_LEVEL");
+     /* Get the variables */
+    temp_str = getenv("PERFEXPERT_RECOMMENDER_VERBOSE_LEVEL");
     if (NULL != temp_str) {
         globals.verbose_level = atoi(temp_str);
-        if (0 != globals.verbose_level) {
-            OUTPUT_VERBOSE((5, "ENV: verbose_level=%d", globals.verbose_level));
+        if (0 >= atoi(temp_str)) {
+            OUTPUT(("%s (%d)",
+                    _ERROR("ENV Error: invalid debug level (too low)"),
+                    atoi(temp_str)));
+            show_help();
         }
+        if (10 < atoi(temp_str)) {
+            OUTPUT(("%s (%d)",
+                    _ERROR("ENV Error: invalid debug level (too high)"),
+                    atoi(temp_str)));
+            show_help();
+        }
+        OUTPUT_VERBOSE((5, "ENV: verbose_level=%d", globals.verbose_level));
     }
 
-    OUTPUT_VERBOSE((4, "=== %s", _BLUE("Environment variables")));
+    temp_str = getenv("PERFEXPERT_RECOMMENDER_INPUT_FILE");
+    if (NULL != temp_str) {
+        globals.inputfile = temp_str;
+        OUTPUT_VERBOSE((5, "ENV: inputfile=%s", globals.inputfile));
+    }
+
+    temp_str = getenv("PERFEXPERT_RECOMMENDER_OUTPUT_FILE");
+    if (NULL != temp_str) {
+        globals.outputfile = temp_str;
+        OUTPUT_VERBOSE((5, "ENV: outputfile=%s", globals.outputfile));
+    }
+
+    temp_str = getenv("PERFEXPERT_RECOMMENDER_DATABASE_FILE");
+    if (NULL != temp_str) {
+        globals.dbfile =  temp_str;
+        OUTPUT_VERBOSE((5, "ENV: dbfile=%s", globals.dbfile));
+    }
+
+    temp_str = getenv("PERFEXPERT_RECOMMENDER_METRICS_FILE");
+    if (NULL != temp_str) {
+        globals.use_temp_metrics = 1;
+        globals.metrics_file = temp_str;
+        OUTPUT_VERBOSE((5, "ENV: metrics_file=%s", globals.metrics_file));
+    }
+
+    temp_str = getenv("PERFEXPERT_RECOMMENDER_REC_COUNT");
+    if ((NULL != temp_str) && (0 <= atoi(temp_str))) {
+        globals.rec_count = atoi(temp_str);
+        OUTPUT_VERBOSE((5, "ENV: rec_count=%d", globals.rec_count));
+    }
+
+    temp_str = getenv("PERFEXPERT_RECOMMENDER_WORKDIR");
+    if (NULL != temp_str) {
+        globals.workdir = temp_str;
+        OUTPUT_VERBOSE((5, "ENV: workdir=%s", globals.workdir));
+    }
+
+    temp_str = getenv("PERFEXPERT_RECOMMENDER_COLORFUL");
+    if ((NULL != temp_str) && (1 == atoi(temp_str))) {
+        globals.colorful = 1;
+        OUTPUT_VERBOSE((5, "ENV: colorful=YES"));
+    }
 
     return PERFEXPERT_SUCCESS;
 }
@@ -471,10 +394,10 @@ static int parse_cli_params(int argc, char *argv[]) {
     while (1) {
         /* get parameter */
 #if HAVE_ROSE == 1
-        parameter = getopt_long(argc, argv, "cvhinm:l:f:d:o:a:s:p:r:x",
+        parameter = getopt_long(argc, argv, "a:cd:f:hl:m:no:p:r:v",
                                 long_options, &option_index);
 #else
-        parameter = getopt_long(argc, argv, "cvhinm:l:f:d:o:p:r:",
+        parameter = getopt_long(argc, argv, "cd:f:hl:m:no:p:r:v",
                                 long_options, &option_index);
 #endif
         /* Detect the end of the options */
@@ -485,7 +408,6 @@ static int parse_cli_params(int argc, char *argv[]) {
         switch (parameter) {
             /* Verbose level */
             case 'l':
-                globals.verbose = 1;
                 globals.verbose_level = atoi(optarg);
                 OUTPUT_VERBOSE((10, "option 'l' set"));
                 if (0 >= atoi(optarg)) {
@@ -504,7 +426,6 @@ static int parse_cli_params(int argc, char *argv[]) {
 
             /* Activate verbose mode */
             case 'v':
-                globals.verbose = 1;
                 if (0 == globals.verbose_level) {
                     globals.verbose_level = 5;
                 }
@@ -522,45 +443,22 @@ static int parse_cli_params(int argc, char *argv[]) {
                 OUTPUT_VERBOSE((10, "option 'h' set"));
                 show_help();
 
-            /* Use STDIN? */
-            case 'i':
-                globals.use_stdin = 1;
-                OUTPUT_VERBOSE((10, "option 'i' set"));
-                break;
-
             /* Use input file? */
             case 'f':
-                globals.use_stdin = 0;
                 globals.inputfile = optarg;
                 OUTPUT_VERBOSE((10, "option 'f' set [%s]", globals.inputfile));
                 break;
 
             /* Use output file? */
             case 'o':
-                globals.use_stdout = 0;
                 globals.outputfile = optarg;
                 OUTPUT_VERBOSE((10, "option 'o' set [%s]", globals.outputfile));
                 break;
 #if HAVE_ROSE == 1
             /* Use automatic performance optimization? */
             case 'a':
-                globals.automatic = 1;
-                globals.use_stdout = 0;
                 globals.workdir = optarg;
                 OUTPUT_VERBOSE((10, "option 'a' set [%s]", globals.workdir));
-                break;
-
-            /* Specify the source */
-            case 's':
-                globals.automatic = 1;
-                globals.source_file = optarg;
-                OUTPUT_VERBOSE((10, "option 's' set [%s]", globals.source_file));
-                break;
-
-            /* Enable MACPO */
-            case 'x':
-                globals.macpo = 1;
-                OUTPUT_VERBOSE((10, "option 'x' set [%d]", globals.macpo));
                 break;
 #endif
             /* Which database file? */
@@ -598,28 +496,16 @@ static int parse_cli_params(int argc, char *argv[]) {
                 
             /* Unknown option */
             case '?':
-                show_help();
-                
             default:
-                exit(PERFEXPERT_ERROR);
+                show_help();
         }
     }
     OUTPUT_VERBOSE((4, "=== %s", _BLUE("CLI params")));
     OUTPUT_VERBOSE((10, "Summary of selected options:"));
-    OUTPUT_VERBOSE((10, "   Verbose:                    %s",
-                    globals.verbose ? "yes" : "no"));
     OUTPUT_VERBOSE((10, "   Verbose level:              %d",
                     globals.verbose_level));
     OUTPUT_VERBOSE((10, "   Colorful verbose?           %s",
                     globals.colorful ? "yes" : "no"));
-    OUTPUT_VERBOSE((10, "   Use STDOUT?                 %s",
-                    globals.use_stdout ? "yes" : "no"));
-    OUTPUT_VERBOSE((10, "   Use STDIN?                  %s",
-                    globals.use_stdin ? "yes" : "no"));
-    OUTPUT_VERBOSE((10, "   Use automatic optimization? %s",
-                    globals.automatic ? "yes" : "no"));
-    OUTPUT_VERBOSE((10, "   Enable MACPO?               %s",
-                    globals.macpo ? "yes" : "no"));
     OUTPUT_VERBOSE((10, "   PerfExpert PID:             %llu",
                     globals.perfexpert_pid));
     OUTPUT_VERBOSE((10, "   Temporary directory:        %s",
@@ -638,8 +524,6 @@ static int parse_cli_params(int argc, char *argv[]) {
                     globals.metrics_table ? globals.metrics_table : "(null)"));
     OUTPUT_VERBOSE((10, "   Recommendation count:       %d",
                     globals.rec_count));
-    OUTPUT_VERBOSE((10, "   Source file:                %s",
-                    globals.source_file ? globals.source_file : "(null)"));
 
     /* Not using OUTPUT_VERBOSE because I want only one line */
     if (8 <= globals.verbose_level) {
@@ -727,7 +611,7 @@ static int parse_metrics_file(void) {
 }
 
 /* parse_segment_params */
-static int parse_segment_params(perfexpert_list_t *segments_p, FILE *inputfile_p) {
+static int parse_segment_params(perfexpert_list_t *segments_p) {
     segment_t *item;
     int  input_line = 0;
     char buffer[BUFFER_SIZE];
@@ -739,10 +623,7 @@ static int parse_segment_params(perfexpert_list_t *segments_p, FILE *inputfile_p
     OUTPUT_VERBOSE((4, "=== %s", _BLUE("Parsing measurements")));
     
     /* Which INPUT we are using? (just a double check) */
-    if ((NULL == inputfile_p) && (globals.use_stdin)) {
-        inputfile_p = stdin;
-    }
-    if (globals.use_stdin) {
+    if (NULL == globals.inputfile) {
         OUTPUT_VERBOSE((3, "using STDIN as input for perf measurements"));
     } else {
         OUTPUT_VERBOSE((3, "using (%s) as input for perf measurements",
@@ -762,7 +643,7 @@ static int parse_segment_params(perfexpert_list_t *segments_p, FILE *inputfile_p
     }
 
     bzero(buffer, BUFFER_SIZE);
-    while (NULL != fgets(buffer, BUFFER_SIZE - 1, inputfile_p)) {
+    while (NULL != fgets(buffer, BUFFER_SIZE - 1, globals.inputfile_FP)) {
         node_t *node;
         int temp;
         
@@ -1009,21 +890,19 @@ static int parse_segment_params(perfexpert_list_t *segments_p, FILE *inputfile_p
 }
 
 /* get_rowid */
-static int get_rowid(void *rowid, int col_count, char **col_values,
-                     char **col_names) {
-    int *temp = (int *)rowid;
-    if (NULL != col_values[0]) {
-        *temp = atoi(col_values[0]);
+static int get_rowid(void *rid, int c_count, char **c_val, char **c_names) {
+    int *temp = (int *)rid;
+    if (NULL != c_val[0]) {
+        *temp = atoi(c_val[0]);
     }
     return PERFEXPERT_SUCCESS;
 }
 
 /* get_rowid */
-static int get_weight(void *weight, int col_count, char **col_values,
-                      char **col_names) {
+static int get_weight(void *weight, int c_count, char **c_val, char **c_names) {
     double *temp = (double *)weight;
-    if (NULL != col_values[0]) {
-        *temp = atof(col_values[0]);
+    if (NULL != c_val[0]) {
+        *temp = atof(c_val[0]);
     }
     return PERFEXPERT_SUCCESS;
 }
@@ -1035,7 +914,7 @@ static int output_transformers(void *weight, int col_count, char **col_values,
     char *error_msg = NULL;
     char temp_str[BUFFER_SIZE];
 
-    if (0 == globals.automatic) {
+    if (NULL == globals.workdir) {
         /* Pretty print for the user */
         if (NULL != col_values[0]) {
             fprintf(globals.outputfile_FP, "%s ", col_values[0]);
@@ -1077,7 +956,7 @@ static int output_transformers(void *weight, int col_count, char **col_values,
 /* output_recognizers */
 static int output_recognizers(void *weight, int col_count, char **col_values,
                               char **col_names) {
-    if (0 == globals.automatic) {
+    if (NULL == globals.workdir) {
         /* Pretty print for the user */
         if (NULL != col_values[0]) {
             fprintf(globals.outputfile_FP, "%s ", col_values[0]);
@@ -1121,7 +1000,7 @@ static int output_recommendations(void *not_used, int col_count,
     sprintf(temp_str, "WHERE rt.id_recommendation = %s;", col_values[2]);
     strcat(sql, temp_str);
 
-    if (0 == globals.automatic) {
+    if (NULL == globals.workdir) {
         /* Pretty print for the user */
         fprintf(globals.outputfile_FP, "#\n# This is a possible recommendation");
         fprintf(globals.outputfile_FP, " for this code segment\n#\n");
@@ -1136,8 +1015,8 @@ static int output_recommendations(void *not_used, int col_count,
         OUTPUT_VERBOSE((10, "%s", _YELLOW("patterns for this recommendation")));
         OUTPUT_VERBOSE((10, "   SQL: %s", _CYAN(sql)));
 
-        if (SQLITE_OK != sqlite3_exec(globals.db, sql, output_transformers, NULL,
-                                      &error_msg)) {
+        if (SQLITE_OK != sqlite3_exec(globals.db, sql, output_transformers,
+                                      NULL, &error_msg)) {
             fprintf(stderr, "Error: SQL error: %s\n", error_msg);
             sqlite3_free(error_msg);
             sqlite3_close(globals.db);
@@ -1154,8 +1033,8 @@ static int output_recommendations(void *not_used, int col_count,
                         _YELLOW("Code transformers for this recommendation")));
         OUTPUT_VERBOSE((10, "   SQL: %s", _CYAN(sql)));
 
-        if (SQLITE_OK != sqlite3_exec(globals.db, sql, output_transformers, NULL,
-                                      &error_msg)) {
+        if (SQLITE_OK != sqlite3_exec(globals.db, sql, output_transformers,
+                                      NULL, &error_msg)) {
             fprintf(stderr, "Error: SQL error: %s\n", error_msg);
             sqlite3_free(error_msg);
             sqlite3_close(globals.db);
@@ -1305,7 +1184,8 @@ static int select_recommendations(segment_t *segment) {
 
         /* Bind ROWID */
         if (SQLITE_OK != sqlite3_bind_int(statement,
-                                          sqlite3_bind_parameter_index(statement, "@RID"),
+                                          sqlite3_bind_parameter_index(statement,
+                                                                       "@RID"),
                                           segment->rowid)) {
             fprintf(stderr, "Error: SQL error: %s\n", error_msg);
             sqlite3_free(error_msg);
@@ -1315,7 +1195,8 @@ static int select_recommendations(segment_t *segment) {
 
         /* Bind loop depth */
         if (SQLITE_OK != sqlite3_bind_double(statement,
-                                             sqlite3_bind_parameter_index(statement, "@LPD"),
+                                             sqlite3_bind_parameter_index(statement,
+                                                                          "@LPD"),
                                              segment->loop_depth)) {
             fprintf(stderr, "Error: SQL error: %s\n", error_msg);
             sqlite3_free(error_msg);
@@ -1339,11 +1220,11 @@ static int select_recommendations(segment_t *segment) {
                  * their types are SQLITE_INTEGER and SQLITE_FLOAT respectivelly
                  */
                 if (SQLITE_INTEGER != sqlite3_column_type(statement, 0)) {
-                    OUTPUT(("%s", _ERROR("The first column of a recommendation function returned a type different than integer. The result of this function will be ignored.")));
+                    OUTPUT(("%s", _ERROR("1st column is not an integer.")));
                     continue;
                 }
                 if (SQLITE_FLOAT != sqlite3_column_type(statement, 1)) {
-                    OUTPUT(("%s", _ERROR("The second column of a recommendation function returned a type different than double. The result of this function will be ignored.")));
+                    OUTPUT(("%s", _ERROR("2nd column is not a double.")));
                     continue;
                 }
                 
@@ -1352,13 +1233,16 @@ static int select_recommendations(segment_t *segment) {
                     /* Find the weigth of this recommendation */
                     weight = 0;
                     bzero(sql, BUFFER_SIZE);
-                    strcat(sql, "SELECT weight FROM recommendation_function WHERE");
+                    strcat(sql,
+                           "SELECT weight FROM recommendation_function WHERE");
                     bzero(temp_str, BUFFER_SIZE);
-                    sprintf(temp_str, " id_recommendation=%d AND id_function=%d;",
+                    sprintf(temp_str,
+                            " id_recommendation=%d AND id_function=%d;",
                             sqlite3_column_int(statement, 0), function->id);
                     strcat(sql, temp_str);
                     if (SQLITE_OK != sqlite3_exec(globals.db, sql, get_weight,
-                                                  (void *)&weight, &error_msg)) {
+                                                  (void *)&weight,
+                                                  &error_msg)) {
                         fprintf(stderr, "Error: SQL error: %s\n", error_msg);
                         sqlite3_free(error_msg);
                         sqlite3_close(globals.db);
@@ -1367,8 +1251,8 @@ static int select_recommendations(segment_t *segment) {
                     
                     /* Insert recommendation into the temporary table */
                     bzero(sql, BUFFER_SIZE);
-                    sprintf(sql, "INSERT INTO recommendation_%d_%d ", (int)getpid(),
-                            segment->rowid);
+                    sprintf(sql, "INSERT INTO recommendation_%d_%d ",
+                            (int)getpid(), segment->rowid);
                     bzero(temp_str, BUFFER_SIZE);
                     sprintf(temp_str, "VALUES (%d, %d, %f, %f);", function->id,
                             sqlite3_column_int(statement, 0),
@@ -1480,55 +1364,5 @@ static int select_recommendations(segment_t *segment) {
 #ifdef __cplusplus
 }
 #endif
-
-int run_macpo(segment_t *item) {
-    int  pid = 0;
-    int  rc = PERFEXPERT_UNDEFINED;
-    char temp_str[BUFFER_SIZE];
-    char temp_str2[BUFFER_SIZE];
-    char buffer[BUFFER_SIZE];
-
-    char argv[10][50];
-
-    bzero(temp_str, BUFFER_SIZE);
-    sprintf(temp_str, "%s/macpo.sh", PERFEXPERT_BINDIR);
-
-    bzero(argv, 50 * 10);
-    sprintf(argv[0], "macpo.sh");
-    sprintf(argv[1], "--macpo:function=%s", item->function_name);
-    sprintf(argv[2], "%s", globals.source_file);
-    sprintf(argv[3], "-fopenmp");
-    sprintf(argv[4], "-o");
-    sprintf(argv[5], "%s/macpo_bin", globals.workdir);
-
-    /* Set the command line */
-    bzero(temp_str2, BUFFER_SIZE);
-    sprintf(temp_str2, "%s %s %s %s %s %s %s", temp_str, argv[0], argv[1], argv[2],
-            argv[3], argv[4], argv[5]);
-    OUTPUT_VERBOSE((5, "   running %s", _CYAN(temp_str2)));
-
-    /* Forking child */
-    pid = fork();
-    if (-1 == pid) {
-        OUTPUT(("%s", _ERROR("Error: unable to fork")));
-        return PERFEXPERT_ERROR;
-    }
-
-    if (0 == pid) {
-        /* Child: Call the code transformer */
-        // TODO: this is ridiculous. I have to change it to execp, but I'm too
-        //       tired to do it now.
-        execl(temp_str, argv[0], argv[1], argv[2], argv[3], argv[4], argv[5], NULL);
-
-        OUTPUT(("child process failed to run, check if program exists"));
-        exit(127);
-    } else {
-        /* Parent */
-        wait(&rc);
-        OUTPUT_VERBOSE((10, "   result  %s %d", _CYAN("return code"), rc >> 8));
-    }
-
-    return PERFEXPERT_SUCCESS;
-}
 
 // EOF
