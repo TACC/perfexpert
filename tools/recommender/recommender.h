@@ -62,26 +62,20 @@ extern "C" {
 
 /** Structure to hold global variables */
 typedef struct {
-    int  verbose;
+    sqlite3 *db;
     int  verbose_level;
-    int  use_stdin;
-    int  use_stdout;
-    int  automatic;
     char *inputfile;
+    FILE *inputfile_FP;
     char *outputfile;
     FILE *outputfile_FP;
     char *dbfile;
-    sqlite3 *db;
     char *workdir;
     char *metrics_file;
     int  use_temp_metrics;
     char *metrics_table;
     int  colorful;
-    char *source_file;
     int  rec_count;
-    char *fragments_dir;
     char recommendations;
-    int  macpo;
     unsigned long long int perfexpert_pid;
 } globals_t;
 
@@ -101,21 +95,19 @@ extern globals_t globals; /**< Variable to hold global options */
  *  this structure compatible with the parse_cli_params() and show_help().
  */
 static struct option long_options[] = {
-    {"verbose_level",   required_argument, NULL, 'l'},
-    {"verbose",         no_argument,       NULL, 'v'},
-    {"stdin",           no_argument,       NULL, 'i'},
+    {"automatic",       required_argument, NULL, 'a'},
+    {"colorful",        no_argument,       NULL, 'c'},
+    {"database",        required_argument, NULL, 'd'},
     {"inputfile",       required_argument, NULL, 'f'},
     {"help",            no_argument,       NULL, 'h'},
-    {"database",        required_argument, NULL, 'd'},
-    {"outputfile",      required_argument, NULL, 'o'},
-    {"automatic",       required_argument, NULL, 'a'},
-    {"recommendations", required_argument, NULL, 'r'},
-    {"metricfile",      required_argument, NULL, 'm'},
+    {"verbose_level",   required_argument, NULL, 'l'},
+    {"metricsfile",     required_argument, NULL, 'm'},
     {"newmetrics",      no_argument,       NULL, 'n'},
-    {"colorful",        no_argument,       NULL, 'c'},
-    {"sourcefile",      required_argument, NULL, 's'},
+    {"outputfile",      required_argument, NULL, 'o'},
     {"perfexpert_pid",  required_argument, NULL, 'p'},
-    {"macpo",           no_argument,       NULL, 'x'},
+    {"recommendations", required_argument, NULL, 'r'},
+    {"sourcefile",      required_argument, NULL, 's'},
+    {"verbose",         no_argument,       NULL, 'v'},
     {0, 0, 0, 0}
 };
 
@@ -158,11 +150,9 @@ static void show_help(void);
 static int  parse_env_vars(void);
 static int  parse_cli_params(int argc, char *argv[]);
 static int  parse_metrics_file(void);
-static int  parse_segment_params(perfexpert_list_t *segments_p, FILE *inputfile_p);
-static int  get_rowid(void *rowid, int col_count, char **col_values,
-                      char **col_names);
-static int  get_weight(void *weight, int col_count, char **col_values,
-                       char **col_names);
+static int  parse_segment_params(perfexpert_list_t *segments_p);
+static int  get_rowid(void *rid, int c_count, char **c_val, char **c_names);
+static int  get_weight(void *weight, int c_count, char **c_val, char **c_names);
 static int  output_recognizers(void *weight, int col_count, char **col_values,
                                char **col_names);
 static int  output_transformers(void *weight, int col_count, char **col_values,
@@ -175,7 +165,7 @@ static int  accumulate_functions(void *functions, int col_count,
 static int  select_recommendations(segment_t *segment);
 
 #if HAVE_ROSE == 1
-int open_rose(void);
+int open_rose(const char *source_file);
 int close_rose(void);
 int extract_fragment(segment_t *segment);
 int extract_source(void);

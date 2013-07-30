@@ -66,9 +66,6 @@ extern "C" {
 
 /** Default values for some parameters */
 #define RECOMMENDATION_DB           "recommendation.db"
-#define PERFEXPERT_RECO_FILE        "perfexpert_recommendations.txt"
-#define PERFEXPERT_PR_FILE          "perfexpert_transformations.txt"
-#define PERFEXPERT_CT_FILE          "perfexpert_functions.txt"
 #define PERFEXPERT_FRAGMENTS_DIR    "fragments"
 #define PERFEXPERT_SOURCE_DIR       "source"
 #define METRICS_TABLE               "metric"
