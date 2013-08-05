@@ -57,6 +57,13 @@ int open_rose(const char *source_file) {
 
     OUTPUT_VERBOSE((7, "=== %s", _BLUE((char *)"Opening Rose")));
 
+    /* First of all, check if file exists */
+    if (-1 == access(source_file, R_OK )) {
+        OUTPUT(("%s (%s)", _ERROR((char *)"Error: source file not found"),
+                source_file));
+        return PERFEXPERT_ERROR;
+    }
+
     /* Fill 'files', aka **argv */
     files = (char **)malloc(sizeof(char *) * 3);
 
