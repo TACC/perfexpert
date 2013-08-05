@@ -103,16 +103,6 @@ int recommender_main(int argc, char** argv) {
     }
 
     /* Connect to database */
-    globals.dbfile = (char *)malloc(strlen(RECOMMENDATION_DB) +
-                                    strlen(PERFEXPERT_VARDIR) + 2);
-    if (NULL == globals.dbfile) {
-        OUTPUT(("%s", _ERROR("Error: out of memory")));
-        exit(PERFEXPERT_ERROR);
-    }
-    bzero(globals.dbfile,
-          strlen(RECOMMENDATION_DB) + strlen(PERFEXPERT_VARDIR) + 2);
-    sprintf(globals.dbfile, "%s/%s", PERFEXPERT_VARDIR, RECOMMENDATION_DB);
-
     if (PERFEXPERT_SUCCESS != database_connect()) {
         OUTPUT(("%s", _ERROR("Error: connecting to database")));
         exit(PERFEXPERT_ERROR);
@@ -275,13 +265,11 @@ static void show_help(void) {
     OUTPUT_VERBOSE((10, "printing help"));
     
     /*      12345678901234567890123456789012345678901234567890123456789012345678901234567890 */
-    printf("Usage: recommender -i|-f file [-l level] [-o file] [-d database] [-m file] \n");
-    printf("                   [-nvch] ");
+    printf("Usage: recommender -f file [-l level] [-o file] [-d database] [-m file] [-nvch]\n");
 #if HAVE_ROSE == 1
-    printf(" [-a workdir]");
+    printf("                   [-a workdir]");
 #endif
     printf("\n");
-    printf("  -i --stdin           Use STDIN as input for performance measurements\n");
     printf("  -f --inputfile       Use 'file' as input for performance measurements\n");
     printf("  -o --outputfile      Use 'file' as output for recommendations (default: STDOUT)\n");
     printf("                       if the file exists its content will be overwritten\n");
@@ -1049,22 +1037,33 @@ static int output_recommendations(void *not_used, int col_count,
 static int database_connect(void) {
     OUTPUT_VERBOSE((4, "=== %s", _BLUE("Connecting to database")));
 
-    /* Connect to the DB */
+    /* Use defualt database if used does not define one */
     if (NULL == globals.dbfile) {
-        globals.dbfile = "./recommendation.db";
+        globals.dbfile = (char *)malloc(strlen(RECOMMENDATION_DB) +
+                                        strlen(PERFEXPERT_VARDIR) + 2);
+        if (NULL == globals.dbfile) {
+            OUTPUT(("%s", _ERROR("Error: out of memory")));
+            exit(PERFEXPERT_ERROR);
+        }
+        bzero(globals.dbfile,
+              strlen(RECOMMENDATION_DB) + strlen(PERFEXPERT_VARDIR) + 2);
+        sprintf(globals.dbfile, "%s/%s", PERFEXPERT_VARDIR, RECOMMENDATION_DB);
     }
+
+    /* Check if file exists and if it is writable */
     if (-1 == access(globals.dbfile, F_OK)) {
         OUTPUT(("%s (%s)",
                 _ERROR("Error: recommendation database doesn't exist"),
                 globals.dbfile));
         return PERFEXPERT_ERROR;
     }
-    if (-1 == access(globals.dbfile, R_OK)) {
-        OUTPUT(("%s (%s)", _ERROR("Error: you don't have permission to read"),
+    if (-1 == access(globals.dbfile, W_OK)) {
+        OUTPUT(("%s (%s)", _ERROR("Error: you don't have permission to write"),
                 globals.dbfile));
         return PERFEXPERT_ERROR;
     }
     
+    /* Connect to the DB */
     if (SQLITE_OK != sqlite3_open(globals.dbfile, &(globals.db))) {
         OUTPUT(("%s (%s), %s", _ERROR("Error: openning database"),
                 globals.dbfile, sqlite3_errmsg(globals.db)));
