@@ -131,6 +131,46 @@ static int perfexpert_util_make_path(char *path, int nmode) {
     return PERFEXPERT_SUCCESS;
 }
 
+/* database_connect */
+static int database_connect(void) {
+    /* Use default database if used does not define one */
+    if (NULL == globals.dbfile) {
+        globals.dbfile = (char *)malloc(strlen(RECOMMENDATION_DB) +
+                                        strlen(PERFEXPERT_VARDIR) + 2);
+        if (NULL == globals.dbfile) {
+            OUTPUT(("%s", _ERROR((char *)"Error: out of memory")));
+            exit(PERFEXPERT_ERROR);
+        }
+        bzero(globals.dbfile,
+              strlen(RECOMMENDATION_DB) + strlen(PERFEXPERT_VARDIR) + 2);
+        sprintf(globals.dbfile, "%s/%s", PERFEXPERT_VARDIR, RECOMMENDATION_DB);
+    }
+
+    /* Check if file exists and if it is writable */
+    if (-1 == access(globals.dbfile, F_OK)) {
+        OUTPUT(("%s (%s)",
+                _ERROR((char *)"Error: recommendation database doesn't exist"),
+                globals.dbfile));
+        return PERFEXPERT_ERROR;
+    }
+    if (-1 == access(globals.dbfile, W_OK)) {
+        OUTPUT(("%s (%s)", _ERROR((char *)"Error: you don't have permission to write"),
+                globals.dbfile));
+        return PERFEXPERT_ERROR;
+    }
+    
+    /* Connect to the DB */
+    if (SQLITE_OK != sqlite3_open(globals.dbfile, &(globals.db))) {
+        OUTPUT(("%s (%s), %s", _ERROR((char *)"Error: openning database"),
+                globals.dbfile, sqlite3_errmsg(globals.db)));
+        sqlite3_close(globals.db);
+        return PERFEXPERT_ERROR;
+    } else {
+        OUTPUT_VERBOSE((4, "connected to %s", globals.dbfile));
+    }
+    return PERFEXPERT_SUCCESS;
+}
+
 #ifdef __cplusplus
 }
 #endif

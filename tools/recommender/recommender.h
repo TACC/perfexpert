@@ -159,7 +159,6 @@ static int  output_transformers(void *weight, int col_count, char **col_values,
                                 char **col_names);
 static int  output_recommendations(void *not_used, int col_count,
                                    char **col_values, char **col_names);
-static int  database_connect(void);
 static int  accumulate_functions(void *functions, int col_count,
                                  char **col_values, char **col_names);
 static int  select_recommendations(segment_t *segment);
