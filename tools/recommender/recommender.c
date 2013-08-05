@@ -235,18 +235,19 @@ int recommender_main(int argc, char** argv) {
         if (NULL != globals.workdir) {
             /* Open ROSE */
             if (PERFEXPERT_ERROR == open_rose(item->filename)) {
-                OUTPUT(("%s", _ERROR("Error: starting Rose")));
-                exit(PERFEXPERT_ERROR);
-            }
-            /* Hey ROSE, here we go... */
-            if (PERFEXPERT_ERROR == extract_fragment(item)) {
-                OUTPUT(("%s (%s:%d)", _ERROR("Error: extracting fragments for"),
-                        item->filename, item->line_number));
-            }
-            /* Close Rose */
-            if (PERFEXPERT_SUCCESS != close_rose()) {
-                OUTPUT(("%s", _ERROR("Error: closing Rose")));
-                exit(PERFEXPERT_ERROR);
+                OUTPUT(("%s", _RED("Error: starting Rose, moving forward...")));
+            } else {
+                /* Hey ROSE, here we go... */
+                if (PERFEXPERT_ERROR == extract_fragment(item)) {
+                    OUTPUT(("%s (%s:%d)",
+                            _ERROR("Error: extracting fragments for"),
+                            item->filename, item->line_number));
+                }
+                /* Close Rose */
+                if (PERFEXPERT_SUCCESS != close_rose()) {
+                    OUTPUT(("%s", _ERROR("Error: closing Rose")));
+                    exit(PERFEXPERT_ERROR);
+                }
             }
         }
 #endif
