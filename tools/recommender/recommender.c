@@ -103,6 +103,7 @@ int recommender_main(int argc, char** argv) {
     }
 
     /* Connect to database */
+    OUTPUT_VERBOSE((4, "=== %s", _BLUE("Connecting to database")));
     if (PERFEXPERT_SUCCESS != database_connect()) {
         OUTPUT(("%s", _ERROR("Error: connecting to database")));
         exit(PERFEXPERT_ERROR);
@@ -1029,48 +1030,6 @@ static int output_recommendations(void *not_used, int col_count,
             sqlite3_close(globals.db);
             exit(PERFEXPERT_ERROR);
         }
-    }
-    return PERFEXPERT_SUCCESS;
-}
-
-/* database_connect */
-static int database_connect(void) {
-    OUTPUT_VERBOSE((4, "=== %s", _BLUE("Connecting to database")));
-
-    /* Use defualt database if used does not define one */
-    if (NULL == globals.dbfile) {
-        globals.dbfile = (char *)malloc(strlen(RECOMMENDATION_DB) +
-                                        strlen(PERFEXPERT_VARDIR) + 2);
-        if (NULL == globals.dbfile) {
-            OUTPUT(("%s", _ERROR("Error: out of memory")));
-            exit(PERFEXPERT_ERROR);
-        }
-        bzero(globals.dbfile,
-              strlen(RECOMMENDATION_DB) + strlen(PERFEXPERT_VARDIR) + 2);
-        sprintf(globals.dbfile, "%s/%s", PERFEXPERT_VARDIR, RECOMMENDATION_DB);
-    }
-
-    /* Check if file exists and if it is writable */
-    if (-1 == access(globals.dbfile, F_OK)) {
-        OUTPUT(("%s (%s)",
-                _ERROR("Error: recommendation database doesn't exist"),
-                globals.dbfile));
-        return PERFEXPERT_ERROR;
-    }
-    if (-1 == access(globals.dbfile, W_OK)) {
-        OUTPUT(("%s (%s)", _ERROR("Error: you don't have permission to write"),
-                globals.dbfile));
-        return PERFEXPERT_ERROR;
-    }
-    
-    /* Connect to the DB */
-    if (SQLITE_OK != sqlite3_open(globals.dbfile, &(globals.db))) {
-        OUTPUT(("%s (%s), %s", _ERROR("Error: openning database"),
-                globals.dbfile, sqlite3_errmsg(globals.db)));
-        sqlite3_close(globals.db);
-        exit(PERFEXPERT_ERROR);
-    } else {
-        OUTPUT_VERBOSE((4, "connected to %s", globals.dbfile));
     }
     return PERFEXPERT_SUCCESS;
 }
