@@ -6,7 +6,7 @@
 .Nd recommend possible optimizations
 .Sh SYNOPSIS
 .Nm
-.Fl i|-f Ar inputfile
+.Fl f Ar inputfile
 .Op Fl o Ar outputfile
 .Op Fl a Ar workdir
 .Op Fl r Ar count
@@ -21,10 +21,8 @@ identified by analyzer(1). TODO: describe how  selection of optimization actuall
 .Sh OPTIONS
 The following options are available:
 .Bl -tag -width -indent
-.It Fl i, -stdin
-Use STDIN as input for performance measurements.
 .It Fl f, -inputfile
-Set the file from where performance measurements should be read.
+Set the file from where performance measurements should be read (default STDIN).
 .It Fl o, -outputfile
 File to write possible optimizations (default: STDOUT). If the file exists the content will be
 overwritten.

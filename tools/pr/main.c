@@ -215,20 +215,49 @@ static void show_help(void) {
 
 /* parse_env_vars */
 static int parse_env_vars(void) {
-    // TODO: add here all the parameter we have for command line arguments
     char *temp_str;
     
-    /* Get the variables */
-    temp_str = getenv("PERFEXPERT_VERBOSE_LEVEL");
+    temp_str = getenv("PERFEXPERT_PR_VERBOSE_LEVEL");
     if (NULL != temp_str) {
         globals.verbose_level = atoi(temp_str);
-        if (0 != globals.verbose_level) {
-            OUTPUT_VERBOSE((5, "ENV: verbose_level=%d", globals.verbose_level));
+        if ((0 >= atoi(temp_str)) || (10 < atoi(temp_str))) {
+            OUTPUT(("%s (%d)", _ERROR("ENV Error: invalid debug level"),
+                    atoi(temp_str)));
+            show_help();
         }
+        OUTPUT_VERBOSE((5, "ENV: verbose_level=%d", globals.verbose_level));
     }
-    
-    OUTPUT_VERBOSE((4, "=== %s", _BLUE("Environment variables")));
-    
+
+    temp_str = getenv("PERFEXPERT_PR_INPUT_FILE");
+    if (NULL != temp_str) {
+        globals.inputfile = temp_str;
+        OUTPUT_VERBOSE((5, "ENV: inputfile=%s", globals.inputfile));
+    }
+
+    temp_str = getenv("PERFEXPERT_PR_OUTPUT_FILE");
+    if (NULL != temp_str) {
+        globals.outputfile = temp_str;
+        OUTPUT_VERBOSE((5, "ENV: outputfile=%s", globals.outputfile));
+    }
+
+    temp_str = getenv("PERFEXPERT_PR_DATABASE_FILE");
+    if (NULL != temp_str) {
+        globals.dbfile =  temp_str;
+        OUTPUT_VERBOSE((5, "ENV: dbfile=%s", globals.dbfile));
+    }
+
+    temp_str = getenv("PERFEXPERT_PR_WORKDIR");
+    if (NULL != temp_str) {
+        globals.workdir = temp_str;
+        OUTPUT_VERBOSE((5, "ENV: workdir=%s", globals.workdir));
+    }
+
+    temp_str = getenv("PERFEXPERT_PR_COLORFUL");
+    if ((NULL != temp_str) && (1 == atoi(temp_str))) {
+        globals.colorful = 1;
+        OUTPUT_VERBOSE((5, "ENV: colorful=YES"));
+    }
+
     return PERFEXPERT_SUCCESS;
 }
 
@@ -905,10 +934,10 @@ static int test_one(test_t *test) {
     char temp_str2[BUFFER_SIZE];
     char buffer[BUFFER_SIZE];
 
-#define	PARENT_READ  pipe1[0]
-#define	CHILD_WRITE  pipe1[1]
-#define CHILD_READ   pipe2[0]
-#define PARENT_WRITE pipe2[1]
+    #define	PARENT_READ  pipe1[0]
+    #define	CHILD_WRITE  pipe1[1]
+    #define CHILD_READ   pipe2[0]
+    #define PARENT_WRITE pipe2[1]
     
     /* Creating pipes */
     if (-1 == pipe(pipe1)) {
