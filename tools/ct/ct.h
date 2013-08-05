@@ -44,10 +44,8 @@ extern "C" {
 #include "perfexpert_list.h"
 #endif
 
-#if HAVE_SQLITE3 == 1
 #ifndef _SQLITE3_H_
 #include <sqlite3.h>
-#endif
 #endif
 
 #ifndef _GETOPT_H
@@ -60,22 +58,19 @@ extern "C" {
 
 /** Structure to hold global variables */
 typedef struct {
-    int  verbose;
     int  verbose_level;
     int  use_stdin;
     int  use_stdout;
     char *inputfile;
+    FILE *inputfile_FP;
     char *outputfile;
     FILE *outputfile_FP;
     int  colorful;
     int  automatic;
     char *workdir;
-    int  transfall;
-#if HAVE_SQLITE3 == 1
     char *dbfile;
     sqlite3 *db;
     unsigned long long int perfexpert_pid;
-#endif
 } globals_t;
 
 extern globals_t globals; /**< Variable to hold global options */
@@ -96,16 +91,13 @@ extern globals_t globals; /**< Variable to hold global options */
 static struct option long_options[] = {
     {"verbose_level",   required_argument, NULL, 'l'},
     {"verbose",         no_argument,       NULL, 'v'},
-    {"stdin",           no_argument,       NULL, 'i'},
     {"inputfile",       required_argument, NULL, 'f'},
     {"help",            no_argument,       NULL, 'h'},
     {"outputfile",      required_argument, NULL, 'o'},
     {"colorful",        no_argument,       NULL, 'c'},
     {"automatic",       required_argument, NULL, 'a'},
     {"transfall",       no_argument,       NULL, 't'},
-#if HAVE_SQLITE3 == 1
     {"perfexpert_pid",  required_argument, NULL, 'p'},
-#endif
     {0, 0, 0, 0}
 };
 
@@ -157,14 +149,10 @@ typedef struct fragment {
 static void show_help(void);
 static int  parse_env_vars(void);
 static int  parse_cli_params(int argc, char *argv[]);
-static int  parse_transformation_params(perfexpert_list_t *segments_p,
-                                        FILE *inputfile_p);
+static int  parse_transformation_params(perfexpert_list_t *segments_p);
 static int  apply_transformations(perfexpert_list_t *fragments_p);
 static int  apply_one(transf_t *transf);
 static int  output_results(perfexpert_list_t *fragments_p);
-#if HAVE_SQLITE3 == 1
-static int  database_connect(void);
-#endif
     
 #ifdef __cplusplus
 }

@@ -75,7 +75,6 @@ typedef struct {
     char *metrics_table;
     int  colorful;
     int  rec_count;
-    char recommendations;
     unsigned long long int perfexpert_pid;
 } globals_t;
 
@@ -139,36 +138,18 @@ typedef struct segment {
     double representativeness;
     int    rowid;
     perfexpert_list_t functions;
-    int    outer_loop;
-    int    outer_outer_loop;
-    char   *function_name; // Should add functiona_name to DB?
+    char   *function_name; // Should add function_name to DB?
 } segment_t;
 
 /* Function declarations */
-int recommender_main(int argc, char** argv);
 static void show_help(void);
 static int  parse_env_vars(void);
 static int  parse_cli_params(int argc, char *argv[]);
 static int  parse_metrics_file(void);
 static int  parse_segment_params(perfexpert_list_t *segments_p);
-static int  get_rowid(void *rid, int c_count, char **c_val, char **c_names);
-static int  get_weight(void *weight, int c_count, char **c_val, char **c_names);
-static int  output_recognizers(void *weight, int col_count, char **col_values,
-                               char **col_names);
-static int  output_transformers(void *weight, int col_count, char **col_values,
-                                char **col_names);
-static int  output_recommendations(void *not_used, int col_count,
-                                   char **col_values, char **col_names);
-static int  accumulate_functions(void *functions, int col_count,
-                                 char **col_values, char **col_names);
+static int  output_recommendations(void *var, int count, char **val, char **names);
+static int  accumulate_functions(void *functions, int count, char **val, char **names);
 static int  select_recommendations(segment_t *segment);
-
-#if HAVE_ROSE == 1
-int open_rose(const char *source_file);
-int close_rose(void);
-int extract_fragment(segment_t *segment);
-int extract_source(void);
-#endif
 
 #ifdef __cplusplus
 }
