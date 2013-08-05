@@ -27,15 +27,9 @@
 
 bin_PROGRAMS = recommender
 
-recommender_SOURCES = main.cpp recommender.c
+recommender_SOURCES = recommender.c
 recommender_CPPFLAGS = -I$(srcdir)/../common
-recommender_LDFLAGS = -lsqlite3 -lrose -ljvm
-
-
-# Adding support to Rose
-if WITH_ROSE_SUPPORT
-recommender_SOURCES += rose_functions.cpp
-endif
+recommender_LDFLAGS = -lsqlite3
 
 # Install the recommendation database
 install-exec-local:

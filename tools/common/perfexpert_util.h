@@ -131,6 +131,11 @@ static int perfexpert_util_make_path(char *path, int nmode) {
     return PERFEXPERT_SUCCESS;
 }
 
+/* database_disconnect */
+static int database_disconnect(sqlite3 *db) {
+    sqlite3_close(db);
+}
+
 /* database_connect */
 static int database_connect(void) {
     /* Use default database if used does not define one */
@@ -163,10 +168,28 @@ static int database_connect(void) {
     if (SQLITE_OK != sqlite3_open(globals.dbfile, &(globals.db))) {
         OUTPUT(("%s (%s), %s", _ERROR((char *)"Error: openning database"),
                 globals.dbfile, sqlite3_errmsg(globals.db)));
-        sqlite3_close(globals.db);
+        database_disconnect(globals.db);
         return PERFEXPERT_ERROR;
     } else {
         OUTPUT_VERBOSE((4, "connected to %s", globals.dbfile));
+    }
+    return PERFEXPERT_SUCCESS;
+}
+
+/* get_int */
+static int get_int(void *var, int count, char **val, char **names) {
+    int *temp = (int *)var;
+    if (NULL != val[0]) {
+        *temp = atoi(val[0]);
+    }
+    return PERFEXPERT_SUCCESS;
+}
+
+/* get_double */
+static int get_double(void *var, int count, char **val, char **names) {
+    double *temp = (double *)var;
+    if (NULL != val[0]) {
+        *temp = atof(val[0]);
     }
     return PERFEXPERT_SUCCESS;
 }

@@ -31,6 +31,11 @@ perfexpert_ct_SOURCES = main.c
 perfexpert_ct_CPPFLAGS = -I$(srcdir)/../common
 perfexpert_ct_CFLAGS = -O3
 
+# Adding support to Rose
+if WITH_ROSE_SUPPORT
+perfexpert_ct_SOURCES += rose_functions.cpp
+endif
+
 SUBDIRS = c_loop_interchange
 
 # EOF
