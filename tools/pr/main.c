@@ -40,10 +40,8 @@ extern "C" {
 #include <fcntl.h>
 #include <inttypes.h>
 
-#if HAVE_SQLITE3 == 1
 /* Utility headers */
 #include <sqlite3.h>
-#endif
     
 /* PerfExpert headers */
 #include "config.h"
@@ -65,29 +63,17 @@ int main(int argc, char** argv) {
     
     /* Set default values for globals */
     globals = (globals_t) {
-        .verbose          = 0,      // int
-        .verbose_level    = 0,      // int
-        .use_stdin        = 0,      // int
-        .use_stdout       = 1,      // int
-        .inputfile        = NULL,   // char *
-        .outputfile       = NULL,   // char *
-        .outputfile_FP    = stdout, // FILE *
-        .workdir       = NULL,   // char *
-#if HAVE_SQLITE3 == 1
-        .perfexpert_pid      = (unsigned long long int)getpid(), // int
-#endif
-        .testall          = 0,      // int
-        .colorful         = 0       // int
+        .verbose_level  = 0,      // int
+        .inputfile      = NULL,   // char *
+        .outputfile_FP  = stdin,  // FILE *
+        .outputfile     = NULL,   // char *
+        .outputfile_FP  = stdout, // FILE *
+        .dbfile         = NULL,   // char *
+        .workdir        = NULL,   // char *
+        .perfexpert_pid = (unsigned long long int)getpid(), // int
+        .testall        = 0,      // int
+        .colorful       = 0       // int
     };
-    globals.dbfile = (char *)malloc(strlen(RECOMMENDATION_DB) +
-                                    strlen(PERFEXPERT_VARDIR) + 2);
-    if (NULL == globals.dbfile) {
-        OUTPUT(("%s", _ERROR("Error: out of memory")));
-        exit(PERFEXPERT_ERROR);
-    }
-    bzero(globals.dbfile,
-          strlen(RECOMMENDATION_DB) + strlen(PERFEXPERT_VARDIR) + 2);
-    sprintf(globals.dbfile, "%s/%s", PERFEXPERT_VARDIR, RECOMMENDATION_DB);
 
     /* Parse command-line parameters */
     if (PERFEXPERT_SUCCESS != parse_cli_params(argc, argv)) {
@@ -103,33 +89,20 @@ int main(int argc, char** argv) {
     }
     perfexpert_list_construct(fragments);
 
+
+    /* Open input file */
+    if (NULL != globals.inputfile) {
+        if (NULL == (globals.inputfile_FP = fopen(globals.inputfile, "r"))) {
+            OUTPUT(("%s (%s)", _ERROR("Error: unable to open input file"),
+                    globals.inputfile));
+            return PERFEXPERT_ERROR;
+        }
+    }
+
     /* Parse input parameters */
-    if (1 == globals.use_stdin) {
-        if (PERFEXPERT_SUCCESS != parse_fragment_params(fragments, stdin)) {
-            OUTPUT(("%s", _ERROR("Error: parsing input params")));
-            exit(PERFEXPERT_ERROR);
-        }
-    } else {
-        if (NULL != globals.inputfile) {
-            FILE *inputfile_FP = NULL;
-            
-            /* Open input file */
-            if (NULL == (inputfile_FP = fopen(globals.inputfile, "r"))) {
-                OUTPUT(("%s (%s)", _ERROR("Error: unable to open input file"),
-                        globals.inputfile));
-                return PERFEXPERT_ERROR;
-            } else {
-                if (PERFEXPERT_SUCCESS != parse_fragment_params(fragments,
-                                                                inputfile_FP)) {
-                    OUTPUT(("%s", _ERROR("Error: parsing input params")));
-                    exit(PERFEXPERT_ERROR);
-                }
-                fclose(inputfile_FP);
-            }
-        } else {
-            OUTPUT(("%s", _ERROR("Error: undefined input")));
-            show_help();
-        }
+    if (PERFEXPERT_SUCCESS != parse_fragment_params(fragments)) {
+        OUTPUT(("%s", _ERROR("Error: parsing input params")));
+        exit(PERFEXPERT_ERROR);
     }
 
     /* Test the pattern recognizers */
@@ -146,42 +119,7 @@ int main(int argc, char** argv) {
     }
 
     /* Output results */
-    if (1 == globals.automatic) {
-        globals.use_stdout = 0;
-
-        if (NULL == globals.workdir) {
-            globals.workdir = (char *)malloc(strlen("./perfexpert-") + 8);
-            if (NULL == globals.workdir) {
-                OUTPUT(("%s", _ERROR("Error: out of memory")));
-                exit(PERFEXPERT_ERROR);
-            }
-            bzero(globals.workdir, strlen("./perfexpert-" + 8));
-            sprintf(globals.workdir, "./perfexpert-%d", getpid());
-        }
-        OUTPUT_VERBOSE((7, "using (%s) as output directory",
-                        globals.workdir));
-
-        if (PERFEXPERT_ERROR == perfexpert_util_make_path(globals.workdir,
-                                                          0755)) {
-            OUTPUT(("%s", _ERROR("Error: cannot create temporary directory")));
-            exit(PERFEXPERT_ERROR);
-        }
-
-        globals.outputfile = (char *)malloc(strlen(globals.workdir) +
-                                            strlen(PERFEXPERT_PR_FILE) + 2);
-        if (NULL == globals.outputfile) {
-            OUTPUT(("%s", _ERROR("Error: out of memory")));
-            exit(PERFEXPERT_ERROR);
-        }
-        bzero(globals.outputfile, strlen(globals.workdir) +
-              strlen(PERFEXPERT_PR_FILE) + 2);
-        strcat(globals.outputfile, globals.workdir);
-        strcat(globals.outputfile, "/");
-        strcat(globals.outputfile, PERFEXPERT_PR_FILE);
-        OUTPUT_VERBOSE((7, "printing output to (%s)", globals.workdir));
-    }
-
-    if (0 == globals.use_stdout) {
+    if (NULL != globals.outputfile) {
         OUTPUT_VERBOSE((7, "printing test results to file (%s)",
                         globals.outputfile));
         globals.outputfile_FP = fopen(globals.outputfile, "w+");
@@ -198,26 +136,33 @@ int main(int argc, char** argv) {
         OUTPUT(("%s", _ERROR("Error: outputting results")));
         exit(PERFEXPERT_ERROR);
     }
-    if (0 == globals.use_stdout) {
+    if (NULL != globals.outputfile) {
         fclose(globals.outputfile_FP);
     }
 
     /* Free memory */
     while (PERFEXPERT_FALSE == perfexpert_list_is_empty(fragments)) {
         fragment = (fragment_t *)perfexpert_list_get_first(fragments);
-        perfexpert_list_remove_item(fragments, (perfexpert_list_item_t *)fragment);
-        while (PERFEXPERT_FALSE == perfexpert_list_is_empty(&(fragment->recommendations))) {
-            recommendation = (recommendation_t *)perfexpert_list_get_first(&(fragment->recommendations));
+        perfexpert_list_remove_item(fragments,
+                                    (perfexpert_list_item_t *)fragment);
+        while (PERFEXPERT_FALSE == perfexpert_list_is_empty(
+            &(fragment->recommendations))) {
+            recommendation = (recommendation_t *)perfexpert_list_get_first(
+                &(fragment->recommendations));
             perfexpert_list_remove_item(&(fragment->recommendations),
                                      (perfexpert_list_item_t *)recommendation);
-            while (PERFEXPERT_FALSE == perfexpert_list_is_empty(&(recommendation->transformers))) {
-                transformer = (transformer_t *)perfexpert_list_get_first(&(recommendation->transformers));
+            while (PERFEXPERT_FALSE == perfexpert_list_is_empty(
+                &(recommendation->transformers))) {
+                transformer = (transformer_t *)perfexpert_list_get_first(
+                    &(recommendation->transformers));
                 perfexpert_list_remove_item(&(recommendation->transformers),
                                          (perfexpert_list_item_t *)transformer);
-                while (PERFEXPERT_FALSE == perfexpert_list_is_empty(&(transformer->recognizers))) {
-                    recognizer = (recognizer_t *)perfexpert_list_get_first(&(transformer->recognizers));
+                while (PERFEXPERT_FALSE == perfexpert_list_is_empty(
+                    &(transformer->recognizers))) {
+                    recognizer = (recognizer_t *)perfexpert_list_get_first(
+                        &(transformer->recognizers));
                     perfexpert_list_remove_item(&(transformer->recognizers),
-                                                 (perfexpert_list_item_t *)recognizer);
+                        (perfexpert_list_item_t *)recognizer);
                     free(recognizer->program);
                     free(recognizer);
                 }
@@ -235,9 +180,6 @@ int main(int argc, char** argv) {
     }
     perfexpert_list_destruct(fragments);
     free(fragments);
-    if (1 == globals.automatic) {
-        free(globals.outputfile);
-    }
 
     return PERFEXPERT_SUCCESS;
 }
@@ -247,25 +189,17 @@ static void show_help(void) {
     OUTPUT_VERBOSE((10, "printing help"));
     
     /*      12345678901234567890123456789012345678901234567890123456789012345678901234567890 */
-    printf("Usage: pr -i|-f file [-o file] [-tvch] [-l level] [-a dir]");
-#if HAVE_SQLITE3 == 1
-    printf(" [-d database] [-p pid]");
-#endif
+    printf("Usage: pr -f file [-tvch] [-o file] [-l level] [-a workdir] [-d database] [-p pid]");
     printf("\n");
-    printf("  -i --stdin           Use STDIN as input for patterns\n");
     printf("  -f --inputfile       Use 'file' as input for patterns\n");
     printf("  -o --outputfile      Use 'file' as output (default stdout)\n");
     printf("  -t --testall         Test all the pattern recognizers of each code fragment,\n");
     printf("                       otherwise stop on the first valid one\n");
     printf("  -a --automatic       Use automatic performance optimization and create files\n");
-    printf("                       into 'dir' directory (default: off).\n");
-    printf("                       This argument overwrites -o (no output on STDOUT, except\n");
-    printf("                       for verbose messages)\n");
-#if HAVE_SQLITE3 == 1
+    printf("                       into 'workdir' directory (default: off).\n");
     printf("  -d --database        Select the recommendation database file\n");
     printf("                       (default: %s/%s)\n", PERFEXPERT_VARDIR, RECOMMENDATION_DB);
     printf("  -p --perfexpert_pid  Use 'pid' to log on DB consecutive calls to Recommender\n");
-#endif
     printf("  -v --verbose         Enable verbose mode using default verbose level (5)\n");
     printf("  -l --verbose_level   Enable verbose mode using a specific verbose level (1-10)\n");
     printf("  -c --colorful        Enable colors on verbose mode, no weird characters will\n");
@@ -300,10 +234,8 @@ static int parse_env_vars(void) {
 
 /* parse_cli_params */
 static int parse_cli_params(int argc, char *argv[]) {
-    /** Temporary variable to hold parameter */
-    int parameter;
-    /** getopt_long() stores the option index here */
-    int option_index = 0;
+    int parameter;        /** Temporary variable to hold parameter */
+    int option_index = 0; /** getopt_long() stores the option index here */
     
     /* If some environment variable is defined, use it! */
     if (PERFEXPERT_SUCCESS != parse_env_vars()) {
@@ -313,13 +245,9 @@ static int parse_cli_params(int argc, char *argv[]) {
     
     while (1) {
         /* get parameter */
-#if HAVE_SQLITE3 == 1
-        parameter = getopt_long(argc, argv, "a:cd:vhif:l:o:p:t", long_options,
+        parameter = getopt_long(argc, argv, "a:cd:vhf:l:o:p:t", long_options,
                                 &option_index);
-#else
-        parameter = getopt_long(argc, argv, "a:cvhif:l:o:t", long_options,
-                                &option_index);
-#endif
+
         /* Detect the end of the options */
         if (-1 == parameter) {
             break;
@@ -328,7 +256,6 @@ static int parse_cli_params(int argc, char *argv[]) {
         switch (parameter) {
             /* Verbose level */
             case 'l':
-                globals.verbose = 1;
                 globals.verbose_level = atoi(optarg);
                 OUTPUT_VERBOSE((10, "option 'l' set"));
                 if (0 >= atoi(optarg)) {
@@ -347,13 +274,12 @@ static int parse_cli_params(int argc, char *argv[]) {
                 
             /* Activate verbose mode */
             case 'v':
-                globals.verbose = 1;
                 if (0 == globals.verbose_level) {
                     globals.verbose_level = 5;
                 }
                 OUTPUT_VERBOSE((10, "option 'v' set"));
                 break;
-#if HAVE_SQLITE3 == 1
+
             /* Which database file? */
             case 'd':
                 globals.dbfile = optarg;
@@ -366,7 +292,7 @@ static int parse_cli_params(int argc, char *argv[]) {
                 OUTPUT_VERBOSE((10, "option 'p' set [%llu]",
                                 globals.perfexpert_pid));
                 break;
-#endif
+
             /* Activate colorful mode */
             case 'c':
                 globals.colorful = 1;
@@ -378,30 +304,20 @@ static int parse_cli_params(int argc, char *argv[]) {
                 OUTPUT_VERBOSE((10, "option 'h' set"));
                 show_help();
                 
-            /* Use STDIN? */
-            case 'i':
-                globals.use_stdin = 1;
-                OUTPUT_VERBOSE((10, "option 'i' set"));
-                break;
-                
             /* Use input file? */
             case 'f':
-                globals.use_stdin = 0;
                 globals.inputfile = optarg;
                 OUTPUT_VERBOSE((10, "option 'f' set [%s]", globals.inputfile));
                 break;
 
             /* Use output file? */
             case 'o':
-                globals.use_stdout = 0;
                 globals.outputfile = optarg;
                 OUTPUT_VERBOSE((10, "option 'o' set [%s]", globals.outputfile));
                 break;
 
             /* Use automatic optimization? */
             case 'a':
-                globals.automatic = 1;
-                globals.use_stdout = 0;
                 globals.workdir = optarg;
                 OUTPUT_VERBOSE((10, "option 'a' set [%s]", globals.workdir));
                 break;
@@ -422,24 +338,16 @@ static int parse_cli_params(int argc, char *argv[]) {
     }
     OUTPUT_VERBOSE((4, "=== %s", _BLUE("CLI params")));
     OUTPUT_VERBOSE((10, "Summary of selected options:"));
-    OUTPUT_VERBOSE((10, "   Verbose:                    %s",
-                    globals.verbose ? "yes" : "no"));
     OUTPUT_VERBOSE((10, "   Verbose level:              %d",
                     globals.verbose_level));
     OUTPUT_VERBOSE((10, "   Colorful verbose?           %s",
                     globals.colorful ? "yes" : "no"));
-    OUTPUT_VERBOSE((10, "   Use STDOUT?                 %s",
-                    globals.use_stdout ? "yes" : "no"));
-    OUTPUT_VERBOSE((10, "   Use STDIN?                  %s",
-                    globals.use_stdin ? "yes" : "no"));
     OUTPUT_VERBOSE((10, "   Input file:                 %s",
                     globals.inputfile ? globals.inputfile : "(null)"));
     OUTPUT_VERBOSE((10, "   Output file:                %s",
                     globals.outputfile ? globals.outputfile : "(null)"));
     OUTPUT_VERBOSE((10, "   Test all?                   %s",
                     globals.testall ? "yes" : "no"));
-    OUTPUT_VERBOSE((10, "   Use automatic optimization? %s",
-                    globals.automatic ? "yes" : "no"));
     OUTPUT_VERBOSE((10, "   PerfExpert PID:             %llu",
                     globals.perfexpert_pid));
     OUTPUT_VERBOSE((10, "   Temporary directory:        %s",
@@ -461,7 +369,7 @@ static int parse_cli_params(int argc, char *argv[]) {
 }
 
 /* parse_fragment_params */
-static int parse_fragment_params(perfexpert_list_t *fragments_p, FILE *inputfile_p) {
+static int parse_fragment_params(perfexpert_list_t *fragments_p) {
     fragment_t *fragment;
     recommendation_t *recommendation;
     recognizer_t *recognizer;
@@ -472,10 +380,7 @@ static int parse_fragment_params(perfexpert_list_t *fragments_p, FILE *inputfile
     OUTPUT_VERBOSE((4, "=== %s", _BLUE("Parsing fragments file")));
     
     /* Which INPUT we are using? (just a double check) */
-    if ((NULL == inputfile_p) && (globals.use_stdin)) {
-        inputfile_p = stdin;
-    }
-    if (globals.use_stdin) {
+    if (NULL == globals.inputfile) {
         OUTPUT_VERBOSE((3, "using STDIN as input for fragments"));
     } else {
         OUTPUT_VERBOSE((3, "using (%s) as input for fragments",
@@ -483,10 +388,10 @@ static int parse_fragment_params(perfexpert_list_t *fragments_p, FILE *inputfile
     }
     
     /* For each line in the INPUT file... */
-    OUTPUT_VERBOSE((7, "--- parsing input file"));
+    OUTPUT_VERBOSE((7, "--- parsing input"));
     
     bzero(buffer, BUFFER_SIZE);
-    while (NULL != fgets(buffer, BUFFER_SIZE - 1, inputfile_p)) {
+    while (NULL != fgets(buffer, BUFFER_SIZE - 1, globals.inputfile_FP)) {
         node_t *node;
         int temp;
         
@@ -522,10 +427,12 @@ static int parse_fragment_params(perfexpert_list_t *fragments_p, FILE *inputfile
             fragment->outer_outer_loop_fragment_file = NULL;
             fragment->outer_loop = 0;
             fragment->outer_outer_loop = 0;
-            perfexpert_list_construct((perfexpert_list_t *)&(fragment->recommendations));
+            perfexpert_list_construct(
+                (perfexpert_list_t *)&(fragment->recommendations));
 
             /* Add this item to 'segments' */
-            perfexpert_list_append(fragments_p, (perfexpert_list_item_t *)fragment);
+            perfexpert_list_append(fragments_p,
+                                   (perfexpert_list_item_t *)fragment);
             
             continue;
         }
@@ -636,7 +543,8 @@ static int parse_fragment_params(perfexpert_list_t *fragments_p, FILE *inputfile
         }
         /* Recommender param: recommender.outer_loop_fragment */
         if (0 == strncmp("recommender.outer_loop_fragment", node->key, 31)) {
-            fragment->outer_loop_fragment_file = (char *)malloc(strlen(node->value) + 1);
+            fragment->outer_loop_fragment_file =
+                (char *)malloc(strlen(node->value) + 1);
             if (NULL == fragment->outer_loop_fragment_file) {
                 OUTPUT(("%s", _ERROR("Error: out of memory")));
                 exit(PERFEXPERT_ERROR);
@@ -650,13 +558,16 @@ static int parse_fragment_params(perfexpert_list_t *fragments_p, FILE *inputfile
             continue;
         }
         /* Recommender param: recommender.outer_outer_loop_fragment */
-        if (0 == strncmp("recommender.outer_outer_loop_fragment", node->key, 31)) {
-            fragment->outer_outer_loop_fragment_file = (char *)malloc(strlen(node->value) + 1);
+        if (0 == strncmp("recommender.outer_outer_loop_fragment", node->key,
+            31)) {
+            fragment->outer_outer_loop_fragment_file =
+                (char *)malloc(strlen(node->value) + 1);
             if (NULL == fragment->outer_outer_loop_fragment_file) {
                 OUTPUT(("%s", _ERROR("Error: out of memory")));
                 exit(PERFEXPERT_ERROR);
             }
-            bzero(fragment->outer_outer_loop_fragment_file, strlen(node->value) + 1);
+            bzero(fragment->outer_outer_loop_fragment_file,
+                  strlen(node->value) + 1);
             strcpy(fragment->outer_outer_loop_fragment_file, node->value);
             OUTPUT_VERBOSE((10, "(%d)  \\- %s [%s]", input_line,
                             _MAGENTA("outer loop fragment file:"),
@@ -669,15 +580,19 @@ static int parse_fragment_params(perfexpert_list_t *fragments_p, FILE *inputfile
          */
         /* Recommender param: recommender.recommendation_id */
         if (0 == strncmp("recommender.recommendation_id", node->key, 29)) {
-            recommendation = (recommendation_t *)malloc(sizeof(recommendation_t));
+            recommendation =
+                (recommendation_t *)malloc(sizeof(recommendation_t));
             if (NULL == recommendation) {
                 OUTPUT(("%s", _ERROR("Error: out of memory")));
                 exit(PERFEXPERT_ERROR);
             }
-            perfexpert_list_item_construct((perfexpert_list_item_t *)recommendation);
+            perfexpert_list_item_construct(
+                (perfexpert_list_item_t *)recommendation);
             recommendation->id = atoi(node->value);
-            perfexpert_list_construct((perfexpert_list_t *)&(recommendation->transformers));
-            perfexpert_list_append((perfexpert_list_t *)&(fragment->recommendations),
+            perfexpert_list_construct(
+                (perfexpert_list_t *)&(recommendation->transformers));
+            perfexpert_list_append(
+                (perfexpert_list_t *)&(fragment->recommendations),
                                 (perfexpert_list_item_t *)recommendation);
             OUTPUT_VERBOSE((10, "(%d)  | \\- %s [%d]", input_line,
                             _YELLOW("recommendation ID:"), recommendation->id));
@@ -694,11 +609,14 @@ static int parse_fragment_params(perfexpert_list_t *fragments_p, FILE *inputfile
                 OUTPUT(("%s", _ERROR("Error: out of memory")));
                 exit(PERFEXPERT_ERROR);
             }
-            perfexpert_list_item_construct((perfexpert_list_item_t *)transformer);
+            perfexpert_list_item_construct(
+                (perfexpert_list_item_t *)transformer);
             transformer->id = atoi(node->value);
-            perfexpert_list_append((perfexpert_list_t *)&(recommendation->transformers),
-                                   (perfexpert_list_item_t *)transformer);
-            perfexpert_list_construct((perfexpert_list_t *)&(transformer->recognizers));
+            perfexpert_list_append(
+                (perfexpert_list_t *)&(recommendation->transformers),
+                (perfexpert_list_item_t *)transformer);
+            perfexpert_list_construct(
+                (perfexpert_list_t *)&(transformer->recognizers));
             OUTPUT_VERBOSE((10, "(%d)  | | \\- %s [%d]", input_line,
                             _CYAN("transformer ID:"), transformer->id));
             free(node);
@@ -728,11 +646,13 @@ static int parse_fragment_params(perfexpert_list_t *fragments_p, FILE *inputfile
                 OUTPUT(("%s", _ERROR("Error: out of memory")));
                 exit(PERFEXPERT_ERROR);
             }
-            perfexpert_list_item_construct((perfexpert_list_item_t *)recognizer);
+            perfexpert_list_item_construct(
+                (perfexpert_list_item_t *)recognizer);
             recognizer->id = atoi(node->value);
             recognizer->test_result = PERFEXPERT_UNDEFINED;
-            perfexpert_list_append((perfexpert_list_t *)&(transformer->recognizers),
-                                   (perfexpert_list_item_t *)recognizer);
+            perfexpert_list_append(
+                (perfexpert_list_t *)&(transformer->recognizers),
+                (perfexpert_list_item_t *)recognizer);
             OUTPUT_VERBOSE((10, "(%d)  | | | \\- %s [%d]", input_line,
                             _WHITE("recognizer ID:"), recognizer->id));
             free(node);
@@ -799,21 +719,28 @@ static int test_recognizers(perfexpert_list_t *fragments_p) {
     while ((perfexpert_list_item_t *)fragment != &(fragments_p->sentinel)) {
         /* For all code fragments... */
         fragment_id++;
-        recommendation = (recommendation_t *)perfexpert_list_get_first(&(fragment->recommendations));
-        while ((perfexpert_list_item_t *)recommendation != &(fragment->recommendations.sentinel)) {
+        recommendation = (recommendation_t *)perfexpert_list_get_first(
+            &(fragment->recommendations));
+        while ((perfexpert_list_item_t *)recommendation !=
+            &(fragment->recommendations.sentinel)) {
             /* For all recommendations... */
-            transformer = (transformer_t *)perfexpert_list_get_first(&(recommendation->transformers));
-            while ((perfexpert_list_item_t *)transformer != &(recommendation->transformers.sentinel)) {
+            transformer = (transformer_t *)perfexpert_list_get_first(
+                &(recommendation->transformers));
+            while ((perfexpert_list_item_t *)transformer !=
+                &(recommendation->transformers.sentinel)) {
                 /* For all fragment transformers... */
-                recognizer = (recognizer_t *)perfexpert_list_get_first(&(transformer->recognizers));
-                while ((perfexpert_list_item_t *)recognizer != &(transformer->recognizers.sentinel)) {
+                recognizer = (recognizer_t *)perfexpert_list_get_first(
+                    &(transformer->recognizers));
+                while ((perfexpert_list_item_t *)recognizer !=
+                    &(transformer->recognizers.sentinel)) {
                     /* For all fragment recognizers... */
                     test = (test_t *)malloc(sizeof(test_t));
                     if (NULL == test) {
                         OUTPUT(("%s", _ERROR("Error: out of memory")));
                         exit(PERFEXPERT_ERROR);
                     }
-                    perfexpert_list_item_construct((perfexpert_list_item_t *)test);
+                    perfexpert_list_item_construct(
+                        (perfexpert_list_item_t *)test);
                     test->program = recognizer->program;
                     test->fragment_file = fragment->fragment_file;
                     test->test_result = &(recognizer->test_result);
@@ -823,7 +750,8 @@ static int test_recognizers(perfexpert_list_t *fragments_p) {
                                     test->fragment_file));
 
                     /* Add this item to to-'tests' */
-                    perfexpert_list_append(&tests, (perfexpert_list_item_t *)test);
+                    perfexpert_list_append(&tests,
+                                           (perfexpert_list_item_t *)test);
 
                     /* It we're testing for a loop, check for the outer loop */
                     if ((0 == strncmp("loop", fragment->code_type, 4)) &&
@@ -837,16 +765,19 @@ static int test_recognizers(perfexpert_list_t *fragments_p) {
                             OUTPUT(("%s", _ERROR("Error: out of memory")));
                             exit(PERFEXPERT_ERROR);
                         }
-                        perfexpert_list_item_construct((perfexpert_list_item_t *)test);
+                        perfexpert_list_item_construct(
+                            (perfexpert_list_item_t *)test);
                         test->program = recognizer->program;
-                        test->fragment_file = fragment->outer_loop_fragment_file;
+                        test->fragment_file =
+                            fragment->outer_loop_fragment_file;
                         test->test_result = &(recognizer->test2_result);
 
                         OUTPUT_VERBOSE((10, "[%s] %s", test->program,
                                         test->fragment_file));
 
                         /* Add this item to to-'tests' */
-                        perfexpert_list_append(&tests, (perfexpert_list_item_t *)test);
+                        perfexpert_list_append(&tests,
+                                               (perfexpert_list_item_t *)test);
                     
                         /* And test for the outer outer loop too */
                         if ((3 <= fragment->loop_depth) &&
@@ -859,23 +790,29 @@ static int test_recognizers(perfexpert_list_t *fragments_p) {
                                 OUTPUT(("%s", _ERROR("Error: out of memory")));
                                 exit(PERFEXPERT_ERROR);
                             }
-                            perfexpert_list_item_construct((perfexpert_list_item_t *)test);
+                            perfexpert_list_item_construct(
+                                (perfexpert_list_item_t *)test);
                             test->program = recognizer->program;
-                            test->fragment_file = fragment->outer_outer_loop_fragment_file;
+                            test->fragment_file =
+                                fragment->outer_outer_loop_fragment_file;
                             test->test_result = &(recognizer->test3_result);
 
                             OUTPUT_VERBOSE((10, "[%s] %s", test->program,
                                             test->fragment_file));
 
                             /* Add this item to to-'tests' */
-                            perfexpert_list_append(&tests, (perfexpert_list_item_t *)test);
+                            perfexpert_list_append(&tests,
+                                (perfexpert_list_item_t *)test);
                         }
                     }
-                    recognizer = (recognizer_t *)perfexpert_list_get_next(recognizer);
+                    recognizer = (recognizer_t *)perfexpert_list_get_next(
+                        recognizer);
                 }
-                transformer = (transformer_t *)perfexpert_list_get_next(transformer);
+                transformer = (transformer_t *)perfexpert_list_get_next(
+                    transformer);
             }
-            recommendation = (recommendation_t *)perfexpert_list_get_next(recommendation);
+            recommendation = (recommendation_t *)perfexpert_list_get_next(
+                recommendation);
         }
         fragment = (fragment_t *)perfexpert_list_get_next(fragment);
     }
@@ -917,15 +854,17 @@ static int test_recognizers(perfexpert_list_t *fragments_p) {
                     break;
                 
                 case PERFEXPERT_SUCCESS:
-                    OUTPUT_VERBOSE((8, "   %s    [%s] >> [%s]", _BOLDGREEN("OK"),
-                                    test->program, test->fragment_file));
+                    OUTPUT_VERBOSE((8, "   %s    [%s] >> [%s]",
+                                    _BOLDGREEN("OK"), test->program,
+                                    test->fragment_file));
                     fragment_id = test->fragment_id;
                     positive_tests++;
                     break;
                 
                 case PERFEXPERT_ERROR:
-                    OUTPUT_VERBOSE((8, "   %s [%s] >> [%s]", _BOLDYELLOW("ERROR"),
-                                    test->program, test->fragment_file));
+                    OUTPUT_VERBOSE((8, "   %s [%s] >> [%s]",
+                                    _BOLDYELLOW("ERROR"), test->program,
+                                    test->fragment_file));
                     break;
                 
                 default:
@@ -942,9 +881,7 @@ static int test_recognizers(perfexpert_list_t *fragments_p) {
             free(test);
         }
     }
-    
     perfexpert_list_destruct(&tests);
-    //free(tests);
 
     OUTPUT_VERBOSE((4, "==="));
 
@@ -1096,7 +1033,6 @@ static int output_results(perfexpert_list_t *fragments_p) {
     transformer_t *transformer;
     recognizer_t *recognizer;
     fragment_t *fragment;
-#if HAVE_SQLITE3 == 1
     int  r_bytes = 0;
     int  fragment_FP;
     char sql[MAX_FRAGMENT_DATA];
@@ -1105,7 +1041,6 @@ static int output_results(perfexpert_list_t *fragments_p) {
     char fragment_data[MAX_FRAGMENT_DATA/4];
     char parent_fragment_data[MAX_FRAGMENT_DATA/4];
     char grandparent_fragment_data[MAX_FRAGMENT_DATA/4];
-#endif
 
     OUTPUT_VERBOSE((4, "=== %s", _BLUE("Outputting results")));
 
@@ -1114,9 +1049,10 @@ static int output_results(perfexpert_list_t *fragments_p) {
     while ((perfexpert_list_item_t *)fragment != &(fragments_p->sentinel)) {
         /* For all code fragments ... */
         recommendations = (perfexpert_list_t *)&(fragment->recommendations);
-        recommendation = (recommendation_t *)perfexpert_list_get_first(&(fragment->recommendations));
+        recommendation = (recommendation_t *)perfexpert_list_get_first(
+            &(fragment->recommendations));
 
-        if (0 == globals.use_stdout) {
+        if (NULL == globals.outputfile) {
             fprintf(globals.outputfile_FP, "%% transformation for %s:%d\n",
                     fragment->filename, fragment->line_number);
             fprintf(globals.outputfile_FP, "code.filename=%s\n",
@@ -1139,15 +1075,20 @@ static int output_results(perfexpert_list_t *fragments_p) {
                     fragment->fragment_file);
         }
 
-        while ((perfexpert_list_item_t *)recommendation != &(recommendations->sentinel)) {
+        while ((perfexpert_list_item_t *)recommendation !=
+            &(recommendations->sentinel)) {
             /* For all recommendations... */
-            transformer = (transformer_t *)perfexpert_list_get_first(&(recommendation->transformers));
-            while ((perfexpert_list_item_t *)transformer != &(recommendation->transformers.sentinel)) {
+            transformer = (transformer_t *)perfexpert_list_get_first(
+                &(recommendation->transformers));
+            while ((perfexpert_list_item_t *)transformer !=
+                &(recommendation->transformers.sentinel)) {
                 /* For all transformers... */
-                recognizer = (recognizer_t *)perfexpert_list_get_first(&(transformer->recognizers));
-                while ((perfexpert_list_item_t *)recognizer != &(transformer->recognizers.sentinel)) {
+                recognizer = (recognizer_t *)perfexpert_list_get_first(
+                    &(transformer->recognizers));
+                while ((perfexpert_list_item_t *)recognizer !=
+                    &(transformer->recognizers.sentinel)) {
                     /* For all fragment recognizers... */
-                    if (0 == globals.use_stdout) {
+                    if (NULL == globals.outputfile) {
                         if (PERFEXPERT_SUCCESS == recognizer->test_result) {
                             fprintf(globals.outputfile_FP,
                                     "recommender.code_fragment=%s\n",
@@ -1169,7 +1110,7 @@ static int output_results(perfexpert_list_t *fragments_p) {
                                     "pr.transformation=%s\n",
                                     transformer->program);
                         }
-                        /* If it is a loop, check grandparent loop test result */
+                        /* If its a loop, check grandparent loop test result */
                         if ((0 == strncmp(fragment->code_type, "loop", 4)) &&
                             (PERFEXPERT_SUCCESS == recognizer->test3_result)) {
                             fprintf(globals.outputfile_FP,
@@ -1186,11 +1127,13 @@ static int output_results(perfexpert_list_t *fragments_p) {
                         fprintf(globals.outputfile_FP, "Transformation: %s ",
                                 transformer->program);
                         fprintf(globals.outputfile_FP, "%s\n",
-                                recognizer->test_result ? "(not valid)" : "(valid)");
+                                recognizer->test_result ?
+                                "(not valid)" : "(valid)");
                         /* If it is a loop, check parent loop test result */
                         if ((0 == strncmp(fragment->code_type, "loop", 4)) &&
                             (0 != fragment->outer_loop)) {
-                            fprintf(globals.outputfile_FP, "Transformation: %s ",
+                            fprintf(globals.outputfile_FP,
+                                    "Transformation: %s ",
                                     transformer->program);
                             fprintf(globals.outputfile_FP, "%s\n",
                                     recognizer->test2_result ?
@@ -1208,7 +1151,6 @@ static int output_results(perfexpert_list_t *fragments_p) {
                                     "(valid on grandparent loop)");
                         }
                     }
-#if HAVE_SQLITE3 == 1
                     /* Log result on SQLite: 3 steps */
                     /* Step 1: connect to database */
                     if (PERFEXPERT_SUCCESS != database_connect()) {
@@ -1217,7 +1159,8 @@ static int output_results(perfexpert_list_t *fragments_p) {
                     }
 
                     /* Step 2: read fragment file content */
-                    if (-1 == (fragment_FP = open(fragment->fragment_file, O_RDONLY))) {
+                    if (-1 == (fragment_FP = open(fragment->fragment_file,
+                                                  O_RDONLY))) {
                         OUTPUT(("%s (%s)",
                                 _ERROR("Error: unable to open fragment file"),
                                 fragment->fragment_file));
@@ -1232,8 +1175,8 @@ static int output_results(perfexpert_list_t *fragments_p) {
                     /* parent fragment data */
                     if ((0 == strncmp(fragment->code_type, "loop", 4)) &&
                         (0 != fragment->outer_loop)) {
-                        if (-1 == (fragment_FP = open(fragment->outer_loop_fragment_file,
-                                                      O_RDONLY))) {
+                        if (-1 == (fragment_FP = open(
+                            fragment->outer_loop_fragment_file, O_RDONLY))) {
                             OUTPUT(("%s (%s)",
                                     _ERROR("Error: unable to open fragment file"),
                                     fragment->outer_loop_fragment_file));
@@ -1249,15 +1192,18 @@ static int output_results(perfexpert_list_t *fragments_p) {
                     /* grandparent fragment data */
                     if ((0 == strncmp(fragment->code_type, "loop", 4)) &&
                         (0 != fragment->outer_outer_loop)) {
-                        if (-1 == (fragment_FP = open(fragment->outer_outer_loop_fragment_file,
-                                                      O_RDONLY))) {
+                        if (-1 == (fragment_FP = open(
+                            fragment->outer_outer_loop_fragment_file,
+                            O_RDONLY))) {
                             OUTPUT(("%s (%s)",
                                     _ERROR("Error: unable to open fragment file"),
                                     fragment->outer_outer_loop_fragment_file));
                             return PERFEXPERT_ERROR;
                         } else {
-                            bzero(grandparent_fragment_data, MAX_FRAGMENT_DATA/4);
-                            r_bytes = read(fragment_FP, grandparent_fragment_data,
+                            bzero(grandparent_fragment_data,
+                                MAX_FRAGMENT_DATA/4);
+                            r_bytes = read(fragment_FP,
+                                           grandparent_fragment_data,
                                            MAX_FRAGMENT_DATA/4);
                             // TODO: escape single quotes from grandparent_fragment_data
                             close(fragment_FP);
@@ -1275,8 +1221,9 @@ static int output_results(perfexpert_list_t *fragments_p) {
                     bzero(temp_str, MAX_FRAGMENT_DATA/4);
                     sprintf(temp_str, "%llu, '%s', %d, '%s', %d, %d, %d);",
                             globals.perfexpert_pid, fragment->filename,
-                            fragment->line_number, fragment_data, recommendation->id,
-                            recognizer->id, recognizer->test_result);
+                            fragment->line_number, fragment_data,
+                            recommendation->id, recognizer->id,
+                            recognizer->test_result);
                     strcat(sql, temp_str);
 
                     /* Add the parent loop test result */
@@ -1326,12 +1273,14 @@ static int output_results(perfexpert_list_t *fragments_p) {
                         sqlite3_close(globals.db);
                         exit(PERFEXPERT_ERROR);
                     }
-#endif
-                    recognizer = (recognizer_t *)perfexpert_list_get_next(recognizer);
+                    recognizer = (recognizer_t *)perfexpert_list_get_next(
+                        recognizer);
                 }
-                transformer = (transformer_t *)perfexpert_list_get_next(transformer);
+                transformer = (transformer_t *)perfexpert_list_get_next(
+                    transformer);
             }
-            recommendation = (recommendation_t *)perfexpert_list_get_next(recommendation);
+            recommendation = (recommendation_t *)perfexpert_list_get_next(
+                recommendation);
         }
         fragment = (fragment_t *)perfexpert_list_get_next(fragment);
     }
@@ -1339,39 +1288,6 @@ static int output_results(perfexpert_list_t *fragments_p) {
     OUTPUT_VERBOSE((4, "==="));
     return PERFEXPERT_SUCCESS;
 }
-
-#if HAVE_SQLITE3 == 1
-/* database_connect */
-static int database_connect(void) {
-    OUTPUT_VERBOSE((4, "=== %s", _BLUE("Connecting to database")));
-
-    /* Connect to the DB */
-    if (NULL == globals.dbfile) {
-        globals.dbfile = "./recommendation.db";
-    }
-    if (-1 == access(globals.dbfile, F_OK)) {
-        OUTPUT(("%s (%s)",
-                _ERROR("Error: recommendation database doesn't exist"),
-                globals.dbfile));
-        return PERFEXPERT_ERROR;
-    }
-    if (-1 == access(globals.dbfile, R_OK)) {
-        OUTPUT(("%s (%s)", _ERROR("Error: you don't have permission to read"),
-                globals.dbfile));
-        return PERFEXPERT_ERROR;
-    }
-
-    if (SQLITE_OK != sqlite3_open(globals.dbfile, &(globals.db))) {
-        OUTPUT(("%s (%s), %s", _ERROR("Error: openning database"),
-                globals.dbfile, sqlite3_errmsg(globals.db)));
-        sqlite3_close(globals.db);
-        exit(PERFEXPERT_ERROR);
-    } else {
-        OUTPUT_VERBOSE((4, "connected to %s", globals.dbfile));
-    }
-    return PERFEXPERT_SUCCESS;
-}
-#endif
     
 #ifdef __cplusplus
 }
