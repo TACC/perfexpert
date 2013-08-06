@@ -9,6 +9,7 @@
 #include <sys/stat.h>
 #include <set>
 #include <map>
+#include <list>
 
 #include <omp.h>
 
@@ -156,8 +157,8 @@ void record (bool debugFlag, var_list** listHead, mynode* new_access, mynode* ol
 		new_access->core_home = old_access->core_home;
 
 		// Notice that we treat RR, RW and WW conflicts in the same manner here
-		if ((old_access->type_access == TYPE_READ && new_access->type_access == TYPE_READ) || (old_access->core_home >> 0) == (new_access->coreID >> 0))	l1_hit   = 1;
-		if ((old_access->type_access == TYPE_READ && new_access->type_access == TYPE_READ) || (old_access->core_home >> 1) == (new_access->coreID >> 1))	l2_hit   = 1;
+		if ((old_access->type_access == TYPE_READ && new_access->type_access == TYPE_READ) || (old_access->core_home >> 0) == (new_access->coreID >> 0))	l1_hit	 = 1;
+		if ((old_access->type_access == TYPE_READ && new_access->type_access == TYPE_READ) || (old_access->core_home >> 1) == (new_access->coreID >> 1))	l2_hit	 = 1;
 		if ((old_access->type_access == TYPE_READ && new_access->type_access == TYPE_READ) || (old_access->core_home >> 2) == (new_access->coreID >> 2))	numa_hit = 1;
 	}
 
@@ -490,8 +491,8 @@ void freeRecords(bool debugFlag, var_list* listHead)
 			ptr->numa_miss += localMetrics.numa_miss;
 
 			ptr->tot_dist += localMetrics.program_distance;
-			ptr->tot_lat  += localMetrics.program_latency;
-			ptr->tot_count+= localMetrics.program_count;
+			ptr->tot_lat += localMetrics.program_latency;
+			ptr->tot_count += localMetrics.program_count;
 
 			omp_unset_lock(&var_lock);
 		}
@@ -603,6 +604,15 @@ chunk** readRecords(FILE* fp, short* setCounter, bool debugFlag /*, std::tr1::un
 	return recordChunks;
 }
 
+bool compare_metrics(print_metrics* metrics_01, print_metrics* metrics_02)
+{
+	if (metrics_01 && metrics_02)
+		return metrics_01->observed_count >= metrics_02->observed_count;
+
+	// Whatevah!
+	return false;
+}
+
 void print_streams(bool bot, bool stream_names)
 {
 	if (!bot)
@@ -641,6 +651,17 @@ int main(int argc, char* argv[])
 	struct arg_info info;
 	memset (&info, 0, sizeof(struct arg_info));
 	argp_parse (&argp, argc, argv, 0, 0, &info);
+
+	if (info.arg2 == NULL)
+	{
+		info.threshold = 0.1;	// Default threshold of 10%
+		info.location = info.arg1;
+	}
+	else
+	{
+		sscanf(info.arg1, "%f", &info.threshold);
+		info.location = info.arg2;
+	}
 
 	FILE* fp = fopen(info.location, "r");
 	if (fp == NULL)
@@ -790,65 +811,92 @@ int main(int argc, char* argv[])
 
 	omp_destroy_lock(&var_lock);
 
-#define	MAX_STRIDE_COUNT	3
 	varMetrics* ptr = varMetricsHead;
+	std::list<print_metrics*> final_metrics_list;
+
+	long total_observed_count = 0;
 	while (ptr)
 	{
-		if (ptr->tot_count > 500)
+		print_metrics* metrics = new print_metrics();
+
+		metrics->var_name = var_idx[ptr->vIndex];
+		double reuse = ptr->reuse[0] + ptr->reuse[1] + ptr->reuse[2];
+
+		// Place stride_map values into a set
+		stride_list_t stride_list;
+
+		stride_info_t stride_info;
+		google::sparse_hash_map<long, long, hash<long>, eqlng>::iterator it;
+		for (it = ptr->stride_map.begin(); it != ptr->stride_map.end(); it++)
 		{
-			std::string var_name = var_idx[ptr->vIndex];
-			double reuse = ptr->reuse[0] + ptr->reuse[1] + ptr->reuse[2];
+			stride_info.first = it->first;	// Stride value
+			stride_info.second = it->second;	// Stride count
 
-			// Place stride_map values into a set
-			stride_list_t stride_list;
+			stride_list.push_back(stride_info);
+		}
 
-			stride_info_t stride_info;
-			google::sparse_hash_map<long, long, hash<long>, eqlng>::iterator it;
-			for (it = ptr->stride_map.begin(); it != ptr->stride_map.end(); it++)
-			{
-				stride_info.first = it->first;	// Stride value
-				stride_info.second = it->second;	// Stride count
+		std::sort(stride_list.begin(), stride_list.end(), sort_function);
 
-				stride_list.push_back(stride_info);
-			}
+		int i;
+		for (i=0; i<3 && i<stride_list.size(); i++)
+		{
+			metrics->stride_value[i] = stride_list[i].first;
+			metrics->stride_count[i] = stride_list[i].second;
+		}
 
-			std::sort(stride_list.begin(), stride_list.end(), sort_function);
+		for (; i<3; i++)
+		{
+			metrics->stride_value[i] = 0;
+			metrics->stride_count[i] = 0;
+		}
 
-			float avg_cpa = ptr->tot_lat /((double) ptr->tot_count);
+		total_observed_count += ptr->tot_count;
+		metrics->observed_count = ptr->tot_count;
+		metrics->avg_cpa = ptr->tot_lat /((double) ptr->tot_count);
+		metrics->l1_conflict_ratio = 100.0 * (1-ptr->l1_hit / ((double) (ptr->l1_hit + ptr->l1_miss)));
+		metrics->l2_conflict_ratio = 100.0 * (1-ptr->l2_hit / ((double) (ptr->l2_hit + ptr->l2_miss)));
+		metrics->numa_conflict_ratio = 100.0 * (1-ptr->numa_hit / ((double) (ptr->numa_hit + ptr->numa_miss)));
 
-			float l1_conflict_ratio = 100.0 * (1-ptr->l1_hit / ((double) (ptr->l1_hit + ptr->l1_miss)));
-			float l2_conflict_ratio = 100.0 * (1-ptr->l2_hit / ((double) (ptr->l2_hit + ptr->l2_miss)));
-			float numa_conflict_ratio = 100.0 * (1-ptr->numa_hit / ((double) (ptr->numa_hit + ptr->numa_miss)));
+		metrics->l1_reuse = 100.0 * ptr->reuse[0] / reuse;
+		metrics->l2_reuse = 100.0 * ptr->reuse[1] / reuse;
+		metrics->l3_reuse = 100.0 * ptr->reuse[2] / reuse;
 
-			float l1_reuse = 100.0 * ptr->reuse[0] / reuse;
-			float l2_reuse = 100.0 * ptr->reuse[1] / reuse;
-			float l3_reuse = 100.0 * ptr->reuse[2] / reuse;
+		final_metrics_list.push_back(metrics);
 
+		ptr = ptr->next;
+	}
+
+	final_metrics_list.sort(compare_metrics);
+
+	for (std::list<print_metrics*>::iterator i = final_metrics_list.begin(); i != final_metrics_list.end(); i++)
+	{
+		print_metrics* metrics = *i;
+
+		float observed_percentage = float(metrics->observed_count) / total_observed_count;
+		if (observed_percentage >= info.threshold)
+		{
 			if (!info.bot)
 			{
 				int i, max;
 				printf ("\n================================================================================\n");
-				printf ("Var \"%s\", seen %ld times, estimated to cost %.2f cycles on every access\n", var_name.c_str(), ptr->tot_count, avg_cpa);
+				printf ("Var \"%s\", seen %ld times [%.2f%%], estimated to cost %.2f cycles on every access\n", metrics->var_name.c_str(), metrics->observed_count, 100.0f * metrics->observed_count / total_observed_count, metrics->avg_cpa);
 
-				long count_sum=0;
-				for (int i=0; i<3 && i<stride_list.size(); i++)
-					count_sum += stride_list[i].second;
-
+				long count_sum = metrics->stride_count[0] + metrics->stride_count[1] + metrics->stride_count[2];
 				if (count_sum > 0)
 				{
-					for (int i=0; i<3 && i<stride_list.size(); i++)
-						printf ("Stride of %ld cache lines was observed %ld times (%.2f%%).\n", stride_list[i].first, stride_list[i].second, ((float) stride_list[i].second) / count_sum * 100.0f);
+					for (int i=0; i<3 && metrics->stride_count[i] > 0; i++)
+						printf ("Stride of %ld cache lines was observed %ld times (%.2f%%).\n", metrics->stride_value[i], metrics->stride_count[i], ((float) metrics->stride_count[i]) / count_sum * 100.0f);
 				}
 				else
 				{
-					for (int i=0; i<3 && i<stride_list.size(); i++)
-						printf ("Stride of %ld cache lines was observed %ld times.\n", stride_list[i].first, stride_list[i].second);
+					for (int i=0; i<3 && metrics->stride_count[i] > 0; i++)
+						printf ("Stride of %ld cache lines was observed %ld times.\n", metrics->stride_value[i], metrics->stride_count[i]);
 				}
 
 				printf ("\n");
 
-				printf ("Level 1 data cache conflicts = %.2f%% [", l1_conflict_ratio);
-				max = ceil(40.0f*((float) l1_conflict_ratio)/100.0f);
+				printf ("Level 1 data cache conflicts = %.2f%% [", metrics->l1_conflict_ratio);
+				max = ceil(40.0f*((float) metrics->l1_conflict_ratio)/100.0f);
 				for (i=0; i<max; i++)
 					printf ("#");
 
@@ -857,8 +905,8 @@ int main(int argc, char* argv[])
 
 				printf ("]\n");
 
-				printf ("Level 2 data cache conflicts = %.2f%% [", l2_conflict_ratio);
-				max = ceil(40.0f*((float) l2_conflict_ratio)/100.0f);
+				printf ("Level 2 data cache conflicts = %.2f%% [", metrics->l2_conflict_ratio);
+				max = ceil(40.0f*((float) metrics->l2_conflict_ratio)/100.0f);
 				for (i=0; i<max; i++)
 					printf ("#");
 
@@ -867,8 +915,8 @@ int main(int argc, char* argv[])
 
 				printf ("]\n");
 
-				printf ("NUMA data conflicts = %.2f%%          [", numa_conflict_ratio);
-				max = ceil(40.0f*((float) numa_conflict_ratio)/100.0f);
+				printf ("NUMA data conflicts = %.2f%%					[", metrics->numa_conflict_ratio);
+				max = ceil(40.0f*((float) metrics->numa_conflict_ratio)/100.0f);
 				for (i=0; i<max; i++)
 					printf ("#");
 
@@ -877,8 +925,8 @@ int main(int argc, char* argv[])
 
 				printf ("]\n\n");
 
-				printf ("Level 1 data cache reuse factor = %03.1f%% [", l1_reuse);
-				max = ceil(40.0f*((float) l1_reuse)/100.0f);
+				printf ("Level 1 data cache reuse factor = %03.1f%% [", metrics->l1_reuse);
+				max = ceil(40.0f*((float) metrics->l1_reuse)/100.0f);
 				for (i=0; i<max; i++)
 					printf ("#");
 
@@ -887,8 +935,8 @@ int main(int argc, char* argv[])
 
 				printf ("]\n");
 
-				printf ("Level 2 data cache reuse factor = %03.1f%% [", l2_reuse);
-				max = ceil(40.0f*((float) l2_reuse)/100.0f);
+				printf ("Level 2 data cache reuse factor = %03.1f%% [", metrics->l2_reuse);
+				max = ceil(40.0f*((float) metrics->l2_reuse)/100.0f);
 				for (i=0; i<max; i++)
 					printf ("#");
 
@@ -897,8 +945,8 @@ int main(int argc, char* argv[])
 
 				printf ("]\n");
 
-				printf ("Level 3 data cache reuse factor = %03.1f%% [", l3_reuse);
-				max = ceil(40.0f*((float) l3_reuse)/100.0f);
+				printf ("Level 3 data cache reuse factor = %03.1f%% [", metrics->l3_reuse);
+				max = ceil(40.0f*((float) metrics->l3_reuse)/100.0f);
 				for (i=0; i<max; i++)
 					printf ("#");
 
@@ -910,31 +958,33 @@ int main(int argc, char* argv[])
 			}
 			else
 			{
-				for (int i=0; i<3 && i<stride_list.size(); i++)
+				for (int i=0; i<3 && metrics->stride_count[i] > 0; i++)
 				{
-					printf ("%s.stride_%d.value=%ld\n", var_name.c_str(), i, stride_list[i].first);
-					printf ("%s.stride_%d.count=%ld\n", var_name.c_str(), i, stride_list[i].second);
+					printf ("%s.stride_%d.value=%ld\n", metrics->var_name.c_str(), i, metrics->stride_value[i]);
+					printf ("%s.stride_%d.count=%ld\n", metrics->var_name.c_str(), i, metrics->stride_count[i]);
 				}
 
-				// printf ("%s.avg_dist=%.2f\n", var_name.c_str(), ptr->tot_dist /((double) ptr->tot_count));
-				printf ("%s.count=%ld\n", var_name.c_str(), ptr->tot_count);
-				printf ("%s.avg_cpa=%.2f\n", var_name.c_str(), avg_cpa);
-				printf ("%s.l1_conflict_ratio=%.0f\n", var_name.c_str(), l1_conflict_ratio);
-				printf ("%s.l2_conflict_ratio=%.0f\n", var_name.c_str(), l2_conflict_ratio);
+				printf ("%s.count=%ld\n", metrics->var_name.c_str(), metrics->observed_count);
+				printf ("%s.percentage=%.2f\n", metrics->var_name.c_str(), 100.0f * metrics->observed_count / total_observed_count);
+				printf ("%s.avg_cpa=%.2f\n", metrics->var_name.c_str(), metrics->avg_cpa);
+				printf ("%s.l1_conflict_ratio=%.0f\n", metrics->var_name.c_str(), metrics->l1_conflict_ratio);
+				printf ("%s.l2_conflict_ratio=%.0f\n", metrics->var_name.c_str(), metrics->l2_conflict_ratio);
 				// printf ("%s.l3_conflict_ratio=%.0f\n", var_name.c_str(), 100.0 * (1-ptr->l3_hit / ((double) (ptr->l3_hit + ptr->l3_miss))));
-				printf ("%s.numa_conflict_ratio=%.0f\n", var_name.c_str(), numa_conflict_ratio);
-				printf ("%s.l1_reuse=%.0f\n", var_name.c_str(), l1_reuse);
-				printf ("%s.l2_reuse=%.0f\n", var_name.c_str(), l2_reuse);
-				printf ("%s.l3_reuse=%.0f\n", var_name.c_str(), l3_reuse);
+				printf ("%s.numa_conflict_ratio=%.0f\n", metrics->var_name.c_str(), metrics->numa_conflict_ratio);
+				printf ("%s.l1_reuse=%.0f\n", metrics->var_name.c_str(), metrics->l1_reuse);
+				printf ("%s.l2_reuse=%.0f\n", metrics->var_name.c_str(), metrics->l2_reuse);
+				printf ("%s.l3_reuse=%.0f\n", metrics->var_name.c_str(), metrics->l3_reuse);
 			}
 		}
-
-		ptr = ptr->next;
 	}
 
 	ptr = varMetricsHead;
 	while (ptr)
 	{
+		print_metrics* metrics = final_metrics_list.back();
+		final_metrics_list.pop_back();
+		free(metrics);
+
 		ptr = ptr->next;
 		free(varMetricsHead);
 		varMetricsHead = ptr;

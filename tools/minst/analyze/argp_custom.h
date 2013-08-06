@@ -3,7 +3,7 @@
 #define	ARGP_H_
 
 #include <argp.h>
-     
+
 struct argp_option options[4] =
 {
 	{ "debug", 'd', NULL, 0, "Output debug information", 0 },
@@ -14,7 +14,8 @@ struct argp_option options[4] =
 
 struct arg_info
 {
-	char *location;
+	float threshold;
+	char *arg1, *arg2, *location;
 	bool bot, showDebug, stream_names;
 };
 
@@ -29,10 +30,10 @@ static error_t parse_opt(int key, char* arg, struct argp_state *state)
 		case 's':	info->stream_names = true;		break;
 
 		case ARGP_KEY_ARG:
-			if (state->arg_num >= 1)
+			if (state->arg_num >= 2)
 				argp_usage(state);
 
-			info->location = arg;
+			state->arg_num == 0 ? info->arg1 = arg : info->arg2 = arg;
 			break;
 
 		case ARGP_KEY_END:
@@ -48,6 +49,6 @@ static error_t parse_opt(int key, char* arg, struct argp_state *state)
 	return 0;
 }
 
-struct argp argp = { options, parse_opt, "macpo.out", "Program to process reuse distances", 0, 0, 0 };
+struct argp argp = { options, parse_opt, "[threshold] macpo.out", "Program to process reuse distances", 0, 0, 0 };
 
 #endif /* ARGP_H_ */
