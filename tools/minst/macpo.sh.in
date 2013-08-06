@@ -79,6 +79,30 @@ else
 	tmp_gfort=/tmp/macpo.gfort
 fi
 
+# Check if we have a --help in the arguments
+for arg in $*
+do
+  if [ -n "$arg" ]
+  then
+    if [ "$arg" == "--help" -o "$arg" == "-h" ]
+    then
+      echo "Usage: macpo.sh [OPTIONS] [source file | object file ]"
+      echo "Wrapper script to compile code and instrument a specific function or loop."
+      echo
+      echo "  --macpo:instrument [default]    Instruct MACPO to instrument code"
+      echo "  --macpo:loopsplit               Instruct MACPO to split a given loop"
+      echo "  --macpo:noinst                  Do not make any changes to the code, just invoke the compiler"
+      echo "  --macpo:function=\"foo\"          Instrument array accesses in function foo"
+      echo "  --macpo:loop=\"foo:23\"           Instrument / split loop at line 23 in function foo"
+      echo "  --help                          Give this help list"
+      echo
+      echo "  In addition to these, all options accepted by GNU compilers can be passed to macpo.sh."
+
+      exit 0
+    fi
+  fi
+done
+
 # Finally, invoke the minst executable
 ${MINST_PATH} -I${MRT_INCLUDE_DIR} -L${MRT_LIB_DIR} $* -lmrt &> "$tmp_minst"
 
