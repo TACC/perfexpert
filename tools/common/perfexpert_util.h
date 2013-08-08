@@ -52,6 +52,14 @@ extern "C" {
 #include <stdlib.h>
 #endif
 
+#ifndef _SQLITE3_H_
+#include <sqlite3.h>
+#endif
+
+#ifndef INSTALL_DIRS_H
+#include "install_dirs.h"
+#endif
+
 #ifndef PERFEXPERT_CONSTANTS_H
 #include "perfexpert_constants.h"
 #endif
@@ -60,7 +68,7 @@ extern "C" {
 #include "perfexpert_output.h"
 #endif
 
-/* make_path: create an entire directory tree (if needed), like 'mkdir -p' */
+/* perfexpert_util_make_path: create an entire directory tree (if needed), like 'mkdir -p' */
 static int perfexpert_util_make_path(char *path, int nmode) {
     int oumask;
     char *p = NULL;
@@ -86,7 +94,7 @@ static int perfexpert_util_make_path(char *path, int nmode) {
     npath = (char *)malloc(strlen(path) + 1);
     if (NULL == npath) {
         OUTPUT(("%s", _ERROR((char *)"Error: out of memory")));
-        exit(PERFEXPERT_ERROR);
+        return PERFEXPERT_ERROR;
     }
     bzero(npath, strlen(path) + 1);
     strncpy(npath, path, strlen(path));
@@ -131,53 +139,53 @@ static int perfexpert_util_make_path(char *path, int nmode) {
     return PERFEXPERT_SUCCESS;
 }
 
-/* database_disconnect */
-static int database_disconnect(sqlite3 *db) {
+/* perfexpert_database_disconnect */
+static int perfexpert_database_disconnect(sqlite3 *db) {
     sqlite3_close(db);
 }
 
-/* database_connect */
-static int database_connect(void) {
+// TODO: add hack to lock database on Lustre filesystems
+// TODO: register a signal handler to enable database disconnection when a TERM or KILL signal is received
+/* perfexpert_database_connect */
+static int perfexpert_database_connect(sqlite3 **db, char *file) {
     /* Use default database if used does not define one */
-    if (NULL == globals.dbfile) {
-        globals.dbfile = (char *)malloc(strlen(RECOMMENDATION_DB) +
-                                        strlen(PERFEXPERT_VARDIR) + 2);
-        if (NULL == globals.dbfile) {
+    if (NULL == file) {
+        file = (char *)malloc(strlen(RECOMMENDATION_DB) +
+                                     strlen(PERFEXPERT_VARDIR) + 2);
+        if (NULL == file) {
             OUTPUT(("%s", _ERROR((char *)"Error: out of memory")));
-            exit(PERFEXPERT_ERROR);
+            return PERFEXPERT_ERROR;
         }
-        bzero(globals.dbfile,
-              strlen(RECOMMENDATION_DB) + strlen(PERFEXPERT_VARDIR) + 2);
-        sprintf(globals.dbfile, "%s/%s", PERFEXPERT_VARDIR, RECOMMENDATION_DB);
+        bzero(file, strlen(RECOMMENDATION_DB) + strlen(PERFEXPERT_VARDIR) + 2);
+        sprintf(file, "%s/%s", PERFEXPERT_VARDIR, RECOMMENDATION_DB);
     }
 
     /* Check if file exists and if it is writable */
-    if (-1 == access(globals.dbfile, F_OK)) {
-        OUTPUT(("%s (%s)",
-                _ERROR((char *)"Error: recommendation database doesn't exist"),
-                globals.dbfile));
+    if (-1 == access(file, F_OK)) {
+        OUTPUT(("%s (%s)", _ERROR((char *)"Error: file not found"), file));
         return PERFEXPERT_ERROR;
     }
-    if (-1 == access(globals.dbfile, W_OK)) {
-        OUTPUT(("%s (%s)", _ERROR((char *)"Error: you don't have permission to write"),
-                globals.dbfile));
+    if (-1 == access(file, W_OK)) {
+        OUTPUT(("%s (%s)",
+                _ERROR((char *)"Error: you don't have permission to write"),
+                file));
         return PERFEXPERT_ERROR;
     }
     
     /* Connect to the DB */
-    if (SQLITE_OK != sqlite3_open(globals.dbfile, &(globals.db))) {
+    if (SQLITE_OK != sqlite3_open(file, db)) {
         OUTPUT(("%s (%s), %s", _ERROR((char *)"Error: openning database"),
-                globals.dbfile, sqlite3_errmsg(globals.db)));
-        database_disconnect(globals.db);
+                file, sqlite3_errmsg(*db)));
+        perfexpert_database_disconnect(*db);
         return PERFEXPERT_ERROR;
-    } else {
-        OUTPUT_VERBOSE((4, "connected to %s", globals.dbfile));
     }
+
+    OUTPUT_VERBOSE((4, "connected to %s", file));
     return PERFEXPERT_SUCCESS;
 }
 
-/* get_int */
-static int get_int(void *var, int count, char **val, char **names) {
+/* perfexpert_database_get_int */
+static int perfexpert_database_get_int(void *var, int count, char **val, char **names) {
     int *temp = (int *)var;
     if (NULL != val[0]) {
         *temp = atoi(val[0]);
@@ -185,8 +193,8 @@ static int get_int(void *var, int count, char **val, char **names) {
     return PERFEXPERT_SUCCESS;
 }
 
-/* get_double */
-static int get_double(void *var, int count, char **val, char **names) {
+/* perfexpert_database_get_double */
+static int perfexpert_database_get_double(void *var, int count, char **val, char **names) {
     double *temp = (double *)var;
     if (NULL != val[0]) {
         *temp = atof(val[0]);
