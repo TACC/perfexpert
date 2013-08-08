@@ -90,7 +90,7 @@ extern globals_t globals; /**< Variable to hold global options */
 #include "perfexpert_output.h"
 #endif
 
-/** Structure to handle command line arguments. Try to keep the content of
+/** Structure to handles command line arguments. Try to keep the content of
  *  this structure compatible with the parse_cli_params() and show_help().
  */
 static struct option long_options[] = {
@@ -147,8 +147,10 @@ static int  parse_env_vars(void);
 static int  parse_cli_params(int argc, char *argv[]);
 static int  parse_metrics_file(void);
 static int  parse_segment_params(perfexpert_list_t *segments_p);
-static int  output_recommendations(void *var, int count, char **val, char **names);
-static int  accumulate_functions(void *functions, int count, char **val, char **names);
+static int  output_recommendations(void *var, int count, char **val,
+    char **names);
+static int  accumulate_functions(void *functions, int count, char **val,
+    char **names);
 static int  select_recommendations(segment_t *segment);
 
 #ifdef __cplusplus

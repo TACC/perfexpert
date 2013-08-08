@@ -27,7 +27,7 @@
 
 bin_PROGRAMS = recommender
 
-recommender_SOURCES = recommender.c
+recommender_SOURCES = main.c
 recommender_CPPFLAGS = -I$(srcdir)/../common
 recommender_LDFLAGS = -lsqlite3
 

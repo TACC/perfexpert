@@ -242,60 +242,6 @@ AS_IF([test x"$BASH_PROGRAM" == x"no"],
     [AC_MSG_ERROR([Most of our scripts require the Bash shell.])], [])
 
 #------------------------------------------------------------------------------
-# From this point, we can install all the dependencies
-#
-#AC_ARG_ENABLE([make-all-deps],
-#    [AS_HELP_STRING([--enable-make-all-deps],
-#        [Use this argument to install all dependecies, such as ROSE, PIPS, GMP,
-#        HPCToolKit, Google SparseHash, and their dependencies. Unfortunatelly,
-#        we cannot install PAPI, SQLite3 and JAVA for you])], [
-#    MAKE_ROSE=yes
-#    MAKE_PIPS=yes
-#    MAKE_HPCTOOLKIT=yes
-#    MAKE_GMP=yes
-#    MAKE_GSH=yes
-#], [])
-
-#AC_ARG_ENABLE([make-rose],
-#    [AS_HELP_STRING([--enable-make-rose],
-#        [Use this argument to install ROSE])],
-#    [MAKE_ROSE=yes], [])
-
-#AC_ARG_ENABLE([make-pips],
-#    [AS_HELP_STRING([--enable-make-pips],
-#        [Use this argument to install PIPS])],
-#    [MAKE_PIPS=yes], [])
-
-#AC_ARG_ENABLE([make-hpctoolkit],
-#    [AS_HELP_STRING([--enable-make-hpctoolkit],
-#        [Use this argument to install HPCToolKit])],
-#    [MAKE_HPCTOOLKIT=yes], [])
-
-#AC_ARG_ENABLE([make-gmp],
-#    [AS_HELP_STRING([--enable-make-gmp],
-#        [Use this argument to install GNU Multiple Precision Arithmetic Library])],
-#    [MAKE_GMP=yes], [])
-
-#AC_ARG_ENABLE([make-gsh],
-#    [AS_HELP_STRING([--enable-make-gsh],
-#        [Use this argument to install Google's Sparsehash heders])],
-#    [MAKE_GSH=yes], [])
-
-#AC_ARG_ENABLE([ant],
-#    [AS_HELP_STRING([--enable-ant],
-#        [Use this argument if you do not have Apache ANT installed])],
-#    [MAKE_ANT=yes], [])
-
-#AC_CONFIG_FILES([external/Makefile])
-
-#AM_CONDITIONAL([MAKE_ROSE],       [test x"$MAKE_ROSE" = x"yes"])
-#AM_CONDITIONAL([MAKE_PISP],       [test x"$MAKE_PIPS" = x"yes"])
-#AM_CONDITIONAL([MAKE_HPCTOOLKIT], [test x"$MAKE_HPCTOOLKIT" = x"yes"])
-#AM_CONDITIONAL([MAKE_GMP],        [test x"$MAKE_GMP" = x"yes"])
-#AM_CONDITIONAL([MAKE_GSH],        [test x"$MAKE_GSH" = x"yes"])
-#AM_CONDITIONAL([MAKE_ANT],        [test x"$MAKE_ANT" = x"yes"])
-
-#------------------------------------------------------------------------------
 # Checks for GNU Multiple Precision Arithmetic Library
 #
 AC_CHECK_LIB([gmp], [__gmpf_init, __gmpf_clear], [WITH_GMP_SUPPORT=yes],
@@ -312,16 +258,16 @@ AC_CHECK_HEADER([gmp.h], [
 #------------------------------------------------------------------------------
 # Checks for PIPS, optionally, using an argument (required for perfexpert_ct)
 #
-AC_ARG_WITH([pips],
-    [AS_HELP_STRING([--with-pips],
-        [Use this argument to set where PIPS binaries are installed (not
-        necessary if it is in the PATH). TPIPS (one of PIPS binaries) is
-        necessary to compile PerfExpert:CT])], [
-    PIPS_PATH="$withval"
-    AC_PATH_TOOL([TPIPS_PROGRAM], [tpips], [no], [$PIPS_PATH/bin])
-    AS_IF([test x"$TPIPS_PROGRAM" = x"no"],
-        [AC_MSG_ERROR([TPIPS not found in $PIPS_PATH])])], [
-    AC_PATH_TOOL([TPIPS_PROGRAM], [tpips], [no])])
+#AC_ARG_WITH([pips],
+#    [AS_HELP_STRING([--with-pips],
+#        [Use this argument to set where PIPS binaries are installed (not
+#        necessary if it is in the PATH). TPIPS (one of PIPS binaries) is
+#        necessary to compile PerfExpert:CT])], [
+#    PIPS_PATH="$withval"
+#    AC_PATH_TOOL([TPIPS_PROGRAM], [tpips], [no], [$PIPS_PATH/bin])
+#    AS_IF([test x"$TPIPS_PROGRAM" = x"no"],
+#        [AC_MSG_ERROR([TPIPS not found in $PIPS_PATH])])], [
+#    AC_PATH_TOOL([TPIPS_PROGRAM], [tpips], [no])])
 
 #------------------------------------------------------------------------------
 # Find Apache ANT, optionally, using an argument (required for Analyzer)
@@ -554,7 +500,7 @@ AC_ARG_ENABLE([recommender],
         [Enable/Disable the optimization recommender tool [default=enabled]])],
     [ENABLE_RECOMMENDER=$enableval], [ENABLE_RECOMMENDER=yes])
 
-AC_MSG_CHECKING([whether to enable the Optimization Recommender])
+AC_MSG_CHECKING([whether to enable the optimization recommender tool])
 AS_IF([test x"$ENABLE_RECOMMENDER" = x"yes"], [
     AC_MSG_RESULT([yes])
 
@@ -571,84 +517,44 @@ AS_IF([test x"$ENABLE_RECOMMENDER" = x"yes"], [
 AC_SUBST([ENABLE_RECOMMENDER])
 
 #------------------------------------------------------------------------------
-# Enable/Disable 'perfexpert_pr'
+# Enable/Disable 'perfexpert_ct'
 #
-# It looks like there is a bug while checking for LEX which makes the LEX check
-# result appears before the result message (yes/no).
-#
-AC_ARG_ENABLE([perfexpert_pr],
-    [AS_HELP_STRING([--disable-perfexpert_pr],
-        [Enable/Disable the pattern recognizer tool [default=enabled]])],
-    [ENABLE_PR=$enableval], [ENABLE_PR=yes])
+AC_ARG_ENABLE([perfexpert_ct],
+    [AS_HELP_STRING([--disable-perfexpert_ct],
+        [Enable/Disable the code transformation tool [default=enabled]])],
+    [ENABLE_CT=$enableval], [ENABLE_CT=yes])
 
-AC_MSG_CHECKING([whether to enable PerfExpert Pattern Recognizer])
-AS_IF([test x"$ENABLE_PR" = x"yes"], [
+AC_MSG_CHECKING([whether to enable code transformation])
+AS_IF([test x"$ENABLE_CT" = x"yes"], [
     AC_MSG_RESULT([yes])
+
+    # SQLite is required
+    AS_IF([test x"$WITH_SQLITE3_SUPPORT" = x"no"],
+        [AC_MSG_ERROR([Please install SQLite3])], [])
 
     # Check for Lex/Flex and Yacc/Bison
     AC_PROG_LEX
     AC_PROG_YACC
 
-    ENABLE_PR=pr
-    AC_CONFIG_FILES([tools/pr/Makefile])
-    AC_CONFIG_FILES([tools/pr/nested_c_loops/Makefile])
-], [
-    AC_MSG_RESULT([no])
-    ENABLE_PR=
-])
-AC_SUBST([ENABLE_PR])
-
-#------------------------------------------------------------------------------
-# Enable/Disable 'perfexpert_ct'
-#
-AC_MSG_CHECKING([whether to enable PerfExpert Code Transformer])
-AC_ARG_ENABLE([perfexpert_ct],
-    [AS_HELP_STRING([--disable-perfexpert_ct],
-        [Enable/Disable the code transformer tool [default=enabled]])],
-    [ENABLE_CT=$enableval], [ENABLE_CT=yes])
-
-AS_IF([test x"$ENABLE_CT" = x"yes"], [
-    AC_MSG_RESULT([yes])
+    # ROSE is required
+    AS_IF([test x"$WITH_ROSE_SUPPORT" = x"no"],
+        [AC_MSG_ERROR([ROSE not found, try using '--with-rose'])], [])
 
     # PIPS is required
-    AS_IF([test x"$TPIPS_PROGRAM" = x"no"],
-        [AC_MSG_ERROR([TPIPS not found, try using '--with-pips'])], [])
-
-    AC_CONFIG_FILES([tools/ct/c_loop_interchange/Makefile])
-    AC_CONFIG_FILES([tools/ct/c_loop_interchange/ct_c_loop_interchange.sh],
-        [chmod +x tools/ct/c_loop_interchange/ct_c_loop_interchange.sh])
+    #AS_IF([test x"$TPIPS_PROGRAM" = x"no"],
+    #    [AC_MSG_ERROR([TPIPS not found, try using '--with-pips'])], [])
 
     ENABLE_CT=ct
     AC_CONFIG_FILES([tools/ct/Makefile])
+    AC_CONFIG_FILES([tools/ct/recognizers/Makefile])
+    AC_CONFIG_FILES([tools/ct/recognizers/nested_c_loops/Makefile])
+    AC_CONFIG_FILES([tools/ct/transformers/Makefile])
+    AC_CONFIG_FILES([tools/ct/transformers/c_loop_interchange/Makefile])
 ], [
     AC_MSG_RESULT([no])
     ENABLE_CT=
 ])
 AC_SUBST([ENABLE_CT])
-
-#------------------------------------------------------------------------------
-# Enable/Disable 'perfexpert_ci'
-#
-AC_MSG_CHECKING([whether to enable PerfExpert Code Integrator])
-AC_ARG_ENABLE([perfexpert_ci],
-    [AS_HELP_STRING([--disable-perfexpert_ci],
-        [Enable/Disable the code integrator tool [default=enabled]])],
-    [ENABLE_CI=$enableval], [ENABLE_CI=yes])
-
-AS_IF([test x"$ENABLE_CI" = x"yes"], [
-    AC_MSG_RESULT(yes)
-
-    # ROSE is required
-    AS_IF([test x"$WITH_ROSE_SUPPORT" = x"no"],
-        [AC_MSG_ERROR([ROSE not found, try using '--with-rose'])], [])
-
-    ENABLE_CI=ci
-    AC_CONFIG_FILES([tools/ci/Makefile])
-], [
-    AC_MSG_RESULT(no)
-    ENABLE_CI=
-])
-AC_SUBST([ENABLE_CI])
 
 #------------------------------------------------------------------------------
 # Generate the ninja-super-power-script perfexpert.sh
@@ -663,9 +569,7 @@ AC_MSG_NOTICE([========================================================])
 AC_MSG_NOTICE([ Analyzer:                  $ENABLE_ANALYZER            ])
 AC_MSG_NOTICE([ Minst (MACPO):             $ENABLE_MINST               ])
 AC_MSG_NOTICE([ Optimizations Recommender: $ENABLE_RECOMMENDER         ])
-AC_MSG_NOTICE([ Code Pattern Recognizer:   $ENABLE_PR                  ])
 AC_MSG_NOTICE([ Code Transformer:          $ENABLE_CT                  ])
-AC_MSG_NOTICE([ Code Integrator:           $ENABLE_CI                  ])
 AC_MSG_NOTICE([                                                        ])
 AC_MSG_NOTICE([ Debug mode: $ENABLE_DEBUG                              ])
 AC_MSG_NOTICE([ PAPI:       $HAVE_PAPI_HEADER                          ])

@@ -154,7 +154,8 @@ static inline int perfexpert_list_is_empty(perfexpert_list_t* list) {
  * @param[in] list   The list container
  * @retval    item_t A pointer to the first item on the list
  */
-static inline perfexpert_list_item_t* perfexpert_list_get_first(perfexpert_list_t* list) {
+static inline perfexpert_list_item_t* perfexpert_list_get_first(
+    perfexpert_list_t* list) {
     perfexpert_list_item_t* item = (perfexpert_list_item_t*)list->sentinel.next;
     return item;
 }
@@ -177,8 +178,8 @@ static inline size_t perfexpert_list_get_size(perfexpert_list_t* list) {
  * @retval    item_t A pointer to the item on the list previous to the one that
  *                   was removed.
  */
-static inline perfexpert_list_item_t *perfexpert_list_remove_item(perfexpert_list_t *list,
-                                                                  perfexpert_list_item_t *item) {
+static inline perfexpert_list_item_t *perfexpert_list_remove_item(
+    perfexpert_list_t *list, perfexpert_list_item_t *item) {
     item->prev->next = item->next;
     item->next->prev = item->prev;
     list->length--;

@@ -59,14 +59,11 @@ extern "C" {
 /** Structure to hold global variables */
 typedef struct {
     int  verbose_level;
-    int  use_stdin;
-    int  use_stdout;
     char *inputfile;
     FILE *inputfile_FP;
     char *outputfile;
     FILE *outputfile_FP;
     int  colorful;
-    int  automatic;
     char *workdir;
     char *dbfile;
     sqlite3 *db;
@@ -89,15 +86,15 @@ extern globals_t globals; /**< Variable to hold global options */
  *  this structure compatible with the parse_cli_params() and show_help().
  */
 static struct option long_options[] = {
-    {"verbose_level",   required_argument, NULL, 'l'},
-    {"verbose",         no_argument,       NULL, 'v'},
+    {"automatic",       required_argument, NULL, 'a'},
+    {"database",        required_argument, NULL, 'd'},
+    {"colorful",        no_argument,       NULL, 'c'},
     {"inputfile",       required_argument, NULL, 'f'},
     {"help",            no_argument,       NULL, 'h'},
+    {"verbose_level",   required_argument, NULL, 'l'},
     {"outputfile",      required_argument, NULL, 'o'},
-    {"colorful",        no_argument,       NULL, 'c'},
-    {"automatic",       required_argument, NULL, 'a'},
-    {"transfall",       no_argument,       NULL, 't'},
     {"perfexpert_pid",  required_argument, NULL, 'p'},
+    {"verbose",         no_argument,       NULL, 'v'},
     {0, 0, 0, 0}
 };
 
@@ -107,32 +104,39 @@ typedef struct node {
     char *value;
 } node_t;
 
-/** Ninja structure to hold a list of transformations to apply */
-typedef struct transf {
+/** Ninja structure to hold a list of tests to perform */
+typedef struct test {
     volatile perfexpert_list_item_t *next;
     volatile perfexpert_list_item_t *prev;
     char *program;
-    char *fragment_file;
-    int  fragment_line_number;
-    char *filename;
-    int  line_number;
-    char *code_type;
-    char *function_name;
-    int  *transf_result;
-    char **transf_function;
-    int  fragment_id;
-} transf_t;
+    char *file;
+    int  *result;
+} test_t;
+
+/** Structure to hold patterns */
+typedef struct pattern {
+    volatile perfexpert_list_item_t *next;
+    volatile perfexpert_list_item_t *prev;
+    int  id;
+    char *program;
+} pattern_t;
 
 /** Structure to hold transformations */
 typedef struct transformation {
     volatile perfexpert_list_item_t *next;
     volatile perfexpert_list_item_t *prev;
+    int  id;
     char *program;
-    char *fragment_file;
-    int  line_number;
-    int  transf_result;
-    char *transf_function;
+    perfexpert_list_t patterns;
 } transformation_t;
+
+/** Structure to hold recommendations */
+typedef struct recommendation {
+    volatile perfexpert_list_item_t *next;
+    volatile perfexpert_list_item_t *prev;
+    int id;
+    perfexpert_list_t transformations;
+} recommendation_t;
 
 /** Structure to hold fragments */
 typedef struct fragment {
@@ -140,20 +144,51 @@ typedef struct fragment {
     volatile perfexpert_list_item_t *prev;
     char *filename;
     int  line_number;
-    char *code_type;
     char *function_name;
-    perfexpert_list_t transformations;
+    char *code_type;
+    int  rowid;
+    int  loop_depth;
+    perfexpert_list_t recommendations;
+    /* The fields below have local information */
+    char *fragment_file;
+    char *outer_loop_fragment_file;
+    char *outer_outer_loop_fragment_file;
+    int  outer_loop_line_number;
+    int  outer_outer_loop_line_number;
+    int  pattern_test_result;
+    int  pattern_outer_loop_test_result;
+    int  pattern_outer_outer_loop_test_result;
 } fragment_t;
 
 /* Function declarations */
+int ct_main(int argc, char** argv);
 static void show_help(void);
 static int  parse_env_vars(void);
 static int  parse_cli_params(int argc, char *argv[]);
-static int  parse_transformation_params(perfexpert_list_t *segments_p);
-static int  apply_transformations(perfexpert_list_t *fragments_p);
-static int  apply_one(transf_t *transf);
-static int  output_results(perfexpert_list_t *fragments_p);
-    
+static int  parse_transformation_params(perfexpert_list_t *fragments);
+static int  select_transformations(fragment_t *fragment);
+static int  accumulate_transformations(void *recommendation,
+    int count, char **val, char **names);
+static int  accumulate_patterns(void *transformation, int count,
+    char **val, char **names);
+static int  apply_recommendations(fragment_t *fragment);
+static int  apply_transformations(fragment_t *fragment,
+    recommendation_t *recommendation);
+static int  apply_patterns(fragment_t *fragment,
+    recommendation_t *recommendation, transformation_t *transformation);
+static int  test_transformation(fragment_t *fragment,
+    recommendation_t *recommendation, transformation_t *transformation);
+static int  test_pattern(fragment_t *fragment, recommendation_t *recommendation,
+    transformation_t *transformation, pattern_t *pattern);
+static int  run_transformer(fragment_t *fragment,
+    recommendation_t *recommendation, transformation_t *transformation);
+static int  run_recognizer(test_t *test);
+
+int open_rose(const char *source_file);
+int close_rose(void);
+int extract_fragment(fragment_t *fragment);
+int extract_source(void);
+
 #ifdef __cplusplus
 }
 #endif
