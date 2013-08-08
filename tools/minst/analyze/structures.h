@@ -62,7 +62,7 @@ static int valcmp(void* i1, void* i2, NODE n)
 
 static unsigned int nodesize(void* i)
 {
-	return  sizeof(mynode);
+	return	sizeof(mynode);
 }
 
 /* Reuse records declarations */
@@ -104,7 +104,6 @@ typedef struct tagMetrics
 	long l1_reuse_count[3], l2_reuse_count[3], l3_reuse_count[3];
 } metrics;
 
-#define MAX_STRIDE_VALUES	5
 typedef struct tagVarMetrics
 {
 	// char var_name[EXT_VAR_LEN];
@@ -121,6 +120,19 @@ typedef struct tagVarMetrics
 
 	struct tagVarMetrics* next;
 } varMetrics;
+
+typedef struct {
+	std::string var_name;
+
+	int stride_value[3];
+	long stride_count[3];
+
+	long observed_count;
+	float avg_cpa;
+	float l1_conflict_ratio, l2_conflict_ratio, numa_conflict_ratio;
+
+	float l1_reuse, l2_reuse, l3_reuse;
+} print_metrics;
 
 typedef struct tagSet
 {
