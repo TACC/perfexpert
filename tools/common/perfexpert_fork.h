@@ -193,22 +193,37 @@ static int fork_and_wait(test_t *test, char *argv[]) {
 
     /* Evaluating the result */
     switch (rc >> 8) {
-        case -1: /* Error during fork() or waitpid() */
+        case PERFEXPERT_FAILURE: /* (-1) Error during fork() or waitpid() */
             OUTPUT_VERBOSE((7, "      [%s] [%s] >> [%s]",
                             _BOLDYELLOW((char *)"ERROR"), argv[0], test->info));
             return rc >> 8;
 
-        case 0: /* The pattern matches */
+        case PERFEXPERT_SUCCESS: /* (0) The pattern matches */
             OUTPUT_VERBOSE((7, "      [ %s  ] [%s] >> [%s]",
                             _BOLDGREEN((char *)"OK"), argv[0], test->info));
             return rc >> 8;
 
-        case 255: /* The pattern doesn't match */
+        case PERFEXPERT_NO_REC: /* (2) The pattern matches */
+            OUTPUT_VERBOSE((7, "      [%s] [%s] >> [%s]",
+                            _BOLDYELLOW((char *)"NOREC"), argv[0], test->info));
+            return rc >> 8;
+
+        case PERFEXPERT_NO_PAT: /* (3) The pattern matches */
+            OUTPUT_VERBOSE((7, "      [%s] [%s] >> [%s]",
+                            _BOLDYELLOW((char *)"NOPAT"), argv[0], test->info));
+            return rc >> 8;
+
+        case PERFEXPERT_NO_TRANS: /* (4) The pattern matches */
+            OUTPUT_VERBOSE((7, "      [%s] [%s] >> [%s]",
+                            _BOLDYELLOW((char *)"NOTRA"), argv[0], test->info));
+            return rc >> 8;
+
+        case 127: /* Execution failed */
             OUTPUT_VERBOSE((7, "      [%s ] [%s] >> [%s]",
                             _BOLDRED((char *)"FAIL"), argv[0], test->info));
             return rc >> 8;
 
-        case 127: /* Execution failed */
+        case 255: /* The pattern doesn't match */
             OUTPUT_VERBOSE((7, "      [%s ] [%s] >> [%s]",
                             _BOLDRED((char *)"FAIL"), argv[0], test->info));
             return rc >> 8;
