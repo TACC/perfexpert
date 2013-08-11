@@ -50,6 +50,7 @@ globals_t globals; // Variable to hold global options, this one is OK
 int main(int argc, char** argv) {
     char workdir[] = ".perfexpert-temp.XXXXXX";
     char temp_str[2][BUFFER_SIZE];
+    int rc = PERFEXPERT_ERROR;
 
     /* Set default values for globals */
     globals = (globals_t) {
@@ -75,14 +76,14 @@ int main(int argc, char** argv) {
     /* Parse command-line parameters */
     if (PERFEXPERT_SUCCESS != parse_cli_params(argc, argv)) {
         OUTPUT(("%s", _ERROR("Error: parsing command line arguments")));
-        return PERFEXPERT_ERROR;
+        goto clean_up;
     }
 
     /* Create a work directory */
     globals.workdir = mkdtemp(workdir);
     if (NULL == globals.workdir) {
         OUTPUT(("%s", _ERROR("Error: creating working directory")));
-        return PERFEXPERT_ERROR;
+        goto clean_up;
     }
     OUTPUT_VERBOSE((5, "   %s %s", _YELLOW("workdir:"), globals.workdir));
 
@@ -97,7 +98,7 @@ int main(int argc, char** argv) {
             if (PERFEXPERT_SUCCESS != perfexpert_util_file_copy(temp_str[1],
                                                                 temp_str[0])) {
                 OUTPUT(("%s", _ERROR((char *)"Error: unable to copy file")));
-                return PERFEXPERT_ERROR;
+                goto clean_up;
             }
         }
         globals.dbfile = temp_str[1];
@@ -105,7 +106,7 @@ int main(int argc, char** argv) {
     } else {
         if (PERFEXPERT_SUCCESS != perfexpert_util_file_exists(globals.dbfile)) {
             OUTPUT(("%s", _ERROR((char *)"Error: database file not found")));
-            return PERFEXPERT_ERROR;
+            goto clean_up;
         }
     }
 
@@ -115,14 +116,14 @@ int main(int argc, char** argv) {
         globals.stepdir = (char *)malloc(strlen(globals.workdir) + 5);
         if (NULL == globals.stepdir) {
             OUTPUT(("%s", _ERROR("Error: out of memory")));
-            return PERFEXPERT_ERROR;
+            goto clean_up;
         }
         bzero(globals.stepdir, strlen(globals.workdir) + 5);
         sprintf(globals.stepdir, "%s/%d", globals.workdir, globals.step);
         if (PERFEXPERT_ERROR == perfexpert_util_make_path(globals.stepdir,
             0755)) {
             OUTPUT(("%s", _ERROR((char *)"Error: cannot create step workdir")));
-            return PERFEXPERT_ERROR;
+            goto clean_up;
         }
         OUTPUT_VERBOSE((5, "   %s %s", _YELLOW("stepdir:"), globals.stepdir));
 
@@ -130,20 +131,20 @@ int main(int argc, char** argv) {
         if ((NULL != globals.sourcefile) || (NULL != globals.target)) {
             if (PERFEXPERT_SUCCESS != compile_program()) {
                 OUTPUT(("%s", _ERROR("Error: program compilation failed")));
-                return PERFEXPERT_ERROR;
+                goto clean_up;
             }
         }
 
         /* Call HPCToolkit and stuff (former perfexpert_run_exp) */
         if (PERFEXPERT_SUCCESS != measurements()) {
             OUTPUT(("%s", _ERROR("Error: unable to take measurements")));
-            return PERFEXPERT_ERROR;
+            goto clean_up;
         }
 
         /* Call analyzer and stuff (former perfexpert) */
         if (PERFEXPERT_SUCCESS != analysis()) {
             OUTPUT(("%s", _ERROR("Error: unable to run analyzer")));
-            return PERFEXPERT_ERROR;
+            goto clean_up;
         }
 
         /* Call recommender */
@@ -151,11 +152,17 @@ int main(int argc, char** argv) {
             case PERFEXPERT_ERROR:
             case PERFEXPERT_FAILURE:
                 OUTPUT(("%s", _ERROR("Error: unable to run recommender")));
-                return PERFEXPERT_ERROR;
+                goto clean_up;
 
             case PERFEXPERT_NO_REC:
+                OUTPUT(("No recommendation found"));
                 // TODO: show analysis
-                break;
+
+                rc = PERFEXPERT_NO_REC;
+                goto clean_up;
+
+            case PERFEXPERT_SUCCESS:
+                rc = PERFEXPERT_SUCCESS;
         }
 
         /* Call code transformer */
@@ -163,16 +170,23 @@ int main(int argc, char** argv) {
             case PERFEXPERT_ERROR:
             case PERFEXPERT_FAILURE:
                 OUTPUT(("%s", _ERROR("Error: unable to run code transformer")));
-                return PERFEXPERT_ERROR;
+                goto clean_up;
 
             case PERFEXPERT_NO_TRANS:
+                OUTPUT(("Unable to apply code transformations"));
                 // TODO: show analysis and recommendations
-                break;
+
+                rc = PERFEXPERT_NO_TRANS;
+                goto clean_up;
+
+            case PERFEXPERT_SUCCESS:
+                rc = PERFEXPERT_SUCCESS;
         }
 
         globals.step++;
     }
 
+    clean_up:
     /* TODO: Should I remove the garbage? */
     if (!globals.left_garbage) {
     }
@@ -182,7 +196,7 @@ int main(int argc, char** argv) {
         free(globals.stepdir);
     }
 
-    return PERFEXPERT_SUCCESS;
+    return rc;
 }
 
 /* show_help */

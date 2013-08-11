@@ -196,27 +196,27 @@ static int fork_and_wait(test_t *test, char *argv[]) {
         case -1: /* Error during fork() or waitpid() */
             OUTPUT_VERBOSE((7, "      [%s] [%s] >> [%s]",
                             _BOLDYELLOW((char *)"ERROR"), argv[0], test->info));
-            return PERFEXPERT_ERROR;
+            return rc >> 8;
 
         case 0: /* The pattern matches */
             OUTPUT_VERBOSE((7, "      [ %s  ] [%s] >> [%s]",
                             _BOLDGREEN((char *)"OK"), argv[0], test->info));
-            return PERFEXPERT_SUCCESS;
+            return rc >> 8;
 
         case 255: /* The pattern doesn't match */
             OUTPUT_VERBOSE((7, "      [%s ] [%s] >> [%s]",
                             _BOLDRED((char *)"FAIL"), argv[0], test->info));
-            return PERFEXPERT_FAILURE;
+            return rc >> 8;
 
         case 127: /* Execution failed */
             OUTPUT_VERBOSE((7, "      [%s ] [%s] >> [%s]",
                             _BOLDRED((char *)"FAIL"), argv[0], test->info));
-            return PERFEXPERT_FAILURE;
+            return rc >> 8;
 
         default: /* Not sure what happened */
             OUTPUT_VERBOSE((7, "      [%s] [%s] >> [%s]",
                             _MAGENTA((char *)"UNDEF"), argv[0], test->info));
-            return PERFEXPERT_UNDEFINED;
+            return rc >> 8;
     }
 }
 
