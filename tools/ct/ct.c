@@ -138,8 +138,7 @@ int ct_main(int argc, char** argv) {
         switch (apply_recommendations(fragment)) {
             case PERFEXPERT_NO_TRANS:
                 OUTPUT(("%s", _GREEN("Sorry, we have no transformations")));
-                /* Move to the next code bottleneck */
-                fragment = (fragment_t *)perfexpert_list_get_next(fragment);
+                goto move_on;
                 continue;
 
             case PERFEXPERT_SUCCESS:
@@ -154,6 +153,7 @@ int ct_main(int argc, char** argv) {
         }
 
         /* Move to the next code bottleneck */
+        move_on:
         fragment = (fragment_t *)perfexpert_list_get_next(fragment);
     }
 
@@ -166,7 +166,7 @@ int ct_main(int argc, char** argv) {
         fclose(globals.outputfile_FP);
     }
     perfexpert_database_disconnect(globals.db);
-    return PERFEXPERT_SUCCESS;
+    return rc;
 }
 
 /* show_help */
@@ -722,7 +722,7 @@ static int apply_recommendations(fragment_t *fragment) {
 static int apply_transformations(fragment_t *fragment,
     recommendation_t *recommendation) {
     transformation_t *transformation;
-    int rc = PERFEXPERT_FAILURE;
+    int rc = PERFEXPERT_NO_TRANS;
 
     /* Return when there is no transformations for this recommendation */
     if (0 == perfexpert_list_get_size(&(recommendation->transformations))) {
@@ -965,12 +965,12 @@ static int test_pattern(fragment_t *fragment, recommendation_t *recommendation,
     test->info  = fragment->fragment_file;
     test->input = fragment->fragment_file;
     temp_str = (char *)malloc(strlen(fragment->fragment_file) +
-                              strlen(".output"));
+                              strlen(".output") + 1);
     if (NULL == temp_str) {
         OUTPUT(("%s", _ERROR("Error: out of memory")));
         return PERFEXPERT_ERROR;
     }
-    bzero(temp_str, strlen(fragment->fragment_file) + strlen(".output"));
+    bzero(temp_str, strlen(fragment->fragment_file) + strlen(".output") + 1);
     test->output = temp_str;
 
     /* It we're testing for a loop, check for the outer loop */
@@ -989,13 +989,13 @@ static int test_pattern(fragment_t *fragment, recommendation_t *recommendation,
         test->info  = fragment->outer_loop_fragment_file;
         test->input = fragment->outer_loop_fragment_file;
         temp_str = (char *)malloc(strlen(fragment->outer_loop_fragment_file) +
-                                  strlen(".output"));
+                                  strlen(".output") + 1);
         if (NULL == temp_str) {
             OUTPUT(("%s", _ERROR("Error: out of memory")));
             return PERFEXPERT_ERROR;
         }
         bzero(temp_str, strlen(fragment->outer_loop_fragment_file) +
-                        strlen(".output"));
+                        strlen(".output") + 1);
         test->output = temp_str;
 
         /* And test for the outer outer loop too */
@@ -1014,13 +1014,13 @@ static int test_pattern(fragment_t *fragment, recommendation_t *recommendation,
             test->input = fragment->outer_outer_loop_fragment_file;
             temp_str = (char *)malloc(
                 strlen(fragment->outer_outer_loop_fragment_file) +
-                strlen(".output"));
+                strlen(".output") + 1);
             if (NULL == temp_str) {
                 OUTPUT(("%s", _ERROR("Error: out of memory")));
                 return PERFEXPERT_ERROR;
             }
             bzero(temp_str, strlen(fragment->outer_outer_loop_fragment_file) +
-                            strlen(".output"));
+                            strlen(".output") + 1);
             test->output = temp_str;
         }
     }

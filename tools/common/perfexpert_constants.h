@@ -79,11 +79,6 @@ extern "C" {
 #define DEFAULT_CFLAGS   "-g -O3 -fno-inline "
 #define DEFAULT_LDFLAGS  ""
 
-/** Default values for general utility programs */
-
-
-
-
 #ifdef __cplusplus
 }
 #endif
