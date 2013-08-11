@@ -28,15 +28,13 @@
 SUBDIRS = $(ENABLE_ANALYZER)
 SUBDIRS += $(ENABLE_MINST)
 SUBDIRS += $(ENABLE_RECOMMENDER)
-SUBDIRS += $(ENABLE_PR)
 SUBDIRS += $(ENABLE_CT)
-SUBDIRS += $(ENABLE_CI)
 
-dist_bin_SCRIPTS = perfexpert.sh
+bin_PROGRAMS = perfexpert
 
-install-exec-local: install-dist_binSCRIPTS
-
-install-exec-hook:
-	cd $(bindir); rm perfexpert; $(LN_S) perfexpert.sh perfexpert
+perfexpert_SOURCES = perfexpert.c
+perfexpert_CPPFLAGS = -I$(srcdir)/common
+# perfexpert_LDFLAGS = 
+perfexpert_CFLAGS = -O3
 
 # EOF

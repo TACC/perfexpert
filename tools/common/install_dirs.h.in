@@ -33,14 +33,14 @@ extern "C" {
 #endif
     
 #define PERFEXPERT_PREFIX "@prefix@"
-/** Executables that users can run */
 #define PERFEXPERT_BINDIR "@prefix@/bin"
-/** JAR files */
 #define PERFEXPERT_LIBDIR "@prefix@/lib"
-/** Configuration files */
 #define PERFEXPERT_ETCDIR "@prefix@/etc"
-/** Recommendation database */
 #define PERFEXPERT_VARDIR "@prefix@/var"
+
+#define HPCSTRUCT "@HPCSTRUCT_PROGRAM@"
+#define HPCRUN    "@HPCRUN_PROGRAM@"
+#define HPCPROF   "@HPCPROF_PROGRAM@"
 
 #ifdef __cplusplus
 }

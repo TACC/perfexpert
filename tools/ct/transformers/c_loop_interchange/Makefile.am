@@ -25,9 +25,9 @@
 # $HEADER$
 #
 
-bin_PROGRAMS = ct_loop_interchange
-ct_loop_interchange_SOURCES = ct_loop_interchange.cpp
-ct_loop_interchange_CPPFLAGS = -I$(srcdir)/../../../common
-ct_loop_interchange_LDFLAGS = -lrose -ljvm
+bin_PROGRAMS = loop_interchange
+loop_interchange_SOURCES = loop_interchange.cpp
+loop_interchange_CPPFLAGS = -I$(srcdir)/../../../common
+loop_interchange_LDFLAGS = -lrose -ljvm
 
 # EOF

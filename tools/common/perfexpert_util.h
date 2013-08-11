@@ -36,10 +36,6 @@ extern "C" {
 #include <sys/stat.h>
 #endif
 
-#ifndef	_SYS_TYPES_H
-#include <sys/types.h>
-#endif
-
 #ifndef	_ERRNO_H
 #include <errno.h>
 #endif
@@ -52,12 +48,12 @@ extern "C" {
 #include <stdlib.h>
 #endif
 
-#ifndef _SQLITE3_H_
-#include <sqlite3.h>
+#ifndef _UNISTD_H
+#include <unistd.h>
 #endif
 
-#ifndef INSTALL_DIRS_H
-#include "install_dirs.h"
+#ifndef _FCNTL_H
+#include <fcntl.h>
 #endif
 
 #ifndef PERFEXPERT_CONSTANTS_H
@@ -68,8 +64,8 @@ extern "C" {
 #include "perfexpert_output.h"
 #endif
 
-/* perfexpert_util_make_path: create an entire directory tree (if needed), like 'mkdir -p' */
-static int perfexpert_util_make_path(char *path, int nmode) {
+/* perfexpert_util_make_path (create an entire directory tree like 'mkdir -p') */
+static int perfexpert_util_make_path(const char *path, int nmode) {
     int oumask;
     char *p = NULL;
     char *npath = NULL;
@@ -139,67 +135,84 @@ static int perfexpert_util_make_path(char *path, int nmode) {
     return PERFEXPERT_SUCCESS;
 }
 
-/* perfexpert_database_disconnect */
-static int perfexpert_database_disconnect(sqlite3 *db) {
-    sqlite3_close(db);
-}
-
-// TODO: add hack to lock database on Lustre filesystems
-// TODO: register a signal handler to enable database disconnection when a TERM or KILL signal is received
-/* perfexpert_database_connect */
-static int perfexpert_database_connect(sqlite3 **db, char *file) {
-    /* Use default database if used does not define one */
-    if (NULL == file) {
-        file = (char *)malloc(strlen(RECOMMENDATION_DB) +
-                                     strlen(PERFEXPERT_VARDIR) + 2);
-        if (NULL == file) {
-            OUTPUT(("%s", _ERROR((char *)"Error: out of memory")));
-            return PERFEXPERT_ERROR;
-        }
-        bzero(file, strlen(RECOMMENDATION_DB) + strlen(PERFEXPERT_VARDIR) + 2);
-        sprintf(file, "%s/%s", PERFEXPERT_VARDIR, RECOMMENDATION_DB);
-    }
-
-    /* Check if file exists and if it is writable */
-    if (-1 == access(file, F_OK)) {
+// TODO: add a full path search to these functions
+/* perfexpert_util_file_exists */
+static int perfexpert_util_file_exists(const char *file) {
+    if (0 != access(file, F_OK)) {
         OUTPUT(("%s (%s)", _ERROR((char *)"Error: file not found"), file));
         return PERFEXPERT_ERROR;
     }
-    if (-1 == access(file, W_OK)) {
-        OUTPUT(("%s (%s)",
-                _ERROR((char *)"Error: you don't have permission to write"),
-                file));
-        return PERFEXPERT_ERROR;
-    }
-    
-    /* Connect to the DB */
-    if (SQLITE_OK != sqlite3_open(file, db)) {
-        OUTPUT(("%s (%s), %s", _ERROR((char *)"Error: openning database"),
-                file, sqlite3_errmsg(*db)));
-        perfexpert_database_disconnect(*db);
-        return PERFEXPERT_ERROR;
-    }
-
-    OUTPUT_VERBOSE((4, "connected to %s", file));
     return PERFEXPERT_SUCCESS;
 }
 
-/* perfexpert_database_get_int */
-static int perfexpert_database_get_int(void *var, int count, char **val, char **names) {
-    int *temp = (int *)var;
-    if (NULL != val[0]) {
-        *temp = atoi(val[0]);
+/* perfexpert_util_file_exists_and_is_executable */
+static int perfexpert_util_file_exists_and_is_exec(const char *file) {
+    if (PERFEXPERT_SUCCESS == perfexpert_util_file_exists(file)) {
+        if (0 != access(file, X_OK)) {
+            OUTPUT(("%s (%s)",
+                    _ERROR((char *)"Error: file is not an executable"), file));
+            return PERFEXPERT_ERROR;
+        }
+    } else {
+        return PERFEXPERT_ERROR;
     }
     return PERFEXPERT_SUCCESS;
 }
 
-/* perfexpert_database_get_double */
-static int perfexpert_database_get_double(void *var, int count, char **val, char **names) {
-    double *temp = (double *)var;
-    if (NULL != val[0]) {
-        *temp = atof(val[0]);
+/* perfexpert_util_file_copy */
+static int perfexpert_util_file_copy(const char *to, const char *from) {
+    int     fd_to, fd_from;
+    char    buf[BUFFER_SIZE];
+    ssize_t nread;
+    int     saved_errno;
+
+    fd_from = open(from, O_RDONLY);
+    if (fd_from < 0) {
+        return PERFEXPERT_ERROR;
     }
-    return PERFEXPERT_SUCCESS;
+
+    fd_to = open(to, O_WRONLY | O_CREAT | O_EXCL, 0666);
+    if (fd_to < 0) {
+        goto out_error;
+    }
+
+    while (nread = read(fd_from, buf, sizeof buf), nread > 0) {
+        char *out_ptr = buf;
+        ssize_t nwritten;
+
+        do {
+            nwritten = write(fd_to, out_ptr, nread);
+
+            if (nwritten >= 0) {
+                nread -= nwritten;
+                out_ptr += nwritten;
+            } else if (errno != EINTR) {
+                goto out_error;
+            }
+        } while (nread > 0);
+    }
+
+    if (nread == 0) {
+        if (close(fd_to) < 0) {
+            fd_to = -1;
+            goto out_error;
+        }
+        close(fd_from);
+
+        /* Success! */
+        return PERFEXPERT_SUCCESS;
+    }
+
+  out_error:
+    saved_errno = errno;
+
+    close(fd_from);
+    if (fd_to >= 0) {
+        close(fd_to);
+    }
+
+    errno = saved_errno;
+    return PERFEXPERT_ERROR;
 }
 
 #ifdef __cplusplus

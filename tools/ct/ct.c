@@ -35,7 +35,6 @@ extern "C" {
 #include <string.h>
 #include <inttypes.h>
 #include <getopt.h>
-#include <fcntl.h>
 
 /* Utility headers */
 #include <sqlite3.h>
@@ -45,6 +44,8 @@ extern "C" {
 #include "ct.h"
 #include "perfexpert_output.h"
 #include "perfexpert_util.h"
+#include "perfexpert_fork.h"
+#include "perfexpert_database.h"
 
 /* Global variables, try to not create them! */
 globals_t globals; // Variable to hold global options, this one is OK
@@ -191,46 +192,40 @@ static void show_help(void) {
 
 /* parse_env_vars */
 static int parse_env_vars(void) {
-    char *temp_str;
-    
-    temp_str = getenv("PERFEXPERT_CT_VERBOSE_LEVEL");
-    if (NULL != temp_str) {
-        if ((0 >= atoi(temp_str)) || (10 < atoi(temp_str))) {
+    if (NULL != getenv("PERFEXPERT_CT_VERBOSE_LEVEL")) {
+        if ((0 >= atoi(getenv("PERFEXPERT_CT_VERBOSE_LEVEL"))) ||
+            (10 < atoi(getenv("PERFEXPERT_CT_VERBOSE_LEVEL")))) {
             OUTPUT(("%s (%d)", _ERROR("ENV Error: invalid debug level"),
-                    atoi(temp_str)));
+                    atoi(getenv("PERFEXPERT_CT_VERBOSE_LEVEL"))));
             show_help();
             return PERFEXPERT_ERROR;
         }
-        globals.verbose_level = atoi(temp_str);
+        globals.verbose_level = atoi(getenv("PERFEXPERT_CT_VERBOSE_LEVEL"));
         OUTPUT_VERBOSE((5, "ENV: verbose_level=%d", globals.verbose_level));
     }
 
-    temp_str = getenv("PERFEXPERT_CT_INPUT_FILE");
-    if (NULL != temp_str) {
-        globals.inputfile = temp_str;
+    if (NULL != getenv("PERFEXPERT_CT_INPUT_FILE")) {
+        globals.inputfile = getenv("PERFEXPERT_CT_INPUT_FILE");
         OUTPUT_VERBOSE((5, "ENV: inputfile=%s", globals.inputfile));
     }
 
-    temp_str = getenv("PERFEXPERT_CT_OUTPUT_FILE");
-    if (NULL != temp_str) {
-        globals.outputfile = temp_str;
+    if (NULL != getenv("PERFEXPERT_CT_OUTPUT_FILE")) {
+        globals.outputfile = getenv("PERFEXPERT_CT_OUTPUT_FILE");
         OUTPUT_VERBOSE((5, "ENV: outputfile=%s", globals.outputfile));
     }
 
-    temp_str = getenv("PERFEXPERT_CT_DATABASE_FILE");
-    if (NULL != temp_str) {
-        globals.dbfile =  temp_str;
+    if (NULL != getenv("PERFEXPERT_CT_DATABASE_FILE")) {
+        globals.dbfile =  getenv("PERFEXPERT_CT_DATABASE_FILE");
         OUTPUT_VERBOSE((5, "ENV: dbfile=%s", globals.dbfile));
     }
 
-    temp_str = getenv("PERFEXPERT_CT_WORKDIR");
-    if (NULL != temp_str) {
-        globals.workdir = temp_str;
+    if (NULL != getenv("PERFEXPERT_CT_WORKDIR")) {
+        globals.workdir = getenv("PERFEXPERT_CT_WORKDIR");
         OUTPUT_VERBOSE((5, "ENV: workdir=%s", globals.workdir));
     }
 
-    temp_str = getenv("PERFEXPERT_CT_COLORFUL");
-    if ((NULL != temp_str) && (1 == atoi(temp_str))) {
+    if ((NULL != getenv("PERFEXPERT_CT_COLORFUL")) &&
+        (1 == atoi(getenv("PERFEXPERT_CT_COLORFUL")))) {
         globals.colorful = 1;
         OUTPUT_VERBOSE((5, "ENV: colorful=YES"));
     }
@@ -334,25 +329,19 @@ static int parse_cli_params(int argc, char *argv[]) {
     }
     OUTPUT_VERBOSE((4, "=== %s", _BLUE("CLI params")));
     OUTPUT_VERBOSE((10, "Summary of selected options:"));
-    OUTPUT_VERBOSE((10, "   Verbose level:              %d",
-                    globals.verbose_level));
-    OUTPUT_VERBOSE((10, "   Colorful verbose?           %s",
+    OUTPUT_VERBOSE((10, "   Verbose level:    %d", globals.verbose_level));
+    OUTPUT_VERBOSE((10, "   Colorful verbose? %s",
                     globals.colorful ? "yes" : "no"));
-    OUTPUT_VERBOSE((10, "   Input file:                 %s",
-                    globals.inputfile ? globals.inputfile : "(null)"));
-    OUTPUT_VERBOSE((10, "   Output file:                %s",
-                    globals.outputfile ? globals.outputfile : "(null)"));
-    OUTPUT_VERBOSE((10, "   PerfExpert PID:             %llu",
-                    globals.perfexpert_pid));
-    OUTPUT_VERBOSE((10, "   Temporary directory:        %s",
-                    globals.workdir ? globals.workdir : "(null)"));
-    OUTPUT_VERBOSE((10, "   Database file:              %s",
-                    globals.dbfile ? globals.dbfile : "(null)"));
+    OUTPUT_VERBOSE((10, "   Input file:       %s", globals.inputfile));
+    OUTPUT_VERBOSE((10, "   Output file:      %s", globals.outputfile));
+    OUTPUT_VERBOSE((10, "   PerfExpert PID:   %llu",globals.perfexpert_pid));
+    OUTPUT_VERBOSE((10, "   Work directory:   %s", globals.workdir));
+    OUTPUT_VERBOSE((10, "   Database file:    %s", globals.dbfile));
 
     /* Not using OUTPUT_VERBOSE because I want only one line */
     if (8 <= globals.verbose_level) {
         int i;
-        printf("%s complete command line:", PROGRAM_PREFIX);
+        printf("%s    %s", PROGRAM_PREFIX, _YELLOW("command line:"));
         for (i = 0; i < argc; i++) {
             printf(" %s", argv[i]);
         }
@@ -697,12 +686,12 @@ static int apply_recommendations(fragment_t *fragment) {
         /* Apply transformations */
         switch (apply_transformations(fragment, recommendation)) {
             case PERFEXPERT_ERROR:
-                OUTPUT_VERBOSE((8, "   [%s] [%d]", _YELLOW("ERROR"),
+                OUTPUT_VERBOSE((8, "   [%s] [%d]", _BOLDYELLOW("ERROR"),
                                 recommendation->id));
                 return PERFEXPERT_ERROR;
 
             case PERFEXPERT_FAILURE:
-                OUTPUT_VERBOSE((8, "   [%s ] [%d]", _RED("FAIL"),
+                OUTPUT_VERBOSE((8, "   [%s ] [%d]", _BOLDRED("FAIL"),
                                 recommendation->id));
                 break;
 
@@ -756,12 +745,12 @@ static int apply_transformations(fragment_t *fragment,
         /* Apply patterns */
         switch (apply_patterns(fragment, recommendation, transformation)) {
             case PERFEXPERT_ERROR:
-                OUTPUT_VERBOSE((8, "   [%s] [%d] (%s)", _YELLOW("ERROR"),
+                OUTPUT_VERBOSE((8, "   [%s] [%d] (%s)", _BOLDYELLOW("ERROR"),
                                 transformation->id, transformation->program));
                 return PERFEXPERT_ERROR;
 
             case PERFEXPERT_FAILURE:
-                OUTPUT_VERBOSE((8, "   [%s ] [%d] (%s)", _RED("FAIL"),
+                OUTPUT_VERBOSE((8, "   [%s ] [%d] (%s)", _BOLDRED("FAIL"),
                                 transformation->id, transformation->program));
                 goto move_on;
 
@@ -844,12 +833,12 @@ static int apply_patterns(fragment_t *fragment,
         switch (test_pattern(fragment, recommendation, transformation,
                              pattern)) {
             case PERFEXPERT_ERROR:
-                OUTPUT_VERBOSE((7, "   [%s] [%d] (%s)", _YELLOW("ERROR"),
+                OUTPUT_VERBOSE((7, "   [%s] [%d] (%s)", _BOLDYELLOW("ERROR"),
                                 pattern->id, pattern->program));
                 return PERFEXPERT_ERROR;
 
             case PERFEXPERT_FAILURE:
-                OUTPUT_VERBOSE((7, "   [%s ] [%d] (%s)", _RED("FAIL"),
+                OUTPUT_VERBOSE((7, "   [%s ] [%d] (%s)", _BOLDRED("FAIL"),
                                 pattern->id, pattern->program));
                 break;
 
@@ -872,29 +861,82 @@ static int apply_patterns(fragment_t *fragment,
 /* test_transformation */
 static int test_transformation(fragment_t *fragment,
     recommendation_t *recommendation, transformation_t *transformation) {
+    char *argv[12];
+    char temp_str[BUFFER_SIZE];
+    test_t *test;
+    int rc;
 
-    switch (run_transformer(fragment, recommendation, transformation)) {
-        case PERFEXPERT_FAILURE:
-            OUTPUT_VERBOSE((8, "   [%s ] [%s] >> [%s]", _ERROR("FAIL"),
-                            transformation->program, fragment->filename));
-            return PERFEXPERT_FAILURE;
+    /* Set the code transformer arguments. Ok, we have to define an
+     * interface to code transformers. Here is a simple one. Each code
+     * transformer will be called using the following arguments:
+     *
+     * -f FUNCTION  Function name were code bottleneck belongs to
+     * -l LINE      Line number identified by HPCtoolkit/PerfExpert/etc...
+     * -r FILE      File to write the transformation result
+     * -s FILE      Source file
+     * -w DIR       Use DIR as work directory
+     */
+    argv[0] = transformation->program;
+    argv[1] = (char *)malloc(strlen("-f") + 1);
+    bzero(argv[1], strlen("-f") + 1);
+    sprintf(argv[1], "-f");
+    argv[2] = fragment->function_name; 
+    argv[3] = (char *)malloc(strlen("-l") + 1);
+    bzero(argv[3], strlen("-l") + 1);
+    sprintf(argv[3], "-l");
+    argv[4] = (char *)malloc(10);
+    bzero(argv[4], 10);
+    sprintf(argv[4], "%d", fragment->line_number); 
+    argv[5] = (char *)malloc(strlen("-r") + 1);
+    bzero(argv[5], strlen("-r") + 1);
+    sprintf(argv[5], "-r");
+    argv[6] = (char *)malloc(strlen(fragment->filename) + 5);
+    bzero(argv[6], strlen(fragment->filename) + 5);
+    sprintf(argv[6], "new_%s", fragment->filename);
+    argv[7] = (char *)malloc(strlen("-s") + 1);
+    bzero(argv[7], strlen("-s") + 1);
+    sprintf(argv[7], "-s");
+    argv[8] = fragment->filename;
+    argv[9] = (char *)malloc(strlen("-w") + 1);
+    bzero(argv[9], strlen("-w") + 1);
+    sprintf(argv[9], "-w");
+    argv[10] = (char *)malloc(strlen("./") + 1);
+    bzero(argv[10], strlen("./") + 1);
+    sprintf(argv[10], "./");
+    argv[11] = NULL;
 
-        case PERFEXPERT_SUCCESS:
-            OUTPUT_VERBOSE((8, "   [ %s  ] [%s] >> [%s]", _BOLDGREEN("OK"),
-                            transformation->program, fragment->filename));
-            return PERFEXPERT_SUCCESS;
-
-        case PERFEXPERT_ERROR:
-            OUTPUT_VERBOSE((8, "   [%s] [%s] >> [%s]", _BOLDYELLOW("ERROR"),
-                            transformation->program, fragment->filename));
-            return PERFEXPERT_ERROR;
-
-        case PERFEXPERT_UNDEFINED:
-        default:
-            OUTPUT_VERBOSE((8, "   [%s] [%s] >> [%s]", _BOLDRED("UNDEF"),
-                            transformation->program, fragment->filename));
-            return PERFEXPERT_UNDEFINED;
+    /* The main test */
+    test = (test_t *)malloc(sizeof(test_t));
+    if (NULL == test) {
+        OUTPUT(("%s", _ERROR("Error: out of memory")));
+        return PERFEXPERT_ERROR;
     }
+    test->info   = fragment->filename;
+    test->input  = NULL;
+    bzero(temp_str, BUFFER_SIZE);
+    strcat(temp_str, fragment->filename);
+    strcat(temp_str, ".output");
+    test->output = temp_str;
+
+    /* fork_and_wait_and_pray */
+    rc = fork_and_wait(test, argv);
+
+    /* Replace the source code file */
+    bzero(temp_str, BUFFER_SIZE);
+    sprintf(temp_str, "%s.old_%d", fragment->filename, getpid());
+
+    if (PERFEXPERT_SUCCESS == rc) {
+        if (rename(fragment->filename, temp_str)) {
+            return PERFEXPERT_ERROR;
+        }
+        if (rename(argv[6], fragment->filename)) {
+            return PERFEXPERT_ERROR;
+        }
+        OUTPUT(("applying %s to line %d of file %s", transformation->program,
+                fragment->line_number, fragment->filename));
+        OUTPUT(("the original file was renamed to %s", temp_str));
+    }
+    return rc;
 }
 
 /* test_pattern */
@@ -902,7 +944,12 @@ static int test_pattern(fragment_t *fragment, recommendation_t *recommendation,
     transformation_t *transformation, pattern_t *pattern) {
     perfexpert_list_t tests;
     test_t *test;
-    int rc = PERFEXPERT_FAILURE;
+    int  rc = PERFEXPERT_FAILURE;
+    char *temp_str;
+    char *argv[2];
+
+    argv[0] = pattern->program;
+    argv[1] = NULL;
 
     /* Considering the outer loops, we can have more than one test */
     perfexpert_list_construct(&tests);
@@ -915,9 +962,16 @@ static int test_pattern(fragment_t *fragment, recommendation_t *recommendation,
     }
     perfexpert_list_item_construct((perfexpert_list_item_t *)test);
     perfexpert_list_append(&tests, (perfexpert_list_item_t *)test);
-    test->program = pattern->program;
-    test->file    = fragment->fragment_file;
-    test->result  = &(fragment->pattern_test_result);
+    test->info  = fragment->fragment_file;
+    test->input = fragment->fragment_file;
+    temp_str = (char *)malloc(strlen(fragment->fragment_file) +
+                              strlen(".output"));
+    if (NULL == temp_str) {
+        OUTPUT(("%s", _ERROR("Error: out of memory")));
+        return PERFEXPERT_ERROR;
+    }
+    bzero(temp_str, strlen(fragment->fragment_file) + strlen(".output"));
+    test->output = temp_str;
 
     /* It we're testing for a loop, check for the outer loop */
     if ((0 == strncmp("loop", fragment->code_type, 4)) &&
@@ -932,9 +986,17 @@ static int test_pattern(fragment_t *fragment, recommendation_t *recommendation,
         }
         perfexpert_list_item_construct((perfexpert_list_item_t *)test);
         perfexpert_list_append(&tests, (perfexpert_list_item_t *)test);
-        test->program = pattern->program;
-        test->file    = fragment->outer_loop_fragment_file;
-        test->result  = &(fragment->pattern_outer_loop_test_result);
+        test->info  = fragment->outer_loop_fragment_file;
+        test->input = fragment->outer_loop_fragment_file;
+        temp_str = (char *)malloc(strlen(fragment->outer_loop_fragment_file) +
+                                  strlen(".output"));
+        if (NULL == temp_str) {
+            OUTPUT(("%s", _ERROR("Error: out of memory")));
+            return PERFEXPERT_ERROR;
+        }
+        bzero(temp_str, strlen(fragment->outer_loop_fragment_file) +
+                        strlen(".output"));
+        test->output = temp_str;
 
         /* And test for the outer outer loop too */
         if ((3 <= fragment->loop_depth) &&
@@ -948,20 +1010,27 @@ static int test_pattern(fragment_t *fragment, recommendation_t *recommendation,
             }
             perfexpert_list_item_construct((perfexpert_list_item_t *)test);
             perfexpert_list_append(&tests, (perfexpert_list_item_t *)test);
-            test->program = pattern->program;
-            test->file    = fragment->outer_outer_loop_fragment_file;
-            test->result  = &(fragment->pattern_outer_outer_loop_test_result);
+            test->info  = fragment->outer_outer_loop_fragment_file;
+            test->input = fragment->outer_outer_loop_fragment_file;
+            temp_str = (char *)malloc(
+                strlen(fragment->outer_outer_loop_fragment_file) +
+                strlen(".output"));
+            if (NULL == temp_str) {
+                OUTPUT(("%s", _ERROR("Error: out of memory")));
+                return PERFEXPERT_ERROR;
+            }
+            bzero(temp_str, strlen(fragment->outer_outer_loop_fragment_file) +
+                            strlen(".output"));
+            test->output = temp_str;
         }
     }
 
     /* Run all the tests */
     test = (test_t *)perfexpert_list_get_first(&tests);
     while ((perfexpert_list_item_t *)test != &(tests.sentinel)) {
-        switch (run_recognizer(test)) {
+        switch (fork_and_wait(test, argv)) {
             case PERFEXPERT_SUCCESS:
                 rc = PERFEXPERT_SUCCESS;
-
-
                 break;
 
             case PERFEXPERT_ERROR:
@@ -974,233 +1043,6 @@ static int test_pattern(fragment_t *fragment, recommendation_t *recommendation,
             (perfexpert_list_item_t *)test);
     }
     return rc;
-}
-
-/* apply_one */
-static int run_transformer(fragment_t *fragment,
-    recommendation_t *recommendation, transformation_t *transformation) {
-    int  pid = 0;
-    int  rc = PERFEXPERT_UNDEFINED;
-    char temp_str[BUFFER_SIZE];
-    char temp_str2[BUFFER_SIZE];
-    char buffer[BUFFER_SIZE];
-
-    char argv[20][PARAM_SIZE];
-
-    bzero(temp_str, BUFFER_SIZE);
-    sprintf(temp_str, "%s/ct_%s", PERFEXPERT_BINDIR, transformation->program);
-
-    /* Set the code transformer arguments. Ok, we have to define an
-     * interface to code transformers. Here is a simple one. Each code
-     * transformer will be called using the following arguments:
-     *
-     * -f FUNCTION  Function name were code bottleneck belongs to
-     * -l LINE      Line number identified by HPCtoolkit/PerfExpert/etc...
-     * -r FILE      File (maybe link) containing the transformation result
-     * -s FILE      Source file
-     * -w DIR       Use DIR as work directory
-     */
-    bzero(argv, PARAM_SIZE * 20);
-    sprintf(argv[0], "ct_%s", transformation->program);
-    sprintf(argv[1], "-f");
-    sprintf(argv[2], "%s", fragment->function_name);
-    sprintf(argv[3], "-l");
-    sprintf(argv[4], "%d", fragment->line_number);
-    sprintf(argv[5], "-r");
-    sprintf(argv[6], "new_%s", fragment->filename);
-    sprintf(argv[7], "-s");
-    sprintf(argv[8], "%s", fragment->filename);
-    sprintf(argv[9], "-w");
-    sprintf(argv[10], "./");
-
-    /* Set the command line */
-    bzero(temp_str2, BUFFER_SIZE);
-    sprintf(temp_str2,
-            "%s %s %s %s %s %s %s %s %s %s %s %s",
-            temp_str, argv[0], argv[1], argv[2], argv[3], argv[4], argv[5],
-            argv[6], argv[7], argv[8], argv[9], argv[10]);
-    OUTPUT_VERBOSE((10, "      running %s", _CYAN(temp_str2)));
-
-    /* Forking child */
-    pid = fork();
-    if (-1 == pid) {
-        OUTPUT(("%s", _ERROR("Error: unable to fork")));
-        return PERFEXPERT_ERROR;
-    }
-
-    if (0 == pid) {
-        /* Child: Call the code transformer */
-        // TODO: this is ridiculous. I have to change it to execp, but I'm too
-        //       tired to do it now.
-        execl(temp_str, argv[0], argv[1], argv[2], argv[3], argv[4], argv[5],
-              argv[6], argv[7], argv[8], argv[9], argv[10], NULL);
-
-        OUTPUT(("child process failed to run, check if program exists"));
-        exit(127);
-    } else {
-        /* Parent */
-        wait(&rc);
-        OUTPUT_VERBOSE((10, "      result  %s %d", _CYAN("return code"), rc >> 8));
-    }
-
-    /* Evaluating the result */
-    switch (rc >> 8) {
-        case 0: /* The transformation was possible */
-            // PERFEXPERT_SUCCESS;
-            break;
-
-        case 255: /* The transformation was not possible */
-            // PERFEXPERT_ERROR;
-            break;
-
-        case -1: /* Error during fork() or waitpid() */
-            // PERFEXPERT_FAILURE;
-            break;
-
-        case 127: /* Execution failed */
-            // PERFEXPERT_FAILURE;
-            break;
-
-        default: /* Not sure what happened */
-            // PERFEXPERT_UNDEFINED;
-            break;
-    }
-    return PERFEXPERT_SUCCESS;
-}
-
-/* test_one_pattern */
-static int run_recognizer(test_t *test) {
-    int  pipe1[2], pipe2[2];
-    int  pid = 0;
-    int  file = 0;
-    int  r_bytes = 0, w_bytes = 0;
-    int  rc = PERFEXPERT_UNDEFINED;
-    char temp_str[BUFFER_SIZE];
-    char temp_str2[BUFFER_SIZE];
-    char buffer[BUFFER_SIZE];
-
-    #define PARENT_READ  pipe1[0]
-    #define CHILD_WRITE  pipe1[1]
-    #define CHILD_READ   pipe2[0]
-    #define PARENT_WRITE pipe2[1]
-    
-    /* Creating pipes */
-    if (-1 == pipe(pipe1)) {
-        OUTPUT(("%s", _ERROR("Error: unable to create pipe1")));
-        return PERFEXPERT_ERROR;
-    }
-    if (-1 == pipe(pipe2)) {
-        OUTPUT(("%s", _ERROR("Error: unable to create pipe2")));
-        return PERFEXPERT_ERROR;
-    }
-    
-    /* Forking child */
-    pid = fork();
-    if (-1 == pid) {
-        OUTPUT(("%s", _ERROR("Error: unable to fork")));
-        return PERFEXPERT_ERROR;
-    }
-
-    if (0 == pid) {
-        /* Child */
-        bzero(temp_str, BUFFER_SIZE);
-        bzero(temp_str2, BUFFER_SIZE);
-        sprintf(temp_str, "%s/pr_%s", PERFEXPERT_BINDIR, test->program);
-        sprintf(temp_str2, "pr_%s", test->program);
-        OUTPUT_VERBOSE((10, "      running %s", _CYAN(temp_str)));
-        
-        close(PARENT_WRITE);
-        close(PARENT_READ);
-
-        if (-1 == dup2(CHILD_READ, STDIN_FILENO)) {
-            OUTPUT(("%s", _ERROR("Error: unable to DUP STDIN")));
-            return PERFEXPERT_ERROR;
-        }
-        if (-1 == dup2(CHILD_WRITE, STDOUT_FILENO)) {
-            OUTPUT(("%s", _ERROR("Error: unable to DUP STDOUT")));
-            return PERFEXPERT_ERROR;
-        }
-
-        execl(temp_str, temp_str2, NULL);
-        
-        OUTPUT(("child process failed to run, check if program exists"));
-        exit(127);
-    } else {
-        /* Parent */
-        close(CHILD_READ);
-        close(CHILD_WRITE);
-        
-        /* Open input file and send it to the child process */
-        if (-1 == (file = open(test->file, O_RDONLY))) {
-            OUTPUT(("%s (%s)", _ERROR("Error: unable to open fragment file"),
-                    test->file));
-            return PERFEXPERT_ERROR;
-        } else {
-            bzero(buffer, BUFFER_SIZE);
-            while (0 != (r_bytes = read(file, buffer, BUFFER_SIZE))) {
-                w_bytes = write(PARENT_WRITE, buffer, r_bytes);
-                bzero(buffer, BUFFER_SIZE);
-            }
-            close(file);
-            close(PARENT_WRITE);
-        }
-        
-        /* Read child process' answer and write it to output file */
-        bzero(temp_str, BUFFER_SIZE);
-        sprintf(temp_str, "%s.%s.output", test->file, test->program);
-        OUTPUT_VERBOSE((10, "      output  %s", _CYAN(temp_str)));
-
-        if (-1 == (file = open(temp_str, O_CREAT|O_WRONLY, 0644))) {
-            OUTPUT(("%s (%s)", _ERROR("Error: unable to open output file"),
-                    temp_str));
-            return PERFEXPERT_ERROR;
-        } else {
-            bzero(buffer, BUFFER_SIZE);
-            while (0 != (r_bytes = read(PARENT_READ, buffer, BUFFER_SIZE))) {
-                w_bytes = write(file, buffer, r_bytes);
-                bzero(buffer, BUFFER_SIZE);
-            }
-            close(file);
-            close(PARENT_READ);
-        }
-        wait(&rc);
-        OUTPUT_VERBOSE((10, "      result  %s %d", _CYAN("return code"),
-                        rc >> 8));
-    }
-
-    /* Evaluating the result */
-    switch (rc >> 8) {
-        case -1: /* Error during fork() or waitpid() */
-            OUTPUT_VERBOSE((7, "   [%s] [%s] >> [%s]", _BOLDYELLOW("ERROR"),
-                            test->program, test->file));
-            *test->result = PERFEXPERT_ERROR;
-            break;
-
-        case 0: /* The pattern matches */
-            OUTPUT_VERBOSE((7, "   [ %s  ] [%s] >> [%s]", _BOLDGREEN("OK"),
-                            test->program, test->file));
-            *test->result = PERFEXPERT_SUCCESS;;
-            break;
-
-        case 255: /* The pattern doesn't match */
-            OUTPUT_VERBOSE((7, "   [%s ] [%s] >> [%s]", _BOLDRED("FAIL"),
-                            test->program, test->file));
-            *test->result = PERFEXPERT_FAILURE;
-            break;
-
-        case 127: /* Execution failed */
-            OUTPUT_VERBOSE((7, "   [%s ] [%s] >> [%s]", _BOLDRED("FAIL"),
-                            test->program, test->file));
-            *test->result = PERFEXPERT_FAILURE;
-            break;
-
-        default: /* Not sure what happened */
-            OUTPUT_VERBOSE((7, "   [%s] [%s] >> [%s]", _MAGENTA("UNDEF"),
-                            test->program, test->file));
-            *test->result = PERFEXPERT_UNDEFINED;
-            break;
-    }
-    return *test->result;
 }
 
 #ifdef __cplusplus

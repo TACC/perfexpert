@@ -104,15 +104,6 @@ typedef struct node {
     char *value;
 } node_t;
 
-/** Ninja structure to hold a list of tests to perform */
-typedef struct test {
-    volatile perfexpert_list_item_t *next;
-    volatile perfexpert_list_item_t *prev;
-    char *program;
-    char *file;
-    int  *result;
-} test_t;
-
 /** Structure to hold patterns */
 typedef struct pattern {
     volatile perfexpert_list_item_t *next;
@@ -155,9 +146,6 @@ typedef struct fragment {
     char *outer_outer_loop_fragment_file;
     int  outer_loop_line_number;
     int  outer_outer_loop_line_number;
-    int  pattern_test_result;
-    int  pattern_outer_loop_test_result;
-    int  pattern_outer_outer_loop_test_result;
 } fragment_t;
 
 /* Function declarations */
@@ -180,10 +168,8 @@ static int  test_transformation(fragment_t *fragment,
     recommendation_t *recommendation, transformation_t *transformation);
 static int  test_pattern(fragment_t *fragment, recommendation_t *recommendation,
     transformation_t *transformation, pattern_t *pattern);
-static int  run_transformer(fragment_t *fragment,
-    recommendation_t *recommendation, transformation_t *transformation);
-static int  run_recognizer(test_t *test);
 
+/* Rose functions */
 int open_rose(const char *source_file);
 int close_rose(void);
 int extract_fragment(fragment_t *fragment);
