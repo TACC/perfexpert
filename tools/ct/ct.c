@@ -971,6 +971,7 @@ static int test_pattern(fragment_t *fragment, recommendation_t *recommendation,
         return PERFEXPERT_ERROR;
     }
     bzero(temp_str, strlen(fragment->fragment_file) + strlen(".output") + 1);
+    sprintf(temp_str, "%s.output", fragment->fragment_file);
     test->output = temp_str;
 
     /* It we're testing for a loop, check for the outer loop */
@@ -996,6 +997,7 @@ static int test_pattern(fragment_t *fragment, recommendation_t *recommendation,
         }
         bzero(temp_str, strlen(fragment->outer_loop_fragment_file) +
                         strlen(".output") + 1);
+        sprintf(temp_str, "%s.output", fragment->outer_loop_fragment_file);
         test->output = temp_str;
 
         /* And test for the outer outer loop too */
@@ -1021,6 +1023,8 @@ static int test_pattern(fragment_t *fragment, recommendation_t *recommendation,
             }
             bzero(temp_str, strlen(fragment->outer_outer_loop_fragment_file) +
                             strlen(".output") + 1);
+            sprintf(temp_str, "%s.output",
+                    fragment->outer_outer_loop_fragment_file);
             test->output = temp_str;
         }
     }
