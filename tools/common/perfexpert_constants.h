@@ -66,12 +66,23 @@ extern "C" {
 #define MAX_FRAGMENT_DATA 1048576
 #define PARAM_SIZE        128
 
-/** Default values for some parameters */
-#define RECOMMENDATION_DB           "recommendation.db"
-#define PERFEXPERT_FRAGMENTS_DIR    "fragments"
-#define PERFEXPERT_SOURCE_DIR       "source"
-#define METRICS_TABLE               "metric"
-#define METRICS_FILE                "recommender-metrics.txt"
+/** Default values for some files and directories */
+#define RECOMMENDATION_DB        "perfexpert.db"
+#define PERFEXPERT_FRAGMENTS_DIR "fragments"
+#define PERFEXPERT_SOURCE_DIR    "source"
+#define METRICS_TABLE            "metric"
+#define METRICS_FILE             "recommender-metrics.txt"
+#define EXPERIMENT_FILE			 "experiment.properties"
+
+/** Default compiler and compilation options */
+#define DEFAULT_COMPILER "gcc"
+#define DEFAULT_CFLAGS   "-g -O3 -fno-inline "
+#define DEFAULT_LDFLAGS  ""
+
+/** Default values for general utility programs */
+
+
+
 
 #ifdef __cplusplus
 }
