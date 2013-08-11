@@ -173,12 +173,8 @@ static int output_fragment(SgNode *node, Sg_File_Info *info,
 
 void recommenderTraversal::visit(SgNode *node) {
     Sg_File_Info *info = NULL;
-    Sg_File_Info *parent_info = NULL;
-    Sg_File_Info *grand_parent_info = NULL;
     SgFunctionDefinition *function = NULL;
     SgForStatement *c_loop = NULL;
-    SgForStatement *parent_loop = NULL;
-    SgForStatement *grandparent_loop = NULL;
     SgNode *grandparent = NULL;
     SgNode *parent = NULL;
     int node_found = 0;
@@ -186,7 +182,7 @@ void recommenderTraversal::visit(SgNode *node) {
     info = node->get_file_info();
 
     /* Find code fragment for bottlenecks type 'loop' in C */
-    if ((NULL != (c_loop = isSgForStatement(node))) &&
+    if ((isSgForStatement(node)) &&
         (0 == strncmp("loop", fragment->code_type, 4)) &&
         (info->get_line() == fragment->line_number)) {
 
@@ -230,9 +226,9 @@ void recommenderTraversal::visit(SgNode *node) {
             }
 
             /* Is it a for/do/while? */
-            if (NULL != (parent_loop = isSgForStatement(parent))) {
-                parent_info = parent->get_file_info();
-                fragment->outer_loop_line_number = parent_info->get_line();
+            if (isSgForStatement(parent)) {
+                info = parent->get_file_info();
+                fragment->outer_loop_line_number = info->get_line();
 
                 /* The parent is a loop */
                 OUTPUT_VERBOSE((8, "   %s (%d)",
@@ -240,7 +236,7 @@ void recommenderTraversal::visit(SgNode *node) {
                                 fragment->outer_loop_line_number));
 
                 /* Extract the parent loop fragment */
-                if (PERFEXPERT_SUCCESS != output_fragment(parent, parent_info,
+                if (PERFEXPERT_SUCCESS != output_fragment(parent, info,
                                                           fragment)) {
                     OUTPUT(("%s",
                             _ERROR((char *)"Error: extracting fragment")));
@@ -278,20 +274,19 @@ void recommenderTraversal::visit(SgNode *node) {
                     }
 
                     /* Is it a for/do/while? */
-                    if (NULL != (grandparent_loop = isSgForStatement(
-                        grandparent))) {
-                        grand_parent_info = grandparent->get_file_info();
+                    if (isSgForStatement(grandparent)) {
+                        info = grandparent->get_file_info();
                         fragment->outer_outer_loop_line_number = 
-                            grand_parent_info->get_line();
+                            info->get_line();
 
                         /* The grandparent is a loop */
                         OUTPUT_VERBOSE((8, "   %s (%d)",
                             _GREEN((char *)"loop has a grandparent loop at line"),
-                            grand_parent_info->get_line()));
+                            info->get_line()));
 
                         /* Extract the parent loop fragment */
                         if (PERFEXPERT_SUCCESS != output_fragment(grandparent,
-                            grand_parent_info, fragment)) {
+                            info, fragment)) {
                             OUTPUT(("%s",
                                 _ERROR((char *)"Error: extracting fragment")));
                             rc = PERFEXPERT_ERROR;

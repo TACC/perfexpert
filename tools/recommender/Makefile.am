@@ -37,17 +37,17 @@ install-exec-local:
 	$(MKDIR_P) $(localstatedir)
 	$(MKDIR_P) $(sysconfdir)
 	$(MKDIR_P) $(datadir)/$(PACKAGE_NAME)
-	$(SQLITE3_PROGRAM) recommendation.db \
+	$(SQLITE3_PROGRAM) perfexpert.db \
 		< $(top_srcdir)/contrib/recommendation.db.txt
-	if [ -f $(localstatedir)/recommendation.db ]; then echo \
+	if [ -f $(localstatedir)/perfexpert.db ]; then echo \
 		"############################# WARNING #############################" \
 		>> $(top_builddir)/warnings_recommender; echo \
-		"Your recommendation database was moved to recommendation.db.old" \
+		"Your recommendation database was moved to perfexpert.db.old" \
 		>> $(top_builddir)/warnings_recommender; echo \
 		"############################# WARNING #############################" \
 		>> $(top_builddir)/warnings_recommender; fi
-	$(INSTALL) -b -m 644 recommendation.db $(localstatedir)/
-	rm recommendation.db
+	$(INSTALL) -b -m 644 perfexpert.db $(localstatedir)/
+	rm perfexpert.db
 	$(INSTALL) -m 644 $(top_srcdir)/contrib/recommendation-metrics.txt \
 		$(sysconfdir)/
 	$(INSTALL) -m 644 $(top_srcdir)/contrib/recommendation.db.txt \

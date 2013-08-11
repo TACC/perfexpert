@@ -645,7 +645,7 @@ int main(int argc, char* argv []) {
 
     PAPI_event_name_to_code("PAPI_TOT_INS", &papi_tot_ins_code);
 
-    fp = fopen("perfexpert_run_exp.sh_header", "w");
+    fp = fopen("experiment.properties", "w");
     if (NULL == fp) {
         fprintf(stderr,
                 "Could not open file analyzer_run_exp.sh_header for writing\n");
@@ -681,9 +681,9 @@ int main(int argc, char* argv []) {
                 if (PAPI_OK == PAPI_add_event(event_set, event_code)) {
                     ADD_EVENT(j);
                     if (0 == remaining) { // New line
-                        fprintf(fp, "experiment[%d]=\"", exp_count);
+                        fprintf(fp, "%%\n", exp_count);
                     }
-                    fprintf(fp, "--event %s:%d ", event_list[j].PAPI_event_name,
+                    fprintf(fp, "%s:%d\n", event_list[j].PAPI_event_name,
                             event_list[j].sampling_freq);
                     addCount++;
                 }
@@ -706,7 +706,7 @@ int main(int argc, char* argv []) {
             exp_count++;
         }
         if ((0 < addCount) && (0 < remaining)) {
-            fprintf(fp, "--event PAPI_TOT_INS:%d\"\n",
+            fprintf(fp, "PAPI_TOT_INS:%d\n",
                     event_list[TOT_INS].sampling_freq);
         }
     } while (0 < remaining);

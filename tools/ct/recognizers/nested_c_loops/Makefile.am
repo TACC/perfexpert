@@ -30,9 +30,9 @@ CLEANFILES = y.tab.c y.tab.h lex.yy.c
 y.tab.c y.tab.h: nested_c_loops.y; $(YACC) -d $(srcdir)/nested_c_loops.y
 lex.yy.c: nested_c_loops.l; $(LEX) $(srcdir)/nested_c_loops.l
 
-bin_PROGRAMS = pr_nested_c_loops
+bin_PROGRAMS = nested_c_loops
 
-pr_nested_c_loops_SOURCES = y.tab.c lex.yy.c
-pr_nested_c_loops_CFLAGS = -O3
+nested_c_loops_SOURCES = y.tab.c lex.yy.c
+nested_c_loops_CFLAGS = -O3
 
 # EOF

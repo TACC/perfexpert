@@ -430,13 +430,11 @@ AS_IF([test x"$ENABLE_ANALYZER" = x"yes"], [
         AS_IF([test x"$HPCPROF_PROGRAM" = x"no"],
             [AC_MSG_ERROR([hpcprof not found, try using '--with-hpctoolkit'])])
 
-        # Generate hound and sniffer Makefiles and also perfexpert_run_exp.sh
+        # Generate hound and sniffer Makefiles
         ENABLE_HOUND=hound
         ENABLE_SNIFFER=sniffer
         AC_CONFIG_FILES([tools/analyzer/hound/Makefile])
         AC_CONFIG_FILES([tools/analyzer/sniffer/Makefile])
-        AC_CONFIG_FILES([tools/analyzer/sniffer/perfexpert_run_exp.sh_template],
-            [chmod +x tools/analyzer/sniffer/perfexpert_run_exp.sh_template])
     ], [
         # Disable hound and sniffer
         ENABLE_HOUND=
@@ -557,19 +555,14 @@ AS_IF([test x"$ENABLE_CT" = x"yes"], [
 AC_SUBST([ENABLE_CT])
 
 #------------------------------------------------------------------------------
-# Generate the ninja-super-power-script perfexpert.sh
-#
-AC_CONFIG_FILES([tools/perfexpert.sh], [chmod +x tools/perfexpert.sh])
-
-#------------------------------------------------------------------------------
 # Generate output files
 #
 AC_OUTPUT
 AC_MSG_NOTICE([========================================================])
-AC_MSG_NOTICE([ Analyzer:                  $ENABLE_ANALYZER            ])
-AC_MSG_NOTICE([ Minst (MACPO):             $ENABLE_MINST               ])
-AC_MSG_NOTICE([ Optimizations Recommender: $ENABLE_RECOMMENDER         ])
-AC_MSG_NOTICE([ Code Transformer:          $ENABLE_CT                  ])
+AC_MSG_NOTICE([ Analyzer:         $ENABLE_ANALYZER                     ])
+AC_MSG_NOTICE([ Minst (MACPO):    $ENABLE_MINST                        ])
+AC_MSG_NOTICE([ Recommender:      $ENABLE_RECOMMENDER                  ])
+AC_MSG_NOTICE([ Code Transformer: $ENABLE_CT                           ])
 AC_MSG_NOTICE([                                                        ])
 AC_MSG_NOTICE([ Debug mode: $ENABLE_DEBUG                              ])
 AC_MSG_NOTICE([ PAPI:       $HAVE_PAPI_HEADER                          ])
@@ -579,7 +572,6 @@ AC_MSG_NOTICE([             $HPCPROF_PROGRAM                           ])
 AC_MSG_NOTICE([ SQLite3:    $WITH_SQLITE3_SUPPORT                      ])
 AC_MSG_NOTICE([ Rose:       $WITH_ROSE                                 ])
 AC_MSG_NOTICE([ Java VM:    $WITH_JVM                                  ])
-AC_MSG_NOTICE([ PIPS:       $TPIPS_PROGRAM                             ])
 AC_MSG_NOTICE([                                                        ])
 AC_MSG_NOTICE([ CC=$CC                                                 ])
 AC_MSG_NOTICE([ CXX=$CXX                                               ])
@@ -588,24 +580,6 @@ AC_MSG_NOTICE([ CFLAGS=$CFLAGS                                         ])
 AC_MSG_NOTICE([ CXXFLAGS=$CXXFLAGS                                     ])
 AC_MSG_NOTICE([ LDFLAGS=$LDFLAGS                                       ])
 AC_MSG_NOTICE([ LIBS=$LIBS                                             ])
-AS_IF([test x"$HOST_OS" != x"linux"], [
-    AS_IF([test x"$ENABLE_ANALYZER" = x"yes"], [
-        AC_MSG_NOTICE([========================================================])
-        AC_MSG_NOTICE([                    !!! WARNING !!!                     ])
-        AC_MSG_NOTICE([                                                        ])
-        AC_MSG_NOTICE([ Since you are not running Linux, Analyzer is unable to ])
-        AC_MSG_NOTICE([ characterize you machine (using hound tool) neither to ])
-        AC_MSG_NOTICE([ generate LCPI configuration file (sniffer tool). Thus, ])
-        AC_MSG_NOTICE([ 'analyzer_run' script will not be available to you.    ])
-        AC_MSG_NOTICE([ However, if you want to run Analyzer on this           ])
-        AC_MSG_NOTICE([ installation just to analyze an experiment file you're ])
-        AC_MSG_NOTICE([ planning to run on another host you just have to copy  ])
-        AC_MSG_NOTICE([ the lcpi.properties and machine.properties files from  ])
-        AC_MSG_NOTICE([ the host's \$prefix/etc where you are planning to run  ])
-        AC_MSG_NOTICE([ the program you want to analyze/optimize to the        ])
-        AC_MSG_NOTICE([ $prefix/etc directory on this machine.                 ])
-    ], [])
-], [])
 AC_MSG_NOTICE([========================================================])
 AC_MSG_NOTICE([ Great news! Now you just have to run "make -s install" ])
 AC_MSG_NOTICE([========================================================])

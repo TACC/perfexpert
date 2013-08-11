@@ -44,6 +44,7 @@ extern "C" {
 #include "recommender.h"
 #include "perfexpert_output.h"
 #include "perfexpert_util.h"
+#include "perfexpert_database.h"
 
 /* Global variables, try to not create them! */
 globals_t globals; // Variable to hold global options, this one is OK
@@ -97,7 +98,8 @@ int main(int argc, char** argv) {
 
     /* Print to a file or STDOUT is? */
     if (NULL != globals.outputfile) {
-        OUTPUT_VERBOSE((7, "printing recommendations to file (%s)",
+        OUTPUT_VERBOSE((7, "   %s (%s)",
+                        _YELLOW("printing recommendations to file"),
                         globals.outputfile));
         globals.outputfile_FP = fopen(globals.outputfile, "w+");
         if (NULL == globals.outputfile_FP) {
@@ -107,7 +109,7 @@ int main(int argc, char** argv) {
             goto cleanup;
         }
     } else {
-        OUTPUT_VERBOSE((7, "printing recommendations to STDOUT"));
+        OUTPUT_VERBOSE((7, "   printing recommendations to STDOUT"));
     }
 
     /* Connect to database */
@@ -181,7 +183,6 @@ int main(int argc, char** argv) {
 /* show_help */
 static void show_help(void) {
     OUTPUT_VERBOSE((10, "printing help"));
-    
     /*      12345678901234567890123456789012345678901234567890123456789012345678901234567890 */
     printf("Usage: recommender -f file [-l level] [-o file] [-d database] [-m file] [-nvch]\n");
     #if HAVE_ROSE == 1
@@ -211,59 +212,52 @@ static void show_help(void) {
 
 /* parse_env_vars */
 static int parse_env_vars(void) {
-    char *temp_str;
-    
-    temp_str = getenv("PERFEXPERT_RECOMMENDER_VERBOSE_LEVEL");
-    if (NULL != temp_str) {
-        if ((0 >= atoi(temp_str)) || (10 < atoi(temp_str))) {
+    if (NULL != getenv("PERFEXPERT_RECOMMENDER_VERBOSE_LEVEL")) {
+        if ((0 >= atoi(getenv("PERFEXPERT_RECOMMENDER_VERBOSE_LEVEL"))) ||
+            (10 < atoi(getenv("PERFEXPERT_RECOMMENDER_VERBOSE_LEVEL")))) {
             OUTPUT(("%s (%d)", _ERROR("ENV Error: invalid debug level"),
-                    atoi(temp_str)));
+                    atoi(getenv("PERFEXPERT_RECOMMENDER_VERBOSE_LEVEL"))));
             show_help();
             return PERFEXPERT_ERROR;
         }
-        globals.verbose_level = atoi(temp_str);
+        globals.verbose_level = atoi(getenv("PERFEXPERT_RECOMMENDER_VERBOSE_LEVEL"));
         OUTPUT_VERBOSE((5, "ENV: verbose_level=%d", globals.verbose_level));
     }
 
-    temp_str = getenv("PERFEXPERT_RECOMMENDER_INPUT_FILE");
-    if (NULL != temp_str) {
-        globals.inputfile = temp_str;
+    if (NULL != getenv("PERFEXPERT_RECOMMENDER_INPUT_FILE")) {
+        globals.inputfile = getenv("PERFEXPERT_RECOMMENDER_INPUT_FILE");
         OUTPUT_VERBOSE((5, "ENV: inputfile=%s", globals.inputfile));
     }
 
-    temp_str = getenv("PERFEXPERT_RECOMMENDER_OUTPUT_FILE");
-    if (NULL != temp_str) {
-        globals.outputfile = temp_str;
+    if (NULL != getenv("PERFEXPERT_RECOMMENDER_OUTPUT_FILE")) {
+        globals.outputfile = getenv("PERFEXPERT_RECOMMENDER_OUTPUT_FILE");
         OUTPUT_VERBOSE((5, "ENV: outputfile=%s", globals.outputfile));
     }
 
-    temp_str = getenv("PERFEXPERT_RECOMMENDER_DATABASE_FILE");
-    if (NULL != temp_str) {
-        globals.dbfile =  temp_str;
+    if (NULL != getenv("PERFEXPERT_RECOMMENDER_DATABASE_FILE")) {
+        globals.dbfile =  getenv("PERFEXPERT_RECOMMENDER_DATABASE_FILE");
         OUTPUT_VERBOSE((5, "ENV: dbfile=%s", globals.dbfile));
     }
 
-    temp_str = getenv("PERFEXPERT_RECOMMENDER_METRICS_FILE");
-    if (NULL != temp_str) {
+    if (NULL != getenv("PERFEXPERT_RECOMMENDER_METRICS_FILE")) {
         globals.use_temp_metrics = 1;
-        globals.metrics_file = temp_str;
+        globals.metrics_file = getenv("PERFEXPERT_RECOMMENDER_METRICS_FILE");
         OUTPUT_VERBOSE((5, "ENV: metrics_file=%s", globals.metrics_file));
     }
 
-    temp_str = getenv("PERFEXPERT_RECOMMENDER_REC_COUNT");
-    if ((NULL != temp_str) && (0 <= atoi(temp_str))) {
-        globals.rec_count = atoi(temp_str);
+    if ((NULL != getenv("PERFEXPERT_RECOMMENDER_REC_COUNT")) &&
+        (0 <= atoi(getenv("PERFEXPERT_RECOMMENDER_REC_COUNT")))) {
+        globals.rec_count = atoi(getenv("PERFEXPERT_RECOMMENDER_REC_COUNT"));
         OUTPUT_VERBOSE((5, "ENV: rec_count=%d", globals.rec_count));
     }
 
-    temp_str = getenv("PERFEXPERT_RECOMMENDER_WORKDIR");
-    if (NULL != temp_str) {
-        globals.workdir = temp_str;
+    if (NULL != getenv("PERFEXPERT_RECOMMENDER_WORKDIR")) {
+        globals.workdir = getenv("PERFEXPERT_RECOMMENDER_WORKDIR");
         OUTPUT_VERBOSE((5, "ENV: workdir=%s", globals.workdir));
     }
 
-    temp_str = getenv("PERFEXPERT_RECOMMENDER_COLORFUL");
-    if ((NULL != temp_str) && (1 == atoi(temp_str))) {
+    if ((NULL != getenv("PERFEXPERT_RECOMMENDER_COLORFUL")) &&
+        (1 == atoi(getenv("PERFEXPERT_RECOMMENDER_COLORFUL")))) {
         globals.colorful = 1;
         OUTPUT_VERBOSE((5, "ENV: colorful=YES"));
     }
@@ -393,33 +387,25 @@ static int parse_cli_params(int argc, char *argv[]) {
     }
     OUTPUT_VERBOSE((4, "=== %s", _BLUE("CLI params")));
     OUTPUT_VERBOSE((10, "Summary of selected options:"));
-    OUTPUT_VERBOSE((10, "   Verbose level:              %d",
-                    globals.verbose_level));
-    OUTPUT_VERBOSE((10, "   Colorful verbose?           %s",
+    OUTPUT_VERBOSE((10, "   Verbose level:     %d", globals.verbose_level));
+    OUTPUT_VERBOSE((10, "   Colorful verbose?  %s",
                     globals.colorful ? "yes" : "no"));
-    OUTPUT_VERBOSE((10, "   PerfExpert PID:             %llu",
+    OUTPUT_VERBOSE((10, "   PerfExpert PID:    %llu",
                     globals.perfexpert_pid));
-    OUTPUT_VERBOSE((10, "   Temporary directory:        %s",
-                    globals.workdir ? globals.workdir : "(null)"));
-    OUTPUT_VERBOSE((10, "   Input file:                 %s",
-                    globals.inputfile ? globals.inputfile : "(null)"));
-    OUTPUT_VERBOSE((10, "   Output file:                %s",
-                    globals.outputfile ? globals.outputfile : "(null)"));
-    OUTPUT_VERBOSE((10, "   Database file:              %s",
-                    globals.dbfile ? globals.dbfile : "(null)"));
-    OUTPUT_VERBOSE((10, "   Metrics file:               %s",
-                    globals.metrics_file ? globals.metrics_file : "(null)"));
-    OUTPUT_VERBOSE((10, "   Use temporary metrics:      %s",
+    OUTPUT_VERBOSE((10, "   Work directory:    %s", globals.workdir));
+    OUTPUT_VERBOSE((10, "   Input file:        %s", globals.inputfile));
+    OUTPUT_VERBOSE((10, "   Output file:       %s", globals.outputfile));
+    OUTPUT_VERBOSE((10, "   Database file:     %s", globals.dbfile));
+    OUTPUT_VERBOSE((10, "   Metrics file:      %s", globals.metrics_file));
+    OUTPUT_VERBOSE((10, "   Temporary metrics: %s",
                     globals.use_temp_metrics ? "yes" : "no"));
-    OUTPUT_VERBOSE((10, "   Metrics table:              %s",
-                    globals.metrics_table ? globals.metrics_table : "(null)"));
-    OUTPUT_VERBOSE((10, "   Recommendation count:       %d",
-                    globals.rec_count));
+    OUTPUT_VERBOSE((10, "   Metrics table:     %s", globals.metrics_table));
+    OUTPUT_VERBOSE((10, "   Recommendations:   %d", globals.rec_count));
 
     /* Not using OUTPUT_VERBOSE because I want only one line */
     if (8 <= globals.verbose_level) {
         int i;
-        printf("%s complete command line:", PROGRAM_PREFIX);
+        printf("%s    %s", PROGRAM_PREFIX, _YELLOW("command line:"));
         for (i = 0; i < argc; i++) {
             printf(" %s", argv[i]);
         }
