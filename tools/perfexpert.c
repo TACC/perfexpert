@@ -173,7 +173,7 @@ int main(int argc, char** argv) {
                 goto clean_up;
 
             case PERFEXPERT_NO_TRANS:
-                OUTPUT(("Unable to apply code transformations"));
+                OUTPUT(("Unable to apply optimizations automatically"));
                 // TODO: show analysis and recommendations
 
                 rc = PERFEXPERT_NO_TRANS;
@@ -490,7 +490,7 @@ static int compile_program(void) {
     test_t test;
 
     OUTPUT_VERBOSE((4, "=== %s", _BLUE("Compiling the program")));
-    OUTPUT_VERBOSE((1, "Compiling [%s]", globals.program));
+    OUTPUT(("Compiling [%s]", globals.program));
 
     /* If the source file was provided generate compilation command line */
     if (NULL != globals.sourcefile) {
@@ -570,7 +570,7 @@ static int compile_program(void) {
 /* measurements */
 static int measurements(void) {
     OUTPUT_VERBOSE((4, "=== %s", _BLUE("Measurements phase")));
-    OUTPUT_VERBOSE((1, "Running [%s]", globals.program));
+    OUTPUT(("Running [%s]", globals.program));
 
     /* First of all, does the file exist? (it is just a double check) */
     if (PERFEXPERT_SUCCESS != perfexpert_util_file_exists_and_is_exec(
@@ -603,7 +603,7 @@ static int analysis(void) {
     test_t test;
 
     OUTPUT_VERBOSE((4, "=== %s", _BLUE("Analysis phase")));
-    OUTPUT_VERBOSE((1, "Analysing measurements"));
+    OUTPUT(("Analysing measurements"));
 
     /* First of all, does the file exist? */
     bzero(experiment, BUFFER_SIZE);
@@ -683,12 +683,12 @@ static int analysis(void) {
 
 /* recommendation */
 static int recommendation(void) {
-    char temp_str[7][BUFFER_SIZE];
+    char temp_str[6][BUFFER_SIZE];
     char *argv[6];
     test_t test;
 
     OUTPUT_VERBOSE((4, "=== %s", _BLUE("Recommendations phase")));
-    OUTPUT_VERBOSE((1, "Selecting optimizations"));
+    OUTPUT(("Selecting optimizations"));
 
     /* Set some environment variables to avoid working arguments */
     bzero(temp_str[0], BUFFER_SIZE);
@@ -708,28 +708,26 @@ static int recommendation(void) {
         return PERFEXPERT_ERROR;
     }
     bzero(temp_str[2], BUFFER_SIZE);
-    sprintf(temp_str[2], "%d", globals.verbose_level);
-    if (0 != setenv("PERFEXPERT_RECOMMENDER_VERBOSE_LEVEL", temp_str[2], 1)) {
+    sprintf(temp_str[2], "%d", globals.colorful);
+    if (0 != setenv("PERFEXPERT_RECOMMENDER_COLORFUL", temp_str[2], 1)) {
         OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
         return PERFEXPERT_ERROR;
     }
-    bzero(temp_str[3], BUFFER_SIZE);
-    sprintf(temp_str[3], "%d", globals.colorful);
-    if (0 != setenv("PERFEXPERT_RECOMMENDER_COLORFUL", temp_str[3], 1)) {
+    if (0 != setenv("PERFEXPERT_RECOMMENDER_VERBOSE_LEVEL", "10", 1)) {
         OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
         return PERFEXPERT_ERROR;
     }
 
     /* Arguments to run analyzer */
-    bzero(temp_str[4], BUFFER_SIZE);
-    sprintf(temp_str[4], "%s/recommender", PERFEXPERT_BINDIR);
-    argv[0] = temp_str[4];
+    bzero(temp_str[3], BUFFER_SIZE);
+    sprintf(temp_str[3], "%s/recommender", PERFEXPERT_BINDIR);
+    argv[0] = temp_str[3];
     argv[1] = "--automatic";
     argv[2] = globals.stepdir;
     argv[3] = "--output";
-    bzero(temp_str[5], BUFFER_SIZE);
-    sprintf(temp_str[5], "%s/recommendations_metrics.txt", globals.stepdir);
-    argv[4] = temp_str[5];
+    bzero(temp_str[4], BUFFER_SIZE);
+    sprintf(temp_str[4], "%s/recommendations_metrics.txt", globals.stepdir);
+    argv[4] = temp_str[4];
     argv[5] = NULL;
 
     /* Not using OUTPUT_VERBOSE because I want only one line (WTF?) */
@@ -744,9 +742,9 @@ static int recommendation(void) {
 
     /* The super-ninja test sctructure */
     if (0 == globals.verbose_level) {
-        bzero(temp_str[6], BUFFER_SIZE);
-        sprintf(temp_str[6], "%s/recommender_metrics.output", globals.stepdir);
-        test.output = temp_str[6];
+        bzero(temp_str[5], BUFFER_SIZE);
+        sprintf(temp_str[5], "%s/recommender_metrics.output", globals.stepdir);
+        test.output = temp_str[5];
     } else {
         test.output = NULL;
     }
@@ -760,9 +758,9 @@ static int recommendation(void) {
 
     /* Work some arguments... */
     argv[1] = "--output";
-    bzero(temp_str[5], BUFFER_SIZE);
-    sprintf(temp_str[5], "%s/recommendations_report.txt", globals.stepdir);
-    argv[2] = temp_str[5];
+    bzero(temp_str[4], BUFFER_SIZE);
+    sprintf(temp_str[4], "%s/recommendations_report.txt", globals.stepdir);
+    argv[2] = temp_str[4];
     argv[3] = NULL;
 
     /* Not using OUTPUT_VERBOSE because I want only one line */
@@ -777,9 +775,9 @@ static int recommendation(void) {
 
     /* The super-ninja test sctructure */
     if (0 == globals.verbose_level) {
-        bzero(temp_str[6], BUFFER_SIZE);
-        sprintf(temp_str[6], "%s/recommender_report.output", globals.stepdir);
-        test.output = temp_str[6];
+        bzero(temp_str[5], BUFFER_SIZE);
+        sprintf(temp_str[5], "%s/recommender_report.output", globals.stepdir);
+        test.output = temp_str[5];
     } else {
         test.output = NULL;
     }
@@ -797,12 +795,12 @@ static int recommendation(void) {
 
 /* transformation */
 static int transformation(void) {
-    char temp_str[5][BUFFER_SIZE];
+    char temp_str[4][BUFFER_SIZE];
     char *argv[6];
     test_t test;
 
     OUTPUT_VERBOSE((4, "=== %s", _BLUE("Code transformation phase")));
-    OUTPUT_VERBOSE((1, "Applying optimizations"));
+    OUTPUT(("Applying optimizations"));
 
     /* Set some environment variables to avoid working arguments */
     bzero(temp_str[0], BUFFER_SIZE);
@@ -815,23 +813,21 @@ static int transformation(void) {
         OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
         return PERFEXPERT_ERROR;
     }
-    bzero(temp_str[1], BUFFER_SIZE);
-    sprintf(temp_str[1], "%d", globals.verbose_level);
-    if (0 != setenv("PERFEXPERT_CT_VERBOSE_LEVEL", temp_str[1], 1)) {
+    if (0 != setenv("PERFEXPERT_CT_VERBOSE_LEVEL", "10", 1)) {
         OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
         return PERFEXPERT_ERROR;
     }
-    bzero(temp_str[2], BUFFER_SIZE);
-    sprintf(temp_str[2], "%d", globals.colorful);
-    if (0 != setenv("PERFEXPERT_CT_COLORFUL", temp_str[2], 1)) {
+    bzero(temp_str[1], BUFFER_SIZE);
+    sprintf(temp_str[1], "%d", globals.colorful);
+    if (0 != setenv("PERFEXPERT_CT_COLORFUL", temp_str[1], 1)) {
         OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
         return PERFEXPERT_ERROR;
     }
 
     /* Arguments to run analyzer */
-    bzero(temp_str[3], BUFFER_SIZE);
-    sprintf(temp_str[3], "%s/perfexpert_ct", PERFEXPERT_BINDIR);
-    argv[0] = temp_str[3];
+    bzero(temp_str[2], BUFFER_SIZE);
+    sprintf(temp_str[2], "%s/perfexpert_ct", PERFEXPERT_BINDIR);
+    argv[0] = temp_str[2];
     argv[1] = "--automatic";
     argv[2] = globals.stepdir;
     argv[3] = NULL;
@@ -848,9 +844,9 @@ static int transformation(void) {
 
     /* The super-ninja test sctructure */
     if (0 == globals.verbose_level) {
-        bzero(temp_str[4], BUFFER_SIZE);
-        sprintf(temp_str[4], "%s/perfexpert_ct.output", globals.stepdir);
-        test.output = temp_str[4];
+        bzero(temp_str[3], BUFFER_SIZE);
+        sprintf(temp_str[3], "%s/perfexpert_ct.output", globals.stepdir);
+        test.output = temp_str[3];
     } else {
         test.output = NULL;
     }
