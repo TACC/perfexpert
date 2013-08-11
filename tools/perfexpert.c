@@ -183,6 +183,7 @@ int main(int argc, char** argv) {
                 rc = PERFEXPERT_SUCCESS;
         }
 
+        OUTPUT(("Starting another optimization round..."));
         globals.step++;
     }
 
@@ -686,6 +687,7 @@ static int recommendation(void) {
     char temp_str[6][BUFFER_SIZE];
     char *argv[6];
     test_t test;
+    int rc;
 
     OUTPUT_VERBOSE((4, "=== %s", _BLUE("Recommendations phase")));
     OUTPUT(("Selecting optimizations"));
@@ -752,7 +754,8 @@ static int recommendation(void) {
     test.info = NULL;
 
     /* Run! (to generate recommendation metrics for code transformer) */
-    if (PERFEXPERT_SUCCESS != fork_and_wait(&test, argv)) {
+    rc = fork_and_wait(&test, argv);
+    if (PERFEXPERT_ERROR == rc) {
         return PERFEXPERT_ERROR;
     }
 
@@ -786,11 +789,12 @@ static int recommendation(void) {
 
 
     /* Run! (to generate recommendation report) */
-    if (PERFEXPERT_SUCCESS != fork_and_wait(&test, argv)) {
+    rc = fork_and_wait(&test, argv);
+    if (PERFEXPERT_ERROR == rc) {
         return PERFEXPERT_ERROR;
     }
 
-    return PERFEXPERT_SUCCESS;
+    return rc;
 }
 
 /* transformation */
