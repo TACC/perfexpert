@@ -41,6 +41,7 @@ extern "C" {
 #include "perfexpert_output.h"
 #include "perfexpert_util.h"
 #include "perfexpert_fork.h"
+#include "perfexpert_database.h"
 #include "install_dirs.h"
 
 /* Global variables, try to not create them! */
@@ -49,7 +50,7 @@ globals_t globals; // Variable to hold global options, this one is OK
 /* main, life starts here */
 int main(int argc, char** argv) {
     char workdir[] = ".perfexpert-temp.XXXXXX";
-    char temp_str[3][BUFFER_SIZE];
+    char temp_str[BUFFER_SIZE];
     int rc = PERFEXPERT_ERROR;
 
     /* Set default values for globals */
@@ -88,28 +89,22 @@ int main(int argc, char** argv) {
     }
     OUTPUT_VERBOSE((5, "   %s %s", _YELLOW("workdir:"), globals.workdir));
 
-    /* If database was not specified, check if the local database is update */
+    /* If database was not specified, check if there is any local database and
+     * if this database is update
+     */
     if (NULL == globals.dbfile) {
-        bzero(temp_str[0], BUFFER_SIZE);
-        sprintf(temp_str[0], "%s/%s", PERFEXPERT_VARDIR, RECOMMENDATION_DB);
-        bzero(temp_str[1], BUFFER_SIZE);
-        sprintf(temp_str[1], "%s/.%s", getenv("HOME"), RECOMMENDATION_DB);
-
-        if (PERFEXPERT_SUCCESS != perfexpert_util_file_exists(temp_str[1])) {
-            if (PERFEXPERT_SUCCESS != perfexpert_util_file_copy(temp_str[1],
-                                                                temp_str[0])) {
-                OUTPUT(("%s", _ERROR((char *)"Error: unable to copy file")));
-                goto clean_up;
-            }
-        }
-        globals.dbfile = temp_str[1];
-        OUTPUT_VERBOSE((5, "   %s %s", _YELLOW("database:"), globals.dbfile));
+        if (PERFEXPERT_SUCCESS !=
+            perfexpert_database_update(&(globals.dbfile))) {
+            OUTPUT(("%s", _ERROR((char *)"Error: unable to copy database")));
+            goto clean_up;
+        }        
     } else {
         if (PERFEXPERT_SUCCESS != perfexpert_util_file_exists(globals.dbfile)) {
             OUTPUT(("%s", _ERROR((char *)"Error: database file not found")));
             goto clean_up;
         }
     }
+    OUTPUT_VERBOSE((5, "   %s %s", _YELLOW("database:"), globals.dbfile));
 
     /* Iterate until some tool return != PERFEXPERT_SUCCESS */
     while (1) {
@@ -159,11 +154,11 @@ int main(int argc, char** argv) {
                 OUTPUT(("No recommendation found, printing analysys report"));
 
                 /* Print analysis report */
-                bzero(temp_str[2], BUFFER_SIZE);
-                sprintf(temp_str[2], "%s/analysis_report.txt", globals.stepdir);
+                bzero(temp_str, BUFFER_SIZE);
+                sprintf(temp_str, "%s/analysis_report.txt", globals.stepdir);
 
                 if (PERFEXPERT_SUCCESS !=
-                    perfexpert_util_file_print(temp_str[2])) {
+                    perfexpert_util_file_print(temp_str)) {
                     OUTPUT(("%s",
                             _ERROR("Error: unable to show analysis report")));
                 }
@@ -186,22 +181,22 @@ int main(int argc, char** argv) {
                 OUTPUT(("Unable to apply optimizations automatically"));
 
                 /* Print analysis report */
-                bzero(temp_str[2], BUFFER_SIZE);
-                sprintf(temp_str[2], "%s/analysis_report.txt", globals.stepdir);
+                bzero(temp_str, BUFFER_SIZE);
+                sprintf(temp_str, "%s/analysis_report.txt", globals.stepdir);
 
                 if (PERFEXPERT_SUCCESS !=
-                    perfexpert_util_file_print(temp_str[2])) {
+                    perfexpert_util_file_print(temp_str)) {
                     OUTPUT(("%s",
                             _ERROR("Error: unable to show analysis report")));
                 }
 
                 /* Print recommendations */
-                bzero(temp_str[2], BUFFER_SIZE);
-                sprintf(temp_str[2], "%s/recommendations_report.txt",
+                bzero(temp_str, BUFFER_SIZE);
+                sprintf(temp_str, "%s/recommendations_report.txt",
                         globals.stepdir);
 
                 if (PERFEXPERT_SUCCESS !=
-                    perfexpert_util_file_print(temp_str[2])) {
+                    perfexpert_util_file_print(temp_str)) {
                     OUTPUT(("%s",
                             _ERROR("Error: unable to show recommendations")));
                 }
