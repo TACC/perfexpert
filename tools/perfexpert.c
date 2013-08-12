@@ -49,7 +49,7 @@ globals_t globals; // Variable to hold global options, this one is OK
 /* main, life starts here */
 int main(int argc, char** argv) {
     char workdir[] = ".perfexpert-temp.XXXXXX";
-    char temp_str[2][BUFFER_SIZE];
+    char temp_str[3][BUFFER_SIZE];
     int rc = PERFEXPERT_ERROR;
 
     /* Set default values for globals */
@@ -155,8 +155,17 @@ int main(int argc, char** argv) {
                 goto clean_up;
 
             case PERFEXPERT_NO_REC:
-                OUTPUT(("No recommendation found"));
-                // TODO: show analysis
+                OUTPUT(("No recommendation found, printing analysys report"));
+
+                /* Print analysis report */
+                bzero(temp_str[2], BUFFER_SIZE);
+                sprintf(temp_str[2], "%s/analysis_report.txt", globals.stepdir);
+
+                if (PERFEXPERT_SUCCESS !=
+                    perfexpert_util_file_print(temp_str[2])) {
+                    OUTPUT(("%s",
+                            _ERROR("Error: unable to show analysis report")));
+                }
 
                 rc = PERFEXPERT_NO_REC;
                 goto clean_up;
@@ -174,7 +183,27 @@ int main(int argc, char** argv) {
 
             case PERFEXPERT_NO_TRANS:
                 OUTPUT(("Unable to apply optimizations automatically"));
-                // TODO: show analysis and recommendations
+
+                /* Print analysis report */
+                bzero(temp_str[2], BUFFER_SIZE);
+                sprintf(temp_str[2], "%s/analysis_report.txt", globals.stepdir);
+
+                if (PERFEXPERT_SUCCESS !=
+                    perfexpert_util_file_print(temp_str[2])) {
+                    OUTPUT(("%s",
+                            _ERROR("Error: unable to show analysis report")));
+                }
+
+                /* Print recommendations */
+                bzero(temp_str[2], BUFFER_SIZE);
+                sprintf(temp_str[2], "%s/recommendations_report.txt",
+                        globals.stepdir);
+
+                if (PERFEXPERT_SUCCESS !=
+                    perfexpert_util_file_print(temp_str[2])) {
+                    OUTPUT(("%s",
+                            _ERROR("Error: unable to show recommendations")));
+                }
 
                 rc = PERFEXPERT_NO_TRANS;
                 goto clean_up;
@@ -486,7 +515,6 @@ static int compile_program(void) {
     char   temp_str[BUFFER_SIZE];
     char   *argv[PARAM_SIZE];
     int    arg_index = 0;
-    int    flags_size = 0;
     char   flags[BUFFER_SIZE];
     test_t test;
 
@@ -503,14 +531,6 @@ static int compile_program(void) {
         arg_index++;
 
         /* What are the default and user defined compiler flags? */
-        flags_size = strlen(DEFAULT_CFLAGS) + 1;
-        if (NULL != getenv("CFLAGS")) {
-            flags_size += strlen(DEFAULT_CFLAGS) + 1;
-        }
-        if (NULL != getenv("PERFEXPERT_CFLAGS")) {
-            flags_size += strlen(DEFAULT_CFLAGS) + 1;
-        }
-
         bzero(flags, BUFFER_SIZE);
         strcat(flags, DEFAULT_CFLAGS);
         if (NULL != getenv("CFLAGS")) {
@@ -536,12 +556,20 @@ static int compile_program(void) {
     }
 
     /* If the user chose a Makefile... */
-    // TODO: I should take into consideration the compilation FLAGS here too
     if (NULL != globals.target) {
         argv[arg_index] = "make";
         arg_index++;
         argv[arg_index] = globals.target;
-        arg_index++;        
+        arg_index++;
+
+        if (NULL != getenv("CFLAGS")) {
+            strcat(flags, getenv("CFLAGS"));
+            strcat(flags, " ");
+        }
+        if (NULL != getenv("PERFEXPERT_CFLAGS")) {
+            strcat(flags, getenv("PERFEXPERT_CFLAGS"));
+        }
+        setenv("CFLAGS", flags, 1);
     }
 
     /* In both cases we should add a NULL */
@@ -907,6 +935,8 @@ static int run_hpcrun(void) {
     experiment_t *experiment;
     perfexpert_list_t experiments;
     int    rc = PERFEXPERT_SUCCESS;
+    char   *argv[2];
+    test_t test;
 
     /* Open experiment file */
     exp_file = (char *)malloc(strlen(PERFEXPERT_ETCDIR) +
@@ -950,22 +980,33 @@ static int run_hpcrun(void) {
                 (perfexpert_list_item_t *)experiment);
             perfexpert_list_append(&experiments,
                                    (perfexpert_list_item_t *)experiment);
+            experiment->argc = 0;
 
-            // TODO: add PREFIX to argv
+            /* Add PREFIX to argv */
+            if (NULL != globals.prefix) {
+                experiment->argv[experiment->argc] = strtok(globals.prefix,
+                                                            " ");
+                do {
+                    experiment->argc++;
+                } while (experiment->argv[experiment->argc] = strtok(NULL,
+                                                                     " "));
+            }
 
             /* Arguments to run hpcrun */
-            experiment->argc = 3;
-            experiment->argv[0] = HPCRUN;
-            experiment->argv[1] = "--output";
+            experiment->argv[experiment->argc] = HPCRUN;
+            experiment->argc++;
+            experiment->argv[experiment->argc] = "--output";
             temp_str = (char *)malloc(BUFFER_SIZE);
             if (NULL == temp_str) {
                 OUTPUT(("%s", _ERROR("Error: out of memory")));
                 rc = PERFEXPERT_ERROR;
                 goto CLEANUP;
             }
+            experiment->argc++;
             bzero(temp_str, BUFFER_SIZE);
             sprintf(temp_str, "%s/measurements", globals.stepdir);
-            experiment->argv[2] = temp_str;
+            experiment->argv[experiment->argc] = temp_str;
+            experiment->argc++;
 
             /* Move to next line */
             continue;
@@ -1009,7 +1050,32 @@ static int run_hpcrun(void) {
         experiment->argv[experiment->argc] = NULL;
 
         // TODO: add the program arguments to argv!
-        // TODO: run the BEFORE and AFTER programs
+
+        /* Run the BEFORE program */
+        if (NULL != globals.before) {
+            argv[0] = globals.before;
+            argv[1]; NULL;
+
+            temp_str = (char *)malloc(BUFFER_SIZE);
+            if (NULL == temp_str) {
+                OUTPUT(("%s", _ERROR("Error: out of memory")));
+                rc = PERFEXPERT_ERROR;
+                goto CLEANUP;
+            }
+            bzero(temp_str, BUFFER_SIZE);
+            sprintf(temp_str, "%s/before.%d.output", globals.stepdir,
+                    input_line);
+            experiment->test.output = temp_str;
+            test.output = temp_str;
+            test.input  = NULL;
+            test.info   = globals.before;
+
+            if (0 != fork_and_wait(&test, (char **)argv)) {
+                OUTPUT(("   %s [%s]", _BOLDRED("error running"),
+                        globals.before));
+            }
+            free(temp_str);
+        }
 
         /* The super-ninja test sctructure */
         temp_str = (char *)malloc(BUFFER_SIZE);
@@ -1053,6 +1119,32 @@ static int run_hpcrun(void) {
                 break;
         }
 
+        /* Run the AFTER program */
+        if (NULL != globals.after) {
+            argv[0] = globals.after;
+            argv[1]; NULL;
+
+            temp_str = (char *)malloc(BUFFER_SIZE);
+            if (NULL == temp_str) {
+                OUTPUT(("%s", _ERROR("Error: out of memory")));
+                rc = PERFEXPERT_ERROR;
+                goto CLEANUP;
+            }
+            bzero(temp_str, BUFFER_SIZE);
+            sprintf(temp_str, "%s/after.%d.output", globals.stepdir,
+                    input_line);
+            experiment->test.output = temp_str;
+            test.output = temp_str;
+            test.input  = NULL;
+            test.info   = globals.after;
+
+            if (0 != fork_and_wait(&test, (char **)argv)) {
+                OUTPUT(("   %s [%s]", _BOLDRED("error running"),
+                        globals.after));
+            }
+            free(temp_str);
+        }
+
         /* Move to the next experiment */
         input_line++;
         experiment = (experiment_t *)perfexpert_list_get_next(experiment);
@@ -1060,7 +1152,7 @@ static int run_hpcrun(void) {
 
     CLEANUP:
     /* Free memory */
-    // TODO: free list of experiments, nd for each experiment argv and test
+    // TODO: free list of experiments, and for each experiment argv and test
 
     return rc;
 }
