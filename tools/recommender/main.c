@@ -177,6 +177,9 @@ int main(int argc, char** argv) {
         fclose(globals.outputfile_FP);
     }
     perfexpert_database_disconnect(globals.db);
+
+    /* Free memory */
+
     return rc;
 }
 
@@ -999,7 +1002,8 @@ static int parse_metrics_file(void) {
 }
 
 /* output_recommendations */
-static int output_recommendations(void *var, int count, char **val, char **names) {
+static int output_recommendations(void *var, int count, char **val,
+    char **names) {
     int *rc = (int *)var;
 
     OUTPUT_VERBOSE((7, "%s", _GREEN("new recommendation found")));
@@ -1023,7 +1027,8 @@ static int output_recommendations(void *var, int count, char **val, char **names
 }
 
 /* accumulate_functions */
-static int accumulate_functions(void *functions, int count, char **val, char **names) {
+static int accumulate_functions(void *functions, int count, char **val,
+    char **names) {
     function_t *function;
     
     /* Copy SQL query result into functions list */
