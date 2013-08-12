@@ -68,7 +68,7 @@ extern "C" {
 
 /** Default values for some files and directories */
 #define RECOMMENDATION_DB        "perfexpert.db"
-#define PERFEXPERT_FRAGMENTS_DIR "fragments"
+#define PERFEXPERT_FRAGMENTS_DIR "database/src"
 #define PERFEXPERT_SOURCE_DIR    "source"
 #define METRICS_TABLE            "metric"
 #define METRICS_FILE             "recommender-metrics.txt"

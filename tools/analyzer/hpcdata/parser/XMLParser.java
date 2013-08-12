@@ -97,13 +97,20 @@ public class XMLParser extends DefaultHandler {
             }
         }
         
+        /* Get the full path for the source file */
         if (qName.equals("File")) {
             if (null != attr.getValue("i") && null != attr.getValue("n")) {
-                String [] file_bits = attr.getValue("n").split("/");
                 file_name_map.put(Long.parseLong(attr.getValue("i")),
-                                  file_bits[file_bits.length - 1].replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;"));
+                                  attr.getValue("n").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;"));
             }
         }
+        // if (qName.equals("File")) {
+        //     if (null != attr.getValue("i") && null != attr.getValue("n")) {
+        //         String [] file_bits = attr.getValue("n").split("/");
+        //         file_name_map.put(Long.parseLong(attr.getValue("i")),
+        //                           file_bits[file_bits.length - 1].replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;"));
+        //     }
+        // }
 
         if (qName.equals("Metric")) {
             long id = 0;
