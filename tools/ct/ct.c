@@ -166,6 +166,9 @@ int ct_main(int argc, char** argv) {
         fclose(globals.outputfile_FP);
     }
     perfexpert_database_disconnect(globals.db);
+
+    /* TODO: Free memory */
+
     return rc;
 }
 
