@@ -178,7 +178,7 @@ int main(int argc, char** argv) {
     }
     perfexpert_database_disconnect(globals.db);
 
-    /* Free memory */
+    /* TODO: Free memory */
 
     return rc;
 }
@@ -552,6 +552,11 @@ static int parse_segment_params(perfexpert_list_t *segments_p) {
                 OUTPUT(("%s", _ERROR("Error: out of memory")));
                 return PERFEXPERT_ERROR;
             }
+            /* Remove the "./src" string from filename */
+            node->value = strstr(node->value, "./src");
+            memmove(node->value, node->value + strlen("./src"),
+                    1 + strlen(node->value + strlen("./src")));
+
             bzero(item->filename, strlen(node->value) + 1);
             strcpy(item->filename, node->value);
             OUTPUT_VERBOSE((10, "(%d) %s     [%s]", input_line,
@@ -684,6 +689,8 @@ static int parse_segment_params(perfexpert_list_t *segments_p) {
         item = (segment_t *)perfexpert_list_get_next(item);
     }
     
+    /* TODO: Free memory */
+
     return PERFEXPERT_SUCCESS;
 }
 
@@ -998,6 +1005,9 @@ static int parse_metrics_file(void) {
         }
         OUTPUT(("using temporary metric table (%s)", globals.metrics_table));
     }
+
+    /* TODO: Free memory */
+
     return PERFEXPERT_SUCCESS;
 }
 
@@ -1068,6 +1078,9 @@ static int accumulate_functions(void *functions, int count, char **val,
     if (NULL != globals.outputfile) {
         fclose(globals.outputfile_FP);
     }
+
+    /* TODO: Free memory */
+
     return PERFEXPERT_ERROR;
 }
 

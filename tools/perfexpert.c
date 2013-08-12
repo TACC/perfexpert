@@ -54,23 +54,24 @@ int main(int argc, char** argv) {
 
     /* Set default values for globals */
     globals = (globals_t) {
-        .verbose_level      = 0,    // int
-        .dbfile             = NULL, // char *
-        .colorful           = 0,    // int
-        .threshold          = 0.0,  // float
-        .rec_count          = 3,    // int
-        .left_garbage       = 0,    // int
-        .target             = NULL, // char *
-        .sourcefile         = NULL, // char *
-        .program            = NULL, // char *
-        .arguments          = 0,    // int
-        .arguments_position = 0,    // int
-        .before             = NULL, // char *
-        .after              = NULL, // char *
-        .prefix             = NULL, // char *
-        .step               = 1,    // int
-        .workdir            = NULL, // char *
-        .stepdir            = NULL  // char *
+        .verbose_level = 0,    // int
+        .dbfile        = NULL, // char *
+        .colorful      = 0,    // int
+        .threshold     = 0.0,  // float
+        .rec_count     = 3,    // int
+        .left_garbage  = 0,    // int
+        .target        = NULL, // char *
+        .sourcefile    = NULL, // char *
+        .program       = NULL, // char *
+        .prog_arg_pos  = 0,    // int
+        .main_argc     = argc, // int
+        .main_argv     = argv, // char **
+        .before        = NULL, // char *
+        .after         = NULL, // char *
+        .prefix        = NULL, // char *
+        .step          = 1,    // int
+        .workdir       = NULL, // char *
+        .stepdir       = NULL  // char *
     };
 
     /* Parse command-line parameters */
@@ -459,9 +460,9 @@ static int parse_cli_params(int argc, char *argv[]) {
     optind++;
 
     if (argc > optind) {
-        globals.arguments = argc - optind;
+        globals.prog_arg_pos = optind;
         OUTPUT_VERBOSE((10, "option 'program_arguments' set [%d]",
-                        globals.arguments));
+                        argc - globals.prog_arg_pos));
     }
 
     /* Not using OUTPUT_VERBOSE because I want only one line */
@@ -487,7 +488,8 @@ static int parse_cli_params(int argc, char *argv[]) {
     OUTPUT_VERBOSE((10, "   Make target:         %s", globals.target));
     OUTPUT_VERBOSE((10, "   Program source file: %s", globals.sourcefile));
     OUTPUT_VERBOSE((10, "   Program executable:  %s", globals.program));
-    OUTPUT_VERBOSE((10, "   Program arguments:   %d", globals.arguments));
+    OUTPUT_VERBOSE((10, "   Program arguments:   %d",
+                    argc - globals.prog_arg_pos));
     OUTPUT_VERBOSE((10, "   Before each run:     %s", globals.before));
     OUTPUT_VERBOSE((10, "   After each run:      %s", globals.after));
 
@@ -1043,13 +1045,7 @@ static int run_hpcrun(void) {
     OUTPUT_VERBOSE((5, "   %s", _YELLOW("running experiments")));
     experiment = (experiment_t *)perfexpert_list_get_first(&experiments);
     while ((perfexpert_list_item_t *)experiment != &(experiments.sentinel)) {
-
-        /* Ok, now we just have to add the program and its arguments */
-        experiment->argv[experiment->argc] = globals.program;
-        experiment->argc++;
-        experiment->argv[experiment->argc] = NULL;
-
-        // TODO: add the program arguments to argv!
+        int count = 0;
 
         /* Run the BEFORE program */
         if (NULL != globals.before) {
@@ -1076,6 +1072,19 @@ static int run_hpcrun(void) {
             }
             free(temp_str);
         }
+
+        /* Ok, now we just have to add the program and its arguments */
+        experiment->argv[experiment->argc] = globals.program;
+        experiment->argc++;
+
+        /* Add the program arguments to experiment's argv */
+        while ((globals.prog_arg_pos + count) < globals.main_argc) {
+            experiment->argv[experiment->argc] =
+                globals.main_argv[globals.prog_arg_pos + count];
+            experiment->argc++;
+            count++;
+        }
+        experiment->argv[experiment->argc] = NULL;
 
         /* The super-ninja test sctructure */
         temp_str = (char *)malloc(BUFFER_SIZE);

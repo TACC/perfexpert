@@ -349,6 +349,7 @@ void recommenderTraversal::atTraversalEnd() {
                     fragment->filename));
 }
 
+// TODO: make a copy of the function before changing it
 // int replace_function(function_t *function) {
 //     ciTraversal functionTraversal;
 //     FILE *destination_file_FP;

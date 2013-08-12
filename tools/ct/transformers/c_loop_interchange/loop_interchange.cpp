@@ -53,7 +53,6 @@ globals_t  globals;
 
 using namespace std;
 using namespace SageInterface;
-// using namespace SageBuilder;
 
 SgProject *userProject;
 
@@ -197,14 +196,7 @@ int open_rose(void) {
     bzero(files[0], sizeof("ct_loop_interchange") + 1);
     snprintf(files[0], sizeof("ct_loop_interchange"), "ct_loop_interchange");
 
-    files[1] = (char *)malloc(sizeof(globals.sourcefile) +
-                              sizeof(globals.workdir) + 2);
-    if (NULL == files[1]) {
-        printf("Error: out of memory\n");
-        return PERFEXPERT_ERROR;
-    }
-    bzero(files[1], sizeof(globals.sourcefile) + sizeof(globals.workdir) + 2);
-    sprintf(files[1], "%s/%s", globals.workdir, globals.sourcefile);
+    files[1] = globals.sourcefile;
     files[2] = NULL;
 
     /* Load files and build AST */
@@ -216,20 +208,9 @@ int open_rose(void) {
 
 int extract_source(void) {
     FILE *destination_file_FP;
-    char *destination_file = NULL;
     SgSourceFile* file = NULL;
     int fileNum;
     int i;
-
-    destination_file = (char *)malloc(sizeof(globals.resultfile) +
-                                      sizeof(globals.workdir) + 3);
-    if (NULL == destination_file) {
-        printf("Error: out of memory\n");
-        return PERFEXPERT_ERROR;
-    }
-    bzero(destination_file, sizeof(globals.resultfile) + sizeof(globals.workdir)
-          + 3);
-    sprintf(destination_file, "%s/%s", globals.workdir, globals.resultfile);
 
     /* For each filename */
     fileNum = userProject->numberOfFiles();
@@ -237,9 +218,9 @@ int extract_source(void) {
         file = isSgSourceFile(userProject->get_fileList()[i]);
 
         /* Open output file */
-        destination_file_FP = fopen(destination_file, "w+");
+        destination_file_FP = fopen(globals.resultfile, "w+");
         if (NULL == destination_file_FP) {
-            printf("error opening file (%s)\n", destination_file);
+            printf("error opening file (%s)\n", globals.resultfile);
             return PERFEXPERT_ERROR;
         }
 
@@ -250,7 +231,7 @@ int extract_source(void) {
         /* Close output file */
         fclose(destination_file_FP);
 
-        printf("modified source code (%s)\n", destination_file);
+        printf("modified source code (%s)\n", globals.resultfile);
     }
     return PERFEXPERT_SUCCESS;
 }

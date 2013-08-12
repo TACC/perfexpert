@@ -522,6 +522,8 @@ static int parse_transformation_params(perfexpert_list_t *fragments) {
     OUTPUT_VERBOSE((4, "%d %s", perfexpert_list_get_size(fragments),
                     _GREEN("code bottleneck(s) found")));
 
+    /* TODO: Free memory */
+
     return PERFEXPERT_SUCCESS;
 }
 
@@ -630,6 +632,8 @@ static int accumulate_transformations(void *recommendation, int count,
     perfexpert_list_append((perfexpert_list_t *)&(r->transformations),
                            (perfexpert_list_item_t *)transformation);
 
+    /* TODO: Free memory */
+
     return PERFEXPERT_SUCCESS;
 }
 
@@ -662,6 +666,8 @@ static int accumulate_patterns(void *transformation, int count, char **val,
     t = (transformation_t *)transformation;
     perfexpert_list_append((perfexpert_list_t *)&(t->patterns),
                            (perfexpert_list_item_t *)pattern);
+
+    /* TODO: Free memory */
 
     return PERFEXPERT_SUCCESS;
 }
@@ -895,7 +901,7 @@ static int test_transformation(fragment_t *fragment,
     sprintf(argv[5], "-r");
     argv[6] = (char *)malloc(strlen(fragment->filename) + 5);
     bzero(argv[6], strlen(fragment->filename) + 5);
-    sprintf(argv[6], "new_%s", fragment->filename);
+    sprintf(argv[6], "%s_new", fragment->filename);
     argv[7] = (char *)malloc(strlen("-s") + 1);
     bzero(argv[7], strlen("-s") + 1);
     sprintf(argv[7], "-s");
@@ -922,6 +928,16 @@ static int test_transformation(fragment_t *fragment,
             transformation->program);
     test->output = temp_str;
 
+    /* Not using OUTPUT_VERBOSE because I want only one line */
+    if (8 <= globals.verbose_level) {
+        int i;
+        printf("%s    %s", PROGRAM_PREFIX, _YELLOW("command line:"));
+        for (i = 0; i < 11; i++) {
+            printf(" %s", argv[i]);
+        }
+        printf("\n");
+    }
+
     /* fork_and_wait_and_pray */
     rc = fork_and_wait(test, argv);
 
@@ -940,6 +956,9 @@ static int test_transformation(fragment_t *fragment,
                 fragment->line_number, fragment->filename));
         OUTPUT(("the original file was renamed to %s", temp_str));
     }
+
+    /* TODO: Free memory */
+
     return rc;
 }
 
@@ -1054,6 +1073,9 @@ static int test_pattern(fragment_t *fragment, recommendation_t *recommendation,
         test = (test_t *)perfexpert_list_get_next(
             (perfexpert_list_item_t *)test);
     }
+
+    /* TODO: Free memory */
+
     return rc;
 }
 

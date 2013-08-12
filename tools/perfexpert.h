@@ -63,8 +63,9 @@ typedef struct {
     char  *target;
     char  *sourcefile;
     char  *program;
-    int   arguments;
-    int   arguments_position;
+    int   prog_arg_pos;
+    int   main_argc;
+    char  **main_argv;
     char  *before;
     char  *after;
     int   step;
