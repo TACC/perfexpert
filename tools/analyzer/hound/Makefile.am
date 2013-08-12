@@ -39,5 +39,7 @@ install-exec-local:
 	./hound > machine.properties
 	$(MKDIR_P) $(sysconfdir)
 	$(INSTALL) -m 644 machine.properties $(sysconfdir)/
+	hwloc-info --output-format xml > memory.properties
+	$(INSTALL) -m 644 memory.properties $(sysconfdir)/
 
 # EOF
