@@ -29,22 +29,19 @@ cd hpctoolkit-5.3.2-r4197/
 mkdir _build
 cd _build
 module load papi
-../configure --prefix=${INSTALL_DIR} \
+../configure --prefix=${INSTALL_DIR}/external \
     --with-externals=../../hpctoolkit-externals-5.3.2-r4197/_build/ \
     --with-papi=${PAPI_DIR}
 make install
 cd ../../
-# rm -rf hpctoolkit-5.3.2-r4197/
-# rm -rf hpctoolkit-externals-5.3.2-r4197/
 
 echo "Package: BOOST"
 date
 tar -xzvf ./boost_1_47_0.tar.gz
 cd boost_1_47_0/
 ./bootstrap.sh
-./b2 install --prefix=${INSTALL_DIR}
+./b2 install --prefix=${INSTALL_DIR}/external
 cd ../
-# rm -rf boost_1_47_0/
 
 echo "Package: ROSE"
 date
@@ -52,14 +49,13 @@ tar -xzvf ./rose-0.9.5a-without-EDG-20584.tar.gz
 cd rose-0.9.5a-20584/
 mkdir _build
 cd _build
-../configure --prefix=${INSTALL_DIR} --with-boost=${INSTALL_DIR} \
+../configure --prefix=${INSTALL_DIR}/external --with-boost=${INSTALL_DIR} \
 	--disable-tutorial-directory --disable-projects-directory \
 	--disable-tests-directory --disable-opencl --disable-php \
     --disable-cuda --disable-binary-analysis --disable-java \
     --with-gomp_omp_runtime_library=/opt/apps/gcc/4.6.3/lib64/
 JAVA_TOOL_OPTIONS="-Xms256M -Xmx1G" make install
 cd ../../
-# rm -rf rose-0.9.5a-20584/
 
 echo "Package: Google SparseHash"
 date
@@ -67,10 +63,9 @@ tar -xzvf ./sparsehash-2.0.2.tar.gz
 cd sparsehash-2.0.2/
 mkdir _build
 cd _build
-../configure --prefix=${INSTALL_DIR}
+../configure --prefix=${INSTALL_DIR}/external
 make install
 cd ../../
-# rm -rf sparsehash-2.0.2/
 
 echo "Package: GMP"
 date
@@ -78,86 +73,13 @@ tar -xzvf ./gmp-5.1.2.tar.gz
 cd gmp-5.1.2/
 mkdir _build
 cd _build
-../configure --prefix=${INSTALL_DIR}
+../configure --prefix=${INSTALL_DIR}/external
 make
 make check
 make install
 cd ../../
-# rm -rf gmp-5.1.2/
 
 echo "Package: Apache ANT"
 date
 tar -xzvf ./apache-ant-1.9.1-bin.tar.gz
 export ANT_HOME=`pwd`/apache-ant-1.9.1
-
-# echo "Package: cproto"
-# date
-# tar -xzvf ./cproto.tar.gz
-# cd cproto-4.7j/
-# mkdir _build
-# cd _build
-# ../configure --prefix=${INSTALL_DIR}
-# make install
-# cd ../../
-# rm -rf cproto-4.7j/
-
-# echo "Package: Polylib"
-# date
-# tar -xzvf ./polylib-5.22.5.tar.gz
-# cd polylib-5.22.5/
-# mkdir _build
-# cd _build
-# ../configure --prefix=${INSTALL_DIR}
-# make install
-# cd ../../
-# rm -rf polylib-5.22.5/
-
-# echo "Package: NewGen"
-# date
-# tar -xzvf ./newgen-0.1.tar.gz
-# cd newgen-0.1/
-# autoreconf --install
-# mkdir _build
-# cd _build
-# ../configure --disable-static --prefix=${INSTALL_DIR}
-# make install
-# cd ../../
-# rm -rf newgen-0.1/
-
-# echo "Package: Linear"
-# date
-# tar -xzvf ./linear-0.1.tar.gz
-# cd linear-0.1
-# autoreconf --install
-# mkdir _build
-# cd _build
-# ../configure --disable-static --prefix=${INSTALL_DIR} \
-#     PKG_CONFIG_PATH=${INSTALL_DIR}/lib/pkgconfig:$PKG_CONFIG_PATH
-# make install
-# cd ../../
-# rm -rf linear-0.1/
-
-# echo "Package: PIPS"
-# date
-# tar -xzvf ./pips-0.1.tar.gz
-# cd pips-0.1/
-# autoreconf --install
-# mkdir _build
-# cd _build
-# ../configure --disable-static --prefix=${INSTALL_DIR} \
-#     PKG_CONFIG_PATH=${INSTALL_DIR}/lib/pkgconfig:$PKG_CONFIG_PATH
-# make install
-# cd ../../
-# rm -rf pips-0.1/
-
-# Already present on Stampede
-# echo "Package: hwlock"
-# date
-# tar -xzvf hwloc-1.7.1.tar.gz
-# cd hwloc-1.7.1/
-# mkdir _build
-# cd _build
-# ../configure --prefix=$HOME/perfexpert
-# make install
-# cd ../../
-# rm -rf hwloc-1.7.1/
