@@ -138,7 +138,7 @@ static int perfexpert_util_make_path(const char *path, int nmode) {
 /* perfexpert_util_file_exists */
 static int perfexpert_util_file_exists(const char *file) {
     if (0 != access(file, F_OK)) {
-        OUTPUT(("%s (%s)", _ERROR((char *)"Error: file not found"), file));
+        // OUTPUT_VERBOSE((10, "%s (%s)", _RED((char *)"file not found"), file));
         return PERFEXPERT_ERROR;
     }
     return PERFEXPERT_SUCCESS;
@@ -149,8 +149,8 @@ static int perfexpert_util_file_exists(const char *file) {
 static int perfexpert_util_file_exists_and_is_exec(const char *file) {
     if (PERFEXPERT_SUCCESS == perfexpert_util_file_exists(file)) {
         if (0 != access(file, X_OK)) {
-            OUTPUT(("%s (%s)",
-                    _ERROR((char *)"Error: file is not an executable"), file));
+            // OUTPUT_VERBOSE((10, "%s (%s)",
+            //                 _RED((char *)"file is not an executable"), file));
             return PERFEXPERT_ERROR;
         }
     } else {

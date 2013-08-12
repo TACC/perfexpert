@@ -56,6 +56,95 @@ extern "C" {
 #include "perfexpert_output.h"
 #endif
 
+/* perfexpert_database_update */
+static int perfexpert_database_update(char **file) {
+    FILE  *version_file_FP;
+    char  temp_str[6][BUFFER_SIZE];
+    float my_version = 0.0;
+    float sys_version = 0.0;
+
+    bzero(temp_str[0], BUFFER_SIZE);
+    sprintf(temp_str[0], "%s/%s", PERFEXPERT_VARDIR, RECOMMENDATION_DB);
+    bzero(temp_str[1], BUFFER_SIZE);
+    sprintf(temp_str[1], "%s/.%s", getenv("HOME"), RECOMMENDATION_DB);
+    bzero(temp_str[2], BUFFER_SIZE);
+    sprintf(temp_str[2], "%s/.%s.version", PERFEXPERT_VARDIR, RECOMMENDATION_DB);
+    bzero(temp_str[3], BUFFER_SIZE);
+    sprintf(temp_str[3], "%s/.%s.version", getenv("HOME"), RECOMMENDATION_DB);
+    bzero(temp_str[4], BUFFER_SIZE);
+    sprintf(temp_str[4], "%s/.%s~", getenv("HOME"), RECOMMENDATION_DB);
+    bzero(temp_str[5], BUFFER_SIZE);
+
+    if (PERFEXPERT_SUCCESS == perfexpert_util_file_exists(temp_str[1])) {
+        OUTPUT_VERBOSE((10, "      found local database (%s)", temp_str[1]));
+        if (PERFEXPERT_SUCCESS == perfexpert_util_file_exists(temp_str[3])) {
+            /* My version */
+            version_file_FP = fopen(temp_str[3], "r");
+            if (version_file_FP) {
+                fread(temp_str[5], 1, sizeof(temp_str[5]), version_file_FP);
+                my_version = atof(temp_str[5]);
+                if (ferror(version_file_FP)) {
+                    return PERFEXPERT_ERROR;
+                }
+                fclose(version_file_FP);
+            } else {
+                return PERFEXPERT_ERROR;
+            }
+            OUTPUT_VERBOSE((10, "      local database version (%f)",
+                            my_version));
+
+            /* System's version */
+            version_file_FP = fopen(temp_str[2], "r");
+            if (version_file_FP) {
+                fread(temp_str[5], 1, sizeof(temp_str[5]), version_file_FP);
+                sys_version = atof(temp_str[5]);
+                if (ferror(version_file_FP)) {
+                    return PERFEXPERT_ERROR;
+                }
+                fclose(version_file_FP);
+            } else {
+                return PERFEXPERT_ERROR;
+            }
+            OUTPUT_VERBOSE((10, "      system database version (%f)",
+                            sys_version));
+
+            /* Compare */
+            if (my_version > sys_version) {
+                return PERFEXPERT_ERROR;
+            } else if (my_version == sys_version) {
+                goto DATABASE_OK;
+            } else if (my_version < sys_version) {
+                rename(temp_str[1], temp_str[4]);
+                unlink(temp_str[3]);
+            }
+        } else {
+            OUTPUT_VERBOSE((10, "      local database version unknown"));
+            rename(temp_str[1], temp_str[4]);
+        }
+    }
+
+    OUTPUT_VERBOSE((10, "      updating database"));
+    if (PERFEXPERT_SUCCESS != perfexpert_util_file_copy(temp_str[1],
+                                                        temp_str[0])) {
+        OUTPUT(("%s (%s) >> (%s)", _ERROR((char *)"Error: unable to copy file"),
+                temp_str[0], temp_str[1]));
+        return PERFEXPERT_ERROR;
+    }
+    if (PERFEXPERT_SUCCESS != perfexpert_util_file_copy(temp_str[3],
+                                                        temp_str[2])) {
+        OUTPUT(("%s (%s) >> (%s)", _ERROR((char *)"Error: unable to copy file"),
+                temp_str[0], temp_str[1]));
+        return PERFEXPERT_ERROR;
+    }
+
+    DATABASE_OK:
+    *file = (char *)malloc(strlen(temp_str[1] + 1));
+    bzero(*file, strlen(temp_str[1] + 1));
+    strcpy(*file, temp_str[1]);
+
+    return PERFEXPERT_SUCCESS;
+}
+
 /* perfexpert_database_disconnect */
 static int perfexpert_database_disconnect(sqlite3 *db) {
     /* Close DB connection */
@@ -103,7 +192,8 @@ static int perfexpert_database_connect(sqlite3 **db, char *file) {
 }
 
 /* perfexpert_database_get_int */
-static int perfexpert_database_get_int(void *var, int count, char **val, char **names) {
+static int perfexpert_database_get_int(void *var, int count, char **val,
+    char **names) {
     int *temp = (int *)var;
     if (NULL != val[0]) {
         *temp = atoi(val[0]);
@@ -112,7 +202,8 @@ static int perfexpert_database_get_int(void *var, int count, char **val, char **
 }
 
 /* perfexpert_database_get_double */
-static int perfexpert_database_get_double(void *var, int count, char **val, char **names) {
+static int perfexpert_database_get_double(void *var, int count, char **val,
+    char **names) {
     double *temp = (double *)var;
     if (NULL != val[0]) {
         *temp = atof(val[0]);
