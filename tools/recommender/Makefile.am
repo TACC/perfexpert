@@ -48,6 +48,8 @@ install-exec-local:
 		>> $(top_builddir)/warnings_recommender; fi
 	$(INSTALL) -b -m 644 perfexpert.db $(localstatedir)/
 	rm perfexpert.db
+	echo 1.0 > .perfexpert.db.version
+	$(INSTALL) -m 644 .perfexpert.db.version $(localstatedir)/
 	$(INSTALL) -m 644 $(top_srcdir)/contrib/recommendation-metrics.txt \
 		$(sysconfdir)/
 	$(INSTALL) -m 644 $(top_srcdir)/contrib/recommendation.db.txt \
