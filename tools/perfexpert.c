@@ -230,8 +230,10 @@ static void show_help(void) {
     OUTPUT_VERBOSE((10, "printing help"));
     /*      12345678901234567890123456789012345678901234567890123456789012345678901234567890 */
     printf("Usage: perfexpert <threshold> [-gvch] [-l level] [-d database] [-r count]\n");
-    printf("                 [-m target|-s sourcefile] [-p prefix] [-a program] [-b program]\n");
-    printf("                 <program_executable> [program arguments]\n\n");
+    printf("                 [-m target|-s sourcefile] [-p prefix] [-a FILE] [-b FILE]\n");
+    printf("                 <program_executable> [program_arguments]\n\n");
+    printf("  <threshold>        Define the relevance (in % of runtime) of code fragments\n");
+    printf("                     PerfExpert should take into consideration (> 0 and <= 1)\n");
     printf("  -d --database      Select the recommendation database file\n");
     printf("                     (default: %s/%s)\n", PERFEXPERT_VARDIR, RECOMMENDATION_DB);
     printf("  -r --recommend     Number of recommendation to show\n");
