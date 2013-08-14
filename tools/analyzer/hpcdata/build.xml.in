@@ -33,7 +33,7 @@
     
     <path id="HPCData.classpath">
         <pathelement location="."/>
-        <pathelement location="@top_srcdir@/external/log4j-1.2.16.jar"/>
+        <pathelement location="@top_srcdir@/externals/log4j-1.2.16.jar"/>
         <pathelement location="../argp/argp-1.0.jar"/>
     </path>
     
