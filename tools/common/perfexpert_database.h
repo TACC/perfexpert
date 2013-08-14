@@ -58,6 +58,7 @@ extern "C" {
 
 /* perfexpert_database_update */
 static int perfexpert_database_update(char **file) {
+    // TODO: this functions requires much more tests
     FILE  *version_file_FP;
     char  temp_str[6][BUFFER_SIZE];
     float my_version = 0.0;

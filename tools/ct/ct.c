@@ -46,6 +46,9 @@ extern "C" {
 #include "perfexpert_util.h"
 #include "perfexpert_fork.h"
 #include "perfexpert_database.h"
+#include "perfexpert_log.h"
+
+// TODO: extract the function, uuencode it, and log
 
 /* Global variables, try to not create them! */
 globals_t globals; // Variable to hold global options, this one is OK
@@ -59,15 +62,15 @@ int ct_main(int argc, char** argv) {
 
     /* Set default values for globals */
     globals = (globals_t) {
-        .verbose_level    = 0,      // int
-        .inputfile        = NULL,   // char *
-        .inputfile_FP     = stdin,   // char *
-        .outputfile       = NULL,   // char *
-        .outputfile_FP    = stdout, // FILE *
-        .dbfile           = NULL,   // char *
-        .workdir          = NULL,   // char *
-        .perfexpert_pid   = (unsigned long long int)getpid(), // int
-        .colorful         = 0       // int
+        .verbose_level = 0,              // int
+        .inputfile     = NULL,           // char *
+        .inputfile_FP  = stdin,          // char *
+        .outputfile    = NULL,           // char *
+        .outputfile_FP = stdout,         // FILE *
+        .dbfile        = NULL,           // char *
+        .workdir       = NULL,           // char *
+        .pid           = (long)getpid(), // long int
+        .colorful      = 0               // int
     };
 
     /* Parse command-line parameters */
@@ -175,22 +178,21 @@ int ct_main(int argc, char** argv) {
 /* show_help */
 static void show_help(void) {
     OUTPUT_VERBOSE((10, "printing help"));
-
-    /*               12345678901234567890123456789012345678901234567890123456789012345678901234567890 */
-    fprintf(stderr, "Usage: perfexpert_ct -f file [-o file] [-vch] [-l level] [-a workdir] [-p pid]");
-    fprintf(stderr, "                     [-d database]\n\n");
-    fprintf(stderr, "  -f --inputfile       Use 'file' as input for patterns\n");
-    fprintf(stderr, "  -o --outputfile      Use 'file' as output (default stdout)\n");
-    fprintf(stderr, "  -a --automatic       Use automatic performance optimization and create files\n");
-    fprintf(stderr, "                       into 'dir' directory (default: off).\n");
-    fprintf(stderr, "  -d --database        Select the recommendation database file\n");
-    fprintf(stderr, "                       (default: %s/%s)\n", PERFEXPERT_VARDIR, RECOMMENDATION_DB);
-    fprintf(stderr, "  -p --perfexpert_pid  Use 'pid' to log on DB consecutive calls to Recommender\n");
-    fprintf(stderr, "  -v --verbose         Enable verbose mode using default verbose level (5)\n");
-    fprintf(stderr, "  -l --verbose_level   Enable verbose mode using a specific verbose level (1-10)\n");
-    fprintf(stderr, "  -c --colorful        Enable colors on verbose mode, no weird characters will\n");
-    fprintf(stderr, "                       appear on output files\n");
-    fprintf(stderr, "  -h --help            Show this message\n");
+    /*      12345678901234567890123456789012345678901234567890123456789012345678901234567890 */
+    printf("Usage: perfexpert_ct -f file [-o file] [-vch] [-l level] [-a workdir] [-p pid]");
+    printf("                     [-d database]\n\n");
+    printf("  -f --inputfile     Use 'file' as input for patterns\n");
+    printf("  -o --outputfile    Use 'file' as output (default stdout)\n");
+    printf("  -a --automatic     Use automatic performance optimization and create files\n");
+    printf("                     into 'dir' directory (default: off).\n");
+    printf("  -d --database      Select the recommendation database file\n");
+    printf("                     (default: %s/%s)\n", PERFEXPERT_VARDIR, RECOMMENDATION_DB);
+    printf("  -p --pid           Use 'pid' to log on consecutive calls to recommender\n");
+    printf("  -v --verbose       Enable verbose mode using default verbose level (5)\n");
+    printf("  -l --verbose_level Enable verbose mode using a specific verbose level (1-10)\n");
+    printf("  -c --colorful      Enable colors on verbose mode, no weird characters will\n");
+    printf("                     appear on output files\n");
+    printf("  -h --help          Show this message\n");
 }
 
 /* parse_env_vars */
@@ -231,6 +233,11 @@ static int parse_env_vars(void) {
         (1 == atoi(getenv("PERFEXPERT_CT_COLORFUL")))) {
         globals.colorful = 1;
         OUTPUT_VERBOSE((5, "ENV: colorful=YES"));
+    }
+
+    if (NULL != getenv("PERFEXPERT_CT_PID")) {
+        globals.pid = atoi(getenv("PERFEXPERT_CT_PID"));
+        OUTPUT_VERBOSE((5, "ENV: pid=%d", globals.pid));
     }
 
     return PERFEXPERT_SUCCESS;
@@ -286,11 +293,10 @@ static int parse_cli_params(int argc, char *argv[]) {
                 OUTPUT_VERBOSE((10, "option 'd' set [%s]", globals.dbfile));
                 break;
 
-            /* Specify PerfExpert PID */
+            /* Specify PID (for LOG) */
             case 'p':
-                globals.perfexpert_pid = strtoull(optarg, (char **)NULL, 10);
-                OUTPUT_VERBOSE((10, "option 'p' set [%llu]",
-                                globals.perfexpert_pid));
+                globals.pid = atoi(optarg);
+                OUTPUT_VERBOSE((10, "option 'p' set [%d]", globals.pid));
                 break;
 
             /* Activate colorful mode */
@@ -337,7 +343,7 @@ static int parse_cli_params(int argc, char *argv[]) {
                     globals.colorful ? "yes" : "no"));
     OUTPUT_VERBOSE((10, "   Input file:       %s", globals.inputfile));
     OUTPUT_VERBOSE((10, "   Output file:      %s", globals.outputfile));
-    OUTPUT_VERBOSE((10, "   PerfExpert PID:   %llu",globals.perfexpert_pid));
+    OUTPUT_VERBOSE((10, "   PID:              %d", globals.pid));
     OUTPUT_VERBOSE((10, "   Work directory:   %s", globals.workdir));
     OUTPUT_VERBOSE((10, "   Database file:    %s", globals.dbfile));
 
@@ -789,6 +795,7 @@ static int apply_transformations(fragment_t *fragment,
                 OUTPUT_VERBOSE((8, "   [ %s  ] [%d] (%s)", _BOLDGREEN("OK"),
                                 transformation->id, transformation->program));
                 rc = PERFEXPERT_SUCCESS;
+                LOG(("transformation=%s", transformation->program));
                 break;
 
             default:

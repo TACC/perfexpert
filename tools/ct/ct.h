@@ -58,16 +58,16 @@ extern "C" {
 
 /** Structure to hold global variables */
 typedef struct {
-    int  verbose_level;
-    char *inputfile;
-    FILE *inputfile_FP;
-    char *outputfile;
-    FILE *outputfile_FP;
-    int  colorful;
-    char *workdir;
-    char *dbfile;
-    sqlite3 *db;
-    unsigned long long int perfexpert_pid;
+    int      verbose_level;
+    char     *inputfile;
+    FILE     *inputfile_FP;
+    char     *outputfile;
+    FILE     *outputfile_FP;
+    int      colorful;
+    char     *workdir;
+    char     *dbfile;
+    sqlite3  *db;
+    long int pid;
 } globals_t;
 
 extern globals_t globals; /**< Variable to hold global options */
@@ -93,7 +93,7 @@ static struct option long_options[] = {
     {"help",            no_argument,       NULL, 'h'},
     {"verbose_level",   required_argument, NULL, 'l'},
     {"outputfile",      required_argument, NULL, 'o'},
-    {"perfexpert_pid",  required_argument, NULL, 'p'},
+    {"pid",             required_argument, NULL, 'p'},
     {"verbose",         no_argument,       NULL, 'v'},
     {0, 0, 0, 0}
 };

@@ -256,20 +256,6 @@ AC_CHECK_HEADER([gmp.h], [
 ])
 
 #------------------------------------------------------------------------------
-# Checks for PIPS, optionally, using an argument (required for perfexpert_ct)
-#
-#AC_ARG_WITH([pips],
-#    [AS_HELP_STRING([--with-pips],
-#        [Use this argument to set where PIPS binaries are installed (not
-#        necessary if it is in the PATH). TPIPS (one of PIPS binaries) is
-#        necessary to compile PerfExpert:CT])], [
-#    PIPS_PATH="$withval"
-#    AC_PATH_TOOL([TPIPS_PROGRAM], [tpips], [no], [$PIPS_PATH/bin])
-#    AS_IF([test x"$TPIPS_PROGRAM" = x"no"],
-#        [AC_MSG_ERROR([TPIPS not found in $PIPS_PATH])])], [
-#    AC_PATH_TOOL([TPIPS_PROGRAM], [tpips], [no])])
-
-#------------------------------------------------------------------------------
 # Find Apache ANT, optionally, using an argument (required for Analyzer)
 #
 AC_ARG_WITH([apache-ant],
@@ -377,7 +363,6 @@ AM_CONDITIONAL([WITH_ROSE_SUPPORT], [test x"$WITH_ROSE_SUPPORT" = x"yes"])
 #------------------------------------------------------------------------------
 # Checks for Google's SparseHash headers
 #
-#AC_LANG([C++])
 AC_LANG_PUSH([C++])
 
 AC_CHECK_HEADER([google/sparse_hash_map], [
@@ -389,7 +374,6 @@ AC_CHECK_HEADER([google/sparse_hash_map], [
     AC_MSG_ERROR([Google's SparseHash not found, try setting -I<path> using CPPFLAGS])
 ])
 
-#AC_LANG([C])
 AC_LANG_POP
 
 #------------------------------------------------------------------------------

@@ -54,24 +54,25 @@ extern "C" {
 
 /** Structure to hold global variables */
 typedef struct {
-    int   verbose_level;
-    char  *dbfile;
-    int   colorful;
-    float threshold;
-    int   rec_count;
-    int   left_garbage;
-    char  *target;
-    char  *sourcefile;
-    char  *program;
-    int   prog_arg_pos;
-    int   main_argc;
-    char  **main_argv;
-    char  *before;
-    char  *after;
-    int   step;
-    char  *workdir;
-    char  *stepdir;
-    char  *prefix;
+    int      verbose_level;
+    char     *dbfile;
+    int      colorful;
+    float    threshold;
+    int      rec_count;
+    int      left_garbage;
+    char     *target;
+    char     *sourcefile;
+    char     *program;
+    int      prog_arg_pos;
+    int      main_argc;
+    char     **main_argv;
+    char     *before;
+    char     *after;
+    int      step;
+    char     *workdir;
+    char     *stepdir;
+    char     *prefix;
+    long int pid;
 } globals_t;
 
 extern globals_t globals; /**< Variable to hold global options */
