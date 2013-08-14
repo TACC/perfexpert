@@ -45,6 +45,7 @@ extern "C" {
 #include "perfexpert_output.h"
 #include "perfexpert_util.h"
 #include "perfexpert_database.h"
+#include "perfexpert_log.h"
 
 /* Global variables, try to not create them! */
 globals_t globals; // Variable to hold global options, this one is OK
@@ -58,19 +59,19 @@ int main(int argc, char** argv) {
     
     /* Set default values for globals */
     globals = (globals_t) {
-        .verbose_level    = 0,             // int
-        .inputfile        = NULL,          // char *
-        .inputfile_FP     = stdin,         // FILE *
-        .outputfile       = NULL,          // char *
-        .outputfile_FP    = stdout,        // FILE *
-        .dbfile           = NULL,          // char *
-        .workdir          = NULL,          // char *
-        .perfexpert_pid   = (unsigned long long int)getpid(), // int
-        .colorful         = 0,             // int
-        .metrics_file     = NULL,          // char *
-        .use_temp_metrics = 0,             // int
-        .metrics_table    = METRICS_TABLE, // char *
-        .rec_count        = 3              // int
+        .verbose_level    = 0,              // int
+        .inputfile        = NULL,           // char *
+        .inputfile_FP     = stdin,          // FILE *
+        .outputfile       = NULL,           // char *
+        .outputfile_FP    = stdout,         // FILE *
+        .dbfile           = NULL,           // char *
+        .workdir          = NULL,           // char *
+        .pid              = (long)getpid(), // long int
+        .colorful         = 0,              // int
+        .metrics_file     = NULL,           // char *
+        .use_temp_metrics = 0,              // int
+        .metrics_table    = METRICS_TABLE,  // char *
+        .rec_count        = 3               // int
     };
 
     /* Parse command-line parameters */
@@ -188,13 +189,14 @@ static void show_help(void) {
     OUTPUT_VERBOSE((10, "printing help"));
     /*      12345678901234567890123456789012345678901234567890123456789012345678901234567890 */
     printf("Usage: recommender -f file [-l level] [-o file] [-d database] [-m file] [-nvch]\n");
+    printf("                   [-p pid]");
     #if HAVE_ROSE == 1
-    printf("                   [-a workdir]");
+    printf(" [-a workdir]");
     #endif
-    printf("\n");
+    printf("\n\n");
     printf("  -f --inputfile       Use 'file' as input for performance measurements\n");
-    printf("  -o --outputfile      Use 'file' as output for recommendations (default: STDOUT)\n");
-    printf("                       if the file exists its content will be overwritten\n");
+    printf("  -o --outputfile      Use 'file' as output for recommendations. If 'fiel'\n");
+    printf("                       exists its content will be overwritten (default: STDOUT)\n");
     printf("  -d --database        Select the recommendation database file\n");
     printf("                       (default: %s/%s)\n", PERFEXPERT_VARDIR, RECOMMENDATION_DB);
     printf("  -m --metricsfile     Use 'file' to define metrics different from the default\n");
@@ -202,6 +204,7 @@ static void show_help(void) {
     printf("                       will be created using the default metrics file:\n");
     printf("                       %s/%s\n", PERFEXPERT_ETCDIR, METRICS_FILE);
     printf("  -r --recommendations Number of recommendation to show\n");
+    printf("  -p --pid             Use 'pid' to log on consecutive calls to recommender\n");
     #if HAVE_ROSE == 1
     printf("  -a --automatic       Use automatic performance optimization and create files\n");
     printf("                       into 'workdir' directory (default: off).\n");
@@ -263,6 +266,11 @@ static int parse_env_vars(void) {
         (1 == atoi(getenv("PERFEXPERT_RECOMMENDER_COLORFUL")))) {
         globals.colorful = 1;
         OUTPUT_VERBOSE((5, "ENV: colorful=YES"));
+    }
+
+    if (NULL != getenv("PERFEXPERT_RECOMMENDER_PID")) {
+        globals.pid = atoi(getenv("PERFEXPERT_RECOMMENDER_PID"));
+        OUTPUT_VERBOSE((5, "ENV: pid=%d", globals.pid));
     }
 
     return PERFEXPERT_SUCCESS;
@@ -368,11 +376,10 @@ static int parse_cli_params(int argc, char *argv[]) {
                                 globals.metrics_file));
                 break;
                 
-            /* Specify PerfExpert PID */
+            /* Specify PID (for LOG) */
             case 'p':
-                globals.perfexpert_pid = strtoull(optarg, (char **)NULL, 10);
-                OUTPUT_VERBOSE((10, "option 'p' set [%llu]",
-                                globals.perfexpert_pid));
+                globals.pid = atoi(optarg);
+                OUTPUT_VERBOSE((10, "option 'p' set [%d]", globals.pid));
                 break;
                 
             /* Number of recommendation to output */
@@ -380,7 +387,7 @@ static int parse_cli_params(int argc, char *argv[]) {
                 globals.rec_count = atoi(optarg);
                 OUTPUT_VERBOSE((10, "option 'r' set [%d]", globals.rec_count));
                 break;
-                
+
             /* Unknown option */
             case '?':
             default:
@@ -393,8 +400,7 @@ static int parse_cli_params(int argc, char *argv[]) {
     OUTPUT_VERBOSE((10, "   Verbose level:     %d", globals.verbose_level));
     OUTPUT_VERBOSE((10, "   Colorful verbose?  %s",
                     globals.colorful ? "yes" : "no"));
-    OUTPUT_VERBOSE((10, "   PerfExpert PID:    %llu",
-                    globals.perfexpert_pid));
+    OUTPUT_VERBOSE((10, "   PID:               %d", globals.pid));
     OUTPUT_VERBOSE((10, "   Work directory:    %s", globals.workdir));
     OUTPUT_VERBOSE((10, "   Input file:        %s", globals.inputfile));
     OUTPUT_VERBOSE((10, "   Output file:       %s", globals.outputfile));
@@ -462,7 +468,7 @@ static int parse_segment_params(perfexpert_list_t *segments_p) {
         if (0 == strncmp("%", buffer, 1)) {
             char temp_str[BUFFER_SIZE];
             
-            OUTPUT_VERBOSE((5, "(%d) --- %s", input_line,
+            OUTPUT_VERBOSE((5, "   (%d) --- %s", input_line,
                             _GREEN("new bottleneck found")));
 
             /* Create a list item for this code bottleneck */
@@ -516,18 +522,6 @@ static int parse_segment_params(perfexpert_list_t *segments_p) {
                 item->rowid = rowid;
             }
 
-            /* Set PerfExpert PID for the new segment */
-            bzero(sql, BUFFER_SIZE);
-            sprintf(sql, "UPDATE %s SET pid=%llu WHERE id=%d;",
-                    globals.metrics_table, globals.perfexpert_pid, rowid);
-            if (SQLITE_OK != sqlite3_exec(globals.db, sql, NULL, NULL,
-                                          &error_msg)) {
-                fprintf(stderr, "Error: SQL error: %s\n", error_msg);
-                fprintf(stderr, "SQL clause: %s\n", sql);
-                sqlite3_free(error_msg);
-                return PERFEXPERT_ERROR;
-            }
-
             continue;
         }
 
@@ -559,13 +553,13 @@ static int parse_segment_params(perfexpert_list_t *segments_p) {
 
             bzero(item->filename, strlen(node->value) + 1);
             strcpy(item->filename, node->value);
-            OUTPUT_VERBOSE((10, "(%d) %s     [%s]", input_line,
+            OUTPUT_VERBOSE((10, "   (%d) %s [%s]", input_line,
                             _MAGENTA("filename:"), item->filename));
         }
         /* Code param: code.line_number */
         if (0 == strncmp("code.line_number", node->key, 16)) {
             item->line_number = atoi(node->value);
-            OUTPUT_VERBOSE((10, "(%d) %s  [%d]", input_line,
+            OUTPUT_VERBOSE((10, "   (%d) %s [%d]", input_line,
                             _MAGENTA("line number:"), item->line_number));
         }
         /* Code param: code.type */
@@ -577,8 +571,8 @@ static int parse_segment_params(perfexpert_list_t *segments_p) {
             }
             bzero(item->type, strlen(node->value) + 1);
             strcpy(item->type, node->value);
-            OUTPUT_VERBOSE((10, "(%d) type:         [%s]",
-                            input_line, item->type));
+            OUTPUT_VERBOSE((10, "   (%d) %s [%s]", input_line,
+                            _MAGENTA("type:"), item->type));
         }
         /* Code param: code.extra_info */
         if (0 == strncmp("code.extra_info", node->key, 15)) {
@@ -589,16 +583,15 @@ static int parse_segment_params(perfexpert_list_t *segments_p) {
             }
             bzero(item->extra_info, strlen(node->value) + 1);
             strcpy(item->extra_info, node->value);
-            OUTPUT_VERBOSE((10, "(%d) extra info:   [%s]", input_line,
-                            item->extra_info));
+            OUTPUT_VERBOSE((10, "   (%d) %s [%s]", input_line,
+                            _MAGENTA("extra info:"), item->extra_info));
         }
         /* Code param: code.representativeness */
         if (0 == strncmp("code.representativeness", node->key, 23)) {
             item->representativeness = atof(node->value);
-            OUTPUT_VERBOSE((10, "(%d) representativeness: [%f], ",
-                            input_line, item->representativeness));
-            free(node);
-            continue;
+            OUTPUT_VERBOSE((10, "   (%d) %s [%f], ", input_line,
+                            _MAGENTA("representativeness:"),
+                            item->representativeness));
         }
         /* Code param: code.section_info */
         if (0 == strncmp("code.section_info", node->key, 17)) {
@@ -609,8 +602,8 @@ static int parse_segment_params(perfexpert_list_t *segments_p) {
             }
             bzero(item->section_info, strlen(node->value) + 1);
             strcpy(item->section_info, node->value);
-            OUTPUT_VERBOSE((10, "(%d) section info: [%s]", input_line,
-                            item->section_info));
+            OUTPUT_VERBOSE((10, "   (%d) %s [%s]", input_line,
+                            _MAGENTA("section info:"), item->section_info));
             free(node);
             continue;
         }
@@ -627,16 +620,20 @@ static int parse_segment_params(perfexpert_list_t *segments_p) {
             }
             bzero(item->function_name, strlen(node->value) + 1);
             strcpy(item->function_name, node->value);
-            OUTPUT_VERBOSE((10, "(%d) function name: [%s]", input_line,
-                            item->function_name));
-            free(node);
-            continue;
+            OUTPUT_VERBOSE((10, "   (%d) %s [%s]", input_line,
+                            _MAGENTA("function name:"), item->function_name));
+        }
+        /* Code param: code.runtime */
+        if (0 == strncmp("code.runtime", node->key, 12)) {
+            item->runtime = atof(node->value);
+            OUTPUT_VERBOSE((10, "   (%d) %s [%f], ", input_line,
+                            _MAGENTA("runtime:"), item->runtime));
         }
         /* Code param: perfexpert.loop_depth */
         if (0 == strncmp("perfexpert.loop-depth", node->key, 21)) {
             item->loop_depth = atof(node->value);
-            OUTPUT_VERBOSE((10, "(%d) loop depth: [%f]", input_line,
-                            item->loop_depth));
+            OUTPUT_VERBOSE((10, "   (%d) %s [%f]", input_line,
+                            _MAGENTA("loop depth:"), item->loop_depth));
         }
 
         /* Clean the node->key (remove undesired characters) */
@@ -662,14 +659,26 @@ static int parse_segment_params(perfexpert_list_t *segments_p) {
         /* Update metrics table */
         if (SQLITE_OK != sqlite3_exec(globals.db, sql, NULL, NULL,
                                       &error_msg)) {
-            OUTPUT_VERBOSE((4, "(%d) %s (%s = %s)", input_line,
+            OUTPUT_VERBOSE((4, "   (%d) %s (%s = %s)", input_line,
                             _RED("ignored line"), node->key, node->value));
             sqlite3_free(error_msg);
         } else {
-            OUTPUT_VERBOSE((10, "(%d) %s", input_line, sql));
+            OUTPUT_VERBOSE((10, "   (%d) %s", input_line, sql));
         }
         free(node);
     }
+
+    /* LOG this bottleneck */
+    bzero(sql, BUFFER_SIZE);
+    sprintf(sql, "SELECT * FROM %s WHERE id=%d;", globals.metrics_table, rowid);
+
+    if (SQLITE_OK != sqlite3_exec(globals.db, sql, log_bottleneck, NULL,
+                                  &error_msg)) {
+        fprintf(stderr, "Error: SQL error: %s\n", error_msg);
+        sqlite3_free(error_msg);
+        return PERFEXPERT_ERROR;
+    }
+
 
     /* To improve SQLite performance and keep database clean */
     if (SQLITE_OK != sqlite3_exec(globals.db, "END TRANSACTION;", NULL, NULL,
@@ -1016,7 +1025,7 @@ static int output_recommendations(void *var, int count, char **val,
     char **names) {
     int *rc = (int *)var;
 
-    OUTPUT_VERBOSE((7, "%s", _GREEN("new recommendation found")));
+    OUTPUT_VERBOSE((7, "   %s (%s)", _GREEN("recommendation found"), val[2]));
     
     if (NULL == globals.workdir) {
         /* Pretty print for the user */
@@ -1082,6 +1091,25 @@ static int accumulate_functions(void *functions, int count, char **val,
     /* TODO: Free memory */
 
     return PERFEXPERT_ERROR;
+}
+
+/* log_bottleneck */
+static int log_bottleneck(void *var, int count, char **val, char **names) {
+    int  i;
+    char temp_str[MAX_LOG_ENTRY];
+
+    bzero(temp_str, MAX_LOG_ENTRY);
+    for (i = 0; i < count; i++) {
+        if (NULL != val[i]) {
+            strcat(temp_str, names[i]);
+            strcat(temp_str, "=");
+            strcat(temp_str, val[i]);
+            strcat(temp_str, ";");
+        }
+    }
+    LOG(("%s", temp_str));
+
+    return PERFEXPERT_SUCCESS;
 }
 
 #ifdef __cplusplus

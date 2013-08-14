@@ -63,19 +63,19 @@ extern "C" {
 /** Structure to hold global variables */
 typedef struct {
     sqlite3 *db;
-    int  verbose_level;
-    char *inputfile;
-    FILE *inputfile_FP;
-    char *outputfile;
-    FILE *outputfile_FP;
-    char *dbfile;
-    char *workdir;
-    char *metrics_file;
-    int  use_temp_metrics;
-    char *metrics_table;
-    int  colorful;
-    int  rec_count;
-    unsigned long long int perfexpert_pid;
+    int      verbose_level;
+    char     *inputfile;
+    FILE     *inputfile_FP;
+    char     *outputfile;
+    FILE     *outputfile_FP;
+    char     *dbfile;
+    char     *workdir;
+    char     *metrics_file;
+    int      use_temp_metrics;
+    char     *metrics_table;
+    int      colorful;
+    int      rec_count;
+    long int pid;
 } globals_t;
 
 extern globals_t globals; /**< Variable to hold global options */
@@ -103,7 +103,7 @@ static struct option long_options[] = {
     {"metricsfile",     required_argument, NULL, 'm'},
     {"newmetrics",      no_argument,       NULL, 'n'},
     {"outputfile",      required_argument, NULL, 'o'},
-    {"perfexpert_pid",  required_argument, NULL, 'p'},
+    {"pid",             required_argument, NULL, 'p'},
     {"recommendations", required_argument, NULL, 'r'},
     {"sourcefile",      required_argument, NULL, 's'},
     {"verbose",         no_argument,       NULL, 'v'},
@@ -136,6 +136,7 @@ typedef struct segment {
     char   *section_info;
     double loop_depth;
     double representativeness;
+    double runtime;
     int    rowid;
     perfexpert_list_t functions;
     char   *function_name; // Should add function_name to DB?
@@ -152,6 +153,7 @@ static int  output_recommendations(void *var, int count, char **val,
 static int  accumulate_functions(void *functions, int count, char **val,
     char **names);
 static int  select_recommendations(segment_t *segment);
+static int  log_bottleneck(void *var, int count, char **val, char **names);
 
 #ifdef __cplusplus
 }
