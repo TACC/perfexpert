@@ -60,9 +60,9 @@ fi
 if [ -f ${LIBDIR}/log4j-1.2.16.jar ]; then
     # Probable location after install
     CLASSPATH="${CLASSPATH}:${LIBDIR}/log4j-1.2.16.jar"
-elif [ -f ${ABS_TOP_SRCDIR}/external/log4j-1.2.16.jar ]; then
+elif [ -f ${ABS_TOP_SRCDIR}/externals/log4j-1.2.16.jar ]; then
     # Probable location before install
-    CLASSPATH="${CLASSPATH}:${ABS_TOP_SRCDIR}/external/log4j-1.2.16.jar"
+    CLASSPATH="${CLASSPATH}:${ABS_TOP_SRCDIR}/externals/log4j-1.2.16.jar"
 else
     echo "Unable to find Log4J 1.2.16 JAR file"
     exit 1
@@ -72,9 +72,9 @@ fi
 if [ -f ${LIBDIR}/log4j.properties ]; then
     # Probable location after install
     LOG4J="-Dlog4j.configuration=file:${LIBDIR}/log4j.properties"
-elif [ -f ${ABS_TOP_SRCDIR}/external/log4j-1.2.16.jar ]; then
+elif [ -f ${ABS_TOP_SRCDIR}/externals/log4j-1.2.16.jar ]; then
     # Probable location before install
-    LOG4J="-Dlog4j.configuration=file:${ABS_TOP_SRCDIR}/external/log4j.properties"
+    LOG4J="-Dlog4j.configuration=file:${ABS_TOP_SRCDIR}/externals/log4j.properties"
 else
     echo "Unable to find Log4J properties file"
     exit 1
