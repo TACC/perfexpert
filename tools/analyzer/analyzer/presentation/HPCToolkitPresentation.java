@@ -155,7 +155,8 @@ public class HPCToolkitPresentation {
                 System.out.println("code.function_name=" + profile.getCodeProcedureName());
                 System.out.println("code.extra_info=" + profile.getCodeExtraInfo());
                 System.out.println("code.representativeness=" + doubleFormat.format(profile.getImportance()*100));
-                
+                System.out.println("code.runtime=" + doubleFormat.format(profile.getMetricBasedOnPEIndex(indexOfCycles)/cpuFrequency));
+
                 // PerfExpert metrics with correspondent measurements
                 Set s = lcpi.entrySet();
                 Iterator it = s.iterator();
