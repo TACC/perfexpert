@@ -38,7 +38,7 @@ install-exec-local:
 	$(MKDIR_P) $(sysconfdir)
 	$(MKDIR_P) $(datadir)/$(PACKAGE_NAME)
 	$(SQLITE3_PROGRAM) perfexpert.db \
-		< $(top_srcdir)/contrib/recommendation.db.txt
+		< $(top_srcdir)/contrib/recommender.db.txt
 	if [ -f $(localstatedir)/perfexpert.db ]; then echo \
 		"############################# WARNING #############################" \
 		>> $(top_builddir)/warnings_recommender; echo \
@@ -50,9 +50,9 @@ install-exec-local:
 	rm perfexpert.db
 	echo 1.0 > .perfexpert.db.version
 	$(INSTALL) -m 644 .perfexpert.db.version $(localstatedir)/
-	$(INSTALL) -m 644 $(top_srcdir)/contrib/recommendation-metrics.txt \
+	$(INSTALL) -m 644 $(top_srcdir)/contrib/recommender-metrics.txt \
 		$(sysconfdir)/
-	$(INSTALL) -m 644 $(top_srcdir)/contrib/recommendation.db.txt \
+	$(INSTALL) -m 644 $(top_srcdir)/contrib/recommender.db.txt \
 		$(datadir)/$(PACKAGE_NAME)/
 
 # EOF
