@@ -35,8 +35,8 @@ install-exec-local: install-dist_binSCRIPTS
 
 install-data-local:
 	$(MKDIR_P) $(libdir)
-	$(INSTALL) -m 644 $(top_srcdir)/external/log4j-1.2.16.jar $(libdir)/
-	$(INSTALL) -m 644 $(top_srcdir)/external/log4j.properties $(libdir)/
+	$(INSTALL) -m 644 $(top_srcdir)/externals/log4j-1.2.16.jar $(libdir)/
+	$(INSTALL) -m 644 $(top_srcdir)/externals/log4j.properties $(libdir)/
 
 install-exec-hook:
 	cd $(bindir); rm hpcdata; $(LN_S) hpcdata.sh hpcdata
