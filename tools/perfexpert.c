@@ -652,7 +652,7 @@ static int analysis(void) {
 
     /* Arguments to run analyzer */
     bzero(temp_str[0], BUFFER_SIZE);
-    sprintf(temp_str[0], "%s/analyzer", PERFEXPERT_BINDIR);
+    sprintf(temp_str[0], "%s", ANALYZER_PROGRAM);
     argv[0] = temp_str[0];
     argv[1] = "--recommend";
     argv[2] = "--opttran";
@@ -765,7 +765,7 @@ static int recommendation(void) {
 
     /* Arguments to run analyzer */
     bzero(temp_str[3], BUFFER_SIZE);
-    sprintf(temp_str[3], "%s/recommender", PERFEXPERT_BINDIR);
+    sprintf(temp_str[3], "%s", RECOMMENDER_PROGRAM);
     argv[0] = temp_str[3];
     argv[1] = "--automatic";
     argv[2] = globals.stepdir;
@@ -883,7 +883,7 @@ static int transformation(void) {
 
     /* Arguments to run analyzer */
     bzero(temp_str[2], BUFFER_SIZE);
-    sprintf(temp_str[2], "%s/perfexpert_ct", PERFEXPERT_BINDIR);
+    sprintf(temp_str[2], "%s", CT_PROGRAM);
     argv[0] = temp_str[2];
     argv[1] = "--automatic";
     argv[2] = globals.stepdir;
@@ -902,7 +902,7 @@ static int transformation(void) {
     /* The super-ninja test sctructure */
     if (0 == globals.verbose_level) {
         bzero(temp_str[3], BUFFER_SIZE);
-        sprintf(temp_str[3], "%s/perfexpert_ct.output", globals.stepdir);
+        sprintf(temp_str[3], "%s/%s.output", globals.stepdir, CT_PROGRAM);
         test.output = temp_str[3];
     } else {
         test.output = NULL;
@@ -963,7 +963,7 @@ static int run_hpcrun(void) {
     char   *argv[2];
     test_t test;
 
-    /* Open experiment file */
+    /* Open experiment file (it is a list of arguments which I use to run) */
     exp_file = (char *)malloc(strlen(PERFEXPERT_ETCDIR) +
                               strlen(EXPERIMENT_FILE) + 2);
     if (NULL == exp_file) {
