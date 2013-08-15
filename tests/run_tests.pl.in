@@ -39,7 +39,8 @@ my $JVM="@JVM_LIB@";
 my $PAPI="@PAPI_LIB@";
 
 $ENV{LD_LIBRARY_PATH}="$ENV{LD_LIBRARY_PATH}:$PAPI:$JVM:$ROSE";
-$ENV{TEST_BUILDDIR}="$BUILDDIR/..";
+$ENV{PERFEXPERT_BUILDDIR}="$BUILDDIR/..";
+$ENV{PERFEXPERT_SRCDIR}="$SRCDIR";
 
 foreach my $test (`ls $SRCDIR/tests`) {
     chomp($test);
