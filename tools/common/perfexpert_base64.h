@@ -113,7 +113,7 @@ static const int base64_index[256] = {
  * @ingroup base64
  */
 inline void base64_encode_block(unsigned char out[4], const unsigned char in[3],
-	int len) {
+    int len) {
     out[0] = base64_list[in[0] >> 2];
     out[1] = base64_list[((in[0] & 0x03) << 4) | ((in[1] & 0xf0) >> 4) ];
     out[2] = (unsigned char)(len > 1 ? base64_list[ ((in[1] & 0x0f) << 2) |
