@@ -1,3 +1,4 @@
+#!/bin/bash
 #
 # Copyright (c) 2013  University of Texas at Austin. All rights reserved.
 #
@@ -25,16 +26,8 @@
 # $HEADER$
 #
 
-ACLOCAL_AMFLAGS = -I m4
+echo "OMP"
 
-SUBDIRS = tools
-
-.PHONY: check
-
-check:
-	$(top_builddir)/tests/run_tests.pl
-
-install-data-hook:
-	cat $(top_builddir)/warnings*
+exit 0
 
 # EOF
