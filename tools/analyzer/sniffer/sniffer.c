@@ -33,20 +33,23 @@ void counter_err(char* lcpi) {
 }
 
 int testCounter(unsigned ctr) {
+    int ret;
     int event_set = PAPI_NULL;
     int papi_tot_ins_code;
     int event_code;
 
-    if (PAPI_OK != PAPI_create_eventset(&event_set)) {
+    if (PAPI_OK != (ret = PAPI_create_eventset(&event_set))) {
         fprintf(stderr, "Could not create PAPI event set for determining which counters can be counted simultaneously\n");
+        fprintf(stderr, "PAPI error message: %s.\n", PAPI_strerror(ret));
         return 1;
     }
 
     /* Add PAPI_TOT_INS as we will be measuring it in every run */
     PAPI_event_name_to_code("PAPI_TOT_INS", &papi_tot_ins_code);
-    if (PAPI_OK != PAPI_add_event(event_set, papi_tot_ins_code)) {
+    if (PAPI_OK != (ret = PAPI_add_event(event_set, papi_tot_ins_code))) {
         fprintf(stderr,
                 "Could not add PAPI_TOT_INS to the event set, cannot continue\n");
+        fprintf(stderr, "PAPI error message: %s.\n", PAPI_strerror(ret));
         return 1;
     }
 
@@ -124,6 +127,7 @@ int attach_sampling_frequencies(int saved_sampling_freq[SAMPLING_CATEGORY_COUNT]
 int main(int argc, char* argv []) {
     FILE* fp;
     int i;
+    int ret;
     int saved_sampling_freq[SAMPLING_CATEGORY_COUNT] = { 0 };
     int event_code;
     int exp_count = 0;
@@ -658,14 +662,18 @@ int main(int argc, char* argv []) {
         int j;
         int event_set = PAPI_NULL;
         
-        if (PAPI_OK != PAPI_create_eventset(&event_set)) {
+        if (PAPI_OK != (ret = PAPI_create_eventset(&event_set))) {
             fprintf(stderr, "Could not create PAPI event set for determining which counters can be counted simultaneously\n");
+            fprintf(stderr, "PAPI error message: %s.\n", PAPI_strerror(ret));
+            fclose(fp);
             return 1;
         }
         
         /* Add PAPI_TOT_INS as we will be measuring it in every run */
-        if (PAPI_OK != PAPI_add_event(event_set, papi_tot_ins_code)) {
+        if (PAPI_OK != (ret = PAPI_add_event(event_set, papi_tot_ins_code))) {
             fprintf(stderr, "Could not add PAPI_TOT_INS to the event set, cannot continue...\n");
+            fprintf(stderr, "PAPI error message: %s.\n", PAPI_strerror(ret));
+            fclose(fp);
             return 1;
         }
         
