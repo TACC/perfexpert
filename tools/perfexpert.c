@@ -466,11 +466,9 @@ static int parse_cli_params(int argc, char *argv[]) {
     }
     optind++;
 
-    if (argc > optind) {
-        globals.prog_arg_pos = optind;
-        OUTPUT_VERBOSE((10, "option 'program_arguments' set [%d]",
-                        argc - globals.prog_arg_pos));
-    }
+    globals.prog_arg_pos = optind;
+    OUTPUT_VERBOSE((10, "option 'program_arguments' set [%d]",
+                    argc - globals.prog_arg_pos));
 
     /* Not using OUTPUT_VERBOSE because I want only one line */
     if (8 <= globals.verbose_level) {
@@ -1132,7 +1130,7 @@ static int run_hpcrun(void) {
             printf("\n");
         }
 
-        /* Test patterns */
+        /* Run program and test return code (should I really test it?) */
         switch (fork_and_wait(&(experiment->test), (char **)experiment->argv)) {
             case PERFEXPERT_ERROR:
                 OUTPUT_VERBOSE((7, "   [%s]", _BOLDYELLOW("ERROR")));
