@@ -189,16 +189,16 @@ AC_ARG_WITH([jvm],
         use this argument to set JVM library path])], [
     WITH_JVM_LIB=$withval
     LDFLAGS+=" -L$WITH_JVM_LIB"
-    AC_SUBST(JVM_LIB, $WITH_JVM_LIB)
 
     # A random number of C symbols of JVM library
     AC_CHECK_LIB([jvm], [JVM_InitializeCompiler, JVM_Open, JVM_Close],
         [WITH_JVM=yes],
         [AC_MSG_ERROR([Java Virtual Machine (JVM) library not found!])])
     WITH_JVM=yes
+    AC_SUBST(JVM_LIB, $WITH_JVM_LIB)
 ], [
-    WITH_JVM=no]
-)
+    WITH_JVM=no
+])
 
 #------------------------------------------------------------------------------
 # Check for PAPI, optionally, using an argument (required for Analyzer)
@@ -211,12 +211,15 @@ AC_ARG_WITH([papi],
         This argument is not necessary if PAPI is installed into default
         directories ('/usr' and '/usr/local')])], [
     CPPFLAGS+=" -I$withval/include"
-    LDFLAGS+=" -L$withval/lib"], [])
+    LDFLAGS+=" -L$withval/lib"
+    WITH_PAPI_LIB=$withval/lib], [])
 
 AC_ARG_WITH([papi-lib],
     [AS_HELP_STRING([--with-papi-lib],
         [use this argument to set PAPI library path (it overwrites
-        '--with-papi' argument)])], [LDFLAGS+=" -L$withval"], [])
+        '--with-papi' argument)])], [
+            LDFLAGS+=" -L$withval"
+            WITH_PAPI_LIB=$withval], [])
 
 AC_ARG_WITH([papi-include],
     [AS_HELP_STRING([--with-papi-include],
@@ -224,10 +227,12 @@ AC_ARG_WITH([papi-include],
         '--with-papi' argument)])], [CPPFLAGS+=" -I$withval"], [])
 
 # Checks for PAPI library and header file
-AC_CHECK_LIB([papi], [PAPI_library_init, PAPI_add_event,
-    PAPI_create_eventset, PAPI_get_event_info, PAPI_event_name_to_code,
-    PAPI_query_event], [HAVE_PAPI_LIB=yes],
-    [AC_MSG_ERROR([libpapi not found])])
+AC_CHECK_LIB([papi], [PAPI_library_init, PAPI_add_event], [
+    HAVE_PAPI_LIB=yes
+    AC_SUBST(PAPI_LIB, $WITH_PAPI_LIB)
+], [
+    AC_MSG_ERROR([libpapi not found])
+])
 
 AC_CHECK_HEADER([papi.h], [HAVE_PAPI_HEADER=yes],
     [AC_MSG_ERROR([papi.h not found])])
@@ -347,6 +352,8 @@ AS_IF([test x"$WITH_ROSE" == x"yes"], [
     #AC_CHECK_LIB([rose], [node_has_side_effects, add_to_scopes_list,
     #    copy_node, node_complete_object_type, set_node_operator],
     #    [WITH_ROSE=yes], [AC_MSG_ERROR([ROSE library not found!])])
+
+    AC_SUBST(ROSE_LIB, $WITH_ROSE_LIBS)
 
     # How the hell I can make the rose.h header check work?
     #AC_CHECK_HEADER([rose.h], [], [AC_MSG_ERROR([not found: rose.h])])
@@ -537,6 +544,15 @@ AS_IF([test x"$ENABLE_CT" = x"yes"], [
     ENABLE_CT=
 ])
 AC_SUBST([ENABLE_CT])
+
+#------------------------------------------------------------------------------
+# Tests
+#
+AC_PATH_TOOL([PERL_PROGRAM], [perl], [no])
+AS_IF([test x"$PERL_PROGRAM" == x"no"],
+    [AC_MSG_NOTICE([Perl not found, unable to run tests.])], [
+        AC_CONFIG_FILES([tests/run_tests.pl], [chmod +x tests/run_tests.pl])
+    ])
 
 #------------------------------------------------------------------------------
 # Generate output files
