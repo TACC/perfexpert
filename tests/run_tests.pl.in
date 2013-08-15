@@ -45,16 +45,16 @@ $ENV{PERFEXPERT_SRCDIR}="$SRCDIR";
 foreach my $test (`ls $SRCDIR/tests`) {
     chomp($test);
     if ("run_tests.pl.in" ne $test) {
-        printf("%s $test\n", colored("---------- Testing", 'blue'));
+        printf("%s $test\n", colored("Testing", 'blue'));
         if (-x "$SRCDIR/tests/$test/run") {
             system("$SRCDIR/tests/$test/run");
             if ($? eq 0) {
-                printf("%s\n", colored("---------- Test PASSED!", 'green'));
+                printf("%s\n\n", colored("Test PASSED!", 'green'));
             } else {
-                printf("%s\n", colored("---------- Test FAILED!", 'red'));
+                printf("%s\n\n", colored("Test FAILED!", 'red'));
             }
         } else {
-            printf("%s\n", colored("---------- Test SKIPED!", 'magenta'));
+            printf("%s\n\n", colored("Test SKIPED!", 'magenta'));
         }
     }
 }  
