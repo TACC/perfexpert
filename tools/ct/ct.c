@@ -129,7 +129,6 @@ int ct_main(int argc, char** argv) {
     /* Select transformations for each code bottleneck */
     fragment = (fragment_t *)perfexpert_list_get_first(fragments);
     while ((perfexpert_list_item_t *)fragment != &(fragments->sentinel)) {
-
         /* Query DB for transformations */
         if (PERFEXPERT_SUCCESS != select_transformations(fragment)) {
             OUTPUT(("%s", _ERROR("Error: applying transformation")));
