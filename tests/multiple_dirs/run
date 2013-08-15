@@ -30,15 +30,15 @@ PERFEXPERT_BIN=${PERFEXPERT_BUILDDIR}/tools/perfexpert
 
 # Create a test directory
 echo Creating test directory...
-mkdir -p multiple_files.test
-cd multiple_files.test
+mkdir -p multiple_dirs.test/compute
+cd multiple_dirs.test
 
 # Copy the original source code
 echo Copying test program file...
-cp ${PERFEXPERT_SRCDIR}/tests/multiple_files/omp_mm_compute.c .
-cp ${PERFEXPERT_SRCDIR}/tests/multiple_files/omp_mm.c .
-cp ${PERFEXPERT_SRCDIR}/tests/multiple_files/omp_mm.h .
-cp ${PERFEXPERT_SRCDIR}/tests/multiple_files/Makefile .
+cp ${PERFEXPERT_SRCDIR}/tests/multiple_dirs/compute/compute.c ./compute/
+cp ${PERFEXPERT_SRCDIR}/tests/multiple_dirs/omp_mm.c .
+cp ${PERFEXPERT_SRCDIR}/tests/multiple_dirs/omp_mm.h .
+cp ${PERFEXPERT_SRCDIR}/tests/multiple_dirs/Makefile .
 
 # Create a local database
 echo Creating test database...
