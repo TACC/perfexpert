@@ -53,4 +53,6 @@ class recommenderTraversal : public AstSimpleProcessing {
 static int output_fragment(SgNode *node, Sg_File_Info *fileInfo,
 	                       fragment_t *fragment);
 
+static int output_function(SgNode *node, fragment_t *fragment);
+
 #endif /* TRAVERSAL_H */

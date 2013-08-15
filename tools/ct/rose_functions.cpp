@@ -40,6 +40,8 @@
 #include "ct.h"
 #include "perfexpert_output.h"
 #include "perfexpert_util.h"
+#include "perfexpert_log.h"
+#include "perfexpert_base64.h"
 #include "rose_functions.h"
 
 using namespace std;
@@ -86,6 +88,7 @@ int open_rose(const char *source_file) {
     files[2] = NULL;
 
     /* Load files and build AST */
+    userProject = NULL;
     userProject = frontend(2, files);
     ROSE_ASSERT(userProject != NULL);
     
@@ -171,6 +174,46 @@ static int output_fragment(SgNode *node, Sg_File_Info *info,
     return PERFEXPERT_SUCCESS;
 }
 
+static int output_function(SgNode *node, fragment_t *fragment) {
+    char *function_file = NULL;
+    FILE *function_file_FP;
+
+    /* Set fragment filename */
+    function_file = (char *)malloc(strlen(globals.workdir) +
+                                   strlen(PERFEXPERT_FRAGMENTS_DIR) +
+                                   strlen(fragment->filename) + 
+                                   strlen(fragment->function_name) + 10);
+    if (NULL == function_file) {
+        OUTPUT(("%s", _ERROR((char *)"Error: out of memory")));
+        return PERFEXPERT_ERROR;
+    }
+    bzero(function_file, (strlen(globals.workdir) +
+                          strlen(PERFEXPERT_FRAGMENTS_DIR) +
+                          strlen(fragment->filename) + 
+                          strlen(fragment->function_name) + 10));
+    sprintf(function_file, "%s/%s/%s_%s", globals.workdir,
+            PERFEXPERT_FRAGMENTS_DIR, fragment->filename,
+            fragment->function_name);
+    OUTPUT_VERBOSE((8, "   %s (%s)", _YELLOW((char *)"extracting it to"),
+                    function_file));
+
+    function_file_FP = fopen(function_file, "w+");
+    if (NULL == function_file_FP) {
+        OUTPUT(("%s (%s)", _ERROR((char *)"error opening file"),
+                _ERROR(function_file)));
+        return PERFEXPERT_ERROR;
+    }
+    fprintf(function_file_FP, "%s", node->unparseToCompleteString().c_str());
+    fclose(function_file_FP);
+    free(function_file);
+
+    /* LOG the function */
+    LOG((base64_encode(node->unparseToCompleteString().c_str(),
+                       strlen(node->unparseToCompleteString().c_str()))));
+
+    return PERFEXPERT_SUCCESS;
+}
+
 void recommenderTraversal::visit(SgNode *node) {
     Sg_File_Info *info = NULL;
     SgFunctionDefinition *function = NULL;
@@ -182,9 +225,8 @@ void recommenderTraversal::visit(SgNode *node) {
     info = node->get_file_info();
 
     /* Find code fragment for bottlenecks type 'loop' in C */
-    if ((isSgForStatement(node)) &&
-        (0 == strncmp("loop", fragment->code_type, 4)) &&
-        (info->get_line() == fragment->line_number)) {
+    if ((isSgForStatement(node)) && (info->get_line() == fragment->line_number)
+        && (0 == strncmp("loop", fragment->code_type, 4))) {
 
         /* Found a C loop on the exact line number */
         OUTPUT_VERBOSE((8, "   %s (%d)",
@@ -322,20 +364,23 @@ void recommenderTraversal::visit(SgNode *node) {
         }
     }
 
-    /* Find code fragments for bottlenecks type 'function' */
-    if ((NULL != (function = isSgFunctionDefinition(node))) &&
-        (0 == strncmp("function", fragment->code_type, 8)) &&
-        (info->get_line() == fragment->line_number)) {
-        /* found a function on the exact line number */
-        node_found = 1;
-        // attachComment(function, "PERFEXPERT working here");
-    }
+    /* If it is a function extract it! */
+    if (NULL != (function = isSgFunctionDefinition(node))) {
+        SgName function_name = function->get_declaration()->get_name();
 
-    /* Extract code fragment */
-    if (1 == node_found) {
-        OUTPUT_VERBOSE((8, "found a (%s) on (%s:%d)", node->sage_class_name(),
-                        info->get_filename(), info->get_line()));
-        output_fragment(node, info, fragment);
+        if (0 == strcmp(function_name.str(), fragment->function_name)) {
+            /* Found a function with the rigth name */
+            OUTPUT_VERBOSE((8, "   %s (%d) [%s]",
+                            _GREEN((char *)"function found at line"),
+                            info->get_line(), fragment->function_name));
+
+            /* Extract the function */
+            if (PERFEXPERT_SUCCESS != output_function(node, fragment)) {
+                OUTPUT(("%s", _ERROR((char *)"Error: extracting function")));
+                rc = PERFEXPERT_ERROR;
+                return;
+            }
+        }
     }
 }
 
