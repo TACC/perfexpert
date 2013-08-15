@@ -48,8 +48,6 @@ extern "C" {
 #include "perfexpert_database.h"
 #include "perfexpert_log.h"
 
-// TODO: extract the function, uuencode it, and log
-
 /* Global variables, try to not create them! */
 globals_t globals; // Variable to hold global options, this one is OK
 
