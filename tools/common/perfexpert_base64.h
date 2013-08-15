@@ -44,9 +44,6 @@
 extern "C" {
 #endif
 
-char  *base64_encode(const char *in, size_t size);
-char  *base64_decode(const char *in);
-
 #define XX 100
 
 /** @var base64_list
