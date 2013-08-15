@@ -69,19 +69,19 @@ extern "C" {
 
 /** Default values for some files and directories */
 #define RECOMMENDATION_DB        "perfexpert.db"
-#define RECOMMENDER_PROGRAM		 "recommender"
+#define RECOMMENDER_PROGRAM      "recommender"
 #define RECOMMENDER_METRICS      "recommender_metrics"
 #define RECOMMENDER_REPORT       "recommender_report"
-#define ANALYZER_PROGRAM		 "analyzer"
+#define ANALYZER_PROGRAM         "analyzer"
 #define ANALYZER_METRICS         "analyzer_metrics"
 #define ANALYZER_REPORT          "analyzer_report"
-#define CT_PROGRAM				 "perfexpert_ct"
+#define CT_PROGRAM               "perfexpert_ct"
 #define LOGFILE                  ".perfexpert.log"
 #define PERFEXPERT_FRAGMENTS_DIR "database/src"
 #define PERFEXPERT_SOURCE_DIR    "source"
 #define METRICS_TABLE            "metric"
 #define METRICS_FILE             "recommender-metrics.txt"
-#define EXPERIMENT_FILE			 "experiment.properties"
+#define EXPERIMENT_FILE          "experiment.properties"
 
 /** Default compiler and compilation options */
 #define DEFAULT_COMPILER "gcc"
