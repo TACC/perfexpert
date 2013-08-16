@@ -84,7 +84,7 @@ extern "C" {
 #define EXPERIMENT_FILE          "experiment.properties"
 
 /** Default compiler and compilation options */
-#define DEFAULT_COMPILER "gcc"
+#define DEFAULT_COMPILER "cc"
 #define DEFAULT_CFLAGS   "-g -O3 -fno-inline "
 #define DEFAULT_LDFLAGS  ""
 
