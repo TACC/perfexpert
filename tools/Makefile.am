@@ -31,10 +31,10 @@ SUBDIRS += $(ENABLE_RECOMMENDER)
 SUBDIRS += $(ENABLE_CT)
 
 bin_PROGRAMS = perfexpert
+dist_bin_SCRIPTS = perfexpert_get_info.pl
 
 perfexpert_SOURCES = perfexpert.c
 perfexpert_CPPFLAGS = -I$(srcdir)/common
-# perfexpert_LDFLAGS = 
 perfexpert_CFLAGS = -O3
 
 # EOF
