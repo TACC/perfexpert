@@ -384,6 +384,11 @@ AC_CHECK_HEADER([google/sparse_hash_map], [
 AC_LANG_POP
 
 #------------------------------------------------------------------------------
+# PerfExpert
+#
+AC_CONFIG_FILES([tools/perfexpert_get_info.pl])
+
+#------------------------------------------------------------------------------
 # Enable/Disable 'analyzer'
 #
 AC_ARG_ENABLE([analyzer],
