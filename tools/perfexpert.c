@@ -401,11 +401,6 @@ static int parse_cli_params(int argc, char *argv[]) {
             case 'p':
                 globals.prefix = optarg;
                 OUTPUT_VERBOSE((10, "option 'p' set [%s]", globals.prefix));
-                if (PERFEXPERT_SUCCESS !=
-                    perfexpert_util_file_exists_and_is_exec(globals.prefix)) {
-                    show_help();
-                    return PERFEXPERT_ERROR;
-                }
                 break;
 
             /* Number of recommendation to output */
