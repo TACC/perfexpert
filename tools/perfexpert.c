@@ -243,7 +243,7 @@ static void show_help(void) {
     printf("Usage: perfexpert <threshold> [-gvch] [-l level] [-d database] [-r count]\n");
     printf("                 [-m target|-s sourcefile] [-p prefix] [-a FILE] [-b FILE]\n");
     printf("                 <program_executable> [program_arguments]\n\n");
-    printf("  <threshold>        Define the relevance (in % of runtime) of code fragments\n");
+    printf("  <threshold>        Define the relevance (in %% of runtime) of code fragments\n");
     printf("                     PerfExpert should take into consideration (> 0 and <= 1)\n");
     printf("  -d --database      Select the recommendation database file\n");
     printf("                     (default: %s/%s)\n", PERFEXPERT_VARDIR, RECOMMENDATION_DB);
@@ -257,6 +257,7 @@ static void show_help(void) {
     printf("                     quotes to specify multiple arguments (e.g. -p \"mpirun -n 2\"\n");
     printf("  -b --before        Execute FILE before each run of the application\n");
     printf("  -a --after         Execute FILE after each run of the application\n");
+    printf("  -g --left-garbage  Do not remove temporary fiels after run\n");
     printf("  -v --verbose       Enable verbose mode using default verbose level (1)\n");
     printf("  -l --verbose_level Enable verbose mode using a specific verbose level (1-10)\n");
     printf("  -c --colorful      Enable colors on verbose mode, no weird characters will\n");
@@ -560,6 +561,11 @@ static int compile_program(void) {
 
     /* If the user chose a Makefile... */
     if (NULL != globals.target) {
+        if (PERFEXPERT_SUCCESS != perfexpert_util_file_exists("./Makefile")) {
+            OUTPUT(("%s", _ERROR("Error: Makefile file not found")));
+            return PERFEXPERT_ERROR;                    
+        }
+
         argv[arg_index] = "make";
         arg_index++;
         argv[arg_index] = globals.target;
