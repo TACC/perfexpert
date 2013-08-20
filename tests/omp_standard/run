@@ -1,0 +1,60 @@
+#!/bin/bash
+#
+# Copyright (c) 2013  University of Texas at Austin. All rights reserved.
+#
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# This file is part of PerfExpert.
+#
+# PerfExpert is free software: you can redistribute it and/or modify it under
+# the terms of the GNU Lesser General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option) any
+# later version.
+#
+# PerfExpert is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+# A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+# details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with PerfExpert. If not, see <http://www.gnu.org/licenses/>.
+#
+# Author: Leonardo Fialho
+#
+# $HEADER$
+#
+
+PERFEXPERT_BIN=${PERFEXPERT_BUILDDIR}/tools/perfexpert
+
+# Create a test directory
+echo Creating test directory...
+mkdir -p omp_standard.test
+cd omp_standard.test
+
+# Copy the original source code
+echo Copying test program file...
+cp ${PERFEXPERT_SRCDIR}/tests/omp_standard/original.c ./test.c
+
+# Create a local database
+echo Creating test database...
+sqlite3 ./test.db < ${PERFEXPERT_SRCDIR}/contrib/recommender.db.txt
+
+# Compile the program...
+cc -fopenmp -O3 -g -o test test.c
+
+# Call PerfExpert
+echo Running test...
+OMP_NUM_THREADS=16 ${PERFEXPERT_BIN} -l 10 -c -d ./test.db -r 10 0.1 \
+	./test > test.output
+RC=$?
+
+# Did we got the expected result?
+echo Test return code: $RC
+if [ "1" -eq "$RC" ]; then
+	exit -1
+fi
+exit 0
+
+# EOF
