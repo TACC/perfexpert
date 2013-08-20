@@ -174,9 +174,9 @@ int main(int argc, char** argv) {
                 rc = PERFEXPERT_SUCCESS;
         }
 
-        #if HAVE_ROSE == 1
-        /* Call code transformer */
         if ((NULL != globals.sourcefile) || (NULL != globals.target)) {
+            #if HAVE_ROSE == 1
+            /* Call code transformer */
             switch (transformation()) {
                 case PERFEXPERT_ERROR:
                 case PERFEXPERT_FAILURE:
@@ -215,9 +215,10 @@ int main(int argc, char** argv) {
                 case PERFEXPERT_SUCCESS:
                     rc = PERFEXPERT_SUCCESS;
             }
+            #endif
+        } else {
+            goto clean_up;
         }
-        #endif
-
         OUTPUT(("Starting another optimization round..."));
         globals.step++;
     }
