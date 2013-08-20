@@ -83,6 +83,11 @@ extern "C" {
 #define METRICS_FILE             "recommender-metrics.txt"
 #define EXPERIMENT_FILE          "experiment.properties"
 
+/* HPCToolkit binaries (should be in the path) */
+#define HPCSTRUCT "hpcstruct"
+#define HPCRUN    "hpcrun"
+#define HPCPROF   "hpcprof"
+
 /** Default compiler and compilation options */
 #define DEFAULT_COMPILER "cc"
 #define DEFAULT_CFLAGS   "-g -O3 -fno-inline "

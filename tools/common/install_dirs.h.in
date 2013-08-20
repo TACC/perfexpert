@@ -38,10 +38,6 @@ extern "C" {
 #define PERFEXPERT_ETCDIR "@prefix@/etc"
 #define PERFEXPERT_VARDIR "@prefix@/var"
 
-#define HPCSTRUCT "@HPCSTRUCT_PROGRAM@"
-#define HPCRUN    "@HPCRUN_PROGRAM@"
-#define HPCPROF   "@HPCPROF_PROGRAM@"
-
 #ifdef __cplusplus
 }
 #endif
