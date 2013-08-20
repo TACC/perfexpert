@@ -32,7 +32,8 @@ SUBDIRS = tools
 .PHONY: check
 
 check:
-	$(top_builddir)/tests/run_tests.pl
+	cd $(top_builddir)/tests/ 
+	./run_tests.pl
 
 install-data-hook:
 	cat $(top_builddir)/warnings*
