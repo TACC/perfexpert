@@ -277,25 +277,29 @@ AC_ARG_WITH([apache-ant],
 #------------------------------------------------------------------------------
 # Find HPCToolkit programs, optionally, using an argument
 #
-AC_ARG_WITH([hpctoolkit],
-    [AS_HELP_STRING([--with-hpctoolkit],
-        [Use this argument to set where HPCTollkit binaries are
-        installed (not necessary if they are in the PATH)])], [
-    HPCTOOLKIT_PATH="$withval"
-    AC_PATH_TOOL([HPCSTRUCT_PROGRAM], [hpcstruct], [no], [$HPCTOOLKIT_PATH/bin])
-    AC_PATH_TOOL([HPCRUN_PROGRAM],    [hpcrun],    [no], [$HPCTOOLKIT_PATH/bin])
-    AC_PATH_TOOL([HPCPROF_PROGRAM],   [hpcprof],   [no], [$HPCTOOLKIT_PATH/bin])
-    AS_IF([test x"$HPCSTRUCT_PROGRAM" = x"no"],
-        [AC_MSG_ERROR([hpcstruct not found in $HPCTOOLKIT_PATH/bin])])
-    AS_IF([test x"$HPCRUN_PROGRAM" = x"no"],
-        [AC_MSG_ERROR([hpcrun not found in $HPCTOOLKIT_PATH/bin])])
-    AS_IF([test x"$HPCPROF_PROGRAM" = x"no"],
-        [AC_MSG_ERROR([hpcprof not found in $HPCTOOLKIT_PATH/bin])])
-], [
-    AC_PATH_TOOL([HPCSTRUCT_PROGRAM], [hpcstruct], [no])
-    AC_PATH_TOOL([HPCRUN_PROGRAM],    [hpcrun],    [no])
-    AC_PATH_TOOL([HPCPROF_PROGRAM],   [hpcprof],   [no])
-])
+AC_PATH_TOOL([HPCSTRUCT_PROGRAM], [hpcstruct], [no])
+AC_PATH_TOOL([HPCRUN_PROGRAM],    [hpcrun],    [no])
+AC_PATH_TOOL([HPCPROF_PROGRAM],   [hpcprof],   [no])
+
+# AC_ARG_WITH([hpctoolkit],
+#     [AS_HELP_STRING([--with-hpctoolkit],
+#         [Use this argument to set where HPCTollkit binaries are
+#         installed (not necessary if they are in the PATH)])], [
+#     HPCTOOLKIT_PATH="$withval"
+#     AC_PATH_TOOL([HPCSTRUCT_PROGRAM], [hpcstruct], [no], [$HPCTOOLKIT_PATH/bin])
+#     AC_PATH_TOOL([HPCRUN_PROGRAM],    [hpcrun],    [no], [$HPCTOOLKIT_PATH/bin])
+#     AC_PATH_TOOL([HPCPROF_PROGRAM],   [hpcprof],   [no], [$HPCTOOLKIT_PATH/bin])
+#     AS_IF([test x"$HPCSTRUCT_PROGRAM" = x"no"],
+#         [AC_MSG_ERROR([hpcstruct not found in $HPCTOOLKIT_PATH/bin])])
+#     AS_IF([test x"$HPCRUN_PROGRAM" = x"no"],
+#         [AC_MSG_ERROR([hpcrun not found in $HPCTOOLKIT_PATH/bin])])
+#     AS_IF([test x"$HPCPROF_PROGRAM" = x"no"],
+#         [AC_MSG_ERROR([hpcprof not found in $HPCTOOLKIT_PATH/bin])])
+# ], [
+#     AC_PATH_TOOL([HPCSTRUCT_PROGRAM], [hpcstruct], [no])
+#     AC_PATH_TOOL([HPCRUN_PROGRAM],    [hpcrun],    [no])
+#     AC_PATH_TOOL([HPCPROF_PROGRAM],   [hpcprof],   [no])
+# ])
 
 #------------------------------------------------------------------------------
 # Support to ROSE Compiler (optional), using an argument
