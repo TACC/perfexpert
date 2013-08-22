@@ -819,16 +819,16 @@ static int apply_patterns(fragment_t *fragment,
     }
 
     /* Did HPCToolkit identified the file */
-    if (0 == strcmp("~unknown-file~", source_file)) {
+    if (0 == strcmp("~unknown-file~", fragment->filename)) {
         OUTPUT(("%s (%s)", _ERROR((char *)"Error: unknown source file"),
-            source_file));
+            fragment->filename));
         return PERFEXPERT_NO_PAT;        
     }
 
     /* First of all, check if file exists */
-    if (-1 == access(source_file, R_OK )) {
+    if (-1 == access(fragment->filename, R_OK )) {
         OUTPUT(("%s (%s)", _ERROR((char *)"Error: source file not found"),
-            source_file));
+            fragment->filename));
         return PERFEXPERT_NO_PAT;
     }
 
