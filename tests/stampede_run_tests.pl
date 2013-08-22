@@ -1,4 +1,4 @@
-#!/bin/bash
+#!@PERL_PROGRAM@
 #
 # Copyright (c) 2013  University of Texas at Austin. All rights reserved.
 #
@@ -26,34 +26,31 @@
 # $HEADER$
 #
 
-# Create a test directory
-echo Creating test directory...
-mkdir -p omp.test
-cd omp.test
+# Dedicated to Ashay, who loves Perl. 
 
-# Copy the original source code
-echo Copying test program file...
-cp ${PERFEXPERT_SRCDIR}/tests/omp/original.c ./test.c
+use Term::ANSIColor;
+use warnings;
+use strict;
 
-# Create a local database
-echo Creating test database...
-sqlite3 ./test.db < ${PERFEXPERT_SRCDIR}/contrib/recommender.db.txt
+my $SRCDIR="./";
+$ENV{PERFEXPERT_SRCDIR}=$SRCDIR;
+$ENV{PERFEXPERT_BIN}="./tools/perfexpert";
 
-# Call PerfExpert
-echo Running test...
-OMP_NUM_THREADS=16 CFLAGS="-fopenmp" perfexpert -l 10 -c -d ./test.db -r 10 \
-	-s ./test.c 0.1 ./test
-RC=$?
-
-# Did we got the expected result?
-echo Test return code: $RC
-if [ "1" -eq "$RC" ]; then
-	exit -1
-fi
-if [ "127" -eq "$RC" ]; then
-	echo Unable to run PerfExpert
-	exit -1
-fi
-exit 0
+foreach my $test (`ls $SRCDIR/tests`) {
+    chomp($test);
+    if ("run_tests.pl.in" ne $test) {
+        printf("%s $test\n", colored("Testing", 'blue'));
+        if (-x "$SRCDIR/tests/$test/run") {
+            system("$SRCDIR/tests/$test/run");
+            if ($? eq 0) {
+                printf("%s\n\n", colored("Test PASSED!", 'green'));
+            } else {
+                printf("%s\n\n", colored("Test FAILED!", 'red'));
+            }
+        } else {
+            printf("%s\n\n", colored("Test SKIPED!", 'magenta'));
+        }
+    }
+}  
 
 # EOF
