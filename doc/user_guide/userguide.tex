@@ -100,8 +100,8 @@ If you want to contribute with PerfExpert or need help to do research using Perf
 
 \section{Mailing List}
 
-[WE HAVE TO CREATE A MAILING LIST]
-
+Out mailing list is hosted at Google. To subscribe send a message to:\\
+\href{subscribe-perfexpert@googlegroups.com}{\texttt{subscribe-perfexpert@googlegroups.com}} or access the group's webpage at: \href{https://groups.google.com/d/forum/perfexpert}{\texttt{https://groups.google.com/d/forum/perfexpert}}.
 \chapter{Installation Instructions}
 
 \section{Prerequisites}
@@ -160,7 +160,7 @@ $ ./autogen.sh
 	\item Libtool version 2.2.6b or newer (\href{ftp://ftp.gnu.org/gnu/libtool/}{\texttt{ftp://ftp.gnu.org/gnu/libtool/}})
 \end{itemize}
 
-In case you have any problem installing PerfExpert, send us an email\\ (\href{fialho@utexas.edu}{\texttt{fialho@utexas.edu}}) or use our mailing list: [WE HAVE TO CREATE A MAILING LIST].
+In case you have any problem installing PerfExpert, send us an email\\ (\href{fialho@utexas.edu}{\texttt{fialho@utexas.edu}}) or use our mailing list: \href{perfexpert@googlegroups.com}{\texttt{perfexpert@googlegroups.com}}.
 
 \section{Characterizing your Machine}
 
@@ -176,7 +176,9 @@ The objective of this chapter is to explain how to run programs using PerfExpert
 
 If you are using any of the TACC\footnote{\href{https://www.tacc.utexas.edu/}{\texttt{https://www.tacc.utexas.edu/}}} machines, load the appropriate modules:
 
-module load papi perfexpert
+\begin{verbatim}
+$ module load papi hpctoolkit perfexpert
+\end{verbatim}
 
 The runs with PerfExpert should be made using a data set size for each compute node which is equivalent to full production runs but for which execution time is not more than about ten or fifteen minutes since PerfExpert will run your application multiple times (actually, three times on Stampede) with different performance counters enabled. For that reason, before you run PerfExpert you should either request iterative access to computational resources (compute node), or modify the job script that you use to run your application and specify a running time that is about 3 (for Stampede) or 6 (for Lonestar) times the normal running time of the program.
 
