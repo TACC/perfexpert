@@ -62,7 +62,7 @@ int main(int argc, char** argv) {
         .colorful      = 0,              // int
         .threshold     = 0.0,            // float
         .rec_count     = 3,              // int
-        .left_garbage  = 0,              // int
+        .clean_garbage = 0,              // int
         .pid           = (long)getpid(), // long int
         .target        = NULL,           // char *
         .sourcefile    = NULL,           // char *
@@ -141,9 +141,30 @@ int main(int argc, char** argv) {
         }
 
         /* Call analyzer and stuff (former perfexpert) */
-        if (PERFEXPERT_SUCCESS != analysis()) {
-            OUTPUT(("%s", _ERROR("Error: unable to run analyzer")));
-            goto clean_up;
+        switch (analysis()) {
+            case PERFEXPERT_FAILURE:
+            case PERFEXPERT_ERROR:
+                OUTPUT(("%s", _ERROR("Error: unable to run analyzer")));
+                goto clean_up;
+
+            case PERFEXPERT_NO_DATA:
+                OUTPUT(("Unable to analyze your application"));
+
+                /* Print analysis report */
+                bzero(temp_str, BUFFER_SIZE);
+                sprintf(temp_str, "%s/%s.txt", globals.stepdir,
+                        ANALYZER_REPORT);
+
+                if (PERFEXPERT_SUCCESS !=
+                    perfexpert_util_file_print(temp_str)) {
+                    OUTPUT(("%s",
+                        _ERROR("Error: unable to show analysis report")));
+                }
+                rc = PERFEXPERT_NO_DATA;
+                goto clean_up;
+
+            case PERFEXPERT_SUCCESS:
+                rc = PERFEXPERT_SUCCESS;
         }
 
         /* Call recommender */
@@ -186,51 +207,52 @@ int main(int argc, char** argv) {
 
                 case PERFEXPERT_NO_TRANS:
                     OUTPUT(("Unable to apply optimizations automatically"));
-
-                    /* Print analysis report */
-                    bzero(temp_str, BUFFER_SIZE);
-                    sprintf(temp_str, "%s/%s.txt", globals.stepdir,
-                            ANALYZER_REPORT);
-
-                    if (PERFEXPERT_SUCCESS !=
-                        perfexpert_util_file_print(temp_str)) {
-                        OUTPUT(("%s",
-                            _ERROR("Error: unable to show analysis report")));
-                    }
-
-                    /* Print recommendations */
-                    bzero(temp_str, BUFFER_SIZE);
-                    sprintf(temp_str, "%s/%s.txt", globals.stepdir,
-                            RECOMMENDER_REPORT);
-
-                    if (PERFEXPERT_SUCCESS !=
-                        perfexpert_util_file_print(temp_str)) {
-                        OUTPUT(("%s",
-                            _ERROR("Error: unable to show recommendations")));
-                    }
-
                     rc = PERFEXPERT_NO_TRANS;
-                    goto clean_up;
+                    goto report;
 
                 case PERFEXPERT_SUCCESS:
                     rc = PERFEXPERT_SUCCESS;
             }
             #endif
         } else {
-            goto clean_up;
+            rc = PERFEXPERT_SUCCESS;
+            goto report;
         }
         OUTPUT(("Starting another optimization round..."));
         globals.step++;
     }
 
+    report:
+    /* Print analysis report */
+    bzero(temp_str, BUFFER_SIZE);
+    sprintf(temp_str, "%s/%s.txt", globals.stepdir, ANALYZER_REPORT);
+
+    if (PERFEXPERT_SUCCESS !=
+        perfexpert_util_file_print(temp_str)) {
+        OUTPUT(("%s", _ERROR("Error: unable to show analysis report")));
+    }
+
+    /* Print recommendations */
+    bzero(temp_str, BUFFER_SIZE);
+    sprintf(temp_str, "%s/%s.txt", globals.stepdir, RECOMMENDER_REPORT);
+
+    if (PERFEXPERT_SUCCESS !=
+        perfexpert_util_file_print(temp_str)) {
+        OUTPUT(("%s", _ERROR("Error: unable to show recommendations")));
+    }
+
     clean_up:
     /* TODO: Should I remove the garbage? */
-    if (!globals.left_garbage) {
+    if (!globals.clean_garbage) {
     }
 
     /* TODO: Free memory */
     if (NULL != globals.stepdir) {
         free(globals.stepdir);
+    }
+    /* Remove perfexpert.log */
+    if (-1 == remove("perfexpert.log")) {
+        OUTPUT(("%s", _ERROR("Error: unable to remove perfexpert.log")));
     }
 
     return rc;
@@ -257,7 +279,7 @@ static void show_help(void) {
     printf("                     quotes to specify multiple arguments (e.g. -p \"mpirun -n 2\"\n");
     printf("  -b --before        Execute FILE before each run of the application\n");
     printf("  -a --after         Execute FILE after each run of the application\n");
-    printf("  -g --left-garbage  Do not remove temporary fiels after run\n");
+    printf("  -g --clean-garbage Remove temporary fiels after run\n");
     printf("  -v --verbose       Enable verbose mode using default verbose level (1)\n");
     printf("  -l --verbose_level Enable verbose mode using a specific verbose level (1-10)\n");
     printf("  -c --colorful      Enable colors on verbose mode, no weird characters will\n");
@@ -368,7 +390,7 @@ static int parse_cli_params(int argc, char *argv[]) {
 
             /* Leave the garbage there? */
             case 'g':
-                globals.left_garbage = 1;
+                globals.clean_garbage = 1;
                 OUTPUT_VERBOSE((10, "option 'g' set"));
                 break;
 
@@ -482,8 +504,8 @@ static int parse_cli_params(int argc, char *argv[]) {
     OUTPUT_VERBOSE((10, "   Verbose level:       %d", globals.verbose_level));
     OUTPUT_VERBOSE((10, "   Colorful verbose?    %s",
                     globals.colorful ? "yes" : "no"));
-    OUTPUT_VERBOSE((10, "   Leave the garbage?   %s",
-                    globals.left_garbage ? "yes" : "no"));
+    OUTPUT_VERBOSE((10, "   Clean the garbage?   %s",
+                    globals.clean_garbage ? "yes" : "no"));
     OUTPUT_VERBOSE((10, "   Database file:       %s", globals.dbfile));
     OUTPUT_VERBOSE((10, "   Recommendations      %d", globals.rec_count));
     OUTPUT_VERBOSE((10, "   Threshold:           %f", globals.threshold));
@@ -492,6 +514,7 @@ static int parse_cli_params(int argc, char *argv[]) {
     OUTPUT_VERBOSE((10, "   Program executable:  %s", globals.program));
     OUTPUT_VERBOSE((10, "   Program arguments:   %d",
                     argc - globals.prog_arg_pos));
+    OUTPUT_VERBOSE((10, "   Prefix:              %s", globals.prefix));
     OUTPUT_VERBOSE((10, "   Before each run:     %s", globals.before));
     OUTPUT_VERBOSE((10, "   After each run:      %s", globals.after));
 
@@ -707,16 +730,7 @@ static int analysis(void) {
     test.info   = experiment;
 
     /* Run! (to generate analysis report) */
-    if (PERFEXPERT_SUCCESS != fork_and_wait(&test, argv)) {
-        return PERFEXPERT_ERROR;
-    }
-
-    /* Remove perfexpert.log */
-    if (-1 == remove("perfexpert.log")) {
-        OUTPUT(("%s", _ERROR("Error: unable to remove perfexpert.log")));
-    }
-
-    return PERFEXPERT_SUCCESS;
+    return fork_and_wait(&test, argv);
 }
 
 /* recommendation */
@@ -1009,25 +1023,32 @@ static int run_hpcrun(void) {
 
             /* Add PREFIX to argv */
             if (NULL != globals.prefix) {
-                experiment->argv[experiment->argc] = strtok(globals.prefix,
-                                                            " ");
+                temp_str = (char *)malloc(strlen(globals.prefix) + 1);
+                if (NULL == temp_str) {
+                    OUTPUT(("%s", _ERROR("Error: out of memory")));
+                    rc = PERFEXPERT_ERROR;
+                    goto CLEANUP;
+                }
+                bzero(temp_str, strlen(globals.prefix) + 1);
+                sprintf(temp_str, "%s", globals.prefix);
+
+                experiment->argv[experiment->argc] = strtok(temp_str, " ");
                 do {
                     experiment->argc++;
-                } while (experiment->argv[experiment->argc] = strtok(NULL,
-                                                                     " "));
+                } while (experiment->argv[experiment->argc] = strtok(NULL, " "));
             }
 
             /* Arguments to run hpcrun */
             experiment->argv[experiment->argc] = HPCRUN;
             experiment->argc++;
             experiment->argv[experiment->argc] = "--output";
+            experiment->argc++;
             temp_str = (char *)malloc(BUFFER_SIZE);
             if (NULL == temp_str) {
                 OUTPUT(("%s", _ERROR("Error: out of memory")));
                 rc = PERFEXPERT_ERROR;
                 goto CLEANUP;
             }
-            experiment->argc++;
             bzero(temp_str, BUFFER_SIZE);
             sprintf(temp_str, "%s/measurements", globals.stepdir);
             experiment->argv[experiment->argc] = temp_str;
@@ -1096,11 +1117,11 @@ static int run_hpcrun(void) {
             free(temp_str);
         }
 
-        /* Ok, now we just have to add the program and its arguments */
+        /* Ok, now we have to add the program and... */
         experiment->argv[experiment->argc] = globals.program;
         experiment->argc++;
 
-        /* Add the program arguments to experiment's argv */
+        /* ...and the program arguments to experiment's argv */
         while ((globals.prog_arg_pos + count) < globals.main_argc) {
             experiment->argv[experiment->argc] =
                 globals.main_argv[globals.prog_arg_pos + count];

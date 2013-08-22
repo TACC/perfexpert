@@ -67,27 +67,24 @@ public class PerfExpert {
         }
 
         Switch swHelp = new Switch('h', "help", "Show this screen");
-        Switch swAgg = new Switch('a', "aggregate", "Show whole-program information only");
-        FlaggedOption flRecommend = new FlaggedOption('r',
-                                                      "recommend",
-                                                      "Recommend suggestions for optimization",
-                                                      "limit",
-                                                      false, ArgType.INTEGER);
+        Switch swAgg = new Switch('a', "aggregate",
+            "Show whole-program information only");
+        FlaggedOption flRecommend = new FlaggedOption('r', "recommend",
+            "Recommend suggestions for optimization", "limit", false,
+            ArgType.INTEGER);
         FlaggedOption flThreads = new FlaggedOption('t', "threads",
-                                                    "Show information for specific threads",
-                                                    "thread#",
-                                                    true, ArgType.STRING);
+            "Show information for specific threads", "thread#", true,
+            ArgType.STRING);
         UnflaggedOption ufThreshold = new UnflaggedOption("threshold",
-                                                          "Threshold between 0 and 1",
-                                                          ArgType.DOUBLE);
+            "Threshold between 0 and 1", ArgType.DOUBLE);
         UnflaggedOption ufExp01 = new UnflaggedOption("experiment.xml",
-                                                      "experiment.xml file generated using `perfexpert_run_exp'",
-                                                      ArgType.STRING);
+            "experiment.xml file generated using `perfexpert_run_exp'",
+            ArgType.STRING);
         UnflaggedOption ufExp02 = new UnflaggedOption("experiment.xml",
-                                                      "Second experiment.xml file, for comparison only. Not valid with -r,--recommend",
-                                                      ArgType.STRING);
-        // Fialho: adding a new option --opttran
-        Switch swOpttran = new Switch('o', "opttran", "Show recommendations using OptTran format");
+            "Second experiment.xml file, for comparison only. Not valid with -r,--recommend",
+            ArgType.STRING);
+        Switch swOpttran = new Switch('o', "opttran",
+            "Show recommendations using OptTran format");
 
         ufExp02.setMandatory(false);
 
@@ -107,20 +104,19 @@ public class PerfExpert {
         }
         catch (ArgPException e) {
             printHelp(parser);
-            return;
+            System.exit(1);
         }
 
         // Sanity check
         if ((parser.isSet(flRecommend) && parser.isSet(ufExp02)) ||
             parser.isSet(swHelp)) {
             printHelp(parser);
-            return;
+            System.exit(1);
         }
 
         Double threshold = 0.1;
         Integer max_suggestions = 0;
         boolean recommend = false, aggregateOnly = false;
-        // Fialho: new flag, opttran
         boolean opttran = false;
         String filename01 = null, filename02 = null, threads = null;
 
@@ -144,58 +140,44 @@ public class PerfExpert {
         String HPCDATA_LOCATION = System.getenv("PERFEXPERT_HPCDATA_HOME");
         if ((null == HPCDATA_LOCATION) || (0 == HPCDATA_LOCATION.length())) {
             log.error("The environment variable ${PERFEXPERT_HPCDATA_HOME} was not set, cannot proceed");
-            return;
+            System.exit(1);
         }
 
         LCPIConfigManager lcpiConfig = new LCPIConfigManager("file://" +
-                                                             PERFEXPERT_HOME +
-                                                             "/../etc/lcpi.properties");
+            PERFEXPERT_HOME + "/../etc/lcpi.properties");
         if (lcpiConfig.readConfigSource() == false) {
             // Error while reading configuraiton, handled inside method
-            return;
+            System.exit(1);
         }
 
-        MachineConfigManager machineConfig = new MachineConfigManager("file://" +
-                                                                      PERFEXPERT_HOME +
-                                                                      "/../etc/machine.properties");
+        MachineConfigManager machineConfig = new MachineConfigManager(
+            "file://" + PERFEXPERT_HOME + "/../etc/machine.properties");
         if (false == machineConfig.readConfigSource()) {
             // Error while reading configuraiton, handled inside method
-            return;
+            System.exit(1);
         }
 
         String thread_regex = RangeParser.getRegexString(threads);
 
         List<HPCToolkitProfile> profiles01 = null, profiles02 = null;
         HPCToolkitParser parser01 = new HPCToolkitParser(HPCDATA_LOCATION,
-                                                         threshold,
-                                                         "file://" + filename01,
-                                                         lcpiConfig.getProperties());
+            threshold, "file://" + filename01, lcpiConfig.getProperties());
         profiles01 = parser01.parse(aggregateOnly, thread_regex);
 
         if (null != filename02) {
             HPCToolkitParser parser02 = new HPCToolkitParser(HPCDATA_LOCATION,
-                                                             0,
-                                                             "file://" + filename02,
-                                                             lcpiConfig.getProperties());
+                0, "file://" + filename02, lcpiConfig.getProperties());
             profiles02 = parser02.parse(aggregateOnly, thread_regex);
         }
 
         if (!recommend) {
-            HPCToolkitPresentation.presentSummaryProfiles(profiles01,
-                                                          profiles02,
-                                                          lcpiConfig,
-                                                          machineConfig,
-                                                          filename01,
-                                                          filename02,
-                                                          aggregateOnly);
+            System.exit(HPCToolkitPresentation.presentSummaryProfiles(profiles01,
+                profiles02, lcpiConfig, machineConfig, filename01,
+                filename02, aggregateOnly));
         } else {
-            HPCToolkitPresentation.presentRecommendations(profiles01,
-                                                          lcpiConfig,
-                                                          machineConfig,
-                                                          filename01,
-                                                          aggregateOnly,
-                                                          max_suggestions,
-                                                          opttran); // Fialho: new flag
+            System.exit(HPCToolkitPresentation.presentRecommendations(profiles01,
+                lcpiConfig, machineConfig, filename01, aggregateOnly,
+                max_suggestions, opttran));
         }
     }
 }

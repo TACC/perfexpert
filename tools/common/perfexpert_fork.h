@@ -203,19 +203,24 @@ static int fork_and_wait(test_t *test, char *argv[]) {
                             _BOLDGREEN((char *)"OK"), argv[0], test->info));
             return rc >> 8;
 
-        case PERFEXPERT_NO_REC: /* (2) The pattern matches */
+        case PERFEXPERT_NO_REC: /* (2) Out of recommendations */
             OUTPUT_VERBOSE((7, "      [%s] [%s] >> [%s]",
                             _BOLDYELLOW((char *)"NOREC"), argv[0], test->info));
             return rc >> 8;
 
-        case PERFEXPERT_NO_PAT: /* (3) The pattern matches */
+        case PERFEXPERT_NO_PAT: /* (3) NO pattern matches */
             OUTPUT_VERBOSE((7, "      [%s] [%s] >> [%s]",
                             _BOLDYELLOW((char *)"NOPAT"), argv[0], test->info));
             return rc >> 8;
 
-        case PERFEXPERT_NO_TRANS: /* (4) The pattern matches */
+        case PERFEXPERT_NO_TRANS: /* (4) Out of transformations */
             OUTPUT_VERBOSE((7, "      [%s] [%s] >> [%s]",
                             _BOLDYELLOW((char *)"NOTRA"), argv[0], test->info));
+            return rc >> 8;
+
+        case PERFEXPERT_NO_DATA: /* (5) analyzer does not have enough data */
+            OUTPUT_VERBOSE((7, "      [%s] [%s] >> [%s]",
+                            _BOLDYELLOW((char *)"NODAT"), argv[0], test->info));
             return rc >> 8;
 
         case 127: /* Execution failed */

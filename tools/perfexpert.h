@@ -59,7 +59,7 @@ typedef struct {
     int      colorful;
     float    threshold;
     int      rec_count;
-    int      left_garbage;
+    int      clean_garbage;
     char     *target;
     char     *sourcefile;
     char     *program;
@@ -95,7 +95,7 @@ static struct option long_options[] = {
     {"before",        required_argument, NULL, 'b'},
     {"colorful",      no_argument,       NULL, 'c'},
     {"database",      required_argument, NULL, 'd'},
-    {"left_garbage",  no_argument,       NULL, 'g'},
+    {"clean_garbage", no_argument,       NULL, 'g'},
     {"help",          no_argument,       NULL, 'h'},
     {"verbose_level", required_argument, NULL, 'l'},
     {"makefile",      required_argument, NULL, 'm'},
