@@ -12,7 +12,7 @@ int main (int argc, char *argv[]) {
     MPI_Status status;
 
     if (3 > argc) {
-      printf("Insuficient arguments (%d), argc\n");
+      printf("Insuficient arguments (%d)\n", argc);
       printf("Usage: ping <times> <delay> [pong]\n");
       exit(1);
     }
