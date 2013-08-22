@@ -1,0 +1,38 @@
+#
+# Copyright (c) 2013  University of Texas at Austin. All rights reserved.
+#
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# This file is part of PerfExpert.
+#
+# PerfExpert is free software: you can redistribute it and/or modify it under
+# the terms of the GNU Lesser General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option) any
+# later version.
+#
+# PerfExpert is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+# A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+# details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with PerfExpert. If not, see <http://www.gnu.org/licenses/>.
+#
+# Author: Leonardo Fialho
+#
+# $HEADER$
+#
+
+This test checks a MPI simple ping code. The objective is to verify the '-p'
+argument and be sure the compilaion using mpicc works fine. The mpi_ping
+program also receive two command line arguments. Recommender shouls provide
+(useless) recommendations to change the MPI library becasue most of the time is
+spent into MPI calls. Of course, it will be impossible to apply any of these
+recommendations.
+
+This test works for the builfding node of Stamepede. Probably, for other systems
+you shoud change the run command to set the proper MPIRUN prefix.
+
+EOF
