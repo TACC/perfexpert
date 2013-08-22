@@ -818,6 +818,20 @@ static int apply_patterns(fragment_t *fragment,
         return PERFEXPERT_NO_PAT;
     }
 
+    /* Did HPCToolkit identified the file */
+    if (0 == strcmp("~unknown-file~", source_file)) {
+        OUTPUT(("%s (%s)", _ERROR((char *)"Error: unknown source file"),
+            source_file));
+        return PERFEXPERT_NO_PAT;        
+    }
+
+    /* First of all, check if file exists */
+    if (-1 == access(source_file, R_OK )) {
+        OUTPUT(("%s (%s)", _ERROR((char *)"Error: source file not found"),
+            source_file));
+        return PERFEXPERT_NO_PAT;
+    }
+
     /* For each pattern required for this transfomation ... */
     pattern = (pattern_t *)perfexpert_list_get_first(
         &(transformation->patterns));
