@@ -41,13 +41,11 @@ public class HPCToolkitPresentation {
     static short maxBarWidth = 47;
     enum Metric { METRIC_RATIO, METRIC_LCPI };
     static Logger log = Logger.getLogger( HPCToolkitPresentation.class );
-    public static void presentRecommendations(List<HPCToolkitProfile> profiles01,
-                                              LCPIConfigManager lcpiConfig,
-                                              MachineConfigManager machineConfig,
-                                              String file01,
-                                              boolean aggregateOnly,
-                                              int maxSuggestions,
-                                              boolean opttran) { // Fialho: new flag
+    public static int presentRecommendations(List<HPCToolkitProfile> profiles01,
+        LCPIConfigManager lcpiConfig, MachineConfigManager machineConfig,
+        String file01, boolean aggregateOnly, int maxSuggestions,
+        boolean opttran) {
+        int rc = 5; // Return code, by default PERFEXPERT_NO_DATA
         Map<String, Float> lcpiMap = new HashMap<String,Float>(20);
 
         List<HPCToolkitProfile> profiles02 = null;
@@ -57,17 +55,17 @@ public class HPCToolkitPresentation {
 
         if (null == profiles01 || 0 == profiles01.size()) {
             log.error("Received empty profiles as input, terminating...");
-            return;
+            return 1;
         }
 
         if (null == lcpiConfig) {
             log.error("Received empty LCPI configuration as input, terminating...");
-            return;
+            return 1;
         }
 
         if (null == machineConfig) {
             log.error("Received empty machine configuration as input, terminating...");
-            return;
+            return 1;
         }
 
         DecimalFormat doubleFormat = new DecimalFormat("#.###");
@@ -81,7 +79,7 @@ public class HPCToolkitPresentation {
 
         if (null == indexOfCycles) {
             log.error("Could not find PAPI_TOT_CYC among the list of discovered counters, cannot proceed with LCPI computation");
-            return;
+            return 1;
         }
 
         if (null == CPIThreshold) {
@@ -147,6 +145,7 @@ public class HPCToolkitPresentation {
                                   "% of the total runtime)", lcpi);
                 System.out.println (as.recommend(maxSuggestions));
             } else {
+                rc = 0; // If at least one profile enters here, return PERFEXPERT_SUCCESS
                 System.out.println("%");
                 System.out.println("code.section_info=" + profile.getCodeSectionInfo());
                 System.out.println("code.filename=" + profile.getCodeFilename());
@@ -182,29 +181,29 @@ public class HPCToolkitPresentation {
                 }
             }
         }
+        return rc;
     }
 
-    public static void presentSummaryProfiles(List<HPCToolkitProfile> profiles01,
-                                              List<HPCToolkitProfile> profiles02,
-                                              LCPIConfigManager lcpiConfig,
-                                              MachineConfigManager machineConfig,
-                                              String file01, String file02,
-                                              boolean aggregateOnly) {
+    public static int presentSummaryProfiles(List<HPCToolkitProfile> profiles01,
+        List<HPCToolkitProfile> profiles02, LCPIConfigManager lcpiConfig,
+        MachineConfigManager machineConfig, String file01, String file02,
+        boolean aggregateOnly) {
         Metric metricType;
+        int rc = 5; // Return code, by defualt PERFEXPERT_NO_DATA
 
         if (null == profiles01 || 0 == profiles01.size()) {
             // log.error("Received empty profiles as input, terminating...");
-            return;
+            return 1;
         }
 
         if (null == lcpiConfig) {
             log.error("Received empty LCPI configuration as input, terminating...");
-            return;
+            return 1;
         }
 
         if (null == machineConfig) {
             log.error("Received empty machine configuration as input, terminating...");
-            return;
+            return 1;
         }
 
         DecimalFormat doubleFormat = new DecimalFormat("#.###");
@@ -219,7 +218,7 @@ public class HPCToolkitPresentation {
 
         if (null == indexOfCycles) {
             log.error("Could not find PAPI_TOT_CYC among the list of discovered counters, cannot proceed with LCPI computation");
-            return;
+            return 1;
         }
 
         if (null == CPIThreshold) {
@@ -232,9 +231,9 @@ public class HPCToolkitPresentation {
         for (HPCToolkitProfile profile : profiles01) {
             if (profile.getCodeSectionInfo().equals("Aggregate")) {
                 System.out.println ("Total running time for \"" + file01 +
-                                    "\" is " +
-                                    doubleFormat.format(profile.getMetricBasedOnPEIndex(indexOfCycles)/cpuFrequency) +
-                                    " sec");
+                    "\" is " +
+                    doubleFormat.format(profile.getMetricBasedOnPEIndex(indexOfCycles)/cpuFrequency) +
+                    " sec");
                 break;
             }
         }
@@ -244,9 +243,9 @@ public class HPCToolkitPresentation {
                 if (profile.getCodeSectionInfo().equals("Aggregate")) {
                     Integer indexOfCycles2 = profile.getConstants().getPerfCounterTranslation().get("PAPI_TOT_CYC");
                     System.out.println ("Total running time for \"" + file02 +
-                                        "\" is " +
-                                        doubleFormat.format(profile.getMetricBasedOnPEIndex(indexOfCycles2)/cpuFrequency) +
-                                        " sec");
+                        "\" is " +
+                        doubleFormat.format(profile.getMetricBasedOnPEIndex(indexOfCycles2)/cpuFrequency) +
+                        " sec");
                     break;
                 }
             }
@@ -271,18 +270,16 @@ public class HPCToolkitPresentation {
 
             if (null == matchingProfile) {
                 System.out.println("\n" + profile.getCodeSectionInfo() + " (" +
-                                   doubleFormat.format(profile.getImportance()*100) +
-                                   "% of the total runtime)");
+                    doubleFormat.format(profile.getImportance()*100) +
+                    "% of the total runtime)");
             } else {
                 Integer indexOfCycles2 = profiles02.get(0).getConstants().getPerfCounterTranslation().get("PAPI_TOT_CYC");
                 double cycles2 = matchingProfile.getMetricBasedOnPEIndex(indexOfCycles2);
 
                 System.out.println("\n" + profile.getCodeSectionInfo() +
-                                   " (runtimes are " +
-                                   doubleFormat.format(cycles/cpuFrequency) +
-                                   "s and " +
-                                   doubleFormat.format(cycles2/cpuFrequency) +
-                                   "s)");
+                    " (runtimes are " +
+                    doubleFormat.format(cycles/cpuFrequency) + "s and " +
+                    doubleFormat.format(cycles2/cpuFrequency) + "s)");
             }
 
             System.out.println("===============================================================================");
@@ -290,8 +287,8 @@ public class HPCToolkitPresentation {
             double maxVariation = matchingProfile == null ? profile.getVariation() : (profile.getVariation() > matchingProfile.getVariation() ? profile.getVariation() : matchingProfile.getVariation());
             if (maxVariation > 0.2) {
                 System.out.println("WARNING: The instruction count variation is " +
-                                   doubleFormat.format(maxVariation*100) +
-                                   "%, making the results unreliable");
+                    doubleFormat.format(maxVariation*100) +
+                    "%, making the results unreliable");
             }
             if (cycles < cpuFrequency) {
                 System.out.println("WARNING: The runtime for this code section is too short to gather meaningful measurements");
@@ -303,6 +300,9 @@ public class HPCToolkitPresentation {
                 System.out.println("The performance of this code section is good");
             }
             
+            // When any of the bottlenecks reach this point, the return code changes
+            rc = 0; // If at least one code section reach this point, return PERFEXPERT_SUCCESS
+
             boolean printRatioHeader = false;
             boolean printPerfHeader = false;
             boolean printPercentHeader = false;
@@ -356,15 +356,13 @@ public class HPCToolkitPresentation {
                     }
                     catch (edu.utexas.tacc.perfexpert.configuration.hpctoolkit.mathparser.ParseException e) {
                         log.error("Error in parsing expression: " + formula +
-                                  "\nDefaulting value of " + LCPI +
-                                  " to zero.\n[" + e.getMessage() + "]\n" +
-                                  e.getStackTrace());
+                            "\nDefaulting value of " + LCPI + " to zero.\n[" +
+                            e.getMessage() + "]\n" + e.getStackTrace());
                     }
                     catch (java.text.ParseException e2) {
                         log.error("Error in parsing expression: " + formula +
-                                  "\nDefaulting value of " + LCPI +
-                                  " to zero.\n[" + e2.getMessage() + "]\n" +
-                                  e2.getStackTrace());
+                            "\nDefaulting value of " + LCPI + " to zero.\n[" +
+                            e2.getMessage() + "]\n" + e2.getStackTrace());
                     }
 
                     matchingProfile.setLCPI(index, result02);
@@ -406,12 +404,12 @@ public class HPCToolkitPresentation {
                 }
 
                 if (subcategory.regionMatches(true, 0, "overall", 0,
-                                              subcategory.length())) {
+                    subcategory.length())) {
                     // Print the category name
                     System.out.print(String.format("%-25s: ", "* " + fCategory));
                 } else {
                     System.out.print(String.format("%-25s: ", "   - " +
-                                                   fSubcategory));
+                        fSubcategory));
                 }
                 
                 if (null == matchingProfile) {
@@ -451,16 +449,17 @@ public class HPCToolkitPresentation {
                 }
 
                 if (category.regionMatches(true, 0, "overall", 0,
-                                           category.length())) {
+                        category.length())) {
                     // Print line about upper bounds
                     System.out.println("upper bound estimates");
                 }
             }
         }
+        return rc;
     }
 
     private static HPCToolkitProfile getMatchingProfile(HPCToolkitProfile needle,
-                                                        List<HPCToolkitProfile> smallHaystack) {
+        List<HPCToolkitProfile> smallHaystack) {
         if (null == smallHaystack) {
             return null;
         }
@@ -476,7 +475,7 @@ public class HPCToolkitPresentation {
     }
 
     private static void printRatioBar(double value1, double value2,
-                                      double cpiThreshold) {
+        double cpiThreshold) {
         // Scale to maxBarWidth
         value1 *= maxBarWidth / 100.0;
         value2 *= maxBarWidth / 100.0;
@@ -528,7 +527,7 @@ public class HPCToolkitPresentation {
     }
 
     private static void printLCPIBar(double value1, double value2,
-                                     double cpiThreshold) {
+        double cpiThreshold) {
         value1 *= 10 / cpiThreshold;
         value2 *= 10 / cpiThreshold;
 

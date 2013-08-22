@@ -52,6 +52,8 @@ extern "C" {
 #define PERFEXPERT_NO_PAT     3
 /** PERFEXPERT_NO_PAT should be used when transformations can't be applied */
 #define PERFEXPERT_NO_TRANS   4
+/** PERFEXPERT_NO_DATA should be used when analyzer return an error */
+#define PERFEXPERT_NO_DATA    5
 
 #define PERFEXPERT_TRUE   1 /**< used to return boolean values */
 #define PERFEXPERT_FALSE  0 /**< used to return boolean values */
