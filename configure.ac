@@ -63,10 +63,7 @@ AC_PROG_CXX
 AC_PROG_MKDIR_P
 AC_PROG_LN_S
 AC_PROG_INSTALL
-
-# Minst (MACPO) requires Libtool
-AC_CONFIG_MACRO_DIR([m4])
-LT_INIT
+AC_PROG_RANLIB
 
 # Checks for typedefs, structures, and compiler characteristics
 AC_C_INLINE
