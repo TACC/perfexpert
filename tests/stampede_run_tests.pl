@@ -1,4 +1,4 @@
-#!@PERL_PROGRAM@
+#!/usr/bin/perl
 #
 # Copyright (c) 2013  University of Texas at Austin. All rights reserved.
 #
@@ -32,7 +32,7 @@ use Term::ANSIColor;
 use warnings;
 use strict;
 
-my $SRCDIR="./";
+my $SRCDIR=".";
 $ENV{PERFEXPERT_SRCDIR}=$SRCDIR;
 $ENV{PERFEXPERT_BIN}="./tools/perfexpert";
 
