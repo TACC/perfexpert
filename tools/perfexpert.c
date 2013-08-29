@@ -176,20 +176,8 @@ int main(int argc, char** argv) {
 
             case PERFEXPERT_NO_REC:
                 OUTPUT(("No recommendation found, printing analysys report"));
-
-                /* Print analysis report */
-                bzero(temp_str, BUFFER_SIZE);
-                sprintf(temp_str, "%s/%s.txt", globals.stepdir,
-                        ANALYZER_REPORT);
-
-                if (PERFEXPERT_SUCCESS !=
-                    perfexpert_util_file_print(temp_str)) {
-                    OUTPUT(("%s",
-                            _ERROR("Error: unable to show analysis report")));
-                }
-
                 rc = PERFEXPERT_NO_REC;
-                goto clean_up;
+                goto report;
 
             case PERFEXPERT_SUCCESS:
                 rc = PERFEXPERT_SUCCESS;
@@ -222,23 +210,23 @@ int main(int argc, char** argv) {
         globals.step++;
     }
 
-    report:
     /* Print analysis report */
+    report:
     bzero(temp_str, BUFFER_SIZE);
     sprintf(temp_str, "%s/%s.txt", globals.stepdir, ANALYZER_REPORT);
 
-    if (PERFEXPERT_SUCCESS !=
-        perfexpert_util_file_print(temp_str)) {
+    if (PERFEXPERT_SUCCESS != perfexpert_util_file_print(temp_str)) {
         OUTPUT(("%s", _ERROR("Error: unable to show analysis report")));
     }
 
     /* Print recommendations */
-    bzero(temp_str, BUFFER_SIZE);
-    sprintf(temp_str, "%s/%s.txt", globals.stepdir, RECOMMENDER_REPORT);
+    if ((0 < globals.rec_count) && (PERFEXPERT_NO_REC != rc)) {
+        bzero(temp_str, BUFFER_SIZE);
+        sprintf(temp_str, "%s/%s.txt", globals.stepdir, RECOMMENDER_REPORT);
 
-    if (PERFEXPERT_SUCCESS !=
-        perfexpert_util_file_print(temp_str)) {
-        OUTPUT(("%s", _ERROR("Error: unable to show recommendations")));
+        if (PERFEXPERT_SUCCESS != perfexpert_util_file_print(temp_str)) {
+            OUTPUT(("%s", _ERROR("Error: unable to show recommendations")));
+        }
     }
 
     clean_up:
