@@ -53,7 +53,7 @@ HPC systems are notorious for operating at a small fraction of their peak perfor
 
 Applying PerfExpert requires only a single command line added to the application's usual job script. PerfExpert automates performance optimization at the core, socket and node levels as far as is possible. PerfExpert works with, and has been tested on, all Intel and AMD processors from Intel Nehalem and AMD 10h microarchitectures. PerfExpert is currently available only for the CPU portion of Stampede compute nodes but will be extended to Intel Many Integrated Cores (MICs) in the near future.
 
-\section{TACC Staff}
+\section{People}
 
 \textbf{James Browne}\\
 Professor Emeritus of Computer Science, UT Austin\\
@@ -94,7 +94,7 @@ Version 4 of PerfExpert has been designed to allow third-party contributions. Th
 	\item Writing modules to modify the source code in order to alleviate the identified bottlenecks.
 \end{itemize}
 
-If you would like to contribute to PerfExpert or need help to do research using PerfExpert, please contact us at \href{mailto:fialho@utexas.edu}{\texttt{fialho@utexas.edu}}. Complete directions on how to add to or modify each phase of PerfExpert can be found on the PerfExpert web site \href{https://bitbucket.org/leonardofialho/perfexpert/}{\texttt{https://bitbucket.org/leonardofialho/perfexpert/}}.
+Check section \ref{extending} to find some documentation on extending PerfExpert. If you would like to contribute to PerfExpert or need help to do research using PerfExpert, please contact us at \href{mailto:fialho@utexas.edu}{\texttt{fialho@utexas.edu}}. Complete directions on how to add to or modify each phase of PerfExpert can be found on the PerfExpert web site \href{https://bitbucket.org/leonardofialho/perfexpert/}{\texttt{https://bitbucket.org/leonardofialho/perfexpert/}}.
 
 \section{Mailing List}
 
@@ -406,7 +406,7 @@ $ CC="icc" OMP_NUM_THREADS=16 CFLAGS="-fopenmp" perfexpert -s mm_omp.c 0.05 mm_o
 
 This section explains the performance analysis report and the metrics shown by PerfExpert. We discuss the following sample output:
 
-{\begin{verbatim}
+\begin{verbatim}
 Loop in function compute() (99.9% of the total runtime)
 =========================================================================
 ratio to total instrns       %  0.......25.........50.......75......100
@@ -436,7 +436,7 @@ upper bound estimates
 * floating-point instr   :  0.2 >>>>
    - fast FP instr       :  0.2 >>>>
    - slow FP instr       :  0.0 >
-\end{verbatim}}
+\end{verbatim}
 
 Apart from the total running time, PerfExpert performance analysis report includes, for each code segment:
 
@@ -482,65 +482,158 @@ In each case, the classification (data access, instruction access, data TLB, etc
 
 \section{List of Recommendations for Optimization}
 
-If PerfExpert runs with \texttt{-Ðr} option enabled, it will generate the performance analysis report  and a list of suggestions for bottleneck remediation for each bottleneck. This option is always available, it does not depend on which of the other command line option are.
+If PerfExpert runs with \texttt{-Ðr} option enabled, it will also generate a list of suggestions for performance improvement for each bottleneck. This option is always available, it does not depend on which of the other command line option are. A list of suggestions for this example is shown below:
 
-A list of suggestions for this example (truncated to only the most important recommendation) is shown following. Each entry in this list is similar to the following one:
+\begin{verbatim}
+#--------------------------------------------------
+# Recommendations for /work/02204/fialho/tutorial/3/mm_omp.c:14
+#--------------------------------------------------
+#
+# Here is a possible recommendation for this code segment
+#
+Description: move loop invariant computations out of loop
+Reason: this optimization reduces the number of executed floating-point operations
+Code example:
+loop i
+  x = x + a * b * c[i];
+ =====>
+temp = a * b;
+loop i
+  x = x + temp * c[i];
 
-% TODO: update this recommendation
-{{\begin{verbatim}
-Loop in function compute() at mm_omp.c:15 (100% of the total runtime) 
-*************************************************************************
-change the order of loops
-this optimization may improve the memory access pattern and make it
-more cache and TLB friendly.
-loop i {
+#
+# Here is a possible recommendation for this code segment
+#
+Description: change the order of loops
+Reason: this optimization may improve the memory access pattern and make it more cache 
+and TLB friendly
+Code example:
+loop i
   loop j {...}
-}
-=====>
-loop j {
+ =====>
+loop j
   loop i {...}
-}
-\end{verbatim}}
+
+#
+# Here is a possible recommendation for this code segment
+#
+Description: componentize important loops by factoring them into their own subroutines
+Reason: this optimization may allow the compiler to optimize the loop independently and
+thus tune it better
+Code example:
+loop i {...}
+...
+loop j {...}
+ =====>
+void li() { loop i {...} }
+void lj() { loop j {...} }
+...
+li();
+...
+lj();
+\end{verbatim}
+
+\chapter{List of Automatic Optimizations PerfExpert Supports}
 
 \chapter{PerfExpert for Advanced Users}
+
+\section{Tools Which Are Part of PerfExpert}
+
+\subsection{\texttt{macpo}}
+\subsection{\texttt{recommender}}
+\subsection{\texttt{perfexpert\_ct}}
 
 \section{PerfExpert Temporary Directory}
 
 \section{Command Line Arguments Unveiled}
 
-\section{Using Environment Variables}
-
-\begin{description}
-	\item[\texttt{PERFEXPERT\_CT\_VERBOSE\_LEVEL}]\hfill \\
-	\item[\texttt{PERFEXPERT\_CT\_INPUT\_FILE}]\hfill \\
-	\item[\texttt{PERFEXPERT\_CT\_OUTPUT\_FILE}]\hfill \\
-	\item[\texttt{PERFEXPERT\_CT\_DATABASE\_FILE}]\hfill \\
-	\item[\texttt{PERFEXPERT\_CT\_WORKDIR}]\hfill \\
-	\item[\texttt{PERFEXPERT\_CT\_COLORFUL}]\hfill \\
-	\item[\texttt{PERFEXPERT\_CT\_PID}]\hfill \\
-	\item[\texttt{PERFEXPERT\_VERBOSE\_LEVEL}]\hfill \\
-	\item[\texttt{PERFEXPERT\_DATABASE\_FILE}]\hfill \\
-	\item[\texttt{PERFEXPERT\_REC\_COUNT}]\hfill \\
-	\item[\texttt{PERFEXPERT\_COLORFUL}]\hfill \\
-	\item[\texttt{PERFEXPERT\_MAKE\_TARGET}]\hfill \\
-	\item[\texttt{PERFEXPERT\_SOURCE\_FILE}]\hfill \\
-	\item[\texttt{CC}]\hfill \\
-	\item[\texttt{CFLAGS}]\hfill \\
-	\item[\texttt{PERFEXPERT\_CFLAGS}]\hfill \\
-	\item[\texttt{PERFEXPERT\_RECOMMENDER\_VERBOSE\_LEVEL}]\hfill \\
-	\item[\texttt{PERFEXPERT\_RECOMMENDER\_INPUT\_FILE}]\hfill \\
-	\item[\texttt{PERFEXPERT\_RECOMMENDER\_OUTPUT\_FILE}]\hfill \\
-	\item[\texttt{PERFEXPERT\_RECOMMENDER\_DATABASE\_FILE}]\hfill \\
-	\item[\texttt{PERFEXPERT\_RECOMMENDER\_METRICS\_FILE}]\hfill \\
-	\item[\texttt{PERFEXPERT\_RECOMMENDER\_REC\_COUNT}]\hfill \\
-	\item[\texttt{PERFEXPERT\_RECOMMENDER\_WORKDIR}]\hfill \\
-	\item[\texttt{PERFEXPERT\_RECOMMENDER\_COLORFUL}]\hfill \\
-	\item[\texttt{PERFEXPERT\_RECOMMENDER\_PID}]\hfill \\
-\end{description}
-
 \section{Re-Analyzing the Results from a Previous PerfExpert Run}
 
+\section{Using Environment Variables}
+
+Here is the list of all the environment variables PerfExpert uses. The command line arguments overwrite the value set by any of the environment variables. PerfExpert automatically sets the \texttt{PERFEXPERT\_RECOMMENDER\_*} and \texttt{PERFEXPERT\_CT\_*} variables, but it will not overwrite the value of them if they are already set. Thus, it is possible to use these environment variables to pass options to \texttt{recommender} and \texttt{perfexpert\_ct}.
+
+\begin{description}
+	\item[\texttt{PERFEXPERT\_MAKE\_TARGET}]\hfill \\
+	This variable has the same functionality than the \texttt{-m} command line option. It's value is passed to \texttt{make} to compile the source code while using a \texttt{Makefile} (\textit{e.g.}, \texttt{make all}). If this variable is set while the user selects the \texttt{-s} command line option an error will be generated.
+
+	\item[\texttt{PERFEXPERT\_SOURCE\_FILE}]\hfill \\
+	This variable has the same functionality than the \texttt{-s} command line option. It's value should be a valid source code file which will be compiled to obtain the binary executable. If this variable is set while the user selects the \texttt{-m} command line option an error will be generated.
+
+	\item[\texttt{PERFEXPERT\_DATABASE\_FILE}]\hfill \\
+	This variable has the same functionality than the \texttt{-d} command line option. It's value should be a valid PerfExpert database file. By default, PerfExpert uses the \texttt{.perfexpert.db} database file located in the user \texttt{\$HOME} directory. If this file does not exist, PerfExpert will copy it from the installation directory.
+
+	\item[\texttt{PERFEXPERT\_REC\_COUNT}]\hfill \\
+	This variable has the same functionality than the \texttt{-r} command line option. It's value should be a valid integer number higher than \texttt{0}.
+
+	\item[\texttt{PERFEXPERT\_VERBOSE\_LEVEL}]\hfill \\
+	This variable has the same functionality than the \texttt{-l} command line option. It's value should be a valid integer number within \texttt{1} and \texttt{10}.
+
+	\item[\texttt{PERFEXPERT\_COLORFUL}]\hfill \\
+	This variable has the same functionality than the \texttt{-c} command line option. It's value should be \texttt{0} or \texttt{1}.
+	
+	\item[\texttt{CC}]\hfill \\
+	This variable sets the compiler PerfExpert should use to obtain the binary executable. It should be a valid executable file. It is possible to set it's value to include the compiler's full path. The value of this variable has no effect when PerfExpert runs without the \texttt{-s} command line option and the \texttt{PERFEXPERT\_SOURCE\_FILE} environment variable is not set. Also, note that the value of this variable has no effect when PerfExpert uses \texttt{Makefile} to obtain the binary executable.
+
+	\item[\texttt{CFLAGS}]\hfill \\
+	This variable sets the compiler flags PerfExpert should use while compiling the source code. The value of this variable has no effect when PerfExpert runs without the \texttt{-s} command line option and the \texttt{PERFEXPERT\_SOURCE\_FILE} environment variable is not set. Also, note that the value of this variable has no effect when PerfExpert uses \texttt{Makefile} to obtain the binary executable.
+
+	\item[\texttt{PERFEXPERT\_CFLAGS}]\hfill \\
+	This variable is used by PerfExpert to implement optimization which depends upon compiler flags. This variable should not be used to pass any user defined compiler flags because it's content will be freely modified by PerfExpert.
+
+	\item[\texttt{PERFEXPERT\_RECOMMENDER\_INPUT\_FILE}]\hfill \\
+	This variable has the same functionality than the \texttt{-f} command line option. It should be a valid readable file. It is possible to set it's value to include a full path. PerfExpert automatically sets the value of this variable.
+	
+	\item[\texttt{PERFEXPERT\_RECOMMENDER\_OUTPUT\_FILE}]\hfill \\
+	This variable has the same functionality than the \texttt{-o} command line option.  It is possible to set it's value to include a full path. PerfExpert automatically sets the value of this variable.
+
+	\item[\texttt{PERFEXPERT\_RECOMMENDER\_DATABASE\_FILE}]\hfill \\
+	This variable has the same functionality than the \texttt{-d} command line option. It's value should be a valid PerfExpert database file. By default, PerfExpert sets the value of this variable to the database it is using.
+
+	\item[\texttt{PERFEXPERT\_RECOMMENDER\_METRICS\_FILE}]\hfill \\
+	This variable has the same functionality than the \texttt{-m} command line option. It should be a valid readable file. It is possible to set it's value to include a full path.
+	
+	\item[\texttt{PERFEXPERT\_RECOMMENDER\_REC\_COUNT}]\hfill \\
+	This variable has the same functionality than the \texttt{-r} command line option. It's value should be a valid integer number higher than \texttt{0}. By default, PerfExpert sets the value of this variable to value it is set to run with.
+
+	\item[\texttt{PERFEXPERT\_RECOMMENDER\_WORKDIR}]\hfill \\
+	The variable controls where \texttt{recommender} will generate intermediary files used for automatic optimization. The value of this variable is automatically set by PerfExpert and it the same working directory the \texttt{perfexpert} itself uses. Usually, it's value is like \texttt{.perfexpert-temp.XXXXXX}.
+
+	\item[\texttt{PERFEXPERT\_RECOMMENDER\_PID}]\hfill \\
+	This variable is used by PerfExpert to identify calls to \texttt{recommender} during the same execution but in a different optimization cycle. It is automatically set by PerfExpert and it's value is the PID of the \texttt{perfexpert} process.
+
+	\item[\texttt{PERFEXPERT\_RECOMMENDER\_VERBOSE\_LEVEL}]\hfill \\
+	This variable has the same functionality than the \texttt{-l} command line option. It's value should be a valid integer number within \texttt{1} and \texttt{10}. By default, PerfExpert sets the value of this variable to value it is set to run with.
+
+	\item[\texttt{PERFEXPERT\_RECOMMENDER\_COLORFUL}]\hfill \\
+	This variable has the same functionality than the \texttt{-c} command line option. It's value should be \texttt{0} or \texttt{1}. By default, PerfExpert sets the value of this variable to value it is set to run with.
+
+	\item[\texttt{PERFEXPERT\_CT\_INPUT\_FILE}]\hfill \\
+	This variable has the same functionality than the \texttt{-f} command line option. It should be a valid readable file. It is possible to set it's value to include a full path. PerfExpert automatically sets the value of this variable.
+
+	\item[\texttt{PERFEXPERT\_CT\_OUTPUT\_FILE}]\hfill \\
+	This variable has the same functionality than the \texttt{-o} command line option.  It is possible to set it's value to include a full path. PerfExpert automatically sets the value of this variable.
+
+	\item[\texttt{PERFEXPERT\_CT\_DATABASE\_FILE}]\hfill \\
+	This variable has the same functionality than the \texttt{-d} command line option. It's value should be a valid PerfExpert database file. By default, PerfExpert sets the value of this variable to the database it is using.
+
+	\item[\texttt{PERFEXPERT\_CT\_WORKDIR}]\hfill \\
+	The variable controls where \texttt{recommender} will generate intermediary files used for automatic optimization. The value of this variable is automatically set by PerfExpert and it the same working directory the \texttt{perfexpert} itself uses. Usually, it's value is like \texttt{.perfexpert-temp.XXXXXX}.
+
+	\item[\texttt{PERFEXPERT\_CT\_PID}]\hfill \\
+	This variable is used by PerfExpert to identify calls to \texttt{perfexpert\_ct} during the same execution but in a different optimization cycle. It is automatically set by PerfExpert and it's value is the PID of the \texttt{perfexpert} process.
+
+	\item[\texttt{PERFEXPERT\_CT\_VERBOSE\_LEVEL}]\hfill \\
+	This variable has the same functionality than the \texttt{-l} command line option. It's value should be a valid integer number within \texttt{1} and \texttt{10}. By default, PerfExpert sets the value of this variable to value it is set to run with.
+
+	\item[\texttt{PERFEXPERT\_CT\_COLORFUL}]\hfill \\
+	This variable has the same functionality than the \texttt{-c} command line option. It's value should be \texttt{0} or \texttt{1}. By default, PerfExpert sets the value of this variable to value it is set to run with.
+\end{description}
+
 \chapter{Extending PerfExpert}
+\label{extending}
+
+\section{Database Layout}
 
 \section{Adding Metrics to PerfExpert}
 
