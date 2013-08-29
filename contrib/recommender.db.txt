@@ -949,8 +949,12 @@ SUM(
     THEN (metric.perfexpert_data_accesses_L2d_hits - (maximum * 0.1))
     ELSE 0 END) +
   (CASE c.short
+    WHEN 'd-l3'
+    THEN (metric.perfexpert_data_accesses_L3d_hits - (maximum * 0.1))
+    ELSE 0 END) +
+  (CASE c.short
     WHEN 'd-mem'
-    THEN (metric.perfexpert_data_accesses_L2d_misses - (maximum * 0.1))
+    THEN (metric.perfexpert_data_accesses_LLC_misses - (maximum * 0.1))
     ELSE 0 END) +
   (CASE c.short
     WHEN 'd-tlb'
@@ -987,7 +991,8 @@ JOIN
     MAX(
       metric.perfexpert_data_accesses_L1d_hits,
       metric.perfexpert_data_accesses_L2d_hits,
-      metric.perfexpert_data_accesses_L2d_misses,
+      metric.perfexpert_data_accesses_L3d_hits,
+      metric.perfexpert_data_accesses_LLC_misses,
       metric.perfexpert_data_TLB_overall,
       metric.perfexpert_instruction_accesses_overall,
       metric.perfexpert_instruction_TLB_overall,
