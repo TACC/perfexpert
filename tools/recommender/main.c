@@ -510,8 +510,7 @@ static int parse_segment_params(perfexpert_list_t *segments_p) {
             
             /* Insert new code fragment into metrics database, retrieve id */
             if (SQLITE_OK != sqlite3_exec(globals.db, sql,
-                                          perfexpert_database_get_int,
-                                          (void *)&rowid, &error_msg)) {
+                perfexpert_database_get_int, (void *)&rowid, &error_msg)) {
                 fprintf(stderr, "Error: SQL error: %s\n", error_msg);
                 fprintf(stderr, "SQL clause: %s\n", sql);
                 sqlite3_free(error_msg);
@@ -740,14 +739,12 @@ static int select_recommendations(segment_t *segment) {
     
     /* Select all functions, accumulate them */
     OUTPUT_VERBOSE((8, "%s [%s:%d, ROWID: %d]",
-                    _YELLOW("looking for functions to segment"),
-                    segment->filename, segment->line_number, segment->rowid));
+        _YELLOW("looking for functions to segment"), segment->filename,
+        segment->line_number, segment->rowid));
     
     if (SQLITE_OK != sqlite3_exec(globals.db,
-                                  "SELECT id, desc, statement FROM function;",
-                                  accumulate_functions,
-                                  (void *)&(segment->functions),
-                                  &error_msg)) {
+        "SELECT id, desc, statement FROM function;", accumulate_functions,
+        (void *)&(segment->functions), &error_msg)) {
         fprintf(stderr, "Error: SQL error: %s\n", error_msg);
         sqlite3_free(error_msg);
         return PERFEXPERT_ERROR;
@@ -755,16 +752,16 @@ static int select_recommendations(segment_t *segment) {
 
     /* Execute all functions, accumulate recommendations */
     OUTPUT_VERBOSE((8, "%d %s", perfexpert_list_get_size(&(segment->functions)),
-                    _GREEN("functions found")));
+        _GREEN("functions found")));
 
     /* Create a temporary table to store possible recommendations */
     bzero(sql, BUFFER_SIZE);
     sprintf(sql, "CREATE TEMP TABLE recommendation_%d_%d (function_id INTEGER,",
-            (int)getpid(), segment->rowid);
+        (int)getpid(), segment->rowid);
     strcat(sql, " recommendation_id INTEGER, score FLOAT, weigth FLOAT);");
 
     OUTPUT_VERBOSE((10, "%s",
-                    _YELLOW("creating temporary table of recommendations")));
+        _YELLOW("creating temporary table of recommendations")));
     OUTPUT_VERBOSE((10, "   SQL: %s", _CYAN(sql)));
     
     if (SQLITE_OK != sqlite3_exec(globals.db, sql, NULL, NULL, &error_msg)) {
@@ -779,8 +776,8 @@ static int select_recommendations(segment_t *segment) {
         sqlite3_stmt *statement;
         
         OUTPUT_VERBOSE((8, "%s (ID: %d, %s) [%d bytes]",
-                        _YELLOW("running function"), function->id,
-                        function->desc, strlen(function->statement)));
+            _YELLOW("running function"), function->id, function->desc,
+            strlen(function->statement)));
 
         /* Prepare the SQL statement */
         if (SQLITE_OK != sqlite3_prepare_v2(globals.db, function->statement,
@@ -792,9 +789,7 @@ static int select_recommendations(segment_t *segment) {
 
         /* Bind ROWID */
         if (SQLITE_OK != sqlite3_bind_int(statement,
-                                          sqlite3_bind_parameter_index(statement,
-                                                                       "@RID"),
-                                          segment->rowid)) {
+            sqlite3_bind_parameter_index(statement, "@RID"), segment->rowid)) {
             fprintf(stderr, "Error: SQL error: %s\n", error_msg);
             sqlite3_free(error_msg);
             return PERFEXPERT_ERROR;
@@ -802,9 +797,8 @@ static int select_recommendations(segment_t *segment) {
 
         /* Bind loop depth */
         if (SQLITE_OK != sqlite3_bind_double(statement,
-                                             sqlite3_bind_parameter_index(statement,
-                                                                          "@LPD"),
-                                             segment->loop_depth)) {
+            sqlite3_bind_parameter_index(statement, "@LPD"),
+            segment->loop_depth)) {
             fprintf(stderr, "Error: SQL error: %s\n", error_msg);
             sqlite3_free(error_msg);
             return PERFEXPERT_ERROR;
@@ -818,19 +812,19 @@ static int select_recommendations(segment_t *segment) {
             /* It is possible that this function does not return results */
             if (SQLITE_DONE == rc) {
                 OUTPUT_VERBOSE((10,
-                                "      end of recommendations for function (%d)",
-                                function->id));
+                    "      end of recommendations for function (%d)",
+                    function->id));
                 continue;
             } else if (SQLITE_ROW == rc) {
                 /* check if there are at least two columns in the SQL result and
                  * their types are SQLITE_INTEGER and SQLITE_FLOAT respectivelly
                  */
                 if (SQLITE_INTEGER != sqlite3_column_type(statement, 0)) {
-                    OUTPUT(("%s", _ERROR("1st column is not an integer.")));
+                    OUTPUT(("%s", _ERROR("1st column is not an integer")));
                     continue;
                 }
                 if (SQLITE_FLOAT != sqlite3_column_type(statement, 1)) {
-                    OUTPUT(("%s", _ERROR("2nd column is not a double.")));
+                    OUTPUT(("%s", _ERROR("2nd column is not a float")));
                     continue;
                 }
                 
@@ -847,9 +841,8 @@ static int select_recommendations(segment_t *segment) {
                             sqlite3_column_int(statement, 0), function->id);
                     strcat(sql, temp_str);
                     if (SQLITE_OK != sqlite3_exec(globals.db, sql,
-                                                  perfexpert_database_get_double,
-                                                  (void *)&weight,
-                                                  &error_msg)) {
+                        perfexpert_database_get_double, (void *)&weight,
+                        &error_msg)) {
                         fprintf(stderr, "Error: SQL error: %s\n", error_msg);
                         sqlite3_free(error_msg);
                         return PERFEXPERT_ERROR;
@@ -873,10 +866,8 @@ static int select_recommendations(segment_t *segment) {
                     }
                     
                     OUTPUT_VERBOSE((10, "      FunctionID=%d, RecommendationID=%d, Score=%f, Weight=%f",
-                                    function->id,
-                                    sqlite3_column_int(statement, 0),
-                                    sqlite3_column_double(statement, 1),
-                                    weight));
+                        function->id, sqlite3_column_int(statement, 0),
+                        sqlite3_column_double(statement, 1), weight));
                 }
             }
         } while (SQLITE_ROW == rc);
@@ -921,8 +912,7 @@ static int select_recommendations(segment_t *segment) {
     strcat(sql, temp_str);
     
     OUTPUT_VERBOSE((10, "%s (top %d)",
-                    _YELLOW("selecting top-N recommendations"),
-                    globals.rec_count));
+        _YELLOW("selecting top-N recommendations"), globals.rec_count));
     OUTPUT_VERBOSE((10, "   SQL: %s", _CYAN(sql)));
 
     rc = PERFEXPERT_NO_REC;
