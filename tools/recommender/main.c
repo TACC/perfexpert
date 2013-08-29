@@ -195,7 +195,7 @@ static void show_help(void) {
     #endif
     printf("\n\n");
     printf("  -f --inputfile       Use 'file' as input for performance measurements\n");
-    printf("  -o --outputfile      Use 'file' as output for recommendations. If 'fiel'\n");
+    printf("  -o --outputfile      Use 'file' as output for recommendations. If 'file'\n");
     printf("                       exists its content will be overwritten (default: STDOUT)\n");
     printf("  -d --database        Select the recommendation database file\n");
     printf("                       (default: %s/%s)\n", PERFEXPERT_VARDIR, RECOMMENDATION_DB);
