@@ -723,7 +723,7 @@ static int analysis(void) {
 
 /* recommendation */
 static int recommendation(void) {
-    char temp_str[7][BUFFER_SIZE];
+    char temp_str[8][BUFFER_SIZE];
     char *argv[6];
     test_t test;
     int rc;
@@ -734,33 +734,35 @@ static int recommendation(void) {
     /* Set some environment variables to avoid working arguments */
     bzero(temp_str[0], BUFFER_SIZE);
     sprintf(temp_str[0], "%s/%s.txt", globals.stepdir, ANALYZER_METRICS);
-    if (0 != setenv("PERFEXPERT_RECOMMENDER_INPUT_FILE", temp_str[0], 1)) {
+    if (0 != setenv("PERFEXPERT_RECOMMENDER_INPUT_FILE", temp_str[0], 0)) {
         OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
         return PERFEXPERT_ERROR;
     }
     bzero(temp_str[1], BUFFER_SIZE);
     sprintf(temp_str[1], "%d", globals.rec_count);
-    if (0 != setenv("PERFEXPERT_RECOMMENDER_REC_COUNT", temp_str[1], 1)) {
+    if (0 != setenv("PERFEXPERT_RECOMMENDER_REC_COUNT", temp_str[1], 0)) {
         OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
         return PERFEXPERT_ERROR;
     }
-    if (0 != setenv("PERFEXPERT_RECOMMENDER_DATABASE_FILE", globals.dbfile, 1)) {
+    if (0 != setenv("PERFEXPERT_RECOMMENDER_DATABASE_FILE", globals.dbfile, 0)) {
         OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
         return PERFEXPERT_ERROR;
     }
     bzero(temp_str[2], BUFFER_SIZE);
     sprintf(temp_str[2], "%d", globals.colorful);
-    if (0 != setenv("PERFEXPERT_RECOMMENDER_COLORFUL", temp_str[2], 1)) {
+    if (0 != setenv("PERFEXPERT_RECOMMENDER_COLORFUL", temp_str[2], 0)) {
         OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
         return PERFEXPERT_ERROR;
     }
-    if (0 != setenv("PERFEXPERT_RECOMMENDER_VERBOSE_LEVEL", "10", 1)) {
+    bzero(temp_str[7], BUFFER_SIZE);
+    sprintf(temp_str[7], "%d", globals.verbose_level);
+    if (0 != setenv("PERFEXPERT_RECOMMENDER_VERBOSE_LEVEL", temp_str[7], 0)) {
         OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
         return PERFEXPERT_ERROR;
     }
     bzero(temp_str[6], BUFFER_SIZE);
     sprintf(temp_str[6], "%d", (int)getpid());
-    if (0 != setenv("PERFEXPERT_RECOMMENDER_PID", temp_str[6], 1)) {
+    if (0 != setenv("PERFEXPERT_RECOMMENDER_PID", temp_str[6], 0)) {
         OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
         return PERFEXPERT_ERROR;
     }
@@ -848,7 +850,7 @@ static int recommendation(void) {
 
 /* transformation */
 static int transformation(void) {
-    char temp_str[5][BUFFER_SIZE];
+    char temp_str[6][BUFFER_SIZE];
     char *argv[6];
     test_t test;
 
@@ -858,27 +860,29 @@ static int transformation(void) {
     /* Set some environment variables to avoid working arguments */
     bzero(temp_str[0], BUFFER_SIZE);
     sprintf(temp_str[0], "%s/%s.txt", globals.stepdir, RECOMMENDER_METRICS);
-    if (0 != setenv("PERFEXPERT_CT_INPUT_FILE", temp_str[0], 1)) {
+    if (0 != setenv("PERFEXPERT_CT_INPUT_FILE", temp_str[0], 0)) {
         OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
         return PERFEXPERT_ERROR;
     }
-    if (0 != setenv("PERFEXPERT_CT_DATABASE_FILE", globals.dbfile, 1)) {
+    if (0 != setenv("PERFEXPERT_CT_DATABASE_FILE", globals.dbfile, 0)) {
         OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
         return PERFEXPERT_ERROR;
     }
-    if (0 != setenv("PERFEXPERT_CT_VERBOSE_LEVEL", "10", 1)) {
+    bzero(temp_str[5], BUFFER_SIZE);
+    sprintf(temp_str[5], "%d", globals.verbose_level);
+    if (0 != setenv("PERFEXPERT_CT_VERBOSE_LEVEL", temp_str[5], 0)) {
         OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
         return PERFEXPERT_ERROR;
     }
     bzero(temp_str[1], BUFFER_SIZE);
     sprintf(temp_str[1], "%d", globals.colorful);
-    if (0 != setenv("PERFEXPERT_CT_COLORFUL", temp_str[1], 1)) {
+    if (0 != setenv("PERFEXPERT_CT_COLORFUL", temp_str[1], 0)) {
         OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
         return PERFEXPERT_ERROR;
     }
     bzero(temp_str[4], BUFFER_SIZE);
     sprintf(temp_str[4], "%d", (int)getpid());
-    if (0 != setenv("PERFEXPERT_CT_PID", temp_str[4], 1)) {
+    if (0 != setenv("PERFEXPERT_CT_PID", temp_str[4], 0)) {
         OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
         return PERFEXPERT_ERROR;
     }
