@@ -2,8 +2,8 @@ perfexpert.overall
 perfexpert.data_accesses.overall
 perfexpert.data_accesses.L1d_hits
 perfexpert.data_accesses.L2d_hits
-perfexpert.data_accesses.L2d_misses
-perfexpert.data_accesses.L3d_misses
+perfexpert.data_accesses.L3d_hits
+perfexpert.data_accesses.LLC_misses
 perfexpert.ratio.floating_point
 perfexpert.ratio.data_accesses
 perfexpert.instruction_accesses.overall
@@ -31,6 +31,7 @@ papi.PAPI_L2_ICM
 papi.PAPI_L1_DCA
 papi.PAPI_L2_DCA
 papi.PAPI_L2_TCM
+papi.PAPI_L3_TCA
 papi.PAPI_L3_TCM
 papi.PAPI_TLB_IM
 papi.PAPI_TLB_DM
@@ -38,6 +39,8 @@ papi.PAPI_BR_INS
 papi.PAPI_BR_MSP
 papi.PAPI_LD_INS
 papi_PAPI_FDV_INS
+papi.ITLB_MISSES:WALK_DURATION
+papi.DTLB_LOAD_MISSES:WALK_DURATION
 papi.SSEX_UOPS_RETIRED:PACKED_SINGLE
 papi.SSEX_UOPS_RETIRED:PACKED_DOUBLE
 papi.SSEX_UOPS_RETIRED:SCALAR_DOUBLE:SCALAR_SINGLE
