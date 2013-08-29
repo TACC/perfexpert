@@ -20,25 +20,24 @@ void compute() {
 int main(int argc,char *argv[]) {
     #pragma omp parallel for shared(a) private(i, j)
     for (i = 0; i < 2000; i++) {
-        for (j = 0; j < 2000; j++) { 
+        for (j = 0; j < 2000; j++) {
             a[i][j] = (i + j);
         }
     }
-    
+
     #pragma omp parallel for shared(b) private(i, j)
     for (i = 0; i < 2000; i++) {
         for (j = 0; j < 2000; j++) {
             b[i][j] = (i * j);
         }
     }
-    
+
     #pragma omp parallel for shared(c) private(i, j)
     for (i = 0; i < 2000; i++) {
         for (j = 0; j < 2000; j++) {
             c[i][j] = 0;
         }
     }
-
     compute();
     return 0;
 }
