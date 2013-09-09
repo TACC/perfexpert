@@ -9,13 +9,19 @@
 
 \chapter{PerfExpert for Advanced Users}
 
-This chapter covers details of internal PerfExpert operations. While it is not required to common users it may be highly appreciated by advanced users.
+This chapter covers details of PerfExpert internal operation. While its reading is not required for common users, advanced user may appreciate its content.
 
 \section{The Big Picture}
 
 \section{Tools Which Are Part of PerfExpert}
 
+This section describes the usage details of each of the tools which compose PerfExpert.
+
 \subsection{\texttt{perfexpert}}
+
+\subsubsection{Synopsis}
+
+\subsubsection{Description}
 
 \subsubsection{Command Line Arguments}
 
@@ -25,7 +31,7 @@ Here is a complete list of the environment variables PerfExpert uses. The comman
 
 \begin{description}
 	\item[\texttt{PERFEXPERT\_MAKE\_TARGET}]\hfill \\
-	This variable has the same functionality than the \texttt{-m} command line option. It's value is passed to \texttt{make} to compile the source code while using a \texttt{Makefile} (\textit{e.g.}, \texttt{make all}). If this variable is set while the user selects the \texttt{-s} command line option an error will be generated.
+	This variable has the same functionality than the \texttt{-m} command line option. It's value is passed to \texttt{make} to compile the source code while using a \texttt{Makefile} (\textit{e.g.}, if it's blue is set to \texttt{all}, PerfExpert will compile the user application using the \texttt{make all} command). If this variable is set while the user selects the \texttt{-s} command line option an error will be generated.
 
 	\item[\texttt{PERFEXPERT\_SOURCE\_FILE}]\hfill \\
 	This variable has the same functionality than the \texttt{-s} command line option. It's value should be a valid source code file which will be compiled to obtain the binary executable. If this variable is set while the user selects the \texttt{-m} command line option an error will be generated.
@@ -52,17 +58,113 @@ Here is a complete list of the environment variables PerfExpert uses. The comman
 	This variable is used by PerfExpert to implement optimization which depends upon compiler flags. This variable should not be used to pass any user defined compiler flags because it's content will be freely modified by PerfExpert.
 \end{description}
 
+\subsubsection{Exit Status}
+
 \subsection{\texttt{analyzer}}
 
+\subsubsection{Synopsis}
+
+\subsubsection{Description}
+
 \subsubsection{Command Line Arguments}
+
+\subsubsection{Exit Status}
 
 \subsection{\texttt{macpo}}
 
+\subsubsection{Synopsis}
+
+\subsubsection{Description}
+
 \subsubsection{Command Line Arguments}
+
+\subsubsection{Exit Status}
 
 \subsection{\texttt{recommender}}
 
+\subsubsection{Description}
+
+\texttt{recommender} is part of PerfExpert. It uses PerfExpert database to select possible optimizations for hot-spots identified by \texttt{analyzer}.
+
+% TODO: describe how  selection of optimization actually works.
+     
+\subsubsection{Synopsis}
+
+\btt recommender -f \tt\underline{in}p\underline{utfile} \btt [ -o \tt\underline{out}p\underline{utfile} \btt ] [ -a \tt\underline{workdir} \btt ] [ -r \tt\underline{count} \btt ] [ -d \tt\underline{database} \btt ]\par
+\ \ \ \ \ \ \ \ \ \btt [ -m \tt\underline{metricsfile} \btt ] [ -l \tt\underline{level} \btt ] [ -chnv ]\normalfont
+
 \subsubsection{Command Line Arguments}
+
+\begin{description}
+	\item[\btt -f, --inputfile]\hfill \\
+	Set the file from where performance measurements should be read (default: \texttt{STDIN}).
+
+	\item[\tt inputfile]\hfill \\
+	File to use as input for performance measurements. File format: each application hot-spot starts with a percent sign (\texttt{\%}), the \texttt{code} metrics are mandatory, the list of metrics may vary, according to the example above:
+	\begin{verbatim}
+% 1st application hot-spot
+code.section_info=Loop in function compute.omp_fn.3() at ./mm_omp.c:14
+code.filename=./mm_omp.c
+code.line_number=14
+code.type=loop
+code.function_name=compute.omp_fn.3
+code.extra_info=2
+code.representativeness=99.8
+code.runtime=22.204
+(list of metrics)
+...
+% 2nd application hot-spot
+...
+	\end{verbatim}
+
+	\item[\btt -o, --outputfile]\hfill \\
+	File to write possible optimizations (default: \texttt{STDOUT}). If the file exists it's content will be overwrite.
+
+	\item[\tt outputfile]\hfill \\
+	File to use as output for recommendations (default: \texttt{STDOUT}).
+
+	\item[\btt -a, --automatic]\hfill \\
+	Enable automatic performance optimization and create files into a temporary directory (default: off) This option is available only when PerfExpert is compiled with support to ROSE (\url{http://rosecompiler.org/}).
+
+	\item[\tt workdir]\hfill \\
+	Temporary directory where intermediary files for automatic performance optimization are created.
+
+	\item[\btt -r, --recommendations]\hfill \\
+	Set the number of optimizations perfexpert should provide.
+
+	\item[\tt count]\hfill \\
+	Number of optimizations perfexpert should provide.
+
+	\item[\btt -d, --database]\hfill \\
+	Full path and name of PerfExpert database file (default: \texttt{PERFEXPERT\_VARDIR/RECOMMENDATION\_DB}).
+
+	\item[\tt database]\hfill \\
+	Database file (default: \texttt{PERFEXPERT\_VARDIR/RECOMMENDATION\_DB}).
+
+	\item[\btt -m, --metricsfile]\hfill \\
+	Choose a different set of performance metrics. A temporary table will be created, in other words, it automatically enables the \texttt{-n} argument.
+
+	\item[\tt metricsfile]\hfill \\
+	File to define metrics different from the default one. File format: each line represents a metric.
+
+	\item[\btt -n, --newmetrics]\hfill \\
+	Do not use the system metrics table. A temporary table will be created using the default metrics file (default: \texttt{PERFEXPERT\_ETCDIR/METRICS\_FILE}).
+
+	\item[\btt -v, --verbose]\hfill \\
+	Enable verbose mode (default: level 5).
+
+	\item[\btt -l, --verbose\_level]\hfill \\
+	Enable verbose mode using a specific verbose level.
+
+	\item[\btt -c, --colorful]\hfill \\
+	Enable colors on verbose mode, no weird characters will appear on output files.
+
+	\item[\btt -h, --help]\hfill \\
+	Show the help message.
+
+	\item[\tt level]\hfill \\
+	Verbose level (range: 1-10).
+\end{description}
 
 \subsubsection{Environment Variables}
 
@@ -97,7 +199,15 @@ Here is a complete list of the environment variables \texttt{recommender} uses. 
 	This variable has the same functionality than the \texttt{-c} command line option. It's value should be \texttt{0} or \texttt{1}. By default, PerfExpert sets the value of this variable to value it is set to run with.
 \end{description}
 
+\subsubsection{Exit Status}
+
+\texttt{recommender} exits 0 on success, 1 for general errors, and 2 when there is no optimization recommendations available. Any other exit code, even if not specified here, should be considered as an error.
+
 \subsection{\texttt{perfexpert\_ct}}
+
+\subsubsection{Synopsis}
+
+\subsubsection{Description}
 
 \subsubsection{Command Line Arguments}
 
@@ -128,9 +238,11 @@ Here is a complete list of the environment variables \texttt{perfexpert\_ct} use
 	This variable has the same functionality than the \texttt{-c} command line option. It's value should be \texttt{0} or \texttt{1}. By default, PerfExpert sets the value of this variable to value it is set to run with.
 \end{description}
 
-\subsubsection{Pattern Recognizers}
+\subsubsection{Exit Status}
 
-\subsubsection{Code Transformers}
+\subsubsection{Pattern Recognizers Interface}
+
+\subsubsection{Code Transformers Interface}
 
 \subsection{Other Auxiliary Tools}
 
