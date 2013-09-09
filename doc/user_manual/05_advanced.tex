@@ -1,0 +1,241 @@
+\chapter{List of Automatic Optimizations PerfExpert Supports}
+
+\begin{description}
+	\item[Loop Interchange]\hfill \\
+	\item[Loop Tiling (aka Loop Blocking)]\hfill \\
+	\item[Loop Fission]\hfill \\
+
+\end{description}
+
+\chapter{PerfExpert for Advanced Users}
+
+This chapter covers details of internal PerfExpert operations. While it is not required to common users it may be highly appreciated by advanced users.
+
+\section{The Big Picture}
+
+\section{Tools Which Are Part of PerfExpert}
+
+\subsection{\texttt{perfexpert}}
+
+\subsubsection{Command Line Arguments}
+
+\subsubsection{Environment Variables}
+
+Here is a complete list of the environment variables PerfExpert uses. The command line arguments overwrite the value set by any of the environment variables.
+
+\begin{description}
+	\item[\texttt{PERFEXPERT\_MAKE\_TARGET}]\hfill \\
+	This variable has the same functionality than the \texttt{-m} command line option. It's value is passed to \texttt{make} to compile the source code while using a \texttt{Makefile} (\textit{e.g.}, \texttt{make all}). If this variable is set while the user selects the \texttt{-s} command line option an error will be generated.
+
+	\item[\texttt{PERFEXPERT\_SOURCE\_FILE}]\hfill \\
+	This variable has the same functionality than the \texttt{-s} command line option. It's value should be a valid source code file which will be compiled to obtain the binary executable. If this variable is set while the user selects the \texttt{-m} command line option an error will be generated.
+
+	\item[\texttt{PERFEXPERT\_DATABASE\_FILE}]\hfill \\
+	This variable has the same functionality than the \texttt{-d} command line option. It's value should be a valid PerfExpert database file. By default, PerfExpert uses the \texttt{.perfexpert.db} database file located in the user \texttt{\$HOME} directory. If this file does not exist, PerfExpert will copy it from the installation directory.
+
+	\item[\texttt{PERFEXPERT\_REC\_COUNT}]\hfill \\
+	This variable has the same functionality than the \texttt{-r} command line option. It's value should be a valid integer number higher than \texttt{0}.
+
+	\item[\texttt{PERFEXPERT\_VERBOSE\_LEVEL}]\hfill \\
+	This variable has the same functionality than the \texttt{-l} command line option. It's value should be a valid integer number within \texttt{1} and \texttt{10}.
+
+	\item[\texttt{PERFEXPERT\_COLORFUL}]\hfill \\
+	This variable has the same functionality than the \texttt{-c} command line option. It's value should be \texttt{0} or \texttt{1}.
+	
+	\item[\texttt{CC}]\hfill \\
+	This variable sets the compiler PerfExpert should use to obtain the binary executable. It should be a valid executable file. It is possible to set it's value to include the compiler's full path. The value of this variable has no effect when PerfExpert runs without the \texttt{-s} command line option and the \texttt{PERFEXPERT\_SOURCE\_FILE} environment variable is not set. Also, note that the value of this variable has no effect when PerfExpert uses \texttt{Makefile} to obtain the binary executable.
+
+	\item[\texttt{CFLAGS}]\hfill \\
+	This variable sets the compiler flags PerfExpert should use while compiling the source code. The value of this variable has no effect when PerfExpert runs without the \texttt{-s} command line option and the \texttt{PERFEXPERT\_SOURCE\_FILE} environment variable is not set. Also, note that the value of this variable has no effect when PerfExpert uses \texttt{Makefile} to obtain the binary executable.
+
+	\item[\texttt{PERFEXPERT\_CFLAGS}]\hfill \\
+	This variable is used by PerfExpert to implement optimization which depends upon compiler flags. This variable should not be used to pass any user defined compiler flags because it's content will be freely modified by PerfExpert.
+\end{description}
+
+\subsection{\texttt{analyzer}}
+
+\subsubsection{Command Line Arguments}
+
+\subsection{\texttt{macpo}}
+
+\subsubsection{Command Line Arguments}
+
+\subsection{\texttt{recommender}}
+
+\subsubsection{Command Line Arguments}
+
+\subsubsection{Environment Variables}
+
+Here is a complete list of the environment variables \texttt{recommender} uses. The command line arguments overwrite the value set by any of the environment variables. PerfExpert automatically sets most of these variables, but it does not overwrite their values if they are already set. Thus, it is possible to use these variables to pass options to \texttt{recommender}.
+
+\begin{description}
+	\item[\texttt{PERFEXPERT\_RECOMMENDER\_INPUT\_FILE}]\hfill \\
+	This variable has the same functionality than the \texttt{-f} command line option. It should be a valid readable file. It is possible to set it's value to include a full path. PerfExpert automatically sets the value of this variable.
+	
+	\item[\texttt{PERFEXPERT\_RECOMMENDER\_OUTPUT\_FILE}]\hfill \\
+	This variable has the same functionality than the \texttt{-o} command line option.  It is possible to set it's value to include a full path. PerfExpert automatically sets the value of this variable.
+
+	\item[\texttt{PERFEXPERT\_RECOMMENDER\_DATABASE\_FILE}]\hfill \\
+	This variable has the same functionality than the \texttt{-d} command line option. It's value should be a valid PerfExpert database file. By default, PerfExpert sets the value of this variable to the database it is using.
+
+	\item[\texttt{PERFEXPERT\_RECOMMENDER\_METRICS\_FILE}]\hfill \\
+	This variable has the same functionality than the \texttt{-m} command line option. It should be a valid readable file. It is possible to set it's value to include a full path.
+	
+	\item[\texttt{PERFEXPERT\_RECOMMENDER\_REC\_COUNT}]\hfill \\
+	This variable has the same functionality than the \texttt{-r} command line option. It's value should be a valid integer number higher than \texttt{0}. By default, PerfExpert sets the value of this variable to value it is set to run with.
+
+	\item[\texttt{PERFEXPERT\_RECOMMENDER\_WORKDIR}]\hfill \\
+	The variable controls where \texttt{recommender} will generate intermediary files used for automatic optimization. The value of this variable is automatically set by PerfExpert and it the same working directory the \texttt{perfexpert} itself uses. Usually, it's value is like \texttt{.perfexpert-temp.XXXXXX}.
+
+	\item[\texttt{PERFEXPERT\_RECOMMENDER\_PID}]\hfill \\
+	This variable is used by PerfExpert to identify calls to \texttt{recommender} during the same execution but in a different optimization cycle. It is automatically set by PerfExpert and it's value is the PID of the \texttt{perfexpert} process.
+
+	\item[\texttt{PERFEXPERT\_RECOMMENDER\_VERBOSE\_LEVEL}]\hfill \\
+	This variable has the same functionality than the \texttt{-l} command line option. It's value should be a valid integer number within \texttt{1} and \texttt{10}. By default, PerfExpert sets the value of this variable to value it is set to run with.
+
+	\item[\texttt{PERFEXPERT\_RECOMMENDER\_COLORFUL}]\hfill \\
+	This variable has the same functionality than the \texttt{-c} command line option. It's value should be \texttt{0} or \texttt{1}. By default, PerfExpert sets the value of this variable to value it is set to run with.
+\end{description}
+
+\subsection{\texttt{perfexpert\_ct}}
+
+\subsubsection{Command Line Arguments}
+
+\subsubsection{Environment Variables}
+
+Here is a complete list of the environment variables \texttt{perfexpert\_ct} uses. The command line arguments overwrite the value set by any of the environment variables. PerfExpert automatically sets most of these variables, but it does not overwrite their values if they are already set. Thus, it is possible to use these environment variables to pass options to \texttt{perfexpert\_ct}.
+
+\begin{description}
+	\item[\texttt{PERFEXPERT\_CT\_INPUT\_FILE}]\hfill \\
+	This variable has the same functionality than the \texttt{-f} command line option. It should be a valid readable file. It is possible to set it's value to include a full path. PerfExpert automatically sets the value of this variable.
+
+	\item[\texttt{PERFEXPERT\_CT\_OUTPUT\_FILE}]\hfill \\
+	This variable has the same functionality than the \texttt{-o} command line option.  It is possible to set it's value to include a full path. PerfExpert automatically sets the value of this variable.
+
+	\item[\texttt{PERFEXPERT\_CT\_DATABASE\_FILE}]\hfill \\
+	This variable has the same functionality than the \texttt{-d} command line option. It's value should be a valid PerfExpert database file. By default, PerfExpert sets the value of this variable to the database it is using.
+
+	\item[\texttt{PERFEXPERT\_CT\_WORKDIR}]\hfill \\
+	The variable controls where \texttt{recommender} will generate intermediary files used for automatic optimization. The value of this variable is automatically set by PerfExpert and it the same working directory the \texttt{perfexpert} itself uses. Usually, it's value is like \texttt{.perfexpert-temp.XXXXXX}.
+
+	\item[\texttt{PERFEXPERT\_CT\_PID}]\hfill \\
+	This variable is used by PerfExpert to identify calls to \texttt{perfexpert\_ct} during the same execution but in a different optimization cycle. It is automatically set by PerfExpert and it's value is the PID of the \texttt{perfexpert} process.
+
+	\item[\texttt{PERFEXPERT\_CT\_VERBOSE\_LEVEL}]\hfill \\
+	This variable has the same functionality than the \texttt{-l} command line option. It's value should be a valid integer number within \texttt{1} and \texttt{10}. By default, PerfExpert sets the value of this variable to value it is set to run with.
+
+	\item[\texttt{PERFEXPERT\_CT\_COLORFUL}]\hfill \\
+	This variable has the same functionality than the \texttt{-c} command line option. It's value should be \texttt{0} or \texttt{1}. By default, PerfExpert sets the value of this variable to value it is set to run with.
+\end{description}
+
+\subsubsection{Pattern Recognizers}
+
+\subsubsection{Code Transformers}
+
+\subsection{Other Auxiliary Tools}
+
+\begin{description}
+	\item[\texttt{hound}]\hfill \\
+	
+	\item[\texttt{sniffer}]\hfill \\
+\end{description}
+
+\section{PerfExpert Temporary Directory}
+
+Every single time PerfExpert is executed it generates a temporary directory. The name of the directory varies, but it always is in the form of \texttt{.perfexpert-temp.FPAEx6} and is located in the directory from where you called the \texttt{perfexpert} command. Generally, PerfExpert does not remove the temporary directory, unless the user specify in contrary using the \texttt{-g} command line option.
+
+The temporary directory may be useful in many situations, such as:
+
+\begin{itemize}
+	\item Re-analyzing results from a previous PerfExpert run.
+	\item Checking the output of the binary executable.
+	\item Comparing the performance of different version of the same code.
+	\item Searching for execution errors.
+\end{itemize}
+
+The basic directory tree of the temporary directory looks like the following:
+
+\begin{verbatim}
+.perfexpert-temp.FPAEx6
+.perfexpert-temp.FPAEx6/1
+.perfexpert-temp.FPAEx6/1/database
+.perfexpert-temp.FPAEx6/1/database/src
+.perfexpert-temp.FPAEx6/1/measurements
+.perfexpert-temp.FPAEx6/2
+.perfexpert-temp.FPAEx6/2/database
+.perfexpert-temp.FPAEx6/2/database/src
+.perfexpert-temp.FPAEx6/2/measurements
+  (...)
+\end{verbatim}
+
+\noindent where for each optimization cycle there is a sub-directory named as cardinal numbers. The sub-directories inside each of the optimization cycle sub-directories are user for:
+
+\begin{description}
+	\item[\texttt{database}]\hfill \\
+	Stores the \texttt{experiment.xml} file and the sub-directory for the source code. The experiment file, which is generated by \texttt{hpcprof} (a tool from HPCToolkit), is the application performance profile.
+
+	\item[\texttt{database/src}]\hfill \\
+	Stores the source code extracted from the binary executable. The full path of the source code will be represented here and also the statically linked libraries.
+
+	\item[\texttt{measurements}]\hfill \\
+	Stores the measurement files collected with \texttt{hpcrun} (a tool from HPCToolkit). There is a \texttt{.log} file for each \texttt{hpcrun} invocation and one \texttt{.hpcrun} data file for each thread of each invocation of the binary executable, as following:
+\end{description}
+
+\begin{verbatim}
+.perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-000-7281ba5a-91510-0.log
+.perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-000-7281ba5a-91510-0.hpcrun
+.perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-001-7281ba5a-91510-0.hpcrun
+  (...)
+.perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-014-7281ba5a-91510-0.hpcrun
+.perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-015-7281ba5a-91510-0.hpcrun
+.perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-000-7281ba5a-91614-0.log
+.perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-000-7281ba5a-91614-0.hpcrun
+.perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-001-7281ba5a-91614-0.hpcrun
+  (...)
+.perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-014-7281ba5a-91614-0.hpcrun
+.perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-015-7281ba5a-91614-0.hpcrun
+.perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-000-7281ba5a-91718-0.log
+.perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-000-7281ba5a-91718-0.hpcrun
+.perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-001-7281ba5a-91718-0.hpcrun
+  (...)
+.perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-014-7281ba5a-91718-0.hpcrun
+.perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-015-7281ba5a-91718-0.hpcrun
+\end{verbatim}
+
+\noindent where the filenames are composed of the name of the binary executable, the MPI JOBID (if existent), the thread ID, the process ID, and other control data. In the example above, we shown the \texttt{.log} files and the \texttt{.hpcrun} files from three invocations of \texttt{hpcrun} (the number of invocations may change from one system to other) using 16 threads each of them.
+
+Besides the sub-directories described above, there are the following files inside each of the optimization cycle sub-directory:
+
+\begin{description}
+	\item[\texttt{recommender\_report.txt}]\hfill \\
+
+	\item[\texttt{analyzer\_report.txt}]\hfill \\
+
+	\item[\texttt{analyzer\_metrics.txt}]\hfill \\
+
+	\item[\texttt{mm\_omp.hpcstruct}]\hfill \\
+
+	\item[\texttt{hpcstruct.output}, \texttt{hpcrun.1.output}, \texttt{hpcrun.2.output}, \texttt{hpcrun.3.output}, \texttt{hpcprof.output}]\hfill \\
+
+\end{description}
+
+\section{Re-Analyzing the Results from a Previous PerfExpert Run}
+
+\chapter{Extending PerfExpert}
+\label{extending}
+
+\section{PerfExpert Database Layout}
+
+\section{Adding Metrics to PerfExpert}
+
+\subsection{Performance Counters}
+
+\subsection{Derived Metrics}
+
+\section{New Recommendations for Optimization}
+
+\section{Enabling New Automatic Optimizations}
+
+\subsection{Pattern Recognizers Interface}
+
+\subsection{Code Transformers Interface}
