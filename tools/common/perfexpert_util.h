@@ -159,6 +159,58 @@ static int perfexpert_util_file_exists_and_is_exec(const char *file) {
     return PERFEXPERT_SUCCESS;
 }
 
+/* perfexpert_util_program_only */
+static int perfexpert_util_program_only(const char *file, char **program) {
+    char str_temp[BUFFER_SIZE];
+    char *token, *last;
+
+    bzero(str_temp, BUFFER_SIZE);
+    if (NULL == realpath(file, str_temp)) {
+        return PERFEXPERT_ERROR;
+    }
+    token = strtok(str_temp, "/");
+    while (token = strtok(NULL, "/")) {
+        last = token;
+    }
+
+    token = (char *)malloc(strlen(last) + 1);
+    if (NULL == token) {
+        OUTPUT(("%s", _ERROR("Error: out of memory")));
+        return PERFEXPERT_ERROR;
+    }
+    bzero(token, strlen(last) + 1);
+    strcpy(token, last);
+    *program = token;
+
+    return PERFEXPERT_SUCCESS;
+}
+
+/* perfexpert_util_path_only */
+static int perfexpert_util_path_only(const char *file, char **path) {
+    char str_temp[BUFFER_SIZE];
+    char *program, *temp;
+
+    bzero(str_temp, BUFFER_SIZE);
+    if (NULL == realpath(file, str_temp)) {
+        return PERFEXPERT_ERROR;
+    }
+    if (PERFEXPERT_SUCCESS != perfexpert_util_program_only(file, &program)) {
+        OUTPUT(("%s", _ERROR("Error: unable to extract path")));
+        return PERFEXPERT_ERROR;
+    }
+
+    temp = (char *)malloc(strlen(str_temp) - strlen(program) + 1);
+    if (NULL == temp) {
+        OUTPUT(("%s", _ERROR("Error: out of memory")));
+        return PERFEXPERT_ERROR;
+    }
+    bzero(temp, strlen(str_temp) - strlen(program) + 1);
+    strncpy(temp, str_temp, strlen(str_temp) - strlen(program));
+    *path = temp;
+
+    return PERFEXPERT_SUCCESS;
+}
+
 /* perfexpert_util_file_copy */
 static int perfexpert_util_file_copy(const char *to, const char *from) {
     int     fd_to, fd_from;

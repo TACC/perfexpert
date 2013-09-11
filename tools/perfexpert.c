@@ -34,6 +34,8 @@ extern "C" {
 #include <stdlib.h>
 #include <string.h>
 #include <getopt.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 /* PerfExpert headers */
 #include "config.h"
@@ -53,6 +55,7 @@ globals_t globals; // Variable to hold global options, this one is OK
 int main(int argc, char** argv) {
     char workdir[] = ".perfexpert-temp.XXXXXX";
     char temp_str[BUFFER_SIZE];
+    char *temp_str2;
     int rc = PERFEXPERT_ERROR;
 
     /* Set default values for globals */
@@ -67,15 +70,21 @@ int main(int argc, char** argv) {
         .target        = NULL,           // char *
         .sourcefile    = NULL,           // char *
         .program       = NULL,           // char *
+        .program_path  = NULL,           // char *
+        .program_full  = NULL,           // char *
         .prog_arg_pos  = 0,              // int
         .main_argc     = argc,           // int
         .main_argv     = argv,           // char **
-        .before        = NULL,           // char *
-        .after         = NULL,           // char *
-        .prefix        = NULL,           // char *
         .step          = 1,              // int
         .workdir       = NULL,           // char *
-        .stepdir       = NULL            // char *
+        .stepdir       = NULL,           // char *
+        .prefix        = NULL,           // char *
+        .before        = NULL,           // char *
+        .after         = NULL,           // char *
+        .knc           = NULL,           // char *
+        .knc_prefix    = NULL,           // char *
+        .knc_before    = NULL,           // char *
+        .knc_after     = NULL            // char *
     };
 
     /* Parse command-line parameters */
@@ -85,11 +94,20 @@ int main(int argc, char** argv) {
     }
 
     /* Create a work directory */
-    globals.workdir = mkdtemp(workdir);
-    if (NULL == globals.workdir) {
+    bzero(temp_str, BUFFER_SIZE);
+    temp_str2 = mkdtemp(workdir);
+    if (NULL == temp_str2) {
         OUTPUT(("%s", _ERROR("Error: creating working directory")));
         goto clean_up;
     }
+    globals.workdir = (char *)malloc(strlen(getcwd(NULL, 0)) + strlen(temp_str2)
+        + 1);
+    if (NULL == globals.workdir) {
+        OUTPUT(("%s", _ERROR("Error: out of memory")));
+        return PERFEXPERT_ERROR;
+    }
+    bzero(globals.workdir, strlen(getcwd(NULL, 0)) + strlen(temp_str2) + 1);
+    sprintf(globals.workdir, "%s/%s", getcwd(NULL, 0), temp_str2);
     OUTPUT_VERBOSE((5, "   %s %s", _YELLOW("workdir:"), globals.workdir));
 
     /* If database was not specified, check if there is any local database and
@@ -130,6 +148,9 @@ int main(int argc, char** argv) {
         if ((NULL != globals.sourcefile) || (NULL != globals.target)) {
             if (PERFEXPERT_SUCCESS != compile_program()) {
                 OUTPUT(("%s", _ERROR("Error: program compilation failed")));
+                if (NULL != globals.knc) {
+                    OUTPUT(("Are you adding the flags to to compile for MIC?"));                    
+                }
                 goto clean_up;
             }
         }
@@ -239,9 +260,7 @@ int main(int argc, char** argv) {
         free(globals.stepdir);
     }
     /* Remove perfexpert.log */
-    if (-1 == remove("perfexpert.log")) {
-        OUTPUT(("%s", _ERROR("Error: unable to remove perfexpert.log")));
-    }
+    remove("perfexpert.log");
 
     return rc;
 }
@@ -250,26 +269,38 @@ int main(int argc, char** argv) {
 static void show_help(void) {
     OUTPUT_VERBOSE((10, "printing help"));
     /*      12345678901234567890123456789012345678901234567890123456789012345678901234567890 */
-    printf("Usage: perfexpert <threshold> [-gvch] [-l level] [-d database] [-r count]\n");
-    printf("                 [-m target|-s sourcefile] [-p prefix] [-a FILE] [-b FILE]\n");
-    printf("                 <program_executable> [program_arguments]\n\n");
+    printf("Usage: perfexpert <threshold> [-m target|-s sourcefile] [-r count] [-d database]\n");
+    printf("                  [-p prefix] [-b filename] [-a filename] [-l level] [-gvch]\n");
+    printf("                  [-k card [-P prefix] [-B filename] [-A filename] ]\n");
+    printf("                  <program_executable> [program_arguments]\n\n");
     printf("  <threshold>        Define the relevance (in %% of runtime) of code fragments\n");
     printf("                     PerfExpert should take into consideration (> 0 and <= 1)\n");
-    printf("  -d --database      Select the recommendation database file\n");
-    printf("                     (default: %s/%s)\n", PERFEXPERT_VARDIR, RECOMMENDATION_DB);
-    printf("  -r --recommend     Number of recommendation to show\n");
     printf("  -m --makefile      Use GNU standard 'make' command to compile the code (it\n");
     printf("                     requires the source code available in current directory)\n");
     printf("  -s --source        Specify the source code file (if your source code has more\n");
     printf("                     than one file please use a Makefile and choose '-m' option\n");
     printf("                     it also enables the automatic optimization option '-a')\n");
-    printf("  -p --prefix        Add a prefix to the command line (e.g. mpirun) use double\n");
-    printf("                     quotes to specify multiple arguments (e.g. -p \"mpirun -n 2\"\n");
-    printf("  -b --before        Execute FILE before each run of the application\n");
-    printf("  -a --after         Execute FILE after each run of the application\n");
-    printf("  -g --clean-garbage Remove temporary fiels after run\n");
+    printf("  -r --recommend     Number of recommendations ('count') PerfExpert should show\n");
+    printf("  -d --database      Select the recommendation database file\n");
+    printf("                     (default: %s/%s)\n", PERFEXPERT_VARDIR, RECOMMENDATION_DB);
+    printf("  -p --prefix        Add a prefix to the command line (e.g. mpirun). Use double\n");
+    printf("                     quotes to specify arguments with spaces within (e.g.\n");
+    printf("                     -p \"mpirun -n 2\"). Use a semicolon (';') to run multiple\n");
+    printf("                     commands in the same command line\n");
+    printf("  -b --before        Execute 'filename' before each run of the application\n");
+    printf("  -a --after         Execute 'filename' after each run of the application\n");
+    printf("  -k --knc           Tell PerfExpert to run the experiments on the KNC 'card'\n");
+    printf("  -P --prefix-knc    Add a prefix to the command line (e.g. mpirun). Use double\n");
+    printf("                     quotes to specify arguments with spaces within (e.g.\n");
+    printf("                     -p \"mpirun -n 2\"). Use a semicolon (';') to run multiple\n");
+    printf("                     commands in the same command line\n");
+    printf("  -B --knc-before    Execute 'filename' before each run of the application on\n");
+    printf("                     the KNC card.\n");
+    printf("  -A --knc-after     Execute 'filename' after each run of the application on\n");
+    printf("                     the KNC card.\n");
+    printf("  -g --clean-garbage Remove temporary files after run\n");
     printf("  -v --verbose       Enable verbose mode using default verbose level (1)\n");
-    printf("  -l --verbose_level Enable verbose mode using a specific verbose level (1-10)\n");
+    printf("  -l --verbose-level Enable verbose mode using a specific verbose level (1-10)\n");
     printf("  -c --colorful      Enable colors on verbose mode, no weird characters will\n");
     printf("                     appear on output files\n");
     printf("  -h --help          Show this message\n\n");
@@ -317,6 +348,41 @@ static int parse_env_vars(void) {
         OUTPUT_VERBOSE((5, "ENV: sourcefile=%s", globals.sourcefile));
     }
 
+    if (NULL != getenv("PERFEXPERT_PREFIX")) {
+        globals.prefix = ("PERFEXPERT_PREFIX");
+        OUTPUT_VERBOSE((5, "ENV: prefix=%s", globals.prefix));
+    }
+
+    if (NULL != getenv("PERFEXPERT_BEFORE")) {
+        globals.before = ("PERFEXPERT_BEFORE");
+        OUTPUT_VERBOSE((5, "ENV: before=%s", globals.before));
+    }
+
+    if (NULL != getenv("PERFEXPERT_AFTER")) {
+        globals.after = ("PERFEXPERT_AFTER");
+        OUTPUT_VERBOSE((5, "ENV: after=%s", globals.after));
+    }
+
+    if (NULL != getenv("PERFEXPERT_KNC_CARD")) {
+        globals.knc = ("PERFEXPERT_KNC_CARD");
+        OUTPUT_VERBOSE((5, "ENV: knc=%s", globals.knc));
+    }
+
+    if (NULL != getenv("PERFEXPERT_KNC_PREFIX")) {
+        globals.knc_prefix = ("PERFEXPERT_KNC_PREFIX");
+        OUTPUT_VERBOSE((5, "ENV: knc_prefix=%s", globals.knc_prefix));
+    }
+
+    if (NULL != getenv("PERFEXPERT_KNC_BEFORE")) {
+        globals.knc_before = ("PERFEXPERT_KNC_BEFORE");
+        OUTPUT_VERBOSE((5, "ENV: knc_before=%s", globals.knc_before));
+    }
+
+    if (NULL != getenv("PERFEXPERT_KNC_AFTER")) {
+        globals.knc_after = ("PERFEXPERT_KNC_AFTER");
+        OUTPUT_VERBOSE((5, "ENV: knc)after=%s", globals.knc_after));
+    }
+
     return PERFEXPERT_SUCCESS;
 }
 
@@ -333,8 +399,8 @@ static int parse_cli_params(int argc, char *argv[]) {
 
     while (1) {
         /* get parameter */
-        parameter = getopt_long(argc, argv, "a:b:cd:ghl:m:p:r:s:v", long_options,
-                                &option_index);
+        parameter = getopt_long(argc, argv, "a:A:b:B:cd:ghk:l:m:p:P:r:s:v",
+            long_options, &option_index);
 
         /* Detect the end of the options */
         if (-1 == parameter) {
@@ -346,22 +412,24 @@ static int parse_cli_params(int argc, char *argv[]) {
             case 'a':
                 globals.after = optarg;
                 OUTPUT_VERBOSE((10, "option 'a' set [%s]", globals.after));
-                if (PERFEXPERT_SUCCESS !=
-                    perfexpert_util_file_exists_and_is_exec(globals.after)) {
-                    show_help();
-                    return PERFEXPERT_ERROR;
-                }
+                break;
+
+            /* Should I run on the KNC some program after each execution? */
+            case 'A':
+                globals.knc_after = optarg;
+                OUTPUT_VERBOSE((10, "option 'A' set [%s]", globals.knc_after));
                 break;
 
             /* Should I run some program before each execution? */
             case 'b':
                 globals.before = optarg;
                 OUTPUT_VERBOSE((10, "option 'b' set [%s]", globals.before));
-                if (PERFEXPERT_SUCCESS !=
-                    perfexpert_util_file_exists_and_is_exec(globals.before)) {
-                    show_help();
-                    return PERFEXPERT_ERROR;
-                }
+                break;
+
+            /* Should I run on the KNC some program before each execution? */
+            case 'B':
+                globals.knc_before = optarg;
+                OUTPUT_VERBOSE((10, "option 'B' set [%s]", globals.knc_before));
                 break;
 
             /* Activate colorful mode */
@@ -388,6 +456,12 @@ static int parse_cli_params(int argc, char *argv[]) {
                 show_help();
                 exit(PERFEXPERT_SUCCESS);
 
+            /* MIC card */
+            case 'k':
+                globals.knc = optarg;
+                OUTPUT_VERBOSE((10, "option 'k' set [%s]", globals.knc));
+                break;
+
             /* Verbose level */
             case 'l':
                 globals.verbose_level = atoi(optarg);
@@ -410,9 +484,16 @@ static int parse_cli_params(int argc, char *argv[]) {
                 }
                 break;
 
+            /* Should I add a program prefix to the command line? */
             case 'p':
                 globals.prefix = optarg;
                 OUTPUT_VERBOSE((10, "option 'p' set [%s]", globals.prefix));
+                break;
+
+            /* Should I add a program prefix to the KNC command line? */
+            case 'P':
+                globals.knc_prefix = optarg;
+                OUTPUT_VERBOSE((10, "option 'P' set [%s]", globals.knc_prefix));
                 break;
 
             /* Number of recommendation to output */
@@ -451,8 +532,7 @@ static int parse_cli_params(int argc, char *argv[]) {
         globals.threshold = atof(argv[optind]);
         OUTPUT_VERBOSE((10, "option 'threshold' set [%f]", globals.threshold));
         if ((0 >= globals.threshold) || (1 < globals.threshold)) {
-            OUTPUT(("%s (%s)", _ERROR("Error: invalid threshold value"),
-                    argv[optind]));
+            OUTPUT(("%s", _ERROR("Error: invalid threshold value")));
             show_help();
             return PERFEXPERT_ERROR;
         }
@@ -460,15 +540,34 @@ static int parse_cli_params(int argc, char *argv[]) {
     optind++;
 
     if (argc > optind) {
-        globals.program = argv[optind];
         OUTPUT_VERBOSE((10, "option 'program_executable' set [%s]",
-                        globals.program));
+            argv[optind]));
         if ((NULL == globals.sourcefile) && (NULL == globals.target)) {
-            if (PERFEXPERT_SUCCESS != perfexpert_util_file_exists(
-                globals.program)) {
+            if (PERFEXPERT_SUCCESS != perfexpert_util_file_exists_and_is_exec(
+                argv[optind])) {
                 show_help();
                 return PERFEXPERT_ERROR;
             }
+            if (PERFEXPERT_SUCCESS != perfexpert_util_program_only(argv[optind],
+                &(globals.program))) {
+                OUTPUT(("%s", _ERROR("Error: unable to find program")));
+                return PERFEXPERT_ERROR;
+            }
+            if (PERFEXPERT_SUCCESS != perfexpert_util_path_only(argv[optind],
+                &(globals.program_path))) {
+                OUTPUT(("%s", _ERROR("Error: unable to find program")));
+                return PERFEXPERT_ERROR;
+            }
+            globals.program_full = (char *)malloc(strlen(globals.program) +
+                strlen(globals.program_path) + 1);
+            if (NULL == globals.program_full) {
+                OUTPUT(("%s", _ERROR("Error: out of memory")));
+                return PERFEXPERT_ERROR;
+            }
+            bzero(globals.program_full, strlen(globals.program) +
+                strlen(globals.program_path) + 1);
+            sprintf(globals.program_full, "%s%s", globals.program_path,
+                globals.program);
         }
     }
     optind++;
@@ -500,11 +599,17 @@ static int parse_cli_params(int argc, char *argv[]) {
     OUTPUT_VERBOSE((10, "   Make target:         %s", globals.target));
     OUTPUT_VERBOSE((10, "   Program source file: %s", globals.sourcefile));
     OUTPUT_VERBOSE((10, "   Program executable:  %s", globals.program));
+    OUTPUT_VERBOSE((10, "   Program path:        %s", globals.program_path));
+    OUTPUT_VERBOSE((10, "   Program full path:   %s", globals.program_full));
     OUTPUT_VERBOSE((10, "   Program arguments:   %d",
                     argc - globals.prog_arg_pos));
     OUTPUT_VERBOSE((10, "   Prefix:              %s", globals.prefix));
     OUTPUT_VERBOSE((10, "   Before each run:     %s", globals.before));
     OUTPUT_VERBOSE((10, "   After each run:      %s", globals.after));
+    OUTPUT_VERBOSE((10, "   MIC card:            %s", globals.knc));
+    OUTPUT_VERBOSE((10, "   MIC prefix:          %s", globals.knc_prefix));
+    OUTPUT_VERBOSE((10, "   MIC before each run: %s", globals.knc_before));
+    OUTPUT_VERBOSE((10, "   MIC after each run:  %s", globals.knc_after));
 
     /* Not using OUTPUT_VERBOSE because I want only one line */
     if (8 <= globals.verbose_level) {
@@ -516,10 +621,26 @@ static int parse_cli_params(int argc, char *argv[]) {
         printf("\n");
     }
 
-    /* Sanity check */
-    if ((0.0 >= globals.threshold) || (NULL == globals.program)) {
+    /* Sanity check: target and sourcefile at the same time */
+    if ((NULL != globals.target) && (NULL != globals.sourcefile)) {
+        OUTPUT(("%s", _ERROR("Error: target and sourcefile are both defined")));
         show_help();
         return PERFEXPERT_ERROR;
+    }
+
+    /* Sanity check: MIC options without MIC */
+    if ((NULL != globals.knc_prefix) && (NULL == globals.knc)) {
+        OUTPUT(("%s", _RED("Warning: option -P selected without option -k")));
+    }
+
+    /* Sanity check: MIC options without MIC */
+    if ((NULL != globals.knc_before) && (NULL == globals.knc)) {
+        OUTPUT(("%s", _RED("Warning: option -B selected without option -k")));
+    }
+
+    /* Sanity check: MIC options without MIC */
+    if ((NULL != globals.knc_after) && (NULL == globals.knc)) {
+        OUTPUT(("%s", _RED("Warning: option -A selected without option -k")));
     }
 
     return PERFEXPERT_SUCCESS;
@@ -632,9 +753,17 @@ static int measurements(void) {
         return PERFEXPERT_ERROR;
     }
     /* Collect measurements */
-    if (PERFEXPERT_SUCCESS != run_hpcrun()) {
-        OUTPUT(("%s", _ERROR("Error: unable to run hpcrun")));
-        return PERFEXPERT_ERROR;
+    if (NULL == globals.knc) {
+        if (PERFEXPERT_SUCCESS != run_hpcrun()) {
+            OUTPUT(("%s", _ERROR("Error: unable to run hpcrun")));
+            return PERFEXPERT_ERROR;
+        }
+    } else {
+        if (PERFEXPERT_SUCCESS != run_hpcrun_knc()) {
+            OUTPUT(("%s", _ERROR("Error: unable to run hpcrun on KNC")));
+            OUTPUT(("Are you adding the flags to compile for MIC?"));                    
+            return PERFEXPERT_ERROR;
+        }
     }
     /* Sumarize results */
     if (PERFEXPERT_SUCCESS != run_hpcprof()) {
@@ -932,7 +1061,7 @@ static int run_hpcstruct(void) {
     bzero(temp_str[0], BUFFER_SIZE);
     sprintf(temp_str[0], "%s/%s.hpcstruct", globals.stepdir, globals.program);
     argv[2] = temp_str[0];
-    argv[3] = globals.program;
+    argv[3] = globals.program_full;
     argv[4] = NULL;
 
     /* Not using OUTPUT_VERBOSE because I want only one line */
@@ -971,13 +1100,15 @@ static int run_hpcrun(void) {
 
     /* Open experiment file (it is a list of arguments which I use to run) */
     exp_file = (char *)malloc(strlen(PERFEXPERT_ETCDIR) +
-                              strlen(EXPERIMENT_FILE) + 2);
+        strlen(EXPERIMENT_FILE) + 2);
+    
     if (NULL == exp_file) {
         OUTPUT(("%s", _ERROR("Error: out of memory")));
         return PERFEXPERT_ERROR;
     }
     bzero(exp_file, strlen(PERFEXPERT_ETCDIR) + strlen(EXPERIMENT_FILE) + 2);
     sprintf(exp_file, "%s/%s", PERFEXPERT_ETCDIR, EXPERIMENT_FILE);
+
     if (NULL == (exp_file_FP = fopen(exp_file, "r"))) {
         OUTPUT(("%s (%s)", _ERROR("Error: unable to open file"), exp_file));
         free(exp_file);
@@ -1027,7 +1158,8 @@ static int run_hpcrun(void) {
                 experiment->argv[experiment->argc] = strtok(temp_str, " ");
                 do {
                     experiment->argc++;
-                } while (experiment->argv[experiment->argc] = strtok(NULL, " "));
+                } while (experiment->argv[experiment->argc] = strtok(NULL,
+                    " "));
             }
 
             /* Arguments to run hpcrun */
@@ -1110,7 +1242,7 @@ static int run_hpcrun(void) {
         }
 
         /* Ok, now we have to add the program and... */
-        experiment->argv[experiment->argc] = globals.program;
+        experiment->argv[experiment->argc] = globals.program_full;
         experiment->argc++;
 
         /* ...and the program arguments to experiment's argv */
@@ -1200,6 +1332,163 @@ static int run_hpcrun(void) {
     // TODO: free list of experiments, and for each experiment argv and test
 
     return rc;
+}
+
+/* run_hpcrun_knc */
+static int run_hpcrun_knc(void) {
+    const char blank[] = " \t\r\n";
+    FILE *script_FP;
+    FILE *experiment_FP;
+    char file[BUFFER_SIZE];
+    char script[BUFFER_SIZE];
+    char buffer[BUFFER_SIZE];
+    char experiment[BUFFER_SIZE];
+    int  experiment_count = 0;
+    char *argv[4];
+    test_t test;
+    int  count = 0;
+    
+    /* Open experiment file (it is a list of arguments which I use to run) */
+    bzero(file, BUFFER_SIZE);
+    sprintf(file, "%s/%s", PERFEXPERT_ETCDIR, MIC_EXPERIMENT_FILE);
+    if (NULL == (experiment_FP = fopen(file, "r"))) {
+        OUTPUT(("%s (%s)", _ERROR("Error: unable to open file"), file));
+        return PERFEXPERT_ERROR;
+    }
+
+    /* If this command should run on the MIC, encapsulate it in a script */
+    bzero(script, BUFFER_SIZE);
+    sprintf(script, "%s/knc_hpcrun.sh", globals.stepdir);
+
+    if (NULL == (script_FP = fopen(script, "w"))) {
+        OUTPUT(("%s (%s)", _ERROR("Error: unable to open file"), script));
+        return PERFEXPERT_ERROR;
+    }
+    fprintf(script_FP, "#!/bin/sh");
+
+    /* Fill the script file with all the experiments, before, and after */
+    bzero(buffer, BUFFER_SIZE);
+    while (NULL != fgets(buffer, BUFFER_SIZE - 1, experiment_FP)) {
+        /* Ignore comments and blank lines */
+        if ((0 == strncmp("#", buffer, 1)) ||
+            (strspn(buffer, blank) == strlen(buffer))) {
+            continue;
+        }
+
+        /* Is this line a new experiment? */
+        if (0 == strncmp("%", buffer, 1)) {
+            /* In case this is not the first experiment...*/
+            if (0 < experiment_count) {
+                /* Add the program and the program arguments to experiment */
+                fprintf(script_FP, " %s", globals.program_full);
+                count = 0;
+                while ((globals.prog_arg_pos + count) < globals.main_argc) {
+                    fprintf(script_FP, " %s",
+                        globals.main_argv[globals.prog_arg_pos + count]);
+                    count++;
+                }
+
+                /* Add the AFTER program */
+                if (NULL != globals.knc_after) {
+                    fprintf(script_FP, "\n\n# Run the AFTER command\n");
+                    fprintf(script_FP, "%s", globals.knc_after);
+                }
+            }
+
+            /* Add the BEFORE program */
+            if (NULL != globals.knc_before) {
+                fprintf(script_FP, "\n\n# Run the BEFORE command\n");
+                fprintf(script_FP, "%s", globals.knc_before);
+            }
+
+            fprintf(script_FP, "\n\n# Run HPCRUN (%d)\n", experiment_count);
+            /* Add PREFIX */
+            if (NULL != globals.knc_prefix) {
+                fprintf(script_FP, "%s ", globals.knc_prefix);
+            }
+
+            /* Arguments to run hpcrun */
+            fprintf(script_FP, "%s --output %s/measurements", HPCRUN,
+                globals.stepdir);
+
+            /* Move to next line of the experiment file */
+            experiment_count++;
+            continue;
+        }
+
+        /* Remove the \n character */
+        buffer[strlen(buffer) - 1] = '\0';
+
+        /* Add the event */
+        fprintf(script_FP, " --event %s", buffer);
+
+        /* Move to next line */
+        continue;
+    }
+
+    /* Add the program and the program arguments to experiment's */
+    count = 0;
+    fprintf(script_FP, " %s", globals.program_full);
+    while ((globals.prog_arg_pos + count) < globals.main_argc) {
+        fprintf(script_FP, " %s", globals.main_argv[globals.prog_arg_pos +
+            count]);
+        count++;
+    }
+
+    /* Add the AFTER program */
+    if (NULL != globals.knc_after) {
+        fprintf(script_FP, "\n\n# Run the AFTER command\n");
+        fprintf(script_FP, "%s", globals.knc_after);
+    }
+    fprintf(script_FP, "\n\nexit 0\n\n# EOF\n");
+
+    /* Close files and set mode */
+    fclose(experiment_FP);
+    fclose(script_FP);
+    if (-1 == chmod(script, S_IRWXU)) {
+        OUTPUT(("%s (%s)", _ERROR((char *)"Error: unable to set script mode"),
+            script));
+        return PERFEXPERT_ERROR;
+    }
+
+    /* The super-ninja test sctructure */
+    bzero(file, BUFFER_SIZE);
+    sprintf(file, "%s/knc_hpcrun.output", globals.stepdir);
+
+    test.output = file;
+    test.input  = NULL;
+    test.info   = globals.program;
+    
+    argv[0] = "ssh";
+    argv[1] = globals.knc;
+    argv[2] = script;
+    argv[3] = NULL;
+
+    /* Not using OUTPUT_VERBOSE because I want only one line */
+    if (8 <= globals.verbose_level) {
+        printf("%s    %s %s %s %s\n", PROGRAM_PREFIX, _YELLOW("command line:"),
+            argv[0], argv[1], argv[2]);
+    }
+
+    /* Run program and test return code (should I really test it?) */
+    switch (fork_and_wait(&test, argv)) {
+        case PERFEXPERT_ERROR:
+            OUTPUT_VERBOSE((7, "   [%s]", _BOLDYELLOW("ERROR")));
+            return PERFEXPERT_ERROR;
+
+        case PERFEXPERT_FAILURE:
+        case 255:
+            OUTPUT_VERBOSE((7, "   [%s ]", _BOLDRED("FAIL")));
+            return PERFEXPERT_FAILURE;
+
+        case PERFEXPERT_SUCCESS:
+            OUTPUT_VERBOSE((7, "   [ %s  ]", _BOLDGREEN("OK")));
+            return PERFEXPERT_SUCCESS;
+
+        default:
+            OUTPUT_VERBOSE((7, "   [UNKNO]"));
+            return PERFEXPERT_SUCCESS;
+    }
 }
 
 /* run_hpcprof */

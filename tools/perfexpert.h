@@ -63,15 +63,21 @@ typedef struct {
     char     *target;
     char     *sourcefile;
     char     *program;
+    char     *program_path;
+    char     *program_full;
     int      prog_arg_pos;
     int      main_argc;
     char     **main_argv;
-    char     *before;
-    char     *after;
     int      step;
     char     *workdir;
     char     *stepdir;
     char     *prefix;
+    char     *before;
+    char     *after;
+    char     *knc;
+    char     *knc_prefix;
+    char     *knc_before;
+    char     *knc_after;
     long int pid;
 } globals_t;
 
@@ -92,14 +98,18 @@ extern globals_t globals; /**< Variable to hold global options */
  */
 static struct option long_options[] = {
     {"after",         required_argument, NULL, 'a'},
+    {"knc-after",     required_argument, NULL, 'A'},
     {"before",        required_argument, NULL, 'b'},
+    {"knc-before",    required_argument, NULL, 'B'},
     {"colorful",      no_argument,       NULL, 'c'},
     {"database",      required_argument, NULL, 'd'},
-    {"clean_garbage", no_argument,       NULL, 'g'},
+    {"clean-garbage", no_argument,       NULL, 'g'},
     {"help",          no_argument,       NULL, 'h'},
-    {"verbose_level", required_argument, NULL, 'l'},
+    {"knc",           required_argument, NULL, 'k'},
+    {"verbose-level", required_argument, NULL, 'l'},
     {"makefile",      required_argument, NULL, 'm'},
     {"prefix",        required_argument, NULL, 'p'},
+    {"knc-prefix",    required_argument, NULL, 'P'},
     {"recommend",     required_argument, NULL, 'r'},
     {"source",        required_argument, NULL, 's'},
     {"verbose",       no_argument,       NULL, 'v'},
@@ -108,16 +118,17 @@ static struct option long_options[] = {
 
 /* Function declarations */
 static void show_help(void);
-static int  parse_env_vars(void);
-static int  parse_cli_params(int argc, char *argv[]);
-static int  compile_program(void);
-static int  measurements(void);
-static int  analysis(void);
-static int  run_hpcstruct(void);
-static int  run_hpcrun(void);
-static int  run_hpcprof(void);
-static int  recommendation(void);
-static int  transformation(void);
+static int parse_env_vars(void);
+static int parse_cli_params(int argc, char *argv[]);
+static int compile_program(void);
+static int measurements(void);
+static int analysis(void);
+static int run_hpcstruct(void);
+static int run_hpcrun(void);
+static int run_hpcrun_knc(void);
+static int run_hpcprof(void);
+static int recommendation(void);
+static int transformation(void);
 
 #ifdef __cplusplus
 }
