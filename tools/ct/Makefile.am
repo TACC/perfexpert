@@ -27,9 +27,21 @@
 
 bin_PROGRAMS = perfexpert_ct
 
-perfexpert_ct_SOURCES = main.cpp ct.c rose_functions.cpp
+perfexpert_ct_SOURCES = ct_real_main.c \
+	ct_input.c \
+	ct_logic.c \
+	ct_main.cpp \
+	ct_options.c \
+	ct_pattern.c \
+	ct_recommendation.c \
+	ct_rose.cpp \
+	ct_transformation.c \
+	ct_traversal.cpp
+
 perfexpert_ct_CPPFLAGS = -I$(srcdir)/../common
+
 perfexpert_ct_LDFLAGS = -lsqlite3 -lrose -ljvm
+
 perfexpert_ct_CFLAGS = -O3
 
 SUBDIRS = recognizers transformers
