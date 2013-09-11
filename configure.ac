@@ -430,8 +430,8 @@ AS_IF([test x"$ENABLE_ANALYZER" = x"yes"], [
         # Generate hound and sniffer Makefiles
         ENABLE_HOUND=hound
         ENABLE_SNIFFER=sniffer
-        AC_CONFIG_FILES([tools/analyzer/hound/Makefile])
-        AC_CONFIG_FILES([tools/analyzer/sniffer/Makefile])
+        AC_CONFIG_FILES([tools/hound/Makefile])
+        AC_CONFIG_FILES([tools/sniffer/Makefile])
     ], [
         # Disable hound and sniffer
         ENABLE_HOUND=
