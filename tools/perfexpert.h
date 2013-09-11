@@ -32,56 +32,13 @@
 extern "C" {
 #endif
 
-#ifndef INSTALL_DIRS_H
-#include "install_dirs.h"
-#endif
-
-#ifndef PERFEXPERT_CONSTANTS_H_
-#include "perfexpert_constants.h"
+#ifndef _STDLIB_H
+#include <stdlib.h>
 #endif
 
 #ifndef _GETOPT_H_
 #include <getopt.h> /* To parse command line arguments */
 #endif
-
-#ifndef	_CTYPE_H_
-#include <ctype.h>
-#endif
-
-#ifndef	_STDIO_H_
-#include <stdio.h> /* To use FILE type on globals */
-#endif
-
-/** Structure to hold global variables */
-typedef struct {
-    int      verbose_level;
-    char     *dbfile;
-    int      colorful;
-    float    threshold;
-    int      rec_count;
-    int      clean_garbage;
-    char     *target;
-    char     *sourcefile;
-    char     *program;
-    char     *program_path;
-    char     *program_full;
-    int      prog_arg_pos;
-    int      main_argc;
-    char     **main_argv;
-    int      step;
-    char     *workdir;
-    char     *stepdir;
-    char     *prefix;
-    char     *before;
-    char     *after;
-    char     *knc;
-    char     *knc_prefix;
-    char     *knc_before;
-    char     *knc_after;
-    long int pid;
-} globals_t;
-
-extern globals_t globals; /**< Variable to hold global options */
 
 /* WARNING: to include perfexpert_output.h globals have to be defined first */
 #ifdef PROGRAM_PREFIX
@@ -89,9 +46,36 @@ extern globals_t globals; /**< Variable to hold global options */
 #endif
 #define PROGRAM_PREFIX "[perfexpert]"
 
-#ifndef PERFEXPERT_OUTPUT_H
-#include "perfexpert_output.h"
-#endif
+/** Structure to hold global variables */
+typedef struct {
+    int   verbose_level;
+    char  *dbfile;
+    int   colorful;
+    float threshold;
+    int   rec_count;
+    int   clean_garbage;
+    char  *target;
+    char  *sourcefile;
+    char  *program;
+    char  *program_path;
+    char  *program_full;
+    int   prog_arg_pos;
+    int   main_argc;
+    char  **main_argv;
+    int   step;
+    char  *workdir;
+    char  *stepdir;
+    char  *prefix;
+    char  *before;
+    char  *after;
+    char  *knc;
+    char  *knc_prefix;
+    char  *knc_before;
+    char  *knc_after;
+    long int pid;
+} globals_t;
+
+extern globals_t globals; /* This variable is declared in perfexpert_main.c */
 
 /** Structure to handles command line arguments. Try to keep the content of
  *  this structure compatible with the parse_cli_params() and show_help().
@@ -117,18 +101,18 @@ static struct option long_options[] = {
 };
 
 /* Function declarations */
-static void show_help(void);
-static int parse_env_vars(void);
-static int parse_cli_params(int argc, char *argv[]);
-static int compile_program(void);
-static int measurements(void);
-static int analysis(void);
-static int run_hpcstruct(void);
-static int run_hpcrun(void);
-static int run_hpcrun_knc(void);
-static int run_hpcprof(void);
-static int recommendation(void);
-static int transformation(void);
+void show_help(void);
+int parse_env_vars(void);
+int parse_cli_params(int argc, char *argv[]);
+int compile_program(void);
+int measurements(void);
+int analysis(void);
+int run_hpcstruct(void);
+int run_hpcrun(void);
+int run_hpcrun_knc(void);
+int run_hpcprof(void);
+int recommendation(void);
+int transformation(void);
 
 #ifdef __cplusplus
 }
