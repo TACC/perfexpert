@@ -21,9 +21,73 @@ This section describes the usage details of each of the tools which compose Perf
 
 \subsubsection{Synopsis}
 
+
+\btt perfexpert <\tt\underline{threshold}\btt> [-m \tt\underline{tar}g\underline{et} \btt | -s \tt\underline{sourcefile}\btt] [-r \tt\underline{count} \btt] [-d \tt\underline{database}\btt] [-p \tt p\underline{refix}\btt]\par
+\ \ \ \ \ \ \ \ \ \btt[-b \tt\underline{before}\btt] [-a \tt\underline{after}\btt] [-l \tt\underline{level}\btt] \btt[-k \tt\underline{card} \btt[-P \tt p\underline{refix}\btt] [-B \tt\underline{before}\btt] [-A \tt\underline{after}\btt]]\par
+\ \ \ \ \ \ \ \ \ \btt[-gchv]\par
+\normalfont
+
 \subsubsection{Description}
 
 \subsubsection{Command Line Arguments}
+
+
+\begin{description}
+	\item[\tt threshold]\hfill \\
+
+	\item[\btt -m, --makefile]\hfill \\
+
+	\item[\tt target]\hfill \\
+
+	\item[\btt -s, --source]\hfill \\
+
+	\item[\tt sourcefile]\hfill \\
+
+	\item[\btt -r, --recommendations]\hfill \\
+	Set the number of optimizations perfexpert should provide.
+
+	\item[\tt count]\hfill \\
+	Number of optimizations perfexpert should provide.
+
+	\item[\btt -d, --database]\hfill \\
+	Full path and name of PerfExpert database file (default: \texttt{PERFEXPERT\_VARDIR/RECOMMENDATION\_DB}).
+
+	\item[\tt database]\hfill \\
+	Database file (default: \texttt{PERFEXPERT\_VARDIR/RECOMMENDATION\_DB}).
+
+	\item[\btt -p, --prefix]\hfill \\
+
+	\item[\tt prefix]\hfill \\
+
+	\item[\btt -b, --before]\hfill \\
+
+	\item[\btt -a, --after]\hfill \\
+
+	\item[\btt -P, --knc-prefix]\hfill \\
+
+	\item[\btt -B, --knc-before]\hfill \\
+
+	\item[\btt -A, --knc-after]\hfill \\
+
+	\item[\btt -A, --knc-after]\hfill \\
+
+	\item[\btt -g, --clean-garbage]\hfill \\
+
+	\item[\btt -v, --verbose]\hfill \\
+	Enable verbose mode (default: level 5).
+
+	\item[\btt -l, --verbose\_level]\hfill \\
+	Enable verbose mode using a specific verbose level.
+
+	\item[\tt level]\hfill \\
+	Verbose level (range: 1-10).
+
+	\item[\btt -c, --colorful]\hfill \\
+	Enable colors on verbose mode, no weird characters will appear on output files.
+
+	\item[\btt -h, --help]\hfill \\
+	Show the help message.
+\end{description}
 
 \subsubsection{Environment Variables}
 
@@ -56,6 +120,28 @@ Here is a complete list of the environment variables PerfExpert uses. The comman
 
 	\item[\texttt{PERFEXPERT\_CFLAGS}]\hfill \\
 	This variable is used by PerfExpert to implement optimization which depends upon compiler flags. This variable should not be used to pass any user defined compiler flags because it's content will be freely modified by PerfExpert.
+
+	\item[\texttt{PERFEXPERT\_PREFIX}]\hfill \\
+	This variable has the same functionality than the \texttt{-p} command line option. It's value should be a command that will prefix the experiment command line.
+
+	\item[\texttt{PERFEXPERT\_BEFORE}]\hfill \\
+	This variable has the same functionality than the \texttt{-b} command line option. It's value should be a command that will be executed before each experiment.
+
+	\item[\texttt{PERFEXPERT\_AFTER}]\hfill \\
+	This variable has the same functionality than the \texttt{-a} command line option. It's value should be a command that will be executed after each experiment.
+
+	\item[\texttt{PERFEXPERT\_KNC}]\hfill \\
+	This variable has the same functionality than the \texttt{-k} command line option. It's value should be the name of the KNC card (\textit{e.g.}, ``\texttt{mic0}'').
+
+	\item[\texttt{PERFEXPERT\_KNC\_PREFIX}]\hfill \\
+	This variable has the same functionality than the \texttt{-P} command line option. It's value should be a command that will prefix the command line that will be executed on the KNC.
+
+	\item[\texttt{PERFEXPERT\_KNC\_BEFORE}]\hfill \\
+	This variable has the same functionality than the \texttt{-B} command line option. It's value should be a command that will be executed on the KNC before each experiment.
+
+	\item[\texttt{PERFEXPERT\_KNC\_AFTER}]\hfill \\
+	This variable has the same functionality than the \texttt{-A} command line option. It's value should be a command that will be executed on the KNC after each experiment.
+
 \end{description}
 
 \subsubsection{Exit Status}
@@ -90,8 +176,8 @@ Here is a complete list of the environment variables PerfExpert uses. The comman
      
 \subsubsection{Synopsis}
 
-\btt recommender -f \tt\underline{in}p\underline{utfile} \btt [ -o \tt\underline{out}p\underline{utfile} \btt ] [ -a \tt\underline{workdir} \btt ] [ -r \tt\underline{count} \btt ] [ -d \tt\underline{database} \btt ]\par
-\ \ \ \ \ \ \ \ \ \btt [ -m \tt\underline{metricsfile} \btt ] [ -l \tt\underline{level} \btt ] [ -chnv ]\normalfont
+\btt recommender -f \tt\underline{in}p\underline{utfile} \btt[-o \tt\underline{out}p\underline{utfile}\btt] [-a \tt\underline{workdir} \btt] [-r \tt\underline{count}\btt] [-d \tt\underline{database}\btt] [-l \tt\underline{level}\btt]\par
+\ \ \ \ \ \ \ \ \ \btt[-m \tt\underline{metricsfile}\btt] [-chnv]\normalfont
 
 \subsubsection{Command Line Arguments}
 
@@ -116,7 +202,6 @@ code.runtime=22.204
 % 2nd application hot-spot
 ...
 	\end{verbatim}
-
 	\item[\btt -o, --outputfile]\hfill \\
 	File to write possible optimizations (default: \texttt{STDOUT}). If the file exists it's content will be overwrite.
 
@@ -156,14 +241,14 @@ code.runtime=22.204
 	\item[\btt -l, --verbose\_level]\hfill \\
 	Enable verbose mode using a specific verbose level.
 
+	\item[\tt level]\hfill \\
+	Verbose level (range: 1-10).
+
 	\item[\btt -c, --colorful]\hfill \\
 	Enable colors on verbose mode, no weird characters will appear on output files.
 
 	\item[\btt -h, --help]\hfill \\
 	Show the help message.
-
-	\item[\tt level]\hfill \\
-	Verbose level (range: 1-10).
 \end{description}
 
 \subsubsection{Environment Variables}
@@ -331,7 +416,9 @@ Besides the sub-directories described above, there are the following files insid
 
 \end{description}
 
-\section{Re-Analyzing the Results from a Previous PerfExpert Run}
+\section{Analyzing the Results from a Previous PerfExpert Run}
+
+\section{Executing on the Intel\textsuperscript{\textregistered} Xeon Phi\textsuperscript{\texttrademark} Coprocessors}
 
 \chapter{Extending PerfExpert}
 \label{extending}

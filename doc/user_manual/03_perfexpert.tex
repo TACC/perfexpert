@@ -22,20 +22,12 @@ Below is an example of a job script file modified to use PerfExpert which runs P
 \noindent\hrulefill
 \begin{verbatim}
 #!/bin/bash
-
-# job name
-#SBATCH -J myMPI
-# output and error filename (%j stands to jobID)
-#SBATCH -o myMPI.o%j
-# total number of mpi tasks requested
-#SBATCH -n 16
-# queue (partition) -- normal, development, etc.
-#SBATCH -p development
-# run time (hh:mm:ss) - 1.5 hours
-#SBATCH -t 01:30:00
-# run the executable named my_program
-perfexpert 0.1 ./my_program
-\end{verbatim}\hrulefill
+#SBATCH -J myMPI             # job name
+#SBATCH -o myMPI.o%j         # output and error filename (%j stands to jobID)
+#SBATCH -n 16                # total number of mpi tasks requested
+#SBATCH -p development       # queue (partition) -- normal, development, etc.
+#SBATCH -t 01:30:00          # run time (hh:mm:ss) - 1.5 hours
+perfexpert 0.1 ./my_program  # run the executable named my_program\end{verbatim}\hrulefill
 	
 \section{PerfExpert Options}
 
@@ -43,30 +35,38 @@ There are several different options for applying PerfExpert. The following summa
 
 \begin{verbatim}
 $ perfexpert -h
-Usage: perfexpert <threshold> [-gvch] [-l level] [-d database] [-r count] [-p prefix]
-                   [-m target|-s sourcefile] [-a FILE] [-b FILE] <program_executable>
-                   [program_arguments]
+Usage: perfexpert <threshold> [-m target|-s sourcefile] [-r count] [-d database]
+                  [-p prefix] [-b filename] [-a filename] [-l level] [-gvch]
+                  [-k card [-P prefix] [-B filename] [-A filename] ]
+                  <program_executable> [program_arguments]
 
- <threshold>        Define the relevance (in % of runtime) of code fragments PerfExpert 
-                    should take into consideration (> 0 and <= 1)
- -d --database      Select the recommendation database file
- -r --recommend     Number of recommendation to show
- -m --makefile      Use GNU standard 'make' command to compile
-                    the code (it requires the source code
-                    available in current directory)
- -s --source        Specify the source code file (if your source code has more than one 
-                    file please use a Makefile and choose -m option it also enables
-                    automatic optimization (-a)
- -p --prefix        Add a prefix to the command line (e.g. mpirun) use double quotes to 
-                    specify multiple arguments (e.g. -p "mpirun -n 2"
- -b --before        Execute FILE before each run of the
-                    application
- -a --after         Execute FILE after each run of the application
- -v --verbose       Enable verbose mode using default verbose level (1)
- -l --verbose_level Enable verbose mode using specific verbose level (1-10)
- -c --colorful      Enable colors on verbose mode, no weird characters will appear on
-                    output files
- -h --help          Show this message
+  <threshold>        Define the relevance (in % of runtime) of code fragments PerfExpert
+                     should take into consideration (> 0 and <= 1)
+  -m --makefile      Use GNU standard `make' command to compile the code (it requires
+                     the source code available in current directory)
+  -s --source        Specify the source code file (if your source code has more than one
+                     file please use a Makefile and choose `-m' option it also enables
+                     the automatic optimization option `-a')
+  -r --recommend     Number of recommendations (`count') PerfExpert should show
+  -d --database      Select the recommendation database file
+                     (default: PERFEXPERT_VARDIR/RECOMMENDATION_DB)
+  -p --prefix        Add a prefix to the command line (e.g. mpirun). Use double quotes to
+                     specify arguments with spaces within (e.g. -p "mpirun -n 2"). Use a
+                     semicolon (`;') to run multiple commands in the same command line
+  -b --before        Execute 'filename' before each run of the application
+  -a --after         Execute 'filename' after each run of the application
+  -k --knc           Tell PerfExpert to run the experiments on the KNC 'card'
+  -p --prefix-knc    Add a prefix to the command line (e.g. mpirun). Use double quotes to
+                     specify arguments with spaces within (e.g. -p "mpirun -n 2"). Use a
+                     semicolon (`;') to run multiple commands in the same command line
+  -B --knc-before    Execute 'filename' before each run of the application on the KNC
+  -A --knc-after     Execute 'filename' after each run of the application on the KNC
+  -g --clean-garbage Remove temporary files after run
+  -v --verbose       Enable verbose mode using default verbose level (1)
+  -l --verbose-level Enable verbose mode using a specific verbose level (1-10)
+  -c --colorful      Enable colors on verbose mode, no weird characters will appear on
+                     output files
+  -h --help          Show this message
 
 Use CC, CFLAGS and LDFLAGS to select compiler and compilation/linkage flags
 \end{verbatim}
@@ -95,6 +95,12 @@ To select a different compiler, you should specify the \texttt{CC} environment v
 
 \begin{verbatim}
 $ CC="icc" OMP_NUM_THREADS=16 CFLAGS="-fopenmp" perfexpert -s mm_omp.c 0.05 mm_omp
+\end{verbatim}
+
+If you do not want to have PerfExpert trying to optimize the application automatically, just compile your program and run the following command:
+
+\begin{verbatim}
+$ OMP_NUM_THREADS=16 perfexpert 0.05 mm_omp
 \end{verbatim}
 
 \nicebox{WARNING:}{If the command line you use to run PerfExpert includes the MPI launcher (\textit{i.e.}, \texttt{mpirun -n 2 my\_mpi\_app my\_mpi\_app\_arguments ...}), PerfExpert will analyze the performance of the MPI launcher instead of the performance of your application. Use the \texttt{-p} command line argument of PerfExpert to set the MPI launcher and all its arguments (\textit{e.g.}, \texttt{-p "mpirun -n 16"}).}
