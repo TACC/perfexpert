@@ -27,8 +27,15 @@
 
 bin_PROGRAMS = recommender
 
-recommender_SOURCES = main.c
+recommender_SOURCES = recommender_main.c \
+	recommender_input.c \
+	recommender_log.c \
+	recommender_logic.c \
+	recommender_options.c \
+	recommender_output.c
+
 recommender_CPPFLAGS = -I$(srcdir)/../common
+
 recommender_LDFLAGS = -lsqlite3
 
 # Install the recommendation database
