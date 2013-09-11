@@ -27,7 +27,7 @@
 
 # perfexpert_run_exp will be installed by sniffer
 
-SUBDIRS = argp hpcdata analyzer $(ENABLE_HOUND) $(ENABLE_SNIFFER)
+SUBDIRS = argp hpcdata analyzer
 
 dist_bin_SCRIPTS = hpcdata.sh analyzer.sh
 
