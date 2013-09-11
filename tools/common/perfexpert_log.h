@@ -1,16 +1,5 @@
 /*
  * Copyright (c) 2013  University of Texas at Austin. All rights reserved.
- * Copyright (c) 2007      Voltaire. All rights reserved.
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
- *                         University Research and Technology Corporation.
- *                         All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
- *                         of Tennessee Research Foundation. All rights
- *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
- *                         University of Stuttgart. All rights reserved.
- * Copyright (c) 2004-2005 The Regents of the University of California.
- *                         All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -67,9 +56,7 @@ extern "C" {
 #include <time.h>
 #endif
 
-#ifndef PERFEXPERT_CONSTANTS_H_
 #include "perfexpert_constants.h"
-#endif
 
 /**
  *  Main macro for use in sending debugging output to screen.
@@ -104,10 +91,10 @@ static void perfexpert_log(const char *format, ...) {
 
     bzero(temp_str, MAX_LOG_ENTRY);
     sprintf(temp_str, "%d %s %s %ld --- %s\n", now_time, longdate,
-            PROGRAM_PREFIX, globals.pid, str);
+        PROGRAM_PREFIX, globals.pid, str);
 
     bzero(logfile, BUFFER_SIZE);
-    sprintf(logfile, "%s/%s", getenv("HOME"), LOGFILE);
+    sprintf(logfile, "%s/%s", getenv("HOME"), PERFEXPERT_LOGFILE);
 
     logfile_FP = fopen(logfile, "a");
     if (logfile_FP) {
