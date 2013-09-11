@@ -32,14 +32,6 @@
 extern "C" {
 #endif
 
-#ifndef INSTALL_DIRS_H
-#include "install_dirs.h"
-#endif
-
-#ifndef PERFEXPERT_CONSTANTS_H_
-#include "perfexpert_constants.h"
-#endif
-
 #ifndef PERFEXPERT_LIST_H_
 #include "perfexpert_list.h"
 #endif
@@ -58,19 +50,19 @@ extern "C" {
 
 /** Structure to hold global variables */
 typedef struct {
-    int      verbose_level;
-    char     *inputfile;
-    FILE     *inputfile_FP;
-    char     *outputfile;
-    FILE     *outputfile_FP;
-    int      colorful;
-    char     *workdir;
-    char     *dbfile;
+    FILE *inputfile_FP;
+    FILE *outputfile_FP;
+    char *inputfile;
+    char *outputfile;
+    int  verbose_level;
+    int  colorful;
+    char *workdir;
+    char *dbfile;
     sqlite3  *db;
     long int pid;
 } globals_t;
 
-extern globals_t globals; /**< Variable to hold global options */
+extern globals_t globals; /* This variable is defined in ct_real_main.c */
 
 /* WARNING: to include perfexpert_output.h globals have to be defined first */
 #ifdef PROGRAM_PREFIX
@@ -78,23 +70,19 @@ extern globals_t globals; /**< Variable to hold global options */
 #endif
 #define PROGRAM_PREFIX "[perfexpert:ct]"
 
-#ifndef PERFEXPERT_OUTPUT_H
-#include "perfexpert_output.h"
-#endif
-
 /** Structure to handle command line arguments. Try to keep the content of
  *  this structure compatible with the parse_cli_params() and show_help().
  */
 static struct option long_options[] = {
-    {"automatic",       required_argument, NULL, 'a'},
-    {"database",        required_argument, NULL, 'd'},
-    {"colorful",        no_argument,       NULL, 'c'},
-    {"inputfile",       required_argument, NULL, 'f'},
-    {"help",            no_argument,       NULL, 'h'},
-    {"verbose_level",   required_argument, NULL, 'l'},
-    {"outputfile",      required_argument, NULL, 'o'},
-    {"pid",             required_argument, NULL, 'p'},
-    {"verbose",         no_argument,       NULL, 'v'},
+    {"automatic",     required_argument, NULL, 'a'},
+    {"database",      required_argument, NULL, 'd'},
+    {"colorful",      no_argument,       NULL, 'c'},
+    {"inputfile",     required_argument, NULL, 'f'},
+    {"help",          no_argument,       NULL, 'h'},
+    {"verbose_level", required_argument, NULL, 'l'},
+    {"outputfile",    required_argument, NULL, 'o'},
+    {"pid",           required_argument, NULL, 'p'},
+    {"verbose",       no_argument,       NULL, 'v'},
     {0, 0, 0, 0}
 };
 
@@ -150,23 +138,23 @@ typedef struct fragment {
 
 /* Function declarations */
 int ct_main(int argc, char** argv);
-static void show_help(void);
-static int  parse_env_vars(void);
-static int  parse_cli_params(int argc, char *argv[]);
-static int  parse_transformation_params(perfexpert_list_t *fragments);
-static int  select_transformations(fragment_t *fragment);
-static int  accumulate_transformations(void *recommendation,
-    int count, char **val, char **names);
-static int  accumulate_patterns(void *transformation, int count,
-    char **val, char **names);
-static int  apply_recommendations(fragment_t *fragment);
-static int  apply_transformations(fragment_t *fragment,
+void show_help(void);
+int parse_env_vars(void);
+int parse_cli_params(int argc, char *argv[]);
+int parse_transformation_params(perfexpert_list_t *fragments);
+int select_transformations(fragment_t *fragment);
+int accumulate_transformations(void *recommendation, int count, char **val,
+    char **names);
+int accumulate_patterns(void *transformation, int count, char **val,
+    char **names);
+int apply_recommendations(fragment_t *fragment);
+int apply_transformations(fragment_t *fragment,
     recommendation_t *recommendation);
-static int  apply_patterns(fragment_t *fragment,
-    recommendation_t *recommendation, transformation_t *transformation);
-static int  test_transformation(fragment_t *fragment,
-    recommendation_t *recommendation, transformation_t *transformation);
-static int  test_pattern(fragment_t *fragment, recommendation_t *recommendation,
+int apply_patterns(fragment_t *fragment, recommendation_t *recommendation,
+    transformation_t *transformation);
+int test_transformation(fragment_t *fragment, recommendation_t *recommendation,
+    transformation_t *transformation);
+int test_pattern(fragment_t *fragment, recommendation_t *recommendation,
     transformation_t *transformation, pattern_t *pattern);
 
 /* Rose functions */
