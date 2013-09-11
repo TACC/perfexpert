@@ -69,13 +69,11 @@
 extern "C" {
 #endif
     
-#ifndef PERFEXPERT_CONSTANTS_H_
-#include "perfexpert_constants.h"
-#endif
-
 #ifndef _STDLIB_H
 #include <stdlib.h>
 #endif
+
+#include "perfexpert_constants.h"
 
 /**
  * Structure of list item and base type for items that are put in list 
@@ -194,7 +192,7 @@ static inline perfexpert_list_item_t *perfexpert_list_remove_item(
  * @param[in] item The item to append
  */
 static inline void perfexpert_list_append(perfexpert_list_t *list,
-                                          perfexpert_list_item_t *item) {
+    perfexpert_list_item_t *item) {
     perfexpert_list_item_t *sentinel = &(list->sentinel);
 
     /* set new element's previous pointer             */

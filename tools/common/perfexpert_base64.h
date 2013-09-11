@@ -28,10 +28,6 @@
 #ifndef PERFEXPERT_BASE64_H_
 #define PERFEXPERT_BASE64_H_
 
-#ifndef _STDIO_H
-#include <stdio.h>
-#endif
-
 #ifndef _STDLIB_H
 #include <stdlib.h>
 #endif
@@ -55,29 +51,27 @@ extern "C" {
  *   The character "=" signifies a special processing function used for
  *   padding within the printable encoding procedure.
  *
- *   \verbatim
-    Value Encoding  Value Encoding  Value Encoding  Value Encoding
-       0 A            17 R            34 i            51 z
-       1 B            18 S            35 j            52 0
-       2 C            19 T            36 k            53 1
-       3 D            20 U            37 l            54 2
-       4 E            21 V            38 m            55 3
-       5 F            22 W            39 n            56 4
-       6 G            23 X            40 o            57 5
-       7 H            24 Y            41 p            58 6
-       8 I            25 Z            42 q            59 7
-       9 J            26 a            43 r            60 8
-      10 K            27 b            44 s            61 9
-      11 L            28 c            45 t            62 +
-      12 M            29 d            46 u            63 /
-      13 N            30 e            47 v
-      14 O            31 f            48 w         (pad) =
-      15 P            32 g            49 x
-      16 Q            33 h            50 y
-    \endverbatim
+ *  Value Encoding  Value Encoding  Value Encoding  Value Encoding
+ *     0 A            17 R            34 i            51 z
+ *     1 B            18 S            35 j            52 0
+ *     2 C            19 T            36 k            53 1
+ *     3 D            20 U            37 l            54 2
+ *     4 E            21 V            38 m            55 3
+ *     5 F            22 W            39 n            56 4
+ *     6 G            23 X            40 o            57 5
+ *     7 H            24 Y            41 p            58 6
+ *     8 I            25 Z            42 q            59 7
+ *     9 J            26 a            43 r            60 8
+ *    10 K            27 b            44 s            61 9
+ *    11 L            28 c            45 t            62 +
+ *    12 M            29 d            46 u            63 /
+ *    13 N            30 e            47 v
+ *    14 O            31 f            48 w         (pad) =
+ *    15 P            32 g            49 x
+ *    16 Q            33 h            50 y
  */
 static const char base64_list[] = \
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 static const int base64_index[256] = {
     XX,XX,XX,XX, XX,XX,XX,XX, XX,XX,XX,XX, XX,XX,XX,XX,
@@ -112,12 +106,12 @@ static const int base64_index[256] = {
  *
  * @ingroup base64
  */
-inline void base64_encode_block(unsigned char out[4], const unsigned char in[3],
-    int len) {
+static inline void base64_encode_block(unsigned char out[4],
+    const unsigned char in[3], int len) {
     out[0] = base64_list[in[0] >> 2];
     out[1] = base64_list[((in[0] & 0x03) << 4) | ((in[1] & 0xf0) >> 4) ];
     out[2] = (unsigned char)(len > 1 ? base64_list[ ((in[1] & 0x0f) << 2) |
-                             ((in[2] & 0xc0) >> 6) ] : '=');
+        ((in[2] & 0xc0) >> 6) ] : '=');
     out[3] = (unsigned char)(len > 2 ? base64_list[in[2] & 0x3f] : '=');
 }
 
@@ -134,7 +128,8 @@ inline void base64_encode_block(unsigned char out[4], const unsigned char in[3],
  *
  * @ingroup base64
  */
-inline int base64_decode_block(unsigned char out[3], const unsigned char in[4]) {
+static inline int base64_decode_block(unsigned char out[3],
+    const unsigned char in[4]) {
     int i, numbytes = 3;
     char tmp[4];
 
@@ -167,7 +162,7 @@ inline int base64_decode_block(unsigned char out[3], const unsigned char in[4]) 
  *
  * @ingroup base64
  */
-inline size_t base64_encoded_size(size_t len) {
+static inline size_t base64_encoded_size(size_t len) {
     return(((len + 2) / 3) * 4);
 }
 
@@ -181,7 +176,7 @@ inline size_t base64_encoded_size(size_t len) {
  *
  * @ingroup base64
  */
-inline size_t base64_decoded_size(size_t len) {
+static inline size_t base64_decoded_size(size_t len) {
     return((len / 4) * 3);
 }
 
@@ -200,7 +195,8 @@ inline size_t base64_decoded_size(size_t len) {
  *
  * @ingroup base64
  */
-inline void base64_encode_binary(char *out, const unsigned char *in, size_t len) {
+static inline void base64_encode_binary(char *out, const unsigned char *in,
+    size_t len) {
     int size;
     size_t i = 0;
 
@@ -229,7 +225,7 @@ inline void base64_encode_binary(char *out, const unsigned char *in, size_t len)
  *
  * @ingroup base64
  */
-inline int base64_decode_binary(unsigned char *out, const char *in) {
+static inline int base64_decode_binary(unsigned char *out, const char *in) {
     size_t len = strlen(in), i = 0;
     int numbytes = 0;
 
@@ -259,7 +255,7 @@ inline int base64_decode_binary(unsigned char *out, const char *in) {
  *
  * @ingroup base64
  */
-static char *base64_encode(const char *in, size_t size) {
+static inline char *base64_encode(const char *in, size_t size) {
     char *out;
     size_t outlen;
 
@@ -295,7 +291,7 @@ static char *base64_encode(const char *in, size_t size) {
  *
  * @ingroup base64
  */
-static char *base64_decode(const char *in) {
+static inline char *base64_decode(const char *in) {
     char *out;
     size_t outlen;
     int numbytes;

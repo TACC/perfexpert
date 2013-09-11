@@ -95,13 +95,16 @@ extern "C" {
 #define COLOR_WHITE   7
 
 #define COLORFUL_BUFFER_SIZE 8192
-static char COLORFUL[COLORFUL_BUFFER_SIZE];
 
-static char* colorful(int attr, int fg, int bg, char* str) {
+static inline char* colorful(int attr, int fg, int bg, char* str) {
     if (1 == globals.colorful) {
-        char command[13];
         const char COLOR_RESET[] = "\x1b[0m";
-        
+        static char *COLORFUL;
+        char command[13];
+
+        COLORFUL = (char *)realloc(COLORFUL, strlen(str) + 128);
+        bzero(COLORFUL, strlen(str) + 128);
+
         bzero(COLORFUL, COLORFUL_BUFFER_SIZE);
         sprintf(command, "%c[%d;%d;%dm", 0x1B, attr, fg + 30, bg + 40);
         strcat(COLORFUL, command);
@@ -135,7 +138,7 @@ static char* colorful(int attr, int fg, int bg, char* str) {
  *
  * @param[in] *format Formatted string output conversion
  */
-static void output(const char *format, ...) {
+static inline void output(const char *format, ...) {
     va_list arglist;
     char *str = NULL;
     char *temp_str = NULL;
@@ -172,7 +175,7 @@ static void output(const char *format, ...) {
  *                    outputted
  * @param[in] *format Formatted string output conversion
  */
-static void output_verbose(int level, const char *format, ...) {
+static inline void output_verbose(int level, const char *format, ...) {
     va_list arglist;
     char *str = NULL;
     char *temp_str = NULL;

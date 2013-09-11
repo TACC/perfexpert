@@ -40,24 +40,21 @@ extern "C" {
 #include <stdlib.h>
 #endif
 
+#ifndef _UNISTD_H
+#include <unistd.h>
+#endif
+
 #ifndef _SQLITE3_H_
 #include <sqlite3.h>
 #endif
 
-#ifndef INSTALL_DIRS_H
-#include "install_dirs.h"
-#endif
-
-#ifndef PERFEXPERT_CONSTANTS_H
 #include "perfexpert_constants.h"
-#endif
-
-#ifndef PERFEXPERT_OUTPUT_H
 #include "perfexpert_output.h"
-#endif
+#include "perfexpert_util.h"
+#include "install_dirs.h"
 
 /* perfexpert_database_update */
-static int perfexpert_database_update(char **file) {
+static inline int perfexpert_database_update(char **file) {
     // TODO: this functions requires much more tests
     FILE  *version_file_FP;
     char  temp_str[6][BUFFER_SIZE];
@@ -65,15 +62,15 @@ static int perfexpert_database_update(char **file) {
     float sys_version = 0.0;
 
     bzero(temp_str[0], BUFFER_SIZE);
-    sprintf(temp_str[0], "%s/%s", PERFEXPERT_VARDIR, RECOMMENDATION_DB);
+    sprintf(temp_str[0], "%s/%s", PERFEXPERT_VARDIR, PERFEXPERT_DB);
     bzero(temp_str[1], BUFFER_SIZE);
-    sprintf(temp_str[1], "%s/.%s", getenv("HOME"), RECOMMENDATION_DB);
+    sprintf(temp_str[1], "%s/.%s", getenv("HOME"), PERFEXPERT_DB);
     bzero(temp_str[2], BUFFER_SIZE);
-    sprintf(temp_str[2], "%s/.%s.version", PERFEXPERT_VARDIR, RECOMMENDATION_DB);
+    sprintf(temp_str[2], "%s/.%s.version", PERFEXPERT_VARDIR, PERFEXPERT_DB);
     bzero(temp_str[3], BUFFER_SIZE);
-    sprintf(temp_str[3], "%s/.%s.version", getenv("HOME"), RECOMMENDATION_DB);
+    sprintf(temp_str[3], "%s/.%s.version", getenv("HOME"), PERFEXPERT_DB);
     bzero(temp_str[4], BUFFER_SIZE);
-    sprintf(temp_str[4], "%s/.%s~", getenv("HOME"), RECOMMENDATION_DB);
+    sprintf(temp_str[4], "%s/.%s~", getenv("HOME"), PERFEXPERT_DB);
     bzero(temp_str[5], BUFFER_SIZE);
 
     if (PERFEXPERT_SUCCESS == perfexpert_util_file_exists(temp_str[1])) {
@@ -92,7 +89,7 @@ static int perfexpert_database_update(char **file) {
                 return PERFEXPERT_ERROR;
             }
             OUTPUT_VERBOSE((10, "      local database version (%f)",
-                            my_version));
+                my_version));
 
             /* System's version */
             version_file_FP = fopen(temp_str[2], "r");
@@ -107,7 +104,7 @@ static int perfexpert_database_update(char **file) {
                 return PERFEXPERT_ERROR;
             }
             OUTPUT_VERBOSE((10, "      system database version (%f)",
-                            sys_version));
+                sys_version));
 
             /* Compare */
             if (my_version > sys_version) {
@@ -126,15 +123,15 @@ static int perfexpert_database_update(char **file) {
 
     OUTPUT_VERBOSE((10, "      updating database"));
     if (PERFEXPERT_SUCCESS != perfexpert_util_file_copy(temp_str[1],
-                                                        temp_str[0])) {
+            temp_str[0])) {
         OUTPUT(("%s (%s) >> (%s)", _ERROR((char *)"Error: unable to copy file"),
-                temp_str[0], temp_str[1]));
+            temp_str[0], temp_str[1]));
         return PERFEXPERT_ERROR;
     }
     if (PERFEXPERT_SUCCESS != perfexpert_util_file_copy(temp_str[3],
-                                                        temp_str[2])) {
+        temp_str[2])) {
         OUTPUT(("%s (%s) >> (%s)", _ERROR((char *)"Error: unable to copy file"),
-                temp_str[0], temp_str[1]));
+            temp_str[0], temp_str[1]));
         return PERFEXPERT_ERROR;
     }
 
@@ -147,25 +144,24 @@ static int perfexpert_database_update(char **file) {
 }
 
 /* perfexpert_database_disconnect */
-static int perfexpert_database_disconnect(sqlite3 *db) {
-    /* Close DB connection */
+static inline int perfexpert_database_disconnect(sqlite3 *db) {
     sqlite3_close(db);
 
     return PERFEXPERT_SUCCESS;
 }
 
 /* perfexpert_database_connect */
-static int perfexpert_database_connect(sqlite3 **db, char *file) {
+static inline int perfexpert_database_connect(sqlite3 **db, char *file) {
     /* Use default database if the user does not define one */
     if (NULL == file) {
-        file = (char *)malloc(strlen(RECOMMENDATION_DB) +
+        file = (char *)malloc(strlen(PERFEXPERT_DB) +
                                      strlen(PERFEXPERT_VARDIR) + 2);
         if (NULL == file) {
             OUTPUT(("%s", _ERROR((char *)"Error: out of memory")));
             return PERFEXPERT_ERROR;
         }
-        bzero(file, strlen(RECOMMENDATION_DB) + strlen(PERFEXPERT_VARDIR) + 2);
-        sprintf(file, "%s/%s", PERFEXPERT_VARDIR, RECOMMENDATION_DB);
+        bzero(file, strlen(PERFEXPERT_DB) + strlen(PERFEXPERT_VARDIR) + 2);
+        sprintf(file, "%s/%s", PERFEXPERT_VARDIR, PERFEXPERT_DB);
     }
 
     /* Check if file exists and if it is writable */
@@ -175,15 +171,14 @@ static int perfexpert_database_connect(sqlite3 **db, char *file) {
     }
     if (-1 == access(file, W_OK)) {
         OUTPUT(("%s (%s)",
-                _ERROR((char *)"Error: you don't have permission to write"),
-                file));
+            _ERROR((char *)"Error: you don't have permission to write"), file));
         return PERFEXPERT_ERROR;
     }
 
     /* Connect to the DB */
     if (SQLITE_OK != sqlite3_open(file, db)) {
         OUTPUT(("%s (%s), %s", _ERROR((char *)"Error: openning database"),
-                file, sqlite3_errmsg(*db)));
+            file, sqlite3_errmsg(*db)));
         perfexpert_database_disconnect(*db);
         return PERFEXPERT_ERROR;
     }
@@ -193,7 +188,7 @@ static int perfexpert_database_connect(sqlite3 **db, char *file) {
 }
 
 /* perfexpert_database_get_int */
-static int perfexpert_database_get_int(void *var, int count, char **val,
+static inline int perfexpert_database_get_int(void *var, int count, char **val,
     char **names) {
     int *temp = (int *)var;
     if (NULL != val[0]) {
@@ -203,8 +198,8 @@ static int perfexpert_database_get_int(void *var, int count, char **val,
 }
 
 /* perfexpert_database_get_double */
-static int perfexpert_database_get_double(void *var, int count, char **val,
-    char **names) {
+static inline int perfexpert_database_get_double(void *var, int count,
+    char **val, char **names) {
     double *temp = (double *)var;
     if (NULL != val[0]) {
         *temp = atof(val[0]);
