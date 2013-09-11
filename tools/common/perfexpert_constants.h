@@ -84,6 +84,7 @@ extern "C" {
 #define METRICS_TABLE            "metric"
 #define METRICS_FILE             "recommender-metrics.txt"
 #define EXPERIMENT_FILE          "experiment.properties"
+#define MIC_EXPERIMENT_FILE 	 "experiment_mic.properties"
 
 /* HPCToolkit binaries (should be in the path) */
 #define HPCSTRUCT "hpcstruct"
