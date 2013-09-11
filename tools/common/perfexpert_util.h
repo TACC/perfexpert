@@ -56,16 +56,11 @@ extern "C" {
 #include <fcntl.h>
 #endif
 
-#ifndef PERFEXPERT_CONSTANTS_H
 #include "perfexpert_constants.h"
-#endif
-
-#ifndef PERFEXPERT_OUTPUT_H
 #include "perfexpert_output.h"
-#endif
 
 /* perfexpert_util_make_path (create directory tree like 'mkdir -p') */
-static int perfexpert_util_make_path(const char *path, int nmode) {
+static inline int perfexpert_util_make_path(const char *path, int nmode) {
     int oumask;
     char *p = NULL;
     char *npath = NULL;
@@ -75,12 +70,12 @@ static int perfexpert_util_make_path(const char *path, int nmode) {
     if (0 == stat(path, &sb)) {
         if (0 == S_ISDIR (sb.st_mode)) {
             OUTPUT(("%s '%s'",
-                    _ERROR((char *)"file exists but is not a directory"), path));
+                _ERROR((char *)"file exists but is not a directory"), path));
             return PERFEXPERT_ERROR;
         }
         if (chmod(path, nmode)) {
             OUTPUT(("%s %s: %s", _ERROR((char *)"system error"), path,
-                    strerror(errno)));
+                strerror(errno)));
             return PERFEXPERT_ERROR;
         }
         return PERFEXPERT_SUCCESS;
@@ -136,9 +131,9 @@ static int perfexpert_util_make_path(const char *path, int nmode) {
 }
 
 /* perfexpert_util_file_exists */
-static int perfexpert_util_file_exists(const char *file) {
+static inline int perfexpert_util_file_exists(const char *file) {
     if (0 != access(file, F_OK)) {
-        // OUTPUT_VERBOSE((10, "%s (%s)", _RED((char *)"file not found"), file));
+        OUTPUT_VERBOSE((10, "%s (%s)", _RED((char *)"file not found"), file));
         return PERFEXPERT_ERROR;
     }
     return PERFEXPERT_SUCCESS;
@@ -146,11 +141,11 @@ static int perfexpert_util_file_exists(const char *file) {
 
 // TODO: add a full path search to this function
 /* perfexpert_util_file_exists_and_is_executable */
-static int perfexpert_util_file_exists_and_is_exec(const char *file) {
+static inline int perfexpert_util_file_exists_and_is_exec(const char *file) {
     if (PERFEXPERT_SUCCESS == perfexpert_util_file_exists(file)) {
         if (0 != access(file, X_OK)) {
-            // OUTPUT_VERBOSE((10, "%s (%s)",
-            //                 _RED((char *)"file is not an executable"), file));
+            OUTPUT_VERBOSE((10, "%s (%s)",
+                _RED((char *)"file is not an executable"), file));
             return PERFEXPERT_ERROR;
         }
     } else {
@@ -160,7 +155,7 @@ static int perfexpert_util_file_exists_and_is_exec(const char *file) {
 }
 
 /* perfexpert_util_program_only */
-static int perfexpert_util_program_only(const char *file, char **program) {
+static inline int perfexpert_util_program_only(const char *file, char **prog) {
     char str_temp[BUFFER_SIZE];
     char *token, *last;
 
@@ -175,44 +170,44 @@ static int perfexpert_util_program_only(const char *file, char **program) {
 
     token = (char *)malloc(strlen(last) + 1);
     if (NULL == token) {
-        OUTPUT(("%s", _ERROR("Error: out of memory")));
+        OUTPUT(("%s", _ERROR((char *)"Error: out of memory")));
         return PERFEXPERT_ERROR;
     }
     bzero(token, strlen(last) + 1);
     strcpy(token, last);
-    *program = token;
+    *prog = token;
 
     return PERFEXPERT_SUCCESS;
 }
 
 /* perfexpert_util_path_only */
-static int perfexpert_util_path_only(const char *file, char **path) {
+static inline int perfexpert_util_path_only(const char *file, char **path) {
     char str_temp[BUFFER_SIZE];
-    char *program, *temp;
+    char *prog, *temp;
 
     bzero(str_temp, BUFFER_SIZE);
     if (NULL == realpath(file, str_temp)) {
         return PERFEXPERT_ERROR;
     }
-    if (PERFEXPERT_SUCCESS != perfexpert_util_program_only(file, &program)) {
-        OUTPUT(("%s", _ERROR("Error: unable to extract path")));
+    if (PERFEXPERT_SUCCESS != perfexpert_util_program_only(file, &prog)) {
+        OUTPUT(("%s", _ERROR((char *)"Error: unable to extract path")));
         return PERFEXPERT_ERROR;
     }
 
-    temp = (char *)malloc(strlen(str_temp) - strlen(program) + 1);
+    temp = (char *)malloc(strlen(str_temp) - strlen(prog) + 1);
     if (NULL == temp) {
-        OUTPUT(("%s", _ERROR("Error: out of memory")));
+        OUTPUT(("%s", _ERROR((char *)"Error: out of memory")));
         return PERFEXPERT_ERROR;
     }
-    bzero(temp, strlen(str_temp) - strlen(program) + 1);
-    strncpy(temp, str_temp, strlen(str_temp) - strlen(program));
+    bzero(temp, strlen(str_temp) - strlen(prog) + 1);
+    strncpy(temp, str_temp, strlen(str_temp) - strlen(prog));
     *path = temp;
 
     return PERFEXPERT_SUCCESS;
 }
 
 /* perfexpert_util_file_copy */
-static int perfexpert_util_file_copy(const char *to, const char *from) {
+static inline int perfexpert_util_file_copy(const char *to, const char *from) {
     int     fd_to, fd_from;
     char    buffer[BUFFER_SIZE];
     ssize_t nread;
@@ -267,7 +262,7 @@ static int perfexpert_util_file_copy(const char *to, const char *from) {
 }
 
 /* perfexpert_util_file_print */
-static int perfexpert_util_file_print(const char *file) {
+static inline int perfexpert_util_file_print(const char *file) {
     char   buffer[BUFFER_SIZE];
     FILE   *file_FP;
     size_t nread;

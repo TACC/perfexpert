@@ -31,7 +31,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-    
+
 #ifndef _STDLIB_H
 #include <stdlib.h>
 #endif
@@ -44,21 +44,10 @@ extern "C" {
 #include <fcntl.h>
 #endif
 
-#ifndef INSTALL_DIRS_H
-#include "install_dirs.h"
-#endif
-
-#ifndef PERFEXPERT_CONSTANTS_H
 #include "perfexpert_constants.h"
-#endif
-
-#ifndef PERFEXPERT_OUTPUT_H
 #include "perfexpert_output.h"
-#endif
-
-#ifndef PERFEXPERT_LIST_H_
 #include "perfexpert_list.h"
-#endif
+#include "install_dirs.h"
 
 /** Ninja structure to hold a list of tests to perform */
 typedef struct test {
@@ -79,7 +68,7 @@ typedef struct experiment {
 } experiment_t;
 
 /* fork_and_wait */
-static int fork_and_wait(test_t *test, char *argv[]) {
+static inline int fork_and_wait(test_t *test, char *argv[]) {
     int  pipe1[2], pipe2[2];
     int  pid = 0;
     int  input_FP = 0, output_FP = 0;
