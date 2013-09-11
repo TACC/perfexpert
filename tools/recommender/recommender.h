@@ -32,53 +32,19 @@
 extern "C" {
 #endif
 
-#ifndef INSTALL_DIRS_H
-#include "install_dirs.h"
-#endif
-
-#ifndef PERFEXPERT_CONSTANTS_H_
-#include "perfexpert_constants.h"
-#endif
-
-#ifndef PERFEXPERT_LIST_H_
-#include "perfexpert_list.h"
-#endif
-
 #ifndef _SQLITE3_H_
-#include <sqlite3.h>
+#include <sqlite3.h> /* To sqlite3 type on globals */
 #endif
 
 #ifndef _GETOPT_H_
 #include <getopt.h> /* To parse command line arguments */
 #endif
 
-#ifndef	_CTYPE_H_
-#include <ctype.h>
-#endif
-
 #ifndef	_STDIO_H_
 #include <stdio.h> /* To use FILE type on globals */
 #endif
 
-/** Structure to hold global variables */
-typedef struct {
-    sqlite3 *db;
-    int      verbose_level;
-    char     *inputfile;
-    FILE     *inputfile_FP;
-    char     *outputfile;
-    FILE     *outputfile_FP;
-    char     *dbfile;
-    char     *workdir;
-    char     *metrics_file;
-    int      use_temp_metrics;
-    char     *metrics_table;
-    int      colorful;
-    int      rec_count;
-    long int pid;
-} globals_t;
-
-extern globals_t globals; /**< Variable to hold global options */
+#include "perfexpert_list.h" /* To list items on function and segment */
 
 /* WARNING: to include perfexpert_output.h globals have to be defined first */
 #ifdef PROGRAM_PREFIX
@@ -86,9 +52,25 @@ extern globals_t globals; /**< Variable to hold global options */
 #endif
 #define PROGRAM_PREFIX "[recommender]"
     
-#ifndef PERFEXPERT_OUTPUT_H
-#include "perfexpert_output.h"
-#endif
+/** Structure to hold global variables */
+typedef struct {
+    FILE *inputfile_FP;
+    FILE *outputfile_FP;
+    char *inputfile;
+    char *outputfile;
+    char *dbfile;
+    char *workdir;
+    char *metrics_file;
+    int  use_temp_metrics;
+    char *metrics_table;
+    int  verbose_level;
+    int  colorful;
+    int  rec_count;
+    long int pid;
+    sqlite3 *db;
+} globals_t;
+
+extern globals_t globals; /* This variable id declared in recommender_main.c */
 
 /** Structure to handles command line arguments. Try to keep the content of
  *  this structure compatible with the parse_cli_params() and show_help().
@@ -139,21 +121,19 @@ typedef struct segment {
     double runtime;
     int    rowid;
     perfexpert_list_t functions;
-    char   *function_name; // Should add function_name to DB?
+    char   *function_name; // Should I add function_name to DB?
 } segment_t;
 
 /* Function declarations */
-static void show_help(void);
-static int  parse_env_vars(void);
-static int  parse_cli_params(int argc, char *argv[]);
-static int  parse_metrics_file(void);
-static int  parse_segment_params(perfexpert_list_t *segments_p);
-static int  output_recommendations(void *var, int count, char **val,
-    char **names);
-static int  accumulate_functions(void *functions, int count, char **val,
-    char **names);
-static int  select_recommendations(segment_t *segment);
-static int  log_bottleneck(void *var, int count, char **val, char **names);
+void show_help(void);
+int parse_env_vars(void);
+int parse_cli_params(int argc, char *argv[]);
+int parse_metrics_file(void);
+int parse_segment_params(perfexpert_list_t *segments_p);
+int output_recommendations(void *var, int count, char **val, char **names);
+int accumulate_functions(void *functions, int count, char **val, char **names);
+int select_recommendations(segment_t *segment);
+int log_bottleneck(void *var, int count, char **val, char **names);
 
 #ifdef __cplusplus
 }
