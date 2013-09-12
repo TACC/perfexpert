@@ -98,19 +98,12 @@ extern "C" {
 
 static inline char* colorful(int attr, int fg, int bg, char* str) {
     if (1 == globals.colorful) {
-        const char COLOR_RESET[] = "\x1b[0m";
         static char *COLORFUL;
-        char command[13];
 
         COLORFUL = (char *)realloc(COLORFUL, strlen(str) + 128);
         bzero(COLORFUL, strlen(str) + 128);
+        sprintf(COLORFUL, "%c[%d;%d;%dm%s\x1b[0m", 0x1B, attr, fg + 30, bg + 40, str);
 
-        bzero(COLORFUL, COLORFUL_BUFFER_SIZE);
-        sprintf(command, "%c[%d;%d;%dm", 0x1B, attr, fg + 30, bg + 40);
-        strcat(COLORFUL, command);
-        strcat(COLORFUL, str);
-        strcat(COLORFUL, COLOR_RESET);
-        
         return COLORFUL;
     } else {
         return str;
