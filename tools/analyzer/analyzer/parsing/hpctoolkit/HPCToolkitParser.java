@@ -194,7 +194,7 @@ public class HPCToolkitParser extends AParser {
         }
         
         // Processed input file without errors, so remove the converted file from disk
-        new File(filename).delete();
+        // new File(filename).delete();
     }
 
     // Used while saving the output of the conversion
