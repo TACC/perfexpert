@@ -387,7 +387,8 @@ AC_LANG_POP
 #------------------------------------------------------------------------------
 # PerfExpert
 #
-AC_CONFIG_FILES([tools/perfexpert_get_info.pl])
+AC_CONFIG_FILES([tools/perfexpert/perfexpert_get_info.pl])
+AC_CONFIG_FILES([tools/perfexpert/Makefile])
 
 #------------------------------------------------------------------------------
 # Enable/Disable 'analyzer'
