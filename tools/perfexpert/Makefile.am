@@ -25,12 +25,21 @@
 # $HEADER$
 #
 
-SUBDIRS = perfexpert
-SUBDIRS += $(ENABLE_ANALYZER)
-SUBDIRS += $(ENABLE_MINST)
-SUBDIRS += $(ENABLE_RECOMMENDER)
-SUBDIRS += $(ENABLE_CT)
-SUBDIRS += $(ENABLE_HOUND)
-SUBDIRS += $(ENABLE_SNIFFER)
+bin_PROGRAMS = perfexpert
+
+dist_bin_SCRIPTS = perfexpert_get_info.pl
+
+perfexpert_SOURCES = perfexpert_main.c \
+	perfexpert_analysis.c \
+	perfexpert_compile.c \
+	perfexpert_hpctoolkit.c \
+	perfexpert_measurements.c \
+	perfexpert_options.c \
+	perfexpert_recommendation.c \
+	perfexpert_transformation.c
+
+perfexpert_CPPFLAGS = -I$(srcdir)/../common
+
+perfexpert_CFLAGS = -O3
 
 # EOF
