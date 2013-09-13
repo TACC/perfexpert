@@ -94,17 +94,15 @@ extern "C" {
 #define COLOR_CYAN    6
 #define COLOR_WHITE   7
 
-#define COLORFUL_BUFFER_SIZE 8192
-
 static inline char* colorful(int attr, int fg, int bg, char* str) {
     if (1 == globals.colorful) {
-        static char *COLORFUL;
+        static char *colored;
 
-        COLORFUL = (char *)realloc(COLORFUL, strlen(str) + 128);
-        bzero(COLORFUL, strlen(str) + 128);
-        sprintf(COLORFUL, "%c[%d;%d;%dm%s\x1b[0m", 0x1B, attr, fg + 30, bg + 40, str);
+        colored = (char *)realloc(colored, strlen(str) + 15);
+        bzero(colored, strlen(str) + 15);
+        sprintf(colored, "\x1b[%d;%d;%dm%s\x1b[0m", attr, fg+30, bg+40, str);
 
-        return COLORFUL;
+        return colored;
     } else {
         return str;
     }
@@ -118,7 +116,7 @@ static inline char* colorful(int attr, int fg, int bg, char* str) {
 #define _BLUE(a)       colorful(ATTR_NONE,   COLOR_BLUE,    COLOR_BLACK, a)
 #define _MAGENTA(a)    colorful(ATTR_NONE,   COLOR_MAGENTA, COLOR_BLACK, a)
 #define _CYAN(a)       colorful(ATTR_NONE,   COLOR_CYAN,    COLOR_BLACK, a)
-#define _WHITE(a)      colorful(ATTR_NONE,   COLOR_WHITE,   COLOR_BLACK, a)
+#define _WHITE(a)      colorful(ATTR_BRIGHT, COLOR_WHITE,   COLOR_BLACK, a)
 #define _BOLDRED(a)    colorful(ATTR_BRIGHT, COLOR_RED,     COLOR_BLACK, a)
 #define _BOLDGREEN(a)  colorful(ATTR_BRIGHT, COLOR_GREEN,   COLOR_BLACK, a)
 #define _BOLDYELLOW(a) colorful(ATTR_BRIGHT, COLOR_YELLOW,  COLOR_BLACK, a)
