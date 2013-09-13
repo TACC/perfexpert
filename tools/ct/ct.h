@@ -32,10 +32,6 @@
 extern "C" {
 #endif
 
-#ifndef PERFEXPERT_LIST_H_
-#include "perfexpert_list.h"
-#endif
-
 #ifndef _SQLITE3_H_
 #include <sqlite3.h>
 #endif
@@ -47,6 +43,8 @@ extern "C" {
 #ifndef	_STDIO_H
 #include <stdio.h> /* To use FILE type on globals */
 #endif
+
+#include "perfexpert_list.h"
 
 /** Structure to hold global variables */
 typedef struct {
