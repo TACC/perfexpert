@@ -180,6 +180,34 @@ static inline int perfexpert_util_program_only(const char *file, char **prog) {
     return PERFEXPERT_SUCCESS;
 }
 
+/* perfexpert_util_filename_only */
+static inline int perfexpert_util_filename_only(const char *all, char **only) {
+    char str_temp[BUFFER_SIZE];
+    char *token = NULL, *last = NULL;
+
+    strcpy(str_temp, all);
+    token = strtok(str_temp, "/");
+
+    while (token = strtok(NULL, "/")) {
+        last = token;
+    }
+
+    if (NULL == last) {
+        *only = (char *)all;
+    } else {
+        token = (char *)malloc(strlen(last) + 1);
+        if (NULL == token) {
+            OUTPUT(("%s", _ERROR((char *)"Error: out of memory")));
+            return PERFEXPERT_ERROR;
+        }
+        bzero(token, strlen(last) + 1);
+        strcpy(token, last);
+        *only = token;
+    }
+
+    return PERFEXPERT_SUCCESS;
+}
+
 /* perfexpert_util_path_only */
 static inline int perfexpert_util_path_only(const char *file, char **path) {
     char str_temp[BUFFER_SIZE];
