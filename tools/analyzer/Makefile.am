@@ -25,9 +25,18 @@
 # $HEADER$
 #
 
-# perfexpert_run_exp will be installed by sniffer
-
 SUBDIRS = argp hpcdata analyzer
+
+bin_PROGRAMS = perfexpert_analyzer
+
+perfexpert_analyzer_SOURCES = analyzer_main.c \
+	analyzer_hpctoolkit.c
+
+perfexpert_analyzer_CPPFLAGS = -I$(srcdir)/../common -I/usr/include/libxml2/
+
+perfexpert_analyzer_CFLAGS = -O3
+
+perfexpert_analyzer_LDFLAGS = -lxml2
 
 dist_bin_SCRIPTS = hpcdata.sh analyzer.sh
 
