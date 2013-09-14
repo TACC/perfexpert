@@ -732,32 +732,37 @@ typedef struct UT_hash_handle {
 } UT_hash_handle;
 
 /* Convenience forms */
-#define perfexpert_hash_find_string(head, findstr, out) \
-    HASH_FIND(hh, head, findstr, strlen(findstr), out)
+#define perfexpert_hash_find_str(head, findstr, out) \
+    HASH_FIND(hh_str, head, findstr, strlen(findstr), out)
 #define perfexpert_hash_find_int(head, findint, out) \
-    HASH_FIND(hh, head, findint, sizeof(int), out)
+    HASH_FIND(hh_int, head, findint, sizeof(int), out)
 #define perfexpert_hash_find_ptr(head, findptr, out) \
-    HASH_FIND(hh, head, findptr, sizeof(void *), out)
-#define perfexpert_hash_add_string(head, strfield, add) \
-    HASH_ADD(hh, head, strfield, strlen(add->strfield), add)
+    HASH_FIND(hh_ptr, head, findptr, sizeof(void *), out)
+#define perfexpert_hash_add_str(head, strfield, add) \
+    HASH_ADD(hh_str, head, strfield, strlen(add->strfield), add)
 #define perfexpert_hash_add_int(head, intfield, add) \
-    HASH_ADD(hh, head, intfield, sizeof(int), add)
+    HASH_ADD(hh_int, head, intfield, sizeof(int), add)
 #define perfexpert_hash_add_ptr(head, ptrfield, add) \
-    HASH_ADD(hh, head, ptrfield, sizeof(void *), add)
-#define perfexpert_hash_replace_string(head, strfield, add, replaced) \
-    HASH_REPLACE(hh, head, strfield, strlen(add->strfield), add, replaced)
+    HASH_ADD(hh_ptr, head, ptrfield, sizeof(void *), add)
+#define perfexpert_hash_replace_str(head, strfield, add, replaced) \
+    HASH_REPLACE(hh_str, head, strfield, strlen(add->strfield), add, replaced)
 #define perfexpert_hash_replace_int(head, intfield, add, replaced) \
-    HASH_REPLACE(hh, head, intfield, sizeof(int), add, replaced)
+    HASH_REPLACE(hh_int, head, intfield, sizeof(int), add, replaced)
 #define perfexpert_hash_replace_ptr(head, ptrfield, add) \
-    HASH_REPLACE(hh, head, ptrfield, sizeof(void *), add, replaced)
-#define perfexpert_hash_del(head, delptr) \
-    HASH_DELETE(hh, head, delptr)
-#define perfexpert_hash_sort(head, cmpfcn) HASH_SRT(hh, head, cmpfcn)
-#define perfexpert_hash_count(head) HASH_CNT(hh, head) 
+    HASH_REPLACE(hh_ptr, head, ptrfield, sizeof(void *), add, replaced)
+#define perfexpert_hash_del_str(head, delptr) HASH_DELETE(hh_str, head, delptr)
+#define perfexpert_hash_del_int(head, delptr) HASH_DELETE(hh_int, head, delptr)
+#define perfexpert_hash_del_ptr(head, delptr) HASH_DELETE(hh_ptr, head, delptr)
+#define perfexpert_hash_sort_str(head, cmpfcn) HASH_SRT(hh_str, head, cmpfcn)
+#define perfexpert_hash_sort_int(head, cmpfcn) HASH_SRT(hh_int, head, cmpfcn)
+#define perfexpert_hash_sort_ptr(head, cmpfcn) HASH_SRT(hh_ptr, head, cmpfcn)
+#define perfexpert_hash_count_str(head) HASH_CNT(hh_str, head) 
+#define perfexpert_hash_count_int(head) HASH_CNT(hh_int, head) 
+#define perfexpert_hash_count_ptr(head) HASH_CNT(hh_ptr, head) 
 
 /* Just to be PerfExpert compliant :-) */
-typedef UT_hash_bucket perfexpert_hash_bucket_t;
 typedef UT_hash_table perfexpert_hash_table_t;
+typedef UT_hash_bucket perfexpert_hash_bucket_t;
 typedef UT_hash_handle perfexpert_hash_handle_t;
 
 #ifdef __cplusplus

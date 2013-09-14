@@ -22,25 +22,23 @@
 /* System standard headers */
 #include <stdio.h>
 #include <libxml/parser.h>
-#include <libxml/tree.h>
 
 /* PerfExpert headers */
 #include "analyzer.h" 
 #include "perfexpert_constants.h"
-// #include "uthash.h"
 #include "perfexpert_hash.h"
 #include "perfexpert_output.h"
+#include "perfexpert_md5.h"
 #include "perfexpert_util.h"
 
 // TODO: Wrong file!
 globals_t globals;
 
 /* hpctoolkit_parse_file */
-int hpctoolkit_parse_file(const char *file, profile_t *profiles) {
+int hpctoolkit_parse_file(const char *file, perfexpert_list_t *profiles) {
     xmlDocPtr   document;
     xmlNodePtr  node;
-    callpath_t  *callpath;
-    callpath_t  *parent = NULL;
+    profile_t *profile = NULL;
 
     /* Open file */
     if (NULL == (document = xmlParseFile(file))) {
@@ -69,10 +67,19 @@ int hpctoolkit_parse_file(const char *file, profile_t *profiles) {
 
     /* Perse the document */
     if (PERFEXPERT_SUCCESS != hpctoolkit_parser(document, node->xmlChildrenNode,
-        profiles, callpath, parent)) {
+        profiles, NULL, NULL, 0)) {
         OUTPUT(("%s", _ERROR("Error: unable to parse experiment file")));
         xmlFreeDoc(document);
         return PERFEXPERT_ERROR;
+    }
+
+    OUTPUT_VERBOSE((4, "%d %s", perfexpert_list_get_size(profiles),
+        _GREEN("code profile(s) found")));
+
+    profile = (profile_t *)perfexpert_list_get_first(profiles);
+    while ((perfexpert_list_item_t *)profile != &(profiles->sentinel)) {
+        OUTPUT_VERBOSE((4, "   %s", profile->name));
+        profile = (profile_t *)perfexpert_list_get_next(profile);
     }
 
     xmlFreeDoc(document);
@@ -81,45 +88,49 @@ int hpctoolkit_parse_file(const char *file, profile_t *profiles) {
 }
 
 /* hpctoolkit_parser */
-int hpctoolkit_parser(xmlDocPtr document, xmlNodePtr node, profile_t *profiles,
-    callpath_t *callpath, callpath_t *parent) {
-    metric_t    *local_metric;
-    profile_t   *local_profile;
-    module_t    *local_module;
-    file_t      *local_file;
-    procedure_t *local_procedure;
+int hpctoolkit_parser(xmlDocPtr document, xmlNodePtr node,
+    perfexpert_list_t *profiles, profile_t *profile, callpath_t *parent,
+    int loopdepth) {
+    file_t      *file;
+    metric_t    *metric;
+    module_t    *module;
+    callpath_t  *callpath;
+    procedure_t *procedure;
 
     while (NULL != node) {
         /* SecCallPathProfile */
         if (!xmlStrcmp(node->name, (const xmlChar *)"SecCallPathProfile")) {
-            local_profile = (profile_t *)malloc(sizeof(profile_t));
-            if (NULL == local_profile) {
+            profile = (profile_t *)malloc(sizeof(profile_t));
+            if (NULL == profile) {
                 OUTPUT(("%s", _ERROR("Error: out of memory")));
                 return PERFEXPERT_ERROR;
             }
-            local_profile->metrics = NULL;
-            local_profile->procedures = NULL;
-            local_profile->files = NULL;
-            local_profile->modules = NULL;
-            local_profile->id = atoi(xmlGetProp(node, "i"));
+            profile->metrics_by_id = NULL;
+            profile->metrics_by_name = NULL;
+            profile->procedures = NULL;
+            profile->files = NULL;
+            profile->modules = NULL;
+            profile->id = atoi(xmlGetProp(node, "i"));
+            perfexpert_list_construct(&(profile->callees));
+            perfexpert_list_item_construct((perfexpert_list_item_t *)profile);
 
-            local_profile->name = (char *)malloc(strlen(xmlGetProp(node, "n")) + 1);
-            if (NULL == local_profile->name) {
+            profile->name = (char *)malloc(strlen(xmlGetProp(node, "n")) + 1);
+            if (NULL == profile->name) {
                 OUTPUT(("%s", _ERROR("Error: out of memory")));
                 return PERFEXPERT_ERROR;
             }
-            bzero(local_profile->name, strlen(xmlGetProp(node, "n")) + 1);
-            strcpy(local_profile->name, xmlGetProp(node, "n"));
+            bzero(profile->name, strlen(xmlGetProp(node, "n")) + 1);
+            strcpy(profile->name, xmlGetProp(node, "n"));
 
             OUTPUT_VERBOSE((3, "   %s [%d] (%s)", _YELLOW("profile found:"),
-                local_profile->id, local_profile->name));
+                profile->id, profile->name));
 
-            /* Hash it! */
-            perfexpert_hash_add_int(profiles, id, local_profile);
+            /* Add to the list of profiles */
+            perfexpert_list_append(profiles, (perfexpert_list_item_t *)profile);
 
             /* Call the call path profile parser */
             if (PERFEXPERT_SUCCESS != hpctoolkit_parser(document,
-                node->xmlChildrenNode, profiles, callpath, parent)) {
+                node->xmlChildrenNode, profiles, profile, parent, loopdepth)) {
                 OUTPUT(("%s (%s)", _ERROR("Error: unable to parse profile"),
                     xmlGetProp(node, "n")));
                 return PERFEXPERT_ERROR;
@@ -132,12 +143,12 @@ int hpctoolkit_parser(xmlDocPtr document, xmlNodePtr node, profile_t *profiles,
 
             if ((NULL != xmlGetProp(node, "n")) && (xmlGetProp(node, "i"))) {
 
-                local_metric = (metric_t *)malloc(sizeof(metric_t));
-                if (NULL == local_metric) {
+                metric = (metric_t *)malloc(sizeof(metric_t));
+                if (NULL == metric) {
                     OUTPUT(("%s", _ERROR("Error: out of memory")));
                     return PERFEXPERT_ERROR;
                 }
-                local_metric->id = atoi(xmlGetProp(node, "i"));
+                metric->id = atoi(xmlGetProp(node, "i"));
 
                 /* Save the entire metric name */
                 temp_str[0] = (char *)malloc(strlen(xmlGetProp(node, "n")) + 1);
@@ -151,25 +162,25 @@ int hpctoolkit_parser(xmlDocPtr document, xmlNodePtr node, profile_t *profiles,
                 temp_str[1] = strtok(temp_str[0], ".");
                 if (NULL != temp_str[1]) {
                     /* Set the name (only the performance counter name) */
-                    local_metric->name = (char *)malloc(strlen(temp_str[1]) +
-                        1);
-                    if (NULL == local_metric->name) {
+                    metric->name = (char *)malloc(strlen(temp_str[1]) + 1);
+                    if (NULL == metric->name) {
                         OUTPUT(("%s", _ERROR("Error: out of memory")));
                         return PERFEXPERT_ERROR;
                     }
-                    bzero(local_metric->name, strlen(temp_str[1]) + 1);
-                    strcpy(local_metric->name, temp_str[1]);
+                    bzero(metric->name, strlen(temp_str[1]) + 1);
+                    strcpy(metric->name, temp_str[1]);
 
                     /* Save the thread information */
                     temp_str[1] = strtok(NULL, ".");
 
+                    // TODO: This is bullshit! Instead of adding different experiments, just check the variability
                     if (NULL != temp_str[1]) {
-                        /* Set the sample */
+                        /* Set the experiment */
                         temp_str[2] = strtok(NULL, ".");
                         if (NULL != temp_str[2]) {
-                            local_metric->sample = atoi(temp_str[2]);
+                            metric->experiment = atoi(temp_str[2]);
                         } else {
-                            local_metric->sample = 1;                    
+                            metric->experiment = 1;                    
                         }
 
                         /* Set the thread ID */
@@ -177,17 +188,17 @@ int hpctoolkit_parser(xmlDocPtr document, xmlNodePtr node, profile_t *profiles,
                         temp_str[2] = strtok(NULL, ",");
                         if (NULL != temp_str[2]) {
                             temp_str[2][strlen(temp_str[2]) - 1] = '\0';
-                            local_metric->thread = atoi(temp_str[2]);
+                            metric->thread = atoi(temp_str[2]);
                         }
                     }
                 }
     
-                OUTPUT_VERBOSE((10, "   %s [%d] (%s) [thread=%d] [sample=%d]",
-                    _CYAN("metric"), local_metric->id, local_metric->name,
-                    local_metric->thread, local_metric->sample));
+                OUTPUT_VERBOSE((10, "   %s [%d] (%s) [thread=%d] [exp=%d]",
+                    _CYAN("metric"), metric->id, metric->name, metric->thread,
+                    metric->experiment));
 
                 /* Hash it! */
-                perfexpert_hash_add_int(profiles->metrics, id, local_metric);
+                perfexpert_hash_add_int(profile->metrics_by_id, id, metric);
             }
         }
 
@@ -195,33 +206,33 @@ int hpctoolkit_parser(xmlDocPtr document, xmlNodePtr node, profile_t *profiles,
         if (!xmlStrcmp(node->name, (const xmlChar *)"LoadModule")) {
             if ((NULL != xmlGetProp(node, "n")) && (xmlGetProp(node, "i"))) {
 
-                local_module = (module_t *)malloc(sizeof(module_t));
-                if (NULL == local_module) {
+                module = (module_t *)malloc(sizeof(module_t));
+                if (NULL == module) {
                     OUTPUT(("%s", _ERROR("Error: out of memory")));
                     return PERFEXPERT_ERROR;
                 }
-                local_module->id = atoi(xmlGetProp(node, "i"));
+                module->id = atoi(xmlGetProp(node, "i"));
 
-                local_module->name = (char *)malloc(strlen(xmlGetProp(node,
+                module->name = (char *)malloc(strlen(xmlGetProp(node,
                     "n")) + 1);
-                if (NULL == local_module->name) {
+                if (NULL == module->name) {
                     OUTPUT(("%s", _ERROR("Error: out of memory")));
                     return PERFEXPERT_ERROR;
                 }
-                bzero(local_module->name, strlen(xmlGetProp(node, "n")) + 1);
-                strcpy(local_module->name, xmlGetProp(node, "n"));
+                bzero(module->name, strlen(xmlGetProp(node, "n")) + 1);
+                strcpy(module->name, xmlGetProp(node, "n"));
 
                 if (PERFEXPERT_SUCCESS != perfexpert_util_filename_only(
-                    local_module->name, &(local_module->shortname))) {
+                    module->name, &(module->shortname))) {
                     OUTPUT(("%s", _ERROR("Error: unable to find shortname")));
                     return PERFEXPERT_ERROR;
                 }
 
                 OUTPUT_VERBOSE((10, "   %s [%d] (%s)", _GREEN("module"),
-                    local_module->id, local_module->name));
+                    module->id, module->name));
 
                 /* Hash it! */
-                perfexpert_hash_add_int(profiles->modules, id, local_module);
+                perfexpert_hash_add_int(profile->modules, id, module);
             }
         }
 
@@ -229,32 +240,32 @@ int hpctoolkit_parser(xmlDocPtr document, xmlNodePtr node, profile_t *profiles,
         if (!xmlStrcmp(node->name, (const xmlChar *)"File")) {
             if ((NULL != xmlGetProp(node, "n")) && (xmlGetProp(node, "i"))) {
 
-                local_file = (file_t *)malloc(sizeof(file_t));
-                if (NULL == local_file) {
+                file = (file_t *)malloc(sizeof(file_t));
+                if (NULL == file) {
                     OUTPUT(("%s", _ERROR("Error: out of memory")));
                     return PERFEXPERT_ERROR;
                 }
-                local_file->id = atoi(xmlGetProp(node, "i"));
+                file->id = atoi(xmlGetProp(node, "i"));
 
-                local_file->name = (char *)malloc(strlen(xmlGetProp(node, "n")) + 1);
-                if (NULL == local_file->name) {
+                file->name = (char *)malloc(strlen(xmlGetProp(node, "n")) + 1);
+                if (NULL == file->name) {
                     OUTPUT(("%s", _ERROR("Error: out of memory")));
                     return PERFEXPERT_ERROR;
                 }
-                bzero(local_file->name, strlen(xmlGetProp(node, "n")) + 1);
-                strcpy(local_file->name, xmlGetProp(node, "n"));
+                bzero(file->name, strlen(xmlGetProp(node, "n")) + 1);
+                strcpy(file->name, xmlGetProp(node, "n"));
 
                 if (PERFEXPERT_SUCCESS != perfexpert_util_filename_only(
-                    local_file->name, &(local_file->shortname))) {
+                    file->name, &(file->shortname))) {
                     OUTPUT(("%s", _ERROR("Error: unable to find shortname")));
                     return PERFEXPERT_ERROR;
                 }
 
-                OUTPUT_VERBOSE((10, "   %s [%d] (%s)", _BLUE("file"),
-                    local_file->id, local_file->name));
+                OUTPUT_VERBOSE((10, "   %s [%d] (%s)", _BLUE("file"), file->id,
+                    file->name));
 
                 /* Hash it! */
-                perfexpert_hash_add_int(profiles->files, id, local_file);
+                perfexpert_hash_add_int(profile->files, id, file);
             }
         }
 
@@ -262,28 +273,27 @@ int hpctoolkit_parser(xmlDocPtr document, xmlNodePtr node, profile_t *profiles,
         if (!xmlStrcmp(node->name, (const xmlChar *)"Procedure")) {
             if ((NULL != xmlGetProp(node, "n")) && (xmlGetProp(node, "i"))) {
 
-                local_procedure = (procedure_t *)malloc(sizeof(procedure_t));
-                if (NULL == local_procedure) {
+                procedure = (procedure_t *)malloc(sizeof(procedure_t));
+                if (NULL == procedure) {
                     OUTPUT(("%s", _ERROR("Error: out of memory")));
                     return PERFEXPERT_ERROR;
                 }
-                local_procedure->id = atoi(xmlGetProp(node, "i"));
+                procedure->id = atoi(xmlGetProp(node, "i"));
 
-                local_procedure->name = (char *)malloc(strlen(xmlGetProp(node,
-                    "n")) + 1);
-                if (NULL == local_procedure->name) {
+                procedure->name = (char *)malloc(strlen(xmlGetProp(node, "n")) +
+                    1);
+                if (NULL == procedure->name) {
                     OUTPUT(("%s", _ERROR("Error: out of memory")));
                     return PERFEXPERT_ERROR;
                 }
-                bzero(local_procedure->name, strlen(xmlGetProp(node, "n")) + 1);
-                strcpy(local_procedure->name, xmlGetProp(node, "n"));
+                bzero(procedure->name, strlen(xmlGetProp(node, "n")) + 1);
+                strcpy(procedure->name, xmlGetProp(node, "n"));
 
                 OUTPUT_VERBOSE((10, "   %s [%d] (%s)", _MAGENTA("procedure"),
-                    local_procedure->id, local_procedure->name));
+                    procedure->id, procedure->name));
 
                 /* Hash it! */
-                perfexpert_hash_add_int(profiles->procedures, id,
-                    local_procedure);
+                perfexpert_hash_add_int(profile->procedures, id, procedure);
             }
         }
 
@@ -291,6 +301,7 @@ int hpctoolkit_parser(xmlDocPtr document, xmlNodePtr node, profile_t *profiles,
         if ((!xmlStrcmp(node->name, (const xmlChar *)"PF")) ||
             (!xmlStrcmp(node->name, (const xmlChar *)"Pr"))) {
             int temp_int;
+            loopdepth = 0;
 
             /* Just to be sure it will work */
             if ((NULL == xmlGetProp(node, "n")) || 
@@ -312,50 +323,51 @@ int hpctoolkit_parser(xmlDocPtr document, xmlNodePtr node, profile_t *profiles,
             callpath->alien = 0;
             callpath->file = NULL;
             callpath->module = NULL;
-            callpath->metrics = NULL;
             callpath->procedure = NULL;
+            callpath->metrics_by_id = NULL;
+            callpath->metrics_by_name = NULL;
             callpath->type = PERFEXPERT_FUNCTION;
-            perfexpert_list_construct(&(callpath->calls));
+            perfexpert_list_construct(&(callpath->callees));
             perfexpert_list_item_construct((perfexpert_list_item_t *)callpath);
 
             /* Find procedure */
             temp_int = atoi(xmlGetProp(node, "n"));
-            perfexpert_hash_find_int(profiles->procedures, &temp_int,
-                local_procedure);
-            if (NULL == local_procedure) {
+            perfexpert_hash_find_int(profile->procedures, &temp_int, procedure);
+            if (NULL == procedure) {
                 OUTPUT_VERBOSE((10, "%s", _ERROR("Error: unknown procedure")));
                 return PERFEXPERT_ERROR;
             } else {
-                callpath->procedure = local_procedure;
+                callpath->procedure = procedure;
             }
 
             /* Find module */
             temp_int = atoi(xmlGetProp(node, "lm"));
-            perfexpert_hash_find_int(profiles->modules, &temp_int,
-                local_module);
-            if (NULL == local_module) {
+            perfexpert_hash_find_int(profile->modules, &temp_int, module);
+            if (NULL == module) {
                 OUTPUT_VERBOSE((10, "%s", _ERROR("Error: unknown module")));
                 return PERFEXPERT_ERROR;
             } else {
-                callpath->module = local_module;
+                callpath->module = module;
             }
 
             /* Find file */
             temp_int = atoi(xmlGetProp(node, "f"));
-            perfexpert_hash_find_int(profiles->files, &temp_int, local_file);
-            if (NULL == local_file) {
+            perfexpert_hash_find_int(profile->files, &temp_int, file);
+            if (NULL == file) {
                 OUTPUT_VERBOSE((10, "%s", _ERROR("Error: unknown file")));
                 return PERFEXPERT_ERROR;
             } else {
-                callpath->file = local_file;
+                callpath->file = file;
             }
 
             /* Set parent */
             if (NULL == parent) {
                 callpath->parent = NULL;
+                perfexpert_list_append(&(profile->callees),
+                    (perfexpert_list_item_t *)callpath);
             } else {
                 callpath->parent = parent;
-                perfexpert_list_append(&(parent->calls),
+                perfexpert_list_append(&(parent->callees),
                     (perfexpert_list_item_t *)callpath);
             }
 
@@ -380,28 +392,23 @@ int hpctoolkit_parser(xmlDocPtr document, xmlNodePtr node, profile_t *profiles,
             }
 
             OUTPUT_VERBOSE((10,
-                "   %s i=[%d], s=[%d], a=[%d], n=[%s], f=[%s], l=[%d] lm=[%s]",
+                "   %s i=[%d] s=[%d] a=[%d] n=[%s] f=[%s] l=[%d] lm=[%s]",
                 _RED("call"), callpath->id, callpath->scope, callpath->alien,
                 callpath->procedure->name, callpath->file->shortname,
                 callpath->line, callpath->module->shortname));
 
-            /* Now I am parent */
-            parent = callpath;
-
             /* Keep Walking! (Johnny Walker) */
             if (PERFEXPERT_SUCCESS != hpctoolkit_parser(document,
-                node->xmlChildrenNode, profiles, callpath, parent)) {
+                node->xmlChildrenNode, profiles, profile, callpath, loopdepth)) {
                 OUTPUT(("%s", _ERROR("Error: unable to parse children")));
                 return PERFEXPERT_ERROR;
             }
-
-            /* Now I am child again */
-            parent = callpath->parent;
         }
 
         /* (L)oop */
         if (!xmlStrcmp(node->name, (const xmlChar *)"L")) {
             int temp_int;
+            loopdepth++;
 
             /* Just to be sure it will work */
             if (NULL == xmlGetProp(node, "s")) {
@@ -417,15 +424,19 @@ int hpctoolkit_parser(xmlDocPtr document, xmlNodePtr node, profile_t *profiles,
             callpath->id = -1;
             callpath->line = -1;
             callpath->scope = -1;
-            callpath->metrics = NULL;
+            callpath->metrics_by_id = NULL;
+            callpath->metrics_by_name = NULL;
             callpath->file = parent->file;
             callpath->alien = parent->alien;
             callpath->module = parent->module;
             callpath->parent = parent->parent;
             callpath->procedure = parent->procedure;
             callpath->type = PERFEXPERT_LOOP;
-            perfexpert_list_construct(&(callpath->calls));
+            perfexpert_list_construct(&(callpath->callees));
             perfexpert_list_item_construct((perfexpert_list_item_t *)callpath);
+
+            perfexpert_list_append(&(parent->callees),
+                (perfexpert_list_item_t *)callpath);
 
             /* Set ID */
             if (NULL != xmlGetProp(node, "i")) {
@@ -443,14 +454,14 @@ int hpctoolkit_parser(xmlDocPtr document, xmlNodePtr node, profile_t *profiles,
             }
 
             OUTPUT_VERBOSE((10,
-                "   %s i=[%d], s=[%d], a=[%d], n=[%s], f=[%s], l=[%d] lm=[%s]",
-                _RED("loop"), callpath->id, callpath->scope, callpath->alien,
+                "   %s i=[%d] s=[%d], a=[%d] n=[%s] f=[%s] l=[%d] lm=[%s] d=[%d]",
+                _GREEN("loop"), callpath->id, callpath->scope, callpath->alien,
                 callpath->procedure->name, callpath->file->shortname,
-                callpath->line, callpath->module->shortname));
+                callpath->line, callpath->module->shortname, loopdepth));
 
             /* Keep Walking! (Johnny Walker) */
             if (PERFEXPERT_SUCCESS != hpctoolkit_parser(document,
-                node->xmlChildrenNode, profiles, callpath, parent)) {
+                node->xmlChildrenNode, profiles, profile, callpath, loopdepth)) {
                 OUTPUT(("%s", _ERROR("Error: unable to parse children")));
                 return PERFEXPERT_ERROR;
             }
@@ -468,44 +479,47 @@ int hpctoolkit_parser(xmlDocPtr document, xmlNodePtr node, profile_t *profiles,
             }
 
             /* Are we in the callpath? */
-            if (NULL == callpath) {
+            if (NULL == parent) {
                 OUTPUT(("%s", _ERROR("Error: metric outside callpath")));
                 return PERFEXPERT_ERROR;                
             }
 
             /* Alocate some memory and initialize it */
-            local_metric = (metric_t *)malloc(sizeof(metric_t));
-            if (NULL == local_metric) {
+            metric = (metric_t *)malloc(sizeof(metric_t));
+            if (NULL == metric) {
                 OUTPUT(("%s", _ERROR("Error: out of memory")));
                 return PERFEXPERT_ERROR;
             }
 
             /* Find metric */
             temp_int = atoi(xmlGetProp(node, "n"));
-            perfexpert_hash_find_int(profiles->metrics, &temp_int,
+            perfexpert_hash_find_int(profile->metrics_by_id, &temp_int,
                 metric_entry);
             if (NULL == metric_entry) {
                 OUTPUT_VERBOSE((10, "%s", _ERROR("Error: unknown metric")));
                 return PERFEXPERT_ERROR;
             }
 
-            local_metric->id     = metric_entry->id;
-            local_metric->name   = metric_entry->name;
-            local_metric->thread = metric_entry->thread;
-            local_metric->sample = metric_entry->sample;
-            perfexpert_hash_find_int(callpath->metrics, &temp_int,
-                metric_entry);
-            perfexpert_hash_add_int(callpath->metrics, id, local_metric);
+            metric->id         = metric_entry->id;
+            metric->name       = metric_entry->name;
+            metric->thread     = metric_entry->thread;
+            metric->experiment = metric_entry->experiment;
+            bzero(metric->name_md5, 33);
+            strcpy(metric->name_md5, perfexpert_md5_string(metric_entry->name));
+
+            perfexpert_hash_add_int(parent->metrics_by_id, id, metric);
+            perfexpert_hash_add_str(parent->metrics_by_name, name_md5, metric);
 
             /* Set value */
             if (NULL != xmlGetProp(node, "v")) {
-                local_metric->value = atof(xmlGetProp(node, "v"));
+                metric->value = atof(xmlGetProp(node, "v"));
             }
 
-            OUTPUT_VERBOSE((10, "   %s [%d] (%s) (%g) [thread=%d] [sample=%d]",
-                _CYAN("metric value"), local_metric->id, local_metric->name,
-                local_metric->value, local_metric->thread,
-                local_metric->sample));
+            OUTPUT_VERBOSE((10,
+                "   %s [%d] of [%d] (%s) (%g) [tid=%d] [exp=%d] [md5=%s]",
+                _CYAN("metric value"), metric->id, parent->id, metric->name,
+                metric->value, metric->thread, metric->experiment,
+                metric->name_md5));
         }
 
         /* LoadModuleTable, SecHeader, SecCallPathProfileData, MetricTable */
@@ -518,7 +532,7 @@ int hpctoolkit_parser(xmlDocPtr document, xmlNodePtr node, profile_t *profiles,
             (!xmlStrcmp(node->name, (const xmlChar *)"S")) ||
             (!xmlStrcmp(node->name, (const xmlChar *)"C"))) {
             if (PERFEXPERT_SUCCESS != hpctoolkit_parser(document,
-                node->xmlChildrenNode, profiles, callpath, parent)) {
+                node->xmlChildrenNode, profiles, profile, parent, loopdepth)) {
                 OUTPUT(("%s", _ERROR("Error: unable to parsing children")));
                 return PERFEXPERT_ERROR;
             }
