@@ -24,98 +24,42 @@
 /* PerfExpert headers */
 #include "analyzer.h" 
 #include "perfexpert_constants.h"
-#include "perfexpert_hash.h"
 #include "perfexpert_list.h"
-#include "perfexpert_md5.h"
 #include "perfexpert_output.h"
-#include "perfexpert_util.h"
 
 /* Global variables, try to not create them! */
 globals_t globals; // Variable to hold global options, this one is OK
 
 /* main, life starts here */
 int main(int argc, char **argv) {
-    perfexpert_list_t profiles;
-
     globals.verbose_level = 10;
     globals.colorful = 1;
+    perfexpert_list_construct(&(globals.profiles));
 
-    perfexpert_list_construct(&profiles);
-    hpctoolkit_parse_file(argv[1], &profiles);
-
-    // OK, now we have to test the parser
-    check_profiles(&profiles);
-
-    return 0;
-}
-
-int check_profiles(perfexpert_list_t *profiles) {
-    profile_t *profile = NULL;
-
-    OUTPUT_VERBOSE((5, "%s", _YELLOW("Checking profiles")));
-
-    profile = (profile_t *)perfexpert_list_get_first(profiles);
-    while ((perfexpert_list_item_t *)profile != &(profiles->sentinel)) {
-        OUTPUT_VERBOSE((10, "   %s", profile->name));
-        if (0 < perfexpert_list_get_size(&(profile->callees))) {
-           check_callpath(&(profile->callees), 0);
-        }
-        profile = (profile_t *)perfexpert_list_get_next(profile);
-    }
-
-    return PERFEXPERT_SUCCESS;
-}
-
-int check_callpath(perfexpert_list_t *calls, int root) {
-    callpath_t *callpath;
-    char *indent;
-    int i;
-
-    indent = (char *)malloc((2 * root) + 1);
-    if (NULL == indent) {
-        OUTPUT(("%s", _ERROR("Error: out of memory")));
+    /* Parse input file, check it, and flatten profiles */
+    if (PERFEXPERT_SUCCESS != hpctoolkit_parse_file(argv[1],
+        &(globals.profiles))) {
+        OUTPUT(("%s (%s)",
+            _ERROR("Error: are you sure this is a valid HPCToolkit file?"),
+            argv[1]));
         return PERFEXPERT_ERROR;
     }
-    bzero(indent, (2 * root) + 1);
-    for (i = 0; i < root; i++) {
-        strcat(indent, "  ");
+
+    if (PERFEXPERT_SUCCESS != profile_check_all(&(globals.profiles))) {
+        OUTPUT(("%s (%s)",
+            _ERROR("Error: are you sure this is a valid HPCToolkit file?"),
+            argv[1]));
+        return PERFEXPERT_ERROR;
     }
 
-    callpath = (callpath_t *)perfexpert_list_get_first(calls);
-    while ((perfexpert_list_item_t *)callpath != &(calls->sentinel)) {
-        char *filename = NULL;
-        metric_t *metric;
+    // if (PERFEXPERT_SUCCESS != profile_flatten_all(&profiles)) {
+    //     OUTPUT(("%s (%s)",
+    //         _ERROR("Error: are you sure this is a valid HPCToolkit file?"),
+    //         argv[1]));
+    //     return PERFEXPERT_ERROR;
+    // }
 
-        if (PERFEXPERT_SUCCESS != perfexpert_util_filename_only(
-            callpath->file->name, &filename)) {
-            OUTPUT(("%s", _ERROR("Error: unable to extract short filename")));
-            return PERFEXPERT_ERROR;
-        }
-
-        perfexpert_hash_find_str(callpath->metrics_by_name,
-            perfexpert_md5_string("PAPI_TOT_INS"), metric);
-
-        if (PERFEXPERT_FUNCTION == callpath->type) {
-            OUTPUT_VERBOSE((5, "%s [%d] %s (%s:%d) [PAPI_TOT_INS=%g]", indent,
-                callpath->id, _RED(callpath->procedure->name), filename,
-                callpath->line, metric ? metric->value : 0));
-        } else if (PERFEXPERT_LOOP == callpath->type) {
-            OUTPUT_VERBOSE((5, "%s [%d] %s (%s:%d)  [PAPI_TOT_INS=%g]", indent,
-                callpath->id, _GREEN("loop"), filename, callpath->line,
-                metric ? metric->value : 0));
-        } else {
-            OUTPUT_VERBOSE((5, "%s", _ERROR("WTF???")));
-        }
-
-        if (0 < perfexpert_list_get_size(&(callpath->callees))) {
-            root++;
-            check_callpath(&(callpath->callees), root);
-            root--;
-        }
-        callpath = (callpath_t *)perfexpert_list_get_next(callpath);
-    }
-
-    return PERFEXPERT_SUCCESS;
+    return 0;
 }
 
 // EOF
