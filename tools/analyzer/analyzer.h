@@ -44,6 +44,7 @@ extern "C" {
 typedef struct {
     int  verbose_level;
     int  colorful;
+    perfexpert_list_t profiles;
 } globals_t;
 
 extern globals_t globals; /* This variable is defined in analyzer_main.c */
@@ -54,8 +55,9 @@ extern globals_t globals; /* This variable is defined in analyzer_main.c */
 #endif
 #define PROGRAM_PREFIX "[analyzer]"
 
-#define PERFEXPERT_FUNCTION  0
-#define PERFEXPERT_LOOP      1
+#define PERFEXPERT_HOTSPOT_UNKNOWN   0
+#define PERFEXPERT_HOTSPOT_FUNCTION  1
+#define PERFEXPERT_HOTSPOT_LOOP      2
 
 /** Structure to handle command line arguments. Try to keep the content of
  *  this structure compatible with the parse_cli_params() and show_help().
@@ -92,24 +94,44 @@ typedef struct file {
     perfexpert_hash_handle_t hh_int;
 } file_t;
 
-/** Structure to hold procedures */
-typedef struct procedure {
-    int  id;
-    char *name;
-    perfexpert_hash_handle_t hh_int;
-} procedure_t;
-
 /** Structure to hold metrics */
 typedef struct metric {
     int    id;
     char   *name;
-    char   name_md5[33];
     int    thread;
+    int    mpi_rank;
     int    experiment;
     double value;
     perfexpert_hash_handle_t hh_int;
-    perfexpert_hash_handle_t hh_str;
 } metric_t;
+
+/** Structure to hold procedures */
+typedef struct procedure {
+    volatile perfexpert_list_item_t *next;
+    volatile perfexpert_list_item_t *prev;
+    int  id;
+    char *name;
+    int  type;
+    int  line;
+    file_t *file;
+    module_t *module;
+    metric_t *metrics_by_id;
+    perfexpert_hash_handle_t hh_int;
+} procedure_t;
+
+/** Structure to hold loops */
+typedef struct loop {
+    volatile perfexpert_list_item_t *next;
+    volatile perfexpert_list_item_t *prev;
+    int  id;
+    char *name;
+    int  type;
+    int  line;
+    file_t *file;
+    module_t *module;
+    metric_t *metrics_by_id;
+    int  depth;
+} loop_t;
 
 /** Structure to hold the call path */
 typedef struct callpath callpath_t;
@@ -118,15 +140,8 @@ struct callpath {
     volatile perfexpert_list_item_t *prev;
     perfexpert_list_t callees;
     int  id;
-    int  line;
-    int  type;
     int  scope;
     int  alien;
-    int  loopdepth;
-    file_t *file;
-    module_t *module;
-    metric_t *metrics_by_id;
-    metric_t *metrics_by_name;
     callpath_t *parent;
     procedure_t *procedure;
 };
@@ -139,10 +154,10 @@ typedef struct profile {
     int  id;
     char *name;
     file_t *files;
-    metric_t *metrics_by_id;
-    metric_t *metrics_by_name;
     module_t *modules;
-    procedure_t *procedures;
+    metric_t *metrics_by_id;
+    procedure_t *procedures_by_id;
+    perfexpert_list_t hotspots; /* for both procedure_t and loop_t */
 } profile_t;
 
 /* Function declarations */
@@ -150,8 +165,10 @@ int hpctoolkit_parse_file(const char *file, perfexpert_list_t *profiles);
 int hpctoolkit_parser(xmlDocPtr document, xmlNodePtr node,
     perfexpert_list_t *profiles, profile_t *profile, callpath_t *parent,
     int loopdepth);
-int check_profiles(perfexpert_list_t *profiles);
-int check_callpath(perfexpert_list_t *calls, int root);
+int profile_check_all(perfexpert_list_t *profiles);
+int profile_check_callpath(perfexpert_list_t *calls, int root);
+int profile_flatten_all(perfexpert_list_t *profiles);
+int profile_flatten(profile_t *profile);
 
 #ifdef __cplusplus
 }

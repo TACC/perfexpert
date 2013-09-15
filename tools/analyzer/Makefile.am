@@ -30,7 +30,8 @@ SUBDIRS = argp hpcdata analyzer
 bin_PROGRAMS = perfexpert_analyzer
 
 perfexpert_analyzer_SOURCES = analyzer_main.c \
-	analyzer_hpctoolkit.c
+	analyzer_hpctoolkit.c \
+	analyzer_profile.c
 
 perfexpert_analyzer_CPPFLAGS = -I$(srcdir)/../common -I/usr/include/libxml2/
 
