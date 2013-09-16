@@ -73,8 +73,6 @@ extern "C" {
 #include <stdlib.h>
 #endif
 
-#include "perfexpert_constants.h"
-
 /**
  * Structure of list item and base type for items that are put in list 
  * containers.
@@ -133,18 +131,6 @@ static inline void perfexpert_list_item_destruct(perfexpert_list_item_t *item) {
  */
 #define perfexpert_list_get_prev(item) ((item) ? \
     ((perfexpert_list_item_t*) ((perfexpert_list_item_t*)(item))->prev) : NULL)
-
-/**
- * Check for empty list
- *
- * @param[in] list The  List container
- * @retval    PERFEXPERT_TRUE  If list's size is 0
- * @retval    PERFEXPERT_FALSE Otherwise
- */
-static inline int perfexpert_list_is_empty(perfexpert_list_t* list) {
-    return (list->sentinel.next == &(list->sentinel) ?
-            PERFEXPERT_FALSE : PERFEXPERT_TRUE);
-}
 
 /**
  * Return the first item on the list (does not remove it).
