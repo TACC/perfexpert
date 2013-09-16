@@ -38,22 +38,17 @@ extern "C" {
  * it is possible to combine more than one error code in the return value.
  */
 
-/** PERFEXPERT_UNDEFINED should be used when it is not an error */
-#define PERFEXPERT_UNDEFINED -2
-/** PERFEXPERT_FAILURE should be used when an error is -1 */
-#define PERFEXPERT_FAILURE   -1
-/** PERFEXPERT_SUCCESS should be used in case of success */
-#define PERFEXPERT_SUCCESS    0
-/** PERFEXPERT_ERROR should be used in case of general error */
-#define PERFEXPERT_ERROR      1
-/** PERFEXPERT_NO_REC should be used when we run out of recommendation */
-#define PERFEXPERT_NO_REC     2
-/** PERFEXPERT_NO_PAT should be used when no pattern matches */
-#define PERFEXPERT_NO_PAT     3
-/** PERFEXPERT_NO_PAT should be used when transformations can't be applied */
-#define PERFEXPERT_NO_TRANS   4
-/** PERFEXPERT_NO_DATA should be used when analyzer return an error */
-#define PERFEXPERT_NO_DATA    5
+/* Return codes that should be used... */
+enum {
+	PERFEXPERT_UNDEFINED = -2, /* -2 ...when the error is unknown             */
+	PERFEXPERT_FAILURE,        /* -1 ...when an error is -1 (GNU standard)    */
+	PERFEXPERT_SUCCESS,        /* 0  ...in case of success                    */
+	PERFEXPERT_ERROR,          /* 1  ...in case of general error              */
+	PERFEXPERT_NO_REC,         /* 2  ...when we run out of recommendation     */
+	PERFEXPERT_NO_PAT,         /* 3  ...when no pattern matches               */
+	PERFEXPERT_NO_TRANS,       /* 4  ...when transformations can't be applied */
+	PERFEXPERT_NO_DATA,        /* 5  ...when analyzer return an error         */
+};
 
 #define PERFEXPERT_TRUE   1 /**< used to return boolean values */
 #define PERFEXPERT_FALSE  0 /**< used to return boolean values */
