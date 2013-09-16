@@ -63,6 +63,8 @@ extern "C" {
 #include <unistd.h>
 #endif
 
+#include "perfexpert_constants.h"
+
 /**
  *  Main macro for use in sending debugging output to screen.
  *
@@ -94,8 +96,9 @@ extern "C" {
 #define COLOR_CYAN    6
 #define COLOR_WHITE   7
 
+/* Set string color */
 static inline char* colorful(int attr, int fg, int bg, char* str) {
-    if (1 == globals.colorful) {
+    if (PERFEXPERT_TRUE == globals.colorful) {
         static char *colored;
 
         colored = (char *)realloc(colored, strlen(str) + 15);
