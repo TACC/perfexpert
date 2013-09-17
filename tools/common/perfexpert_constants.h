@@ -91,6 +91,17 @@ enum {
 #define DEFAULT_CFLAGS   "-g -O3 -fno-inline "
 #define DEFAULT_LDFLAGS  ""
 
+/* Hotspots I know */
+enum {
+    PERFEXPERT_HOTSPOT_UNKNOWN = 0,
+    PERFEXPERT_HOTSPOT_PROGRAM,
+    PERFEXPERT_HOTSPOT_FUNCTION,
+    PERFEXPERT_HOTSPOT_LOOP,
+};
+
+/* Total instructions metric */
+#define PERFEXPERT_TOOL_HPCTOOLKIT_TOT_INS "PAPI_TOT_INS"
+
 #ifdef __cplusplus
 }
 #endif

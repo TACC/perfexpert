@@ -32,19 +32,25 @@
 extern "C" {
 #endif
 
+#ifndef _GETOPT_H__
+#include <getopt.h>
+#endif
+
 #ifndef __XML_PARSER_H__
 #include <libxml/parser.h>
 #endif
 
-// #include "uthash.h"
 #include "perfexpert_hash.h"
 #include "perfexpert_list.h"
 
 /** Structure to hold global variables */
 typedef struct {
+    char *tool;
+    char *inputfile;
+    int  aggregate;
+    int  thread;
     int  verbose_level;
     int  colorful;
-    perfexpert_list_t profiles;
 } globals_t;
 
 extern globals_t globals; /* This variable is defined in analyzer_main.c */
@@ -55,22 +61,21 @@ extern globals_t globals; /* This variable is defined in analyzer_main.c */
 #endif
 #define PROGRAM_PREFIX "[analyzer]"
 
-#define PERFEXPERT_HOTSPOT_UNKNOWN   0
-#define PERFEXPERT_HOTSPOT_FUNCTION  1
-#define PERFEXPERT_HOTSPOT_LOOP      2
-
 /** Structure to handle command line arguments. Try to keep the content of
  *  this structure compatible with the parse_cli_params() and show_help().
  */
-// static struct option long_options[] = {
-//     {"colorful",      no_argument,       NULL, 'c'},
-//     {"inputfile",     required_argument, NULL, 'f'},
-//     {"help",          no_argument,       NULL, 'h'},
-//     {"verbose_level", required_argument, NULL, 'l'},
-//     {"outputfile",    required_argument, NULL, 'o'},
-//     {"verbose",       no_argument,       NULL, 'v'},
-//     {0, 0, 0, 0}
-// };
+static struct option long_options[] = {
+    {"aggregate",     no_argument,       NULL, 'a'},
+    {"colorful",      no_argument,       NULL, 'c'},
+    {"inputfile",     required_argument, NULL, 'f'},
+    {"help",          no_argument,       NULL, 'h'},
+    {"measurement",   required_argument, NULL, 'm'},
+    {"verbose_level", required_argument, NULL, 'l'},
+    {"outputfile",    required_argument, NULL, 'o'},
+    {"thread",        required_argument, NULL, 't'},
+    {"verbose",       no_argument,       NULL, 'v'},
+    {0, 0, 0, 0}
+};
 
 /** Structure to help STDIN parsing */
 typedef struct node {
@@ -96,6 +101,8 @@ typedef struct file {
 
 /** Structure to hold metrics */
 typedef struct metric {
+    volatile perfexpert_list_item_t *next;
+    volatile perfexpert_list_item_t *prev;
     int    id;
     char   *name;
     int    thread;
@@ -113,9 +120,13 @@ typedef struct procedure {
     char *name;
     int  type;
     int  line;
+    double variance;
+    double importance;
+    double instructions;
     file_t *file;
     module_t *module;
     metric_t *metrics_by_id;
+    perfexpert_list_t metrics;
     perfexpert_hash_handle_t hh_int;
 } procedure_t;
 
@@ -127,9 +138,13 @@ typedef struct loop {
     char *name;
     int  type;
     int  line;
+    double variance;
+    double importance;
+    double instructions;
     file_t *file;
     module_t *module;
     metric_t *metrics_by_id;
+    perfexpert_list_t metrics;
     int  depth;
 } loop_t;
 
@@ -153,6 +168,7 @@ typedef struct profile {
     perfexpert_list_t callees;
     int  id;
     char *name;
+    double instructions;
     file_t *files;
     module_t *modules;
     metric_t *metrics_by_id;
@@ -161,6 +177,9 @@ typedef struct profile {
 } profile_t;
 
 /* Function declarations */
+void show_help(void);
+int parse_env_vars(void);
+int parse_cli_params(int argc, char *argv[]);
 int hpctoolkit_parse_file(const char *file, perfexpert_list_t *profiles);
 int hpctoolkit_parser(xmlDocPtr document, xmlNodePtr node,
     perfexpert_list_t *profiles, profile_t *profile, callpath_t *parent,
@@ -168,7 +187,10 @@ int hpctoolkit_parser(xmlDocPtr document, xmlNodePtr node,
 int profile_check_all(perfexpert_list_t *profiles);
 int profile_check_callpath(perfexpert_list_t *calls, int root);
 int profile_flatten_all(perfexpert_list_t *profiles);
-int profile_flatten(profile_t *profile);
+int profile_flatten_hotspots(profile_t *profile);
+int profile_aggregate_hotspots(profile_t *profile);
+int profile_aggregate_metrics(procedure_t *hotspot);
+int calculate_importance_variance(profile_t *profile);
 
 #ifdef __cplusplus
 }

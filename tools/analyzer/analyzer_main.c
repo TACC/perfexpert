@@ -32,32 +32,49 @@ globals_t globals; // Variable to hold global options, this one is OK
 
 /* main, life starts here */
 int main(int argc, char **argv) {
-    globals.verbose_level = 10;
-    globals.colorful = 1;
-    perfexpert_list_construct(&(globals.profiles));
+    perfexpert_list_t profiles;
 
-    /* Parse input file, check it, and flatten profiles */
-    if (PERFEXPERT_SUCCESS != hpctoolkit_parse_file(argv[1],
-        &(globals.profiles))) {
-        OUTPUT(("%s (%s)",
-            _ERROR("Error: are you sure this is a valid HPCToolkit file?"),
-            argv[1]));
+    /* Set default values for globals */
+    globals = (globals_t) {
+        .tool          = NULL, // char *
+        .aggregate     = 0,    // int
+        .thread        = -1,   // int
+        .verbose_level = 0,    // int
+        .inputfile     = NULL, // char *
+        .colorful      = 0     // int
+    };
+
+    perfexpert_list_construct(&profiles);
+
+    /* Parse command-line parameters */
+    if (PERFEXPERT_SUCCESS != parse_cli_params(argc, argv)) {
+        OUTPUT(("%s", _ERROR("Error: parsing command line arguments")));
         return PERFEXPERT_ERROR;
     }
 
-    if (PERFEXPERT_SUCCESS != profile_check_all(&(globals.profiles))) {
-        OUTPUT(("%s (%s)",
-            _ERROR("Error: are you sure this is a valid HPCToolkit file?"),
-            argv[1]));
+    /* Parse input file and check, flatten, and validate profiles */
+    if (PERFEXPERT_SUCCESS != hpctoolkit_parse_file(globals.inputfile,
+        &profiles)) {
+        OUTPUT(("%s (%s)", _ERROR("Error: it is not a valid HPCToolkit file"),
+            globals.inputfile));
+        return PERFEXPERT_ERROR;
+    }
+    if (PERFEXPERT_SUCCESS != profile_check_all(&profiles)) {
+        OUTPUT(("%s", _ERROR("Error: checking profile")));
+        return PERFEXPERT_ERROR;
+    }
+    if (PERFEXPERT_SUCCESS != profile_flatten_all(&profiles)) {
+        OUTPUT(("%s (%s)", _ERROR("Error: flatening profiles"),
+            globals.inputfile));
         return PERFEXPERT_ERROR;
     }
 
-    // if (PERFEXPERT_SUCCESS != profile_flatten_all(&profiles)) {
-    //     OUTPUT(("%s (%s)",
-    //         _ERROR("Error: are you sure this is a valid HPCToolkit file?"),
-    //         argv[1]));
-    //     return PERFEXPERT_ERROR;
-    // }
+    // TODO: hash metrics by name
+    // TODO: parse LCPI metrics
+    // TODO: parse machine.properties
+    // TODO: output analysis
+    // TODO: output metrics to recommender
+
 
     return 0;
 }

@@ -29,14 +29,13 @@
 #include "perfexpert_constants.h"
 #include "perfexpert_hash.h"
 #include "perfexpert_output.h"
-#include "perfexpert_md5.h"
 #include "perfexpert_util.h"
 
 /* hpctoolkit_parse_file */
 int hpctoolkit_parse_file(const char *file, perfexpert_list_t *profiles) {
-    xmlDocPtr   document;
-    xmlNodePtr  node;
-    profile_t *profile = NULL;
+    xmlDocPtr  document;
+    xmlNodePtr node;
+    profile_t  *profile = NULL;
 
     /* Open file */
     if (NULL == (document = xmlParseFile(file))) {
@@ -99,6 +98,7 @@ int hpctoolkit_parser(xmlDocPtr document, xmlNodePtr node,
         /* SecCallPathProfile */
         if (!xmlStrcmp(node->name, (const xmlChar *)"SecCallPathProfile")) {
             PERFEXPERT_ALLOC(profile_t, profile, sizeof(profile_t));
+            profile->instructions = 0.0;
             profile->files = NULL;
             profile->modules = NULL;
             profile->metrics_by_id = NULL;
@@ -241,6 +241,9 @@ int hpctoolkit_parser(xmlDocPtr document, xmlNodePtr node,
                 strcpy(procedure->name, xmlGetProp(node, "n"));
 
                 procedure->type = PERFEXPERT_HOTSPOT_FUNCTION;
+                procedure->instructions = 0.0;
+                procedure->importance = 0.0;
+                procedure->variance = 0.0;
                 procedure->line = -1;
                 procedure->file = NULL;
                 procedure->module = NULL;
@@ -332,6 +335,7 @@ int hpctoolkit_parser(xmlDocPtr document, xmlNodePtr node,
                 procedure->file = file;
                 procedure->module = module;
                 procedure->line = atoi(xmlGetProp(node, "l"));
+                perfexpert_list_construct(&(procedure->metrics));
             }
 
             /* Set procedure and ID */
@@ -436,6 +440,9 @@ int hpctoolkit_parser(xmlDocPtr document, xmlNodePtr node,
                 /* Allocate loop and set properties */
                 PERFEXPERT_ALLOC(loop_t, loop, sizeof(loop_t));
                 loop->name = name;
+                loop->variance = 0.0;
+                loop->importance = 0.0;
+                loop->instructions = 0.0;
                 loop->type = PERFEXPERT_HOTSPOT_LOOP;
                 loop->id = atoi(xmlGetProp(node, "i"));
                 loop->line = atoi(xmlGetProp(node, "l"));
@@ -443,6 +450,7 @@ int hpctoolkit_parser(xmlDocPtr document, xmlNodePtr node,
                 loop->module = parent->procedure->module;
                 loop->metrics_by_id = NULL;
                 loop->depth = loopdepth;
+                perfexpert_list_construct(&(loop->metrics));
                 perfexpert_list_item_construct((perfexpert_list_item_t *)loop);
 
                 /* Add loop to list of hotspots */
@@ -503,8 +511,9 @@ int hpctoolkit_parser(xmlDocPtr document, xmlNodePtr node,
             metric->thread     = metric_entry->thread;
             metric->mpi_rank   = metric_entry->mpi_rank;
             metric->experiment = metric_entry->experiment;
-            perfexpert_hash_add_int(parent->procedure->metrics_by_id, id,
-                metric);
+            perfexpert_list_item_construct((perfexpert_list_item_t *)metric);
+            perfexpert_list_append(&(parent->procedure->metrics),
+                (perfexpert_list_item_t *)metric);
 
             /* Set value */
             if (NULL != xmlGetProp(node, "v")) {
