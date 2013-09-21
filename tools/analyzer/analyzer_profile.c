@@ -27,13 +27,14 @@
 #include "perfexpert_alloc.h"
 #include "perfexpert_constants.h"
 #include "perfexpert_list.h"
+#include "perfexpert_md5.h"
 #include "perfexpert_output.h"
 #include "perfexpert_util.h"
 
 /* profile_aggregate_hotspots */
 int profile_aggregate_hotspots(profile_t *profile) {
-    procedure_t *hotspot;
-    procedure_t *aggregated_hotspot;
+    procedure_t *hotspot = NULL;
+    procedure_t *aggregated_hotspot = NULL;
 
     OUTPUT_VERBOSE((5, "%s", _YELLOW("   Aggregating hotspots")));
 
@@ -41,12 +42,18 @@ int profile_aggregate_hotspots(profile_t *profile) {
     PERFEXPERT_ALLOC(procedure_t, aggregated_hotspot, sizeof(procedure_t));
     aggregated_hotspot->id = 0;
     aggregated_hotspot->line = 0;
-    aggregated_hotspot->instructions = 0;
+    aggregated_hotspot->valid = PERFEXPERT_TRUE;
+    aggregated_hotspot->cycles = 0.0;
+    aggregated_hotspot->variance = 0.0;
+    aggregated_hotspot->importance = 0.0;
+    aggregated_hotspot->instructions = 0.0;
     aggregated_hotspot->name = profile->name;
     aggregated_hotspot->type = PERFEXPERT_HOTSPOT_PROGRAM;
     aggregated_hotspot->file = NULL;
     aggregated_hotspot->module = NULL;
+    aggregated_hotspot->lcpi_by_name = NULL;
     aggregated_hotspot->metrics_by_id = NULL;
+    aggregated_hotspot->metrics_by_name = NULL;
     perfexpert_list_construct(&(aggregated_hotspot->metrics));
     perfexpert_list_item_construct(
         (perfexpert_list_item_t *)aggregated_hotspot);
@@ -90,22 +97,22 @@ int profile_aggregate_hotspots(profile_t *profile) {
 }
 
 /* profile_aggregate_metrics */
-int profile_aggregate_metrics(procedure_t *hotspot) {
+int profile_aggregate_metrics(profile_t *profile, procedure_t *hotspot) {
     metric_t *current = NULL;
     metric_t *next = NULL;
     metric_t *next_next = NULL;
 
     if (-1 == globals.thread) {
         OUTPUT_VERBOSE((5, "      %s (metrics count: %d)",
-            _YELLOW("Aggregate metrics ignoring thread ID"),
+            _CYAN("Aggregate metrics ignoring thread ID"),
             perfexpert_list_get_size(&(hotspot->metrics))));
     } else {
         OUTPUT_VERBOSE((5, "      %s (%d) (metrics count: %d)",
-            _YELLOW("Aggregate metrics by thread ID"), globals.thread,
+            _CYAN("Aggregate metrics by thread ID"), globals.thread,
             perfexpert_list_get_size(&(hotspot->metrics))));
     }
 
-    /* Ignore and remove from list other thread IDs */
+    /* Ignore and remove from list of metrics the ones with other thread IDs */
     current = (metric_t *)perfexpert_list_get_first(&(hotspot->metrics));
     while ((perfexpert_list_item_t *)current != &(hotspot->metrics.sentinel)) {
         next = (metric_t *)current->next;
@@ -124,7 +131,7 @@ int profile_aggregate_metrics(procedure_t *hotspot) {
     /* For all metrics in hotspot... */
     current = (metric_t *)perfexpert_list_get_first(&(hotspot->metrics));
     while ((perfexpert_list_item_t *)current != &(hotspot->metrics.sentinel)) {
-        if (9 <= globals.verbose_level) {
+        if (9 <= globals.verbose) {
             printf("%s          %s(%d)[%d] ", PROGRAM_PREFIX,
                 _GREEN(current->name), current->thread, current->experiment);
         }
@@ -140,13 +147,13 @@ int profile_aggregate_metrics(procedure_t *hotspot) {
                 current->value += next->value;
                 perfexpert_list_remove_item(&(hotspot->metrics),
                     (perfexpert_list_item_t *)next);
-                free(next);
+                PERFEXPERT_DEALLOC(next);
 
-                if (10 <= globals.verbose_level) {
+                if (10 <= globals.verbose) {
                     printf("%s ", _CYAN("removed"));
                 }
             } else {
-                if (10 <= globals.verbose_level) {
+                if (10 <= globals.verbose) {
                     printf("%s(%d)[%d] ", next->name, next->thread,
                         next->experiment);
                 }
@@ -154,7 +161,7 @@ int profile_aggregate_metrics(procedure_t *hotspot) {
             /* Compare to the next metric */
             next = next_next;
         }
-        if (9 <= globals.verbose_level) {
+        if (9 <= globals.verbose) {
             printf("\n");
             fflush(stdout);
         }
@@ -163,18 +170,24 @@ int profile_aggregate_metrics(procedure_t *hotspot) {
         current = (metric_t *)perfexpert_list_get_next(current);
     }
 
-    OUTPUT_VERBOSE((5, "         new metrics count: %d",
+    OUTPUT_VERBOSE((5, "      %s (%d)", _MAGENTA("new metrics count"),
         perfexpert_list_get_size(&(hotspot->metrics))));
 
-    if (10 <= globals.verbose_level) {
+    /* Hash metric by name (at this point it should be unique) */
+    if (10 <= globals.verbose) {
         printf("%s          ", PROGRAM_PREFIX);
-        current = (metric_t *)perfexpert_list_get_first(&(hotspot->metrics));
-        while ((perfexpert_list_item_t *)current !=
-            &(hotspot->metrics.sentinel)) {
-            printf("%s[%d](%d) ", _MAGENTA(current->name), current->thread,
+    }
+    current = (metric_t *)perfexpert_list_get_first(&(hotspot->metrics));
+    while ((perfexpert_list_item_t *)current != &(hotspot->metrics.sentinel)) {
+        if (10 <= globals.verbose) {
+            printf("%s[%d](%d) ", _CYAN(current->name), current->thread,
                 current->experiment);
-            current = (metric_t *)perfexpert_list_get_next(current);
         }
+        strcpy(current->name_md5, perfexpert_md5_string(current->name));
+        perfexpert_hash_add_str(hotspot->metrics_by_name, name_md5, current);
+        current = (metric_t *)perfexpert_list_get_next(current);
+    }
+    if (10 <= globals.verbose) {
         printf("\n");
         fflush(stdout);
     }
@@ -186,7 +199,7 @@ int profile_aggregate_metrics(procedure_t *hotspot) {
 int profile_flatten_all(perfexpert_list_t *profiles) {
     profile_t *profile = NULL;
 
-    OUTPUT_VERBOSE((5, "%s", _YELLOW("Flattening profiles")));
+    OUTPUT_VERBOSE((5, "%s", _BLUE("Flattening profiles")));
 
     /* For each profile in the list of profiles... */
     profile = (profile_t *)perfexpert_list_get_first(profiles);
@@ -219,27 +232,60 @@ int profile_flatten_all(perfexpert_list_t *profiles) {
 
 /* profile_flatten_hotspots */
 int profile_flatten_hotspots(profile_t *profile) {
+    procedure_t *hotspot_prev = NULL;
     procedure_t *hotspot = NULL;
+    metric_t *metric = NULL;
+    char key_md5[33];
 
-    OUTPUT_VERBOSE((4, "   %s", _YELLOW("Flatenning hotspots")));
+    OUTPUT_VERBOSE((4, "   %s", _CYAN("Flatenning hotspots")));
 
     /* For each hotspot in the profile's list of hotspots... */
     hotspot = (procedure_t *)perfexpert_list_get_first(&(profile->hotspots));
     while ((perfexpert_list_item_t *)hotspot != &(profile->hotspots.sentinel)) {
-        OUTPUT_VERBOSE((8, "    [%d] %s (%s@%s:%d)", hotspot->id,
-            _RED(hotspot->name),
-            hotspot->module != NULL ? hotspot->module->shortname : "---",
-            hotspot->file != NULL ? hotspot->file->shortname : "---",
-            hotspot->line));
+        if (PERFEXPERT_HOTSPOT_FUNCTION == hotspot->type) {
+            OUTPUT_VERBOSE((8, "    [%d] %s (%s@%s:%d)", hotspot->id,
+                _YELLOW(hotspot->name),
+                hotspot->module != NULL ? hotspot->module->shortname : "---",
+                hotspot->file != NULL ? hotspot->file->shortname : "---",
+                hotspot->line));
+        }
+        if (PERFEXPERT_HOTSPOT_LOOP == hotspot->type) {
+            loop_t *loop = (loop_t *)hotspot;
+            OUTPUT_VERBOSE((8, "    [%d] %s (%s@%s:%d)", hotspot->id,
+                _YELLOW("loop"), loop->procedure->module->shortname,
+                loop->procedure->file->shortname, hotspot->line));
+        }
 
         /* Aggregate threads measurements */
-        if (PERFEXPERT_SUCCESS != profile_aggregate_metrics(hotspot)) {
+        if (PERFEXPERT_SUCCESS != profile_aggregate_metrics(profile, hotspot)) {
             OUTPUT(("%s (%s)", _ERROR("Error: aggregating metrics"),
                 hotspot->name));
             return PERFEXPERT_ERROR;
         }
 
-        /* Move on */
+        /* Check if the total number of instructions is present, if not delete
+         * this hotspot from the list and move on, but first save the total
+         * cycles (if present)!
+         */
+        strcpy(key_md5,
+            perfexpert_md5_string(PERFEXPERT_TOOL_HPCTOOLKIT_TOT_INS));
+        perfexpert_hash_find_str(hotspot->metrics_by_name, key_md5, metric);
+        if (NULL == metric) {
+            strcpy(key_md5,
+                perfexpert_md5_string(PERFEXPERT_TOOL_HPCTOOLKIT_TOT_CYC));
+            perfexpert_hash_find_str(hotspot->metrics_by_name, key_md5, metric);
+            if (NULL != metric) {
+                profile->cycles += metric->value;
+            }
+
+            hotspot_prev = (procedure_t *)hotspot->prev;
+            perfexpert_list_remove_item(&(profile->hotspots),
+                (perfexpert_list_item_t *)hotspot);
+            hotspot = hotspot_prev;
+
+            OUTPUT_VERBOSE((8, "      %s (number of instructions not found)",
+                _RED("removed from list of hotspots")));
+        }
         hotspot = (procedure_t *)perfexpert_list_get_next(hotspot);
     }
 
@@ -250,6 +296,12 @@ int profile_flatten_hotspots(profile_t *profile) {
         return PERFEXPERT_ERROR;
     }
 
+    /* Compute LCPI */
+    if (PERFEXPERT_SUCCESS != lcpi_compute(profile)) {
+        OUTPUT(("%s (%s)", _ERROR("Error: calculating LCPI"), hotspot->name));
+        return PERFEXPERT_ERROR;
+    }
+
     return PERFEXPERT_SUCCESS;
 }
 
@@ -257,7 +309,7 @@ int profile_flatten_hotspots(profile_t *profile) {
 int profile_check_all(perfexpert_list_t *profiles) {
     profile_t *profile = NULL;
 
-    OUTPUT_VERBOSE((5, "%s", _YELLOW("Checking profiles")));
+    OUTPUT_VERBOSE((5, "%s", _BLUE("Checking profiles")));
 
     profile = (profile_t *)perfexpert_list_get_first(profiles);
     while ((perfexpert_list_item_t *)profile != &(profiles->sentinel)) {
@@ -279,21 +331,28 @@ int profile_check_all(perfexpert_list_t *profiles) {
 int profile_check_callpath(perfexpert_list_t *calls, int root) {
     callpath_t *callpath = NULL;
     char *indent = NULL;
-    int i;
+    int i = 0;
 
     PERFEXPERT_ALLOC(char, indent, ((2 * root) + 1));
-
     for (i = 0; i <= root; i++) {
         strcat(indent, " .");
     }
 
     callpath = (callpath_t *)perfexpert_list_get_first(calls);
     while ((perfexpert_list_item_t *)callpath != &(calls->sentinel)) {
-        OUTPUT_VERBOSE((9, "%s [%d] %s (%s@%s:%d)", indent, callpath->id,
-            _RED(callpath->procedure->name),
-            callpath->procedure->module->shortname,
-            callpath->procedure->file->shortname,
-            callpath->procedure->line));
+        if (PERFEXPERT_HOTSPOT_FUNCTION == callpath->procedure->type) {
+            OUTPUT_VERBOSE((9, "%s [%d] %s (%s@%s:%d)", indent, callpath->id,
+                _YELLOW(callpath->procedure->name),
+                callpath->procedure->module->shortname,
+                callpath->procedure->file->shortname,
+                callpath->procedure->line));
+        }
+        if (PERFEXPERT_HOTSPOT_LOOP == callpath->procedure->type) {
+            loop_t *loop = (loop_t *)callpath->procedure;
+            OUTPUT_VERBOSE((9, "%s [%d] %s (%s@%s:%d)", indent, callpath->id,
+                _YELLOW("loop"), loop->procedure->module->shortname,
+                loop->procedure->file->shortname, loop->line));
+        }
 
         if (0 < perfexpert_list_get_size(&(callpath->callees))) {
             root++;
@@ -302,6 +361,7 @@ int profile_check_callpath(perfexpert_list_t *calls, int root) {
         }
         callpath = (callpath_t *)perfexpert_list_get_next(callpath);
     }
+    PERFEXPERT_DEALLOC(indent);
     return PERFEXPERT_SUCCESS;
 }
 

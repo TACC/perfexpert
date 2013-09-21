@@ -113,7 +113,7 @@ int compile_program(void) {
     argv[arg_index] = NULL;
 
     /* Not using OUTPUT_VERBOSE because I want only one line */
-    if (8 <= globals.verbose_level) {
+    if (8 <= globals.verbose) {
         int i;
         printf("%s    %s", PROGRAM_PREFIX, _YELLOW("command line:"));
         for (i = 0; i < arg_index; i++) {

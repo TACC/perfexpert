@@ -29,6 +29,7 @@
 #include "perfexpert_constants.h"
 #include "perfexpert_hash.h"
 #include "perfexpert_output.h"
+#include "perfexpert_string.h"
 #include "perfexpert_util.h"
 
 /* hpctoolkit_parse_file */
@@ -57,9 +58,8 @@ int hpctoolkit_parse_file(const char *file, perfexpert_list_t *profiles) {
         xmlFreeDoc(document);
         return PERFEXPERT_ERROR;
     } else {
-        OUTPUT_VERBOSE((2, "%s (%s)",
-            _YELLOW("Parsing HPCToolkit experiment file"),
-            xmlGetProp(node, "version")));
+        OUTPUT_VERBOSE((2, "%s [HPCToolkit experiment file version %s]",
+            _BLUE("Loading profiles"), xmlGetProp(node, "version")));
     }
 
     /* Perse the document */
@@ -70,12 +70,12 @@ int hpctoolkit_parse_file(const char *file, perfexpert_list_t *profiles) {
         return PERFEXPERT_ERROR;
     }
 
-    OUTPUT_VERBOSE((4, "%d %s", perfexpert_list_get_size(profiles),
-        _GREEN("code profile(s) found")));
+    OUTPUT_VERBOSE((4, "   (%d) %s", perfexpert_list_get_size(profiles),
+        _MAGENTA("code profile(s) found")));
 
     profile = (profile_t *)perfexpert_list_get_first(profiles);
     while ((perfexpert_list_item_t *)profile != &(profiles->sentinel)) {
-        OUTPUT_VERBOSE((4, "   %s", profile->name));
+        OUTPUT_VERBOSE((4, "      %s", _GREEN(profile->name)));
         profile = (profile_t *)perfexpert_list_get_next(profile);
     }
 
@@ -88,20 +88,22 @@ int hpctoolkit_parse_file(const char *file, perfexpert_list_t *profiles) {
 int hpctoolkit_parser(xmlDocPtr document, xmlNodePtr node,
     perfexpert_list_t *profiles, profile_t *profile, callpath_t *parent,
     int loopdepth) {
-    file_t      *file;
-    metric_t    *metric;
-    module_t    *module;
-    callpath_t  *callpath;
-    procedure_t *procedure;
+    file_t      *file = NULL;
+    metric_t    *metric = NULL;
+    module_t    *module = NULL;
+    callpath_t  *callpath = NULL;
+    procedure_t *procedure = NULL;
 
     while (NULL != node) {
         /* SecCallPathProfile */
         if (!xmlStrcmp(node->name, (const xmlChar *)"SecCallPathProfile")) {
             PERFEXPERT_ALLOC(profile_t, profile, sizeof(profile_t));
+            profile->cycles = 0.0;
             profile->instructions = 0.0;
-            profile->files = NULL;
-            profile->modules = NULL;
+            profile->files_by_id = NULL;
+            profile->modules_by_id = NULL;
             profile->metrics_by_id = NULL;
+            profile->metrics_by_name = NULL;
             profile->procedures_by_id = NULL;
             profile->id = atoi(xmlGetProp(node, "i"));
             perfexpert_list_construct(&(profile->callees));
@@ -134,6 +136,7 @@ int hpctoolkit_parser(xmlDocPtr document, xmlNodePtr node,
             if ((NULL != xmlGetProp(node, "n")) && (xmlGetProp(node, "i"))) {
                 PERFEXPERT_ALLOC(metric_t, metric, sizeof(metric_t));
                 metric->id = atoi(xmlGetProp(node, "i"));
+                metric->value = 0.0;
 
                 /* Save the entire metric name */
                 PERFEXPERT_ALLOC(char, temp_str[0],
@@ -145,7 +148,10 @@ int hpctoolkit_parser(xmlDocPtr document, xmlNodePtr node,
                     /* Set the name (only the performance counter name) */
                     PERFEXPERT_ALLOC(char, metric->name,
                         (strlen(temp_str[1]) + 1));
+                    perfexpert_string_replace_char(temp_str[1], ':', '_');
                     strcpy(metric->name, temp_str[1]);
+                    strcpy(metric->name_md5,
+                        perfexpert_md5_string(metric->name));
 
                     /* Save the thread information */
                     temp_str[1] = strtok(NULL, ".");
@@ -202,7 +208,7 @@ int hpctoolkit_parser(xmlDocPtr document, xmlNodePtr node,
                     module->id, module->name));
 
                 /* Hash it! */
-                perfexpert_hash_add_int(profile->modules, id, module);
+                perfexpert_hash_add_int(profile->modules_by_id, id, module);
             }
         }
 
@@ -226,7 +232,7 @@ int hpctoolkit_parser(xmlDocPtr document, xmlNodePtr node,
                     file->name));
 
                 /* Hash it! */
-                perfexpert_hash_add_int(profile->files, id, file);
+                perfexpert_hash_add_int(profile->files_by_id, id, file);
             }
         }
 
@@ -244,12 +250,17 @@ int hpctoolkit_parser(xmlDocPtr document, xmlNodePtr node,
                 procedure->instructions = 0.0;
                 procedure->importance = 0.0;
                 procedure->variance = 0.0;
+                procedure->cycles = 0.0;
+                procedure->valid = PERFEXPERT_TRUE;
                 procedure->line = -1;
                 procedure->file = NULL;
                 procedure->module = NULL;
+                procedure->lcpi_by_name = NULL;
                 procedure->metrics_by_id = NULL;
+                procedure->metrics_by_name = NULL;
                 perfexpert_list_item_construct(
                     (perfexpert_list_item_t *)procedure);
+                perfexpert_list_construct(&(procedure->metrics));
 
                 /* Add to the profile's hash of procedures and also to the list
                  * of potential hotspots
@@ -289,7 +300,7 @@ int hpctoolkit_parser(xmlDocPtr document, xmlNodePtr node,
 
             /* Find file */
             temp_int = atoi(xmlGetProp(node, "f"));
-            perfexpert_hash_find_int(profile->files, &temp_int, file);
+            perfexpert_hash_find_int(profile->files_by_id, &temp_int, file);
             if (NULL == file) {
                 OUTPUT_VERBOSE((10, "%s", _ERROR("Error: unknown file")));
                 return PERFEXPERT_ERROR;
@@ -297,7 +308,7 @@ int hpctoolkit_parser(xmlDocPtr document, xmlNodePtr node,
 
             /* Find module */
             temp_int = atoi(xmlGetProp(node, "lm"));
-            perfexpert_hash_find_int(profile->modules, &temp_int, module);
+            perfexpert_hash_find_int(profile->modules_by_id, &temp_int, module);
             if (NULL == module) {
                 OUTPUT_VERBOSE((10, "%s", _ERROR("Error: unknown module")));
                 return PERFEXPERT_ERROR;
@@ -309,6 +320,7 @@ int hpctoolkit_parser(xmlDocPtr document, xmlNodePtr node,
                 procedure);
             if (NULL == procedure) {
                 OUTPUT_VERBOSE((10, "%s", _ERROR("Error: unknown procedure")));
+                PERFEXPERT_DEALLOC(callpath);
                 return PERFEXPERT_ERROR;
             } else {
                 /* Paranoia checks */
@@ -398,6 +410,8 @@ int hpctoolkit_parser(xmlDocPtr document, xmlNodePtr node,
             PERFEXPERT_ALLOC(callpath_t, callpath, sizeof(callpath_t));
             callpath->alien = parent->alien;
             callpath->parent = parent->parent;
+            callpath->id = atoi(xmlGetProp(node, "i"));
+            callpath->scope = atoi(xmlGetProp(node, "s"));
             perfexpert_list_construct(&(callpath->callees));
             perfexpert_list_item_construct((perfexpert_list_item_t *)callpath);
 
@@ -440,15 +454,25 @@ int hpctoolkit_parser(xmlDocPtr document, xmlNodePtr node,
                 /* Allocate loop and set properties */
                 PERFEXPERT_ALLOC(loop_t, loop, sizeof(loop_t));
                 loop->name = name;
+                loop->valid = PERFEXPERT_TRUE;
+                loop->cycles = 0.0;
                 loop->variance = 0.0;
                 loop->importance = 0.0;
                 loop->instructions = 0.0;
                 loop->type = PERFEXPERT_HOTSPOT_LOOP;
                 loop->id = atoi(xmlGetProp(node, "i"));
                 loop->line = atoi(xmlGetProp(node, "l"));
-                loop->file = parent->procedure->file;
-                loop->module = parent->procedure->module;
+
+                if (PERFEXPERT_HOTSPOT_FUNCTION == parent->procedure->type) {
+                    loop->procedure = parent->procedure;
+                } else {
+                    loop_t *parent_loop = (loop_t *)parent->procedure;
+                    loop->procedure = parent_loop->procedure;
+                }
+
+                loop->lcpi_by_name = NULL;
                 loop->metrics_by_id = NULL;
+                loop->metrics_by_name = NULL;
                 loop->depth = loopdepth;
                 perfexpert_list_construct(&(loop->metrics));
                 perfexpert_list_item_construct((perfexpert_list_item_t *)loop);
@@ -458,17 +482,15 @@ int hpctoolkit_parser(xmlDocPtr document, xmlNodePtr node,
                     (perfexpert_list_item_t *)loop);
             }
 
-            /* Set ID, scope, and procedure */
+            /* Set procedure */
             callpath->procedure = (procedure_t *)loop;
-            callpath->id = atoi(xmlGetProp(node, "i"));
-            callpath->scope = atoi(xmlGetProp(node, "s"));
 
             OUTPUT_VERBOSE((10,
-                "   %s i=[%d] s=[%d], a=[%d] n=[%s] f=[%s] l=[%d] lm=[%s] d=[%d]",
+                "   %s i=[%d] s=[%d], a=[%d] n=[%s] p=[%s] f=[%s] l=[%d] lm=[%s] d=[%d]",
                 _GREEN("loop"), callpath->id, callpath->scope, callpath->alien,
-                callpath->procedure->name, callpath->procedure->file->shortname,
-                callpath->procedure->line,
-                callpath->procedure->module->shortname, loopdepth));
+                callpath->procedure->name, loop->procedure->name,
+                loop->procedure->file->shortname, callpath->procedure->line,
+                loop->procedure->module->shortname, loopdepth));
 
             /* Keep Walking! (Johnny Walker) */
             if (PERFEXPERT_SUCCESS != hpctoolkit_parser(document,
@@ -480,8 +502,8 @@ int hpctoolkit_parser(xmlDocPtr document, xmlNodePtr node,
 
         /* (M)etric */
         if ((!xmlStrcmp(node->name, (const xmlChar *)"M"))) {
-            int temp_int;
-            metric_t *metric_entry;
+            int temp_int = 0;
+            metric_t *metric_entry = NULL;
 
             /* Just to be sure it will work */
             if ((NULL == xmlGetProp(node, "n")) || 
@@ -506,19 +528,16 @@ int hpctoolkit_parser(xmlDocPtr document, xmlNodePtr node,
 
             /* Alocate metric and initialize it */
             PERFEXPERT_ALLOC(metric_t, metric, sizeof(metric_t));
-            metric->id         = metric_entry->id;
-            metric->name       = metric_entry->name;
-            metric->thread     = metric_entry->thread;
-            metric->mpi_rank   = metric_entry->mpi_rank;
+            metric->id = metric_entry->id;
+            metric->name = metric_entry->name;
+            metric->thread = metric_entry->thread;
+            metric->mpi_rank = metric_entry->mpi_rank;
             metric->experiment = metric_entry->experiment;
+            metric->value = atof(xmlGetProp(node, "v"));
+            strcpy(metric->name_md5, metric_entry->name_md5);
             perfexpert_list_item_construct((perfexpert_list_item_t *)metric);
             perfexpert_list_append(&(parent->procedure->metrics),
                 (perfexpert_list_item_t *)metric);
-
-            /* Set value */
-            if (NULL != xmlGetProp(node, "v")) {
-                metric->value = atof(xmlGetProp(node, "v"));
-            }
 
             OUTPUT_VERBOSE((10,
                 "   %s [%d] of [%d] (%s) (%g) [rank=%d] [tid=%d] [exp=%d]",

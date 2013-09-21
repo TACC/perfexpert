@@ -33,14 +33,16 @@ extern "C" {
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 /* PerfExpert headers */
 #include "config.h"
 #include "perfexpert.h"
-#include "perfexpert_output.h"
-#include "perfexpert_util.h"
-#include "perfexpert_fork.h"
 #include "perfexpert_constants.h"
+#include "perfexpert_fork.h"
+#include "perfexpert_output.h"
+#include "perfexpert_time.h"
+#include "perfexpert_util.h"
 #include "install_dirs.h"
 
 /* run_hpcstruct */
@@ -59,7 +61,7 @@ int run_hpcstruct(void) {
     argv[4] = NULL;
 
     /* Not using OUTPUT_VERBOSE because I want only one line */
-    if (8 <= globals.verbose_level) {
+    if (8 <= globals.verbose) {
         int i;
         printf("%s    %s", PROGRAM_PREFIX, _YELLOW("command line:"));
         for (i = 0; i <= 3; i++) {
@@ -91,6 +93,7 @@ int run_hpcrun(void) {
     int    rc = PERFEXPERT_SUCCESS;
     char   *argv[2];
     test_t test;
+    struct timespec time_start, time_end, time_diff;
 
     /* Open experiment file (it is a list of arguments which I use to run) */
     exp_file = (char *)malloc(strlen(PERFEXPERT_ETCDIR) +
@@ -262,7 +265,7 @@ int run_hpcrun(void) {
         experiment->test.info   = globals.program;
 
         /* Not using OUTPUT_VERBOSE because I want only one line */
-        if (8 <= globals.verbose_level) {
+        if (8 <= globals.verbose) {
             int i;
             printf("%s    %s", PROGRAM_PREFIX, _YELLOW("command line:"));
             for (i = 0; i < experiment->argc; i++) {
@@ -272,6 +275,7 @@ int run_hpcrun(void) {
         }
 
         /* Run program and test return code (should I really test it?) */
+        clock_gettime(CLOCK_MONOTONIC, &time_start);
         switch (fork_and_wait(&(experiment->test), (char **)experiment->argv)) {
             case PERFEXPERT_ERROR:
                 OUTPUT_VERBOSE((7, "   [%s]", _BOLDYELLOW("ERROR")));
@@ -289,6 +293,10 @@ int run_hpcrun(void) {
             default:
                 break;
         }
+        clock_gettime(CLOCK_MONOTONIC, &time_end);
+        perfexpert_time_diff(&time_diff, &time_start, &time_end);
+        OUTPUT(("   [%d] run in %lld.%.9ld seconds", input_line,
+            (long long)time_diff.tv_sec, time_diff.tv_nsec));
 
         /* Run the AFTER program */
         if (NULL != globals.after) {
@@ -459,7 +467,7 @@ int run_hpcrun_knc(void) {
     argv[3] = NULL;
 
     /* Not using OUTPUT_VERBOSE because I want only one line */
-    if (8 <= globals.verbose_level) {
+    if (8 <= globals.verbose) {
         printf("%s    %s %s %s %s\n", PROGRAM_PREFIX, _YELLOW("command line:"),
             argv[0], argv[1], argv[2]);
     }
@@ -509,7 +517,7 @@ int run_hpcprof(void) {
     argv[8] = NULL;
 
     /* Not using OUTPUT_VERBOSE because I want only one line */
-    if (8 <= globals.verbose_level) {
+    if (8 <= globals.verbose) {
         int i;
         printf("%s    %s", PROGRAM_PREFIX, _YELLOW("command line:"));
         for (i = 0; i <= 7; i++) {

@@ -36,15 +36,12 @@ extern "C" {
 #include <sqlite3.h> /* To sqlite3 type on globals */
 #endif
 
-#ifndef _GETOPT_H_
-#include <getopt.h> /* To parse command line arguments */
-#endif
-
 #ifndef	_STDIO_H_
 #include <stdio.h> /* To use FILE type on globals */
 #endif
 
 #include "perfexpert_list.h" /* To list items on function and segment */
+#include "perfexpert_constants.h"
 
 /* WARNING: to include perfexpert_output.h globals have to be defined first */
 #ifdef PROGRAM_PREFIX
@@ -56,14 +53,15 @@ extern "C" {
 typedef struct {
     FILE *inputfile_FP;
     FILE *outputfile_FP;
+    FILE *outputmetrics_FP;
     char *inputfile;
     char *outputfile;
+    char *outputmetrics;
     char *dbfile;
     char *workdir;
     char *metrics_file;
-    int  use_temp_metrics;
     char *metrics_table;
-    int  verbose_level;
+    int  verbose;
     int  colorful;
     int  rec_count;
     long int pid;
@@ -71,26 +69,6 @@ typedef struct {
 } globals_t;
 
 extern globals_t globals; /* This variable id declared in recommender_main.c */
-
-/** Structure to handles command line arguments. Try to keep the content of
- *  this structure compatible with the parse_cli_params() and show_help().
- */
-static struct option long_options[] = {
-    {"automatic",       required_argument, NULL, 'a'},
-    {"colorful",        no_argument,       NULL, 'c'},
-    {"database",        required_argument, NULL, 'd'},
-    {"inputfile",       required_argument, NULL, 'f'},
-    {"help",            no_argument,       NULL, 'h'},
-    {"verbose_level",   required_argument, NULL, 'l'},
-    {"metricsfile",     required_argument, NULL, 'm'},
-    {"newmetrics",      no_argument,       NULL, 'n'},
-    {"outputfile",      required_argument, NULL, 'o'},
-    {"pid",             required_argument, NULL, 'p'},
-    {"recommendations", required_argument, NULL, 'r'},
-    {"sourcefile",      required_argument, NULL, 's'},
-    {"verbose",         no_argument,       NULL, 'v'},
-    {0, 0, 0, 0}
-};
 
 /** Structure to help STDIN parsing */
 typedef struct node {
@@ -116,9 +94,9 @@ typedef struct segment {
     char   *type;
     char   *extra_info;
     char   *section_info;
-    double loop_depth;
-    double representativeness;
+    double importance;
     double runtime;
+    int    loopdepth;
     int    rowid;
     perfexpert_list_t functions;
     char   *function_name; // Should I add function_name to DB?

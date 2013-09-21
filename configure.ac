@@ -20,8 +20,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with PerfExpert. If not, see <http://www.gnu.org/licenses/>.
 #
-# Author: Leonardo Fialho
-#         Ashay Rane
+# Author: Leonardo Fialho and Ashay Rane
 #
 # $HEADER$
 #------------------------------------------------------------------------------
@@ -30,10 +29,10 @@
 AC_PREREQ(2.63)
 
 # Define the package name, version, author, etc.
-AC_INIT([perfexpert], [0.1], [Leonardo Fialho: fialho@utexas.edu],
+AC_INIT([perfexpert], [4.1], [Leonardo Fialho: fialho@utexas.edu],
     [perfexpert.tar.gz], [http://www.tacc.com.br/perfexpert/])
 AC_COPYRIGHT([University of Texas at Austin])
-AC_REVISION([$Revision: 4.0 $])
+AC_REVISION([$Revision: 4.1 $])
 
 # Used by autotools
 AC_CONFIG_AUX_DIR(config)
@@ -55,7 +54,7 @@ m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 # We need some work here to save hound from -O2 on CFLAGS. This overwrites any
 # user-defined CFLAGS :-/
 CFLAGS="-g"
-CXXFLAGS="-O3 -g"
+CXXFLAGS="-g"
 
 # Requires only a standard C compiler
 AM_PROG_CC_C_O
@@ -88,7 +87,7 @@ AS_CASE([${host}],
         AC_MSG_ERROR([...but we do not support OSX])],
     [*-*-freebsd*], [
         AC_DEFINE([OS_FREEBSD], [1], [The host OS is FreeBSD])
-        AC_MSG_RESULT([hum... Are you happy with whis FreeBSD?])
+        AC_MSG_RESULT([hum... Are you happy with FreeBSD?])
         HOST_OS=freebsd
         AC_MSG_ERROR([...but we do not support FreeBSD])],
     [*-*-linux*], [
@@ -97,12 +96,12 @@ AS_CASE([${host}],
         HOST_OS=linux],
     [*-*-netbsd*], [
         AC_DEFINE([OS_NETBSD], [1], [The host OS is NetBSD])
-        AC_MSG_RESULT([really? There is at least one NetBSD user in the world!])
+        AC_MSG_RESULT([Really? There is at least one NetBSD user in the world!])
         HOST_OS=netbsd
         AC_MSG_ERROR([...but we do not support NetBSD])],
     [*-*-solaris2*], [
         AC_DEFINE([OS_SOLARIS], [1], [The host OS is Solaris])
-        AC_MSG_RESULT([I understand, you are stucked on Solaris, right?])
+        AC_MSG_RESULT([We understand, you're stucked on Solaris, right?])
         HOST_OS=solaris
         AC_MSG_ERROR([...but we do not support Solaris])],
     [*-*-mingw* | *-*-cygwin*], [
@@ -112,23 +111,6 @@ AS_CASE([${host}],
         AC_MSG_ERROR([...but we do not support M$ Windows])],
     [AC_MSG_RESULT([Unsupported operating system: ${host}])
      HOST_OS=unknown
-])
-
-#------------------------------------------------------------------------------
-# Any architecture-specific requirement?
-#
-AC_MSG_CHECKING([for the architecture])
-AS_CASE([${host}],
-    [i?86-* | k?-* | athlon-* | pentium*-], [
-        AC_DEFINE([ARCH_X86], [1], [Architecture is x86])
-        AC_MSG_RESULT([x86])],
-    [x86_64-*], [
-        AC_DEFINE([ARCH_X86_64], [1], [Architecture is x86-64])
-        AC_MSG_RESULT([x86-64])],
-    [ppc-* | powerpc-*], [
-        AC_DEFINE([ARCH_PPC], [1], [Architecture is PowerPC])
-        AC_MSG_RESULT([PowerPC])],
-    [AC_MSG_ERROR([Unknown Architecture])
 ])
 
 #------------------------------------------------------------------------------
@@ -160,6 +142,11 @@ AC_CHECK_HEADER([ctype.h],     [], [AC_MSG_ERROR([not found: ctype.h])])
 AC_CHECK_HEADER([errno.h],     [], [AC_MSG_ERROR([not found: errno.h])])
 AC_CHECK_HEADER([fcntl.h],     [], [AC_MSG_ERROR([not found: fcntl.h])])
 AC_CHECK_HEADER([sys/wait.h],  [], [AC_MSG_ERROR([not found: sys/wait.h])])
+# Headers required exclusively for hound
+AC_CHECK_HEADER([sched.h],     [], [AC_MSG_ERROR([not found: sched.h])])
+AC_CHECK_HEADER([time.h],      [], [AC_MSG_ERROR([not found: time.h])])
+AC_CHECK_HEADER([sys/mman.h],  [], [AC_MSG_ERROR([not found: sys/mman.h])])
+
 
 #------------------------------------------------------------------------------
 # Checks for SQLite headers, lib and program
@@ -258,45 +245,11 @@ AC_CHECK_HEADER([gmp.h], [
 ])
 
 #------------------------------------------------------------------------------
-# Find Apache ANT, optionally, using an argument (required for Analyzer)
-#
-AC_ARG_WITH([apache-ant],
-    [AS_HELP_STRING([--with-apache-ant],
-        [Use this argument to set where Apache Ant program is installed (not
-        necessary if it is in the PATH). Ant is necessary to compile
-        Analyzer])], [
-    ANT_PATH="$withval"
-    AC_PATH_TOOL([ANT_PROGRAM], [ant], [no], [$ANT_PATH])
-    AS_IF([test x"$ANT_PROGRAM" = x"no"],
-        [AC_MSG_ERROR([Ant not found in $ANT_PATH, try --enable-ant])])], [
-        AC_PATH_TOOL([ANT_PROGRAM], [ant], [no])])
-
-#------------------------------------------------------------------------------
 # Find HPCToolkit programs, optionally, using an argument
 #
 AC_PATH_TOOL([HPCSTRUCT_PROGRAM], [hpcstruct], [no])
 AC_PATH_TOOL([HPCRUN_PROGRAM],    [hpcrun],    [no])
 AC_PATH_TOOL([HPCPROF_PROGRAM],   [hpcprof],   [no])
-
-# AC_ARG_WITH([hpctoolkit],
-#     [AS_HELP_STRING([--with-hpctoolkit],
-#         [Use this argument to set where HPCTollkit binaries are
-#         installed (not necessary if they are in the PATH)])], [
-#     HPCTOOLKIT_PATH="$withval"
-#     AC_PATH_TOOL([HPCSTRUCT_PROGRAM], [hpcstruct], [no], [$HPCTOOLKIT_PATH/bin])
-#     AC_PATH_TOOL([HPCRUN_PROGRAM],    [hpcrun],    [no], [$HPCTOOLKIT_PATH/bin])
-#     AC_PATH_TOOL([HPCPROF_PROGRAM],   [hpcprof],   [no], [$HPCTOOLKIT_PATH/bin])
-#     AS_IF([test x"$HPCSTRUCT_PROGRAM" = x"no"],
-#         [AC_MSG_ERROR([hpcstruct not found in $HPCTOOLKIT_PATH/bin])])
-#     AS_IF([test x"$HPCRUN_PROGRAM" = x"no"],
-#         [AC_MSG_ERROR([hpcrun not found in $HPCTOOLKIT_PATH/bin])])
-#     AS_IF([test x"$HPCPROF_PROGRAM" = x"no"],
-#         [AC_MSG_ERROR([hpcprof not found in $HPCTOOLKIT_PATH/bin])])
-# ], [
-#     AC_PATH_TOOL([HPCSTRUCT_PROGRAM], [hpcstruct], [no])
-#     AC_PATH_TOOL([HPCRUN_PROGRAM],    [hpcrun],    [no])
-#     AC_PATH_TOOL([HPCPROF_PROGRAM],   [hpcprof],   [no])
-# ])
 
 #------------------------------------------------------------------------------
 # Support to ROSE Compiler (optional), using an argument
@@ -349,15 +302,7 @@ AS_IF([test x"$WITH_ROSE" == x"yes"], [
     CPPFLAGS+=" -I$WITH_ROSE_INCLUDE"
     LDFLAGS+=" -L$WITH_ROSE_LIBS"
 
-    # A random number of C symbols of ROSE library
-    #AC_CHECK_LIB([rose], [node_has_side_effects, add_to_scopes_list,
-    #    copy_node, node_complete_object_type, set_node_operator],
-    #    [WITH_ROSE=yes], [AC_MSG_ERROR([ROSE library not found!])])
-
     AC_SUBST(ROSE_LIB, $WITH_ROSE_LIBS)
-
-    # How the hell I can make the rose.h header check work?
-    #AC_CHECK_HEADER([rose.h], [], [AC_MSG_ERROR([not found: rose.h])])
 
     WITH_ROSE_SUPPORT=yes
     AC_DEFINE([HAVE_ROSE], [1], [Enable Rose support])
@@ -369,7 +314,7 @@ AS_IF([test x"$WITH_ROSE" == x"yes"], [
 AM_CONDITIONAL([WITH_ROSE_SUPPORT], [test x"$WITH_ROSE_SUPPORT" = x"yes"])
 
 #------------------------------------------------------------------------------
-# Checks for Google's SparseHash headers
+# Checks for Google SparseHash headers
 #
 AC_LANG_PUSH([C++])
 
@@ -385,80 +330,36 @@ AC_CHECK_HEADER([google/sparse_hash_map], [
 AC_LANG_POP
 
 #------------------------------------------------------------------------------
-# PerfExpert
+# TODO: Checks for GNU matheval library
 #
-AC_CONFIG_FILES([tools/perfexpert/perfexpert_get_info.pl])
-AC_CONFIG_FILES([tools/perfexpert/Makefile])
 
 #------------------------------------------------------------------------------
-# Enable/Disable 'analyzer'
+# TODO: Checks for XML2 library
 #
-AC_ARG_ENABLE([analyzer],
-    [AS_HELP_STRING([--disable-analyzer],
-        [Enable/Disable the application profiler tool [default=enabled]])],
-    [ENABLE_ANALYZER=$enableval], [ENABLE_ANALYZER=yes])
 
-AC_MSG_CHECKING([whether to enable Analyzer])
-AS_IF([test x"$ENABLE_ANALYZER" = x"yes"], [
-    AC_MSG_RESULT([yes])
+#------------------------------------------------------------------------------
+# PerfExpert (basic)
+#
 
-    # Apache ANT is required
-    AS_IF([test x"$ANT_PROGRAM" = x"no"],
-        [AC_MSG_ERROR([Ant not found, try using '--with-apache-ant'])])
+# PAPI is required
+AS_IF([test x"HAVE_PAPI_LIB" == x"no"],
+    [AC_MSG_ERROR([PAPI not found, try using '--with-papi'])], [])
+AS_IF([test x"HAVE_PAPI_HEADER" == x"no"],
+    [AC_MSG_ERROR([PAPI not found, try using '--with-papi'])], [])
 
-    # Currently, hound and sniffer only works on Linux.
-    AS_IF([test x"$HOST_OS" == x"linux"], [
+# HPCToolkit is required
+AS_IF([test x"$HPCSTRUCT_PROGRAM" = x"no"],
+    [AC_MSG_ERROR([hpcstruct not found, try using '--with-hpctoolkit'])])
+AS_IF([test x"$HPCRUN_PROGRAM" = x"no"],
+    [AC_MSG_ERROR([hpcrun not found, try using '--with-hpctoolkit'])])
+AS_IF([test x"$HPCPROF_PROGRAM" = x"no"],
+    [AC_MSG_ERROR([hpcprof not found, try using '--with-hpctoolkit'])])
 
-        # Headers required exclusively for hound
-        AC_CHECK_HEADER([sched.h],    [], [AC_MSG_ERROR([not found: sched.h])])
-        AC_CHECK_HEADER([time.h],     [], [AC_MSG_ERROR([not found: time.h])])
-        AC_CHECK_HEADER([sys/mman.h], [], [AC_MSG_ERROR([not found: sys/mman.h])])
-
-        # PAPI is required
-        AS_IF([test x"HAVE_PAPI_LIB" == x"no"],
-            [AC_MSG_ERROR([PAPI not found, try using '--with-papi'])], [])
-        AS_IF([test x"HAVE_PAPI_HEADER" == x"no"],
-            [AC_MSG_ERROR([PAPI not found, try using '--with-papi'])], [])
-
-        # HPCToolkit is required
-        AS_IF([test x"$HPCSTRUCT_PROGRAM" = x"no"],
-            [AC_MSG_ERROR([hpcstruct not found, try using '--with-hpctoolkit'])])
-        AS_IF([test x"$HPCRUN_PROGRAM" = x"no"],
-            [AC_MSG_ERROR([hpcrun not found, try using '--with-hpctoolkit'])])
-        AS_IF([test x"$HPCPROF_PROGRAM" = x"no"],
-            [AC_MSG_ERROR([hpcprof not found, try using '--with-hpctoolkit'])])
-
-        # Generate hound and sniffer Makefiles
-        ENABLE_HOUND=hound
-        ENABLE_SNIFFER=sniffer
-        AC_CONFIG_FILES([tools/hound/Makefile])
-        AC_CONFIG_FILES([tools/sniffer/Makefile])
-    ], [
-        # Disable hound and sniffer
-        ENABLE_HOUND=
-        ENABLE_SNIFFER=
-    ])
-
-    # Generate Makefiles for Analyzer
-    ENABLE_ANALYZER=analyzer
-    AC_CONFIG_FILES([tools/analyzer/Makefile])
-    AC_CONFIG_FILES([tools/analyzer/hpcdata.sh],
-        [chmod +x tools/analyzer/hpcdata.sh])
-    AC_CONFIG_FILES([tools/analyzer/analyzer.sh],
-        [chmod +x tools/analyzer/analyzer.sh])
-    AC_CONFIG_FILES([tools/analyzer/argp/Makefile])
-    AC_CONFIG_FILES([tools/analyzer/argp/build.xml])
-    AC_CONFIG_FILES([tools/analyzer/hpcdata/Makefile])
-    AC_CONFIG_FILES([tools/analyzer/hpcdata/build.xml])
-    AC_CONFIG_FILES([tools/analyzer/analyzer/Makefile])
-    AC_CONFIG_FILES([tools/analyzer/analyzer/build.xml])
-], [
-    AC_MSG_RESULT([no])
-    ENABLE_ANALYZER=
-])
-AC_SUBST([ENABLE_HOUND])
-AC_SUBST([ENABLE_SNIFFER])
-AC_SUBST([ENABLE_ANALYZER])
+AC_CONFIG_FILES([tools/hound/Makefile])
+AC_CONFIG_FILES([tools/sniffer/Makefile])
+AC_CONFIG_FILES([tools/analyzer/Makefile])
+AC_CONFIG_FILES([tools/perfexpert/perfexpert_get_info.pl])
+AC_CONFIG_FILES([tools/perfexpert/Makefile])
 
 #------------------------------------------------------------------------------
 # Enable/Disable 'minst' (MACPO)
@@ -536,10 +437,6 @@ AS_IF([test x"$ENABLE_CT" = x"yes"], [
     AS_IF([test x"$WITH_ROSE_SUPPORT" = x"no"],
         [AC_MSG_ERROR([ROSE not found, try using '--with-rose'])], [])
 
-    # PIPS is required
-    #AS_IF([test x"$TPIPS_PROGRAM" = x"no"],
-    #    [AC_MSG_ERROR([TPIPS not found, try using '--with-pips'])], [])
-
     ENABLE_CT=ct
     AC_CONFIG_FILES([tools/ct/Makefile])
     AC_CONFIG_FILES([tools/ct/recognizers/Makefile])
@@ -566,7 +463,6 @@ AS_IF([test x"$PERL_PROGRAM" == x"no"],
 #
 AC_OUTPUT
 AC_MSG_NOTICE([========================================================])
-AC_MSG_NOTICE([ Analyzer:         $ENABLE_ANALYZER                     ])
 AC_MSG_NOTICE([ Minst (MACPO):    $ENABLE_MINST                        ])
 AC_MSG_NOTICE([ Recommender:      $ENABLE_RECOMMENDER                  ])
 AC_MSG_NOTICE([ Code Transformer: $ENABLE_CT                           ])

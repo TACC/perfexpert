@@ -176,7 +176,7 @@ static inline void output_verbose(int level, const char *format, ...) {
     size_t total_len;
     int rc;
     
-    if (globals.verbose_level >= level) {
+    if (globals.verbose >= level) {
         va_start(arglist, format);
         rc = vasprintf(&str, format, arglist);
         total_len = strlen(str) + 14 + strlen(PROGRAM_PREFIX);

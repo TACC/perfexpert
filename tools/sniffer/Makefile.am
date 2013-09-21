@@ -33,7 +33,7 @@ sniffer_LDFLAGS = -lpapi
 install-exec-local:
 	./sniffer
 	$(MKDIR_P) $(sysconfdir)
-	$(INSTALL) -m 644 lcpi.properties $(sysconfdir)/
-	$(INSTALL) -m 644 experiment.properties $(sysconfdir)/
+	$(INSTALL) -m 644 lcpi.conf $(sysconfdir)/
+	$(INSTALL) -m 644 experiment.conf $(sysconfdir)/
 
 # EOF

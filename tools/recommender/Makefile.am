@@ -25,18 +25,17 @@
 # $HEADER$
 #
 
-bin_PROGRAMS = recommender
+bin_PROGRAMS = perfexpert_recommender
 
-recommender_SOURCES = recommender_main.c \
+perfexpert_recommender_SOURCES = recommender_main.c \
 	recommender_input.c \
 	recommender_log.c \
 	recommender_logic.c \
 	recommender_options.c \
 	recommender_output.c
 
-recommender_CPPFLAGS = -I$(srcdir)/../common
-
-recommender_LDFLAGS = -lsqlite3
+perfexpert_recommender_CPPFLAGS = -I$(srcdir)/../common
+perfexpert_recommender_LDFLAGS = -lsqlite3
 
 # Install the recommendation database
 install-exec-local:
@@ -55,9 +54,9 @@ install-exec-local:
 		>> $(top_builddir)/warnings_recommender; fi
 	$(INSTALL) -b -m 644 perfexpert.db $(localstatedir)/
 	rm perfexpert.db
-	echo 1.1 > .perfexpert.db.version
+	echo 1.22 > .perfexpert.db.version
 	$(INSTALL) -m 644 .perfexpert.db.version $(localstatedir)/
-	$(INSTALL) -m 644 $(top_srcdir)/contrib/recommender-metrics.txt \
+	$(INSTALL) -m 644 $(top_srcdir)/contrib/recommender_metrics.txt \
 		$(sysconfdir)/
 	$(INSTALL) -m 644 $(top_srcdir)/contrib/recommender.db.txt \
 		$(datadir)/$(PACKAGE_NAME)/

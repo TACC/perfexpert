@@ -39,35 +39,35 @@ extern "C" {
 /* PerfExpert headers */
 #include "config.h"
 #include "recommender.h"
-#include "perfexpert_output.h"
-#include "perfexpert_list.h"
+#include "perfexpert_alloc.h"
 #include "perfexpert_database.h"
+#include "perfexpert_list.h"
+#include "perfexpert_output.h"
 
 /* Global variables, try to not create them! */
 globals_t globals; // Variable to hold global options, this one is OK
 
 /* main, life starts here */
 int main(int argc, char** argv) {
-    perfexpert_list_t *segments;
-    segment_t *segment;
-    function_t *function;
-    int rc = PERFEXPERT_NO_REC;
+    perfexpert_list_t segments;
+    int rc = PERFEXPERT_ERROR;
     
     /* Set default values for globals */
     globals = (globals_t) {
-        .verbose_level    = 0,              // int
-        .inputfile        = NULL,           // char *
-        .inputfile_FP     = stdin,          // FILE *
-        .outputfile       = NULL,           // char *
-        .outputfile_FP    = stdout,         // FILE *
-        .dbfile           = NULL,           // char *
-        .workdir          = NULL,           // char *
-        .pid              = (long)getpid(), // long int
-        .colorful         = 0,              // int
-        .metrics_file     = NULL,           // char *
-        .use_temp_metrics = 0,              // int
-        .metrics_table    = METRICS_TABLE,  // char *
-        .rec_count        = 3               // int
+        .verbose          = 0,                // int
+        .inputfile        = NULL,             // char *
+        .inputfile_FP     = NULL,             // FILE *
+        .outputfile       = NULL,             // char *
+        .outputfile_FP    = stdout,           // FILE *
+        .outputmetrics    = NULL,             // char *
+        .outputmetrics_FP = NULL,             // FILE *
+        .dbfile           = NULL,             // char *
+        .workdir          = NULL,             // char *
+        .pid              = (long)getpid(),   // long int
+        .colorful         = PERFEXPERT_FALSE, // int
+        .metrics_file     = NULL,             // char *
+        .metrics_table    = METRICS_TABLE,    // char *
+        .rec_count        = 3                 // int
     };
 
     /* Parse command-line parameters */
@@ -77,94 +77,72 @@ int main(int argc, char** argv) {
     }
 
     /* Create the list of code bottlenecks */
-    segments = (perfexpert_list_t *)malloc(sizeof(perfexpert_list_t));
-    if (NULL == segments) {
-        OUTPUT(("%s", _ERROR("Error: out of memory")));
-        return PERFEXPERT_ERROR;
-    }
-    perfexpert_list_construct(segments);
+    perfexpert_list_construct(&segments);
     
     /* Open input file */
-    if (NULL != globals.inputfile) {
-        if (NULL == (globals.inputfile_FP = fopen(globals.inputfile, "r"))) {
-            OUTPUT(("%s (%s)", _ERROR("Error: unable to open input file"),
-                globals.inputfile));
-            return PERFEXPERT_ERROR;
-        }
+    OUTPUT_VERBOSE((3, "   %s (%s)", _YELLOW("performance analysis input"),
+        globals.inputfile));
+    if (NULL == (globals.inputfile_FP = fopen(globals.inputfile, "r"))) {
+        OUTPUT(("%s (%s)", _ERROR("Error: unable to open input file"),
+            globals.inputfile));
+        return PERFEXPERT_ERROR;
     }
 
     /* Print to a file or STDOUT is? */
     if (NULL != globals.outputfile) {
-        OUTPUT_VERBOSE((7, "   %s (%s)",
-            _YELLOW("printing recommendations to file"), globals.outputfile));
+        OUTPUT_VERBOSE((7, "   %s (%s)", _YELLOW("printing report to file"),
+            globals.outputfile));
         globals.outputfile_FP = fopen(globals.outputfile, "w+");
         if (NULL == globals.outputfile_FP) {
-            OUTPUT(("%s (%s)", _ERROR("Error: unable to open output file"),
+            OUTPUT(("%s (%s)", _ERROR("Error: unable to open report file"),
                 globals.outputfile));
-            rc = PERFEXPERT_ERROR;
-            goto cleanup;
+            goto CLEANUP;
         }
     } else {
-        OUTPUT_VERBOSE((7, "   printing recommendations to STDOUT"));
+        OUTPUT_VERBOSE((7, "   printing report to STDOUT"));
+    }
+
+    /* If necessary open outputmetrics_FP */
+    if (NULL != globals.outputmetrics) {
+        OUTPUT_VERBOSE((7, "   %s (%s)", _YELLOW("printing metrics to file"),
+            globals.outputmetrics));
+        globals.outputmetrics_FP = fopen(globals.outputmetrics, "w+");
+        if (NULL == globals.outputmetrics_FP) {
+            OUTPUT(("%s (%s)",
+                _ERROR("Error: unable to open output metrics file"),
+                globals.outputmetrics));
+            goto CLEANUP;
+        }
     }
 
     /* Connect to database */
     if (PERFEXPERT_SUCCESS != perfexpert_database_connect(&(globals.db),
         globals.dbfile)) {
         OUTPUT(("%s", _ERROR("Error: connecting to database")));
-        rc = PERFEXPERT_ERROR;
-        goto cleanup;
+        goto CLEANUP;
     }
     
     /* Parse metrics file if 'm' is defined, this will create a temp table */
-    if (1 == globals.use_temp_metrics) {
-        globals.metrics_table = (char *)malloc(strlen("metrics_") + 6);
+    if (NULL != globals.metrics_file) {
+        PERFEXPERT_ALLOC(char, globals.metrics_table, (strlen("metrics_") + 6));
         sprintf(globals.metrics_table, "metrics_%d", (int)getpid());
 
         if (PERFEXPERT_SUCCESS != parse_metrics_file()) {
             OUTPUT(("%s", _ERROR("Error: parsing metrics file")));
-            rc = PERFEXPERT_ERROR;
-            goto cleanup;
+            goto CLEANUP;
         }
     }
     
     /* Parse input parameters */
-    if (PERFEXPERT_SUCCESS != parse_segment_params(segments)) {
+    if (PERFEXPERT_SUCCESS != parse_segment_params(&segments)) {
         OUTPUT(("%s", _ERROR("Error: parsing input params")));
-        rc = PERFEXPERT_ERROR;
-        goto cleanup;
+        goto CLEANUP;
     }
 
-    /* Select recommendations for each code bottleneck */
-    segment = (segment_t *)perfexpert_list_get_first(segments);
-    while ((perfexpert_list_item_t *)segment != &(segments->sentinel)) {
-        OUTPUT_VERBOSE((4, "%s (%s:%d)",
-            _YELLOW("selecting recommendation for"), segment->filename,
-            segment->line_number));
+    /* Select recommendations */
+    rc = select_recommendations_all(&segments);
 
-        /* Query DB for recommendations */
-        switch (select_recommendations(segment)) {
-            case PERFEXPERT_NO_REC:
-                OUTPUT(("%s", _GREEN("Sorry, we have no recommendations")));
-                /* Move to the next code bottleneck */
-                segment = (segment_t *)perfexpert_list_get_next(segment);
-                continue;
-
-            case PERFEXPERT_SUCCESS:
-                rc = PERFEXPERT_SUCCESS;
-                break;
-
-            case PERFEXPERT_ERROR:
-            default: 
-                OUTPUT(("%s", _ERROR("Error: selecting recommendations")));
-                rc = PERFEXPERT_ERROR;
-                goto cleanup;
-        }
-        /* Move to the next code bottleneck */
-        segment = (segment_t *)perfexpert_list_get_next(segment);
-    }
-
-    cleanup:
+    CLEANUP:
     /* Close input file */
     if (NULL != globals.inputfile) {
         fclose(globals.inputfile_FP);
@@ -172,9 +150,15 @@ int main(int argc, char** argv) {
     if (NULL != globals.outputfile) {
         fclose(globals.outputfile_FP);
     }
+    if (NULL != globals.outputmetrics) {
+        fclose(globals.outputmetrics_FP);
+    }
     perfexpert_database_disconnect(globals.db);
 
-    /* TODO: Free memory */
+    /* Free memory */
+    if (NULL != globals.metrics_file) {
+        PERFEXPERT_DEALLOC(globals.metrics_table);
+    }
 
     return rc;
 }

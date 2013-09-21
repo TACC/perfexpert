@@ -37,24 +37,51 @@ extern "C" {
 #include "recommender.h"
 #include "perfexpert_output.h"
 
+
+/* output_header */
+int output_header(segment_t *segment) {
+    fprintf(globals.outputfile_FP,
+        "#--------------------------------------------------\n");
+    fprintf(globals.outputfile_FP, "# Recommendations for %s:%d\n",
+        segment->filename, segment->line_number);
+    fprintf(globals.outputfile_FP,
+        "#--------------------------------------------------\n");
+
+    if (NULL != globals.outputmetrics) {
+        fprintf(globals.outputmetrics_FP, "%% recommendation for %s:%d\n",
+            segment->filename, segment->line_number);
+        fprintf(globals.outputmetrics_FP, "code.filename=%s\n",
+            segment->filename);
+        fprintf(globals.outputmetrics_FP, "code.line_number=%d\n",
+            segment->line_number);
+        fprintf(globals.outputmetrics_FP, "code.type=%s\n", segment->type);
+        fprintf(globals.outputmetrics_FP, "code.function_name=%s\n",
+            segment->function_name);
+        fprintf(globals.outputmetrics_FP, "code.loopdepth=%1.0lf\n",
+            segment->loopdepth);
+        fprintf(globals.outputmetrics_FP, "code.rowid=%d\n", segment->rowid);
+    }
+    return PERFEXPERT_SUCCESS;
+}
+
 /* output_recommendations */
 int output_recommendations(void *var, int count, char **val, char **names) {
     int *rc = (int *)var;
 
     OUTPUT_VERBOSE((7, "   %s (%s)", _GREEN("recommendation found"), val[2]));
-    
-    if (NULL == globals.workdir) {
-        /* Pretty print for the user */
-        fprintf(globals.outputfile_FP,
-            "#\n# Here is a possible recommendation for this code segment\n");
-        fprintf(globals.outputfile_FP, "#\nID: %s\n", val[2]);
-        fprintf(globals.outputfile_FP, "Description: %s\n", val[0]);
-        fprintf(globals.outputfile_FP, "Reason: %s\n", val[1]);
-        fprintf(globals.outputfile_FP, "Code example:\n%s\n", val[3]);
-    } else {
-        /* PerfExpert output */
-        fprintf(globals.outputfile_FP, "recommender.recommendation_id=%s\n",
-                val[2]);
+
+    /* Pretty print for the user */
+    fprintf(globals.outputfile_FP,
+        "#\n# Here is a possible recommendation for this code segment\n");
+    fprintf(globals.outputfile_FP, "#\nID: %s\n", val[2]);
+    fprintf(globals.outputfile_FP, "Description: %s\n", val[0]);
+    fprintf(globals.outputfile_FP, "Reason: %s\n", val[1]);
+    fprintf(globals.outputfile_FP, "Code example:\n%s\n", val[3]);
+
+    /* Output metrics */
+    if (NULL != globals.outputmetrics) {
+        fprintf(globals.outputmetrics_FP, "recommender.recommendation_id=%s\n",
+            val[2]);
     }
 
     *rc = PERFEXPERT_SUCCESS;
