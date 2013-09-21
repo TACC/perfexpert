@@ -32,14 +32,6 @@
 extern "C" {
 #endif
 
-#ifndef _STDLIB_H
-#include <stdlib.h>
-#endif
-
-#ifndef _GETOPT_H_
-#include <getopt.h> /* To parse command line arguments */
-#endif
-
 /* WARNING: to include perfexpert_output.h globals have to be defined first */
 #ifdef PROGRAM_PREFIX
 #undef PROGRAM_PREFIX
@@ -48,12 +40,12 @@ extern "C" {
 
 /** Structure to hold global variables */
 typedef struct {
-    int   verbose_level;
+    int   verbose;
     char  *dbfile;
     int   colorful;
     float threshold;
     int   rec_count;
-    int   clean_garbage;
+    int   leave_garbage;
     char  *target;
     char  *sourcefile;
     char  *program;
@@ -76,29 +68,6 @@ typedef struct {
 } globals_t;
 
 extern globals_t globals; /* This variable is declared in perfexpert_main.c */
-
-/** Structure to handles command line arguments. Try to keep the content of
- *  this structure compatible with the parse_cli_params() and show_help().
- */
-static struct option long_options[] = {
-    {"after",         required_argument, NULL, 'a'},
-    {"knc-after",     required_argument, NULL, 'A'},
-    {"before",        required_argument, NULL, 'b'},
-    {"knc-before",    required_argument, NULL, 'B'},
-    {"colorful",      no_argument,       NULL, 'c'},
-    {"database",      required_argument, NULL, 'd'},
-    {"clean-garbage", no_argument,       NULL, 'g'},
-    {"help",          no_argument,       NULL, 'h'},
-    {"knc",           required_argument, NULL, 'k'},
-    {"verbose-level", required_argument, NULL, 'l'},
-    {"makefile",      required_argument, NULL, 'm'},
-    {"prefix",        required_argument, NULL, 'p'},
-    {"knc-prefix",    required_argument, NULL, 'P'},
-    {"recommend",     required_argument, NULL, 'r'},
-    {"source",        required_argument, NULL, 's'},
-    {"verbose",       no_argument,       NULL, 'v'},
-    {0, 0, 0, 0}
-};
 
 /* Function declarations */
 void show_help(void);

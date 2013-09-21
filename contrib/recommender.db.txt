@@ -202,11 +202,13 @@ CREATE TABLE "metric" (
     "pid" INTEGER,
     "code_filename" CHAR(1024),
     "code_line_number" INTEGER,
-    "code_type" CHAR(128),
+    "code_type" INTEGER,
     "code_extra_info" CHAR(1024),
     "code_language" INTEGER,
-    "code_runtime" FLOAT,
-    "code_representativeness" FLOAT,
+    "code_totalruntime" FLOAT,
+    "code_totalwalltime" FLOAT,
+    "code_importance" FLOAT,
+    "code_loopdepth" INTEGER,
     "code_function_name" CHAR(1024),
     "perfexpert_overall" FLOAT,
     "perfexpert_data_accesses_overall" FLOAT,
@@ -228,10 +230,9 @@ CREATE TABLE "metric" (
     "perfexpert_floating_point_instr_overall" FLOAT,
     "perfexpert_floating_point_instr_fast_FP_instr" FLOAT,
     "perfexpert_floating_point_instr_slow_FP_instr" FLOAT,
-    "perfexpert_percent_GFLOPS____max__overall" FLOAT,
-    "perfexpert_percent_GFLOPS____max__packed" FLOAT,
-    "perfexpert_percent_GFLOPS____max__scalar" FLOAT,
-    "perfexpert_loop_depth" FLOAT DEFAULT 0.0,
+    "perfexpert_GFLOPS____max__overall" FLOAT,
+    "perfexpert_GFLOPS____max__packed" FLOAT,
+    "perfexpert_GFLOPS____max__scalar" FLOAT,
     "papi_PAPI_TOT_INS" INTEGER,
     "papi_PAPI_TOT_CYC" INTEGER,
     "papi_PAPI_FP_INS" INTEGER,
@@ -1004,19 +1005,22 @@ JOIN
     WHERE 
       -- limit the result to codes where the overall performance is higher than 1
       -- 0.5 and 1.0 represents 'good-int-CPI' and 'good-fp-CPI
-      metric.perfexpert_overall * 100 / (0.5 * (100 -
-      metric.perfexpert_ratio_floating_point) + 1.0 *
-      metric.perfexpert_ratio_floating_point) > 1
+      metric.perfexpert_overall * 100 / (0.5 *
+        (100 - metric.perfexpert_ratio_floating_point) + 1.0 *
+        metric.perfexpert_ratio_floating_point) > 1
     AND
       -- Recommender rowid, the last inserted bottleneck
       metric.id = @RID
   )
-WHERE (recom.loop <= @LPD AND metric.code_type = 'loop') OR
-      (recom.loop IS NULL AND metric.code_type = 'function')
+WHERE (recom.loop <= @LPD AND metric.code_type = 3) OR
+      (recom.loop IS NULL AND metric.code_type = 2)
   -- Recommender rowid, the last inserted bottleneck
   AND metric.id = @RID
 GROUP BY recom.id
 -- ranked by their scores
 ORDER BY score DESC;");
+
+INSERT INTO function ([desc], [statement]) VALUES ('Patata',
+"SELECT 20 AS recommendation_id, 1.1 AS score;");
 
 END TRANSACTION;

@@ -32,12 +32,6 @@
 extern "C" {
 #endif
     
-/**
- * Some contants here are used to return errors from functions. Those codes
- * should be defined using 'exponential values', e.g. 1, 2, 4, 8, etc. Thus,
- * it is possible to combine more than one error code in the return value.
- */
-
 /* Return codes that should be used... */
 enum {
 	PERFEXPERT_UNDEFINED = -2, /* -2 ...when the error is unknown             */
@@ -50,10 +44,10 @@ enum {
 	PERFEXPERT_NO_DATA,        /* 5  ...when analyzer return an error         */
 };
 
-#define PERFEXPERT_TRUE   1 /**< used to return boolean values */
-#define PERFEXPERT_FALSE  0 /**< used to return boolean values */
+#define PERFEXPERT_TRUE  1 /* used to return boolean values */
+#define PERFEXPERT_FALSE 0 /* used to return boolean values */
 
-/** Buffers size, will be used for:
+/* Buffers size, will be used for:
  * - parsing INPUT file
  * - parsing metrics file
  * - storing SQL statements (including the 'functions')
@@ -64,29 +58,44 @@ enum {
 #define MAX_FRAGMENT_DATA 1048576
 #define PARAM_SIZE        128
 
-/** Default values for some files and directories */
+/* Default values for some files and directories */
+#define PERFEXPERT_OUTPUT        "perfexpert.output"
 #define PERFEXPERT_DB            "perfexpert.db"
 #define PERFEXPERT_FRAGMENTS_DIR "database/src"
 #define PERFEXPERT_SOURCE_DIR    "source"
 #define PERFEXPERT_LOGFILE       ".perfexpert.log"
-#define RECOMMENDER_PROGRAM      "recommender"
-#define RECOMMENDER_METRICS      "recommender_metrics"
-#define RECOMMENDER_REPORT       "recommender_report"
-#define ANALYZER_PROGRAM         "analyzer"
-#define ANALYZER_METRICS         "analyzer_metrics"
-#define ANALYZER_REPORT          "analyzer_report"
-#define CT_PROGRAM               "perfexpert_ct"
-#define METRICS_TABLE            "metric"
-#define METRICS_FILE             "recommender-metrics.txt"
-#define EXPERIMENT_FILE          "experiment.properties"
-#define MIC_EXPERIMENT_FILE 	 "experiment_mic.properties"
 
-/* HPCToolkit binaries (should be in the path) */
+#define RECOMMENDER_PROGRAM      "perfexpert_recommender"
+#define RECOMMENDER_OUTPUT       "recommender.output"
+#define RECOMMENDER_METRICS      "recommender_metrics.txt"
+#define RECOMMENDER_REPORT       "recommender_report.txt"
+
+#define ANALYZER_PROGRAM         "perfexpert_analyzer"
+#define ANALYZER_OUTPUT          "analyzer.output"
+#define ANALYZER_METRICS         "analyzer_metrics.txt"
+#define ANALYZER_REPORT          "analyzer_report.txt"
+#define ANALYZER_VARIANCE_LIMIT  0.2
+
+#define CT_PROGRAM               "perfexpert_ct"
+#define CT_OUTPUT                "ct.output"
+
+#define METRICS_TABLE            "metric"
+#define METRICS_FILE             "recommender_metrics.txt"
+#define LCPI_FILE        	     "lcpi.conf"
+#define MACHINE_FILE             "machine.conf"
+#define EXPERIMENT_FILE          "experiment.conf"
+#define MIC_EXPERIMENT_FILE 	 "experiment_mic.conf"
+
+/* HPCToolkit stuff (binaries should be in the path) */
 #define HPCSTRUCT "hpcstruct"
 #define HPCRUN    "hpcrun"
 #define HPCPROF   "hpcprof"
+#define PERFEXPERT_TOOL_HPCTOOLKIT_PROFILE_FILE  "database/experiment.xml"
+#define PERFEXPERT_TOOL_HPCTOOLKIT_COUNTERS  	 "papi"
+#define PERFEXPERT_TOOL_HPCTOOLKIT_TOT_INS 		 "PAPI_TOT_INS"
+#define PERFEXPERT_TOOL_HPCTOOLKIT_TOT_CYC 		 "PAPI_TOT_CYC"
 
-/** Default compiler and compilation options */
+/* Default compiler and compilation options */
 #define DEFAULT_COMPILER "cc"
 #define DEFAULT_CFLAGS   "-g -O3 -fno-inline "
 #define DEFAULT_LDFLAGS  ""
@@ -98,9 +107,6 @@ enum {
     PERFEXPERT_HOTSPOT_FUNCTION,
     PERFEXPERT_HOTSPOT_LOOP,
 };
-
-/* Total instructions metric */
-#define PERFEXPERT_TOOL_HPCTOOLKIT_TOT_INS "PAPI_TOT_INS"
 
 #ifdef __cplusplus
 }

@@ -5,15 +5,23 @@ PAPI_DIR="${TACC_PAPI_DIR}"
 mkdir -p ${INSTALL_DIR}
 
 # export JAVA_HOME=/home1/02204/fialho/work/src/perfexpert/external/jdk1.7.0_25
-export JAVA_HOME=/usr/java/latest
-export JAVA_BINDIR=$JAVA_HOME/bin
-export JAVA_ROOT=$JAVA_HOME
-export JRE_HOME=$JAVA_HOME/jre
-export PATH=$PATH:${INSTALL_DIR}/bin:$JAVA_BINDIR:$JAVA_HOME/jre/bin
+# export JAVA_HOME=/usr/java/latest
+# export JAVA_BINDIR=$JAVA_HOME/bin
+# export JAVA_ROOT=$JAVA_HOME
+export JRE_HOME=/usr/java/latest/jre
+# export PATH=$PATH:${INSTALL_DIR}/bin:$JAVA_BINDIR:$JAVA_HOME/jre/bin
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${INSTALL_DIR}/lib:$JRE_HOME/lib/amd64/server/
 
-tar -xzvf ./apache-ant-1.9.1-bin.tar.gz
-export ANT_HOME=`pwd`/apache-ant-1.9.1
+# tar -xzvf ./apache-ant-1.9.1-bin.tar.gz
+# export ANT_HOME=`pwd`/apache-ant-1.9.1
+
+tar -xzvf ./libmatheval-1.1.11.tar.gz
+cd libmatheval-1.1.11
+mkdir _build
+cd _build
+../configure --prefix=${INSTALL_DIR}
+make install
+cd ../../
 
 tar -xzvf ./sparsehash-2.0.2.tar.gz
 cd sparsehash-2.0.2/
@@ -68,5 +76,5 @@ cd _build
     --disable-cuda --disable-binary-analysis --disable-java \
     --with-gomp_omp_runtime_library=/opt/apps/gcc/4.6.3/lib64/ \
     --libexecdir=/tmp --bindir=/tmp --sbindir=/tmp
-JAVA_TOOL_OPTIONS="-Xms256M -Xmx1G" make install
+# JAVA_TOOL_OPTIONS="-Xms256M -Xmx1G" make install
 cd ../../

@@ -25,36 +25,47 @@
  * $HEADER$
  */
 
-#ifndef PERFEXPERT_ALLOC_H_
-#define PERFEXPERT_ALLOC_H_
-
-#ifndef _STDLIB_H
-#include <stdlib.h>
-#endif
-
-#include "perfexpert_output.h"
+#ifndef PERFEXPERT_STRING_H_
+#define PERFEXPERT_STRING_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+    
+#ifndef _STRING_H
+#include <string.h>
+#endif
 
-#define PERFEXPERT_ALLOC(type, ptr, size)                                      \
-    ptr = (type *)malloc(size);                                                \
-    if (NULL == ptr) {                                                         \
-        OUTPUT(("%s (%s:%d) (%s)", _ERROR("Error: unable to allocate memory"), \
-            __FILE__, __LINE__, __FUNCTION__));                                \
-        return PERFEXPERT_ERROR;                                               \
-    }                                                                          \
-    bzero(ptr, size)
+/* perfexpert_string_remove_char */
+static inline char* perfexpert_string_remove_char(char *str, int token) {
+    char *output = str;
+    int i, j;
 
-#define PERFEXPERT_DEALLOC(ptr) \
-    if (NULL != ptr) {          \
-        free(ptr);              \
-    }                           \
-    ptr = NULL
+    for (i = 0, j = 0; i < strlen(str); i++, j++) {
+        if (str[i] != (char)token) {
+            output[j] = str[i];
+        } else {
+            j--;
+        }
+    }
+    output[j] = 0;
+    return output;
+}
+
+/* perfexpert_string_replace_char */
+static inline char* perfexpert_string_replace_char(char *str, int out, int in) {
+    int i;
+
+    for (i = 0; i < strlen(str); i++) {
+        if (str[i] == (char)out) {
+            str[i] = (char)in;
+        }
+    }
+    return str;
+}
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* PERFEXPERT_ALLOC_H */
+#endif /* PERFEXPERT_STRING_H */

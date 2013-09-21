@@ -43,17 +43,33 @@ extern "C" {
 
 /* transformation */
 int transformation(void) {
-    char temp_str[6][BUFFER_SIZE];
-    char *argv[6];
+    char temp_str[4][BUFFER_SIZE];
+    char *argv[2];
     test_t test;
 
-    OUTPUT_VERBOSE((4, "=== %s", _BLUE("Code transformation phase")));
+    OUTPUT_VERBOSE((4, "%s", _BLUE("Code transformation phase")));
     OUTPUT(("Applying optimizations"));
 
     /* Set some environment variables to avoid working arguments */
-    bzero(temp_str[0], BUFFER_SIZE);
-    sprintf(temp_str[0], "%s/%s.txt", globals.stepdir, RECOMMENDER_METRICS);
-    if (0 != setenv("PERFEXPERT_CT_INPUT_FILE", temp_str[0], 0)) {
+    bzero(temp_str[1], BUFFER_SIZE);
+    sprintf(temp_str[1], "%d", globals.verbose);
+    if (0 != setenv("PERFEXPERT_CT_VERBOSE_LEVEL", temp_str[1], 0)) {
+        OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
+        return PERFEXPERT_ERROR;
+    }
+    bzero(temp_str[2], BUFFER_SIZE);
+    sprintf(temp_str[2], "%d", globals.colorful);
+    if (0 != setenv("PERFEXPERT_CT_COLORFUL", temp_str[2], 0)) {
+        OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
+        return PERFEXPERT_ERROR;
+    }
+    bzero(temp_str[3], BUFFER_SIZE);
+    sprintf(temp_str[3], "%d", (int)getpid());
+    if (0 != setenv("PERFEXPERT_CT_PID", temp_str[3], 0)) {
+        OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
+        return PERFEXPERT_ERROR;
+    }
+    if (0 != setenv("PERFEXPERT_CT_INPUT_FILE", RECOMMENDER_METRICS, 0)) {
         OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
         return PERFEXPERT_ERROR;
     }
@@ -61,53 +77,21 @@ int transformation(void) {
         OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
         return PERFEXPERT_ERROR;
     }
-    bzero(temp_str[5], BUFFER_SIZE);
-    sprintf(temp_str[5], "%d", globals.verbose_level);
-    if (0 != setenv("PERFEXPERT_CT_VERBOSE_LEVEL", temp_str[5], 0)) {
-        OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
-        return PERFEXPERT_ERROR;
-    }
-    bzero(temp_str[1], BUFFER_SIZE);
-    sprintf(temp_str[1], "%d", globals.colorful);
-    if (0 != setenv("PERFEXPERT_CT_COLORFUL", temp_str[1], 0)) {
-        OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
-        return PERFEXPERT_ERROR;
-    }
-    bzero(temp_str[4], BUFFER_SIZE);
-    sprintf(temp_str[4], "%d", (int)getpid());
-    if (0 != setenv("PERFEXPERT_CT_PID", temp_str[4], 0)) {
+    if (0 != setenv("PERFEXPERT_CT_WORKDIR", globals.stepdir, 0)) {
         OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
         return PERFEXPERT_ERROR;
     }
 
     /* Arguments to run analyzer */
-    bzero(temp_str[2], BUFFER_SIZE);
-    sprintf(temp_str[2], "%s", CT_PROGRAM);
-    argv[0] = temp_str[2];
-    argv[1] = "--automatic";
-    argv[2] = globals.stepdir;
-    argv[3] = NULL;
-
-    /* Not using OUTPUT_VERBOSE because I want only one line (WTF?) */
-    if (8 <= globals.verbose_level) {
-        int i;
-        printf("%s    %s", PROGRAM_PREFIX, _YELLOW("command line:"));
-        for (i = 0; i <= 2; i++) {
-            printf(" %s", argv[i]);
-        }
-        printf("\n");
-    }
+    argv[0] = CT_PROGRAM;
+    argv[1] = NULL;
 
     /* The super-ninja test sctructure */
-    if (0 == globals.verbose_level) {
-        bzero(temp_str[3], BUFFER_SIZE);
-        sprintf(temp_str[3], "%s/%s.output", globals.stepdir, CT_PROGRAM);
-        test.output = temp_str[3];
-    } else {
-        test.output = NULL;
-    }
-    test.input = NULL;
-    test.info  = NULL;
+    bzero(temp_str[0], BUFFER_SIZE);
+    sprintf(temp_str[0], "%s/%s", globals.stepdir, CT_OUTPUT);
+    test.output = temp_str[0];
+    test.input  = NULL;
+    test.info   = NULL;
 
     /* run_and_fork_and_pray */
     return fork_and_wait(&test, argv);

@@ -32,8 +32,8 @@
 extern "C" {
 #endif
 
-#ifndef _GETOPT_H__
-#include <getopt.h>
+#ifndef _STDIO_H__
+#include <stdio.h>
 #endif
 
 #ifndef __XML_PARSER_H__
@@ -43,47 +43,19 @@ extern "C" {
 #include "perfexpert_hash.h"
 #include "perfexpert_list.h"
 
-/** Structure to hold global variables */
-typedef struct {
-    char *tool;
-    char *inputfile;
-    int  aggregate;
-    int  thread;
-    int  verbose_level;
-    int  colorful;
-} globals_t;
+/* Structure to hold lcpi metrics */
+typedef struct lcpi {
+    volatile perfexpert_list_item_t *next;
+    volatile perfexpert_list_item_t *prev;
+    char *name;
+    char name_md5[33];
+    double value;
+    perfexpert_hash_handle_t hh_str;
+    /* From this point this structure is different than metric_t */
+    void *expression;
+} lcpi_t;
 
-extern globals_t globals; /* This variable is defined in analyzer_main.c */
-
-/* WARNING: to include perfexpert_output.h globals have to be defined first */
-#ifdef PROGRAM_PREFIX
-#undef PROGRAM_PREFIX
-#endif
-#define PROGRAM_PREFIX "[analyzer]"
-
-/** Structure to handle command line arguments. Try to keep the content of
- *  this structure compatible with the parse_cli_params() and show_help().
- */
-static struct option long_options[] = {
-    {"aggregate",     no_argument,       NULL, 'a'},
-    {"colorful",      no_argument,       NULL, 'c'},
-    {"inputfile",     required_argument, NULL, 'f'},
-    {"help",          no_argument,       NULL, 'h'},
-    {"measurement",   required_argument, NULL, 'm'},
-    {"verbose_level", required_argument, NULL, 'l'},
-    {"outputfile",    required_argument, NULL, 'o'},
-    {"thread",        required_argument, NULL, 't'},
-    {"verbose",       no_argument,       NULL, 'v'},
-    {0, 0, 0, 0}
-};
-
-/** Structure to help STDIN parsing */
-typedef struct node {
-    char *key;
-    char *value;
-} node_t;
-
-/** Structure to hold modules */
+/* Structure to hold modules */
 typedef struct module {
     int  id;
     char *name;
@@ -91,7 +63,7 @@ typedef struct module {
     perfexpert_hash_handle_t hh_int;
 } module_t;
 
-/** Structure to hold files */
+/* Structure to hold files */
 typedef struct file {
     int  id;
     char *name;
@@ -99,20 +71,23 @@ typedef struct file {
     perfexpert_hash_handle_t hh_int;
 } file_t;
 
-/** Structure to hold metrics */
+/* Structure to hold metrics and machine characterization */
 typedef struct metric {
     volatile perfexpert_list_item_t *next;
     volatile perfexpert_list_item_t *prev;
-    int    id;
     char   *name;
+    char   name_md5[33];
+    double value;
+    perfexpert_hash_handle_t hh_str;
+    /* From this point this structure is different than lcpi_t */
+    int    id;
     int    thread;
     int    mpi_rank;
     int    experiment;
-    double value;
     perfexpert_hash_handle_t hh_int;
 } metric_t;
 
-/** Structure to hold procedures */
+/* Structure to hold procedures */
 typedef struct procedure {
     volatile perfexpert_list_item_t *next;
     volatile perfexpert_list_item_t *prev;
@@ -120,17 +95,22 @@ typedef struct procedure {
     char *name;
     int  type;
     int  line;
+    int  valid;
     double variance;
     double importance;
     double instructions;
-    file_t *file;
-    module_t *module;
+    double cycles;
+    lcpi_t *lcpi_by_name;
     metric_t *metrics_by_id;
+    metric_t *metrics_by_name;
     perfexpert_list_t metrics;
+    /* From this point this struct is different than loop_t */
     perfexpert_hash_handle_t hh_int;
+    module_t *module;
+    file_t *file;
 } procedure_t;
 
-/** Structure to hold loops */
+/* Structure to hold loops */
 typedef struct loop {
     volatile perfexpert_list_item_t *next;
     volatile perfexpert_list_item_t *prev;
@@ -138,17 +118,21 @@ typedef struct loop {
     char *name;
     int  type;
     int  line;
+    int  valid;
     double variance;
     double importance;
     double instructions;
-    file_t *file;
-    module_t *module;
+    double cycles;
+    lcpi_t *lcpi_by_name;
     metric_t *metrics_by_id;
+    metric_t *metrics_by_name;
     perfexpert_list_t metrics;
+    /* From this point this struct is different than procedure_t */
+    procedure_t *procedure;
     int  depth;
 } loop_t;
 
-/** Structure to hold the call path */
+/* Structure to hold the call path */
 typedef struct callpath callpath_t;
 struct callpath {
     volatile perfexpert_list_item_t *next;
@@ -161,20 +145,48 @@ struct callpath {
     procedure_t *procedure;
 };
 
-/** Structure to hold profiles */
+/* Structure to hold profiles */
 typedef struct profile {
     volatile perfexpert_list_item_t *next;
     volatile perfexpert_list_item_t *prev;
     perfexpert_list_t callees;
     int  id;
     char *name;
+    double cycles;
     double instructions;
-    file_t *files;
-    module_t *modules;
+    file_t *files_by_id;
+    module_t *modules_by_id;
     metric_t *metrics_by_id;
+    metric_t *metrics_by_name;
     procedure_t *procedures_by_id;
     perfexpert_list_t hotspots; /* for both procedure_t and loop_t */
 } profile_t;
+
+/* Structure to hold global variables */
+typedef struct {
+    double threshold;
+    char *tool;
+    char *inputfile;
+    char *outputfile;
+    FILE *outputfile_FP;
+    int  aggregate;
+    int  thread;
+    char *machinefile;
+    metric_t *machine_by_name;
+    char *lcpifile;
+    lcpi_t *lcpi_by_name;
+    int  verbose;
+    int  colorful;
+    char *outputmetrics;
+} globals_t;
+
+extern globals_t globals; /* This variable is defined in analyzer_main.c */
+
+/* WARNING: to include perfexpert_output.h globals have to be defined first */
+#ifdef PROGRAM_PREFIX
+#undef PROGRAM_PREFIX
+#endif
+#define PROGRAM_PREFIX "[analyzer]"
 
 /* Function declarations */
 void show_help(void);
@@ -189,8 +201,43 @@ int profile_check_callpath(perfexpert_list_t *calls, int root);
 int profile_flatten_all(perfexpert_list_t *profiles);
 int profile_flatten_hotspots(profile_t *profile);
 int profile_aggregate_hotspots(profile_t *profile);
-int profile_aggregate_metrics(procedure_t *hotspot);
+int profile_aggregate_metrics(profile_t *profile, procedure_t *hotspot);
+int lcpi_parse_file(const char *file);
+int lcpi_compute(profile_t *profile);
+int machine_parse_file(const char *file);
 int calculate_importance_variance(profile_t *profile);
+int output_analysis_all(perfexpert_list_t *profiles);
+int output_analysis(profile_t *profile, procedure_t *hotspot);
+int output_metrics_all(perfexpert_list_t *profiles);
+int output_metrics(profile_t *profile, procedure_t *hotspot, FILE *file_FP);
+
+/* generic_get */
+#include "perfexpert_alloc.h"
+#include "perfexpert_md5.h"
+static inline double generic_get(lcpi_t *db, char key[]) {
+    lcpi_t *entry = NULL;
+    char *key_md5 = NULL;
+    double r;
+
+    PERFEXPERT_ALLOC(char, key_md5, 33);
+    strcpy(key_md5, perfexpert_md5_string(key));
+    perfexpert_hash_find_str(db, key_md5, entry);
+
+    if (NULL == entry) {
+        free(key_md5);
+        return 0.0;
+    } else {
+        r = entry->value;
+        free(key_md5);
+        return r;
+    }
+}
+
+/* Convenience macros to get data from machine_t and lcpi_t */
+#define perfexpert_lcpi_definition_get(_1) generic_get(globals.lcpi_by_name, _1)
+#define perfexpert_lcpi_hotspot_get(_1, _2) generic_get(_1->lcpi_by_name, _2)
+#define perfexpert_machine_get(_1) \
+    generic_get((lcpi_t *)globals.machine_by_name, _1)
 
 #ifdef __cplusplus
 }

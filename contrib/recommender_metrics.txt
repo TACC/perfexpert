@@ -18,9 +18,9 @@ perfexpert.branch_instructions.mispredicted
 perfexpert.floating-point_instr.overall
 perfexpert.floating-point_instr.fast_FP_instr
 perfexpert.floating-point_instr.slow_FP_instr
-perfexpert.percent.GFLOPS_(%_max).overall
-perfexpert.percent.GFLOPS_(%_max).packed
-perfexpert.percent.GFLOPS_(%_max).scalar
+perfexpert.GFLOPS_(%_max).overall
+perfexpert.GFLOPS_(%_max).packed
+perfexpert.GFLOPS_(%_max).scalar
 perfexpert.loop_depth
 papi.PAPI_TOT_INS
 papi.PAPI_TOT_CYC

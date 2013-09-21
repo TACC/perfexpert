@@ -37,71 +37,66 @@ extern "C" {
 /* PerfExpert headers */
 #include "config.h"
 #include "perfexpert.h"
+#include "perfexpert_alloc.h"
+#include "perfexpert_constants.h"
+#include "perfexpert_database.h"
 #include "perfexpert_output.h"
 #include "perfexpert_util.h"
-#include "perfexpert_database.h"
-#include "perfexpert_constants.h"
 
 /* Global variables, try to not create them! */
 globals_t globals; // Variable to hold global options, this one is OK
 
 /* main, life starts here */
 int main(int argc, char** argv) {
-    char workdir[] = ".perfexpert-temp.XXXXXX";
-    char temp_str[BUFFER_SIZE];
-    char *temp_str2;
+    char workdir_template[] = ".perfexpert-temp.XXXXXX";
+    char *workdir;
+    char *report_file;
     int rc = PERFEXPERT_ERROR;
 
     /* Set default values for globals */
     globals = (globals_t) {
-        .verbose_level = 0,              // int
-        .dbfile        = NULL,           // char *
-        .colorful      = 0,              // int
-        .threshold     = 0.0,            // float
-        .rec_count     = 3,              // int
-        .clean_garbage = 0,              // int
-        .pid           = (long)getpid(), // long int
-        .target        = NULL,           // char *
-        .sourcefile    = NULL,           // char *
-        .program       = NULL,           // char *
-        .program_path  = NULL,           // char *
-        .program_full  = NULL,           // char *
-        .prog_arg_pos  = 0,              // int
-        .main_argc     = argc,           // int
-        .main_argv     = argv,           // char **
-        .step          = 1,              // int
-        .workdir       = NULL,           // char *
-        .stepdir       = NULL,           // char *
-        .prefix        = NULL,           // char *
-        .before        = NULL,           // char *
-        .after         = NULL,           // char *
-        .knc           = NULL,           // char *
-        .knc_prefix    = NULL,           // char *
-        .knc_before    = NULL,           // char *
-        .knc_after     = NULL            // char *
+        .verbose       = 0,                // int
+        .dbfile        = NULL,             // char *
+        .colorful      = PERFEXPERT_FALSE, // int
+        .threshold     = 0.0,              // float
+        .rec_count     = 3,                // int
+        .leave_garbage = PERFEXPERT_FALSE, // int
+        .pid           = (long)getpid(),   // long int
+        .target        = NULL,             // char *
+        .sourcefile    = NULL,             // char *
+        .program       = NULL,             // char *
+        .program_path  = NULL,             // char *
+        .program_full  = NULL,             // char *
+        .prog_arg_pos  = 0,                // int
+        .main_argc     = argc,             // int
+        .main_argv     = argv,             // char **
+        .step          = 1,                // int
+        .workdir       = NULL,             // char *
+        .stepdir       = NULL,             // char *
+        .prefix        = NULL,             // char *
+        .before        = NULL,             // char *
+        .after         = NULL,             // char *
+        .knc           = NULL,             // char *
+        .knc_prefix    = NULL,             // char *
+        .knc_before    = NULL,             // char *
+        .knc_after     = NULL              // char *
     };
 
     /* Parse command-line parameters */
     if (PERFEXPERT_SUCCESS != parse_cli_params(argc, argv)) {
         OUTPUT(("%s", _ERROR("Error: parsing command line arguments")));
-        goto clean_up;
+        return PERFEXPERT_ERROR;
     }
 
     /* Create a work directory */
-    bzero(temp_str, BUFFER_SIZE);
-    temp_str2 = mkdtemp(workdir);
-    if (NULL == temp_str2) {
+    workdir = mkdtemp(workdir_template);
+    if (NULL == workdir) {
         OUTPUT(("%s", _ERROR("Error: creating working directory")));
-        goto clean_up;
-    }
-    globals.workdir = (char *)malloc(strlen(getcwd(NULL, 0)) + strlen(temp_str2)
-        + 1);
-    if (NULL == globals.workdir) {
-        OUTPUT(("%s", _ERROR("Error: out of memory")));
         return PERFEXPERT_ERROR;
     }
-    bzero(globals.workdir, strlen(getcwd(NULL, 0)) + strlen(temp_str2) + 1);
-    sprintf(globals.workdir, "%s/%s", getcwd(NULL, 0), temp_str2);
+    PERFEXPERT_ALLOC(char, globals.workdir,
+        (strlen(getcwd(NULL, 0)) + strlen(workdir) + 2));
+    sprintf(globals.workdir, "%s/%s", getcwd(NULL, 0), workdir);
     OUTPUT_VERBOSE((5, "   %s %s", _YELLOW("workdir:"), globals.workdir));
 
     /* If database was not specified, check if there is any local database and
@@ -111,12 +106,12 @@ int main(int argc, char** argv) {
         if (PERFEXPERT_SUCCESS !=
             perfexpert_database_update(&(globals.dbfile))) {
             OUTPUT(("%s", _ERROR((char *)"Error: unable to copy database")));
-            goto clean_up;
+            goto CLEANUP;
         }        
     } else {
         if (PERFEXPERT_SUCCESS != perfexpert_util_file_exists(globals.dbfile)) {
             OUTPUT(("%s", _ERROR((char *)"Error: database file not found")));
-            goto clean_up;
+            goto CLEANUP;
         }
     }
     OUTPUT_VERBOSE((5, "   %s %s", _YELLOW("database:"), globals.dbfile));
@@ -124,17 +119,12 @@ int main(int argc, char** argv) {
     /* Iterate until some tool return != PERFEXPERT_SUCCESS */
     while (1) {
         /* Create step working directory */
-        globals.stepdir = (char *)malloc(strlen(globals.workdir) + 5);
-        if (NULL == globals.stepdir) {
-            OUTPUT(("%s", _ERROR("Error: out of memory")));
-            goto clean_up;
-        }
-        bzero(globals.stepdir, strlen(globals.workdir) + 5);
+        PERFEXPERT_ALLOC(char, globals.stepdir, (strlen(globals.workdir) + 5));
         sprintf(globals.stepdir, "%s/%d", globals.workdir, globals.step);
         if (PERFEXPERT_ERROR == perfexpert_util_make_path(globals.stepdir,
             0755)) {
             OUTPUT(("%s", _ERROR((char *)"Error: cannot create step workdir")));
-            goto clean_up;
+            goto CLEANUP;
         }
         OUTPUT_VERBOSE((5, "   %s %s", _YELLOW("stepdir:"), globals.stepdir));
 
@@ -145,14 +135,14 @@ int main(int argc, char** argv) {
                 if (NULL != globals.knc) {
                     OUTPUT(("Are you adding the flags to to compile for MIC?"));                    
                 }
-                goto clean_up;
+                goto CLEANUP;
             }
         }
 
         /* Call HPCToolkit and stuff (former perfexpert_run_exp) */
         if (PERFEXPERT_SUCCESS != measurements()) {
             OUTPUT(("%s", _ERROR("Error: unable to take measurements")));
-            goto clean_up;
+            goto CLEANUP;
         }
 
         /* Call analyzer and stuff (former perfexpert) */
@@ -160,23 +150,23 @@ int main(int argc, char** argv) {
             case PERFEXPERT_FAILURE:
             case PERFEXPERT_ERROR:
                 OUTPUT(("%s", _ERROR("Error: unable to run analyzer")));
-                goto clean_up;
+                goto CLEANUP;
 
             case PERFEXPERT_NO_DATA:
                 OUTPUT(("Unable to analyze your application"));
 
                 /* Print analysis report */
-                bzero(temp_str, BUFFER_SIZE);
-                sprintf(temp_str, "%s/%s.txt", globals.stepdir,
-                        ANALYZER_REPORT);
-
+                PERFEXPERT_ALLOC(char, report_file,
+                    (strlen(globals.stepdir) + strlen(ANALYZER_REPORT) + 2));
+                sprintf(report_file, "%s/%s", globals.stepdir, ANALYZER_REPORT);
                 if (PERFEXPERT_SUCCESS !=
-                    perfexpert_util_file_print(temp_str)) {
+                    perfexpert_util_file_print(report_file)) {
                     OUTPUT(("%s",
                         _ERROR("Error: unable to show analysis report")));
                 }
+                PERFEXPERT_DEALLOC(report_file);
                 rc = PERFEXPERT_NO_DATA;
-                goto clean_up;
+                goto CLEANUP;
 
             case PERFEXPERT_SUCCESS:
                 rc = PERFEXPERT_SUCCESS;
@@ -187,12 +177,12 @@ int main(int argc, char** argv) {
             case PERFEXPERT_ERROR:
             case PERFEXPERT_FAILURE:
                 OUTPUT(("%s", _ERROR("Error: unable to run recommender")));
-                goto clean_up;
+                goto CLEANUP;
 
             case PERFEXPERT_NO_REC:
                 OUTPUT(("No recommendation found, printing analysys report"));
                 rc = PERFEXPERT_NO_REC;
-                goto report;
+                goto REPORT;
 
             case PERFEXPERT_SUCCESS:
                 rc = PERFEXPERT_SUCCESS;
@@ -206,12 +196,12 @@ int main(int argc, char** argv) {
                 case PERFEXPERT_FAILURE:
                     OUTPUT(("%s",
                             _ERROR("Error: unable to run code transformer")));
-                    goto clean_up;
+                    goto CLEANUP;
 
                 case PERFEXPERT_NO_TRANS:
                     OUTPUT(("Unable to apply optimizations automatically"));
                     rc = PERFEXPERT_NO_TRANS;
-                    goto report;
+                    goto REPORT;
 
                 case PERFEXPERT_SUCCESS:
                     rc = PERFEXPERT_SUCCESS;
@@ -219,42 +209,45 @@ int main(int argc, char** argv) {
             #endif
         } else {
             rc = PERFEXPERT_SUCCESS;
-            goto report;
+            goto REPORT;
         }
         OUTPUT(("Starting another optimization round..."));
+        PERFEXPERT_DEALLOC(globals.stepdir);
         globals.step++;
     }
 
     /* Print analysis report */
-    report:
-    bzero(temp_str, BUFFER_SIZE);
-    sprintf(temp_str, "%s/%s.txt", globals.stepdir, ANALYZER_REPORT);
-
-    if (PERFEXPERT_SUCCESS != perfexpert_util_file_print(temp_str)) {
+    REPORT:
+    PERFEXPERT_ALLOC(char, report_file,
+        (strlen(globals.stepdir) + strlen(ANALYZER_REPORT) + 2));
+    sprintf(report_file, "%s/%s", globals.stepdir, ANALYZER_REPORT);
+    if (PERFEXPERT_SUCCESS != perfexpert_util_file_print(report_file)) {
         OUTPUT(("%s", _ERROR("Error: unable to show analysis report")));
     }
+    PERFEXPERT_DEALLOC(report_file);
 
     /* Print recommendations */
     if ((0 < globals.rec_count) && (PERFEXPERT_NO_REC != rc)) {
-        bzero(temp_str, BUFFER_SIZE);
-        sprintf(temp_str, "%s/%s.txt", globals.stepdir, RECOMMENDER_REPORT);
-
-        if (PERFEXPERT_SUCCESS != perfexpert_util_file_print(temp_str)) {
+        PERFEXPERT_ALLOC(char, report_file,
+            (strlen(globals.stepdir) + strlen(RECOMMENDER_REPORT) + 2));
+        sprintf(report_file, "%s/%s", globals.stepdir, RECOMMENDER_REPORT);
+        if (PERFEXPERT_SUCCESS != perfexpert_util_file_print(report_file)) {
             OUTPUT(("%s", _ERROR("Error: unable to show recommendations")));
         }
+        PERFEXPERT_DEALLOC(report_file);
     }
 
-    clean_up:
-    /* TODO: Should I remove the garbage? */
-    if (!globals.clean_garbage) {
+    CLEANUP:
+    /* Remove the garbage */
+    if (PERFEXPERT_FALSE == globals.leave_garbage) {
+        if (PERFEXPERT_SUCCESS != perfexpert_util_remove_dir(globals.workdir)) {
+            OUTPUT(("unable to remove work directory (%s)", globals.workdir));
+        }        
     }
 
-    /* TODO: Free memory */
-    if (NULL != globals.stepdir) {
-        free(globals.stepdir);
-    }
-    /* Remove perfexpert.log */
-    remove("perfexpert.log");
+    /* Free memory */
+    PERFEXPERT_DEALLOC(globals.workdir);
+    PERFEXPERT_DEALLOC(globals.stepdir);
 
     return rc;
 }

@@ -80,12 +80,12 @@ mkdir -p %{INSTALL_DIR}/etc
 mkdir -p %{INSTALL_DIR}/externals
 cp -r ./externals/lib %{INSTALL_DIR}/externals
 cp -r ./externals/include %{INSTALL_DIR}/externals
-cp ./contrib/stampede/*.properties %{INSTALL_DIR}/etc
+cp ./contrib/stampede/*.conf %{INSTALL_DIR}/etc
 
 mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 # Now install perfexpert itself
-./configure --prefix=%{INSTALL_DIR} --with-rose=%{INSTALL_DIR}/externals --with-jvm=/usr/java/latest/jre/lib/amd64/server/ --with-papi=$TACC_PAPI_DIR --with-apache-ant=/admin/build/admin/rpms/stampede/BUILD/perfexpert-4.0/externals/apache-ant-1.9.1/bin
+./configure --prefix=%{INSTALL_DIR} --with-rose=%{INSTALL_DIR}/externals --with-jvm=/usr/java/latest/jre/lib/amd64/server/ --with-papi=$TACC_PAPI_DIR
 make install
 
 # Add all the module stuff here

@@ -42,4 +42,7 @@ perfexpert_CPPFLAGS = -I$(srcdir)/../common
 
 perfexpert_CFLAGS = -O3
 
+# TODO: fix it
+perfexpert_LDFLAGS = -lrt
+
 # EOF
