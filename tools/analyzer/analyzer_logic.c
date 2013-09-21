@@ -19,7 +19,12 @@
  * Author: Ashay Rane and Leonardo Fialho
  */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* System standard headers */
+#include <string.h>
 #include <float.h>
 #include <stdio.h>
 
@@ -36,17 +41,14 @@ int calculate_importance_variance(profile_t *profile) {
     double maximum = DBL_MIN, minimum = DBL_MAX;
     int i = 0;
 
-    OUTPUT_VERBOSE((4, "   %s",
-        _YELLOW("Calculating importance and variance")));
-
-    /* Just in case... */
-    profile->instructions = 0.0;
+    OUTPUT_VERBOSE((4, "   %s", _CYAN("Calculating importance and variance")));
 
     /* For each hotspot in the profile's list of hotspots... */
     hotspot = (procedure_t *)perfexpert_list_get_first(&(profile->hotspots));
     while ((perfexpert_list_item_t *)hotspot != &(profile->hotspots.sentinel)) {
         /* Reseting values */
         hotspot->instructions = 0.0;
+        hotspot->cycles = 0.0;
         maximum = DBL_MIN;
         minimum = DBL_MAX;
         i = 0;
@@ -63,8 +65,11 @@ int calculate_importance_variance(profile_t *profile) {
                     minimum = metric->value;
                 }
                 hotspot->instructions += metric->value;
-
                 i++;
+            }
+            if (0 == strcmp(metric->name, PERFEXPERT_TOOL_HPCTOOLKIT_TOT_CYC)) {
+                hotspot->cycles += metric->value;
+                profile->cycles += metric->value;
             }
             metric = (metric_t *)perfexpert_list_get_next(metric);
         }
@@ -80,24 +85,29 @@ int calculate_importance_variance(profile_t *profile) {
         hotspot = (procedure_t *)perfexpert_list_get_next(hotspot);
     }
 
-    OUTPUT_VERBOSE((5, "    [%d] %s [ins=%g]", profile->id,
-        _GREEN(profile->name), profile->instructions));
-
     /* Calculate importance */
     hotspot = (procedure_t *)perfexpert_list_get_first(&(profile->hotspots));
     while ((perfexpert_list_item_t *)hotspot != &(profile->hotspots.sentinel)) {
 
-        hotspot->importance = hotspot->instructions / profile->instructions;
+        hotspot->importance = hotspot->cycles / profile->cycles;
 
-        OUTPUT_VERBOSE((5, "      [%d] %s [ins=%g] [imp=%g] [var=%g]",
-            hotspot->id, _RED(hotspot->name), hotspot->instructions,
-            hotspot->importance, hotspot->variance));
+        OUTPUT_VERBOSE((5,
+            "    [%d] %s [ins=%g] [var=%g] [cyc=%g] [importance=%.2f%%]",
+            hotspot->id, _YELLOW(hotspot->name), hotspot->instructions,
+            hotspot->variance, hotspot->cycles, hotspot->importance * 100));
 
         /* Move on */
         hotspot = (procedure_t *)perfexpert_list_get_next(hotspot);
     }
 
+    OUTPUT_VERBOSE((5, "   %s [ins=%g] [cyc=%g]", _MAGENTA("total"),
+        profile->instructions, profile->cycles));
+
     return PERFEXPERT_SUCCESS;
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 // EOF

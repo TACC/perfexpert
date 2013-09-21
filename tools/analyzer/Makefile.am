@@ -25,33 +25,25 @@
 # $HEADER$
 #
 
-SUBDIRS = argp hpcdata analyzer
+# SUBDIRS = argp hpcdata analyzer
 
 bin_PROGRAMS = perfexpert_analyzer
 
 perfexpert_analyzer_SOURCES = analyzer_main.c \
 	analyzer_hpctoolkit.c \
+	analyzer_lcpi.c \
 	analyzer_logic.c \
+	analyzer_machine.c \
 	analyzer_options.c \
+	analyzer_output.c \
 	analyzer_profile.c
 
+# TODO: I don't like libxml2 include here. Move it to configure :/
 perfexpert_analyzer_CPPFLAGS = -I$(srcdir)/../common -I/usr/include/libxml2/
 
 perfexpert_analyzer_CFLAGS = -O3
 
-perfexpert_analyzer_LDFLAGS = -lxml2
-
-dist_bin_SCRIPTS = hpcdata.sh analyzer.sh
-
-install-exec-local: install-dist_binSCRIPTS
-
-install-data-local:
-	$(MKDIR_P) $(libdir)
-	$(INSTALL) -m 644 $(top_srcdir)/externals/log4j-1.2.16.jar $(libdir)/
-	$(INSTALL) -m 644 $(top_srcdir)/externals/log4j.properties $(libdir)/
-
-install-exec-hook:
-	cd $(bindir); rm hpcdata; $(LN_S) hpcdata.sh hpcdata
-	cd $(bindir); rm analyzer; $(LN_S) analyzer.sh analyzer
+# TODO: I don't like libxml2 and matheval here. Move it to configure :/
+perfexpert_analyzer_LDFLAGS = -lxml2 -lmatheval
 
 # EOF

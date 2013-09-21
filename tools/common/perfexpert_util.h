@@ -56,6 +56,8 @@ extern "C" {
 #include <fcntl.h>
 #endif
 
+// #include <sys/types.h>
+
 #include "perfexpert_constants.h"
 #include "perfexpert_output.h"
 
@@ -136,6 +138,44 @@ static inline int perfexpert_util_file_exists(const char *file) {
         OUTPUT_VERBOSE((10, "%s (%s)", _RED((char *)"file not found"), file));
         return PERFEXPERT_ERROR;
     }
+    return PERFEXPERT_SUCCESS;
+}
+
+/* perfexpert_util_dir_exists */
+static inline int perfexpert_util_dir_exists(const char *dir) {
+    struct stat sb;
+
+    if (0 != stat(dir, &sb)) {
+        OUTPUT_VERBOSE((1, "%s (%s)",
+            _RED((char *)"directory not found or you don't have permissions"),
+            dir));
+        return PERFEXPERT_ERROR;
+    }
+    if (!S_ISDIR(sb.st_mode)) {
+        OUTPUT_VERBOSE((1, "%s (%s)", _RED((char *)"is not a directory"), dir));
+        return PERFEXPERT_ERROR;        
+    }
+
+    return PERFEXPERT_SUCCESS;
+}
+
+static inline int perfexpert_util_remove_dir(const char *dir) {
+    char *command = (char *)malloc(strlen(dir) + 8);
+
+    if (PERFEXPERT_SUCCESS != perfexpert_util_dir_exists(dir)) {
+        return PERFEXPERT_ERROR;
+    }
+    if (NULL == command) {
+        return PERFEXPERT_ERROR;
+    }
+    bzero(command, strlen(dir) + 8);
+    sprintf(command, "rm -rf %s", dir);
+    if (-1 == system(command)) {
+        free(command);
+        return PERFEXPERT_ERROR;
+    }
+    free(command);
+
     return PERFEXPERT_SUCCESS;
 }
 

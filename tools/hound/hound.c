@@ -27,72 +27,70 @@
 #include "err.h"
 #include "cpuid.h"
 #include "typeDefinitions.h"
-
 #include "discovery_amd.h"
 #include "discovery_intel.h"
-
 #include "x86_generic.h"
 
-#define    COLLECTION_SIZE    50
+#define COLLECTION_SIZE 50
 
 char processor = PROC_UNKNOWN;
 
-double get90thPercentile(volatile double* lpCycles, unsigned int count)
-{
-    int i, j;
-    double temp;
+double get90thPercentile(volatile double* lpCycles, unsigned int count) {
+    double temp = 0.0, value = 0.0;
+    int i = 0, j = 0;
 
     // Sort elements
-    for (i=0; i<count-1; i++)
-        for (j=i+1; j<count; j++)
-            if (lpCycles[i] > lpCycles[j])
-                temp=lpCycles[i], lpCycles[i]=lpCycles[j], lpCycles[j]=temp;
+    for (i = 0; i < count - 1; i++) {
+        for (j = i + 1; j < count; j++) {
+            if (lpCycles[i] > lpCycles[j]) {
+                temp = lpCycles[i];
+                lpCycles[i] = lpCycles[j];
+                lpCycles[j] = temp;
+            }
+        }
+    }
 
     // Return the 90th percentile from the sorted list
-    double value = lpCycles[(int) (0.9*count)];
-    if (value < 1.0)
+    value = lpCycles[(int) (0.9 * count)];
+    if (value < 1.0) {
         return 1.0;
-
+    }
     return value;
 }
 
-int insertIntoCacheList(cacheList** lplpCacheList, cacheInfo cache)
-{
-    while (*lplpCacheList != NULL)
+int insertIntoCacheList(cacheList** lplpCacheList, cacheInfo cache) {
+    while (*lplpCacheList != NULL) {
         lplpCacheList = &((*lplpCacheList)->lpNext);
+    }
 
-    if (((*lplpCacheList) = (cacheList*) malloc(sizeof(cacheList))) == NULL)
+    if (NULL == ((*lplpCacheList) = (cacheList*)malloc(sizeof(cacheList)))) {
         return -ERR_MEMFAILED;
+    }
 
     (*lplpCacheList)->info = cache;
     (*lplpCacheList)->lpNext = NULL;
     return 0;
 }
 
-void destroyCacheLists(cacheCollection* lpCaches)
-{
+void destroyCacheLists(cacheCollection* lpCaches) {
     cacheList* lpTemp;
-    while ((lpTemp = lpCaches->lpL1Caches) != NULL)
-    {
+    while ((lpTemp = lpCaches->lpL1Caches) != NULL) {
         lpCaches->lpL1Caches = lpTemp->lpNext;
         free(lpTemp);
     }
 
-    while ((lpTemp = lpCaches->lpL2Caches) != NULL)
-    {
+    while ((lpTemp = lpCaches->lpL2Caches) != NULL) {
         lpCaches->lpL2Caches = lpTemp->lpNext;
         free(lpTemp);
     }
 
-    while ((lpTemp = lpCaches->lpL2Caches) != NULL)
-    {
+    while ((lpTemp = lpCaches->lpL2Caches) != NULL) {
         lpCaches->lpL2Caches = lpTemp->lpNext;
         free(lpTemp);
     }
 }
 
-void discoverCachesWithoutCPUID()
-{
+void discoverCachesWithoutCPUID() {
     int i, j;
     unsigned int cycles;
     unsigned short counter = 1;
@@ -108,10 +106,10 @@ void discoverCachesWithoutCPUID()
 
     double val;
     val = get90thPercentile(cycleCollection, COLLECTION_SIZE);
-    printf ("L1_dlat = %.2lf\n", val);
+    printf ("L1_dlat = %lf\n", val);
 
     // FIXME: L1 Latency values are being calculated incorrectly
-    printf ("L1_ilat = %.2lf\n", val);
+    printf ("L1_ilat = %lf\n", val);
 
     // Start measuring from L2
     cycles = val;
@@ -130,9 +128,9 @@ void discoverCachesWithoutCPUID()
             #endif
 
             if (counter == 1)
-                printf ("L%d_dlat = %.2lf\n", ++counter, val);
+                printf ("L%d_dlat = %lf\n", ++counter, val);
             else    // Assuming unified caches beyond L1
-                printf ("L%d_lat = %.2lf\n", ++counter, val);
+                printf ("L%d_lat = %lf\n", ++counter, val);
 
             cycles = val;
 
@@ -148,7 +146,7 @@ void discoverCachesWithoutCPUID()
     }
 
     #ifdef    DEBUG_PRINT
-        printf ("DEBUG: Finished probing caches, now probing memory with size: %.2lf KB\n", 30 * i / 1024.0);
+        printf ("DEBUG: Finished probing caches, now probing memory with size: %lf KB\n", 30 * i / 1024.0);
     #endif
 
     // Start with mem_size = 30i KB
@@ -159,21 +157,17 @@ void discoverCachesWithoutCPUID()
         printf ("DEBUG: Finished probing memory\n");
     #endif
 
-    printf ("mem_lat = %.2lf\n", get90thPercentile(cycleCollection, COLLECTION_SIZE));
+    printf ("mem_lat = %lf\n", get90thPercentile(cycleCollection, COLLECTION_SIZE));
 }
 
-int isCacheProbeSupportedByCPUID(unsigned char processor)
-{
+int isCacheProbeSupportedByCPUID(unsigned char processor) {
     int info[4];
 
-    if (processor == PROC_INTEL)
-    {
+    if (processor == PROC_INTEL) {
         __cpuid(info, 0, 0);
         if (info[0] >= 0x2)
             return 0;
-    }
-    else if (processor == PROC_AMD)
-    {
+    } else if (processor == PROC_AMD) {
         __cpuid(info, 0x80000000, 0);
         if (info[0] >= 0x80000006)
             return 0;
@@ -182,8 +176,7 @@ int isCacheProbeSupportedByCPUID(unsigned char processor)
     return -1;
 }
 
-int main( int argc, char * argv[] )
-{
+int main( int argc, char * argv[] ) {
     int i, j;
     double cycleCollection [COLLECTION_SIZE];
 
@@ -191,8 +184,7 @@ int main( int argc, char * argv[] )
         printf ("DEBUG: Debug messages ON\n");
     #endif
 
-    if (isCPUIDSupported())
-    {
+    if (isCPUIDSupported()) {
         #ifdef    DEBUG_PRINT
             printf ("DEBUG: CPUID supported, getting processor name...\n");
         #endif
@@ -209,38 +201,32 @@ int main( int argc, char * argv[] )
             printf ("DEBUG: Processor name was: %s\n", processorName);
         #endif
 
-        if (isCacheProbeSupportedByCPUID(processor) < 0)
-        {
+        if (isCacheProbeSupportedByCPUID(processor) < 0) {
             #ifdef    DEBUG_PRINT
                 printf ("DEBUG: Processor supports CPUID instruction but only limited information can be retrived. Falling back to probing using different memory sizes\n");
             #endif
 
             // CPUID of no use, instead measure using different memory sizes and latency of access
             processor = PROC_UNKNOWN;
-        }
-        else
-        {
+        } else {
             #ifdef    DEBUG_PRINT
                 printf ("DEBUG: Cache probing using CPUID instruction supported\n");
             #endif
         }
-    }
-    else
-    {
+    } else {
         #ifdef    DEBUG_PRINT
             printf ("DEBUG: CPUID instruction not supported\n");
         #endif
     }
 
     // Version string
-    printf ("version = 1.0\n\n");
     printf ("# Generated using hound\n");
-    printf ("CPI_threshold = 0.5\n");
+    printf ("# version=1.0\n");
+    printf ("CPI_threshold=0.5\n");
 
     if (processor == PROC_UNKNOWN)
         discoverCachesWithoutCPUID();    // Also prints values
-    else
-    {
+    else {
         cacheCollection caches = {0};
 
         if (processor == PROC_INTEL)    discoverIntelCaches(&caches);
@@ -254,8 +240,7 @@ int main( int argc, char * argv[] )
         // measure the latencies to each cache
 
         // First, L1
-        if (caches.lpL1Caches == NULL)
-        {
+        if (caches.lpL1Caches == NULL) {
             #ifdef    DEBUG_PRINT
                 printf ("DEBUG: No L1 caches found!\n");
             #endif
@@ -267,20 +252,19 @@ int main( int argc, char * argv[] )
         double L1_dlat = 1;
         volatile cacheList* lpCache = caches.lpL1Caches;
         volatile double cycleCollection [COLLECTION_SIZE];
-        while (lpCache != NULL)
-        {
-            if (lpCache->info.cacheOrTLB == CACHE && lpCache->info.type != INSTRUCTION)    // We cannot measure TLB and iCACHE latencies this way, so just measure caches
-            {
+        while (lpCache != NULL) {
+            // We cannot measure TLB and iCACHE latencies this way, so just measure caches
+            if (lpCache->info.cacheOrTLB == CACHE && lpCache->info.type != INSTRUCTION) {
                 #ifdef    DEBUG_PRINT
                     if (lpCache->info.cacheOrTLB == CACHE)
-                        printf ("DEBUG: Measuring latency of L1 %s cache, line size: %d bytes, total size: %.1lf KB\n", getCacheType(lpCache->info.type), lpCache->info.lineSize, lpCache->info.lineSize * lpCache->info.lineCount / 1024.0);
+                        printf ("DEBUG: Measuring latency of L1 %s cache, line size: %d bytes, total size: %lf KB\n", getCacheType(lpCache->info.type), lpCache->info.lineSize, lpCache->info.lineSize * lpCache->info.lineCount / 1024.0);
                 #endif
 
                 for (i=0; i<COLLECTION_SIZE; i++)
                     cycleCollection[i] = allocateAndTest(lpCache->info.lineSize * lpCache->info.lineCount, lpCache->info.lineSize, 1);
 
                 L1_dlat = get90thPercentile(cycleCollection, COLLECTION_SIZE);
-                printf ("L1_dlat = %.2lf\n", L1_dlat);
+                printf("L1_dlat=%lf\n", L1_dlat);
                 break;
             }
 
@@ -291,39 +275,36 @@ int main( int argc, char * argv[] )
         // printf ("L1_ilat = %.2lf\n", getIntelL1InstructionLatency());
 
         // Temporary fix:
-        printf ("L1_ilat = %.2lf\n", L1_dlat);
+        printf ("L1_ilat=%lf\n", L1_dlat);
 
         // Then L2
         lpCache = caches.lpL2Caches;
-        while (lpCache != NULL)
-        {
-            if (lpCache->info.cacheOrTLB == CACHE && lpCache->info.type != INSTRUCTION)    // We cannot measure TLB and iCACHE latencies this way, so just measure caches
-            {
+        while (lpCache != NULL) {
+            // We cannot measure TLB and iCACHE latencies this way, so just measure caches
+            if (lpCache->info.cacheOrTLB == CACHE && lpCache->info.type != INSTRUCTION) {
                 #ifdef    DEBUG_PRINT
                     if (lpCache->info.cacheOrTLB == CACHE)
-                        printf ("DEBUG: Measuring latency of L2 %s cache, line size: %d bytes, total size: %.1lf KB\n", getCacheType(lpCache->info.type), lpCache->info.lineSize, lpCache->info.lineSize * lpCache->info.lineCount / 1024.0);
+                        printf ("DEBUG: Measuring latency of L2 %s cache, line size: %d bytes, total size: %lf KB\n", getCacheType(lpCache->info.type), lpCache->info.lineSize, lpCache->info.lineSize * lpCache->info.lineCount / 1024.0);
                 #endif
 
                 for (i=0; i<COLLECTION_SIZE; i++)
                     cycleCollection[i] = allocateAndTest(lpCache->info.lineSize * lpCache->info.lineCount, lpCache->info.lineSize, 1);
 
                 if (lpCache->info.type == UNIFIED)
-                    printf ("L2_lat = %.2lf\n", get90thPercentile(cycleCollection, COLLECTION_SIZE));
+                    printf ("L2_lat=%lf\n", get90thPercentile(cycleCollection, COLLECTION_SIZE));
                 else
-                    printf ("L2_dlat = %.2lf\n", get90thPercentile(cycleCollection, COLLECTION_SIZE));
+                    printf ("L2_dlat=%lf\n", get90thPercentile(cycleCollection, COLLECTION_SIZE));
                 break;
             }
-
             lpCache = lpCache->lpNext;
         }
 
         // L3...
         lpCache = caches.lpL3Caches;
-        while (lpCache != NULL)
-        {
+        while (lpCache != NULL) {
             #ifdef    DEBUG_PRINT
                 if (lpCache->info.cacheOrTLB == CACHE)
-                    printf ("DEBUG: Measuring latency of L3 %s cache, line size: %d bytes, total size: %.1lf KB\n", getCacheType(lpCache->info.type), lpCache->info.lineSize, lpCache->info.lineSize * lpCache->info.lineCount / 1024.0);
+                    printf ("DEBUG: Measuring latency of L3 %s cache, line size: %d bytes, total size: %lf KB\n", getCacheType(lpCache->info.type), lpCache->info.lineSize, lpCache->info.lineSize * lpCache->info.lineCount / 1024.0);
                 else
                     printf ("DEBUG: Was not expecting anything other than cache, however found an item with code '%d' in the list, ignoring...\n", lpCache->info.cacheOrTLB);
             #endif
@@ -332,7 +313,7 @@ int main( int argc, char * argv[] )
             for (i=0; i<COLLECTION_SIZE; i++)
                 cycleCollection[i] = allocateAndTest(lpCache->info.lineSize * lpCache->info.lineCount, lpCache->info.lineSize, 1);
 
-            printf ("L3_lat = %.2lf\n", get90thPercentile(cycleCollection, COLLECTION_SIZE));
+            printf ("L3_lat=%lf\n", get90thPercentile(cycleCollection, COLLECTION_SIZE));
 
             // FIXME: Non-sensical to include a `break' here
             break;
@@ -340,28 +321,23 @@ int main( int argc, char * argv[] )
         }
 
         // Finally to the main memeory
-        if (caches.lpL3Caches)
-        {
+        if (caches.lpL3Caches) {
             lpCache = caches.lpL3Caches;
 
             #ifdef    DEBUG_PRINT
-                printf ("DEBUG: Using memory size as 30x L3 size = %.2lf KB\n", 30 * lpCache->info.lineSize * lpCache->info.lineCount / 1024.0);
+                printf ("DEBUG: Using memory size as 30x L3 size = %lf KB\n", 30 * lpCache->info.lineSize * lpCache->info.lineCount / 1024.0);
             #endif
-        }
-        else if (caches.lpL2Caches)
-        {
+        } else if (caches.lpL2Caches) {
             lpCache = caches.lpL2Caches;
 
             #ifdef    DEBUG_PRINT
-                printf ("DEBUG: Using memory size as 30x L2 size = %.2lf KB\n", 30 * lpCache->info.lineSize * lpCache->info.lineCount / 1024.0);
+                printf ("DEBUG: Using memory size as 30x L2 size = %lf KB\n", 30 * lpCache->info.lineSize * lpCache->info.lineCount / 1024.0);
             #endif
-        }
-        else
-        {
+        } else {
             lpCache = caches.lpL1Caches;
 
             #ifdef    DEBUG_PRINT
-                printf ("DEBUG: Using memory size as 30x L1 size = %.2lf KB\n", 30 * lpCache->info.lineSize * lpCache->info.lineCount / 1024.0);
+                printf ("DEBUG: Using memory size as 30x L1 size = %lf KB\n", 30 * lpCache->info.lineSize * lpCache->info.lineCount / 1024.0);
             #endif
         }
 
@@ -369,56 +345,53 @@ int main( int argc, char * argv[] )
             cycleCollection[i] = allocateAndTestMainMemory(30 * lpCache->info.lineSize * lpCache->info.lineCount, /* lpCache->info.lineSize */ 1024, 0);
 
         destroyCacheLists(&caches);
-        printf ("mem_lat = %.2lf\n", get90thPercentile(cycleCollection, COLLECTION_SIZE));
+        printf ("mem_lat=%lf\n", get90thPercentile(cycleCollection, COLLECTION_SIZE));
     }
 
     // FIALHO TODO: if we avoid this Hound may work great on OXS.
     // Lookup operating frequency in /proc/cpuinfo
     FILE* fp = fopen("/proc/cpuinfo", "r");
-    if (fp == NULL)
-    {
+    if (fp == NULL) {
         perror ("Error opening /proc/cpuinfo for reading processor frequency");
         return 1;
     }
 
     char line [256]={0};
-    while (fgets(line, 256, fp))
-    {
+    while (fgets(line, 256, fp)) {
         if (strncmp ("cpu MHz", line, 7) == 0)
             break;
     }
 
     fclose(fp);
-    if (line[0] == '\0')
-    {
+    if (line[0] == '\0') {
         printf ("Did not find cpu MHz string in /proc/cpuinfo, is it a valid file?\n");
         return 1;
     }
 
     double frequency = 0;
     sscanf(line, "cpu MHz :%lf", &frequency);
-    printf ("CPU_freq = %.0lf\n", frequency*1000000);
+    printf("CPU_freq=%.0lf\n", frequency*1000000);
 
     double FP_lat, FP_slow_lat, BR_lat, BR_miss_lat, TLB_lat;
 
     FP_lat = getFPLatency();
-    printf ("FP_lat = %.2lf\n", FP_lat < 1.0 ? 1.0 : FP_lat);
+    printf("FP_lat=%lf\n", FP_lat < 1.0 ? 1.0 : FP_lat);
 
     FP_slow_lat = getFPSlowLatency();
-    printf ("FP_slow_lat = %.2lf\n", FP_slow_lat < 1.0 ? 1.0 : FP_slow_lat);
+    printf("FP_slow_lat=%lf\n", FP_slow_lat < 1.0 ? 1.0 : FP_slow_lat);
 
     BR_lat = getPredictedBranchLatency();
-    printf ("BR_lat = %.2lf\n", BR_lat < 1.0 ? 1.0 : BR_lat);
+    printf("BR_lat=%lf\n", BR_lat < 1.0 ? 1.0 : BR_lat);
 
     BR_miss_lat = getMisPredictedBranchLatency();
-    printf ("BR_miss_lat = %.2lf\n", BR_miss_lat < 1.0 ? 1.0 : BR_miss_lat);
+    printf("BR_miss_lat=%lf\n", BR_miss_lat < 1.0 ? 1.0 : BR_miss_lat);
 
     // Warm up TLBs?
     for (i=0; i<32; i++)
         allocateAndTest(4096, /* lpCache->info.lineSize */ 512, 1);
 
     TLB_lat = getTLBLatency(512*1024);
-    printf ("TLB_lat = %.2lf\n", TLB_lat < 1.0 ? 1.0 : TLB_lat);
+    printf("TLB_lat=%lf\n", TLB_lat < 1.0 ? 1.0 : TLB_lat);
 
     return 0;
 }

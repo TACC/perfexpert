@@ -44,122 +44,78 @@ extern "C" {
 /* recommendation */
 int recommendation(void) {
     char temp_str[8][BUFFER_SIZE];
-    char *argv[6];
+    char *argv[2];
     test_t test;
     int rc;
 
-    OUTPUT_VERBOSE((4, "=== %s", _BLUE("Recommendations phase")));
+    OUTPUT_VERBOSE((4, "%s", _BLUE("Recommendations phase")));
     OUTPUT(("Selecting optimizations"));
 
     /* Set some environment variables to avoid working arguments */
-    bzero(temp_str[0], BUFFER_SIZE);
-    sprintf(temp_str[0], "%s/%s.txt", globals.stepdir, ANALYZER_METRICS);
-    if (0 != setenv("PERFEXPERT_RECOMMENDER_INPUT_FILE", temp_str[0], 0)) {
-        OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
-        return PERFEXPERT_ERROR;
-    }
     bzero(temp_str[1], BUFFER_SIZE);
-    sprintf(temp_str[1], "%d", globals.rec_count);
-    if (0 != setenv("PERFEXPERT_RECOMMENDER_REC_COUNT", temp_str[1], 0)) {
-        OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
-        return PERFEXPERT_ERROR;
-    }
-    if (0 != setenv("PERFEXPERT_RECOMMENDER_DATABASE_FILE", globals.dbfile, 0)) {
+    sprintf(temp_str[1], "%d", globals.colorful);
+    if (0 != setenv("PERFEXPERT_RECOMMENDER_COLORFUL", temp_str[1], 0)) {
         OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
         return PERFEXPERT_ERROR;
     }
     bzero(temp_str[2], BUFFER_SIZE);
-    sprintf(temp_str[2], "%d", globals.colorful);
-    if (0 != setenv("PERFEXPERT_RECOMMENDER_COLORFUL", temp_str[2], 0)) {
+    sprintf(temp_str[2], "%d", globals.verbose);
+    if (0 != setenv("PERFEXPERT_RECOMMENDER_VERBOSE_LEVEL", temp_str[2], 0)) {
         OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
         return PERFEXPERT_ERROR;
     }
-    bzero(temp_str[7], BUFFER_SIZE);
-    sprintf(temp_str[7], "%d", globals.verbose_level);
-    if (0 != setenv("PERFEXPERT_RECOMMENDER_VERBOSE_LEVEL", temp_str[7], 0)) {
+    bzero(temp_str[3], BUFFER_SIZE);
+    sprintf(temp_str[3], "%d", (int)getpid());
+    if (0 != setenv("PERFEXPERT_RECOMMENDER_PID", temp_str[3], 0)) {
+        OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
+        return PERFEXPERT_ERROR;
+    }
+    bzero(temp_str[4], BUFFER_SIZE);
+    sprintf(temp_str[4], "%d", globals.rec_count);
+    if (0 != setenv("PERFEXPERT_RECOMMENDER_REC_COUNT", temp_str[4], 0)) {
+        OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
+        return PERFEXPERT_ERROR;
+    }
+    bzero(temp_str[5], BUFFER_SIZE);
+    sprintf(temp_str[5], "%s/%s", globals.stepdir, ANALYZER_METRICS);
+    if (0 != setenv("PERFEXPERT_RECOMMENDER_INPUT_FILE", temp_str[5], 0)) {
         OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
         return PERFEXPERT_ERROR;
     }
     bzero(temp_str[6], BUFFER_SIZE);
-    sprintf(temp_str[6], "%d", (int)getpid());
-    if (0 != setenv("PERFEXPERT_RECOMMENDER_PID", temp_str[6], 0)) {
+    sprintf(temp_str[6], "%s/%s", globals.stepdir, RECOMMENDER_REPORT);
+    if (0 != setenv("PERFEXPERT_RECOMMENDER_OUTPUT_FILE", temp_str[6], 0)) {
+        OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
+        return PERFEXPERT_ERROR;
+    }
+    bzero(temp_str[7], BUFFER_SIZE);
+    sprintf(temp_str[7], "%s/%s", globals.stepdir, RECOMMENDER_METRICS);
+    if (0 != setenv("PERFEXPERT_RECOMMENDER_METRICS_FILE", temp_str[7], 0)) {
+        OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
+        return PERFEXPERT_ERROR;
+    }
+    if (0 != setenv("PERFEXPERT_RECOMMENDER_DATABASE_FILE", globals.dbfile,
+        0)) {
+        OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
+        return PERFEXPERT_ERROR;
+    }
+    if (0 != setenv("PERFEXPERT_RECOMMENDER_WORKDIR", globals.stepdir, 0)) {
         OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
         return PERFEXPERT_ERROR;
     }
 
     /* Arguments to run analyzer */
-    bzero(temp_str[3], BUFFER_SIZE);
-    sprintf(temp_str[3], "%s", RECOMMENDER_PROGRAM);
-    argv[0] = temp_str[3];
-    argv[1] = "--automatic";
-    argv[2] = globals.stepdir;
-    argv[3] = "--output";
-    bzero(temp_str[4], BUFFER_SIZE);
-    sprintf(temp_str[4], "%s/%s.txt", globals.stepdir, RECOMMENDER_METRICS);
-    argv[4] = temp_str[4];
-    argv[5] = NULL;
-
-    /* Not using OUTPUT_VERBOSE because I want only one line (WTF?) */
-    if (8 <= globals.verbose_level) {
-        int i;
-        printf("%s    %s", PROGRAM_PREFIX, _YELLOW("command line:"));
-        for (i = 0; i <= 4; i++) {
-            printf(" %s", argv[i]);
-        }
-        printf("\n");
-    }
+    argv[0] = RECOMMENDER_PROGRAM;
+    argv[1] = NULL;
 
     /* The super-ninja test sctructure */
-    if (0 == globals.verbose_level) {
-        bzero(temp_str[5], BUFFER_SIZE);
-        sprintf(temp_str[5], "%s/%s.output", globals.stepdir,
-                RECOMMENDER_METRICS);
-        test.output = temp_str[5];
-    } else {
-        test.output = NULL;
-    }
+    bzero(temp_str[0], BUFFER_SIZE);
+    sprintf(temp_str[0], "%s/%s", globals.stepdir, RECOMMENDER_OUTPUT);
+    test.output = temp_str[0];
     test.input = NULL;
     test.info = NULL;
 
-    /* Run! (to generate recommendation metrics for code transformer) */
-    if ((NULL != globals.sourcefile) || (NULL != globals.target)) {
-        rc = fork_and_wait(&test, argv);
-        if (PERFEXPERT_ERROR == rc) {
-            return PERFEXPERT_ERROR;
-        }
-    }
-
-    /* Work some arguments... */
-    argv[1] = "--output";
-    bzero(temp_str[4], BUFFER_SIZE);
-    sprintf(temp_str[4], "%s/%s.txt", globals.stepdir, RECOMMENDER_REPORT);
-    argv[2] = temp_str[4];
-    argv[3] = NULL;
-
-    /* Not using OUTPUT_VERBOSE because I want only one line */
-    if (8 <= globals.verbose_level) {
-        int i;
-        printf("%s    %s", PROGRAM_PREFIX, _YELLOW("command line:"));
-        for (i = 0; i <= 2; i++) {
-            printf(" %s", argv[i]);
-        }
-        printf("\n");
-    }
-
-    /* The super-ninja test sctructure */
-    if (0 == globals.verbose_level) {
-        bzero(temp_str[5], BUFFER_SIZE);
-        sprintf(temp_str[5], "%s/%s.output", globals.stepdir,
-                RECOMMENDER_REPORT);
-        test.output = temp_str[5];
-    } else {
-        test.output = NULL;
-    }
-    test.input = NULL;
-    test.info = NULL;
-
-
-    /* Run! (to generate recommendation report) */
+    /* run_and_fork_and_pray */
     rc = fork_and_wait(&test, argv);
     if (PERFEXPERT_ERROR == rc) {
         return PERFEXPERT_ERROR;

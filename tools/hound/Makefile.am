@@ -36,10 +36,10 @@ else
 endif
 
 install-exec-local:
-	./hound > machine.properties
+	./hound > machine.conf
 	$(MKDIR_P) $(sysconfdir)
-	$(INSTALL) -m 644 machine.properties $(sysconfdir)/
-	hwloc-info --output-format xml > memory.properties
-	$(INSTALL) -m 644 memory.properties $(sysconfdir)/
+	$(INSTALL) -m 644 machine.conf $(sysconfdir)/
+	hwloc-info --output-format xml > memory.conf
+	$(INSTALL) -m 644 memory.conf $(sysconfdir)/
 
 # EOF

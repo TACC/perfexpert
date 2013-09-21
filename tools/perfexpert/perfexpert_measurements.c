@@ -38,7 +38,7 @@ extern "C" {
 
 /* measurements */
 int measurements(void) {
-    OUTPUT_VERBOSE((4, "=== %s", _BLUE("Measurements phase")));
+    OUTPUT_VERBOSE((4, "%s", _BLUE("Measurements phase")));
     OUTPUT(("Running [%s]", globals.program));
 
     /* First of all, does the file exist? (it is just a double check) */
