@@ -37,19 +37,15 @@ int main(int argc, char* argv []) {
 
     attach_sampling_rate(saved_sampling_freq);
 
-    // bzero(metrics, sizeof(struct lcpi_t));
     /* Generate LCPI metrics */
-    get_overall(metrics.overall);
     get_ratio_floating_point(metrics.ratio_floating_point);
     get_ratio_data_accesses(metrics.ratio_data_accesses);
-    get_gflops(metrics.gflops_overall,
-        metrics.gflops_packed,
+    get_gflops(metrics.gflops_overall, metrics.gflops_packed,
         metrics.gflops_scalar);
+    get_overall(metrics.overall);
     get_data_accesses(metrics.data_accesses_overall,
-        metrics.data_accesses_L1_hits,
-        metrics.data_accesses_L2_hits,
-        metrics.data_accesses_L3_hits,
-        metrics.data_accesses_LLC_misses);
+        metrics.data_accesses_L1_hits, metrics.data_accesses_L2_hits,
+        metrics.data_accesses_L3_hits, metrics.data_accesses_LLC_misses);
     get_instruction_accesses(metrics.instruction_accesses_overall,
         metrics.instruction_accesses_L1_hits,
         metrics.instruction_accesses_L2_hits,
@@ -70,22 +66,23 @@ int main(int argc, char* argv []) {
     return 0;
 }
 
+/* write_lcpi */
 void write_lcpi(lcpi_t metrics) {
     FILE* fp;
 
-    fp = fopen("lcpi.properties", "w");
+    fp = fopen("lcpi.conf", "w");
     if (NULL == fp) {
-        fprintf(stderr, "Could not open file lcpi.properties for writing\n");
+        fprintf(stderr, "Could not open file lcpi.conf for writing\n");
         exit(1);
     }
 
-    fprintf(fp, "# LCPI config generated using sniffer\nversion = 1.0\n");
-    fprintf(fp, "%s\n", metrics.overall);
+    fprintf(fp, "# LCPI config generated using sniffer\n# version = 1.0\n");
     fprintf(fp, "%s\n", metrics.ratio_floating_point);
     fprintf(fp, "%s\n", metrics.ratio_data_accesses);
     fprintf(fp, "%s\n", metrics.gflops_overall);
     fprintf(fp, "%s\n", metrics.gflops_packed);
     fprintf(fp, "%s\n", metrics.gflops_scalar);
+    fprintf(fp, "%s\n", metrics.overall);
     fprintf(fp, "%s\n", metrics.data_accesses_overall);
     fprintf(fp, "%s\n", metrics.data_accesses_L1_hits);
     fprintf(fp, "%s\n", metrics.data_accesses_L2_hits);
@@ -107,6 +104,7 @@ void write_lcpi(lcpi_t metrics) {
     fclose (fp);
 }
 
+/* write_experiment */
 void write_experiment(void) {
     FILE* fp;
     int ret;
@@ -115,12 +113,13 @@ void write_experiment(void) {
     int papi_tot_ins_code;
     short addCount, remaining;
 
-    fp = fopen("experiment.properties", "w");
+    fp = fopen("experiment.conf", "w");
     if (NULL == fp) {
-        fprintf(stderr,
-                "Could not open file analyzer_run_exp.sh_header for writing\n");
+        fprintf(stderr, "Could not open file experiment.conf for writing\n");
         exit(1);
     }
+
+    fprintf(fp, "# Experiment file generated using sniffer\n# version = 1.0\n");
 
     do {
         addCount = 0;
@@ -145,21 +144,20 @@ void write_experiment(void) {
         }
 
         for (j = 0; j < EVENT_COUNT; j++) {
-            // Don't need to specially add PAPI_TOT_INS, we are measuring that anyway
             if (PAPI_TOT_INS == j) {
                 continue;
             }
             
             if (IS_EVENT_USED(j) && TOT_INS != j) {
                 PAPI_event_name_to_code(event_list[j].PAPI_event_name,
-                                        &event_code);
+                    &event_code);
                 if (PAPI_OK == PAPI_add_event(event_set, event_code)) {
                     ADD_EVENT(j);
                     if (0 == remaining) { // New line
                         fprintf(fp, "%%\n", exp_count);
                     }
                     fprintf(fp, "%s:%d\n", event_list[j].PAPI_event_name,
-                            event_list[j].sampling_freq);
+                        event_list[j].sampling_freq);
                     addCount++;
                 }
                 remaining++;
@@ -188,7 +186,7 @@ void write_experiment(void) {
     fclose(fp);
 }
 
-/* floating_point_instr */
+/* get_floating_point_instr */
 void get_floating_point_instr(char *overall, char *slow, char *fast) {
     char lcpi_slow[LCPI_DEF_LENGTH];
     char lcpi_fast[LCPI_DEF_LENGTH];
@@ -203,15 +201,14 @@ void get_floating_point_instr(char *overall, char *slow, char *fast) {
         }
 
     } else if (IS_EVENT_AVAILABLE(FP_COMP_OPS_EXE_SSE_DOUBLE_PRECISION) &&
-               IS_EVENT_AVAILABLE(FP_COMP_OPS_EXE_SSE_FP) &&
-               IS_EVENT_AVAILABLE(FP_COMP_OPS_EXE_SSE_FP_PACKED) &&
-               IS_EVENT_AVAILABLE(FP_COMP_OPS_EXE_SSE_FP_SCALAR) &&
-               IS_EVENT_AVAILABLE(FP_COMP_OPS_EXE_SSE_SINGLE_PRECISION) &&
-               IS_EVENT_AVAILABLE(FP_COMP_OPS_EXE_X87)) {
+        IS_EVENT_AVAILABLE(FP_COMP_OPS_EXE_SSE_FP) &&
+        IS_EVENT_AVAILABLE(FP_COMP_OPS_EXE_SSE_FP_PACKED) &&
+        IS_EVENT_AVAILABLE(FP_COMP_OPS_EXE_SSE_FP_SCALAR) &&
+        IS_EVENT_AVAILABLE(FP_COMP_OPS_EXE_SSE_SINGLE_PRECISION) &&
+        IS_EVENT_AVAILABLE(FP_COMP_OPS_EXE_X87)) {
 
         // Do a dummy test to see if the single big counter can be added or do we have to break it down into multiple parts
         if (0 == test_counter(FP_COMP_OPS_EXE_SSE_DOUBLE_PRECISION_SSE_FP_SSE_FP_PACKED_SSE_FP_SCALAR_SSE_SINGLE_PRECISION_X87)) {
-
             USE_EVENT(FP_COMP_OPS_EXE_SSE_DOUBLE_PRECISION_SSE_FP_SSE_FP_PACKED_SSE_FP_SCALAR_SSE_SINGLE_PRECISION_X87);
             DOWNGRADE_EVENT(FP_COMP_OPS_EXE_SSE_DOUBLE_PRECISION);
             DOWNGRADE_EVENT(FP_COMP_OPS_EXE_SSE_FP);
@@ -222,9 +219,7 @@ void get_floating_point_instr(char *overall, char *slow, char *fast) {
             
             sprintf(lcpi_fast, "(%s*FP_lat)",
                     event_list[FP_COMP_OPS_EXE_SSE_DOUBLE_PRECISION_SSE_FP_SSE_FP_PACKED_SSE_FP_SCALAR_SSE_SINGLE_PRECISION_X87].PAPI_event_name);
-
         } else {
-
             // Asume that we can add separately. If this is false, we will catch it at the time of generating LCPIs
             // Use the available counters
             USE_EVENT(FP_COMP_OPS_EXE_SSE_DOUBLE_PRECISION);
@@ -243,12 +238,11 @@ void get_floating_point_instr(char *overall, char *slow, char *fast) {
                 event_list[FP_COMP_OPS_EXE_X87].PAPI_event_name);
         }
     } else if (IS_EVENT_AVAILABLE(FP_COMP_OPS_EXE_SSE_FP_PACKED_DOUBLE) &&
-               IS_EVENT_AVAILABLE(FP_COMP_OPS_EXE_SSE_FP_SCALAR_SINGLE) &&
-               IS_EVENT_AVAILABLE(FP_COMP_OPS_EXE_SSE_PACKED_SINGLE) &&
-               IS_EVENT_AVAILABLE(FP_COMP_OPS_EXE_SSE_SCALAR_DOUBLE)) {
+        IS_EVENT_AVAILABLE(FP_COMP_OPS_EXE_SSE_FP_SCALAR_SINGLE) &&
+        IS_EVENT_AVAILABLE(FP_COMP_OPS_EXE_SSE_PACKED_SINGLE) &&
+        IS_EVENT_AVAILABLE(FP_COMP_OPS_EXE_SSE_SCALAR_DOUBLE)) {
 
         if (0 == test_counter(FP_COMP_OPS_EXE_SSE_FP_SCALAR_SINGLE_SSE_SCALAR_DOUBLE)) {
-
             USE_EVENT(FP_COMP_OPS_EXE_SSE_FP_SCALAR_SINGLE_SSE_SCALAR_DOUBLE);
             DOWNGRADE_EVENT(FP_COMP_OPS_EXE_SSE_FP_SCALAR_SINGLE);
             DOWNGRADE_EVENT(FP_COMP_OPS_EXE_SSE_SCALAR_DOUBLE);
@@ -259,7 +253,6 @@ void get_floating_point_instr(char *overall, char *slow, char *fast) {
                 event_list[FP_COMP_OPS_EXE_SSE_FP_PACKED_DOUBLE].PAPI_event_name,
                 event_list[FP_COMP_OPS_EXE_SSE_PACKED_SINGLE].PAPI_event_name,
                 event_list[FP_COMP_OPS_EXE_SSE_FP_SCALAR_SINGLE_SSE_SCALAR_DOUBLE].PAPI_event_name);
-
         } else {
 
             // Asume that we can add separately. If this is false, we will catch it at the time of generating LCPIs
@@ -299,7 +292,7 @@ void get_floating_point_instr(char *overall, char *slow, char *fast) {
         lcpi_slow);
 }
 
-/* branch_instructions */
+/* get_branch_instructions */
 void get_branch_instructions(char *overall, char *predicted,
     char *mispredicted) {
     if (IS_EVENT_AVAILABLE(BR_INS) && IS_EVENT_AVAILABLE(BR_MSP)) {
@@ -316,6 +309,7 @@ void get_branch_instructions(char *overall, char *predicted,
     }
 }
 
+/* get_tlb */
 void get_tlb(char *data, char *instruction) {
     /* data_TLB */
     if (IS_EVENT_AVAILABLE(DTLB_LOAD_MISSES_WALK_DURATION)) {
@@ -349,7 +343,7 @@ void get_tlb(char *data, char *instruction) {
     }
 }
 
-/* instruction_accesses */
+/* get_instruction_accesses */
 void get_instruction_accesses(char *overall, char *L1_hits, char *L2_hits,
     char *L2_misses) {
 
@@ -403,7 +397,7 @@ void get_instruction_accesses(char *overall, char *L1_hits, char *L2_hits,
         lcpi_L2_ICM);
 }
 
-/* data_accesses */
+/* get_data_accesses */
 void get_data_accesses(char *overall, char *L1_hits, char *L2_hits,
     char *L3_hits, char *LLC_misses) {
 
@@ -477,14 +471,14 @@ void get_data_accesses(char *overall, char *L1_hits, char *L2_hits,
     sprintf(L2_hits, "data_accesses.L2d_hits = (%s * L2_lat) / PAPI_TOT_INS", l2);
 }
 
-/* gflops */
+/* get_gflops */
 void get_gflops(char *overall, char *packed, char *scalar) {
     if (IS_EVENT_AVAILABLE(RETIRED_SSE_OPERATIONS_ALL)) {
 
         USE_EVENT(RETIRED_SSE_OPERATIONS_ALL);
 
         sprintf(overall,
-            "percent.GFLOPS_(%%_max).overall = (%s / PAPI_TOT_CYC) / 4",
+            "GFLOPS_(%%_max).overall = (%s / PAPI_TOT_CYC) / 4",
             event_list[RETIRED_SSE_OPERATIONS_ALL].PAPI_event_name);        
         strcpy(packed, "");
         strcpy(scalar, "");
@@ -494,19 +488,18 @@ void get_gflops(char *overall, char *packed, char *scalar) {
         USE_EVENT(RETIRED_SSE_OPS_ALL);
 
         sprintf(overall,
-            "percent.GFLOPS_(%%_max).overall = (%s / PAPI_TOT_CYC) / 4",
+            "GFLOPS_(%%_max).overall = (%s / PAPI_TOT_CYC) / 4",
             event_list[RETIRED_SSE_OPS_ALL].PAPI_event_name);        
         strcpy(packed, "");
         strcpy(scalar, "");
 
     } else if (IS_EVENT_AVAILABLE(SSEX_UOPS_RETIRED_PACKED_DOUBLE) &&
-               IS_EVENT_AVAILABLE(SSEX_UOPS_RETIRED_PACKED_SINGLE) &&
-               IS_EVENT_AVAILABLE(SSEX_UOPS_RETIRED_SCALAR_DOUBLE) &&
-               IS_EVENT_AVAILABLE(SSEX_UOPS_RETIRED_SCALAR_SINGLE)) {
+        IS_EVENT_AVAILABLE(SSEX_UOPS_RETIRED_PACKED_SINGLE) &&
+        IS_EVENT_AVAILABLE(SSEX_UOPS_RETIRED_SCALAR_DOUBLE) &&
+        IS_EVENT_AVAILABLE(SSEX_UOPS_RETIRED_SCALAR_SINGLE)) {
 
         // Do a dummy test to see if the single big counter can be added or do we have to break it down into multiple parts
         if (0 == test_counter(SSEX_UOPS_RETIRED_SCALAR_DOUBLE_SCALAR_SINGLE)) {
-
             USE_EVENT(SSEX_UOPS_RETIRED_PACKED_DOUBLE);
             USE_EVENT(SSEX_UOPS_RETIRED_PACKED_SINGLE);
             USE_EVENT(SSEX_UOPS_RETIRED_SCALAR_DOUBLE_SCALAR_SINGLE);
@@ -514,20 +507,18 @@ void get_gflops(char *overall, char *packed, char *scalar) {
             DOWNGRADE_EVENT(SSEX_UOPS_RETIRED_SCALAR_SINGLE);
             
             sprintf(overall,
-                "percent.GFLOPS_(%%_max).overall = ((%s*2 + %s*4 + %s) / PAPI_TOT_CYC) / 4",
+                "GFLOPS_(%%_max).overall = ((%s*2 + %s*4 + %s) / PAPI_TOT_CYC) / 4",
                 event_list[SSEX_UOPS_RETIRED_PACKED_DOUBLE].PAPI_event_name,
                 event_list[SSEX_UOPS_RETIRED_PACKED_SINGLE].PAPI_event_name,
                 event_list[SSEX_UOPS_RETIRED_SCALAR_DOUBLE_SCALAR_SINGLE].PAPI_event_name);
             sprintf(packed,
-                "percent.GFLOPS_(%%_max).packed = ((%s*2 + %s*4) / PAPI_TOT_CYC) / 4",
+                "GFLOPS_(%%_max).packed = ((%s*2 + %s*4) / PAPI_TOT_CYC) / 4",
                 event_list[SSEX_UOPS_RETIRED_PACKED_DOUBLE].PAPI_event_name,
                 event_list[SSEX_UOPS_RETIRED_PACKED_SINGLE].PAPI_event_name);
             sprintf(scalar,
-                "percent.GFLOPS_(%%_max).scalar = (%s / PAPI_TOT_CYC) / 4",
+                "GFLOPS_(%%_max).scalar = (%s / PAPI_TOT_CYC) / 4",
                 event_list[SSEX_UOPS_RETIRED_SCALAR_DOUBLE_SCALAR_SINGLE].PAPI_event_name);
-
         } else {
-
             // Asume that we can add separately. If this is false, we will catch it at the time of generating LCPIs
             // Use the available counters
             USE_EVENT(SSEX_UOPS_RETIRED_PACKED_DOUBLE);
@@ -536,28 +527,27 @@ void get_gflops(char *overall, char *packed, char *scalar) {
             USE_EVENT(SSEX_UOPS_RETIRED_SCALAR_SINGLE);
             
             sprintf(overall,
-                "percent.GFLOPS_(%%_max).overall = ((%s*2 + %s*4 + %s + %s) / PAPI_TOT_CYC) / 4",
+                "GFLOPS_(%%_max).overall = ((%s*2 + %s*4 + %s + %s) / PAPI_TOT_CYC) / 4",
                 event_list[SSEX_UOPS_RETIRED_PACKED_DOUBLE].PAPI_event_name,
                 event_list[SSEX_UOPS_RETIRED_PACKED_SINGLE].PAPI_event_name,
                 event_list[SSEX_UOPS_RETIRED_SCALAR_SINGLE].PAPI_event_name,
                 event_list[SSEX_UOPS_RETIRED_SCALAR_DOUBLE].PAPI_event_name);
             sprintf(packed,
-                "percent.GFLOPS_(%%_max).packed = ((%s*2 + %s*4) / PAPI_TOT_CYC) / 4",
+                "GFLOPS_(%%_max).packed = ((%s*2 + %s*4) / PAPI_TOT_CYC) / 4",
                 event_list[SSEX_UOPS_RETIRED_PACKED_DOUBLE].PAPI_event_name,
                 event_list[SSEX_UOPS_RETIRED_PACKED_SINGLE].PAPI_event_name);
             sprintf(scalar,
-                "percent.GFLOPS_(%%_max).scalar = (%s + %s / PAPI_TOT_CYC) / 4",
+                "GFLOPS_(%%_max).scalar = (%s + %s / PAPI_TOT_CYC) / 4",
                 event_list[SSEX_UOPS_RETIRED_SCALAR_DOUBLE].PAPI_event_name,
                 event_list[SSEX_UOPS_RETIRED_SCALAR_SINGLE].PAPI_event_name);
         }
     } else if (IS_EVENT_AVAILABLE(SIMD_COMP_INST_RETIRED_PACKED_DOUBLE) &&
-               IS_EVENT_AVAILABLE(SIMD_COMP_INST_RETIRED_PACKED_SINGLE) &&
-               IS_EVENT_AVAILABLE(SIMD_COMP_INST_RETIRED_SCALAR_DOUBLE) &&
-               IS_EVENT_AVAILABLE(SIMD_COMP_INST_RETIRED_SCALAR_SINGLE)) {
+        IS_EVENT_AVAILABLE(SIMD_COMP_INST_RETIRED_PACKED_SINGLE) &&
+        IS_EVENT_AVAILABLE(SIMD_COMP_INST_RETIRED_SCALAR_DOUBLE) &&
+        IS_EVENT_AVAILABLE(SIMD_COMP_INST_RETIRED_SCALAR_SINGLE)) {
 
         // Do a dummy test to see if the single big counter can be added or do we have to break it down into multiple parts
         if (0 == test_counter(SIMD_COMP_INST_RETIRED_SCALAR_SINGLE_SCALAR_DOUBLE)) {
-
             USE_EVENT(SIMD_COMP_INST_RETIRED_PACKED_DOUBLE);
             USE_EVENT(SIMD_COMP_INST_RETIRED_PACKED_SINGLE);
             DOWNGRADE_EVENT(SIMD_COMP_INST_RETIRED_SCALAR_DOUBLE);
@@ -565,49 +555,46 @@ void get_gflops(char *overall, char *packed, char *scalar) {
             USE_EVENT(SIMD_COMP_INST_RETIRED_SCALAR_SINGLE_SCALAR_DOUBLE);
 
             sprintf(overall,
-                "percent.GFLOPS_(%%_max).overall = ((%s*2 + %s*4 + %s) / PAPI_TOT_CYC) / 4",
+                "GFLOPS_(%%_max).overall = ((%s*2 + %s*4 + %s) / PAPI_TOT_CYC) / 4",
                 event_list[SIMD_COMP_INST_RETIRED_PACKED_DOUBLE].PAPI_event_name,
                 event_list[SIMD_COMP_INST_RETIRED_PACKED_SINGLE].PAPI_event_name,
                 event_list[SIMD_COMP_INST_RETIRED_SCALAR_SINGLE_SCALAR_DOUBLE].PAPI_event_name);
             sprintf(packed,
-                "percent.GFLOPS_(%%_max).packed = ((%s*2 + %s*4) / PAPI_TOT_CYC) / 4",
+                "GFLOPS_(%%_max).packed = ((%s*2 + %s*4) / PAPI_TOT_CYC) / 4",
                 event_list[SIMD_COMP_INST_RETIRED_PACKED_DOUBLE].PAPI_event_name,
                 event_list[SIMD_COMP_INST_RETIRED_PACKED_SINGLE].PAPI_event_name);
             sprintf(scalar,
-                "percent.GFLOPS_(%%_max).scalar = (%s / PAPI_TOT_CYC) / 4",
+                "GFLOPS_(%%_max).scalar = (%s / PAPI_TOT_CYC) / 4",
                 event_list[SIMD_COMP_INST_RETIRED_SCALAR_SINGLE_SCALAR_DOUBLE].PAPI_event_name);
-
         } else {
-
             USE_EVENT(SIMD_COMP_INST_RETIRED_PACKED_DOUBLE);
             USE_EVENT(SIMD_COMP_INST_RETIRED_PACKED_SINGLE);
             USE_EVENT(SIMD_COMP_INST_RETIRED_SCALAR_DOUBLE);
             USE_EVENT(SIMD_COMP_INST_RETIRED_SCALAR_SINGLE);
             
             sprintf(overall,
-                "percent.GFLOPS_(%%_max).overall = ((%s*2 + %s*4 + %s + %s) / PAPI_TOT_CYC) / 4",
+                "GFLOPS_(%%_max).overall = ((%s*2 + %s*4 + %s + %s) / PAPI_TOT_CYC) / 4",
                 event_list[SIMD_COMP_INST_RETIRED_PACKED_DOUBLE].PAPI_event_name,
                 event_list[SIMD_COMP_INST_RETIRED_PACKED_SINGLE].PAPI_event_name,
                 event_list[SIMD_COMP_INST_RETIRED_SCALAR_SINGLE].PAPI_event_name,
                 event_list[SIMD_COMP_INST_RETIRED_SCALAR_DOUBLE].PAPI_event_name);
             sprintf(packed,
-                "percent.GFLOPS_(%%_max).packed = ((%s*2 + %s*4) / PAPI_TOT_CYC) / 4",
+                "GFLOPS_(%%_max).packed = ((%s*2 + %s*4) / PAPI_TOT_CYC) / 4",
                 event_list[SIMD_COMP_INST_RETIRED_PACKED_DOUBLE].PAPI_event_name,
                 event_list[SIMD_COMP_INST_RETIRED_PACKED_SINGLE].PAPI_event_name);
             sprintf(scalar,
-                "percent.GFLOPS_(%%_max).scalar = ((%s + %s)/ PAPI_TOT_CYC) / 4",
+                "GFLOPS_(%%_max).scalar = ((%s + %s)/ PAPI_TOT_CYC) / 4",
                 event_list[SIMD_COMP_INST_RETIRED_SCALAR_SINGLE].PAPI_event_name,
                 event_list[SIMD_COMP_INST_RETIRED_SCALAR_DOUBLE].PAPI_event_name);
         }
     } else if (IS_EVENT_AVAILABLE(SIMD_FP_256_PACKED_SINGLE) &&
-               IS_EVENT_AVAILABLE(SIMD_FP_256_PACKED_DOUBLE) &&
-               IS_EVENT_AVAILABLE(FP_COMP_OPS_EXE_SSE_FP_PACKED_DOUBLE) &&
-               IS_EVENT_AVAILABLE(FP_COMP_OPS_EXE_SSE_FP_SCALAR_SINGLE) &&
-               IS_EVENT_AVAILABLE(FP_COMP_OPS_EXE_SSE_PACKED_SINGLE) &&
-               IS_EVENT_AVAILABLE(FP_COMP_OPS_EXE_SSE_SCALAR_DOUBLE)) {
+        IS_EVENT_AVAILABLE(SIMD_FP_256_PACKED_DOUBLE) &&
+        IS_EVENT_AVAILABLE(FP_COMP_OPS_EXE_SSE_FP_PACKED_DOUBLE) &&
+        IS_EVENT_AVAILABLE(FP_COMP_OPS_EXE_SSE_FP_SCALAR_SINGLE) &&
+        IS_EVENT_AVAILABLE(FP_COMP_OPS_EXE_SSE_PACKED_SINGLE) &&
+        IS_EVENT_AVAILABLE(FP_COMP_OPS_EXE_SSE_SCALAR_DOUBLE)) {
 
         if (0 == test_counter(FP_COMP_OPS_EXE_SSE_FP_SCALAR_SINGLE_SSE_SCALAR_DOUBLE)) {
-
             DOWNGRADE_EVENT(FP_COMP_OPS_EXE_SSE_FP_SCALAR);
             DOWNGRADE_EVENT(FP_COMP_OPS_EXE_SSE_SCALAR_DOUBLE);
             USE_EVENT(FP_COMP_OPS_EXE_SSE_FP_SCALAR_SINGLE_SSE_SCALAR_DOUBLE);
@@ -617,24 +604,22 @@ void get_gflops(char *overall, char *packed, char *scalar) {
             USE_EVENT(FP_COMP_OPS_EXE_SSE_PACKED_SINGLE);
             
             sprintf(overall,
-                "percent.GFLOPS_(%%_max).overall = ((%s*8 + (%s + %s)*4 + %s*2 + %s) / PAPI_TOT_CYC) / 8",
+                "GFLOPS_(%%_max).overall = ((%s*8 + (%s + %s)*4 + %s*2 + %s) / PAPI_TOT_CYC) / 8",
                 event_list[SIMD_FP_256_PACKED_SINGLE].PAPI_event_name,
                 event_list[SIMD_FP_256_PACKED_DOUBLE].PAPI_event_name,
                 event_list[FP_COMP_OPS_EXE_SSE_PACKED_SINGLE].PAPI_event_name,
                 event_list[FP_COMP_OPS_EXE_SSE_FP_PACKED_DOUBLE].PAPI_event_name,
                 event_list[FP_COMP_OPS_EXE_SSE_FP_SCALAR_SINGLE_SSE_SCALAR_DOUBLE].PAPI_event_name);
             sprintf(packed,
-                "percent.GFLOPS_(%%_max).packed = ((%s*8 + (%s + %s)*4 + %s*2) / PAPI_TOT_CYC) / 8",
+                "GFLOPS_(%%_max).packed = ((%s*8 + (%s + %s)*4 + %s*2) / PAPI_TOT_CYC) / 8",
                 event_list[SIMD_FP_256_PACKED_SINGLE].PAPI_event_name,
                 event_list[SIMD_FP_256_PACKED_DOUBLE].PAPI_event_name,
                 event_list[FP_COMP_OPS_EXE_SSE_PACKED_SINGLE].PAPI_event_name,
                 event_list[FP_COMP_OPS_EXE_SSE_FP_PACKED_DOUBLE].PAPI_event_name);
             sprintf(scalar,
-                "percent.GFLOPS_(%%_max).scalar = (%s / PAPI_TOT_CYC) / 8",
+                "GFLOPS_(%%_max).scalar = (%s / PAPI_TOT_CYC) / 8",
                 event_list[FP_COMP_OPS_EXE_SSE_FP_SCALAR_SINGLE_SSE_SCALAR_DOUBLE].PAPI_event_name);
-
         } else {
-
             USE_EVENT(FP_COMP_OPS_EXE_SSE_FP_SCALAR);
             USE_EVENT(FP_COMP_OPS_EXE_SSE_SCALAR_DOUBLE);
             USE_EVENT(SIMD_FP_256_PACKED_SINGLE);
@@ -643,7 +628,7 @@ void get_gflops(char *overall, char *packed, char *scalar) {
             USE_EVENT(FP_COMP_OPS_EXE_SSE_PACKED_SINGLE);
             
             sprintf(overall,
-                "percent.GFLOPS_(%%_max).overall = ((%s*8 + (%s + %s)*4 + %s*2 + %s + %s) / PAPI_TOT_CYC) / 8",
+                "GFLOPS_(%%_max).overall = ((%s*8 + (%s + %s)*4 + %s*2 + %s + %s) / PAPI_TOT_CYC) / 8",
                 event_list[SIMD_FP_256_PACKED_SINGLE].PAPI_event_name,
                 event_list[SIMD_FP_256_PACKED_DOUBLE].PAPI_event_name,
                 event_list[FP_COMP_OPS_EXE_SSE_PACKED_SINGLE].PAPI_event_name,
@@ -651,13 +636,13 @@ void get_gflops(char *overall, char *packed, char *scalar) {
                 event_list[FP_COMP_OPS_EXE_SSE_FP_SCALAR_SINGLE].PAPI_event_name,
                 event_list[FP_COMP_OPS_EXE_SSE_SCALAR_DOUBLE].PAPI_event_name);
             sprintf(packed,
-                "percent.GFLOPS_(%%_max).packed = ((%s*8 + (%s + %s)*4 + %s*2) / PAPI_TOT_CYC) / 8",
+                "GFLOPS_(%%_max).packed = ((%s*8 + (%s + %s)*4 + %s*2) / PAPI_TOT_CYC) / 8",
                 event_list[SIMD_FP_256_PACKED_SINGLE].PAPI_event_name,
                 event_list[SIMD_FP_256_PACKED_DOUBLE].PAPI_event_name,
                 event_list[FP_COMP_OPS_EXE_SSE_PACKED_SINGLE].PAPI_event_name,
                 event_list[FP_COMP_OPS_EXE_SSE_FP_PACKED_DOUBLE].PAPI_event_name);
             sprintf(scalar,
-                "percent.GFLOPS_(%%_max).scalar = ((%s + %s) / PAPI_TOT_CYC) / 8",
+                "GFLOPS_(%%_max).scalar = ((%s + %s) / PAPI_TOT_CYC) / 8",
                 event_list[FP_COMP_OPS_EXE_SSE_FP_SCALAR_SINGLE].PAPI_event_name,
                 event_list[FP_COMP_OPS_EXE_SSE_SCALAR_DOUBLE].PAPI_event_name);
         }
@@ -666,7 +651,7 @@ void get_gflops(char *overall, char *packed, char *scalar) {
     }
 }
 
-/* ratio.data_accesses */
+/* get_ratio_data_accesses */
 void get_ratio_data_accesses(char *output) {
     char temp_str[LCPI_DEF_LENGTH];
 
@@ -683,7 +668,7 @@ void get_ratio_data_accesses(char *output) {
     sprintf(output, "ratio.data_accesses = %s / PAPI_TOT_INS", temp_str);
 }
 
-/* ratio_floating_point */
+/* get_ratio_floating_point */
 void get_ratio_floating_point(char *output) {
     char temp_str[LCPI_DEF_LENGTH];
 
@@ -695,13 +680,13 @@ void get_ratio_floating_point(char *output) {
         if (IS_EVENT_AVAILABLE(FAD_INS)) {
             USE_EVENT(FAD_INS);
             sprintf(temp_str, "(%s + %s + %s)",
-                    event_list[FML_INS].PAPI_event_name,
-                    event_list[FDV_INS].PAPI_event_name,
-                    event_list[FAD_INS].PAPI_event_name);
+                event_list[FML_INS].PAPI_event_name,
+                event_list[FDV_INS].PAPI_event_name,
+                event_list[FAD_INS].PAPI_event_name);
         } else {
             sprintf(temp_str, "(%s + %s)",
-                    event_list[FML_INS].PAPI_event_name,
-                    event_list[FDV_INS].PAPI_event_name);
+                event_list[FML_INS].PAPI_event_name,
+                event_list[FDV_INS].PAPI_event_name);
         }
     } else if (IS_EVENT_AVAILABLE(FP_INS)) {
         USE_EVENT(FP_INS);
@@ -718,15 +703,15 @@ void get_ratio_floating_point(char *output) {
             USE_EVENT(FP_COMP_OPS_EXE_SSE_PACKED_SINGLE);
             
             sprintf(temp_str, "%s + %s + %s",
-                    event_list[FP_COMP_OPS_EXE_SSE_PACKED_SINGLE].PAPI_event_name,
-                    event_list[FP_COMP_OPS_EXE_SSE_FP_PACKED_DOUBLE].PAPI_event_name,
-                    event_list[FP_COMP_OPS_EXE_SSE_FP_SCALAR_SINGLE_SSE_SCALAR_DOUBLE].PAPI_event_name);
+                event_list[FP_COMP_OPS_EXE_SSE_PACKED_SINGLE].PAPI_event_name,
+                event_list[FP_COMP_OPS_EXE_SSE_FP_PACKED_DOUBLE].PAPI_event_name,
+                event_list[FP_COMP_OPS_EXE_SSE_FP_SCALAR_SINGLE_SSE_SCALAR_DOUBLE].PAPI_event_name);
         } else {
             USE_EVENT(FP_COMP_OPS_EXE_SSE_FP_SCALAR);
             USE_EVENT(FP_COMP_OPS_EXE_SSE_SCALAR_DOUBLE);
             USE_EVENT(FP_COMP_OPS_EXE_SSE_FP_PACKED_DOUBLE);
             USE_EVENT(FP_COMP_OPS_EXE_SSE_PACKED_SINGLE);
-            
+
             sprintf(temp_str, "%s + %s + %s + %s",
                 event_list[FP_COMP_OPS_EXE_SSE_PACKED_SINGLE].PAPI_event_name,
                 event_list[FP_COMP_OPS_EXE_SSE_FP_PACKED_DOUBLE].PAPI_event_name,
@@ -739,6 +724,7 @@ void get_ratio_floating_point(char *output) {
     sprintf(output, "ratio.floating_point = %s / PAPI_TOT_INS", temp_str);
 }
 
+/* get_overall */
 void get_overall(char *output) {
     /* Check the basic ones first */
     if (!IS_EVENT_AVAILABLE(TOT_CYC)) {
@@ -754,10 +740,12 @@ void get_overall(char *output) {
     strcpy(output, "overall = PAPI_TOT_CYC / PAPI_TOT_INS");
 }
 
+/* counter_err */
 void counter_err(char *lcpi) {
     fprintf(stderr, "Error: required counters not found for LCPI: %s\n", lcpi);
 }
 
+/* test_counter */
 int test_counter(unsigned counter) {
     int ret;
     int event_set = PAPI_NULL;
@@ -788,7 +776,7 @@ int test_counter(unsigned counter) {
     return -1;
 }
 
-/* From PAPI source */
+/* is_derived */
 int is_derived(int event_code) {
     PAPI_event_info_t info;
 
@@ -796,10 +784,11 @@ int is_derived(int event_code) {
         return -1;
     }
     return (0 != strlen(info.derived)) &&
-           (0 != strcmp(info.derived, "NOT_DERIVED")) &&
-           (0 != strcmp(info.derived, "DERIVED_CMPD"));
+        (0 != strcmp(info.derived, "NOT_DERIVED")) &&
+        (0 != strcmp(info.derived, "DERIVED_CMPD"));
 }
 
+/* get_prime */
 int get_prime(unsigned short sampling_category, unsigned int start) {
     unsigned short flag;
     unsigned int i, j, end;
@@ -809,10 +798,10 @@ int get_prime(unsigned short sampling_category, unsigned int start) {
     }
     end = sampling_limits[sampling_category];
 
-    for(i = start + 1; i <= end; i++) {
+    for (i = start + 1; i <= end; i++) {
         flag = 0;
-        for(j = 2; j <= i / 2; j++) {
-            if(0 == i%j) {
+        for (j = 2; j <= i / 2; j++) {
+            if (0 == i%j) {
                 flag = 1;
                 break;
             }
@@ -824,6 +813,7 @@ int get_prime(unsigned short sampling_category, unsigned int start) {
     return -1;
 }
 
+/* attach_sampling_rate */
 int attach_sampling_rate(int categories[SAMPLING_CATEGORY_COUNT]) {
     int i, code, cat;
     
