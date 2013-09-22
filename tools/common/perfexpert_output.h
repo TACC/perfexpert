@@ -65,11 +65,7 @@ extern "C" {
 
 #include "perfexpert_constants.h"
 
-/**
- *  Main macro for use in sending debugging output to screen.
- *
- *  @see perfexpert_output()
- */
+/* see perfexpert_output function */
 #ifndef OUTPUT
 #define OUTPUT(a) output a
 #endif
@@ -96,7 +92,7 @@ extern "C" {
 #define COLOR_CYAN    6
 #define COLOR_WHITE   7
 
-/* Set string color */
+/* colorful (never call this function directly ) */
 static inline char* colorful(int attr, int fg, int bg, char* str) {
     if (PERFEXPERT_TRUE == globals.colorful) {
         static char *colored;
@@ -124,32 +120,23 @@ static inline char* colorful(int attr, int fg, int bg, char* str) {
 #define _BOLDGREEN(a)  colorful(ATTR_BRIGHT, COLOR_GREEN,   COLOR_BLACK, a)
 #define _BOLDYELLOW(a) colorful(ATTR_BRIGHT, COLOR_YELLOW,  COLOR_BLACK, a)
 
-/**
- * Global function to send output to screen. This function should never be
- * called directly. The macro OUTPUT should be called instead. Use this function
- * for error messages. Debug and informational messages should use
- * OUTPUT_VERBOSE().
- *
- * @param[in] *format Formatted string output conversion
- */
+/* output (never call this functions directly) */
 static inline void output(const char *format, ...) {
-    va_list arglist;
-    char *str = NULL;
     char *temp_str = NULL;
-    size_t total_len;
-    int rc;
+    char *str = NULL;
+    int rc = 0;
+    size_t total_len = 0;
+    va_list arglist;
     
     va_start(arglist, format);
     rc = vasprintf(&str, format, arglist);
     total_len = strlen(str) + 14 + strlen(PROGRAM_PREFIX);
     
-    temp_str = (char *) malloc(total_len);
+    temp_str = (char *)malloc(total_len);
     if (NULL == temp_str) {
         printf("%s Error: out of memory\n", PROGRAM_PREFIX);
     }
-    
     snprintf(temp_str, total_len, "%s %s\n", PROGRAM_PREFIX, str);
-    
     total_len = write(fileno(stdout), temp_str, (int)strlen(temp_str));
     fflush(stdout);
     
@@ -159,22 +146,13 @@ static inline void output(const char *format, ...) {
     va_end(arglist);
 }
 
-/**
- * Global function to send output to screen. This function should never be
- * called directly. The macro OUTPUT_VERBOSE should be called instead. Use this
- * function for debug and informational messages. Error messages should use
- * OUTPUT().
- *
- * @param[in] level   Starting debug level from where this message should be
- *                    outputted
- * @param[in] *format Formatted string output conversion
- */
+/* output_verbose (never call this function directly) */
 static inline void output_verbose(int level, const char *format, ...) {
     va_list arglist;
-    char *str = NULL;
     char *temp_str = NULL;
-    size_t total_len;
-    int rc;
+    char *str = NULL;
+    int rc = 0;
+    size_t total_len = 0;
     
     if (globals.verbose >= level) {
         va_start(arglist, format);
@@ -185,9 +163,7 @@ static inline void output_verbose(int level, const char *format, ...) {
         if (NULL == temp_str) {
             printf("%s Error: out of memory\n", PROGRAM_PREFIX);
         }
-        
         snprintf(temp_str, total_len, "%s %s\n", PROGRAM_PREFIX, str);
-        
         total_len = write(fileno(stdout), temp_str, (int)strlen(temp_str));
         fflush(stdout);
         
