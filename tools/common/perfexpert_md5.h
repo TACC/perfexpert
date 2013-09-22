@@ -284,7 +284,7 @@ static inline void perfexpert_md5_final(MD5_CTX_t *ctx) {
 }
 
 /* md5_string */
-static inline char* perfexpert_md5_string(char *in) {
+static inline char* perfexpert_md5_string(const char *in) {
     MD5_CTX_t ctx;
     char *rc = NULL;
 
