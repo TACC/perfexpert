@@ -25,8 +25,8 @@
  * $HEADER$
  */
 
-#ifndef RECOMMENDER_H_
-#define RECOMMENDER_H_
+#ifndef PERFEXPERT_H_
+#define PERFEXPERT_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -38,7 +38,7 @@ extern "C" {
 #endif
 #define PROGRAM_PREFIX "[perfexpert]"
 
-/** Structure to hold global variables */
+/* Structure to hold global variables */
 typedef struct {
     int   verbose;
     char  *dbfile;
@@ -64,6 +64,7 @@ typedef struct {
     char  *knc_prefix;
     char  *knc_before;
     char  *knc_after;
+    char  *tool;
     long int pid;
 } globals_t;
 
@@ -76,10 +77,6 @@ int parse_cli_params(int argc, char *argv[]);
 int compile_program(void);
 int measurements(void);
 int analysis(void);
-int run_hpcstruct(void);
-int run_hpcrun(void);
-int run_hpcrun_knc(void);
-int run_hpcprof(void);
 int recommendation(void);
 int transformation(void);
 
@@ -87,4 +84,4 @@ int transformation(void);
 }
 #endif
 
-#endif /* RECOMMENDER_H */
+#endif /* PERFEXPERT_H */
