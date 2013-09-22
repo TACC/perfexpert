@@ -56,8 +56,6 @@ extern "C" {
 #include <fcntl.h>
 #endif
 
-// #include <sys/types.h>
-
 #include "perfexpert_constants.h"
 #include "perfexpert_output.h"
 
@@ -159,6 +157,7 @@ static inline int perfexpert_util_dir_exists(const char *dir) {
     return PERFEXPERT_SUCCESS;
 }
 
+/* perfexpert_util_remove_dir */
 static inline int perfexpert_util_remove_dir(const char *dir) {
     char *command = (char *)malloc(strlen(dir) + 8);
 
