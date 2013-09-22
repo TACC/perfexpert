@@ -58,21 +58,12 @@ extern "C" {
 
 #include "perfexpert_constants.h"
 
-/**
- *  Main macro for use in sending debugging output to screen.
- *
- *  @see perfexpert_log()
- */
+/* see perfexpert_log function */
 #ifndef LOG
 #define LOG(a) perfexpert_log a
 #endif
 
-/**
- * Global function to send data to logfile. This function should never be
- * called directly. The macro LOG should be called instead.
- *
- * @param[in] *format Formatted string output conversion
- */
+/* perfexpert_log */
 static void perfexpert_log(const char *format, ...) {
     va_list arglist;
     FILE    *logfile_FP;
