@@ -36,14 +36,47 @@ extern "C" {
 #include <time.h>
 
 /* PerfExpert headers */
-#include "config.h"
 #include "perfexpert.h"
 #include "perfexpert_constants.h"
 #include "perfexpert_fork.h"
+#include "perfexpert_hpctoolkit.h"
 #include "perfexpert_output.h"
 #include "perfexpert_time.h"
 #include "perfexpert_util.h"
 #include "install_dirs.h"
+
+/* measurements_hpctoolkit */
+int measurements_hpctoolkit(void) {
+    /* First of all, does the file exist? (it is just a double check) */
+    if (PERFEXPERT_SUCCESS != perfexpert_util_file_exists_and_is_exec(
+        globals.program)) {
+        return PERFEXPERT_ERROR;
+    }
+    /* Create the program structure file */
+    if (PERFEXPERT_SUCCESS != run_hpcstruct()) {
+        OUTPUT(("%s", _ERROR("Error: unable to run hpcstruct")));
+        return PERFEXPERT_ERROR;
+    }
+    /* Collect measurements */
+    if (NULL == globals.knc) {
+        if (PERFEXPERT_SUCCESS != run_hpcrun()) {
+            OUTPUT(("%s", _ERROR("Error: unable to run hpcrun")));
+            return PERFEXPERT_ERROR;
+        }
+    } else {
+        if (PERFEXPERT_SUCCESS != run_hpcrun_knc()) {
+            OUTPUT(("%s", _ERROR("Error: unable to run hpcrun on KNC")));
+            OUTPUT(("Are you adding the flags to compile for MIC?"));                    
+            return PERFEXPERT_ERROR;
+        }
+    }
+    /* Sumarize results */
+    if (PERFEXPERT_SUCCESS != run_hpcprof()) {
+        OUTPUT(("%s", _ERROR("Error: unable to run hpcprof")));
+        return PERFEXPERT_ERROR;
+    }
+    return PERFEXPERT_SUCCESS;
+}
 
 /* run_hpcstruct */
 int run_hpcstruct(void) {
@@ -72,7 +105,7 @@ int run_hpcstruct(void) {
 
     /* The super-ninja test sctructure */
     bzero(temp_str[1], BUFFER_SIZE);
-    sprintf(temp_str[1], "%s/hpcstruct.output", globals.stepdir);
+    sprintf(temp_str[1], "%s/%s.output", globals.stepdir, HPCSTRUCT);
     test.output = temp_str[1];
     test.input  = NULL;
     test.info   = globals.program;
@@ -528,7 +561,7 @@ int run_hpcprof(void) {
 
     /* The super-ninja test sctructure */
     bzero(temp_str[3], BUFFER_SIZE);
-    sprintf(temp_str[3], "%s/hpcprof.output", globals.stepdir);
+    sprintf(temp_str[3], "%s/%s.output", globals.stepdir, HPCPROF);
     test.output = temp_str[3];
     test.input  = NULL;
     test.info   = globals.program;

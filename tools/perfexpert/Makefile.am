@@ -27,8 +27,9 @@
 
 bin_PROGRAMS = perfexpert
 
-dist_bin_SCRIPTS = perfexpert_get_info.pl
-
+perfexpert_CFLAGS = -O3
+perfexpert_LDFLAGS = -lrt
+perfexpert_CPPFLAGS = -I$(srcdir)/../common
 perfexpert_SOURCES = perfexpert_main.c \
 	perfexpert_analysis.c \
 	perfexpert_compile.c \
@@ -36,13 +37,9 @@ perfexpert_SOURCES = perfexpert_main.c \
 	perfexpert_measurements.c \
 	perfexpert_options.c \
 	perfexpert_recommendation.c \
-	perfexpert_transformation.c
+	perfexpert_transformation.c \
+	perfexpert_vtune.c
 
-perfexpert_CPPFLAGS = -I$(srcdir)/../common
-
-perfexpert_CFLAGS = -O3
-
-# TODO: fix it
-perfexpert_LDFLAGS = -lrt
+dist_bin_SCRIPTS = perfexpert_get_info.pl
 
 # EOF

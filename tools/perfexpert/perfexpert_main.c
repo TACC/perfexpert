@@ -35,7 +35,6 @@ extern "C" {
 #include <string.h>
 
 /* PerfExpert headers */
-#include "config.h"
 #include "perfexpert.h"
 #include "perfexpert_alloc.h"
 #include "perfexpert_constants.h"
@@ -79,7 +78,8 @@ int main(int argc, char** argv) {
         .knc           = NULL,             // char *
         .knc_prefix    = NULL,             // char *
         .knc_before    = NULL,             // char *
-        .knc_after     = NULL              // char *
+        .knc_after     = NULL,             // char *
+        .tool          = "hpctoolkit"      // char *
     };
 
     /* Parse command-line parameters */
