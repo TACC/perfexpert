@@ -48,6 +48,7 @@ extern "C" {
 #include <sqlite3.h>
 #endif
 
+#include "perfexpert_alloc.h"
 #include "perfexpert_constants.h"
 #include "perfexpert_output.h"
 #include "perfexpert_util.h"
@@ -151,39 +152,38 @@ static inline int perfexpert_database_disconnect(sqlite3 *db) {
 }
 
 /* perfexpert_database_connect */
-static inline int perfexpert_database_connect(sqlite3 **db, char *file) {
+static inline int perfexpert_database_connect(sqlite3 **db, const char *file) {
+    char *my_file = (char *)file;
     /* Use default database if the user does not define one */
-    if (NULL == file) {
-        file = (char *)malloc(strlen(PERFEXPERT_DB) +
-                                     strlen(PERFEXPERT_VARDIR) + 2);
-        if (NULL == file) {
-            OUTPUT(("%s", _ERROR((char *)"Error: out of memory")));
-            return PERFEXPERT_ERROR;
-        }
-        bzero(file, strlen(PERFEXPERT_DB) + strlen(PERFEXPERT_VARDIR) + 2);
-        sprintf(file, "%s/%s", PERFEXPERT_VARDIR, PERFEXPERT_DB);
+    if (NULL == my_file) {
+        PERFEXPERT_ALLOC(char, my_file, (strlen(PERFEXPERT_DB) +
+            strlen(PERFEXPERT_VARDIR) + 2));
+        sprintf(my_file, "%s/%s", PERFEXPERT_VARDIR, PERFEXPERT_DB);
     }
 
     /* Check if file exists and if it is writable */
-    if (-1 == access(file, F_OK)) {
-        OUTPUT(("%s (%s)", _ERROR((char *)"Error: file not found"), file));
+    if (-1 == access(my_file, F_OK)) {
+        OUTPUT(("%s (%s)", _ERROR((char *)"Error: file not found"), my_file));
         return PERFEXPERT_ERROR;
     }
-    if (-1 == access(file, W_OK)) {
+    if (-1 == access(my_file, W_OK)) {
         OUTPUT(("%s (%s)",
-            _ERROR((char *)"Error: you don't have permission to write"), file));
+            _ERROR((char *)"Error: you don't have permission to write"),
+            my_file));
         return PERFEXPERT_ERROR;
     }
 
     /* Connect to the DB */
-    if (SQLITE_OK != sqlite3_open(file, db)) {
+    if (SQLITE_OK != sqlite3_open(my_file, db)) {
         OUTPUT(("%s (%s), %s", _ERROR((char *)"Error: openning database"),
-            file, sqlite3_errmsg(*db)));
+            my_file, sqlite3_errmsg(*db)));
         perfexpert_database_disconnect(*db);
+        PERFEXPERT_DEALLOC(my_file);
         return PERFEXPERT_ERROR;
     }
 
-    OUTPUT_VERBOSE((4, "connected to %s", file));
+    OUTPUT_VERBOSE((4, "connected to %s", my_file));
+    PERFEXPERT_DEALLOC(my_file);
     return PERFEXPERT_SUCCESS;
 }
 
