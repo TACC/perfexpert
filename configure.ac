@@ -33,46 +33,47 @@ AC_INIT([perfexpert], [4.1], [Leonardo Fialho: fialho@utexas.edu],
     [perfexpert.tar.gz], [http://www.tacc.com.br/perfexpert/])
 AC_COPYRIGHT([University of Texas at Austin])
 AC_REVISION([$Revision: 4.1 $])
-
-# Used by autotools
 AC_CONFIG_AUX_DIR(config)
 
-# Generate global config.h and install_dirs.h files
+#------------------------------------------------------------------------------
+# Generate output files and global config.h and install_dirs.h files
+#
+AC_CONFIG_FILES([Makefile tools/Makefile])
 AC_CONFIG_SRCDIR([tools/common/config.h.in])
 AC_CONFIG_HEADERS([tools/common/config.h])
 AC_CONFIG_FILES([tools/common/install_dirs.h])
+AC_CONFIG_FILES([tools/hound/Makefile])
+AC_CONFIG_FILES([tools/sniffer/Makefile])
+AC_CONFIG_FILES([tools/analyzer/Makefile])
+AC_CONFIG_FILES([tools/perfexpert/Makefile])
+AC_CONFIG_FILES([tools/perfexpert/perfexpert_get_info.pl])
 
 # Initialize Automake
 AM_INIT_AUTOMAKE([foreign -Wall -Werror])
-
 # Ok Automake 1.12, shut up!
 m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 
 # Just to have a cleaner output during 'make'
 # AM_SILENT_RULES([yes])
 
-# We need some work here to save hound from -O2 on CFLAGS. This overwrites any
-# user-defined CFLAGS :-/
+# To save hound from -O2 on CFLAGS. This overwrites any user-defined CFLAGS :-/
 CFLAGS="-g"
 CXXFLAGS="-g"
 
-# Requires only a standard C compiler
+# Requirements
+AC_PROG_CPP
 AM_PROG_CC_C_O
+AC_C_VOLATILE
+AC_C_INLINE
 AC_PROG_CXX
+AC_PROG_CXXCPP
+AC_PROG_CXX_C_O
 AC_PROG_MKDIR_P
 AC_PROG_LN_S
 AC_PROG_INSTALL
 AC_PROG_RANLIB
-
-# Checks for typedefs, structures, and compiler characteristics
-AC_C_INLINE
 AC_TYPE_SIZE_T
-
-# Checks for library functions
 AC_FUNC_MALLOC
-
-# Output files
-AC_CONFIG_FILES([Makefile tools/Makefile])
 
 #------------------------------------------------------------------------------
 # Check for the operation system to include specific defines (if needed!)
@@ -81,48 +82,34 @@ AC_CANONICAL_HOST
 AC_MSG_CHECKING([for the OS])
 AS_CASE([${host}],
     [*-*-darwin*], [
-        AC_DEFINE([OS_MACOS], [1], [The host OS is OSX])
         AC_MSG_RESULT([you are a happy Mac user, I suppose...])
-        HOST_OS=darwin
         AC_MSG_ERROR([...but we do not support OSX])],
     [*-*-freebsd*], [
-        AC_DEFINE([OS_FREEBSD], [1], [The host OS is FreeBSD])
         AC_MSG_RESULT([hum... Are you happy with FreeBSD?])
-        HOST_OS=freebsd
         AC_MSG_ERROR([...but we do not support FreeBSD])],
     [*-*-linux*], [
         AC_DEFINE([OS_LINUX], [1], [The host OS is Linux])
-        AC_MSG_RESULT([one more geek using Linux])
-        HOST_OS=linux],
+        AC_MSG_RESULT([one more geek using Linux])],
     [*-*-netbsd*], [
-        AC_DEFINE([OS_NETBSD], [1], [The host OS is NetBSD])
         AC_MSG_RESULT([Really? There is at least one NetBSD user in the world!])
-        HOST_OS=netbsd
         AC_MSG_ERROR([...but we do not support NetBSD])],
     [*-*-solaris2*], [
-        AC_DEFINE([OS_SOLARIS], [1], [The host OS is Solaris])
         AC_MSG_RESULT([We understand, you're stucked on Solaris, right?])
-        HOST_OS=solaris
         AC_MSG_ERROR([...but we do not support Solaris])],
     [*-*-mingw* | *-*-cygwin*], [
-        AC_DEFINE([OS_WINDOWS], [1], [The host OS is Windows])
         AC_MSG_RESULT([I will pray for you, Windows user :-/])
-        HOST_OS=cygwin
         AC_MSG_ERROR([...but we do not support M$ Windows])],
     [AC_MSG_RESULT([Unsupported operating system: ${host}])
-     HOST_OS=unknown
+    AC_MSG_ERROR([unsupported plataform])
 ])
 
 #------------------------------------------------------------------------------
 # Debug
 #
-AC_ARG_ENABLE([debug],
-    [AS_HELP_STRING([--enable-debug],
-        [Enable/Disable debugging [default=disabled]])],
-    [ENABLE_DEBUG=$enableval], [ENABLE_DEBUG=no])
-
+AC_ARG_ENABLE([debug], [AS_HELP_STRING([--enable-debug], [enable debugging])],
+    [ENABLE_DEBUG=$enableval], [ENABLE_DEBUG=no]
+)
 AC_MSG_CHECKING([whether to enable debug])
-
 AS_IF([test x"$ENABLE_DEBUG" = x"yes"], [
     AC_MSG_RESULT([yes])
     AC_DEFINE(ENABLE_DEBUG, [1], [Enable/Disable debug])
@@ -130,280 +117,176 @@ AS_IF([test x"$ENABLE_DEBUG" = x"yes"], [
     AC_MSG_RESULT([no])
     AC_DEFINE(ENABLE_DEBUG, [0], [Enable/Disable debug])
 ])
-
 AM_CONDITIONAL([ENABLE_DEBUG], [test x"$ENABLE_DEBUG" = x"yes"])
 
 #------------------------------------------------------------------------------
-# Checks for required (but generic) header files
+# Headers: generic
 #
-AC_CHECK_HEADER([stdio.h],     [], [AC_MSG_ERROR([not found: stdio.h])])
-AC_CHECK_HEADER([getopt.h],    [], [AC_MSG_ERROR([not found: getopt.h])])
-AC_CHECK_HEADER([ctype.h],     [], [AC_MSG_ERROR([not found: ctype.h])])
-AC_CHECK_HEADER([errno.h],     [], [AC_MSG_ERROR([not found: errno.h])])
-AC_CHECK_HEADER([fcntl.h],     [], [AC_MSG_ERROR([not found: fcntl.h])])
-AC_CHECK_HEADER([sys/wait.h],  [], [AC_MSG_ERROR([not found: sys/wait.h])])
-# Headers required exclusively for hound
-AC_CHECK_HEADER([sched.h],     [], [AC_MSG_ERROR([not found: sched.h])])
-AC_CHECK_HEADER([time.h],      [], [AC_MSG_ERROR([not found: time.h])])
-AC_CHECK_HEADER([sys/mman.h],  [], [AC_MSG_ERROR([not found: sys/mman.h])])
-
+# perfexpert, analyzer, recommender, hound, and sniffer
+AC_CHECK_HEADER([errno.h],     [], [AC_MSG_ERROR([errno.h not found])])
+AC_CHECK_HEADER([fcntl.h],     [], [AC_MSG_ERROR([fcntl.h not found])])
+AC_CHECK_HEADER([float.h],     [], [AC_MSG_ERROR([float.h not found])])
+AC_CHECK_HEADER([getopt.h],    [], [AC_MSG_ERROR([getopt.h not found])])
+AC_CHECK_HEADER([inttypes.h],  [], [AC_MSG_ERROR([inttypes.h not found])])
+AC_CHECK_HEADER([math.h],      [], [AC_MSG_ERROR([math.h not found])])
+AC_CHECK_HEADER([sched.h],     [], [AC_MSG_ERROR([sched.h not found])])
+AC_CHECK_HEADER([stdarg.h],    [], [AC_MSG_ERROR([stdarg.h not found])])
+AC_CHECK_HEADER([stddef.h],    [], [AC_MSG_ERROR([stddef.h not found])])
+AC_CHECK_HEADER([stdio.h],     [], [AC_MSG_ERROR([stdio.h not found])])
+AC_CHECK_HEADER([stdlib.h],    [], [AC_MSG_ERROR([stdlib.h not found])])
+AC_CHECK_HEADER([string.h],    [], [AC_MSG_ERROR([string.h not found])])
+AC_CHECK_HEADER([strings.h],   [], [AC_MSG_ERROR([strings.h not found])])
+AC_CHECK_HEADER([sys/mman.h],  [], [AC_MSG_ERROR([sys/mman.h not found])])
+AC_CHECK_HEADER([sys/stat.h],  [], [AC_MSG_ERROR([sys/stat.h not found])])
+AC_CHECK_HEADER([sys/types.h], [], [AC_MSG_ERROR([sys/types.h not found])])
+AC_CHECK_HEADER([time.h],      [], [AC_MSG_ERROR([time.h not found])])
+AC_CHECK_HEADER([unistd.h],    [], [AC_MSG_ERROR([unistd.h not found])])
 
 #------------------------------------------------------------------------------
-# Checks for SQLite headers, lib and program
+# Binaries: Bash shell, PERL, HPCToolkit programs, and SQLite
 #
-AC_CHECK_LIB([sqlite3], [sqlite3_open, sqlite3_close, sqlite3_exec,
-    sqlite3_free, sqlite3_errmsg], [WITH_SQLITE3_SUPPORT=yes],
-    [AC_MSG_ERROR([SQLite3 library not found])])
-
-AC_CHECK_HEADER([sqlite3.h], [
-    WITH_SQLITE3_SUPPORT=yes
-    AC_DEFINE([HAVE_SQLITE3], [1], [SQLite3 support])
-], [
-    WITH_SQLITE3_SUPPORT=no
-    AC_DEFINE([HAVE_SQLITE3], [0], [SQLite3 support])
-])
-
-AC_PATH_TOOL([SQLITE3_PROGRAM], [sqlite3], [no])
+AC_PATH_TOOL([BASH_PROGRAM],      [bash])
+AC_PATH_TOOL([PERL_PROGRAM],      [perl])
+AC_PATH_TOOL([HPCSTRUCT_PROGRAM], [hpcstruct])
+AC_PATH_TOOL([HPCRUN_PROGRAM],    [hpcrun])
+AC_PATH_TOOL([HPCPROF_PROGRAM],   [hpcprof])
+AC_PATH_TOOL([SQLITE3_PROGRAM],   [sqlite3])
 
 #------------------------------------------------------------------------------
-# Support to JVM (optional), using an argument
+# Externals (headers, lib)
 #
-AC_ARG_WITH([jvm],
-    [AS_HELP_STRING([--with-jvm], [JVM is required when Rose is selected,
-        use this argument to set JVM library path])], [
-    WITH_JVM_LIB=$withval
-    LDFLAGS+=" -L$WITH_JVM_LIB"
-
-    # A random number of C symbols of JVM library
-    AC_CHECK_LIB([jvm], [JVM_InitializeCompiler, JVM_Open, JVM_Close],
-        [WITH_JVM=yes],
-        [AC_MSG_ERROR([Java Virtual Machine (JVM) library not found!])])
-    WITH_JVM=yes
-    AC_SUBST(JVM_LIB, $WITH_JVM_LIB)
-], [
-    WITH_JVM=no
-])
+AC_ARG_WITH([externals],
+    [AS_HELP_STRING([--with-externals],
+        [use this argument to set prefix path of PerfExpert externals])], [
+    CPPFLAGS+=" -I$withval/include"
+    LDFLAGS+=" -L$withval/lib"])
 
 #------------------------------------------------------------------------------
-# Check for PAPI, optionally, using an argument (required for Analyzer)
+# 'perfexpert' requirements
+#
+# Libraries: rt
+#
+AC_CHECK_LIB([rt], [clock_gettime], [], [AC_MSG_ERROR([librt.so not found])])
+
+AS_IF([test "x$PERL_PROGRAM"      == x], [AC_MSG_ERROR([perl not found])])
+AS_IF([test "x$HPCSTRUCT_PROGRAM" == x], [AC_MSG_ERROR([hpcstruct not found])])
+AS_IF([test "x$HPCRUN_PROGRAM"    == x], [AC_MSG_ERROR([hpcrun not found])])
+AS_IF([test "x$HPCPROF_PROGRAM"   == x], [AC_MSG_ERROR([hpcprof not found])])
+
+#------------------------------------------------------------------------------
+# 'hound' requirements
+#
+
+#------------------------------------------------------------------------------
+# 'sniffer' requirements
+#
+# PAPI support (headers and lib)
 #
 AC_ARG_WITH([papi],
     [AS_HELP_STRING([--with-papi],
-        [Use this argument to set PAPI prefix path (where PAPI library
-        and include directories are located), if you do that there is no
-        need to set neither '--with-papi-lib' nor '--with-papi-include'.
-        This argument is not necessary if PAPI is installed into default
-        directories ('/usr' and '/usr/local')])], [
+        [use this argument to set PAPI prefix path (where PAPI library and
+        include directories are located)])], [
     CPPFLAGS+=" -I$withval/include"
-    LDFLAGS+=" -L$withval/lib"
-    WITH_PAPI_LIB=$withval/lib], [])
+    LDFLAGS+=" -L$withval/lib"], [])
 
 AC_ARG_WITH([papi-lib],
     [AS_HELP_STRING([--with-papi-lib],
-        [use this argument to set PAPI library path (it overwrites
-        '--with-papi' argument)])], [
-            LDFLAGS+=" -L$withval"
-            WITH_PAPI_LIB=$withval], [])
+        [use this argument to set PAPI library path])],
+    [LDFLAGS+=" -L$withval"], [])
 
 AC_ARG_WITH([papi-include],
     [AS_HELP_STRING([--with-papi-include],
-        [use this argument to set PAPI include path (it overwrites
-        '--with-papi' argument)])], [CPPFLAGS+=" -I$withval"], [])
+        [use this argument to set PAPI include path])],
+    [CPPFLAGS+=" -I$withval"], [])
 
-# Checks for PAPI library and header file
-AC_CHECK_LIB([papi], [PAPI_library_init, PAPI_add_event], [
-    HAVE_PAPI_LIB=yes
-    AC_SUBST(PAPI_LIB, $WITH_PAPI_LIB)
-], [
-    AC_MSG_ERROR([libpapi not found])
-])
-
-AC_CHECK_HEADER([papi.h], [HAVE_PAPI_HEADER=yes],
-    [AC_MSG_ERROR([papi.h not found])])
-
-AC_DEFINE([HAVE_PAPI], [1], [PAPI support])
+AC_CHECK_LIB([papi], [PAPI_library_init, PAPI_add_event], [],
+    [AC_MSG_ERROR([papi.so not found])])
+AC_CHECK_HEADER([papi.h], [], [AC_MSG_ERROR([papi.h not found])])
 
 #------------------------------------------------------------------------------
-# Most scripts require Bash shell
+# 'perfexpert_analyzer' requirements
 #
-AC_PATH_TOOL([BASH_PROGRAM], [bash], [no])
-AS_IF([test x"$BASH_PROGRAM" == x"no"],
-    [AC_MSG_ERROR([Most of our scripts require the Bash shell.])], [])
-
-#------------------------------------------------------------------------------
-# Checks for GNU Multiple Precision Arithmetic Library
+# GNU Math Evaluator support (headers and lib)
 #
-AC_CHECK_LIB([gmp], [__gmpf_init, __gmpf_clear], [WITH_GMP_SUPPORT=yes],
-    [AC_MSG_ERROR([GMP library (GNU Multiple Precision Arithmetic Library) not found])])
+AC_ARG_WITH([matheval],
+    [AS_HELP_STRING([--with-matheval],
+        [use this argument to set GNU Math Evaluator prefix path (where matheval
+        library and include directories are located)])], [
+    CPPFLAGS+=" -I$withval/include"
+    LDFLAGS+=" -L$withval/lib"])
 
-AC_CHECK_HEADER([gmp.h], [
-    WITH_GMP_SUPPORT=yes
-    AC_DEFINE([HAVE_GMP], [1], [GNU Multiple Precision Arithmetic Library support])
-], [
-    WITH_GMP_SUPPORT=no
-    AC_DEFINE([HAVE_GMP], [0], [GNU Multiple Precision Arithmetic Library support])
-])
+AC_ARG_WITH([matheval-lib],
+    [AS_HELP_STRING([--with-matheval-lib],
+        [use this argument to set GNU matheval library path])],
+    [LDFLAGS+=" -L$withval"])
 
-#------------------------------------------------------------------------------
-# Find HPCToolkit programs, optionally, using an argument
+AC_ARG_WITH([matheval-include],
+    [AS_HELP_STRING([--with-matheval-include],
+        [use this argument to set GNU matheval include path])],
+    [CPPFLAGS+=" -I$withval"])
+
+AC_CHECK_LIB([matheval], [evaluator_create], [],
+    [AC_MSG_ERROR([libmatheval.so not found])])
+AC_CHECK_HEADER([matheval.h], [], [AC_MSG_ERROR([matheval.h not found])])
+
 #
-AC_PATH_TOOL([HPCSTRUCT_PROGRAM], [hpcstruct], [no])
-AC_PATH_TOOL([HPCRUN_PROGRAM],    [hpcrun],    [no])
-AC_PATH_TOOL([HPCPROF_PROGRAM],   [hpcprof],   [no])
-
-#------------------------------------------------------------------------------
-# Support to ROSE Compiler (optional), using an argument
+# XML2 support (headers and lib)
 #
-AC_ARG_WITH([rose],
-    [AS_HELP_STRING([--with-rose],
-        [support to Rose Compiler @<:@default=no@:>@ which enables some
-        advanced features on the Optimization Recommender tool, as well is
-        required to enable PerfExpert:CT (Code Transformer tool), and
-        PerfExpert:CI (Code Integrator tool). Use this argument to set ROSE
-        prefix path (where ROSE libraries and include directories are
-        located), if you do that there is no need to set neither
-        '--with-rose-libs' nor '--with-rose-include'])], [
-    WITH_ROSE_LIBS=$withval/lib
-    WITH_ROSE_INCLUDE=$withval/include
-    WITH_ROSE=yes
-], [
-    WITH_ROSE=no
-])
+AC_ARG_WITH([libxml2],
+    [AS_HELP_STRING([--with-libxml2],
+        [use this argument to set LibXML2 prefix path (where LibXML2 library and
+        include directories are located)])], [
+    CPPFLAGS+=" -I$withval/include"
+    LDFLAGS+=" -L$withval/lib"])
 
-AC_ARG_WITH([rose-libs],
-    [AS_HELP_STRING([--with-rose-libs],
-        [support to ROSE Compiler @<:@default=no@:>@, use this argument to
-        set ROSE library path (it overwrites '--with-rose' argument)])], [
-    WITH_ROSE_LIBS=$withval
-    WITH_ROSE=yes], [])
+AC_ARG_WITH([libxml2-lib],
+    [AS_HELP_STRING([--with-libxml2-lib],
+        [use this argument to set LibXML2 library path])],
+    [LDFLAGS+=" -L$withval"])
 
-AC_ARG_WITH([rose-include],
-    [AS_HELP_STRING([--with-rose-include],
-        [support to ROSE Compiler @<:@default=no@:>@, use this argument to
-        set ROSE include path (it overwrites '--with-rose' argument)])], [
-    WITH_ROSE_INCLUDE=$withval
-    WITH_ROSE=yes], [])
+AC_ARG_WITH([libxml2-include],
+    [AS_HELP_STRING([--with-libxml2-include],
+        [use this argument to set LibXML2 include path])],
+    [CPPFLAGS+=" -I$withval"])
 
-AS_IF([test x"$WITH_ROSE" == x"yes"], [
-    # Rose requires JVM, so...
-    AS_IF([test x"$WITH_JVM" == x"no"], [
-        AC_MSG_ERROR([ROSE requires a JVM, use '--with-jvm' to define it])], [])
-
-    AS_IF([test x"$WITH_ROSE_LIBS" = x""], [
-        AC_MSG_ERROR([You chose to enable ROSE support but ROSE library path
-            was not defined. Use '--with-rose-libs=path' or
-            '--with-rose=prefix' to define it])], [])
-
-    AS_IF([test x"$WITH_ROSE_INCLUDE" = x""], [
-        AC_MSG_ERROR([You chose to enable ROSE support but ROSE include path
-            was not defined. Use '--with-rose-include=path' or
-            '--with-rose=prefix' to define it])], [])
-
-    CPPFLAGS+=" -I$WITH_ROSE_INCLUDE"
-    LDFLAGS+=" -L$WITH_ROSE_LIBS"
-
-    AC_SUBST(ROSE_LIB, $WITH_ROSE_LIBS)
-
-    WITH_ROSE_SUPPORT=yes
-    AC_DEFINE([HAVE_ROSE], [1], [Enable Rose support])
-], [
-    WITH_ROSE_SUPPORT=no
-    AC_DEFINE([HAVE_ROSE], [0], [Enable Rose support])
-])
-
-AM_CONDITIONAL([WITH_ROSE_SUPPORT], [test x"$WITH_ROSE_SUPPORT" = x"yes"])
+AC_CHECK_LIB([xml2], [xmlParseFile], [], [AC_MSG_ERROR([libxml2.so not found])])
+AC_CHECK_HEADER([libxml/parser.h], [], [AC_MSG_ERROR([parser.h not found])])
 
 #------------------------------------------------------------------------------
-# Checks for Google SparseHash headers
-#
-AC_LANG_PUSH([C++])
-
-AC_CHECK_HEADER([google/sparse_hash_map], [
-    WITH_GSH_SUPPORT=yes
-    AC_DEFINE([HAVE_GSH], [1], [Google's SparseHash])
-], [
-    WITH_GSH_SUPPORT=no
-    AC_DEFINE([HAVE_GSH], [0], [Google's SparseHash])
-    AC_MSG_ERROR([Google's SparseHash not found, try setting -I<path> using CPPFLAGS])
-])
-
-AC_LANG_POP
-
-#------------------------------------------------------------------------------
-# TODO: Checks for GNU matheval library
-#
-
-#------------------------------------------------------------------------------
-# TODO: Checks for XML2 library
-#
-
-#------------------------------------------------------------------------------
-# PerfExpert (basic)
-#
-
-# PAPI is required
-AS_IF([test x"HAVE_PAPI_LIB" == x"no"],
-    [AC_MSG_ERROR([PAPI not found, try using '--with-papi'])], [])
-AS_IF([test x"HAVE_PAPI_HEADER" == x"no"],
-    [AC_MSG_ERROR([PAPI not found, try using '--with-papi'])], [])
-
-# HPCToolkit is required
-AS_IF([test x"$HPCSTRUCT_PROGRAM" = x"no"],
-    [AC_MSG_ERROR([hpcstruct not found, try using '--with-hpctoolkit'])])
-AS_IF([test x"$HPCRUN_PROGRAM" = x"no"],
-    [AC_MSG_ERROR([hpcrun not found, try using '--with-hpctoolkit'])])
-AS_IF([test x"$HPCPROF_PROGRAM" = x"no"],
-    [AC_MSG_ERROR([hpcprof not found, try using '--with-hpctoolkit'])])
-
-AC_CONFIG_FILES([tools/hound/Makefile])
-AC_CONFIG_FILES([tools/sniffer/Makefile])
-AC_CONFIG_FILES([tools/analyzer/Makefile])
-AC_CONFIG_FILES([tools/perfexpert/perfexpert_get_info.pl])
-AC_CONFIG_FILES([tools/perfexpert/Makefile])
-
-#------------------------------------------------------------------------------
-# Enable/Disable 'minst' (MACPO)
-#
-AC_ARG_ENABLE([minst],
-    [AS_HELP_STRING([--disable-minst],
-        [Enable/Disable the data access instrumentation tool [default=enabled]])],
-    [ENABLE_MINST=$enableval], [ENABLE_MINST=yes])
-
-AC_MSG_CHECKING([whether to enable Minst (MACPO)])
-AS_IF([test x"$ENABLE_MINST" = x"yes"], [
-    AC_MSG_RESULT([yes])
-
-    # ROSE is required
-    AS_IF([test x"$WITH_ROSE_SUPPORT" = x"no"],
-        [AC_MSG_ERROR([ROSE not found, try using '--with-rose'])], [])
-
-    ENABLE_MINST=minst
-    AC_CONFIG_FILES([tools/minst/Makefile])
-    AC_CONFIG_FILES([tools/minst/macpo.sh],
-        [chmod +x tools/minst/macpo.sh])
-    AC_CONFIG_FILES([tools/minst/libmrt/Makefile])
-    AC_CONFIG_FILES([tools/minst/analyze/Makefile])
-], [
-    AC_MSG_RESULT([no])
-    ENABLE_MINST=
-])
-AC_SUBST([ENABLE_MINST])
-
-#------------------------------------------------------------------------------
-# Enable/Disable 'recommender'
+# 'recommender' requirements
 #
 AC_ARG_ENABLE([recommender],
     [AS_HELP_STRING([--disable-recommender],
-        [Enable/Disable the optimization recommender tool [default=enabled]])],
+        [disable optimization recommender])],
     [ENABLE_RECOMMENDER=$enableval], [ENABLE_RECOMMENDER=yes])
 
 AC_MSG_CHECKING([whether to enable the optimization recommender tool])
-AS_IF([test x"$ENABLE_RECOMMENDER" = x"yes"], [
+AS_IF([test x"$ENABLE_RECOMMENDER" = xyes], [
     AC_MSG_RESULT([yes])
 
-    # SQLite is required
-    AS_IF([test x"$WITH_SQLITE3_SUPPORT" = x"no"],
-        [AC_MSG_ERROR([Please install SQLite3])], [])
+    #
+    # SQLite support (headers, lib, and program)
+    #
+    AC_ARG_WITH([sqlite],
+        [AS_HELP_STRING([--with-sqlite],
+            [use this argument to set SQLite3 prefix path (where SQLite3 library
+            and include directories are located)])], [
+        CPPFLAGS+=" -I$withval/include"
+        LDFLAGS+=" -L$withval/lib"])
+
+    AC_ARG_WITH([sqlite-lib],
+        [AS_HELP_STRING([--with-sqlite-lib],
+            [use this argument to set SQLite3 library path])],
+        [LDFLAGS+=" -L$withval"])
+
+    AC_ARG_WITH([sqlite-include],
+        [AS_HELP_STRING([--with-sqlite-include],
+            [use this argument to set SQLite3 include path])],
+        [CPPFLAGS+=" -I$withval"])
+
+    AC_CHECK_LIB([sqlite3], [sqlite3_open, sqlite3_close, sqlite3_exec], [],
+        [AC_MSG_ERROR([not found: libsqlit3.so])])
+    AC_CHECK_HEADER([sqlite3.h], [], [AC_MSG_ERROR([not found: sqlite3.h])])
 
     ENABLE_RECOMMENDER=recommender
     AC_CONFIG_FILES([tools/recommender/Makefile])
@@ -414,28 +297,142 @@ AS_IF([test x"$ENABLE_RECOMMENDER" = x"yes"], [
 AC_SUBST([ENABLE_RECOMMENDER])
 
 #------------------------------------------------------------------------------
-# Enable/Disable 'perfexpert_ct'
+# 'minst' (MACPO) requirements
+#
+AC_ARG_ENABLE([minst],
+    [AS_HELP_STRING([--disable-minst], [disable data access instrumentation])],
+    [ENABLE_MINST=$enableval], [ENABLE_MINST=yes])
+
+AC_ARG_WITH([jvm],
+    [AS_HELP_STRING([--with-jvm], 
+        [use this argument to set JVM library path])],
+    [LDFLAGS+=" -L$withval"])
+
+AC_LANG_PUSH([C++])
+
+AC_MSG_CHECKING([whether to enable Minst (MACPO)])
+AS_IF([test x"$ENABLE_MINST" = xyes], [
+    AC_MSG_RESULT([yes])
+
+    #
+    # JVM support
+    #
+    AC_CHECK_LIB([jvm], [JVM_Open, JVM_Close], [],
+        [AC_MSG_ERROR([not found: libjvm.so (Java Virtual Machine)])])
+
+    #
+    # ROSE Compiler support (headers and lib)
+    #
+    AC_ARG_WITH([rose],
+        [AS_HELP_STRING([--with-rose],
+            [use this argument to set ROSE prefix path (where ROSE library and
+            include directories are located)])], [
+        CPPFLAGS+=" -I$withval/include"
+        LDFLAGS+=" -L$withval/lib"])
+
+    AC_ARG_WITH([rose-libs],
+        [AS_HELP_STRING([--with-rose-libs],
+            [use this argument to set Compiler library path])],
+        [LDFLAGS+=" -L$withval"])
+
+    AC_ARG_WITH([rose-include],
+        [AS_HELP_STRING([--with-rose-include],
+            [use this argument to set ROSE include path])],
+        [CPPFLAGS+=" -I$withval/include"])
+
+    AC_CHECK_HEADER([rose.h], [], [AC_MSG_ERROR([not found: rose.h])])
+
+    #
+    # GNU Multiple Precision Arithmetic Library support (headers and lib)
+    #
+    AC_ARG_WITH([gmp],
+        [AS_HELP_STRING([--with-gmp],
+            [use this argument to set GNU Multiple Precision Library prefix path
+            (where GMP library and include directories are located)])], [
+        CPPFLAGS+=" -I$withval/include"
+        LDFLAGS+=" -L$withval/lib"])
+
+    AC_ARG_WITH([gmp-lib],
+        [AS_HELP_STRING([--with-gmp-lib],
+            [use this argument to set GMP library path])],
+        [LDFLAGS+=" -L$withval"])
+
+    AC_ARG_WITH([gmp-include],
+        [AS_HELP_STRING([--with-gmp-include],
+            [use this argument to set GMP include path])],
+        [CPPFLAGS+=" -I$withval"])
+
+    AC_CHECK_LIB([gmp], [__gmpf_init, __gmpf_clear], [],
+        [AC_MSG_ERROR([not found: libgmp.so])])
+    AC_CHECK_HEADER([gmp.h], [], [AC_MSG_ERROR([not found: gmp.h])])
+
+    #
+    # Check for Google SparseHash (headers)
+    #
+    AC_ARG_WITH([sparse-hash-include],
+        [AS_HELP_STRING([--with-sparse-hash-include],
+            [use this argument to set Google Sparse Hash include path])],
+        [CPPFLAGS+=" -I$withval"], [])
+
+    AC_CHECK_HEADER([google/sparse_hash_map], [],
+        [AC_MSG_ERROR([not found: google/sparse_hash_map])])
+
+    ENABLE_MINST=minst
+    AC_CONFIG_FILES([tools/minst/Makefile])
+    AC_CONFIG_FILES([tools/minst/macpo.sh], [chmod +x tools/minst/macpo.sh])
+    AC_CONFIG_FILES([tools/minst/libmrt/Makefile])
+    AC_CONFIG_FILES([tools/minst/analyze/Makefile])
+], [
+    AC_MSG_RESULT([no])
+    ENABLE_MINST=
+])
+AC_SUBST([ENABLE_MINST])
+AC_LANG_POP
+
+#------------------------------------------------------------------------------
+# 'perfexpert_ct' requirements
 #
 AC_ARG_ENABLE([perfexpert_ct],
-    [AS_HELP_STRING([--disable-perfexpert_ct],
-        [Enable/Disable the code transformation tool [default=enabled]])],
+    [AS_HELP_STRING([--disable-perfexpert_ct], [disable code transformer])],
     [ENABLE_CT=$enableval], [ENABLE_CT=yes])
 
 AC_MSG_CHECKING([whether to enable code transformation])
-AS_IF([test x"$ENABLE_CT" = x"yes"], [
+AS_IF([test x"$ENABLE_CT" = xyes], [
     AC_MSG_RESULT([yes])
 
-    # SQLite is required
-    AS_IF([test x"$WITH_SQLITE3_SUPPORT" = x"no"],
-        [AC_MSG_ERROR([Please install SQLite3])], [])
+    #
+    # JVM support
+    #
+    AC_CHECK_LIB([jvm], [JVM_Open, JVM_Close], [],
+        [AC_MSG_ERROR([not found: libjvm.so (Java Virtual Machine)])])
+
+    #
+    # ROSE Compiler support (headers and lib)
+    #
+    AC_ARG_WITH([rose],
+        [AS_HELP_STRING([--with-rose],
+            [use this argument to set ROSE prefix path (where ROSE library and
+            include directories are located)])], [
+        CPPFLAGS+=" -I$withval/include"
+        LDFLAGS+=" -L$withval/lib"])
+
+    AC_ARG_WITH([rose-libs],
+        [AS_HELP_STRING([--with-rose-libs],
+            [use this argument to set Compiler library path])],
+        [LDFLAGS+=" -L$withval"])
+
+    AC_ARG_WITH([rose-include],
+        [AS_HELP_STRING([--with-rose-include],
+            [use this argument to set ROSE include path])],
+        [CPPFLAGS+=" -I$withval/include"])
+
+    AC_LANG_PUSH([C++])
+    AC_CHECK_HEADER([rose.h], [], [AC_MSG_ERROR([not found: rose.h])])
+    AC_LANG_POP
 
     # Check for Lex/Flex and Yacc/Bison
     AC_PROG_LEX
     AC_PROG_YACC
-
-    # ROSE is required
-    AS_IF([test x"$WITH_ROSE_SUPPORT" = x"no"],
-        [AC_MSG_ERROR([ROSE not found, try using '--with-rose'])], [])
 
     ENABLE_CT=ct
     AC_CONFIG_FILES([tools/ct/Makefile])
@@ -450,42 +447,14 @@ AS_IF([test x"$ENABLE_CT" = x"yes"], [
 AC_SUBST([ENABLE_CT])
 
 #------------------------------------------------------------------------------
-# Tests
-#
-AC_PATH_TOOL([PERL_PROGRAM], [perl], [no])
-AS_IF([test x"$PERL_PROGRAM" == x"no"],
-    [AC_MSG_NOTICE([Perl not found, unable to run tests.])], [
-        AC_CONFIG_FILES([tests/run_tests.pl], [chmod +x tests/run_tests.pl])
-    ])
-
-#------------------------------------------------------------------------------
-# Generate output files
-#
+AC_CONFIG_FILES([tests/run_tests.pl], [chmod +x tests/run_tests.pl])
+LIBS=""
 AC_OUTPUT
-AC_MSG_NOTICE([========================================================])
-AC_MSG_NOTICE([ Minst (MACPO):    $ENABLE_MINST                        ])
-AC_MSG_NOTICE([ Recommender:      $ENABLE_RECOMMENDER                  ])
-AC_MSG_NOTICE([ Code Transformer: $ENABLE_CT                           ])
-AC_MSG_NOTICE([                                                        ])
-AC_MSG_NOTICE([ Debug mode: $ENABLE_DEBUG                              ])
-AC_MSG_NOTICE([ PAPI:       $HAVE_PAPI_HEADER                          ])
-AC_MSG_NOTICE([ HPCToolkit: $HPCRUN_PROGRAM                            ])
-AC_MSG_NOTICE([             $HPCSTRUCT_PROGRAM                         ])
-AC_MSG_NOTICE([             $HPCPROF_PROGRAM                           ])
-AC_MSG_NOTICE([ SQLite3:    $WITH_SQLITE3_SUPPORT                      ])
-AC_MSG_NOTICE([ Rose:       $WITH_ROSE                                 ])
-AC_MSG_NOTICE([ Java VM:    $WITH_JVM                                  ])
-AC_MSG_NOTICE([                                                        ])
-AC_MSG_NOTICE([ CC=$CC                                                 ])
-AC_MSG_NOTICE([ CXX=$CXX                                               ])
-AC_MSG_NOTICE([ CPPFLAGS=$CPPFLAGS                                     ])
-AC_MSG_NOTICE([ CFLAGS=$CFLAGS                                         ])
-AC_MSG_NOTICE([ CXXFLAGS=$CXXFLAGS                                     ])
-AC_MSG_NOTICE([ LDFLAGS=$LDFLAGS                                       ])
-AC_MSG_NOTICE([ LIBS=$LIBS                                             ])
-AC_MSG_NOTICE([========================================================])
-AC_MSG_NOTICE([ Great news! Now you just have to run "make -s install" ])
-AC_MSG_NOTICE([========================================================])
-AC_MSG_NOTICE([])
+AC_MSG_NOTICE([CC=$CC])
+AC_MSG_NOTICE([CXX=$CXX])
+AC_MSG_NOTICE([CPPFLAGS=$CPPFLAGS])
+AC_MSG_NOTICE([CFLAGS=$CFLAGS])
+AC_MSG_NOTICE([CXXFLAGS=$CXXFLAGS])
+AC_MSG_NOTICE([LDFLAGS=$LDFLAGS])
 
 # EOF
