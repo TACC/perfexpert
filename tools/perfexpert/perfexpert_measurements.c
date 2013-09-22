@@ -30,46 +30,29 @@ extern "C" {
 #endif
 
 /* PerfExpert headers */
-#include "config.h"
 #include "perfexpert.h"
 #include "perfexpert_output.h"
-#include "perfexpert_util.h"
-#include "perfexpert_constants.h"
+#include "perfexpert_tool.h"
 
 /* measurements */
 int measurements(void) {
-    OUTPUT_VERBOSE((4, "%s", _BLUE("Measurements phase")));
-    OUTPUT(("Running [%s]", globals.program));
+    int i = 0;
 
-    /* First of all, does the file exist? (it is just a double check) */
-    if (PERFEXPERT_SUCCESS != perfexpert_util_file_exists_and_is_exec(
-        globals.program)) {
-        return PERFEXPERT_ERROR;
-    }
-    /* Create the program structure file */
-    if (PERFEXPERT_SUCCESS != run_hpcstruct()) {
-        OUTPUT(("%s", _ERROR("Error: unable to run hpcstruct")));
-        return PERFEXPERT_ERROR;
-    }
-    /* Collect measurements */
-    if (NULL == globals.knc) {
-        if (PERFEXPERT_SUCCESS != run_hpcrun()) {
-            OUTPUT(("%s", _ERROR("Error: unable to run hpcrun")));
-            return PERFEXPERT_ERROR;
+    OUTPUT_VERBOSE((4, "%s", _BLUE("Measurements phase")));
+
+    /* Find the measurement function for this tool */
+    while (NULL != tools[i].name) {
+        if (0 == strcmp(globals.tool, tools[i].name)) {
+            OUTPUT(("Running [%s] using %s", globals.program, globals.tool));
+            /* Call the measurement function for this tool */
+            return (*tools[i].function)();
         }
-    } else {
-        if (PERFEXPERT_SUCCESS != run_hpcrun_knc()) {
-            OUTPUT(("%s", _ERROR("Error: unable to run hpcrun on KNC")));
-            OUTPUT(("Are you adding the flags to compile for MIC?"));                    
-            return PERFEXPERT_ERROR;
-        }
+        i++;
     }
-    /* Sumarize results */
-    if (PERFEXPERT_SUCCESS != run_hpcprof()) {
-        OUTPUT(("%s", _ERROR("Error: unable to run hpcprof")));
-        return PERFEXPERT_ERROR;
-    }
-    return PERFEXPERT_SUCCESS;
+
+    OUTPUT(("%s [%s]", _ERROR("Error: unknown measurement tool"),
+        globals.tool));
+    return PERFEXPERT_ERROR;
 }
 
 #ifdef __cplusplus

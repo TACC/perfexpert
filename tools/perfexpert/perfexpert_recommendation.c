@@ -35,7 +35,6 @@ extern "C" {
 #include <string.h>
 
 /* PerfExpert headers */
-#include "config.h"
 #include "perfexpert.h"
 #include "perfexpert_output.h"
 #include "perfexpert_fork.h"

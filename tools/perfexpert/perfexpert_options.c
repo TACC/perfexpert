@@ -36,7 +36,6 @@ extern "C" {
 #include <getopt.h>
 
 /* PerfExpert headers */
-#include "config.h"
 #include "perfexpert.h"
 #include "perfexpert_alloc.h"
 #include "perfexpert_constants.h"
@@ -48,21 +47,22 @@ extern "C" {
  * this structure compatible with the parse_cli_params() and show_help().
  */
 static struct option long_options[] = {
-    {"after",         required_argument, NULL, 'a'},
-    {"knc-after",     required_argument, NULL, 'A'},
-    {"before",        required_argument, NULL, 'b'},
-    {"knc-before",    required_argument, NULL, 'B'},
-    {"colorful",      no_argument,       NULL, 'c'},
-    {"database",      required_argument, NULL, 'd'},
-    {"leave-garbage", no_argument,       NULL, 'g'},
-    {"help",          no_argument,       NULL, 'h'},
-    {"knc",           required_argument, NULL, 'k'},
-    {"makefile",      required_argument, NULL, 'm'},
-    {"prefix",        required_argument, NULL, 'p'},
-    {"knc-prefix",    required_argument, NULL, 'P'},
-    {"recommend",     required_argument, NULL, 'r'},
-    {"source",        required_argument, NULL, 's'},
-    {"verbose",       required_argument, NULL, 'v'},
+    {"after",             required_argument, NULL, 'a'},
+    {"knc-after",         required_argument, NULL, 'A'},
+    {"before",            required_argument, NULL, 'b'},
+    {"knc-before",        required_argument, NULL, 'B'},
+    {"colorful",          no_argument,       NULL, 'c'},
+    {"database",          required_argument, NULL, 'd'},
+    {"leave-garbage",     no_argument,       NULL, 'g'},
+    {"help",              no_argument,       NULL, 'h'},
+    {"knc",               required_argument, NULL, 'k'},
+    {"makefile",          required_argument, NULL, 'm'},
+    {"prefix",            required_argument, NULL, 'p'},
+    {"knc-prefix",        required_argument, NULL, 'P'},
+    {"recommend",         required_argument, NULL, 'r'},
+    {"source",            required_argument, NULL, 's'},
+    {"measurement-tool",  required_argument, NULL, 't'},
+    {"verbose",           required_argument, NULL, 'v'},
     {0, 0, 0, 0}
 };
 
@@ -72,7 +72,7 @@ void show_help(void) {
     /*      12345678901234567890123456789012345678901234567890123456789012345678901234567890 */
     printf("Usage: perfexpert <threshold> [-m target|-s sourcefile] [-r count] [-d database]\n");
     printf("                  [-p prefix] [-b filename] [-a filename] [-v [level]] [-chg]\n");
-    printf("                  [-k card [-P prefix] [-B filename] [-A filename] ]\n");
+    printf("                  [-k card [-P prefix] [-B filename] [-A filename]] [-t tool]\n");
     printf("                  <program_executable> [program_arguments]\n\n");
     printf("  <threshold>        Define the relevance (in %% of runtime) of code fragments\n");
     printf("                     PerfExpert should take into consideration (> 0 and <= 1)\n");
@@ -84,6 +84,9 @@ void show_help(void) {
     printf("  -r --recommend     Number of recommendations ('count') PerfExpert should show\n");
     printf("  -d --database      Select the recommendation database file\n");
     printf("                     (default: %s/%s)\n", PERFEXPERT_VARDIR, PERFEXPERT_DB);
+    printf("  -t --measurement-tool\n");
+    printf("                     Set the tool to be used to collect performance measurements\n");
+    printf("                     (valid options: hpctoolkit and vtune, default: hpctoolkit)\n");
     printf("  -p --prefix        Add a prefix to the command line (e.g. mpirun). Use double\n");
     printf("                     quotes to specify arguments with spaces within (e.g.\n");
     printf("                     -p \"mpirun -n 2\"). Use a semicolon (';') to run multiple\n");
@@ -163,6 +166,10 @@ int parse_env_vars(void) {
         globals.knc_after = ("PERFEXPERT_KNC_AFTER");
         OUTPUT_VERBOSE((1, "ENV: knc)after=%s", globals.knc_after));
     }
+    if (NULL != getenv("PERFEXPERT_ANALYZER_TOOL")) {
+        globals.tool = getenv("PERFEXPERT_ANALYZER_TOOL");
+        OUTPUT_VERBOSE((1, "ENV: tool=%s", globals.tool));
+    }
     return PERFEXPERT_SUCCESS;
 }
 
@@ -179,7 +186,7 @@ int parse_cli_params(int argc, char *argv[]) {
 
     while (1) {
         /* get parameter */
-        parameter = getopt_long(argc, argv, "a:A:b:B:cd:ghk:m:p:P:r:s:v:",
+        parameter = getopt_long(argc, argv, "a:A:b:B:cd:ghk:m:p:P:r:s:t:v:",
             long_options, &option_index);
 
         /* Detect the end of the options */
@@ -263,6 +270,11 @@ int parse_cli_params(int argc, char *argv[]) {
                 globals.sourcefile = optarg;
                 OUTPUT_VERBOSE((1, "option 's' set [%s]", globals.sourcefile));
                 break;
+            /* Measurement tool */
+            case 't':
+                globals.tool = optarg;
+                OUTPUT_VERBOSE((1, "option 't' set [%s]", globals.tool));
+                break;
             /* Unknown option */
             case '?':
             default:
@@ -344,6 +356,7 @@ int parse_cli_params(int argc, char *argv[]) {
     OUTPUT_VERBOSE((7, "   MIC prefix:          %s", globals.knc_prefix));
     OUTPUT_VERBOSE((7, "   MIC before each run: %s", globals.knc_before));
     OUTPUT_VERBOSE((7, "   MIC after each run:  %s", globals.knc_after));
+    OUTPUT_VERBOSE((7, "   Measurement tool:    %s", globals.tool));
 
     /* Not using OUTPUT_VERBOSE because I want only one line */
     if (8 <= globals.verbose) {
@@ -362,9 +375,9 @@ int parse_cli_params(int argc, char *argv[]) {
         return PERFEXPERT_ERROR;
     }
 
-    /* Sanity check: threshold */
-    if (0 == globals.threshold) {
-        OUTPUT(("%s", _ERROR("Error: undefined threshold")));
+    /* Sanity check: threshold is mandatory */
+    if ((0 >= globals.threshold) || (1 < globals.threshold)) {
+        OUTPUT(("%s", _ERROR("Error: undefined or invalid threshold")));
         show_help();
         return PERFEXPERT_ERROR;
     }
