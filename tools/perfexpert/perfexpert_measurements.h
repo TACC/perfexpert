@@ -46,14 +46,24 @@ typedef int (*tool_fn_t)(void);
 typedef struct tool {
     const char *name;
     tool_fn_t function;
+    const char *profile_file;
 } tool_t;
 
 /* Measurements tools definition */
-tool_t tools[] = {
-    {"hpctoolkit", &measurements_hpctoolkit},
-    {"vtune",      &measurements_vtune},
-    {NULL,         NULL}
-};
+extern tool_t tools[]; /* Variable defined in perfexpert_measurements.h */
+
+/* perfexpert_tool_get_tot_cyc */
+static inline char* perfexpert_tool_get_profile_file(const char* tool) {
+    int i = 0;
+
+    while (NULL != tools[i].name) {
+        if (0 == strcmp(tool, tools[i].name)) {
+            return (char *)&(tools[i].profile_file);
+        }
+        i++;
+    }
+    return NULL;
+}
 
 #ifdef __cplusplus
 }
