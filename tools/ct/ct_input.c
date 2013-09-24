@@ -35,20 +35,20 @@ extern "C" {
 #include <string.h>
 
 /* PerfExpert headers */
-#include "config.h"
 #include "ct.h"
+#include "perfexpert_alloc.h"
 #include "perfexpert_constants.h"
 #include "perfexpert_list.h"
 #include "perfexpert_output.h"
 
 /* parse_transformation_params */
 int parse_transformation_params(perfexpert_list_t *fragments) {
-    fragment_t *fragment;
-    recommendation_t *recommendation;
+    recommendation_t *recommendation = NULL;
+    fragment_t *fragment = NULL;
     char buffer[BUFFER_SIZE];
-    int  input_line = 0;
+    int input_line = 0;
 
-    OUTPUT_VERBOSE((4, "=== %s", _BLUE("Parsing fragments")));
+    OUTPUT_VERBOSE((4, "%s", _BLUE("Parsing fragments")));
 
     /* Which INPUT we are using? (just a double check) */
     if (NULL == globals.inputfile) {
@@ -60,36 +60,30 @@ int parse_transformation_params(perfexpert_list_t *fragments) {
 
     bzero(buffer, BUFFER_SIZE);
     while (NULL != fgets(buffer, BUFFER_SIZE - 1, globals.inputfile_FP)) {
-        node_t *node;
-        int temp;
+        node_t *node = NULL;
 
         input_line++;
-
-        /* Ignore comments */
-        if (0 == strncmp("#", buffer, 1)) {
+        /* Ignore comments and blank lines */
+        if ((0 == strncmp("#", buffer, 1)) ||
+            (strspn(buffer, " \t\r\n") == strlen(buffer))) {
             continue;
         }
 
+        /* Remove the end \n character */
+        buffer[strlen(buffer) - 1] = '\0';
+
         /* Is this line a new recommendation? */
         if (0 == strncmp("%", buffer, 1)) {
-            char temp_str[BUFFER_SIZE];
-
             OUTPUT_VERBOSE((5, "(%d) --- %s", input_line,
                 _GREEN("new bottleneck found")));
 
             /* Create a list item for this code fragment */
-            fragment = (fragment_t *)malloc(sizeof(fragment_t));
-            if (NULL == fragment) {
-                OUTPUT(("%s", _ERROR("Error: out of memory")));
-                return PERFEXPERT_ERROR;
-            }
+            PERFEXPERT_ALLOC(fragment_t, fragment, sizeof(fragment_t));
             perfexpert_list_item_construct(
                 (perfexpert_list_item_t *)fragment);
-            perfexpert_list_construct(
-                (perfexpert_list_t *)&(fragment->recommendations));
+            perfexpert_list_construct(&(fragment->recommendations));
             perfexpert_list_append(fragments,
                 (perfexpert_list_item_t *)fragment);
-
             fragment->fragment_file = NULL;
             fragment->outer_loop_fragment_file = NULL;
             fragment->outer_outer_loop_fragment_file = NULL;
@@ -99,27 +93,18 @@ int parse_transformation_params(perfexpert_list_t *fragments) {
             continue;
         }
 
-        node = (node_t *)malloc(sizeof(node_t) + strlen(buffer) + 1);
-        if (NULL == node) {
-            OUTPUT(("%s", _ERROR("Error: out of memory")));
-            return PERFEXPERT_ERROR;
-        }
-        bzero(node, sizeof(node_t) + strlen(buffer) + 1);
+        PERFEXPERT_ALLOC(node_t, node, (sizeof(node_t) + strlen(buffer) + 1));
         node->key = strtok(strcpy((char*)(node + 1), buffer), "=\r\n");
         node->value = strtok(NULL, "\r\n");
 
         /* Code param: code.filename */
         if (0 == strncmp("code.filename", node->key, 13)) {
-            fragment->filename = (char *)malloc(strlen(node->value) + 1);
-            if (NULL == fragment->filename) {
-                OUTPUT(("%s", _ERROR("Error: out of memory")));
-                return PERFEXPERT_ERROR;
-            }
-            bzero(fragment->filename, strlen(node->value) + 1);
+            PERFEXPERT_ALLOC(char, fragment->filename,
+                (strlen(node->value) + 1));
             strcpy(fragment->filename, node->value);
             OUTPUT_VERBOSE((10, "(%d) %s [%s]", input_line,
                 _MAGENTA("filename:"), fragment->filename));
-            free(node);
+            PERFEXPERT_DEALLOC(node);
             continue;
         }
         /* Code param: code.line_number */
@@ -127,35 +112,27 @@ int parse_transformation_params(perfexpert_list_t *fragments) {
             fragment->line_number = atoi(node->value);
             OUTPUT_VERBOSE((10, "(%d) %s [%d]", input_line,
                 _MAGENTA("line number:"), fragment->line_number));
-            free(node);
+            PERFEXPERT_DEALLOC(node);
             continue;
         }
         /* Code param: code.type */
         if (0 == strncmp("code.type", node->key, 9)) {
-            fragment->code_type = (char *)malloc(strlen(node->value) + 1);
-            if (NULL == fragment->code_type) {
-                OUTPUT(("%s", _ERROR("Error: out of memory")));
-                return PERFEXPERT_ERROR;
-            }
-            bzero(fragment->code_type, strlen(node->value) + 1);
+            PERFEXPERT_ALLOC(char, fragment->code_type,
+                (strlen(node->value) + 1));
             strcpy(fragment->code_type, node->value);
             OUTPUT_VERBOSE((10, "(%d) %s [%s]", input_line, _MAGENTA("type:"),
                 fragment->code_type));
-            free(node);
+            PERFEXPERT_DEALLOC(node);
             continue;
         }
         /* Code param: code.function_name */
         if (0 == strncmp("code.function_name", node->key, 18)) {
-            fragment->function_name = (char *)malloc(strlen(node->value) + 1);
-            if (NULL == fragment->function_name) {
-                OUTPUT(("%s", _ERROR("Error: out of memory")));
-                return PERFEXPERT_ERROR;
-            }
-            bzero(fragment->function_name, strlen(node->value) + 1);
+            PERFEXPERT_ALLOC(char, fragment->function_name,
+                (strlen(node->value) + 1));
             strcpy(fragment->function_name, node->value);
             OUTPUT_VERBOSE((10, "(%d) %s [%s]", input_line,
                 _MAGENTA("function name:"), fragment->function_name));
-            free(node);
+            PERFEXPERT_DEALLOC(node);
             continue;
         }
         /* Code param: code.loop_depth */
@@ -163,7 +140,7 @@ int parse_transformation_params(perfexpert_list_t *fragments) {
             fragment->loop_depth = atoi(node->value);
             OUTPUT_VERBOSE((10, "(%d) %s [%d]", input_line,
                 _MAGENTA("loop depth:"), fragment->loop_depth));
-            free(node);
+            PERFEXPERT_DEALLOC(node);
             continue;
         }
         /* Code param: code.rowid */
@@ -171,27 +148,22 @@ int parse_transformation_params(perfexpert_list_t *fragments) {
             fragment->rowid = atoi(node->value);
             OUTPUT_VERBOSE((10, "(%d) %s [%d]", input_line, _MAGENTA("row id:"),
                 fragment->rowid));
-            free(node);
+            PERFEXPERT_DEALLOC(node);
             continue;
         }
         /* Code param: recommender.recommendation_id */
         if (0 == strncmp("recommender.recommendation_id", node->key, 29)) {
-            recommendation = (recommendation_t *)malloc(sizeof(
-                recommendation_t));
-            if (NULL == recommendation) {
-                OUTPUT(("%s", _ERROR("Error: out of memory")));
-                return PERFEXPERT_ERROR;
-            }
+            PERFEXPERT_ALLOC(recommendation_t, recommendation,
+                sizeof(recommendation_t));
             perfexpert_list_item_construct(
                 (perfexpert_list_item_t *)recommendation);
-            perfexpert_list_append(
-                (perfexpert_list_t *)&(fragment->recommendations),
+            perfexpert_list_append(&(fragment->recommendations),
                 (perfexpert_list_item_t *)recommendation);
 
             recommendation->id = atoi(node->value);
             OUTPUT_VERBOSE((10, "(%d) >> %s [%d]", input_line,
                 _YELLOW("recommendation id:"), recommendation->id));
-            free(node);
+            PERFEXPERT_DEALLOC(node);
             continue;
         }
 
@@ -200,14 +172,12 @@ int parse_transformation_params(perfexpert_list_t *fragments) {
          */
         OUTPUT_VERBOSE((4, "(%d) %s (%s = %s)", input_line,
             _RED("ignored line"), node->key, node->value));
-        free(node);
+        PERFEXPERT_DEALLOC(node);
     }
 
     /* print a summary of 'fragments' */
     OUTPUT_VERBOSE((4, "%d %s", perfexpert_list_get_size(fragments),
         _GREEN("code bottleneck(s) found")));
-
-    /* TODO: Free memory */
 
     return PERFEXPERT_SUCCESS;
 }

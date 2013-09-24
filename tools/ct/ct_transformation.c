@@ -35,18 +35,18 @@ extern "C" {
 #include <string.h>
 
 /* PerfExpert headers */
-#include "config.h"
 #include "ct.h"
+#include "perfexpert_alloc.h"
 #include "perfexpert_constants.h"
-#include "perfexpert_list.h"
-#include "perfexpert_output.h"
 #include "perfexpert_fork.h"
+#include "perfexpert_list.h"
 #include "perfexpert_log.h"
+#include "perfexpert_output.h"
 
 /* apply_transformations */
 int apply_transformations(fragment_t *fragment,
     recommendation_t *recommendation) {
-    transformation_t *transformation;
+    transformation_t *transformation = NULL;
     int rc = PERFEXPERT_NO_TRANS;
 
     /* Return when there is no transformations for this recommendation */
@@ -58,13 +58,13 @@ int apply_transformations(fragment_t *fragment,
     transformation = (transformation_t *)perfexpert_list_get_first(
         &(recommendation->transformations));
     while ((perfexpert_list_item_t *)transformation !=
-            &(recommendation->transformations.sentinel)) {
+        &(recommendation->transformations.sentinel)) {
 
         /* Skip if other transformation has already been applied */
         if (PERFEXPERT_SUCCESS == rc) {
             OUTPUT_VERBOSE((8, "   [%s ] [%d] (%s)", _MAGENTA("SKIP"),
                 transformation->id, transformation->program));
-            goto move_on;
+            goto MOVE_ON;
         }
 
         /* Apply patterns */
@@ -77,12 +77,12 @@ int apply_transformations(fragment_t *fragment,
             case PERFEXPERT_FAILURE:
                 OUTPUT_VERBOSE((8, "   [%s ] [%d] (%s)", _BOLDRED("FAIL"),
                     transformation->id, transformation->program));
-                goto move_on;
+                goto MOVE_ON;
 
             case PERFEXPERT_NO_PAT:
                 OUTPUT_VERBOSE((8, "   [%s ] [%d] (%s)", _MAGENTA("SKIP"),
                     transformation->id, transformation->program));
-                goto move_on;
+                goto MOVE_ON;
 
             case PERFEXPERT_SUCCESS:
             default:
@@ -113,7 +113,7 @@ int apply_transformations(fragment_t *fragment,
         }
 
         /* Move to the next code transformation */
-        move_on:
+        MOVE_ON:
         transformation = (transformation_t *)perfexpert_list_get_next(
             transformation);
     }
@@ -123,10 +123,10 @@ int apply_transformations(fragment_t *fragment,
 /* test_transformation */
 int test_transformation(fragment_t *fragment, recommendation_t *recommendation,
     transformation_t *transformation) {
+    int rc = PERFEXPERT_SUCCESS;
+    char *new_file = NULL;
     char *argv[12];
-    char temp_str[BUFFER_SIZE];
-    int rc;
-    test_t *test;
+    test_t *test = NULL;
 
     /* Set the code transformer arguments. Ok, we have to define an
      * interface to code transformers. Here is a simple one. Each code
@@ -139,49 +139,32 @@ int test_transformation(fragment_t *fragment, recommendation_t *recommendation,
      * -w DIR       Use DIR as work directory
      */
     argv[0] = transformation->program;
-    argv[1] = (char *)malloc(strlen("-f") + 1);
-    bzero(argv[1], strlen("-f") + 1);
-    sprintf(argv[1], "-f");
+    argv[1] = "-f";
     argv[2] = fragment->function_name; 
-    argv[3] = (char *)malloc(strlen("-l") + 1);
-    bzero(argv[3], strlen("-l") + 1);
-    sprintf(argv[3], "-l");
-    argv[4] = (char *)malloc(10);
-    bzero(argv[4], 10);
+    argv[3] = "-l";
+    PERFEXPERT_ALLOC(char, argv[4], 10);
     sprintf(argv[4], "%d", fragment->line_number); 
-    argv[5] = (char *)malloc(strlen("-r") + 1);
-    bzero(argv[5], strlen("-r") + 1);
-    sprintf(argv[5], "-r");
-    argv[6] = (char *)malloc(strlen(fragment->filename) + 5);
-    bzero(argv[6], strlen(fragment->filename) + 5);
+    argv[5] = "-r";
+    PERFEXPERT_ALLOC(char, argv[6], (strlen(fragment->filename) + 5));
     sprintf(argv[6], "%s_new", fragment->filename);
-    argv[7] = (char *)malloc(strlen("-s") + 1);
-    bzero(argv[7], strlen("-s") + 1);
-    sprintf(argv[7], "-s");
+    argv[7] = "-s";
     argv[8] = fragment->filename;
-    argv[9] = (char *)malloc(strlen("-w") + 1);
-    bzero(argv[9], strlen("-w") + 1);
-    sprintf(argv[9], "-w");
-    argv[10] = (char *)malloc(strlen("./") + 1);
-    bzero(argv[10], strlen("./") + 1);
-    sprintf(argv[10], "./");
+    argv[9] = "-w";
+    argv[10] = "./";
     argv[11] = NULL;
 
     /* The main test */
-    test = (test_t *)malloc(sizeof(test_t));
-    if (NULL == test) {
-        OUTPUT(("%s", _ERROR("Error: out of memory")));
-        return PERFEXPERT_ERROR;
-    }
-    test->info   = fragment->filename;
-    test->input  = NULL;
-    bzero(temp_str, BUFFER_SIZE);
-    sprintf(temp_str, "%s/%s/%s.%s.output", globals.workdir,
+    PERFEXPERT_ALLOC(test_t, test, sizeof(test_t));
+    PERFEXPERT_ALLOC(char, test->output,
+        (strlen(globals.workdir) + strlen(PERFEXPERT_FRAGMENTS_DIR) +
+            strlen(fragment->filename) + strlen(transformation->program) + 11));
+    sprintf(test->output, "%s/%s/%s.%s.output", globals.workdir,
         PERFEXPERT_FRAGMENTS_DIR, fragment->filename, transformation->program);
-    test->output = temp_str;
+    test->input = NULL;
+    test->info = fragment->filename;
 
     /* Not using OUTPUT_VERBOSE because I want only one line */
-    if (8 <= globals.verbose_level) {
+    if (8 <= globals.verbose) {
         int i;
         printf("%s    %s", PROGRAM_PREFIX, _YELLOW("command line:"));
         for (i = 0; i < 11; i++) {
@@ -194,22 +177,29 @@ int test_transformation(fragment_t *fragment, recommendation_t *recommendation,
     rc = fork_and_wait(test, argv);
 
     /* Replace the source code file */
-    bzero(temp_str, BUFFER_SIZE);
-    sprintf(temp_str, "%s.old_%d", fragment->filename, getpid());
+    PERFEXPERT_ALLOC(char, new_file, (strlen(fragment->filename) + 10));
+    sprintf(new_file, "%s.old_%d", fragment->filename, getpid());
 
     if (PERFEXPERT_SUCCESS == rc) {
-        if (rename(fragment->filename, temp_str)) {
-            return PERFEXPERT_ERROR;
+        if (rename(fragment->filename, new_file)) {
+            rc = PERFEXPERT_ERROR;
+            goto CLEAN_UP;
         }
         if (rename(argv[6], fragment->filename)) {
-            return PERFEXPERT_ERROR;
+            rc = PERFEXPERT_ERROR;
+            goto CLEAN_UP;
         }
         OUTPUT(("applying %s to line %d of file %s", transformation->program,
             fragment->line_number, fragment->filename));
-        OUTPUT(("the original file was renamed to %s", temp_str));
+        OUTPUT(("the original file was renamed to %s", new_file));
     }
 
-    /* TODO: Free memory */
+    /* Free memory */
+    CLEAN_UP:
+    PERFEXPERT_DEALLOC(argv[4]);
+    PERFEXPERT_DEALLOC(argv[6]);
+    PERFEXPERT_DEALLOC(test->output);
+    PERFEXPERT_DEALLOC(new_file);
 
     return rc;
 }

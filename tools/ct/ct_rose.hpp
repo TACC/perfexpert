@@ -50,6 +50,7 @@ class recommenderTraversal : public AstSimpleProcessing {
 	    int rc;
 };
 
+/* Function declarations */
 int output_fragment(SgNode *node, Sg_File_Info *fileInfo, fragment_t *fragment);
 int output_function(SgNode *node, fragment_t *fragment);
 
