@@ -37,34 +37,33 @@ extern "C" {
 #include <sqlite3.h>
 
 /* PerfExpert headers */
-#include "config.h"
 #include "ct.h"
 #include "perfexpert_constants.h"
+#include "perfexpert_database.h"
 #include "perfexpert_list.h"
 #include "perfexpert_output.h"
-#include "perfexpert_database.h"
 
 /* Global variables, try to not create them! */
 globals_t globals; // Variable to hold global options, this one is OK
 
 /* main, life starts here */
 int ct_main(int argc, char** argv) {
-    perfexpert_list_t *fragments;
-    fragment_t *fragment;
-    recommendation_t *recommendation;
+    fragment_t *fragment = NULL;
+    perfexpert_list_t fragments;
     int rc = PERFEXPERT_NO_TRANS;
 
     /* Set default values for globals */
     globals = (globals_t) {
-        .verbose_level = 0,              // int
-        .inputfile     = NULL,           // char *
-        .inputfile_FP  = stdin,          // char *
-        .outputfile    = NULL,           // char *
-        .outputfile_FP = stdout,         // FILE *
-        .dbfile        = NULL,           // char *
-        .workdir       = NULL,           // char *
-        .pid           = (long)getpid(), // long int
-        .colorful      = 0               // int
+        .verbose       = 0,               // int
+        .inputfile     = NULL,            // char *
+        .inputfile_FP  = stdin,           // FILE *
+        .outputfile    = NULL,            // char *
+        .outputfile_FP = stdout,          // FILE *
+        .dbfile        = NULL,            // char *
+        .db            = NULL,            // sqlite3 *
+        .workdir       = NULL,            // char *
+        .pid           = (long)getpid(),  // long int
+        .colorful      = PERFEXPERT_FALSE // int
     };
 
     /* Parse command-line parameters */
@@ -74,12 +73,7 @@ int ct_main(int argc, char** argv) {
     }
 
     /* Create the list of fragments */
-    fragments = (perfexpert_list_t *)malloc(sizeof(perfexpert_list_t));
-    if (NULL == fragments) {
-        OUTPUT(("%s", _ERROR("Error: out of memory")));
-        return PERFEXPERT_ERROR;
-    }
-    perfexpert_list_construct(fragments);
+    perfexpert_list_construct(&fragments);
 
     /* Open input file */
     if (NULL != globals.inputfile) {
@@ -99,7 +93,7 @@ int ct_main(int argc, char** argv) {
             OUTPUT(("%s (%s)", _ERROR("Error: unable to open output file"),
                 globals.outputfile));
             rc = PERFEXPERT_ERROR;
-            goto cleanup;
+            goto CLEAN_UP;
         }
     } else {
         OUTPUT_VERBOSE((7, "printing recommendations to STDOUT"));
@@ -110,32 +104,31 @@ int ct_main(int argc, char** argv) {
         globals.dbfile)) {
         OUTPUT(("%s", _ERROR("Error: connecting to database")));
         rc = PERFEXPERT_ERROR;
-        goto cleanup;
+        goto CLEAN_UP;
     }
 
     /* Parse input parameters */
-    if (PERFEXPERT_SUCCESS != parse_transformation_params(fragments)) {
+    if (PERFEXPERT_SUCCESS != parse_transformation_params(&fragments)) {
         OUTPUT(("%s", _ERROR("Error: parsing input params")));
         rc = PERFEXPERT_ERROR;
-        goto cleanup;
+        goto CLEAN_UP;
     }
 
     /* Select transformations for each code bottleneck */
-    fragment = (fragment_t *)perfexpert_list_get_first(fragments);
-    while ((perfexpert_list_item_t *)fragment != &(fragments->sentinel)) {
+    fragment = (fragment_t *)perfexpert_list_get_first(&fragments);
+    while ((perfexpert_list_item_t *)fragment != &(fragments.sentinel)) {
         /* Query DB for transformations */
         if (PERFEXPERT_SUCCESS != select_transformations(fragment)) {
             OUTPUT(("%s", _ERROR("Error: applying transformation")));
             rc = PERFEXPERT_ERROR;
-            goto cleanup;
+            goto CLEAN_UP;
         }
 
         /* Apply recommendation (actually only one will be applied) */
         switch (apply_recommendations(fragment)) {
             case PERFEXPERT_NO_TRANS:
                 OUTPUT(("%s", _GREEN("Sorry, we have no transformations")));
-                goto move_on;
-                continue;
+                goto MOVE_ON;
 
             case PERFEXPERT_SUCCESS:
                 rc = PERFEXPERT_SUCCESS;
@@ -145,15 +138,15 @@ int ct_main(int argc, char** argv) {
             default: 
                 OUTPUT(("%s", _ERROR("Error: selecting transformations")));
                 rc = PERFEXPERT_ERROR;
-                goto cleanup;
+                goto CLEAN_UP;
         }
 
         /* Move to the next code bottleneck */
-        move_on:
+        MOVE_ON:
         fragment = (fragment_t *)perfexpert_list_get_next(fragment);
     }
 
-    cleanup:
+    CLEAN_UP:
     /* Close files and DB connection */
     if (NULL != globals.inputfile) {
         fclose(globals.inputfile_FP);
@@ -162,8 +155,6 @@ int ct_main(int argc, char** argv) {
         fclose(globals.outputfile_FP);
     }
     perfexpert_database_disconnect(globals.db);
-
-    /* TODO: Free memory */
 
     return rc;
 }

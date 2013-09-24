@@ -30,18 +30,17 @@ extern "C" {
 #endif
 
 /* PerfExpert headers */
-#include "config.h"
 #include "ct.h"
 #include "perfexpert_constants.h"
-#include "perfexpert_output.h"
 #include "perfexpert_list.h"
+#include "perfexpert_output.h"
 
 /* apply_recommendations */
 int apply_recommendations(fragment_t *fragment) {
-    recommendation_t *recommendation;
+    recommendation_t *recommendation = NULL;
     int rc = PERFEXPERT_NO_TRANS;
 
-    OUTPUT_VERBOSE((4, "=== %s", _BLUE("Applying recommendations")));
+    OUTPUT_VERBOSE((4, "%s", _BLUE("Applying recommendations")));
 
     /* For each recommendation in this fragment... */
     recommendation = (recommendation_t *)perfexpert_list_get_first(

@@ -38,20 +38,19 @@ extern "C" {
 #include <sqlite3.h>
 
 /* PerfExpert headers */
-#include "config.h"
 #include "ct.h"
+#include "perfexpert_alloc.h"
 #include "perfexpert_constants.h"
 #include "perfexpert_output.h"
 #include "perfexpert_list.h"
 
 /* select_transformations */
 int select_transformations(fragment_t *fragment) {
-    recommendation_t *recommendation;
-    char sql[BUFFER_SIZE];
-    char temp_str[BUFFER_SIZE];
+    recommendation_t *recommendation = NULL;
     char *error_msg = NULL;
+    char sql[BUFFER_SIZE];
 
-    OUTPUT_VERBOSE((7, "=== %s", _BLUE("Querying DB")));
+    OUTPUT_VERBOSE((7, "%s", _BLUE("Querying DB")));
 
     /* For each recommendation in this fragment, select the transformers */
     recommendation = (recommendation_t *)perfexpert_list_get_first(
@@ -68,13 +67,11 @@ int select_transformations(fragment_t *fragment) {
 
         /* Find the transformations available for this recommendation */
         bzero(sql, BUFFER_SIZE);
-        strcat(sql, "SELECT t.transformer, t.id FROM transformation AS t ");
-        strcat(sql, "INNER JOIN recommendation_transformation AS rt ");
-        strcat(sql, "ON t.id = rt.id_transformation ");
-        bzero(temp_str, BUFFER_SIZE);
-        sprintf(temp_str, "WHERE rt.id_recommendation = %d;",
+        sprintf(sql, "%s %s %s %d;",
+            "SELECT t.transformer, t.id FROM transformation AS t",
+            "INNER JOIN recommendation_transformation AS rt",
+            "ON t.id = rt.id_transformation WHERE rt.id_recommendation =",
             recommendation->id);
-        strcat(sql, temp_str);
         OUTPUT_VERBOSE((10, "      SQL: %s", _CYAN(sql)));
 
         if (SQLITE_OK != sqlite3_exec(globals.db, sql,
@@ -94,27 +91,19 @@ int select_transformations(fragment_t *fragment) {
 /* accumulate_transformations */
 int accumulate_transformations(void *recommendation, int count, char **val,
     char **names) {
-    recommendation_t *r;
-    transformation_t *transformation;
-    char sql[BUFFER_SIZE];
-    char temp_str[BUFFER_SIZE];
+    transformation_t *transformation = NULL;
+    recommendation_t *r = NULL;
     char *error_msg = NULL;
+    char sql[BUFFER_SIZE];
 
     /* Create the transformation item */
-    transformation = (transformation_t *)malloc(sizeof(transformation_t));
-    if (NULL == transformation) {
-        OUTPUT(("%s", _ERROR("Error: out of memory")));
-        return PERFEXPERT_ERROR;
-    }
+    PERFEXPERT_ALLOC(transformation_t, transformation,
+        sizeof(transformation_t));
     perfexpert_list_item_construct((perfexpert_list_item_t *)transformation);
-
-    /* Set the transformation ID */
     transformation->id = atoi(val[1]);
-
-    /* Set the transformer, aka program */
-    transformation->program = (char *)malloc(strlen(val[0]) + 1);
-    bzero(transformation->program, strlen(val[0]) + 1);
+    PERFEXPERT_ALLOC(char, transformation->program, (strlen(val[0]) + 1));
     strncpy(transformation->program, val[0], strlen(val[0]));
+    perfexpert_list_construct(&(transformation->patterns));
 
     OUTPUT_VERBOSE((7, "      %s [%d]", _GREEN(transformation->program),
         transformation->id));
@@ -122,17 +111,12 @@ int accumulate_transformations(void *recommendation, int count, char **val,
     OUTPUT_VERBOSE((4, "      %s [%d]",
         _YELLOW("selecting patterns for transformation"), transformation->id));
 
-    /* Initialize the list of pattern recognizers */
-    perfexpert_list_construct(&(transformation->patterns));
-
     /* Find the pattern recognizers available for this transformation */
     bzero(sql, BUFFER_SIZE);
-    strcat(sql, "SELECT p.recognizer, p.id FROM pattern AS p ");
-    strcat(sql, "INNER JOIN transformation_pattern AS tp ");
-    strcat(sql, "ON p.id = tp.id_pattern ");
-    bzero(temp_str, BUFFER_SIZE);
-    sprintf(temp_str, "WHERE tp.id_transformation = %d;", transformation->id);
-    strcat(sql, temp_str);
+    sprintf(sql, "%s %s %s %d;",
+        "SELECT p.recognizer, p.id FROM pattern AS p",
+        "INNER JOIN transformation_pattern AS tp ON p.id = tp.id_pattern",
+        "WHERE tp.id_transformation =", transformation->id);
     OUTPUT_VERBOSE((10, "         SQL: %s", _CYAN(sql)));
 
     if (SQLITE_OK != sqlite3_exec(globals.db, sql, accumulate_patterns,
@@ -147,31 +131,20 @@ int accumulate_transformations(void *recommendation, int count, char **val,
     perfexpert_list_append((perfexpert_list_t *)&(r->transformations),
         (perfexpert_list_item_t *)transformation);
 
-    /* TODO: Free memory */
-
     return PERFEXPERT_SUCCESS;
 }
 
 /* accumulate_patterns */
 int accumulate_patterns(void *transformation, int count, char **val,
     char **names) {
-    transformation_t *t;
-    pattern_t *pattern;
+    transformation_t *t = NULL;
+    pattern_t *pattern = NULL;
 
     /* Create the pattern item */
-    pattern = (pattern_t *)malloc(sizeof(pattern_t));
-    if (NULL == pattern) {
-        OUTPUT(("%s", _ERROR("Error: out of memory")));
-        return PERFEXPERT_ERROR;
-    }
+    PERFEXPERT_ALLOC(pattern_t, pattern, sizeof(pattern_t));
     perfexpert_list_item_construct((perfexpert_list_item_t *)pattern);
-
-    /* Set the pattern ID */
     pattern->id = atoi(val[1]);
-
-    /* Set the recognizer, aka program */
-    pattern->program = (char *)malloc(strlen(val[0]) + 1);
-    bzero(pattern->program, strlen(val[0]) + 1);
+    PERFEXPERT_ALLOC(char, pattern->program, (strlen(val[0]) + 1));
     strncpy(pattern->program, val[0], strlen(val[0]));
 
     OUTPUT_VERBOSE((7, "         %s (%d)", _GREEN(pattern->program),
@@ -181,8 +154,6 @@ int accumulate_patterns(void *transformation, int count, char **val,
     t = (transformation_t *)transformation;
     perfexpert_list_append((perfexpert_list_t *)&(t->patterns),
         (perfexpert_list_item_t *)pattern);
-
-    /* TODO: Free memory */
 
     return PERFEXPERT_SUCCESS;
 }
