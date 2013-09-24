@@ -55,7 +55,6 @@ int machine_parse_file(const char *file) {
     bzero(buffer, BUFFER_SIZE);
     while (NULL != fgets(buffer, BUFFER_SIZE - 1, machine_FP)) {
         char *token = NULL;
-        int temp = 0;
 
         line++;
 

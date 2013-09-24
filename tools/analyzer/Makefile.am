@@ -25,10 +25,11 @@
 # $HEADER$
 #
 
-# SUBDIRS = argp hpcdata analyzer
-
 bin_PROGRAMS = perfexpert_analyzer
 
+perfexpert_analyzer_CPPFLAGS = -I$(srcdir)/../common
+perfexpert_analyzer_CFLAGS = -O3
+perfexpert_analyzer_LDFLAGS = -lxml2 -lmatheval
 perfexpert_analyzer_SOURCES = analyzer_main.c \
 	analyzer_hpctoolkit.c \
 	analyzer_lcpi.c \
@@ -36,14 +37,7 @@ perfexpert_analyzer_SOURCES = analyzer_main.c \
 	analyzer_machine.c \
 	analyzer_options.c \
 	analyzer_output.c \
-	analyzer_profile.c
-
-# TODO: I don't like libxml2 include here. Move it to configure :/
-perfexpert_analyzer_CPPFLAGS = -I$(srcdir)/../common -I/usr/include/libxml2/
-
-perfexpert_analyzer_CFLAGS = -O3
-
-# TODO: I don't like libxml2 and matheval here. Move it to configure :/
-perfexpert_analyzer_LDFLAGS = -lxml2 -lmatheval
+	analyzer_profile.c \
+	analyzer_vtune.c
 
 # EOF

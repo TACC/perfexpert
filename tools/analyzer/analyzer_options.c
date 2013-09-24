@@ -35,7 +35,6 @@ extern "C" {
 #include <getopt.h>
 
 /* PerfExpert headers */
-#include "config.h"
 #include "analyzer.h"
 #include "perfexpert_constants.h"
 #include "perfexpert_output.h"
@@ -45,17 +44,17 @@ extern "C" {
  * this structure compatible with the parse_cli_params() and show_help().
  */
 static struct option long_options[] = {
-    {"aggregate",   no_argument,       NULL, 'a'},
-    {"colorful",    no_argument,       NULL, 'c'},
-    {"help",        no_argument,       NULL, 'h'},
-    {"inputfile",   required_argument, NULL, 'i'},
-    {"lcpifile",    required_argument, NULL, 'l'},
-    {"measurement", required_argument, NULL, 'm'},
-    {"machine",     required_argument, NULL, 'M'},
-    {"outputfile",  required_argument, NULL, 'o'},
-    {"threshold",   required_argument, NULL, 't'},
-    {"thread",      required_argument, NULL, 'T'},
-    {"verbose",     optional_argument, NULL, 'v'},
+    {"aggregate",        no_argument,       NULL, 'a'},
+    {"colorful",         no_argument,       NULL, 'c'},
+    {"help",             no_argument,       NULL, 'h'},
+    {"inputfile",        required_argument, NULL, 'i'},
+    {"lcpifile",         required_argument, NULL, 'l'},
+    {"measurement-tool", required_argument, NULL, 'm'},
+    {"machine",          required_argument, NULL, 'M'},
+    {"outputfile",       required_argument, NULL, 'o'},
+    {"threshold",        required_argument, NULL, 't'},
+    {"thread",           required_argument, NULL, 'T'},
+    {"verbose",          required_argument, NULL, 'v'},
     {0, 0, 0, 0}
 };
 
@@ -69,10 +68,10 @@ void show_help(void) {
     printf("                     appear on output files\n");
     printf("  -h --help          Show this message\n");
     printf("  -i --inputfile     Use argument as input for performance measurements\n");
-    printf("                     (default: %s)\n", EXPERIMENT_FILE);
     printf("  -l --lcpi          Set input file for LCPI metrics\n");
     printf("                     (default: %s/%s)\n", PERFEXPERT_ETCDIR, LCPI_FILE);
-    printf("  -m --measurement   Set the tool name used to collect performance measurements\n");
+    printf("  -m --measurement-tool\n");
+    printf("                     Set the tool name used to collect performance measurements\n");
     printf("                     (valid options: hpctoolkit and vtune, default: hpctoolkit)\n");
     printf("  -M --machine       Set input file for hardware characterization\n");
     printf("                     (default: %s/%s)\n", PERFEXPERT_ETCDIR, MACHINE_FILE);
@@ -238,6 +237,20 @@ int parse_cli_params(int argc, char *argv[]) {
         printf("\n");
     }
 
+    /* Sanity check: verbose level should be between 1-10 */
+    if ((0 > globals.verbose) || (10 < globals.verbose)) {
+        OUTPUT(("%s", _ERROR("Error: invalid verbose level")));
+        show_help();
+        return PERFEXPERT_ERROR;
+    }
+
+    /* Sanity check: threshold is mandatory */
+    if ((0 >= globals.threshold) || (1 < globals.threshold)) {
+        OUTPUT(("%s", _ERROR("Error: undefined or invalid threshold")));
+        show_help();
+        return PERFEXPERT_ERROR;
+    }
+
     /* Sanity check: inputfile is mandatory */
     if (NULL == globals.inputfile) {
         OUTPUT(("%s", _ERROR("Error: undefined input file")));
@@ -245,23 +258,9 @@ int parse_cli_params(int argc, char *argv[]) {
         return PERFEXPERT_ERROR;
     }
 
-    /* Sanity check: threshold is mandatory */
-    if (0 == globals.threshold) {
-        OUTPUT(("%s", _ERROR("Error: undefined threshold")));
-        show_help();
-        return PERFEXPERT_ERROR;
-    }
-
     /* Sanity check: thread ID must be <= 0, but -1 means NO_THREADS */
     if (-1 > globals.thread) {
         OUTPUT(("%s", _ERROR("Error: invalid thread ID")));
-        show_help();
-        return PERFEXPERT_ERROR;
-    }
-
-    /* Sanity check: verbose level should be between 1-10 */
-    if ((0 > globals.verbose) || (10 < globals.verbose)) {
-        OUTPUT(("%s", _ERROR("Error: invalid verbose level")));
         show_help();
         return PERFEXPERT_ERROR;
     }

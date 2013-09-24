@@ -31,17 +31,17 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-    
+
 /* Return codes that should be used... */
 enum {
-	PERFEXPERT_UNDEFINED = -2, /* -2 ...when the error is unknown             */
-	PERFEXPERT_FAILURE,        /* -1 ...when an error is -1 (GNU standard)    */
-	PERFEXPERT_SUCCESS,        /* 0  ...in case of success                    */
-	PERFEXPERT_ERROR,          /* 1  ...in case of general error              */
-	PERFEXPERT_NO_REC,         /* 2  ...when we run out of recommendation     */
-	PERFEXPERT_NO_PAT,         /* 3  ...when no pattern matches               */
-	PERFEXPERT_NO_TRANS,       /* 4  ...when transformations can't be applied */
-	PERFEXPERT_NO_DATA,        /* 5  ...when analyzer return an error         */
+    PERFEXPERT_UNDEFINED = -2, /* -2 ...when the error is unknown             */
+    PERFEXPERT_FAILURE,        /* -1 ...when an error is -1 (GNU standard)    */
+    PERFEXPERT_SUCCESS,        /* 0  ...in case of success                    */
+    PERFEXPERT_ERROR,          /* 1  ...in case of general error              */
+    PERFEXPERT_NO_REC,         /* 2  ...when we run out of recommendation     */
+    PERFEXPERT_NO_PAT,         /* 3  ...when no pattern matches               */
+    PERFEXPERT_NO_TRANS,       /* 4  ...when transformations can't be applied */
+    PERFEXPERT_NO_DATA,        /* 5  ...when analyzer return an error         */
 };
 
 #define PERFEXPERT_TRUE  1 /* used to return boolean values */
@@ -81,14 +81,8 @@ enum {
 
 #define METRICS_TABLE            "metric"
 #define METRICS_FILE             "recommender_metrics.txt"
-#define LCPI_FILE        	     "lcpi.conf"
+#define LCPI_FILE                "lcpi.conf"
 #define MACHINE_FILE             "machine.conf"
-
-/* HPCToolkit stuff (binaries should be in the path) */
-#define PERFEXPERT_TOOL_HPCTOOLKIT_PROFILE_FILE  "database/experiment.xml"
-#define PERFEXPERT_TOOL_HPCTOOLKIT_COUNTERS  	 "papi"
-#define PERFEXPERT_TOOL_HPCTOOLKIT_TOT_INS 		 "PAPI_TOT_INS"
-#define PERFEXPERT_TOOL_HPCTOOLKIT_TOT_CYC 		 "PAPI_TOT_CYC"
 
 /* Default compiler and compilation options */
 #define DEFAULT_COMPILER "cc"

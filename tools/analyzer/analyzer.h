@@ -192,10 +192,8 @@ extern globals_t globals; /* This variable is defined in analyzer_main.c */
 void show_help(void);
 int parse_env_vars(void);
 int parse_cli_params(int argc, char *argv[]);
-int hpctoolkit_parse_file(const char *file, perfexpert_list_t *profiles);
-int hpctoolkit_parser(xmlDocPtr document, xmlNodePtr node,
-    perfexpert_list_t *profiles, profile_t *profile, callpath_t *parent,
-    int loopdepth);
+int profile_parse_file(const char* file, const char* tool,
+    perfexpert_list_t *profiles);
 int profile_check_all(perfexpert_list_t *profiles);
 int profile_check_callpath(perfexpert_list_t *calls, int root);
 int profile_flatten_all(perfexpert_list_t *profiles);
@@ -243,4 +241,4 @@ static inline double generic_get(lcpi_t *db, char key[]) {
 }
 #endif
 
-#endif /* ANALYZER_H */
+#endif /* ANALYZER_H_ */

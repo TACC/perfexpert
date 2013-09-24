@@ -43,8 +43,8 @@ extern "C" {
 /* lcpi_parse_file */
 int lcpi_parse_file(const char *file) {
     char buffer[BUFFER_SIZE];
-    lcpi_t *lcpi = NULL;
     FILE *lcpi_FP = NULL;
+    lcpi_t *lcpi = NULL;
     int line = 0;
 
     OUTPUT_VERBOSE((4, "%s", _BLUE("Loading LCPI metrics")));
@@ -57,7 +57,6 @@ int lcpi_parse_file(const char *file) {
     bzero(buffer, BUFFER_SIZE);
     while (NULL != fgets(buffer, BUFFER_SIZE - 1, lcpi_FP)) {
         char *token = NULL;
-        int temp = 0;
 
         line++;
 
@@ -111,7 +110,6 @@ int lcpi_compute(profile_t *profile) {
     double *values = NULL;
     char **names = NULL;
     int count = 0;
-    int i = 0;
 
     OUTPUT_VERBOSE((4, "   %s", _CYAN("Calculating LCPI metrics")));
 
@@ -134,6 +132,8 @@ int lcpi_compute(profile_t *profile) {
             /* Get the list of variables and their values */
             evaluator_get_variables(hotspot_lcpi->expression, &names, &count);
             if (0 < count) {
+                int i = 0;
+
                 PERFEXPERT_ALLOC(double, values, (sizeof(double*) * count));
                 for (i = 0; i < count; i++) {
                     metric_t *metric = NULL;

@@ -110,9 +110,9 @@ int main(int argc, char **argv) {
     }
 
     /* Parse input file */
-    if (PERFEXPERT_SUCCESS != hpctoolkit_parse_file(globals.inputfile,
-        &profiles)) {
-        OUTPUT(("%s (%s)", _ERROR("Error: it is not a valid HPCToolkit file"),
+    if (PERFEXPERT_SUCCESS != profile_parse_file(globals.inputfile,
+        globals.tool, &profiles)) {
+        OUTPUT(("%s (%s)", _ERROR("Error: unable to parse input file"),
             globals.inputfile));
         return PERFEXPERT_ERROR;
     }
