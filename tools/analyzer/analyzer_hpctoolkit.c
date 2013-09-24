@@ -19,6 +19,10 @@
  * Author: Ashay Rane and Leonardo Fialho
  */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* System standard headers */
 #include <stdio.h>
 #include <libxml/parser.h>
@@ -58,7 +62,7 @@ int hpctoolkit_parse_file(const char *file, perfexpert_list_t *profiles) {
         xmlFreeDoc(document);
         return PERFEXPERT_ERROR;
     } else {
-        OUTPUT_VERBOSE((2, "%s [HPCToolkit experiment file version %s]",
+        OUTPUT_VERBOSE((2, "   %s [HPCToolkit experiment file version %s]",
             _BLUE("Loading profiles"), xmlGetProp(node, "version")));
     }
 
@@ -177,6 +181,7 @@ int hpctoolkit_parser(xmlDocPtr document, xmlNodePtr node,
                         }
                     }
                 }
+                PERFEXPERT_DEALLOC(temp_str[0]);
     
                 OUTPUT_VERBOSE((10,
                     "   %s [%d] (%s) [rank=%d] [tid=%d] [exp=%d]",
@@ -567,5 +572,9 @@ int hpctoolkit_parser(xmlDocPtr document, xmlNodePtr node,
     }
     return PERFEXPERT_SUCCESS;
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 // EOF

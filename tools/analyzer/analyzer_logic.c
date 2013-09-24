@@ -30,6 +30,7 @@ extern "C" {
 
 /* PerfExpert headers */
 #include "analyzer.h" 
+#include "analyzer_profile.h"
 #include "perfexpert_constants.h"
 #include "perfexpert_list.h"
 #include "perfexpert_output.h"
@@ -39,7 +40,7 @@ int calculate_importance_variance(profile_t *profile) {
     procedure_t *hotspot = NULL;
     metric_t *metric = NULL;
     double maximum = DBL_MIN, minimum = DBL_MAX;
-    int i = 0;
+    int count = 0;
 
     OUTPUT_VERBOSE((4, "   %s", _CYAN("Calculating importance and variance")));
 
@@ -51,13 +52,14 @@ int calculate_importance_variance(profile_t *profile) {
         hotspot->cycles = 0.0;
         maximum = DBL_MIN;
         minimum = DBL_MAX;
-        i = 0;
+        count = 0;
 
         /* Calculate total instructions */
         metric = (metric_t *)perfexpert_list_get_first(&(hotspot->metrics));
         while ((perfexpert_list_item_t *)metric !=
             &(hotspot->metrics.sentinel)) {
-            if (0 == strcmp(metric->name, PERFEXPERT_TOOL_HPCTOOLKIT_TOT_INS)) {
+            if (0 == strcmp(metric->name,
+                perfexpert_tool_get_tot_ins(globals.tool))) {
                 if (maximum < metric->value) {
                     maximum = metric->value;
                 }
@@ -65,9 +67,10 @@ int calculate_importance_variance(profile_t *profile) {
                     minimum = metric->value;
                 }
                 hotspot->instructions += metric->value;
-                i++;
+                count++;
             }
-            if (0 == strcmp(metric->name, PERFEXPERT_TOOL_HPCTOOLKIT_TOT_CYC)) {
+            if (0 == strcmp(metric->name,
+                perfexpert_tool_get_tot_cyc(globals.tool))) {
                 hotspot->cycles += metric->value;
                 profile->cycles += metric->value;
             }
@@ -77,7 +80,7 @@ int calculate_importance_variance(profile_t *profile) {
         /* Calculate variance */
         if ((DBL_MIN != maximum) && (DBL_MAX != minimum)) {
             hotspot->variance = (maximum - minimum) / maximum;
-            hotspot->instructions = hotspot->instructions / i;
+            hotspot->instructions = hotspot->instructions / count;
             profile->instructions += hotspot->instructions;
         }
 
