@@ -32,6 +32,12 @@
 extern "C" {
 #endif
 
+#define VTUNE_EXPERIMENT_FILE     "experiment_vtune.conf"
+#define VTUNE_MIC_EXPERIMENT_FILE "experiment_vtune_mic.conf"
+
+/* HPCToolkit stuff (binaries should be in the path) */
+#define VTUNE_AMPLIFIER "amplxe-cl"
+
 /* Function declarations */
 int measurements_vtune(void);
 
