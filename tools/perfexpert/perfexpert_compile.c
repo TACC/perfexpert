@@ -43,10 +43,10 @@ extern "C" {
 
 /* compile_program */
 int compile_program(void) {
-    char   temp_str[BUFFER_SIZE];
-    char   *argv[PARAM_SIZE];
-    int    arg_index = 0;
-    char   flags[BUFFER_SIZE];
+    char temp_str[BUFFER_SIZE];
+    char *argv[PARAM_SIZE];
+    char flags[BUFFER_SIZE];
+    int  argc = 0;
     test_t test;
 
     OUTPUT_VERBOSE((4, "=== %s", _BLUE("Compiling the program")));
@@ -55,11 +55,15 @@ int compile_program(void) {
     /* If the source file was provided generate compilation command line */
     if (NULL != globals.sourcefile) {
         /* Which compiler should I use? */
-        argv[arg_index] = getenv("CC");
-        if (NULL == argv[arg_index]) {
-            argv[arg_index] = DEFAULT_COMPILER;
+        argv[0] = getenv("CC");
+        if (NULL == argv[0]) {
+            argv[0] = DEFAULT_COMPILER;
         }
-        arg_index++;
+
+        /* What should be the compiler output and the source code? */
+        argv[1] = "-o";
+        argv[2] = globals.program;
+        argv[3] = globals.sourcefile;
 
         /* What are the default and user defined compiler flags? */
         bzero(flags, BUFFER_SIZE);
@@ -72,18 +76,11 @@ int compile_program(void) {
             strcat(flags, getenv("PERFEXPERT_CFLAGS"));
         }
 
-        argv[arg_index] = strtok(flags, " ");
+        argc = 4;
+        argv[argc] = strtok(flags, " ");
         do {
-            arg_index++;
-        } while (argv[arg_index] = strtok(NULL, " "));
-
-        /* What should be the compiler output and the source code? */
-        argv[arg_index] = "-o";
-        arg_index++;
-        argv[arg_index] = globals.program;
-        arg_index++;
-        argv[arg_index] = globals.sourcefile;
-        arg_index++;
+            argc++;
+        } while (argv[argc] = strtok(NULL, " "));
     }
 
     /* If the user chose a Makefile... */
@@ -93,10 +90,9 @@ int compile_program(void) {
             return PERFEXPERT_ERROR;                    
         }
 
-        argv[arg_index] = "make";
-        arg_index++;
-        argv[arg_index] = globals.target;
-        arg_index++;
+        argv[0] = "make";
+        argv[1] = globals.target;
+        argc = 2;
 
         if (NULL != getenv("CFLAGS")) {
             strcat(flags, getenv("CFLAGS"));
@@ -109,23 +105,23 @@ int compile_program(void) {
     }
 
     /* In both cases we should add a NULL */
-    argv[arg_index] = NULL;
+    argv[argc] = NULL;
 
     /* Not using OUTPUT_VERBOSE because I want only one line */
     if (8 <= globals.verbose) {
         int i;
         printf("%s    %s", PROGRAM_PREFIX, _YELLOW("command line:"));
-        for (i = 0; i < arg_index; i++) {
+        for (i = 0; i < argc; i++) {
             printf(" %s", argv[i]);
         }
         printf("\n");
     }
 
     /* Fill the ninja test structure... */
-    test.info   = globals.sourcefile;
-    test.input  = NULL;
+    test.info = globals.sourcefile;
+    test.input = NULL;
     bzero(temp_str, BUFFER_SIZE);
-    sprintf(temp_str, "%s/%s", globals.stepdir, "compile.output");
+    sprintf(temp_str, "%s/compile.output", globals.stepdir);
     test.output = temp_str;
 
     /* fork_and_wait_and_pray */
