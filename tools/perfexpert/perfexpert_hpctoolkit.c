@@ -37,6 +37,7 @@ extern "C" {
 
 /* PerfExpert headers */
 #include "perfexpert.h"
+#include "perfexpert_alloc.h"
 #include "perfexpert_constants.h"
 #include "perfexpert_fork.h"
 #include "perfexpert_hpctoolkit.h"
@@ -80,16 +81,16 @@ int measurements_hpctoolkit(void) {
 
 /* run_hpcstruct */
 int run_hpcstruct(void) {
-    char   temp_str[2][BUFFER_SIZE];
-    char   *argv[5];
+    char *argv[5];
+    int rc = PERFEXPERT_SUCCESS;
     test_t test;
 
     /* Arguments to run hpcstruct */
     argv[0] = HPCSTRUCT;
     argv[1] = "--output";
-    bzero(temp_str[0], BUFFER_SIZE);
-    sprintf(temp_str[0], "%s/%s.hpcstruct", globals.stepdir, globals.program);
-    argv[2] = temp_str[0];
+    PERFEXPERT_ALLOC(char, argv[2],
+        (strlen(globals.stepdir) + strlen(globals.program) + 12));
+    sprintf(argv[2], "%s/%s.hpcstruct", globals.stepdir, globals.program);
     argv[3] = globals.program_full;
     argv[4] = NULL;
 
@@ -97,99 +98,91 @@ int run_hpcstruct(void) {
     if (8 <= globals.verbose) {
         int i;
         printf("%s    %s", PROGRAM_PREFIX, _YELLOW("command line:"));
-        for (i = 0; i <= 3; i++) {
+        for (i = 0; i < 4; i++) {
             printf(" %s", argv[i]);
         }
         printf("\n");
     }
 
     /* The super-ninja test sctructure */
-    bzero(temp_str[1], BUFFER_SIZE);
-    sprintf(temp_str[1], "%s/%s.output", globals.stepdir, HPCSTRUCT);
-    test.output = temp_str[1];
+    PERFEXPERT_ALLOC(char, test.output,
+        (strlen(globals.stepdir) + strlen(HPCSTRUCT) + 9));
+    sprintf(test.output, "%s/%s.output", globals.stepdir, HPCSTRUCT);
     test.input  = NULL;
     test.info   = globals.program;
 
     /* fork_and_wait_and_pray */
-    return fork_and_wait(&test, argv);
+    rc = fork_and_wait(&test, argv);
+
+    /* FRee memory */
+    PERFEXPERT_DEALLOC(argv[2]);
+    PERFEXPERT_DEALLOC(test.output);
+
+    return rc;
 }
 
 /* run_hpcrun */
 int run_hpcrun(void) {
-    FILE   *exp_file_FP;
-    char   *exp_file;
-    int    input_line = 0;
-    char   buffer[BUFFER_SIZE];
-    char   *temp_str;
+    struct timespec time_start, time_end, time_diff;
+    FILE *exp_file_FP;
+    char *exp_file;
+    char *exp_prefix;
+    int count;
+    char buffer[BUFFER_SIZE];
+    char *argv[2];
+    int input_line = 0;
+    int rc = PERFEXPERT_SUCCESS;
+    test_t test;
     experiment_t *experiment;
     perfexpert_list_t experiments;
-    int    rc = PERFEXPERT_SUCCESS;
-    char   *argv[2];
-    test_t test;
-    struct timespec time_start, time_end, time_diff;
 
     /* Open experiment file (it is a list of arguments which I use to run) */
-    exp_file = (char *)malloc(strlen(PERFEXPERT_ETCDIR) +
-        strlen(EXPERIMENT_FILE) + 2);
-    
-    if (NULL == exp_file) {
-        OUTPUT(("%s", _ERROR("Error: out of memory")));
-        return PERFEXPERT_ERROR;
-    }
-    bzero(exp_file, strlen(PERFEXPERT_ETCDIR) + strlen(EXPERIMENT_FILE) + 2);
-    sprintf(exp_file, "%s/%s", PERFEXPERT_ETCDIR, EXPERIMENT_FILE);
+    PERFEXPERT_ALLOC(char, exp_file,
+        (strlen(PERFEXPERT_ETCDIR) + strlen(HPCTOOLKIT_EXPERIMENT_FILE) + 2));
+    sprintf(exp_file, "%s/%s", PERFEXPERT_ETCDIR, HPCTOOLKIT_EXPERIMENT_FILE);
 
     if (NULL == (exp_file_FP = fopen(exp_file, "r"))) {
         OUTPUT(("%s (%s)", _ERROR("Error: unable to open file"), exp_file));
-        free(exp_file);
+        PERFEXPERT_DEALLOC(exp_file);
         return PERFEXPERT_ERROR;
     }
+    PERFEXPERT_DEALLOC(exp_file);
 
     /* Initiate the list of experiments */
-    perfexpert_list_construct((perfexpert_list_t *)&experiments);
+    perfexpert_list_construct(&experiments);
 
     bzero(buffer, BUFFER_SIZE);
     while (NULL != fgets(buffer, BUFFER_SIZE - 1, exp_file_FP)) {
-        int temp;
-
-        /* Ignore comments */
-        input_line++;
-        if (0 == strncmp("#", buffer, 1)) {
+        /* Ignore comments and blank lines */
+        if ((0 == strncmp("#", buffer, 1)) ||
+            (strspn(buffer, " \t\r\n") == strlen(buffer))) {
             continue;
         }
+
+        /* Remove the end \n character */
+        buffer[strlen(buffer) - 1] = '\0';
 
         /* Is this line a new experiment? */
         if (0 == strncmp("%", buffer, 1)) {
             /* Create a list item for this code experiment */
-            experiment = (experiment_t *)malloc(sizeof(experiment_t));
-            if (NULL == experiment) {
-                OUTPUT(("%s", _ERROR("Error: out of memory")));
-                rc = PERFEXPERT_ERROR;
-                goto CLEANUP;
-            }
-
+            PERFEXPERT_ALLOC(experiment_t, experiment, sizeof(experiment_t));
             perfexpert_list_item_construct(
                 (perfexpert_list_item_t *)experiment);
             perfexpert_list_append(&experiments,
-                                   (perfexpert_list_item_t *)experiment);
+                (perfexpert_list_item_t *)experiment);
             experiment->argc = 0;
 
             /* Add PREFIX to argv */
             if (NULL != globals.prefix) {
-                temp_str = (char *)malloc(strlen(globals.prefix) + 1);
-                if (NULL == temp_str) {
-                    OUTPUT(("%s", _ERROR("Error: out of memory")));
-                    rc = PERFEXPERT_ERROR;
-                    goto CLEANUP;
-                }
-                bzero(temp_str, strlen(globals.prefix) + 1);
-                sprintf(temp_str, "%s", globals.prefix);
+                PERFEXPERT_ALLOC(char, exp_prefix,
+                    (strlen(globals.prefix) + 1));
+                sprintf(exp_prefix, "%s", globals.prefix);
 
-                experiment->argv[experiment->argc] = strtok(temp_str, " ");
-                do {
+                experiment->argv[0] = strtok(exp_prefix, " ");
+                experiment->argc = 1;
+                while (experiment->argv[experiment->argc] = strtok(NULL, " ")) {
                     experiment->argc++;
-                } while (experiment->argv[experiment->argc] = strtok(NULL,
-                    " "));
+                }
             }
 
             /* Arguments to run hpcrun */
@@ -197,78 +190,50 @@ int run_hpcrun(void) {
             experiment->argc++;
             experiment->argv[experiment->argc] = "--output";
             experiment->argc++;
-            temp_str = (char *)malloc(BUFFER_SIZE);
-            if (NULL == temp_str) {
-                OUTPUT(("%s", _ERROR("Error: out of memory")));
-                rc = PERFEXPERT_ERROR;
-                goto CLEANUP;
-            }
-            bzero(temp_str, BUFFER_SIZE);
-            sprintf(temp_str, "%s/measurements", globals.stepdir);
-            experiment->argv[experiment->argc] = temp_str;
+            PERFEXPERT_ALLOC(char, experiment->argv[experiment->argc],
+                (strlen(globals.stepdir) + 14));
+            sprintf(experiment->argv[experiment->argc], "%s/measurements",
+                globals.stepdir);
             experiment->argc++;
 
             /* Move to next line */
             continue;
         }
 
-        /* Remove the \n character */
-        buffer[strlen(buffer) - 1] = '\0';
-
         /* Read event */
         experiment->argv[experiment->argc] = "--event";
         experiment->argc++;
-
-        temp_str = (char *)malloc(BUFFER_SIZE);
-        if (NULL == temp_str) {
-            OUTPUT(("%s", _ERROR("Error: out of memory")));
-            rc = PERFEXPERT_ERROR;
-            goto CLEANUP;
-        }
-        bzero(temp_str, BUFFER_SIZE);
-        sprintf(temp_str, "%s", buffer);
-        experiment->argv[experiment->argc] = temp_str;
+        PERFEXPERT_ALLOC(char, experiment->argv[experiment->argc],
+            (strlen(buffer) + 1));
+        sprintf(experiment->argv[experiment->argc], "%s", buffer);
         experiment->argc++;
-
-        /* Move to next line */
-        continue;
     }
 
-    /* Close file and free memory */
+    /* Close file */
     fclose(exp_file_FP);
-    free(exp_file);
 
     /* For each experiment... */
-    input_line = 1;
     OUTPUT_VERBOSE((5, "   %s", _YELLOW("running experiments")));
-    experiment = (experiment_t *)perfexpert_list_get_first(&experiments);
-    while ((perfexpert_list_item_t *)experiment != &(experiments.sentinel)) {
+    while (0 < perfexpert_list_get_size(&experiments)) {
         int count = 0;
+
+        experiment = (experiment_t *)perfexpert_list_get_first(&experiments);
+        input_line++;
 
         /* Run the BEFORE program */
         if (NULL != globals.before) {
             argv[0] = globals.before;
             argv[1]; NULL;
 
-            temp_str = (char *)malloc(BUFFER_SIZE);
-            if (NULL == temp_str) {
-                OUTPUT(("%s", _ERROR("Error: out of memory")));
-                rc = PERFEXPERT_ERROR;
-                goto CLEANUP;
-            }
-            bzero(temp_str, BUFFER_SIZE);
-            sprintf(temp_str, "%s/before.%d.output", globals.stepdir,
-                    input_line);
-            experiment->test.output = temp_str;
-            test.output = temp_str;
-            test.input  = NULL;
-            test.info   = globals.before;
+            PERFEXPERT_ALLOC(char, test.output, (strlen(globals.stepdir) + 20));
+            sprintf(test.output, "%s/before.%d.output", globals.stepdir, count);
+            test.input = NULL;
+            test.info = globals.before;
 
             if (0 != fork_and_wait(&test, (char **)argv)) {
-                OUTPUT(("   %s [%s]", _BOLDRED("error running"),
-                        globals.before));
+                OUTPUT(("   %s [%s]", _RED("error running"), globals.before));
             }
-            free(temp_str);
+            PERFEXPERT_DEALLOC(test.output);
         }
 
         /* Ok, now we have to add the program and... */
@@ -285,17 +250,12 @@ int run_hpcrun(void) {
         experiment->argv[experiment->argc] = NULL;
 
         /* The super-ninja test sctructure */
-        temp_str = (char *)malloc(BUFFER_SIZE);
-        if (NULL == temp_str) {
-            OUTPUT(("%s", _ERROR("Error: out of memory")));
-            rc = PERFEXPERT_ERROR;
-            goto CLEANUP;
-        }
-        bzero(temp_str, BUFFER_SIZE);
-        sprintf(temp_str, "%s/hpcrun.%d.output", globals.stepdir, input_line);
-        experiment->test.output = temp_str;
-        experiment->test.input  = NULL;
-        experiment->test.info   = globals.program;
+        PERFEXPERT_ALLOC(char, experiment->test.output,
+            (strlen(globals.stepdir) + 20));
+        sprintf(experiment->test.output, "%s/hpcrun.%d.output", globals.stepdir,
+            input_line);
+        experiment->test.input = NULL;
+        experiment->test.info = globals.program;
 
         /* Not using OUTPUT_VERBOSE because I want only one line */
         if (8 <= globals.verbose) {
@@ -312,8 +272,7 @@ int run_hpcrun(void) {
         switch (fork_and_wait(&(experiment->test), (char **)experiment->argv)) {
             case PERFEXPERT_ERROR:
                 OUTPUT_VERBOSE((7, "   [%s]", _BOLDYELLOW("ERROR")));
-                rc = PERFEXPERT_ERROR;
-                goto CLEANUP;
+                return PERFEXPERT_ERROR;
 
             case PERFEXPERT_FAILURE:
                 OUTPUT_VERBOSE((7, "   [%s ]", _BOLDRED("FAIL")));
@@ -336,114 +295,111 @@ int run_hpcrun(void) {
             argv[0] = globals.after;
             argv[1]; NULL;
 
-            temp_str = (char *)malloc(BUFFER_SIZE);
-            if (NULL == temp_str) {
-                OUTPUT(("%s", _ERROR("Error: out of memory")));
-                rc = PERFEXPERT_ERROR;
-                goto CLEANUP;
-            }
-            bzero(temp_str, BUFFER_SIZE);
-            sprintf(temp_str, "%s/after.%d.output", globals.stepdir,
-                    input_line);
-            experiment->test.output = temp_str;
-            test.output = temp_str;
-            test.input  = NULL;
-            test.info   = globals.after;
+            PERFEXPERT_ALLOC(char, test.output, (strlen(globals.stepdir) + 20));
+            sprintf(test.output, "%s/after.%d.output", globals.stepdir, count);
+            test.input = NULL;
+            test.info = globals.after;
 
             if (0 != fork_and_wait(&test, (char **)argv)) {
-                OUTPUT(("   %s [%s]", _BOLDRED("error running"),
-                        globals.after));
+                OUTPUT(("   %s [%s]", _RED("error running"), globals.after));
             }
-            free(temp_str);
+            PERFEXPERT_DEALLOC(test.output);
         }
 
-        /* Move to the next experiment */
-        input_line++;
-        experiment = (experiment_t *)perfexpert_list_get_next(experiment);
+        /* Remove experiment from list */
+        perfexpert_list_remove_item(&experiments,
+            (perfexpert_list_item_t *)(experiment));
+        PERFEXPERT_DEALLOC(experiment->test.output);
+        PERFEXPERT_DEALLOC(experiment);
+        experiment = (experiment_t *)perfexpert_list_get_first(&experiments);
     }
-
-    CLEANUP:
-    /* Free memory */
-    // TODO: free list of experiments, and for each experiment argv and test
-
     return rc;
 }
 
 /* run_hpcrun_knc */
 int run_hpcrun_knc(void) {
     const char blank[] = " \t\r\n";
-    FILE *script_FP;
-    FILE *experiment_FP;
-    char file[BUFFER_SIZE];
-    char script[BUFFER_SIZE];
+    FILE *script_file_FP;
+    char *script_file;
+    FILE *exp_file_FP;
+    char *exp_file;
     char buffer[BUFFER_SIZE];
     char experiment[BUFFER_SIZE];
     int  experiment_count = 0;
     char *argv[4];
     test_t test;
     int  count = 0;
-    
+
     /* Open experiment file (it is a list of arguments which I use to run) */
-    bzero(file, BUFFER_SIZE);
-    sprintf(file, "%s/%s", PERFEXPERT_ETCDIR, MIC_EXPERIMENT_FILE);
-    if (NULL == (experiment_FP = fopen(file, "r"))) {
-        OUTPUT(("%s (%s)", _ERROR("Error: unable to open file"), file));
+    PERFEXPERT_ALLOC(char, exp_file,
+        (strlen(PERFEXPERT_ETCDIR) + strlen(HPCTOOLKIT_MIC_EXPERIMENT_FILE)
+            + 2));
+    sprintf(exp_file, "%s/%s", PERFEXPERT_ETCDIR,
+        HPCTOOLKIT_MIC_EXPERIMENT_FILE);
+
+    if (NULL == (exp_file_FP = fopen(exp_file, "r"))) {
+        OUTPUT(("%s (%s)", _ERROR("Error: unable to open file"), exp_file));
+        PERFEXPERT_DEALLOC(exp_file);
         return PERFEXPERT_ERROR;
     }
+    PERFEXPERT_DEALLOC(exp_file);
 
     /* If this command should run on the MIC, encapsulate it in a script */
-    bzero(script, BUFFER_SIZE);
-    sprintf(script, "%s/knc_hpcrun.sh", globals.stepdir);
+    PERFEXPERT_ALLOC(char, script_file, (strlen(globals.stepdir) + 15));
+    sprintf(script_file, "%s/knc_hpcrun.sh", globals.stepdir);
 
-    if (NULL == (script_FP = fopen(script, "w"))) {
-        OUTPUT(("%s (%s)", _ERROR("Error: unable to open file"), script));
+    if (NULL == (script_file_FP = fopen(script_file, "w"))) {
+        OUTPUT(("%s (%s)", _ERROR("Error: unable to open file"), script_file));
         return PERFEXPERT_ERROR;
     }
-    fprintf(script_FP, "#!/bin/sh");
 
+    fprintf(script_file_FP, "#!/bin/sh");
     /* Fill the script file with all the experiments, before, and after */
     bzero(buffer, BUFFER_SIZE);
-    while (NULL != fgets(buffer, BUFFER_SIZE - 1, experiment_FP)) {
+    while (NULL != fgets(buffer, BUFFER_SIZE - 1, exp_file_FP)) {
         /* Ignore comments and blank lines */
         if ((0 == strncmp("#", buffer, 1)) ||
-            (strspn(buffer, blank) == strlen(buffer))) {
+            (strspn(buffer, " \t\r\n") == strlen(buffer))) {
             continue;
         }
+
+        /* Remove the end \n character */
+        buffer[strlen(buffer) - 1] = '\0';
 
         /* Is this line a new experiment? */
         if (0 == strncmp("%", buffer, 1)) {
             /* In case this is not the first experiment...*/
             if (0 < experiment_count) {
                 /* Add the program and the program arguments to experiment */
-                fprintf(script_FP, " %s", globals.program_full);
+                fprintf(script_file_FP, " %s", globals.program_full);
                 count = 0;
                 while ((globals.prog_arg_pos + count) < globals.main_argc) {
-                    fprintf(script_FP, " %s",
+                    fprintf(script_file_FP, " %s",
                         globals.main_argv[globals.prog_arg_pos + count]);
                     count++;
                 }
 
                 /* Add the AFTER program */
                 if (NULL != globals.knc_after) {
-                    fprintf(script_FP, "\n\n# Run the AFTER command\n");
-                    fprintf(script_FP, "%s", globals.knc_after);
+                    fprintf(script_file_FP, "\n\n# AFTER command\n");
+                    fprintf(script_file_FP, "%s", globals.knc_after);
                 }
             }
 
             /* Add the BEFORE program */
             if (NULL != globals.knc_before) {
-                fprintf(script_FP, "\n\n# Run the BEFORE command\n");
-                fprintf(script_FP, "%s", globals.knc_before);
+                fprintf(script_file_FP, "\n\n# BEFORE command\n");
+                fprintf(script_file_FP, "%s", globals.knc_before);
             }
 
-            fprintf(script_FP, "\n\n# Run HPCRUN (%d)\n", experiment_count);
+            fprintf(script_file_FP, "\n\n# HPCRUN (%d)\n", experiment_count);
             /* Add PREFIX */
             if (NULL != globals.knc_prefix) {
-                fprintf(script_FP, "%s ", globals.knc_prefix);
+                fprintf(script_file_FP, "%s ", globals.knc_prefix);
             }
 
             /* Arguments to run hpcrun */
-            fprintf(script_FP, "%s --output %s/measurements", HPCRUN,
+            fprintf(script_file_FP, "%s --output %s/measurements", HPCRUN,
                 globals.stepdir);
 
             /* Move to next line of the experiment file */
@@ -451,52 +407,45 @@ int run_hpcrun_knc(void) {
             continue;
         }
 
-        /* Remove the \n character */
-        buffer[strlen(buffer) - 1] = '\0';
-
         /* Add the event */
-        fprintf(script_FP, " --event %s", buffer);
-
-        /* Move to next line */
-        continue;
+        fprintf(script_file_FP, " --event %s", buffer);
     }
 
     /* Add the program and the program arguments to experiment's */
     count = 0;
-    fprintf(script_FP, " %s", globals.program_full);
+    fprintf(script_file_FP, " %s", globals.program_full);
     while ((globals.prog_arg_pos + count) < globals.main_argc) {
-        fprintf(script_FP, " %s", globals.main_argv[globals.prog_arg_pos +
+        fprintf(script_file_FP, " %s", globals.main_argv[globals.prog_arg_pos +
             count]);
         count++;
     }
 
     /* Add the AFTER program */
     if (NULL != globals.knc_after) {
-        fprintf(script_FP, "\n\n# Run the AFTER command\n");
-        fprintf(script_FP, "%s", globals.knc_after);
+        fprintf(script_file_FP, "\n\n# AFTER command\n");
+        fprintf(script_file_FP, "%s", globals.knc_after);
     }
-    fprintf(script_FP, "\n\nexit 0\n\n# EOF\n");
+    fprintf(script_file_FP, "\n\nexit 0\n\n# EOF\n");
 
     /* Close files and set mode */
-    fclose(experiment_FP);
-    fclose(script_FP);
-    if (-1 == chmod(script, S_IRWXU)) {
+    fclose(exp_file_FP);
+    fclose(script_file_FP);
+    if (-1 == chmod(script_file, S_IRWXU)) {
         OUTPUT(("%s (%s)", _ERROR((char *)"Error: unable to set script mode"),
-            script));
+            script_file));
+        PERFEXPERT_DEALLOC(script_file);
         return PERFEXPERT_ERROR;
     }
 
     /* The super-ninja test sctructure */
-    bzero(file, BUFFER_SIZE);
-    sprintf(file, "%s/knc_hpcrun.output", globals.stepdir);
-
-    test.output = file;
-    test.input  = NULL;
-    test.info   = globals.program;
+    PERFEXPERT_ALLOC(char, test.output, (strlen(globals.stepdir) + 19));
+    sprintf(test.output, "%s/knc_hpcrun.output", globals.stepdir);
+    test.input = NULL;
+    test.info = globals.program;
     
     argv[0] = "ssh";
     argv[1] = globals.knc;
-    argv[2] = script;
+    argv[2] = script_file;
     argv[3] = NULL;
 
     /* Not using OUTPUT_VERBOSE because I want only one line */
@@ -509,27 +458,35 @@ int run_hpcrun_knc(void) {
     switch (fork_and_wait(&test, argv)) {
         case PERFEXPERT_ERROR:
             OUTPUT_VERBOSE((7, "   [%s]", _BOLDYELLOW("ERROR")));
+            PERFEXPERT_DEALLOC(script_file);
+            PERFEXPERT_DEALLOC(test.output);
             return PERFEXPERT_ERROR;
 
         case PERFEXPERT_FAILURE:
         case 255:
             OUTPUT_VERBOSE((7, "   [%s ]", _BOLDRED("FAIL")));
+            PERFEXPERT_DEALLOC(script_file);
+            PERFEXPERT_DEALLOC(test.output);
             return PERFEXPERT_FAILURE;
 
         case PERFEXPERT_SUCCESS:
             OUTPUT_VERBOSE((7, "   [ %s  ]", _BOLDGREEN("OK")));
+            PERFEXPERT_DEALLOC(script_file);
+            PERFEXPERT_DEALLOC(test.output);
             return PERFEXPERT_SUCCESS;
 
         default:
             OUTPUT_VERBOSE((7, "   [UNKNO]"));
+            PERFEXPERT_DEALLOC(script_file);
+            PERFEXPERT_DEALLOC(test.output);
             return PERFEXPERT_SUCCESS;
     }
 }
 
 /* run_hpcprof */
 int run_hpcprof(void) {
-    char   temp_str[4][BUFFER_SIZE];
-    char   *argv[9];
+    int rc = PERFEXPERT_SUCCESS;
+    char *argv[9];
     test_t test;
 
     /* Arguments to run hpcprof */
@@ -537,37 +494,43 @@ int run_hpcprof(void) {
     argv[1] = "--force-metric";
     argv[2] = "--metric=thread";
     argv[3] = "--struct";
-    bzero(temp_str[0], BUFFER_SIZE);
-    sprintf(temp_str[0], "%s/%s.hpcstruct", globals.stepdir, globals.program);
-    argv[4] = temp_str[0];
+    PERFEXPERT_ALLOC(char, argv[4],
+        (strlen(globals.stepdir) + strlen(globals.program) + 12));
+    sprintf(argv[4], "%s/%s.hpcstruct", globals.stepdir, globals.program);
     argv[5] = "--output";
-    bzero(temp_str[1], BUFFER_SIZE);
-    sprintf(temp_str[1], "%s/database", globals.stepdir);
-    argv[6] = temp_str[1];
-    bzero(temp_str[2], BUFFER_SIZE);
-    sprintf(temp_str[2], "%s/measurements", globals.stepdir);
-    argv[7] = temp_str[2];
+    PERFEXPERT_ALLOC(char, argv[6], (strlen(globals.stepdir) + 10));
+    sprintf(argv[6], "%s/database", globals.stepdir);
+    PERFEXPERT_ALLOC(char, argv[7], (strlen(globals.stepdir) + 14));
+    sprintf(argv[7], "%s/measurements", globals.stepdir);
     argv[8] = NULL;
 
     /* Not using OUTPUT_VERBOSE because I want only one line */
     if (8 <= globals.verbose) {
         int i;
         printf("%s    %s", PROGRAM_PREFIX, _YELLOW("command line:"));
-        for (i = 0; i <= 7; i++) {
+        for (i = 0; i < 8; i++) {
             printf(" %s", argv[i]);
         }
         printf("\n");
     }
 
     /* The super-ninja test sctructure */
-    bzero(temp_str[3], BUFFER_SIZE);
-    sprintf(temp_str[3], "%s/%s.output", globals.stepdir, HPCPROF);
-    test.output = temp_str[3];
-    test.input  = NULL;
-    test.info   = globals.program;
+    PERFEXPERT_ALLOC(char, test.output,
+        (strlen(globals.stepdir) + strlen(HPCPROF) + 9));
+    sprintf(test.output, "%s/%s.output", globals.stepdir, HPCPROF);
+    test.input = NULL;
+    test.info = globals.program;
 
     /* fork_and_wait_and_pray */
-    return fork_and_wait(&test, argv);
+    rc = fork_and_wait(&test, argv);
+
+    /* Free memory */
+    PERFEXPERT_DEALLOC(argv[4]);
+    PERFEXPERT_DEALLOC(argv[6]);
+    PERFEXPERT_DEALLOC(argv[7]);
+    PERFEXPERT_DEALLOC(test.output);
+
+    return rc;
 }
 
 #ifdef __cplusplus

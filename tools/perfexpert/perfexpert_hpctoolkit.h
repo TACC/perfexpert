@@ -32,6 +32,9 @@
 extern "C" {
 #endif
 
+#define HPCTOOLKIT_EXPERIMENT_FILE     "experiment_hpctoolkit.conf"
+#define HPCTOOLKIT_MIC_EXPERIMENT_FILE "experiment_hpctoolkit_mic.conf"
+
 /* HPCToolkit stuff (binaries should be in the path) */
 #define HPCSTRUCT "hpcstruct"
 #define HPCRUN    "hpcrun"
