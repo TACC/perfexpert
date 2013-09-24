@@ -35,7 +35,6 @@ extern "C" {
 #include <getopt.h>
 
 /* PerfExpert headers */
-#include "config.h"
 #include "recommender.h"
 #include "perfexpert_constants.h"
 #include "perfexpert_output.h"

@@ -33,7 +33,6 @@ extern "C" {
 #include <string.h>
 
 /* PerfExpert headers */
-#include "config.h"
 #include "recommender.h"
 #include "perfexpert_log.h"
 

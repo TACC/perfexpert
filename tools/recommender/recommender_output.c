@@ -33,10 +33,8 @@ extern "C" {
 #include <stdio.h>
 
 /* PerfExpert headers */
-#include "config.h"
 #include "recommender.h"
 #include "perfexpert_output.h"
-
 
 /* output_header */
 int output_header(segment_t *segment) {
