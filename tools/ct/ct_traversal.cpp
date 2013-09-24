@@ -35,13 +35,14 @@
 #include <sage3.h>
 
 /* PerfExpert headers */
-#include "config.h"
 #include "ct_rose.hpp"
+#include "perfexpert_alloc.h"
 #include "perfexpert_constants.h"
 #include "perfexpert_output.h"
 
 // TODO: it will be nice and polite to add some ROSE_ASSERT to this code
 
+/* recommenderTraversal::visit */
 void recommenderTraversal::visit(SgNode *node) {
     Sg_File_Info *info = NULL;
     SgFunctionDefinition *function = NULL;
@@ -68,18 +69,9 @@ void recommenderTraversal::visit(SgNode *node) {
         }
 
         /* Save the fragment path and filename */
-        fragment->fragment_file = (char *)malloc(strlen(globals.workdir) +
-            strlen(PERFEXPERT_FRAGMENTS_DIR) + strlen(fragment->filename) + 15);
-
-        if (NULL == fragment->fragment_file) {
-            OUTPUT(("%s", _ERROR((char *)"Error: out of memory")));
-            rc = PERFEXPERT_ERROR;
-            return;
-        }
-
-        bzero(fragment->fragment_file, strlen(globals.workdir) +
-            strlen(PERFEXPERT_FRAGMENTS_DIR) + strlen(fragment->filename) + 10);
-
+        PERFEXPERT_ALLOC(char, fragment->fragment_file,
+            (strlen(globals.workdir) + strlen(PERFEXPERT_FRAGMENTS_DIR) +
+                strlen(fragment->filename) + 15));
         sprintf(fragment->fragment_file, "%s/%s/%s_%d", globals.workdir,
             PERFEXPERT_FRAGMENTS_DIR, fragment->filename,
             fragment->line_number);
@@ -113,20 +105,9 @@ void recommenderTraversal::visit(SgNode *node) {
                 }
 
                 /* Save the fragment path and filename */
-                fragment->outer_loop_fragment_file = (char *)malloc(
-                    strlen(globals.workdir) + strlen(PERFEXPERT_FRAGMENTS_DIR)
-                    + strlen(fragment->filename) + 15);
-
-                if (NULL == fragment->outer_loop_fragment_file) {
-                    OUTPUT(("%s", _ERROR((char *)"Error: out of memory")));
-                    rc = PERFEXPERT_ERROR;
-                    return;
-                }
-
-                bzero(fragment->outer_loop_fragment_file,
-                    strlen(globals.workdir) + strlen(PERFEXPERT_FRAGMENTS_DIR) +
-                    strlen(fragment->filename) + 10);
-
+                PERFEXPERT_ALLOC(char, fragment->outer_loop_fragment_file,
+                    (strlen(globals.workdir) + strlen(PERFEXPERT_FRAGMENTS_DIR)
+                    + strlen(fragment->filename) + 15));
                 sprintf(fragment->outer_loop_fragment_file, "%s/%s/%s_%d",
                     globals.workdir, PERFEXPERT_FRAGMENTS_DIR,
                     fragment->filename, fragment->outer_loop_line_number);
@@ -161,23 +142,11 @@ void recommenderTraversal::visit(SgNode *node) {
                         }
 
                         /* Save the fragment path and filename */
-                        fragment->outer_outer_loop_fragment_file =
-                            (char *)malloc(strlen(globals.workdir) +
+                        PERFEXPERT_ALLOC(char,
+                            fragment->outer_outer_loop_fragment_file,
+                            (strlen(globals.workdir) +
                             strlen(PERFEXPERT_FRAGMENTS_DIR) +
-                            strlen(fragment->filename) + 15);
-
-                        if (NULL == fragment->outer_outer_loop_fragment_file) {
-                            OUTPUT(("%s",
-                                _ERROR((char *)"Error: out of memory")));
-                            rc = PERFEXPERT_ERROR;
-                            return;
-                        }
-
-                        bzero(fragment->outer_outer_loop_fragment_file,
-                            strlen(globals.workdir) +
-                            strlen(PERFEXPERT_FRAGMENTS_DIR) +
-                            strlen(fragment->filename) + 10);
-
+                            strlen(fragment->filename) + 15));
                         sprintf(fragment->outer_outer_loop_fragment_file,
                             "%s/%s/%s_%d", globals.workdir,
                             PERFEXPERT_FRAGMENTS_DIR, fragment->filename,
@@ -208,11 +177,13 @@ void recommenderTraversal::visit(SgNode *node) {
     }
 }
 
+/* recommenderTraversal::atTraversalStart */
 void recommenderTraversal::atTraversalStart() {
     OUTPUT_VERBOSE((9, "   %s (%s)", _YELLOW((char *)"starting traversal on"),
         fragment->filename));
 }
 
+/* recommenderTraversal::atTraversalEnd */
 void recommenderTraversal::atTraversalEnd() {
     OUTPUT_VERBOSE((9, "   %s (%s)", _YELLOW((char *)"ending traversal on"),
         fragment->filename));

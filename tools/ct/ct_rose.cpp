@@ -35,43 +35,30 @@
 #include <sage3.h>
 
 /* PerfExpert headers */
-#include "config.h"
 #include "ct_rose.hpp"
+#include "perfexpert_alloc.h"
+#include "perfexpert_base64.h"
 #include "perfexpert_constants.h"
+#include "perfexpert_log.h"
 #include "perfexpert_output.h"
 #include "perfexpert_util.h"
-#include "perfexpert_log.h"
-#include "perfexpert_base64.h"
 
 /* Global variables, try to not create them! */
 SgProject *userProject;
 
 // TODO: it will be nice and polite to add some ROSE_ASSERT to this code
 
+/* open_rose */
 int open_rose(const char *source_file) {
-    char **files = NULL;
+    char *files[3];
 
     OUTPUT_VERBOSE((7, "   %s", _MAGENTA((char *)"opening Rose")));
 
     /* Fill 'files', aka **argv */
-    files = (char **)malloc(sizeof(char *) * 3);
-
-    files[0] = (char *)malloc(sizeof("recommender") + 1);
-    if (NULL == files[0]) {
-        OUTPUT(("%s", _ERROR((char *)"Error: out of memory")));
-        return PERFEXPERT_ERROR;
-    }
-    bzero(files[0], sizeof("recommender") + 1);
+    PERFEXPERT_ALLOC(char, files[0], (sizeof("recommender") + 1));
     snprintf(files[0], sizeof("recommender"), "recommender");
-
-    files[1] = (char *)malloc(strlen(source_file) + 1);
-    if (NULL == files[1]) {
-        OUTPUT(("%s", _ERROR((char *)"Error: out of memory")));
-        return PERFEXPERT_ERROR;
-    }
-    bzero(files[1], strlen(source_file) + 1);
+    PERFEXPERT_ALLOC(char, files[1], (strlen(source_file) + 1));
     strncpy(files[1], source_file, strlen(source_file));
-
     files[2] = NULL;
 
     /* Load files and build AST */
@@ -80,38 +67,35 @@ int open_rose(const char *source_file) {
     ROSE_ASSERT(userProject != NULL);
     
     /* I believe now it is OK to free 'argv' */
-    free(files[0]);
-    free(files);
+    PERFEXPERT_DEALLOC(files[0]);
+    PERFEXPERT_DEALLOC(files[1]);
 
     return PERFEXPERT_SUCCESS;
 }
 
+/* close_rose */
 int close_rose(void) {
     // TODO: should find a way to free 'userProject'
     return PERFEXPERT_SUCCESS;
 }
 
+/* extract_fragment */
 int extract_fragment(fragment_t *fragment) {
-    char *fragments_dir = NULL;
     recommenderTraversal fragmentTraversal;
+    char *fragments_dir = NULL;
 
     /* Create the fragments directory */
-    fragments_dir = (char *)malloc(strlen(globals.workdir) +
-        strlen(PERFEXPERT_FRAGMENTS_DIR) + 2);
-    if (NULL == fragments_dir) {
-        OUTPUT(("%s", _ERROR((char *)"Error: out of memory")));
-        exit(PERFEXPERT_ERROR);
-    }
-    bzero(fragments_dir, strlen(globals.workdir) +
-          strlen(PERFEXPERT_FRAGMENTS_DIR) + 2);
+    PERFEXPERT_ALLOC(char, fragments_dir,
+        (strlen(globals.workdir) + strlen(PERFEXPERT_FRAGMENTS_DIR) + 2));
     sprintf(fragments_dir, "%s/%s", globals.workdir, PERFEXPERT_FRAGMENTS_DIR);
     if (PERFEXPERT_ERROR == perfexpert_util_make_path(fragments_dir, 0755)) {
         OUTPUT(("%s", _ERROR((char *)"Error: cannot create fragments dir")));
-        exit(PERFEXPERT_ERROR);
+        PERFEXPERT_DEALLOC(fragments_dir);
+        return PERFEXPERT_ERROR;
     } else {
         OUTPUT_VERBOSE((4, "   fragments will be put in (%s)", fragments_dir));
     }
-    free(fragments_dir);
+    PERFEXPERT_DEALLOC(fragments_dir);
 
     /* Build the traversal object and call the traversal function starting at
      * the project node of the AST, using a pre-order traversal
@@ -126,19 +110,14 @@ int extract_fragment(fragment_t *fragment) {
     return PERFEXPERT_SUCCESS;
 }
 
+/* output_fragment */
 int output_fragment(SgNode *node, Sg_File_Info *info,
     fragment_t *fragment) {
+    FILE *fragment_file_FP = NULL;
     char *fragment_file = NULL;
-    FILE *fragment_file_FP;
 
     /* Set fragment filename */
-    fragment_file = (char *)malloc(strlen(globals.workdir) +
-        strlen(PERFEXPERT_FRAGMENTS_DIR) + strlen(fragment->filename) + 10);
-    if (NULL == fragment_file) {
-        OUTPUT(("%s", _ERROR((char *)"Error: out of memory")));
-        return PERFEXPERT_ERROR;
-    }
-    bzero(fragment_file, (strlen(globals.workdir) +
+    PERFEXPERT_ALLOC(char, fragment_file, (strlen(globals.workdir) +
         strlen(PERFEXPERT_FRAGMENTS_DIR) + strlen(fragment->filename) + 10));
     sprintf(fragment_file, "%s/%s/%s_%d", globals.workdir,
         PERFEXPERT_FRAGMENTS_DIR, fragment->filename, info->get_line());
@@ -149,30 +128,25 @@ int output_fragment(SgNode *node, Sg_File_Info *info,
     if (NULL == fragment_file_FP) {
         OUTPUT(("%s (%s)", _ERROR((char *)"error opening file"),
             _ERROR(fragment_file)));
+        PERFEXPERT_DEALLOC(fragment_file);
         return PERFEXPERT_ERROR;
     }
     fprintf(fragment_file_FP, "%s", node->unparseToCompleteString().c_str());
     fclose(fragment_file_FP);
-    free(fragment_file);
+    PERFEXPERT_DEALLOC(fragment_file);
 
     return PERFEXPERT_SUCCESS;
 }
 
+/* output_function */
 int output_function(SgNode *node, fragment_t *fragment) {
+    FILE *function_file_FP = NULL;
     char *function_file = NULL;
-    FILE *function_file_FP;
 
     /* Set fragment filename */
-    function_file = (char *)malloc(strlen(globals.workdir) +
-        strlen(PERFEXPERT_FRAGMENTS_DIR) + strlen(fragment->filename) + 
-        strlen(fragment->function_name) + 10);
-    if (NULL == function_file) {
-        OUTPUT(("%s", _ERROR((char *)"Error: out of memory")));
-        return PERFEXPERT_ERROR;
-    }
-    bzero(function_file, (strlen(globals.workdir) +
-        strlen(PERFEXPERT_FRAGMENTS_DIR) + strlen(fragment->filename) + 
-        strlen(fragment->function_name) + 10));
+    PERFEXPERT_ALLOC(char, function_file,
+        (strlen(globals.workdir) + strlen(PERFEXPERT_FRAGMENTS_DIR) +
+            strlen(fragment->filename) + strlen(fragment->function_name) + 10));
     sprintf(function_file, "%s/%s/%s_%s", globals.workdir,
         PERFEXPERT_FRAGMENTS_DIR, fragment->filename, fragment->function_name);
     OUTPUT_VERBOSE((8, "   %s (%s)", _YELLOW((char *)"extracting it to"),
@@ -182,11 +156,12 @@ int output_function(SgNode *node, fragment_t *fragment) {
     if (NULL == function_file_FP) {
         OUTPUT(("%s (%s)", _ERROR((char *)"error opening file"),
             _ERROR(function_file)));
+        PERFEXPERT_DEALLOC(function_file);
         return PERFEXPERT_ERROR;
     }
     fprintf(function_file_FP, "%s", node->unparseToCompleteString().c_str());
     fclose(function_file_FP);
-    free(function_file);
+    PERFEXPERT_DEALLOC(function_file);
 
     /* LOG the function */
     LOG((base64_encode(node->unparseToCompleteString().c_str(),

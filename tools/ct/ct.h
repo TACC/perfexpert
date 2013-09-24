@@ -36,28 +36,24 @@ extern "C" {
 #include <sqlite3.h>
 #endif
 
-#ifndef _GETOPT_H
-#include <getopt.h> /* To parse command line arguments */
-#endif
-
 #ifndef	_STDIO_H
 #include <stdio.h> /* To use FILE type on globals */
 #endif
 
 #include "perfexpert_list.h"
 
-/** Structure to hold global variables */
+/* Structure to hold global variables */
 typedef struct {
     FILE *inputfile_FP;
     FILE *outputfile_FP;
     char *inputfile;
     char *outputfile;
-    int  verbose_level;
-    int  colorful;
     char *workdir;
     char *dbfile;
-    sqlite3  *db;
+    int  verbose;
+    int  colorful;
     long int pid;
+    sqlite3 *db;
 } globals_t;
 
 extern globals_t globals; /* This variable is defined in ct_real_main.c */
@@ -68,29 +64,13 @@ extern globals_t globals; /* This variable is defined in ct_real_main.c */
 #endif
 #define PROGRAM_PREFIX "[perfexpert:ct]"
 
-/** Structure to handle command line arguments. Try to keep the content of
- *  this structure compatible with the parse_cli_params() and show_help().
- */
-static struct option long_options[] = {
-    {"automatic",     required_argument, NULL, 'a'},
-    {"database",      required_argument, NULL, 'd'},
-    {"colorful",      no_argument,       NULL, 'c'},
-    {"inputfile",     required_argument, NULL, 'f'},
-    {"help",          no_argument,       NULL, 'h'},
-    {"verbose_level", required_argument, NULL, 'l'},
-    {"outputfile",    required_argument, NULL, 'o'},
-    {"pid",           required_argument, NULL, 'p'},
-    {"verbose",       no_argument,       NULL, 'v'},
-    {0, 0, 0, 0}
-};
-
-/** Structure to help STDIN parsing */
+/* Structure to help STDIN parsing */
 typedef struct node {
     char *key;
     char *value;
 } node_t;
 
-/** Structure to hold patterns */
+/* Structure to hold patterns */
 typedef struct pattern {
     volatile perfexpert_list_item_t *next;
     volatile perfexpert_list_item_t *prev;
@@ -98,7 +78,7 @@ typedef struct pattern {
     char *program;
 } pattern_t;
 
-/** Structure to hold transformations */
+/* Structure to hold transformations */
 typedef struct transformation {
     volatile perfexpert_list_item_t *next;
     volatile perfexpert_list_item_t *prev;
@@ -107,7 +87,7 @@ typedef struct transformation {
     perfexpert_list_t patterns;
 } transformation_t;
 
-/** Structure to hold recommendations */
+/* Structure to hold recommendations */
 typedef struct recommendation {
     volatile perfexpert_list_item_t *next;
     volatile perfexpert_list_item_t *prev;
@@ -115,7 +95,7 @@ typedef struct recommendation {
     perfexpert_list_t transformations;
 } recommendation_t;
 
-/** Structure to hold fragments */
+/* Structure to hold fragments */
 typedef struct fragment {
     volatile perfexpert_list_item_t *next;
     volatile perfexpert_list_item_t *prev;
@@ -134,7 +114,7 @@ typedef struct fragment {
     int  outer_outer_loop_line_number;
 } fragment_t;
 
-/* Function declarations */
+/* C function declarations */
 int ct_main(int argc, char** argv);
 void show_help(void);
 int parse_env_vars(void);
@@ -155,11 +135,10 @@ int test_transformation(fragment_t *fragment, recommendation_t *recommendation,
 int test_pattern(fragment_t *fragment, recommendation_t *recommendation,
     transformation_t *transformation, pattern_t *pattern);
 
-/* Rose functions */
+/* C++ function declarations (declared as C for linkage purposes) */
 int open_rose(const char *source_file);
 int close_rose(void);
 int extract_fragment(fragment_t *fragment);
-int extract_source(void);
 
 #ifdef __cplusplus
 }

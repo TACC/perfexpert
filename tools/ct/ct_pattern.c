@@ -35,18 +35,18 @@ extern "C" {
 #include <string.h>
 
 /* PerfExpert headers */
-#include "config.h"
 #include "ct.h"
+#include "perfexpert_alloc.h"
 #include "perfexpert_constants.h"
+#include "perfexpert_fork.h"
 #include "perfexpert_list.h"
 #include "perfexpert_output.h"
-#include "perfexpert_fork.h"
 
 /* apply_patterns */
 int apply_patterns(fragment_t *fragment, recommendation_t *recommendation,
     transformation_t *transformation) {
-    pattern_t *pattern;
     int rc = PERFEXPERT_FAILURE;
+    pattern_t *pattern = NULL;
 
     /* Return when there is no patterns for this transformation */
     if (0 == perfexpert_list_get_size(&(transformation->patterns))) {
@@ -84,7 +84,7 @@ int apply_patterns(fragment_t *fragment, recommendation_t *recommendation,
                     fragment->filename, fragment->line_number));
             }
             /* Close Rose */
-                if (PERFEXPERT_SUCCESS != close_rose()) {
+            if (PERFEXPERT_SUCCESS != close_rose()) {
                 OUTPUT(("%s", _ERROR("Error: closing Rose")));
                 return PERFEXPERT_ERROR;
             }
@@ -92,7 +92,7 @@ int apply_patterns(fragment_t *fragment, recommendation_t *recommendation,
 
         /* Test patterns */
         switch (test_pattern(fragment, recommendation, transformation,
-                             pattern)) {
+            pattern)) {
             case PERFEXPERT_ERROR:
                 OUTPUT_VERBOSE((7, "   [%s] [%d] (%s)", _BOLDYELLOW("ERROR"),
                     pattern->id, pattern->program));
@@ -106,13 +106,12 @@ int apply_patterns(fragment_t *fragment, recommendation_t *recommendation,
             case PERFEXPERT_SUCCESS:
                 OUTPUT_VERBOSE((7, "   [ %s  ] [%d] (%s)", _BOLDGREEN("OK"),
                     pattern->id, pattern->program));
-               rc = PERFEXPERT_SUCCESS;
+                rc = PERFEXPERT_SUCCESS;
                 break;
 
             default:
                 break;
         }
-
         /* Move to the next pattern */
         pattern = (pattern_t *)perfexpert_list_get_next(pattern);
     }
@@ -122,39 +121,24 @@ int apply_patterns(fragment_t *fragment, recommendation_t *recommendation,
 /* test_pattern */
 int test_pattern(fragment_t *fragment, recommendation_t *recommendation,
     transformation_t *transformation, pattern_t *pattern) {
+    int rc = PERFEXPERT_FAILURE;
     perfexpert_list_t tests;
-    test_t *test;
-    int  rc = PERFEXPERT_FAILURE;
-    char *temp_str;
+    test_t *test = NULL;
     char *argv[2];
-
-    argv[0] = pattern->program;
-    argv[1] = NULL;
 
     /* Considering the outer loops, we can have more than one test */
     perfexpert_list_construct(&tests);
 
     /* The main test */
-    test = (test_t *)malloc(sizeof(test_t));
-    if (NULL == test) {
-        OUTPUT(("%s", _ERROR("Error: out of memory")));
-        return PERFEXPERT_ERROR;
-    }
+    PERFEXPERT_ALLOC(test_t, test, sizeof(test_t));
     perfexpert_list_item_construct((perfexpert_list_item_t *)test);
     perfexpert_list_append(&tests, (perfexpert_list_item_t *)test);
-    test->info  = fragment->fragment_file;
-    test->input = fragment->fragment_file;
-    temp_str = (char *)malloc(strlen(fragment->fragment_file) +
-        strlen(pattern->program) + strlen(".output") + 2);
-    if (NULL == temp_str) {
-        OUTPUT(("%s", _ERROR("Error: out of memory")));
-        return PERFEXPERT_ERROR;
-    }
-    bzero(temp_str, strlen(fragment->fragment_file) + strlen(pattern->program) +
-        strlen(".output") + 2);
-    sprintf(temp_str, "%s.%s.output", fragment->fragment_file,
+    PERFEXPERT_ALLOC(char, test->output,
+        (strlen(fragment->fragment_file) + strlen(pattern->program) + 9));
+    sprintf(test->output, "%s.%s.output", fragment->fragment_file,
         pattern->program);
-    test->output = temp_str;
+    test->input = fragment->fragment_file;
+    test->info  = fragment->fragment_file;
 
     /* It we're testing for a loop, check for the outer loop */
     if ((0 == strncmp("loop", fragment->code_type, 4)) &&
@@ -162,60 +146,42 @@ int test_pattern(fragment_t *fragment, recommendation_t *recommendation,
         (NULL != fragment->outer_loop_fragment_file)) {
 
         /* The outer loop test */
-        test = (test_t *)malloc(sizeof(test_t));
-        if (NULL == test) {
-            OUTPUT(("%s", _ERROR("Error: out of memory")));
-            return PERFEXPERT_ERROR;
-        }
+        PERFEXPERT_ALLOC(test_t, test, sizeof(test_t));
         perfexpert_list_item_construct((perfexpert_list_item_t *)test);
         perfexpert_list_append(&tests, (perfexpert_list_item_t *)test);
-        test->info  = fragment->outer_loop_fragment_file;
+        PERFEXPERT_ALLOC(char, test->output,
+            (strlen(fragment->outer_loop_fragment_file) +
+                strlen(pattern->program) + 9));
+        sprintf(test->output, "%s.%s.output",
+            fragment->outer_loop_fragment_file, pattern->program);
         test->input = fragment->outer_loop_fragment_file;
-        temp_str = (char *)malloc(strlen(fragment->outer_loop_fragment_file) +
-            strlen(pattern->program) + strlen(".output") + 2);
-        if (NULL == temp_str) {
-            OUTPUT(("%s", _ERROR("Error: out of memory")));
-            return PERFEXPERT_ERROR;
-        }
-        bzero(temp_str, strlen(fragment->outer_loop_fragment_file) +
-            strlen(pattern->program) + strlen(".output") + 2);
-        sprintf(temp_str, "%s.%s.output", fragment->outer_loop_fragment_file,
-            pattern->program);
-        test->output = temp_str;
+        test->info  = fragment->outer_loop_fragment_file;
 
         /* And test for the outer outer loop too */
         if ((3 <= fragment->loop_depth) &&
             (NULL != fragment->outer_outer_loop_fragment_file)) {
 
             /* The outer outer loop test */
-            test = (test_t *)malloc(sizeof(test_t));
-            if (NULL == test) {
-                OUTPUT(("%s", _ERROR("Error: out of memory")));
-                return PERFEXPERT_ERROR;
-            }
+            PERFEXPERT_ALLOC(test_t, test, sizeof(test_t));
             perfexpert_list_item_construct((perfexpert_list_item_t *)test);
             perfexpert_list_append(&tests, (perfexpert_list_item_t *)test);
-            test->info  = fragment->outer_outer_loop_fragment_file;
-            test->input = fragment->outer_outer_loop_fragment_file;
-            temp_str = (char *)malloc(
-                strlen(fragment->outer_outer_loop_fragment_file) +
-                strlen(pattern->program) + strlen(".output") + 2);
-            if (NULL == temp_str) {
-                OUTPUT(("%s", _ERROR("Error: out of memory")));
-                return PERFEXPERT_ERROR;
-            }
-            bzero(temp_str, strlen(fragment->outer_outer_loop_fragment_file) +
-                strlen(pattern->program) + strlen(".output") + 2);
-            sprintf(temp_str, "%s.%s.output",
+            PERFEXPERT_ALLOC(char, test->output,
+                (strlen(fragment->outer_outer_loop_fragment_file) +
+                    strlen(pattern->program) + 9));
+            sprintf(test->output, "%s.%s.output",
                 fragment->outer_outer_loop_fragment_file, pattern->program);
-            test->output = temp_str;
-            }
+            test->input = fragment->outer_outer_loop_fragment_file;
+            test->info  = fragment->outer_outer_loop_fragment_file;
+        }
     }
 
+    argv[0] = pattern->program;
+    argv[1] = NULL;
+
     /* Run all the tests */
-    test = (test_t *)perfexpert_list_get_first(&tests);
-    while ((perfexpert_list_item_t *)test != &(tests.sentinel)) {
-        switch (fork_and_wait(test, argv)) {
+    while (0 < perfexpert_list_get_size(&tests)) {
+        test = (test_t *)perfexpert_list_get_first(&tests);
+        switch (fork_and_wait(test, (char **)argv)) {
             case PERFEXPERT_SUCCESS:
                 rc = PERFEXPERT_SUCCESS;
                 break;
@@ -226,11 +192,11 @@ int test_pattern(fragment_t *fragment, recommendation_t *recommendation,
             default:
                 break;
         }
-        test = (test_t *)perfexpert_list_get_next(
-            (perfexpert_list_item_t *)test);
-    }
 
-    /* TODO: Free memory */
+        perfexpert_list_remove_item(&tests, (perfexpert_list_item_t *)test);
+        PERFEXPERT_DEALLOC(test->output);
+        PERFEXPERT_DEALLOC(test);
+    }
 
     return rc;
 }
