@@ -27,6 +27,8 @@
 
 bin_PROGRAMS = perfexpert_recommender
 
+perfexpert_recommender_CPPFLAGS = -I$(srcdir)/../common
+perfexpert_recommender_LDFLAGS = -lsqlite3
 perfexpert_recommender_SOURCES = recommender_main.c \
 	recommender_input.c \
 	recommender_log.c \
@@ -34,17 +36,13 @@ perfexpert_recommender_SOURCES = recommender_main.c \
 	recommender_options.c \
 	recommender_output.c
 
-perfexpert_recommender_CPPFLAGS = -I$(srcdir)/../common
-perfexpert_recommender_LDFLAGS = -lsqlite3
-
 # Install the recommendation database
 install-exec-local:
 	echo "" > $(top_builddir)/warnings_recommender
 	$(MKDIR_P) $(localstatedir)
 	$(MKDIR_P) $(sysconfdir)
 	$(MKDIR_P) $(datadir)/$(PACKAGE_NAME)
-	$(SQLITE3_PROGRAM) perfexpert.db \
-		< $(top_srcdir)/contrib/recommender.db.txt
+	$(SQLITE3_PROGRAM) perfexpert.db < $(top_srcdir)/contrib/recommender.db.txt
 	if [ -f $(localstatedir)/perfexpert.db ]; then echo \
 		"############################# WARNING #############################" \
 		>> $(top_builddir)/warnings_recommender; echo \
@@ -54,7 +52,7 @@ install-exec-local:
 		>> $(top_builddir)/warnings_recommender; fi
 	$(INSTALL) -b -m 644 perfexpert.db $(localstatedir)/
 	rm perfexpert.db
-	echo 1.22 > .perfexpert.db.version
+	echo 1.23 > .perfexpert.db.version
 	$(INSTALL) -m 644 .perfexpert.db.version $(localstatedir)/
 	$(INSTALL) -m 644 $(top_srcdir)/contrib/recommender_metrics.txt \
 		$(sysconfdir)/
