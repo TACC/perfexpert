@@ -38,13 +38,14 @@
 extern "C" {
 #endif
 
-#define PERFEXPERT_ALLOC(type, ptr, size)                                      \
-    ptr = (type *)malloc(size);                                                \
-    if (NULL == ptr) {                                                         \
-        OUTPUT(("%s (%s:%d) (%s)", _ERROR("Error: unable to allocate memory"), \
-            __FILE__, __LINE__, __FUNCTION__));                                \
-        return PERFEXPERT_ERROR;                                               \
-    }                                                                          \
+#define PERFEXPERT_ALLOC(type, ptr, size)                       \
+    ptr = (type *)malloc(size);                                 \
+    if (NULL == ptr) {                                          \
+        OUTPUT(("%s (%s:%d) (%s)",                              \
+            _ERROR((char *)"Error: unable to allocate memory"), \
+            __FILE__, __LINE__, __FUNCTION__));                 \
+        exit(PERFEXPERT_ERROR);                                 \
+    }                                                           \
     bzero(ptr, size)
 
 #define PERFEXPERT_DEALLOC(ptr) \
