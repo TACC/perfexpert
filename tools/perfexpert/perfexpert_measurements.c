@@ -31,8 +31,21 @@ extern "C" {
 
 /* PerfExpert headers */
 #include "perfexpert.h"
+#include "perfexpert_measurements.h"
 #include "perfexpert_output.h"
-#include "perfexpert_tool.h"
+
+/* Measurements tools definition */
+tool_t tools[] = {
+    {
+        "hpctoolkit",
+        &measurements_hpctoolkit,
+        HPCTOOLKIT_PROFILE_FILE
+    }, {
+        "vtune",
+        &measurements_vtune,
+        VTUNE_PROFILE_FILE
+    }, {NULL, NULL, NULL}
+};
 
 /* measurements */
 int measurements(void) {

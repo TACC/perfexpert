@@ -36,10 +36,11 @@ extern "C" {
 
 /* PerfExpert headers */
 #include "perfexpert.h"
+#include "perfexpert_constants.h"
+#include "perfexpert_fork.h"
+#include "perfexpert_measurements.h"
 #include "perfexpert_output.h"
 #include "perfexpert_util.h"
-#include "perfexpert_fork.h"
-#include "perfexpert_constants.h"
 #include "install_dirs.h"
 
 /* analysis */
@@ -84,7 +85,7 @@ int analysis(void) {
     }
     bzero(temp_str[6], BUFFER_SIZE);
     sprintf(temp_str[6], "%s/%s", globals.stepdir,
-        PERFEXPERT_TOOL_HPCTOOLKIT_PROFILE_FILE);
+        perfexpert_tool_get_profile_file(globals.tool));
     if (0 != setenv("PERFEXPERT_ANALYZER_INPUT_FILE", temp_str[6], 0)) {
         OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
         return PERFEXPERT_ERROR;
@@ -121,8 +122,8 @@ int analysis(void) {
     bzero(temp_str[0], BUFFER_SIZE);
     sprintf(temp_str[0], "%s/%s", globals.stepdir, ANALYZER_OUTPUT);
     test.output = temp_str[0];
-    test.input  = NULL;
-    test.info   = PERFEXPERT_TOOL_HPCTOOLKIT_PROFILE_FILE;
+    test.input = NULL;
+    test.info = NULL;
 
     /* run_and_fork_and_pray */
     return fork_and_wait(&test, argv);
