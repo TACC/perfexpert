@@ -25,11 +25,15 @@
  * $HEADER$
  */
 
-#ifndef PERFEXPERT_TOOL_H_
-#define PERFEXPERT_TOOL_H_
+#ifndef PERFEXPERT_MEASUREMENTS_H_
+#define PERFEXPERT_MEASUREMENTS_H_
 
 #ifdef __cplusplus
 extern "C" {
+#endif
+
+#ifndef _STDLIB_H
+#include <stdlib.h>
 #endif
 
 #include "perfexpert_hpctoolkit.h"
@@ -55,4 +59,4 @@ tool_t tools[] = {
 }
 #endif
 
-#endif /* PERFEXPERT_TOOL_H */
+#endif /* PERFEXPERT_MEASUREMENTS_H */
