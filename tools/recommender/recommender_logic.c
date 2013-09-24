@@ -47,7 +47,7 @@ extern "C" {
 /* select_recommendations_all */
 int select_recommendations_all(perfexpert_list_t *segments) {
     int rc = PERFEXPERT_NO_REC;
-    segment_t *segment;
+    segment_t *segment = NULL;
 
     OUTPUT_VERBOSE((4, "%s", _BLUE("Selecting recommendations")));
 
@@ -146,7 +146,8 @@ int select_recommendations(segment_t *segment) {
         if (SQLITE_OK != sqlite3_bind_int(statement,
             sqlite3_bind_parameter_index(statement, "@LPD"),
             segment->loopdepth)) {
-            OUTPUT(("         %s (%d)", _RED("ignoring @LPD"), segment->loopdepth));
+            OUTPUT(("         %s (%d)", _RED("ignoring @LPD"),
+                segment->loopdepth));
         }
 
         /* Run query */
@@ -229,7 +230,6 @@ int select_recommendations(segment_t *segment) {
     OUTPUT_VERBOSE((10, "         SQL: %s", _CYAN(sql)));
 
     rc = PERFEXPERT_NO_REC;
-
     if (SQLITE_OK != sqlite3_exec(globals.db, sql, output_recommendations,
         (void *)&(rc), &error_msg)) {
         OUTPUT(("%s %s", _ERROR("Error: SQL error"), error_msg));
@@ -242,7 +242,7 @@ int select_recommendations(segment_t *segment) {
 
 /* accumulate_functions */
 int accumulate_functions(void *functions, int count, char **val, char **names) {
-    function_t *function;
+    function_t *function = NULL;
     
     /* Copy SQL query result into functions list */
     PERFEXPERT_ALLOC(function_t, function, sizeof(function_t));
