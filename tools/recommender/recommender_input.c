@@ -69,7 +69,6 @@ int parse_segment_params(perfexpert_list_t *segments) {
     bzero(buffer, BUFFER_SIZE);
     while (NULL != fgets(buffer, BUFFER_SIZE - 1, globals.inputfile_FP)) {
         node_t *node = NULL;
-        int temp = 0;
         
         input_line++;
 
@@ -84,8 +83,6 @@ int parse_segment_params(perfexpert_list_t *segments) {
 
         /* Is this line a new code bottleneck specification? */
         if (0 == strncmp("%", buffer, 1)) {
-            char temp_str[BUFFER_SIZE];
-            
             OUTPUT_VERBOSE((5, "   (%d) %s", input_line,
                 _GREEN("new bottleneck found")));
 
@@ -110,18 +107,12 @@ int parse_segment_params(perfexpert_list_t *segments) {
             perfexpert_list_append(segments, (perfexpert_list_item_t *)item);
 
             /* Create the SQL statement for this new segment */
-            bzero(temp_str, BUFFER_SIZE);
-            sprintf(temp_str,
-                "INSERT INTO %s (code_filename) VALUES ('new_code-%d'); ",
-                globals.metrics_table, (int)getpid());
             bzero(sql, BUFFER_SIZE);
-            strcat(sql, temp_str);
-            bzero(temp_str, BUFFER_SIZE);
-            sprintf(temp_str,
-                "SELECT id FROM %s WHERE code_filename = 'new_code-%d';",
-                globals.metrics_table, (int)getpid());
-            strcat(sql, temp_str);
-
+            sprintf(sql, "%s %s %d');\n%s %s %d';",
+                "INSERT INTO", globals.metrics_table,
+                "(code_filename) VALUES ('new_code-", (int)getpid(),
+                "SELECT id FROM", globals.metrics_table,
+                "WHERE code_filename = 'new_code-", (int)getpid());
             OUTPUT_VERBOSE((5, "     SQL: %s", _CYAN(sql)));
             
             /* Insert new code fragment into metrics database, retrieve id */
@@ -308,8 +299,6 @@ int parse_metrics_file(void) {
 
     bzero(buffer, BUFFER_SIZE);
     while (NULL != fgets(buffer, BUFFER_SIZE - 1, metrics_FP)) {
-        int temp;
-            
         /* Ignore comments and blank lines */
         if ((0 == strncmp("#", buffer, 1)) ||
             (strspn(buffer, " \t\r\n") == strlen(buffer))) {
