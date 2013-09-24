@@ -34,6 +34,7 @@ extern "C" {
 
 #define HPCTOOLKIT_EXPERIMENT_FILE     "experiment_hpctoolkit.conf"
 #define HPCTOOLKIT_MIC_EXPERIMENT_FILE "experiment_hpctoolkit_mic.conf"
+#define HPCTOOLKIT_PROFILE_FILE        "database/experiment.xml"
 
 /* HPCToolkit stuff (binaries should be in the path) */
 #define HPCSTRUCT "hpcstruct"
