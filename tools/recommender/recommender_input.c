@@ -38,7 +38,6 @@ extern "C" {
 #include <sqlite3.h>
 
 /* PerfExpert headers */
-#include "config.h"
 #include "recommender.h"
 #include "perfexpert_alloc.h"
 #include "perfexpert_database.h"
