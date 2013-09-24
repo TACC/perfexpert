@@ -49,7 +49,7 @@ extern "C" {
 #endif
 #define PROGRAM_PREFIX "[recommender]"
     
-/** Structure to hold global variables */
+/* Structure to hold global variables */
 typedef struct {
     FILE *inputfile_FP;
     FILE *outputfile_FP;
@@ -70,13 +70,13 @@ typedef struct {
 
 extern globals_t globals; /* This variable id declared in recommender_main.c */
 
-/** Structure to help STDIN parsing */
+/* Structure to help STDIN parsing */
 typedef struct node {
     char *key;
     char *value;
 } node_t;
 
-/** Structure to hold recommendation selecting functions */
+/* Structure to hold recommendation selecting functions */
 typedef struct function {
     volatile perfexpert_list_item_t *next;
     volatile perfexpert_list_item_t *prev;
@@ -85,7 +85,7 @@ typedef struct function {
     char statement[BUFFER_SIZE];
 } function_t;
 
-/** Structure to hold code segments */
+/* Structure to hold code segments */
 typedef struct segment {
     volatile perfexpert_list_item_t *next; /** Pointer to next list item */
     volatile perfexpert_list_item_t *prev; /** Pointer to previous list item */
