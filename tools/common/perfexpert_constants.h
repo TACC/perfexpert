@@ -83,13 +83,8 @@ enum {
 #define METRICS_FILE             "recommender_metrics.txt"
 #define LCPI_FILE        	     "lcpi.conf"
 #define MACHINE_FILE             "machine.conf"
-#define EXPERIMENT_FILE          "experiment.conf"
-#define MIC_EXPERIMENT_FILE 	 "experiment_mic.conf"
 
 /* HPCToolkit stuff (binaries should be in the path) */
-#define HPCSTRUCT "hpcstruct"
-#define HPCRUN    "hpcrun"
-#define HPCPROF   "hpcprof"
 #define PERFEXPERT_TOOL_HPCTOOLKIT_PROFILE_FILE  "database/experiment.xml"
 #define PERFEXPERT_TOOL_HPCTOOLKIT_COUNTERS  	 "papi"
 #define PERFEXPERT_TOOL_HPCTOOLKIT_TOT_INS 		 "PAPI_TOT_INS"
