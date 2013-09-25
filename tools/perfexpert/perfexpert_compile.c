@@ -49,7 +49,7 @@ int compile_program(void) {
     int  argc = 0;
     test_t test;
 
-    OUTPUT_VERBOSE((4, "=== %s", _BLUE("Compiling the program")));
+    OUTPUT_VERBOSE((4, "%s", _BLUE("Compiling the program")));
     OUTPUT(("Compiling [%s]", globals.program));
 
     /* If the source file was provided generate compilation command line */

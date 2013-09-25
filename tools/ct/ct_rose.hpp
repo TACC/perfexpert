@@ -43,11 +43,11 @@ extern SgProject *userProject; /* This variable is declared in ct_rose.cpp */
 
 class recommenderTraversal : public AstSimpleProcessing {
     public :
-	    virtual void visit(SgNode *node);
-    	virtual void atTraversalStart();
-	    virtual void atTraversalEnd();
-    	fragment_t *fragment;
-	    int rc;
+        virtual void visit(SgNode *node);
+        virtual void atTraversalStart();
+        virtual void atTraversalEnd();
+        fragment_t *fragment;
+        int rc;
 };
 
 /* Function declarations */

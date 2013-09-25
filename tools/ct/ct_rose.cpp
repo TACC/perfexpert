@@ -52,7 +52,7 @@ SgProject *userProject;
 int open_rose(const char *source_file) {
     char *files[3];
 
-    OUTPUT_VERBOSE((7, "   %s", _MAGENTA((char *)"opening Rose")));
+    OUTPUT_VERBOSE((7, "      opening Rose"));
 
     /* Fill 'files', aka **argv */
     PERFEXPERT_ALLOC(char, files[0], (sizeof("recommender") + 1));
@@ -93,14 +93,14 @@ int extract_fragment(fragment_t *fragment) {
         PERFEXPERT_DEALLOC(fragments_dir);
         return PERFEXPERT_ERROR;
     } else {
-        OUTPUT_VERBOSE((4, "   fragments will be put in (%s)", fragments_dir));
+        OUTPUT_VERBOSE((4, "      fragments directory (%s)", fragments_dir));
     }
     PERFEXPERT_DEALLOC(fragments_dir);
 
     /* Build the traversal object and call the traversal function starting at
      * the project node of the AST, using a pre-order traversal
      */
-    OUTPUT_VERBOSE((7, "   %s (%s:%d) [%s]",
+    OUTPUT_VERBOSE((7, "      %s (%s:%d) [code type: %d]",
         _YELLOW((char *)"extracting fragments from"), fragment->filename,
         fragment->line_number, fragment->code_type));
 
@@ -121,7 +121,7 @@ int output_fragment(SgNode *node, Sg_File_Info *info,
         strlen(PERFEXPERT_FRAGMENTS_DIR) + strlen(fragment->filename) + 10));
     sprintf(fragment_file, "%s/%s/%s_%d", globals.workdir,
         PERFEXPERT_FRAGMENTS_DIR, fragment->filename, info->get_line());
-    OUTPUT_VERBOSE((8, "   %s (%s)", _YELLOW((char *)"extracting it to"),
+    OUTPUT_VERBOSE((8, "         %s (%s)", _YELLOW((char *)"extracting it to"),
         fragment_file));
 
     fragment_file_FP = fopen(fragment_file, "w+");
@@ -149,7 +149,7 @@ int output_function(SgNode *node, fragment_t *fragment) {
             strlen(fragment->filename) + strlen(fragment->function_name) + 10));
     sprintf(function_file, "%s/%s/%s_%s", globals.workdir,
         PERFEXPERT_FRAGMENTS_DIR, fragment->filename, fragment->function_name);
-    OUTPUT_VERBOSE((8, "   %s (%s)", _YELLOW((char *)"extracting it to"),
+    OUTPUT_VERBOSE((8, "         %s (%s)", _YELLOW((char *)"extracting it to"),
         function_file));
 
     function_file_FP = fopen(function_file, "w+");

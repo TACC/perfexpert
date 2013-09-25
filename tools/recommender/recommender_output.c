@@ -55,7 +55,7 @@ int output_header(segment_t *segment) {
         fprintf(globals.outputmetrics_FP, "code.type=%s\n", segment->type);
         fprintf(globals.outputmetrics_FP, "code.function_name=%s\n",
             segment->function_name);
-        fprintf(globals.outputmetrics_FP, "code.loopdepth=%1.0lf\n",
+        fprintf(globals.outputmetrics_FP, "code.loopdepth=%d\n",
             segment->loopdepth);
         fprintf(globals.outputmetrics_FP, "code.rowid=%d\n", segment->rowid);
     }

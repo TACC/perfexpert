@@ -50,8 +50,8 @@ int apply_recommendations(fragment_t *fragment) {
 
         /* Skip if other recommendation has already been applied */
         if (PERFEXPERT_SUCCESS == rc) {
-            OUTPUT_VERBOSE((8, "   [%s ] [%d]", _MAGENTA("SKIP"),
-                recommendation->id));
+            OUTPUT_VERBOSE((8, "   [%s ] [%d] (code already changed)",
+                _MAGENTA("SKIP"), recommendation->id));
             goto move_on;
         }
 
@@ -68,8 +68,8 @@ int apply_recommendations(fragment_t *fragment) {
                 break;
 
             case PERFEXPERT_NO_TRANS:
-                OUTPUT_VERBOSE((8, "   [%s ] [%d]", _MAGENTA("SKIP"),
-                    recommendation->id));
+                OUTPUT_VERBOSE((8, "   [%s ] [%d] (no transformations)",
+                    _MAGENTA("SKIP"), recommendation->id));
                 break;
 
             case PERFEXPERT_SUCCESS:

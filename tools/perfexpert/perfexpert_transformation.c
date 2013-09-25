@@ -42,7 +42,7 @@ extern "C" {
 
 /* transformation */
 int transformation(void) {
-    char temp_str[4][BUFFER_SIZE];
+    char temp_str[5][BUFFER_SIZE];
     char *argv[2];
     test_t test;
 
@@ -64,11 +64,13 @@ int transformation(void) {
     }
     bzero(temp_str[3], BUFFER_SIZE);
     sprintf(temp_str[3], "%d", (int)getpid());
-    if (0 != setenv("PERFEXPERT_CT_PID", temp_str[3], 0)) {
+    if (0 != setenv("PERFEXPERT_CT_PID", temp_str[3], 1)) {
         OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
         return PERFEXPERT_ERROR;
     }
-    if (0 != setenv("PERFEXPERT_CT_INPUT_FILE", RECOMMENDER_METRICS, 0)) {
+    bzero(temp_str[4], BUFFER_SIZE);
+    sprintf(temp_str[4], "%s/%s", globals.stepdir, RECOMMENDER_METRICS);
+    if (0 != setenv("PERFEXPERT_CT_INPUT_FILE", temp_str[4], 1)) {
         OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
         return PERFEXPERT_ERROR;
     }
@@ -76,7 +78,7 @@ int transformation(void) {
         OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
         return PERFEXPERT_ERROR;
     }
-    if (0 != setenv("PERFEXPERT_CT_WORKDIR", globals.stepdir, 0)) {
+    if (0 != setenv("PERFEXPERT_CT_WORKDIR", globals.stepdir, 1)) {
         OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
         return PERFEXPERT_ERROR;
     }
@@ -89,8 +91,8 @@ int transformation(void) {
     bzero(temp_str[0], BUFFER_SIZE);
     sprintf(temp_str[0], "%s/%s", globals.stepdir, CT_OUTPUT);
     test.output = temp_str[0];
-    test.input  = NULL;
-    test.info   = NULL;
+    test.input = NULL;
+    test.info = temp_str[4];
 
     /* run_and_fork_and_pray */
     return fork_and_wait(&test, argv);
