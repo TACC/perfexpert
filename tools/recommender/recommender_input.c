@@ -108,7 +108,7 @@ int parse_segment_params(perfexpert_list_t *segments) {
 
             /* Create the SQL statement for this new segment */
             bzero(sql, BUFFER_SIZE);
-            sprintf(sql, "%s %s %d');\n%s %s %d';",
+            sprintf(sql, "%s %s %s %d'); %s %s %s %d';",
                 "INSERT INTO", globals.metrics_table,
                 "(code_filename) VALUES ('new_code-", (int)getpid(),
                 "SELECT id FROM", globals.metrics_table,
@@ -256,12 +256,12 @@ int parse_segment_params(perfexpert_list_t *segments) {
     }
 
     /* print a summary of 'segments' */
-    OUTPUT_VERBOSE((4, "   (%d) %s", perfexpert_list_get_size(segments),
-        _MAGENTA("code segment(s) found")));
+    OUTPUT_VERBOSE((4, "   %s (%d)", _MAGENTA("code segment(s) found"),
+        perfexpert_list_get_size(segments)));
 
     item = (segment_t *)perfexpert_list_get_first(segments);
     while ((perfexpert_list_item_t *)item != &(segments->sentinel)) {
-        OUTPUT_VERBOSE((4, "     %s (line %d)", _YELLOW(item->filename),
+        OUTPUT_VERBOSE((4, "      %s (line %d)", _YELLOW(item->filename),
             item->line_number));
         item = (segment_t *)perfexpert_list_get_next(item);
     }
@@ -282,7 +282,7 @@ int parse_metrics_file(void) {
         sprintf(globals.metrics_file, "%s/%s", PERFEXPERT_ETCDIR, METRICS_FILE);
     }
 
-    OUTPUT_VERBOSE((7, "=== %s (%s)", _BLUE("Reading metrics file"),
+    OUTPUT_VERBOSE((7, "%s (%s)", _BLUE("Reading metrics file"),
         globals.metrics_file));
 
     if (NULL == (metrics_FP = fopen(globals.metrics_file, "r"))) {
