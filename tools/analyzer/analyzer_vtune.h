@@ -35,7 +35,6 @@ extern "C" {
 #include "perfexpert_list.h"
 
 /* VTune stuff */
-#define PERFEXPERT_TOOL_VTUNE_PROFILE_FILE  "database/experiment.xml"
 #define PERFEXPERT_TOOL_VTUNE_COUNTERS      "vtune"
 #define PERFEXPERT_TOOL_VTUNE_TOT_INS       "PAPI_TOT_INS"
 #define PERFEXPERT_TOOL_VTUNE_TOT_CYC       "PAPI_TOT_CYC"
