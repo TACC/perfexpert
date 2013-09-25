@@ -36,7 +36,7 @@ extern "C" {
 #include <sqlite3.h>
 #endif
 
-#ifndef	_STDIO_H
+#ifndef _STDIO_H
 #include <stdio.h> /* To use FILE type on globals */
 #endif
 

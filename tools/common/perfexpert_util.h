@@ -32,11 +32,11 @@
 extern "C" {
 #endif
     
-#ifndef	_SYS_STAT_H
+#ifndef _SYS_STAT_H
 #include <sys/stat.h>
 #endif
 
-#ifndef	_ERRNO_H
+#ifndef _ERRNO_H
 #include <errno.h>
 #endif
 
