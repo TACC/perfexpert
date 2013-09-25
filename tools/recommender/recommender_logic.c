@@ -96,9 +96,8 @@ int select_recommendations(segment_t *segment) {
         return PERFEXPERT_ERROR;
     }
 
-    OUTPUT_VERBOSE((8, "      (%d) %s",
-        perfexpert_list_get_size(&(segment->functions)),
-        _MAGENTA("function(s) found")));
+    OUTPUT_VERBOSE((8, "      %s (%d)", _MAGENTA("function(s) found"),
+        perfexpert_list_get_size(&(segment->functions))));
 
     /* Create a temporary table to store possible recommendations */
     bzero(sql, BUFFER_SIZE);

@@ -66,7 +66,7 @@ int output_header(segment_t *segment) {
 int output_recommendations(void *var, int count, char **val, char **names) {
     int *rc = (int *)var;
 
-    OUTPUT_VERBOSE((7, "   %s (%s)", _GREEN("recommendation found"), val[2]));
+    OUTPUT_VERBOSE((7, "         Recom=%s", val[2]));
 
     /* Pretty print for the user */
     fprintf(globals.outputfile_FP,

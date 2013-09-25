@@ -58,7 +58,7 @@ static inline char* perfexpert_tool_get_profile_file(const char* tool) {
 
     while (NULL != tools[i].name) {
         if (0 == strcmp(tool, tools[i].name)) {
-            return (char *)&(tools[i].profile_file);
+            return (char *)(tools[i].profile_file);
         }
         i++;
     }

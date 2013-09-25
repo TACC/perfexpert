@@ -154,23 +154,26 @@ static inline int perfexpert_database_disconnect(sqlite3 *db) {
 /* perfexpert_database_connect */
 static inline int perfexpert_database_connect(sqlite3 **db, const char *file) {
     char *my_file = (char *)file;
+    int allocated = PERFEXPERT_FALSE;
+
     /* Use default database if the user does not define one */
     if (NULL == my_file) {
-        PERFEXPERT_ALLOC(char, my_file, (strlen(PERFEXPERT_DB) +
-            strlen(PERFEXPERT_VARDIR) + 2));
+        PERFEXPERT_ALLOC(char, my_file,
+            (strlen(PERFEXPERT_DB) + strlen(PERFEXPERT_VARDIR) + 2));
         sprintf(my_file, "%s/%s", PERFEXPERT_VARDIR, PERFEXPERT_DB);
+        allocated = PERFEXPERT_TRUE;
     }
 
     /* Check if file exists and if it is writable */
     if (-1 == access(my_file, F_OK)) {
         OUTPUT(("%s (%s)", _ERROR((char *)"Error: file not found"), my_file));
-        return PERFEXPERT_ERROR;
+        goto CLEAN_UP;
     }
     if (-1 == access(my_file, W_OK)) {
         OUTPUT(("%s (%s)",
-            _ERROR((char *)"Error: you don't have permission to write"),
+            _ERROR((char *)"Error: you don't have permissions to write on"),
             my_file));
-        return PERFEXPERT_ERROR;
+        goto CLEAN_UP;
     }
 
     /* Connect to the DB */
@@ -178,13 +181,18 @@ static inline int perfexpert_database_connect(sqlite3 **db, const char *file) {
         OUTPUT(("%s (%s), %s", _ERROR((char *)"Error: openning database"),
             my_file, sqlite3_errmsg(*db)));
         perfexpert_database_disconnect(*db);
-        PERFEXPERT_DEALLOC(my_file);
-        return PERFEXPERT_ERROR;
+        goto CLEAN_UP;
     }
 
     OUTPUT_VERBOSE((4, "connected to %s", my_file));
-    PERFEXPERT_DEALLOC(my_file);
+
     return PERFEXPERT_SUCCESS;
+
+    CLEAN_UP:
+    if (PERFEXPERT_TRUE == allocated) {
+        PERFEXPERT_DEALLOC(my_file);
+    }
+    return PERFEXPERT_ERROR;
 }
 
 /* perfexpert_database_get_int */

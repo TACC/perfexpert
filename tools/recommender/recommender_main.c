@@ -120,7 +120,7 @@ int main(int argc, char** argv) {
         OUTPUT(("%s", _ERROR("Error: connecting to database")));
         goto CLEANUP;
     }
-    
+
     /* Parse metrics file if 'm' is defined, this will create a temp table */
     if (NULL != globals.metrics_file) {
         PERFEXPERT_ALLOC(char, globals.metrics_table, (strlen("metrics_") + 6));
@@ -131,7 +131,7 @@ int main(int argc, char** argv) {
             goto CLEANUP;
         }
     }
-    
+
     /* Parse input parameters */
     if (PERFEXPERT_SUCCESS != parse_segment_params(&segments)) {
         OUTPUT(("%s", _ERROR("Error: parsing input params")));
