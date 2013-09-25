@@ -196,11 +196,12 @@ int main(int argc, char** argv) {
                 case PERFEXPERT_ERROR:
                 case PERFEXPERT_FAILURE:
                     OUTPUT(("%s",
-                            _ERROR("Error: unable to run code transformer")));
+                        _ERROR("Error: unable to run code transformer")));
                     goto CLEANUP;
 
                 case PERFEXPERT_NO_TRANS:
-                    OUTPUT(("Unable to apply optimizations automatically"));
+                    OUTPUT(("%s",
+                        _RED("Unable to apply optimizations automatically")));
                     rc = PERFEXPERT_NO_TRANS;
                     goto REPORT;
 
@@ -215,7 +216,7 @@ int main(int argc, char** argv) {
             rc = PERFEXPERT_SUCCESS;
             goto REPORT;
         }
-        OUTPUT(("Starting another optimization round..."));
+        OUTPUT(("%s", _BLUE("Starting another optimization round...")));
         PERFEXPERT_DEALLOC(globals.stepdir);
         globals.step++;
     }
@@ -247,6 +248,9 @@ int main(int argc, char** argv) {
         if (PERFEXPERT_SUCCESS != perfexpert_util_remove_dir(globals.workdir)) {
             OUTPUT(("unable to remove work directory (%s)", globals.workdir));
         }        
+    } else {
+        OUTPUT(("%s [%s]", _CYAN("Temporary files are available in"),
+            globals.workdir));
     }
 
     /* Free memory */

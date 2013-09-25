@@ -48,7 +48,7 @@ int recommendation(void) {
     int rc;
 
     OUTPUT_VERBOSE((4, "%s", _BLUE("Recommendations phase")));
-    OUTPUT(("Selecting optimizations"));
+    OUTPUT(("%s", _YELLOW("Selecting optimizations")));
 
     /* Set some environment variables to avoid working arguments */
     bzero(temp_str[1], BUFFER_SIZE);

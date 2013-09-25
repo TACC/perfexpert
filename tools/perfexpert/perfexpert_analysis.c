@@ -50,7 +50,7 @@ int analysis(void) {
     test_t test;
 
     OUTPUT_VERBOSE((4, "%s", _BLUE("Analysis phase")));
-    OUTPUT(("Analysing measurements"));
+    OUTPUT(("%s", _YELLOW("Analysing measurements")));
 
     /* Set some environment variables to avoid working arguments */
     bzero(temp_str[1], BUFFER_SIZE);
