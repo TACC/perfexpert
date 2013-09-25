@@ -435,6 +435,7 @@ AS_IF([test x"$ENABLE_CT" = xyes], [
     AC_PROG_YACC
 
     ENABLE_CT=ct
+    AC_DEFINE([HAVE_CODE_TRANSFORMATION], [1], [Enable code transformation])
     AC_CONFIG_FILES([tools/ct/Makefile])
     AC_CONFIG_FILES([tools/ct/recognizers/Makefile])
     AC_CONFIG_FILES([tools/ct/recognizers/nested_c_loops/Makefile])
