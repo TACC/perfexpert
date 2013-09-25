@@ -150,7 +150,7 @@ int run_amplxecl(void) {
     argc++;
     argv[argc] = "runsa";
     argc++;
-    argv[argc] = "eventconfig=$VTUNE_AMPLIFIER_EVENTS";
+    argv[argc] = "event-config=$VTUNE_AMPLIFIER_EVENTS";
     argc++;
 
     /* Now we add the program and... */
