@@ -56,7 +56,8 @@ int measurements(void) {
     /* Find the measurement function for this tool */
     while (NULL != tools[i].name) {
         if (0 == strcmp(globals.tool, tools[i].name)) {
-            OUTPUT(("Running [%s] using %s", globals.program, globals.tool));
+            OUTPUT(("%s [%s] using %s", _YELLOW("Running"), globals.program,
+                globals.tool));
             /* Call the measurement function for this tool */
             return (*tools[i].function)();
         }

@@ -287,8 +287,8 @@ int run_hpcrun(void) {
         }
         clock_gettime(CLOCK_MONOTONIC, &time_end);
         perfexpert_time_diff(&time_diff, &time_start, &time_end);
-        OUTPUT(("   [%d] run in %lld.%.9ld seconds", input_line,
-            (long long)time_diff.tv_sec, time_diff.tv_nsec));
+        OUTPUT(("   [%d] %lld.%.9ld seconds (includes measurement overhead)",
+            input_line, (long long)time_diff.tv_sec, time_diff.tv_nsec));
 
         /* Run the AFTER program */
         if (NULL != globals.after) {

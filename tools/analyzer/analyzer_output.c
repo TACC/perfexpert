@@ -190,12 +190,11 @@ int output_analysis(profile_t *profile, procedure_t *hotspot) {
     }
 
     /* For each LCPI, print it's value */
-    char PERCENTAGE[] = "0...........25..........50..........75.........100";
+    char PERCENTAGE[] = "0..........25..........50..........75..........100";
     char GOOD_BAD[] = "good.......okay........fair........poor........bad";
     print_ratio = PERFEXPERT_TRUE;
     for (lcpi = hotspot->lcpi_by_name; lcpi != NULL;
         lcpi = lcpi->hh_str.next) {
-        double cpi = lcpi->value;
         char *temp_str = NULL;
         char *category = NULL;
         char *subcategory = NULL;
@@ -228,11 +227,11 @@ int output_analysis(profile_t *profile, procedure_t *hotspot) {
                 print_ratio = PERFEXPERT_FALSE;
             }
             if (100 > (lcpi->value * 100)) {
-                fprintf(globals.outputfile_FP, "%s  %3d ", description,
-                    (int)rint((lcpi->value * 100)));
+                fprintf(globals.outputfile_FP, "%s %4.1f ", description,
+                    (lcpi->value * 100));
                 PRETTY_PRINT((int)rint((lcpi->value * 50)), "*");
             } else {
-                fprintf(globals.outputfile_FP, "%s  100 ", description);
+                fprintf(globals.outputfile_FP, "%s100.0 ", description);
                 PRETTY_PRINT(50, "*");
             }
         }
@@ -243,16 +242,36 @@ int output_analysis(profile_t *profile, procedure_t *hotspot) {
             fprintf(globals.outputfile_FP, "performance assessment  LCPI %s\n",
                 _CYAN(GOOD_BAD));
         }
-        if ((0 == strcmp(category, "overall")) ||
-            (0 == strcmp(category, "data accesses")) ||
+        if ((0 == strcmp(category, "data accesses")) ||
             (0 == strcmp(category, "instruction accesses")) ||
             (0 == strcmp(category, "data TLB")) ||
             (0 == strcmp(category, "instruction TLB")) ||
             (0 == strcmp(category, "branch instructions")) ||
             (0 == strcmp(category, "floating-point instr"))) {
-            fprintf(globals.outputfile_FP, "%s%5.1f ", description, (cpi));
-            PRETTY_PRINT_BAR((int)rint((cpi * 20)), ">");
+            fprintf(globals.outputfile_FP, "%s%5.2f ", description, lcpi->value);
+            PRETTY_PRINT_BAR((int)rint((lcpi->value * 20)), ">");
         }
+        /* Special colors for overall */
+        if (0 == strcmp(category, "overall")) {
+            if (0.5 >= lcpi->value) {
+                fprintf(globals.outputfile_FP, "%s%5.2f ", _GREEN(description),
+                    lcpi->value);
+                PRETTY_PRINT_BAR((int)rint((lcpi->value * 20)), _GREEN(">"));
+            } else if ((0.5 < lcpi->value) && (1.0 >= lcpi->value)) {
+                fprintf(globals.outputfile_FP, "%s%5.2f ", _YELLOW(description),
+                    lcpi->value);
+                PRETTY_PRINT_BAR((int)rint((lcpi->value * 20)), _YELLOW(">"));
+            } else if ((1.0 < lcpi->value) && (2.0 >= lcpi->value)) {
+                fprintf(globals.outputfile_FP, "%s%5.2f ", _RED(description),
+                    lcpi->value);
+                PRETTY_PRINT_BAR((int)rint((lcpi->value * 20)), _RED(">"));
+            } else {
+                fprintf(globals.outputfile_FP, "%s%5.2f ", _ERROR(description),
+                    lcpi->value);
+                PRETTY_PRINT_BAR((int)rint((lcpi->value * 20)), _ERROR(">"));                
+            }
+        }
+        PERFEXPERT_DEALLOC(temp_str);
     }
     PRETTY_PRINT(79, "=");
     fprintf(globals.outputfile_FP, "\n");
