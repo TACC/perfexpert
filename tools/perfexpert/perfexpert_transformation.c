@@ -47,7 +47,7 @@ int transformation(void) {
     test_t test;
 
     OUTPUT_VERBOSE((4, "%s", _BLUE("Code transformation phase")));
-    OUTPUT(("Applying optimizations"));
+    OUTPUT(("%s", _YELLOW("Applying optimizations")));
 
     /* Set some environment variables to avoid working arguments */
     bzero(temp_str[1], BUFFER_SIZE);

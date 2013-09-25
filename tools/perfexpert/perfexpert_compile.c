@@ -50,7 +50,7 @@ int compile_program(void) {
     test_t test;
 
     OUTPUT_VERBOSE((4, "%s", _BLUE("Compiling the program")));
-    OUTPUT(("Compiling [%s]", globals.program));
+    OUTPUT(("%s [%s]", _YELLOW("Compiling"), globals.program));
 
     /* If the source file was provided generate compilation command line */
     if (NULL != globals.sourcefile) {
