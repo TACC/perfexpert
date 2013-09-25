@@ -55,11 +55,11 @@ void recommenderTraversal::visit(SgNode *node) {
 
     /* Find code fragment for bottlenecks type 'loop' in C */
     if ((isSgForStatement(node)) && (info->get_line() == fragment->line_number)
-        && (0 == strncmp("loop", fragment->code_type, 4))) {
+        && (PERFEXPERT_HOTSPOT_LOOP == fragment->code_type)) {
 
         /* Found a C loop on the exact line number */
-        OUTPUT_VERBOSE((8, "   %s (%d)", _GREEN((char *)"loop found at line"),
-            info->get_line()));
+        OUTPUT_VERBOSE((8, "         [loop] %s (line %d)",
+            _GREEN((char *)"found"), info->get_line()));
 
         /* Extract the loop fragment */
         if (PERFEXPERT_SUCCESS != output_fragment(node, info, fragment)) {
@@ -91,9 +91,8 @@ void recommenderTraversal::visit(SgNode *node) {
                 fragment->outer_loop_line_number = info->get_line();
 
                 /* The parent is a loop */
-                OUTPUT_VERBOSE((8, "   %s (%d)",
-                    _GREEN((char *)"loop has a parent loop at line"),
-                    fragment->outer_loop_line_number));
+                OUTPUT_VERBOSE((8, "         [parent loop] %s (line %d)",
+                    _GREEN((char *)"found"), fragment->outer_loop_line_number));
 
                 /* Extract the parent loop fragment */
                 if (PERFEXPERT_SUCCESS != output_fragment(parent, info,
@@ -128,9 +127,9 @@ void recommenderTraversal::visit(SgNode *node) {
                             info->get_line();
 
                         /* The grandparent is a loop */
-                        OUTPUT_VERBOSE((8, "   %s (%d)",
-                            _GREEN((char *)"loop has grandparent loop at line"),
-                            info->get_line()));
+                        OUTPUT_VERBOSE((8, "   [grandparent loop] %s (line %d)",
+                            _GREEN((char *)"found"),
+                            fragment->outer_outer_loop_line_number));
 
                         /* Extract the parent loop fragment */
                         if (PERFEXPERT_SUCCESS != output_fragment(grandparent,
@@ -163,9 +162,9 @@ void recommenderTraversal::visit(SgNode *node) {
 
         if (0 == strcmp(function_name.str(), fragment->function_name)) {
             /* Found a function with the rigth name */
-            OUTPUT_VERBOSE((8, "   %s (%d) [%s]",
-                _GREEN((char *)"function found at line"), info->get_line(),
-                fragment->function_name));
+            OUTPUT_VERBOSE((8, "         [%s] %s (line %d) ",
+                fragment->function_name, _GREEN((char *)"found"),
+                info->get_line()));
 
             /* Extract the function */
             if (PERFEXPERT_SUCCESS != output_function(node, fragment)) {
@@ -179,13 +178,13 @@ void recommenderTraversal::visit(SgNode *node) {
 
 /* recommenderTraversal::atTraversalStart */
 void recommenderTraversal::atTraversalStart() {
-    OUTPUT_VERBOSE((9, "   %s (%s)", _YELLOW((char *)"starting traversal on"),
+    OUTPUT_VERBOSE((9, "      %s (%s)", _YELLOW((char *)"starting traversal"),
         fragment->filename));
 }
 
 /* recommenderTraversal::atTraversalEnd */
 void recommenderTraversal::atTraversalEnd() {
-    OUTPUT_VERBOSE((9, "   %s (%s)", _YELLOW((char *)"ending traversal on"),
+    OUTPUT_VERBOSE((9, "      %s (%s)", _YELLOW((char *)"ending traversal"),
         fragment->filename));
 }
 

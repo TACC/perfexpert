@@ -35,6 +35,7 @@ extern "C" {
 #include <string.h>
 
 /* PerfExpert headers */
+#include "config.h"
 #include "perfexpert.h"
 #include "perfexpert_alloc.h"
 #include "perfexpert_constants.h"
@@ -139,7 +140,7 @@ int main(int argc, char** argv) {
             }
         }
 
-        /* Call HPCToolkit and stuff (former perfexpert_run_exp) */
+        /* Call measurement tool */
         if (PERFEXPERT_SUCCESS != measurements()) {
             OUTPUT(("%s", _ERROR("Error: unable to take measurements")));
             goto CLEANUP;
@@ -189,7 +190,7 @@ int main(int argc, char** argv) {
         }
 
         if ((NULL != globals.sourcefile) || (NULL != globals.target)) {
-            #if HAVE_ROSE == 1
+            #if HAVE_CODE_TRANSFORMATION
             /* Call code transformer */
             switch (transformation()) {
                 case PERFEXPERT_ERROR:
@@ -206,6 +207,9 @@ int main(int argc, char** argv) {
                 case PERFEXPERT_SUCCESS:
                     rc = PERFEXPERT_SUCCESS;
             }
+            #else
+            rc = PERFEXPERT_SUCCESS;
+            goto REPORT;            
             #endif
         } else {
             rc = PERFEXPERT_SUCCESS;

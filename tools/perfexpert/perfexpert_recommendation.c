@@ -77,19 +77,19 @@ int recommendation(void) {
     }
     bzero(temp_str[5], BUFFER_SIZE);
     sprintf(temp_str[5], "%s/%s", globals.stepdir, ANALYZER_METRICS);
-    if (0 != setenv("PERFEXPERT_RECOMMENDER_INPUT_FILE", temp_str[5], 0)) {
+    if (0 != setenv("PERFEXPERT_RECOMMENDER_INPUT_FILE", temp_str[5], 1)) {
         OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
         return PERFEXPERT_ERROR;
     }
     bzero(temp_str[6], BUFFER_SIZE);
     sprintf(temp_str[6], "%s/%s", globals.stepdir, RECOMMENDER_REPORT);
-    if (0 != setenv("PERFEXPERT_RECOMMENDER_OUTPUT_FILE", temp_str[6], 0)) {
+    if (0 != setenv("PERFEXPERT_RECOMMENDER_OUTPUT_FILE", temp_str[6], 1)) {
         OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
         return PERFEXPERT_ERROR;
     }
     bzero(temp_str[7], BUFFER_SIZE);
     sprintf(temp_str[7], "%s/%s", globals.stepdir, RECOMMENDER_METRICS);
-    if (0 != setenv("PERFEXPERT_RECOMMENDER_METRICS_FILE", temp_str[7], 0)) {
+    if (0 != setenv("PERFEXPERT_RECOMMENDER_METRICS_FILE", temp_str[7], 1)) {
         OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
         return PERFEXPERT_ERROR;
     }
@@ -98,7 +98,7 @@ int recommendation(void) {
         OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
         return PERFEXPERT_ERROR;
     }
-    if (0 != setenv("PERFEXPERT_RECOMMENDER_WORKDIR", globals.stepdir, 0)) {
+    if (0 != setenv("PERFEXPERT_RECOMMENDER_WORKDIR", globals.stepdir, 1)) {
         OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
         return PERFEXPERT_ERROR;
     }
@@ -112,7 +112,7 @@ int recommendation(void) {
     sprintf(temp_str[0], "%s/%s", globals.stepdir, RECOMMENDER_OUTPUT);
     test.output = temp_str[0];
     test.input = NULL;
-    test.info = NULL;
+    test.info = temp_str[5];
 
     /* run_and_fork_and_pray */
     rc = fork_and_wait(&test, argv);

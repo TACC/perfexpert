@@ -102,7 +102,7 @@ typedef struct fragment {
     char *filename;
     int  line_number;
     char *function_name;
-    char *code_type;
+    int  code_type;
     int  rowid;
     int  loop_depth;
     perfexpert_list_t recommendations;

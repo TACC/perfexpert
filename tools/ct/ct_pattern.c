@@ -138,10 +138,10 @@ int test_pattern(fragment_t *fragment, recommendation_t *recommendation,
     sprintf(test->output, "%s.%s.output", fragment->fragment_file,
         pattern->program);
     test->input = fragment->fragment_file;
-    test->info  = fragment->fragment_file;
+    test->info = fragment->fragment_file;
 
     /* It we're testing for a loop, check for the outer loop */
-    if ((0 == strncmp("loop", fragment->code_type, 4)) &&
+    if ((PERFEXPERT_HOTSPOT_LOOP == fragment->code_type) &&
         (2 <= fragment->loop_depth) &&
         (NULL != fragment->outer_loop_fragment_file)) {
 
@@ -155,7 +155,7 @@ int test_pattern(fragment_t *fragment, recommendation_t *recommendation,
         sprintf(test->output, "%s.%s.output",
             fragment->outer_loop_fragment_file, pattern->program);
         test->input = fragment->outer_loop_fragment_file;
-        test->info  = fragment->outer_loop_fragment_file;
+        test->info = fragment->outer_loop_fragment_file;
 
         /* And test for the outer outer loop too */
         if ((3 <= fragment->loop_depth) &&
@@ -171,7 +171,7 @@ int test_pattern(fragment_t *fragment, recommendation_t *recommendation,
             sprintf(test->output, "%s.%s.output",
                 fragment->outer_outer_loop_fragment_file, pattern->program);
             test->input = fragment->outer_outer_loop_fragment_file;
-            test->info  = fragment->outer_outer_loop_fragment_file;
+            test->info = fragment->outer_outer_loop_fragment_file;
         }
     }
 

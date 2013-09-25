@@ -36,6 +36,7 @@ extern "C" {
 #include <getopt.h>
 
 /* PerfExpert headers */
+#include "config.h"
 #include "perfexpert.h"
 #include "perfexpert_alloc.h"
 #include "perfexpert_constants.h"
@@ -108,6 +109,9 @@ void show_help(void) {
     printf("                     appear on output files\n");
     printf("  -h --help          Show this message\n\n");
     printf("Use CC, CFLAGS and LDFLAGS to select compiler and compilation/linkage flags\n");
+    #if !HAVE_CODE_TRANSFORMATION
+    printf("-s and -m options will not work because PerfExpert not was configure to use ROSE\n");
+    #endif
 }
 
 /* parse_env_vars */
@@ -306,19 +310,29 @@ int parse_cli_params(int argc, char *argv[]) {
             }
             if (PERFEXPERT_SUCCESS != perfexpert_util_program_only(argv[optind],
                 &(globals.program))) {
-                OUTPUT(("%s", _ERROR("Error: unable to find program")));
+                OUTPUT(("%s", _ERROR("Error: unable to extract program name")));
                 return PERFEXPERT_ERROR;
             }
-            if (PERFEXPERT_SUCCESS != perfexpert_util_path_only(argv[optind],
-                &(globals.program_path))) {
-                OUTPUT(("%s", _ERROR("Error: unable to find program")));
+        } else {
+            if (PERFEXPERT_SUCCESS != perfexpert_util_filename_only(
+                argv[optind], &(globals.program))) {
+                OUTPUT(("%s", _ERROR("Error: unable to extract program name"),
+                    argv[optind]));
                 return PERFEXPERT_ERROR;
-            }
-            PERFEXPERT_ALLOC(char, globals.program_full,
-                (strlen(globals.program) + strlen(globals.program_path) + 1));
-            sprintf(globals.program_full, "%s%s", globals.program_path,
-                globals.program);
+            }            
         }
+        OUTPUT_VERBOSE((1, "   program only=[%s]", globals.program));        
+        if (PERFEXPERT_SUCCESS != perfexpert_util_path_only(argv[optind],
+            &(globals.program_path))) {
+            OUTPUT(("%s", _ERROR("Error: unable to extract program path")));
+            return PERFEXPERT_ERROR;
+        }
+        OUTPUT_VERBOSE((1, "   program path=[%s]", globals.program_path));        
+        PERFEXPERT_ALLOC(char, globals.program_full,
+            (strlen(globals.program) + strlen(globals.program_path) + 1));
+        sprintf(globals.program_full, "%s%s", globals.program_path,
+            globals.program);
+        OUTPUT_VERBOSE((1, "   program full path=[%s]", globals.program_full));        
     }
     optind++;
 

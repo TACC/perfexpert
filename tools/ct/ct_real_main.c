@@ -48,8 +48,8 @@ globals_t globals; // Variable to hold global options, this one is OK
 
 /* main, life starts here */
 int ct_main(int argc, char** argv) {
-    fragment_t *fragment = NULL;
     perfexpert_list_t fragments;
+    fragment_t *fragment = NULL;
     int rc = PERFEXPERT_NO_TRANS;
 
     /* Set default values for globals */
@@ -82,6 +82,10 @@ int ct_main(int argc, char** argv) {
                 globals.inputfile));
             return PERFEXPERT_ERROR;
         }
+        OUTPUT_VERBOSE((3, "using (%s) as input for perf measurements",
+            globals.inputfile));
+    } else {
+        OUTPUT_VERBOSE((3, "using STDIN as input for perf measurements"));        
     }
 
     /* Print to a file or STDOUT is? */
