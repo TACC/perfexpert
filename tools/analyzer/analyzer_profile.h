@@ -60,7 +60,7 @@ static inline char* perfexpert_tool_get_tot_cyc(const char* tool) {
 
     while (NULL != tools[i].name) {
         if (0 == strcmp(tool, tools[i].name)) {
-            return (char *)&(tools[i].tot_cyc);
+            return (char *)(tools[i].tot_cyc);
         }
         i++;
     }
@@ -73,7 +73,7 @@ static inline char* perfexpert_tool_get_tot_ins(const char* tool) {
 
     while (NULL != tools[i].name) {
         if (0 == strcmp(tool, tools[i].name)) {
-            return (char *)&(tools[i].tot_ins);
+            return (char *)(tools[i].tot_ins);
         }
         i++;
     }
@@ -86,7 +86,7 @@ static inline char* perfexpert_tool_get_prefix(const char* tool) {
 
     while (NULL != tools[i].name) {
         if (0 == strcmp(tool, tools[i].name)) {
-            return (char *)&(tools[i].prefix);
+            return (char *)(tools[i].prefix);
         }
         i++;
     }

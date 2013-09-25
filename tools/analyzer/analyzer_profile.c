@@ -328,8 +328,9 @@ int profile_flatten_hotspots(profile_t *profile) {
                 (perfexpert_list_item_t *)hotspot);
             hotspot = hotspot_prev;
 
-            OUTPUT_VERBOSE((8, "      %s (number of instructions not found)",
-                _RED("removed from list of hotspots")));
+            OUTPUT_VERBOSE((8, "      %s (%s not found)",
+                _RED("removed from list of hotspots"),
+                perfexpert_tool_get_tot_cyc(globals.tool)));
         }
         hotspot = (procedure_t *)perfexpert_list_get_next(hotspot);
     }

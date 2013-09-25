@@ -25,7 +25,7 @@
 # $HEADER$
 #
 
-SUBDIRS = perfexpert analyzer hound sniffer
+SUBDIRS = perfexpert analyzer hound sniffer 
 SUBDIRS += $(ENABLE_MINST)
 SUBDIRS += $(ENABLE_RECOMMENDER)
 SUBDIRS += $(ENABLE_CT)
