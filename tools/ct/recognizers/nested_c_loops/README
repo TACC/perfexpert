@@ -30,21 +30,21 @@ iteration (FOR, DO and WHILE) or not.
 
 Software requirements:
 
-	GNU Bison  (http://ftp.gnu.org/gnu/bison/)
-	GNU Flex   (http://flex.sourceforge.net/)
+    GNU Bison  (http://ftp.gnu.org/gnu/bison/)
+    GNU Flex   (http://flex.sourceforge.net/)
 
 Compiling instructions:
 
-	$ make
+    $ make
 
 Compiling instructions without Makefile:
 
-	$ yacc -d nested_c_loops.y
-	$ lex nested_c_loops.l
-	$ gcc -o nested_c_loops lex.yy.c y.tab.c
+    $ yacc -d nested_c_loops.y
+    $ lex nested_c_loops.l
+    $ gcc -o nested_c_loops lex.yy.c y.tab.c
 
 Using instruction:
 
-	$ ./nested_c_loops < example.c
+    $ ./nested_c_loops < example.c
 
 EOF.
