@@ -50,7 +50,8 @@ int select_transformations(fragment_t *fragment) {
     char *error_msg = NULL;
     char sql[BUFFER_SIZE];
 
-    OUTPUT_VERBOSE((7, "%s", _BLUE("Querying DB")));
+    OUTPUT_VERBOSE((7, "%s",
+        _BLUE("Looking for code transformers and code patterns")));
 
     /* For each recommendation in this fragment, select the transformers */
     recommendation = (recommendation_t *)perfexpert_list_get_first(
@@ -58,9 +59,8 @@ int select_transformations(fragment_t *fragment) {
 
     while ((perfexpert_list_item_t *)recommendation !=
         &(fragment->recommendations.sentinel)) {
-        OUTPUT_VERBOSE((4, "   %s [%d]",
-            _YELLOW("selecting transformations for recommendation"),
-            recommendation->id));
+        OUTPUT_VERBOSE((4, "   [%d] %s", recommendation->id,
+            _YELLOW("selecting transformations")));
 
         /* Initialyze the list of transformations */
         perfexpert_list_construct(&(recommendation->transformations));
@@ -105,11 +105,11 @@ int accumulate_transformations(void *recommendation, int count, char **val,
     strncpy(transformation->program, val[0], strlen(val[0]));
     perfexpert_list_construct(&(transformation->patterns));
 
-    OUTPUT_VERBOSE((7, "      %s [%d]", _GREEN(transformation->program),
-        transformation->id));
+    OUTPUT_VERBOSE((7, "      [%d] %s", transformation->id,
+        _GREEN(transformation->program)));
 
-    OUTPUT_VERBOSE((4, "      %s [%d]",
-        _YELLOW("selecting patterns for transformation"), transformation->id));
+    OUTPUT_VERBOSE((4, "      [%d] %s", transformation->id,
+        _YELLOW("selecting patterns")));
 
     /* Find the pattern recognizers available for this transformation */
     bzero(sql, BUFFER_SIZE);
@@ -147,8 +147,8 @@ int accumulate_patterns(void *transformation, int count, char **val,
     PERFEXPERT_ALLOC(char, pattern->program, (strlen(val[0]) + 1));
     strncpy(pattern->program, val[0], strlen(val[0]));
 
-    OUTPUT_VERBOSE((7, "         %s (%d)", _GREEN(pattern->program),
-        pattern->id));
+    OUTPUT_VERBOSE((7, "         [%d] %s", pattern->id,
+        _GREEN(pattern->program)));
 
     /* Add this pattern to the transformation list */
     t = (transformation_t *)transformation;
