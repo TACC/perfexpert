@@ -39,7 +39,6 @@ extern "C" {
 #include "perfexpert_list.h"
 
 /* HPCToolkit stuff */
-#define PERFEXPERT_TOOL_HPCTOOLKIT_PROFILE_FILE  "database/experiment.xml"
 #define PERFEXPERT_TOOL_HPCTOOLKIT_COUNTERS      "papi"
 #define PERFEXPERT_TOOL_HPCTOOLKIT_TOT_INS       "PAPI_TOT_INS"
 #define PERFEXPERT_TOOL_HPCTOOLKIT_TOT_CYC       "PAPI_TOT_CYC"
