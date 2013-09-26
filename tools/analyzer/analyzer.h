@@ -40,6 +40,7 @@ extern "C" {
 #include <libxml/parser.h>
 #endif
 
+#include "perfexpert_constants.h"
 #include "perfexpert_hash.h"
 #include "perfexpert_list.h"
 
@@ -80,10 +81,10 @@ typedef struct metric {
     double value;
     perfexpert_hash_handle_t hh_str;
     /* From this point this structure is different than lcpi_t */
-    int    id;
-    int    thread;
-    int    mpi_rank;
-    int    experiment;
+    int id;
+    int thread;
+    int mpi_rank;
+    int experiment;
     perfexpert_hash_handle_t hh_int;
 } metric_t;
 
@@ -93,13 +94,13 @@ typedef struct procedure {
     volatile perfexpert_list_item_t *prev;
     int  id;
     char *name;
-    int  type;
     int  line;
     int  valid;
     double variance;
     double importance;
     double instructions;
     double cycles;
+    enum hotspot_type_t type;
     lcpi_t *lcpi_by_name;
     metric_t *metrics_by_id;
     metric_t *metrics_by_name;
@@ -116,13 +117,13 @@ typedef struct loop {
     volatile perfexpert_list_item_t *prev;
     int  id;
     char *name;
-    int  type;
     int  line;
     int  valid;
     double variance;
     double importance;
     double instructions;
     double cycles;
+    enum hotspot_type_t type;
     lcpi_t *lcpi_by_name;
     metric_t *metrics_by_id;
     metric_t *metrics_by_name;
@@ -138,9 +139,9 @@ struct callpath {
     volatile perfexpert_list_item_t *next;
     volatile perfexpert_list_item_t *prev;
     perfexpert_list_t callees;
-    int  id;
-    int  scope;
-    int  alien;
+    int id;
+    int scope;
+    int alien;
     callpath_t *parent;
     procedure_t *procedure;
 };
@@ -165,19 +166,19 @@ typedef struct profile {
 /* Structure to hold global variables */
 typedef struct {
     double threshold;
-    char *tool;
-    char *inputfile;
-    char *outputfile;
-    FILE *outputfile_FP;
-    int  aggregate;
-    int  thread;
-    char *machinefile;
+    char     *tool;
+    char     *inputfile;
+    char     *outputfile;
+    FILE     *outputfile_FP;
+    int      aggregate;
+    int      thread;
+    char     *machinefile;
     metric_t *machine_by_name;
-    char *lcpifile;
-    lcpi_t *lcpi_by_name;
-    int  verbose;
-    int  colorful;
-    char *outputmetrics;
+    char     *lcpifile;
+    lcpi_t   *lcpi_by_name;
+    int      verbose;
+    int      colorful;
+    char     *outputmetrics;
 } globals_t;
 
 extern globals_t globals; /* This variable is defined in analyzer_main.c */
@@ -208,6 +209,7 @@ int output_analysis_all(perfexpert_list_t *profiles);
 int output_analysis(profile_t *profile, procedure_t *hotspot);
 int output_metrics_all(perfexpert_list_t *profiles);
 int output_metrics(profile_t *profile, procedure_t *hotspot, FILE *file_FP);
+int hotspot_sort(void);
 
 /* generic_get */
 #include "perfexpert_alloc.h"
