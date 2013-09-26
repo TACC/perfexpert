@@ -52,7 +52,7 @@ tool_t tools[] = {
         PERFEXPERT_TOOL_VTUNE_TOT_INS,
         PERFEXPERT_TOOL_VTUNE_TOT_CYC,
         PERFEXPERT_TOOL_VTUNE_COUNTERS
-    }, {NULL, NULL, NULL, NULL}
+    }, {NULL, NULL, NULL, NULL, NULL}
 };
 
 /* profile_parse_file */
