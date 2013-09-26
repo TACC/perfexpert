@@ -76,6 +76,7 @@ int parse_transformation_params(perfexpert_list_t *fragments) {
             perfexpert_list_construct(&(fragment->recommendations));
             perfexpert_list_append(fragments,
                 (perfexpert_list_item_t *)fragment);
+            fragment->code_type = PERFEXPERT_HOTSPOT_UNKNOWN;
             fragment->fragment_file = NULL;
             fragment->outer_loop_fragment_file = NULL;
             fragment->outer_outer_loop_fragment_file = NULL;

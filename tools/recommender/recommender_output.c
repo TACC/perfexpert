@@ -52,7 +52,7 @@ int output_header(segment_t *segment) {
             segment->filename);
         fprintf(globals.outputmetrics_FP, "code.line_number=%d\n",
             segment->line_number);
-        fprintf(globals.outputmetrics_FP, "code.type=%s\n", segment->type);
+        fprintf(globals.outputmetrics_FP, "code.type=%d\n", segment->type);
         fprintf(globals.outputmetrics_FP, "code.function_name=%s\n",
             segment->function_name);
         fprintf(globals.outputmetrics_FP, "code.loopdepth=%d\n",
