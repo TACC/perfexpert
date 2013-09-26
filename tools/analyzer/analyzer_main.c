@@ -56,6 +56,7 @@ int main(int argc, char **argv) {
         .lcpi_by_name    = NULL,             // lcpi_t *
         .verbose         = 0,                // int
         .colorful        = PERFEXPERT_FALSE, // int
+        .order           = "none",           // char *
         .outputmetrics   = NULL              // char *
     };
 
@@ -126,6 +127,11 @@ int main(int argc, char **argv) {
         OUTPUT(("%s (%s)", _ERROR("Error: flatening profiles"),
             globals.inputfile));
         return PERFEXPERT_ERROR;
+    }
+
+    /* Sort hotspots */
+    if (NULL != globals.order) {
+        hotspot_sort(&profiles);
     }
 
     /* Output analysis report */

@@ -38,6 +38,7 @@ perfexpert_analyzer_SOURCES = analyzer_main.c \
 	analyzer_options.c \
 	analyzer_output.c \
 	analyzer_profile.c \
+	analyzer_sort.c \
 	analyzer_vtune.c
 
 # EOF

@@ -65,6 +65,7 @@ typedef struct {
     char  *knc_before;
     char  *knc_after;
     char  *tool;
+    char  *order;
     long int pid;
 } globals_t;
 

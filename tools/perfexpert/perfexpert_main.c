@@ -80,6 +80,7 @@ int main(int argc, char** argv) {
         .knc_prefix    = NULL,             // char *
         .knc_before    = NULL,             // char *
         .knc_after     = NULL,             // char *
+        .order         = "none",           // char *
         .tool          = "hpctoolkit"      // char *
     };
 
