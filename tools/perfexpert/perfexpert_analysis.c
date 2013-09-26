@@ -46,7 +46,7 @@ extern "C" {
 /* analysis */
 int analysis(void) {
     char *argv[2];
-    char temp_str[10][BUFFER_SIZE];
+    char temp_str[9][BUFFER_SIZE];
     test_t test;
 
     OUTPUT_VERBOSE((4, "%s", _BLUE("Analysis phase")));
@@ -96,16 +96,13 @@ int analysis(void) {
         OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
         return PERFEXPERT_ERROR;
     }
-    // TODO: this will change
     bzero(temp_str[8], BUFFER_SIZE);
-    sprintf(temp_str[8], "%s", "hpctoolkit");
-    if (0 != setenv("PERFEXPERT_ANALYZER_TOOL", temp_str[8], 0)) {
+    sprintf(temp_str[8], "%s/%s", globals.stepdir, ANALYZER_METRICS);
+    if (0 != setenv("PERFEXPERT_ANALYZER_METRICS_FILE", temp_str[8], 1)) {
         OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
         return PERFEXPERT_ERROR;
     }
-    bzero(temp_str[9], BUFFER_SIZE);
-    sprintf(temp_str[9], "%s/%s", globals.stepdir, ANALYZER_METRICS);
-    if (0 != setenv("PERFEXPERT_ANALYZER_METRICS_FILE", temp_str[9], 1)) {
+    if (0 != setenv("PERFEXPERT_ANALYZER_TOOL", globals.tool, 0)) {
         OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
         return PERFEXPERT_ERROR;
     }
