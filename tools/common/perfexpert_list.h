@@ -108,7 +108,7 @@ static inline perfexpert_list_item_t *perfexpert_list_remove_item(
     item->prev->next = item->next;
     item->next->prev = item->prev;
     list->length--;
-    
+
     return (perfexpert_list_item_t *)item->prev;
 }
 

@@ -52,6 +52,7 @@ static struct option long_options[] = {
     {"measurement-tool", required_argument, NULL, 'm'},
     {"machine",          required_argument, NULL, 'M'},
     {"outputfile",       required_argument, NULL, 'o'},
+    {"sorting-order",    required_argument, NULL, 'O'},
     {"threshold",        required_argument, NULL, 't'},
     {"thread",           required_argument, NULL, 'T'},
     {"verbose",          required_argument, NULL, 'v'},
@@ -62,7 +63,7 @@ static struct option long_options[] = {
 void show_help(void) {
     OUTPUT_VERBOSE((10, "printing help"));
     /*      12345678901234567890123456789012345678901234567890123456789012345678901234567890 */
-    printf("Usage: analyzer [-acfhilmMoTvw]\n\n");
+    printf("Usage: analyzer [-acfhilmMoOTvw]\n\n");
     printf("  -a --aggregate     Show whole-program information (instead of per hotspot)\n");
     printf("  -c --colorful      Enable colors on verbose mode, no weird characters will\n");
     printf("                     appear on output files\n");
@@ -76,6 +77,8 @@ void show_help(void) {
     printf("  -M --machine       Set input file for hardware characterization\n");
     printf("                     (default: %s/%s)\n", PERFEXPERT_ETCDIR, MACHINE_FILE);
     printf("  -o --outputfile    Set output file for performance analysis (default: STDOUT)\n");
+    printf("  -O --sorting-order Define the order in which hotspots should be sorted\n");
+    printf("                     (valid values: relevance, performance, and mixed)\n");
     printf("  -t --threshold     Define the relevance (in %% of runtime) of code bottlenecks\n");
     printf("                     PerfExpert should take into consideration (> 0 and <= 1)\n");
     printf("  -T --thread        Show information only for a specific thread ID\n");
@@ -115,6 +118,10 @@ int parse_env_vars(void) {
         globals.outputfile = getenv("PERFEXPERT_ANALYZER_OUTPUT_FILE");
         OUTPUT_VERBOSE((1, "ENV: outputfile=%s", globals.outputfile));
     }
+    if (NULL != getenv("PERFEXPERT_ANALYZER_SORTING_ORDER")) {
+        globals.order = getenv("PERFEXPERT_ANALYZER_SORTING_ORDER");
+        OUTPUT_VERBOSE((1, "ENV: order=%s", globals.order));
+    }
     if (NULL != getenv("PERFEXPERT_ANALYZER_THRESHOLD")) {
         globals.threshold = atof(getenv("PERFEXPERT_ANALYZER_THRESHOLD"));
         OUTPUT_VERBOSE((1, "ENV: threshold=%f", globals.threshold));
@@ -140,7 +147,7 @@ int parse_cli_params(int argc, char *argv[]) {
 
     while (1) {
         /* get parameter */
-        parameter = getopt_long(argc, argv, "achi:l:m:M:o:t:T:v:",
+        parameter = getopt_long(argc, argv, "achi:l:m:M:o:O:t:T:v:",
             long_options, &option_index);
 
         /* Detect the end of the options */
@@ -190,6 +197,11 @@ int parse_cli_params(int argc, char *argv[]) {
                 globals.outputfile = optarg;
                 OUTPUT_VERBOSE((1, "option 'o' set [%s]", globals.outputfile));
                 break;
+            /* Sorting order */
+            case 'O':
+                globals.order = optarg;
+                OUTPUT_VERBOSE((1, "option 'O' set [%s]", globals.order));
+                break;
             /* Threshold */
             case 't':
                 globals.threshold = atof(optarg);
@@ -215,13 +227,16 @@ int parse_cli_params(int argc, char *argv[]) {
 
     /* Print summary */
     OUTPUT_VERBOSE((7, "%s", _BLUE("Summary of options")));
-    OUTPUT_VERBOSE((7, "   Aggregate?        %s", globals.aggregate ? "yes" : "no"));
-    OUTPUT_VERBOSE((7, "   Colorful verbose? %s", globals.colorful ? "yes" : "no"));
+    OUTPUT_VERBOSE((7, "   Aggregate?        %s", globals.aggregate ?
+        "yes" : "no"));
+    OUTPUT_VERBOSE((7, "   Colorful verbose? %s", globals.colorful ?
+        "yes" : "no"));
     OUTPUT_VERBOSE((7, "   Input file:       %s", globals.inputfile));
     OUTPUT_VERBOSE((7, "   LCPI file:        %s", globals.lcpifile));
     OUTPUT_VERBOSE((7, "   Measurement tool: %s", globals.tool));
     OUTPUT_VERBOSE((7, "   Machine file:     %s", globals.machinefile));
     OUTPUT_VERBOSE((7, "   Output file:      %s", globals.outputfile));
+    OUTPUT_VERBOSE((7, "   Sorting order:    %s", globals.order));
     OUTPUT_VERBOSE((7, "   Threshold:        %f", globals.threshold));
     OUTPUT_VERBOSE((7, "   Thread ID:        %d", globals.thread));
     OUTPUT_VERBOSE((7, "   Verbose level:    %d", globals.verbose));

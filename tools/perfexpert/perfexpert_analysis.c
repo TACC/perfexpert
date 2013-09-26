@@ -109,6 +109,10 @@ int analysis(void) {
         OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
         return PERFEXPERT_ERROR;
     }
+    if (0 != setenv("PERFEXPERT_ANALYZER_SORTING_ORDER", globals.order, 0)) {
+        OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
+        return PERFEXPERT_ERROR;
+    }
     if (0 != setenv("PERFEXPERT_ANALYZER_WORKDIR", globals.stepdir, 1)) {
         OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
         return PERFEXPERT_ERROR;

@@ -179,6 +179,7 @@ typedef struct {
     int      verbose;
     int      colorful;
     char     *outputmetrics;
+    char     *order;
 } globals_t;
 
 extern globals_t globals; /* This variable is defined in analyzer_main.c */
@@ -209,7 +210,7 @@ int output_analysis_all(perfexpert_list_t *profiles);
 int output_analysis(profile_t *profile, procedure_t *hotspot);
 int output_metrics_all(perfexpert_list_t *profiles);
 int output_metrics(profile_t *profile, procedure_t *hotspot, FILE *file_FP);
-int hotspot_sort(void);
+int hotspot_sort(perfexpert_list_t *profiles);
 
 /* generic_get */
 #include "perfexpert_alloc.h"
@@ -217,19 +218,17 @@ int hotspot_sort(void);
 static inline double generic_get(lcpi_t *db, char key[]) {
     lcpi_t *entry = NULL;
     char *key_md5 = NULL;
-    double r;
+    double value;
 
     PERFEXPERT_ALLOC(char, key_md5, 33);
     strcpy(key_md5, perfexpert_md5_string(key));
     perfexpert_hash_find_str(db, key_md5, entry);
+    PERFEXPERT_DEALLOC(key_md5);
 
     if (NULL == entry) {
-        free(key_md5);
         return 0.0;
     } else {
-        r = entry->value;
-        free(key_md5);
-        return r;
+        return entry->value;
     }
 }
 
