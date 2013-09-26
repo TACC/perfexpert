@@ -58,6 +58,7 @@ static struct option long_options[] = {
     {"help",              no_argument,       NULL, 'h'},
     {"knc",               required_argument, NULL, 'k'},
     {"makefile",          required_argument, NULL, 'm'},
+    {"sorting-order",     required_argument, NULL, 'O'},
     {"prefix",            required_argument, NULL, 'p'},
     {"knc-prefix",        required_argument, NULL, 'P'},
     {"recommend",         required_argument, NULL, 'r'},
@@ -74,7 +75,7 @@ void show_help(void) {
     printf("Usage: perfexpert <threshold> [-m target|-s sourcefile] [-r count] [-d database]\n");
     printf("                  [-p prefix] [-b filename] [-a filename] [-v [level]] [-chg]\n");
     printf("                  [-k card [-P prefix] [-B filename] [-A filename]] [-t tool]\n");
-    printf("                  <program_executable> [program_arguments]\n\n");
+    printf("                  [-O order] <program_executable> [program_arguments]\n\n");
     printf("  <threshold>        Define the relevance (in %% of runtime) of code fragments\n");
     printf("                     PerfExpert should take into consideration (> 0 and <= 1)\n");
     printf("  -m --makefile      Use GNU standard 'make' command to compile the code (it\n");
@@ -103,6 +104,8 @@ void show_help(void) {
     printf("                     the KNC card.\n");
     printf("  -A --knc-after     Execute 'filename' after each run of the application on\n");
     printf("                     the KNC card.\n");
+    printf("  -O --sorting-order Define the order in which hotspots should be sorted\n");
+    printf("                     (valid values: relevance, performance, and mixed)\n");
     printf("  -g --leave-garbage Do not remove work directory after run\n");
     printf("  -v --verbose       Enable verbose mode (default: disabled, levels: 1-10)\n");
     printf("  -c --colorful      Enable colors on verbose mode, no weird characters will\n");
@@ -170,6 +173,10 @@ int parse_env_vars(void) {
         globals.knc_after = ("PERFEXPERT_KNC_AFTER");
         OUTPUT_VERBOSE((1, "ENV: knc)after=%s", globals.knc_after));
     }
+    if (NULL != getenv("PERFEXPERT_SORTING_ORDER")) {
+        globals.order = getenv("PERFEXPERT_SORTING_ORDER");
+        OUTPUT_VERBOSE((1, "ENV: order=%s", globals.order));
+    }
     if (NULL != getenv("PERFEXPERT_ANALYZER_TOOL")) {
         globals.tool = getenv("PERFEXPERT_ANALYZER_TOOL");
         OUTPUT_VERBOSE((1, "ENV: tool=%s", globals.tool));
@@ -190,7 +197,7 @@ int parse_cli_params(int argc, char *argv[]) {
 
     while (1) {
         /* get parameter */
-        parameter = getopt_long(argc, argv, "a:A:b:B:cd:ghk:m:p:P:r:s:t:v:",
+        parameter = getopt_long(argc, argv, "a:A:b:B:cd:ghk:m:O:p:P:r:s:t:v:",
             long_options, &option_index);
 
         /* Detect the end of the options */
@@ -253,6 +260,11 @@ int parse_cli_params(int argc, char *argv[]) {
             case 'm':
                 globals.target = optarg;
                 OUTPUT_VERBOSE((1, "option 'm' set [%s]", globals.target));
+                break;
+            /* Sorting order */
+            case 'O':
+                globals.order = optarg;
+                OUTPUT_VERBOSE((1, "option 'O' set [%s]", globals.order));
                 break;
             /* Should I add a program prefix to the command line? */
             case 'p':
@@ -352,8 +364,10 @@ int parse_cli_params(int argc, char *argv[]) {
 
     OUTPUT_VERBOSE((7, "%s", _BLUE("Summary of options")));
     OUTPUT_VERBOSE((7, "   Verbose level:       %d", globals.verbose));
-    OUTPUT_VERBOSE((7, "   Colorful verbose?    %s", globals.colorful ? "yes" : "no"));
-    OUTPUT_VERBOSE((7, "   Leave garbage?       %s", globals.leave_garbage ? "yes" : "no"));
+    OUTPUT_VERBOSE((7, "   Colorful verbose?    %s", globals.colorful ?
+        "yes" : "no"));
+    OUTPUT_VERBOSE((7, "   Leave garbage?       %s", globals.leave_garbage ?
+        "yes" : "no"));
     OUTPUT_VERBOSE((7, "   Database file:       %s", globals.dbfile));
     OUTPUT_VERBOSE((7, "   Recommendations      %d", globals.rec_count));
     OUTPUT_VERBOSE((7, "   Threshold:           %f", globals.threshold));
@@ -370,6 +384,7 @@ int parse_cli_params(int argc, char *argv[]) {
     OUTPUT_VERBOSE((7, "   MIC prefix:          %s", globals.knc_prefix));
     OUTPUT_VERBOSE((7, "   MIC before each run: %s", globals.knc_before));
     OUTPUT_VERBOSE((7, "   MIC after each run:  %s", globals.knc_after));
+    OUTPUT_VERBOSE((7, "   Sorting order:       %s", globals.order));
     OUTPUT_VERBOSE((7, "   Measurement tool:    %s", globals.tool));
 
     /* Not using OUTPUT_VERBOSE because I want only one line */

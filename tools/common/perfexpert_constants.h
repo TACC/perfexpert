@@ -97,8 +97,6 @@ enum hotspot_type_t {
     PERFEXPERT_HOTSPOT_LOOP,
 };
 
-/* Hotspots srting order */
-
 #ifdef __cplusplus
 }
 #endif
