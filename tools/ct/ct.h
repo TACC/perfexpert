@@ -40,6 +40,7 @@ extern "C" {
 #include <stdio.h> /* To use FILE type on globals */
 #endif
 
+#include "perfexpert_constants.h"
 #include "perfexpert_list.h"
 
 /* Structure to hold global variables */
@@ -102,9 +103,9 @@ typedef struct fragment {
     char *filename;
     int  line_number;
     char *function_name;
-    int  code_type;
     int  rowid;
     int  loop_depth;
+    enum hotspot_type_t code_type;
     perfexpert_list_t recommendations;
     /* The fields below have local information */
     char *fragment_file;

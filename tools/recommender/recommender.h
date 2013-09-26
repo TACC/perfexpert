@@ -40,8 +40,8 @@ extern "C" {
 #include <stdio.h> /* To use FILE type on globals */
 #endif
 
-#include "perfexpert_list.h" /* To list items on function and segment */
 #include "perfexpert_constants.h"
+#include "perfexpert_list.h" /* To list items on function and segment */
 
 /* WARNING: to include perfexpert_output.h globals have to be defined first */
 #ifdef PROGRAM_PREFIX
@@ -91,13 +91,13 @@ typedef struct segment {
     volatile perfexpert_list_item_t *prev; /** Pointer to previous list item */
     char   *filename;
     int    line_number;
-    char   *type;
     char   *extra_info;
     char   *section_info;
     double importance;
     double runtime;
     int    loopdepth;
     int    rowid;
+    enum hotspot_type_t type;
     perfexpert_list_t functions;
     char   *function_name; // Should I add function_name to DB?
 } segment_t;

@@ -96,7 +96,7 @@ int parse_segment_params(perfexpert_list_t *segments) {
             item->section_info = NULL;
             item->extra_info = NULL;
             item->filename = NULL;
-            item->type = NULL;
+            item->type = PERFEXPERT_HOTSPOT_UNKNOWN;
             item->rowid = 0;
             item->runtime = 0.0;
             item->loopdepth = 0;
@@ -159,9 +159,8 @@ int parse_segment_params(perfexpert_list_t *segments) {
         }
         /* Code param: code.type */
         if (0 == strncmp("code.type", node->key, 9)) {
-            PERFEXPERT_ALLOC(char, item->type, (strlen(node->value) + 1));
-            strcpy(item->type, node->value);
-            OUTPUT_VERBOSE((10, "   (%d) %s [%s]", input_line,
+            item->type = atoi(node->value);
+            OUTPUT_VERBOSE((10, "   (%d) %s [%d]", input_line,
                 _MAGENTA("type:"), item->type));
         }
         /* Code param: code.extra_info */
