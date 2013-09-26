@@ -90,12 +90,14 @@ enum {
 #define DEFAULT_LDFLAGS  ""
 
 /* Hotspots I know */
-enum {
+enum hotspot_type_t {
     PERFEXPERT_HOTSPOT_UNKNOWN = 0,
     PERFEXPERT_HOTSPOT_PROGRAM,
     PERFEXPERT_HOTSPOT_FUNCTION,
     PERFEXPERT_HOTSPOT_LOOP,
 };
+
+/* Hotspots srting order */
 
 #ifdef __cplusplus
 }
