@@ -51,9 +51,11 @@ typedef struct {
     char  *program;
     char  *program_path;
     char  *program_full;
-    int   prog_arg_pos;
-    int   main_argc;
-    char  **main_argv;
+    char  **program_argv;
+    int   program_argc;
+    // int   prog_arg_pos;
+    // int   main_argc;
+    // char  **main_argv;
     int   step;
     char  *workdir;
     char  *stepdir;
@@ -73,7 +75,6 @@ extern globals_t globals; /* This variable is declared in perfexpert_main.c */
 
 /* Function declarations */
 void show_help(void);
-int parse_env_vars(void);
 int parse_cli_params(int argc, char *argv[]);
 int compile_program(void);
 int measurements(void);
