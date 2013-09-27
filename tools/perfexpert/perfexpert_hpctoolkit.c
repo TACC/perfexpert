@@ -49,8 +49,7 @@ extern "C" {
 /* measurements_hpctoolkit */
 int measurements_hpctoolkit(void) {
     /* First of all, does the file exist? (it is just a double check) */
-    if (PERFEXPERT_SUCCESS != perfexpert_util_file_exists_and_is_exec(
-        globals.program)) {
+    if (PERFEXPERT_SUCCESS != perfexpert_util_file_is_exec(globals.program)) {
         return PERFEXPERT_ERROR;
     }
     /* Create the program structure file */
@@ -241,9 +240,8 @@ int run_hpcrun(void) {
         experiment->argc++;
 
         /* ...and the program arguments to experiment's argv */
-        while ((globals.prog_arg_pos + count) < globals.main_argc) {
-            experiment->argv[experiment->argc] =
-                globals.main_argv[globals.prog_arg_pos + count];
+        while (NULL != globals.program_argv[count]) {
+            experiment->argv[experiment->argc] = globals.program_argv[count];
             experiment->argc++;
             count++;
         }
@@ -373,9 +371,8 @@ int run_hpcrun_knc(void) {
                 /* Add the program and the program arguments to experiment */
                 fprintf(script_file_FP, " %s", globals.program_full);
                 count = 0;
-                while ((globals.prog_arg_pos + count) < globals.main_argc) {
-                    fprintf(script_file_FP, " %s",
-                        globals.main_argv[globals.prog_arg_pos + count]);
+                while (NULL != globals.program_argv[count]) {
+                    fprintf(script_file_FP, " %s", globals.program_argv[count]);
                     count++;
                 }
 
@@ -393,6 +390,7 @@ int run_hpcrun_knc(void) {
             }
 
             fprintf(script_file_FP, "\n\n# HPCRUN (%d)\n", experiment_count);
+
             /* Add PREFIX */
             if (NULL != globals.knc_prefix) {
                 fprintf(script_file_FP, "%s ", globals.knc_prefix);
@@ -412,13 +410,13 @@ int run_hpcrun_knc(void) {
     }
 
     /* Add the program and the program arguments to experiment's */
-    count = 0;
-    fprintf(script_file_FP, " %s", globals.program_full);
-    while ((globals.prog_arg_pos + count) < globals.main_argc) {
-        fprintf(script_file_FP, " %s", globals.main_argv[globals.prog_arg_pos +
-            count]);
-        count++;
-    }
+    // count = 0;
+    // fprintf(script_file_FP, " %s", globals.program_full);
+    // while ((globals.prog_arg_pos + count) < globals.main_argc) {
+    //     fprintf(script_file_FP, " %s", globals.main_argv[globals.prog_arg_pos +
+    //         count]);
+    //     count++;
+    // }
 
     /* Add the AFTER program */
     if (NULL != globals.knc_after) {
