@@ -47,8 +47,7 @@ extern "C" {
 /* measurements_hpctoolkit */
 int measurements_vtune(void) {
     /* First of all, does the file exist? (it is just a double check) */
-    if (PERFEXPERT_SUCCESS != perfexpert_util_file_exists_and_is_exec(
-        globals.program)) {
+    if (PERFEXPERT_SUCCESS != perfexpert_util_file_is_exec(globals.program)) {
         return PERFEXPERT_ERROR;
     }
     /* Run Intel VTune Amplifier XE */
@@ -158,8 +157,8 @@ int run_amplxecl(void) {
     argc++;
 
     /* ...and it's arguments */
-    while ((globals.prog_arg_pos + count) < globals.main_argc) {
-        argv[argc] = globals.main_argv[globals.prog_arg_pos + count];
+    while (NULL != globals.program_argv[count]) {
+        argv[argc] = globals.program_argv[count];
         argc++;
         count++;
     }
