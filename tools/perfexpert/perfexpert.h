@@ -52,10 +52,6 @@ typedef struct {
     char  *program_path;
     char  *program_full;
     char  **program_argv;
-    int   program_argc;
-    // int   prog_arg_pos;
-    // int   main_argc;
-    // char  **main_argv;
     int   step;
     char  *workdir;
     char  *stepdir;

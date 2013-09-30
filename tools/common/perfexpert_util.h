@@ -62,9 +62,7 @@ extern "C" {
 
 /* perfexpert_util_make_path (create directory tree like 'mkdir -p') */
 static inline int perfexpert_util_make_path(const char *path, int nmode) {
-    int oumask;
-    char *p = NULL;
-    char *npath = NULL;
+    char *p = NULL, *npath = NULL;
     struct stat sb;
 
     /* Check if we can create such directory */
@@ -79,38 +77,31 @@ static inline int perfexpert_util_make_path(const char *path, int nmode) {
                 strerror(errno)));
             return PERFEXPERT_ERROR;
         }
-        return PERFEXPERT_SUCCESS;
+        return PERFEXPERT_SUCCESS; // directory already exists
     }
 
     /* Save a copy, so we can write to it */
-    npath = (char *)malloc(strlen(path) + 1);
-    if (NULL == npath) {
-        OUTPUT(("%s", _ERROR((char *)"Error: out of memory")));
-        return PERFEXPERT_ERROR;
-    }
-    bzero(npath, strlen(path) + 1);
+    PERFEXPERT_ALLOC(char, npath, (strlen(path) + 1));
     strncpy(npath, path, strlen(path));
 
-    /* Check whether or not we need to do anything with intermediate dirs */
     /* Skip leading slashes */
     p = npath;
     while ('/' == *p) {
         p++;
     }
-    while (p = strchr (p, '/')) {
+    while (p = strchr(p, '/')) {
         *p = '\0';
         if (0 != stat(npath, &sb)) {
             if (mkdir(npath, nmode)) {
-                OUTPUT(("%s '%s': %s",
-                        _ERROR((char *)"cannot create directory"), npath,
-                        strerror(errno)));
-                free(npath);
+                OUTPUT(("%s '%s' %s", _ERROR((char *)"cannot create directory"),
+                    npath, strerror(errno)));
+                PERFEXPERT_DEALLOC(npath);
                 return PERFEXPERT_ERROR;
             }
         } else if (0 == S_ISDIR(sb.st_mode)) {
             OUTPUT(("'%s': %s", npath,
-                    _ERROR((char *)"file exists but is not a directory")));
-            free (npath);
+                _ERROR((char *)"file exists but is not a directory")));
+            PERFEXPERT_DEALLOC(npath);
             return PERFEXPERT_ERROR;
         }
         *p++ = '/'; /* restore slash */
@@ -120,14 +111,14 @@ static inline int perfexpert_util_make_path(const char *path, int nmode) {
     }
     
     /* Create the final directory component */
-    if (stat(npath, &sb) && mkdir(npath, nmode)) {
-        OUTPUT(("%s '%s': %s", _ERROR((char *)"cannot create directory"),
-                npath, strerror(errno)));
-        free(npath);
+    if (stat(npath, &sb) && mkdir(npath, nmode)) { // This is not portable
+        OUTPUT(("%s '%s' %s", _ERROR((char *)"cannot create directory"),
+            npath, strerror(errno)));
+        PERFEXPERT_DEALLOC(npath);
         return PERFEXPERT_ERROR;
     }
 
-    free(npath);
+    PERFEXPERT_DEALLOC(npath);
     return PERFEXPERT_SUCCESS;
 }
 
@@ -137,7 +128,7 @@ static inline int perfexpert_util_dir_exists(const char *dir) {
 
     if (0 != stat(dir, &sb)) {
         OUTPUT_VERBOSE((1, "%s (%s)",
-            _RED((char *)"directory not found or you don't have permissions"),
+            _RED((char *)"directory not found or you do not have permissions"),
             dir));
         return PERFEXPERT_ERROR;
     }
@@ -151,21 +142,19 @@ static inline int perfexpert_util_dir_exists(const char *dir) {
 
 /* perfexpert_util_remove_dir */
 static inline int perfexpert_util_remove_dir(const char *dir) {
-    char *command = (char *)malloc(strlen(dir) + 8);
+    char *command = NULL;
 
     if (PERFEXPERT_SUCCESS != perfexpert_util_dir_exists(dir)) {
         return PERFEXPERT_ERROR;
     }
-    if (NULL == command) {
-        return PERFEXPERT_ERROR;
-    }
-    bzero(command, strlen(dir) + 8);
-    sprintf(command, "rm -rf %s", dir);
+
+    PERFEXPERT_ALLOC(char, command, (strlen(dir) + 8));
+    sprintf(command, "rm -rf %s", dir); // It is pretty ugly :-(
     if (-1 == system(command)) {
-        free(command);
+        PERFEXPERT_DEALLOC(command);
         return PERFEXPERT_ERROR;
     }
-    free(command);
+    PERFEXPERT_DEALLOC(command);
 
     return PERFEXPERT_SUCCESS;
 }
@@ -241,10 +230,9 @@ static inline int perfexpert_util_path_only(const char *file, char **path) {
 
 /* perfexpert_util_file_copy */
 static inline int perfexpert_util_file_copy(const char *to, const char *from) {
-    int     fd_to, fd_from;
-    char    buffer[BUFFER_SIZE];
-    ssize_t nread;
-    int     saved_errno;
+    int fd_to = 0, fd_from = 0, saved_errno = 0;
+    char buffer[1024];
+    ssize_t nread = 0;
 
     fd_from = open(from, O_RDONLY);
     if (0 > fd_from) {
@@ -253,21 +241,20 @@ static inline int perfexpert_util_file_copy(const char *to, const char *from) {
 
     fd_to = open(to, O_WRONLY | O_CREAT | O_EXCL, 0666);
     if (0 > fd_to) {
-        goto out_error;
+        goto ERROR;
     }
 
     while (0 < (nread = read(fd_from, buffer, sizeof(buffer)))) {
         char *out_ptr = buffer;
-        ssize_t nwritten;
+        ssize_t nwritten = 0;
 
         do {
             nwritten = write(fd_to, out_ptr, nread);
-
             if (0 <= nwritten) {
                 nread -= nwritten;
                 out_ptr += nwritten;
-            } else if (errno != EINTR) {
-                goto out_error;
+            } else if (EINTR != errno) {
+                goto ERROR;
             }
         } while (0 < nread);
     }
@@ -275,14 +262,14 @@ static inline int perfexpert_util_file_copy(const char *to, const char *from) {
     if (0 == nread) {
         if (0 > close(fd_to)) {
             fd_to = -1;
-            goto out_error;
+            goto ERROR;
         }
         close(fd_from);
 
         return PERFEXPERT_SUCCESS;
     }
 
-  out_error:
+    ERROR:
     saved_errno = errno;
 
     close(fd_from);
@@ -296,8 +283,8 @@ static inline int perfexpert_util_file_copy(const char *to, const char *from) {
 
 /* perfexpert_util_file_print */
 static inline int perfexpert_util_file_print(const char *file) {
-    char   buffer[BUFFER_SIZE];
-    FILE   *file_FP = NULL;
+    FILE *file_FP = NULL;
+    char buffer[1024];
     size_t nread = 0;
 
     if (PERFEXPERT_SUCCESS != perfexpert_util_file_exists(file)) {

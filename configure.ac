@@ -123,6 +123,7 @@ AM_CONDITIONAL([ENABLE_DEBUG], [test x"$ENABLE_DEBUG" = x"yes"])
 # Headers: generic
 #
 # perfexpert, analyzer, recommender, hound, and sniffer
+AC_CHECK_HEADER([argp.h],      [], [AC_MSG_ERROR([argp.h not found])])
 AC_CHECK_HEADER([errno.h],     [], [AC_MSG_ERROR([errno.h not found])])
 AC_CHECK_HEADER([fcntl.h],     [], [AC_MSG_ERROR([fcntl.h not found])])
 AC_CHECK_HEADER([float.h],     [], [AC_MSG_ERROR([float.h not found])])
