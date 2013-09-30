@@ -43,11 +43,10 @@ extern "C" {
 #include "perfexpert_output.h"
 #include "perfexpert_util.h"
 
+static struct argp argp = { options, parse_options, args_doc, doc };
+
 /* parse_cli_params */
 int parse_cli_params(int argc, char *argv[]) {
-    // static struct argp argp = { options, parse_opt, args_doc, doc };
-    struct argp argp = { options, parse_options, args_doc, doc };
-
     /* If some environment variable is defined, use it! */
     if (PERFEXPERT_SUCCESS != parse_env_vars()) {
         OUTPUT(("%s", _ERROR("Error: parsing environment variables")));
@@ -132,7 +131,6 @@ int parse_cli_params(int argc, char *argv[]) {
             printf(" [%s]", globals.program_argv[i]);
             i++;
         }
-        globals.program_argc = i;
         printf("\n");
     }
 
@@ -150,7 +148,6 @@ int parse_cli_params(int argc, char *argv[]) {
     OUTPUT_VERBOSE((7, "   Program executable:  %s", globals.program));
     OUTPUT_VERBOSE((7, "   Program path:        %s", globals.program_path));
     OUTPUT_VERBOSE((7, "   Program full path:   %s", globals.program_full));
-    OUTPUT_VERBOSE((7, "   Program arguments #: %d", globals.program_argc));
     OUTPUT_VERBOSE((7, "   Prefix:              %s", globals.prefix));
     OUTPUT_VERBOSE((7, "   Before each run:     %s", globals.before));
     OUTPUT_VERBOSE((7, "   After each run:      %s", globals.after));
@@ -207,6 +204,12 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
             OUTPUT_VERBOSE((1, "option 'c' set"));
             break;
 
+        /* MIC card */
+        case 'C':
+            globals.knc = arg;
+            OUTPUT_VERBOSE((1, "option 'C' set [%s]", globals.knc));
+            break;
+
         /* Which database file? */
         case 'd':
             globals.dbfile = arg;
@@ -222,12 +225,8 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
         /* Show help */
         case 'h':
             OUTPUT_VERBOSE((1, "option 'h' set"));
-            argp_usage(state);
-
-        /* MIC card */
-        case 'k':
-            globals.knc = arg;
-            OUTPUT_VERBOSE((1, "option 'k' set [%s]", globals.knc));
+            // argp_help(&argp, NULL, ARGP_HELP_LONG, "porra");
+            argp_state_help(state, stdout, ARGP_HELP_STD_HELP);
             break;
 
         /* Use Makefile? */

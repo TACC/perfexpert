@@ -68,9 +68,6 @@ int main(int argc, char** argv) {
         .program_path  = NULL,             // char *
         .program_full  = NULL,             // char *
         .program_argv  = NULL,             // char **
-        // .prog_arg_pos  = 0,                // int
-        // .main_argc     = argc,             // int
-        // .main_argv     = argv,             // char **
         .step          = 1,                // int
         .workdir       = NULL,             // char *
         .stepdir       = NULL,             // char *
