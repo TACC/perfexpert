@@ -36,6 +36,7 @@ extern "C" {
 
 /* PerfExpert headers */
 #include "analyzer.h"
+#include "analyzer_options.h"
 #include "perfexpert_constants.h"
 #include "perfexpert_output.h"
 #include "install_dirs.h"
@@ -60,7 +61,7 @@ static struct option long_options[] = {
 };
 
 /* show_help */
-void show_help(void) {
+static void show_help(void) {
     OUTPUT_VERBOSE((10, "printing help"));
     /*      12345678901234567890123456789012345678901234567890123456789012345678901234567890 */
     printf("Usage: analyzer [-acfhilmMoOTvw]\n\n");
@@ -86,7 +87,7 @@ void show_help(void) {
 }
 
 /* parse_env_vars */
-int parse_env_vars(void) {
+static int parse_env_vars(void) {
     if (NULL != getenv("PERFEXPERT_ANALYZER_VERBOSE_LEVEL")) {
         globals.verbose = atoi(getenv("PERFEXPERT_ANALYZER_VERBOSE_LEVEL"));
         OUTPUT_VERBOSE((1, "ENV: verbose_level=%d", globals.verbose));

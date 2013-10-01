@@ -54,6 +54,12 @@ typedef struct tool {
 /* Tools definition */
 extern tool_t tools[]; /* This variable is defined in analyzer_profile.c */
 
+/* Functions declarations */
+static int profile_aggregate_hotspots(profile_t *profile);
+static int profile_aggregate_metrics(profile_t *profile, procedure_t *hotspot);
+static int profile_flatten_hotspots(profile_t *profile);
+static int profile_check_callpath(perfexpert_list_t *calls, int root);
+
 /* perfexpert_tool_get_tot_cyc */
 static inline char* perfexpert_tool_get_tot_cyc(const char* tool) {
     int i = 0;

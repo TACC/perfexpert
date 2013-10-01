@@ -25,14 +25,21 @@
 #
 # $HEADER$
 #
-
 # Dedicated to Ashay, who loves Perl. 
 
+# Check for arguments
 if ("" eq $ARGV[0]) {
     printf("Usage: perfexpert_get_info.pl <program> [output]\n");
     exit -1;
 }
 
+# Check if files exists
+unless (-e $ARGV[0]) {
+    print "File not found!";
+    exit -1;
+}
+
+# Read information
 @temp = `readelf -wi -W $ARGV[0] | grep DW_AT_producer`;
 chomp($temp[0]);
 ($none, $none, $none, $producer) = split(": ", $temp[0], 4);
@@ -48,6 +55,9 @@ if ($producer =~ m/GNU F/) {
 }
 if ($producer =~ m/Intel\(R\) C /) {
     $producer_code = "icc";
+}
+if ($producer =~ m/Intel\(R\) C\+\+/) {
+    $producer_code = "icpc";
 }
 if ($producer =~ m/Intel\(R\) Fortran/) {
     $producer_code = "ifort";
@@ -80,6 +90,7 @@ if ("14" eq $language_code) {
     $language = "F95";
 }
 
+# Print information
 if ("" eq $ARGV[1]) {
     printf("producer_name=$producer\n");
     printf("producer_code=$producer_code\n");
