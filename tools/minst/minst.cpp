@@ -131,10 +131,7 @@ attrib MINST::evaluateInheritedAttribute(SgNode* node, attrib attr)
 		if (line_number == 0)
 		{
 			if (function_name != inst_func)
-			{
-				attr.skip = TRUE;
 				return attr;
-			}
 
 			std::cerr << "Operating on function " << function_name << std::endl;
 
@@ -177,8 +174,6 @@ attrib MINST::evaluateInheritedAttribute(SgNode* node, attrib attr)
 			}
 		}
 	}
-	else if (getEnclosingNode<SgFunctionDefinition>(node) != NULL)	// We are inside some other function
-		attr.skip = true;
 
 	return attr;
 }
