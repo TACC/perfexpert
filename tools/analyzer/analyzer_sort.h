@@ -42,9 +42,9 @@ typedef struct sort {
 } sort_t;
 
 /* Function definitions */
-int sort_by_relevance(profile_t *profile);
-int sort_by_performance(profile_t *profile);
-int sort_by_mixed(profile_t *profile);
+static int sort_by_relevance(profile_t *profile);
+static int sort_by_performance(profile_t *profile);
+static int sort_by_mixed(profile_t *profile);
 
 #ifdef __cplusplus
 }

@@ -40,9 +40,11 @@ extern "C" {
 #include <libxml/parser.h>
 #endif
 
+#include "perfexpert_alloc.h"
 #include "perfexpert_constants.h"
 #include "perfexpert_hash.h"
 #include "perfexpert_list.h"
+#include "perfexpert_md5.h"
 
 /* Structure to hold lcpi metrics */
 typedef struct lcpi {
@@ -191,30 +193,20 @@ extern globals_t globals; /* This variable is defined in analyzer_main.c */
 #define PROGRAM_PREFIX "[analyzer]"
 
 /* Function declarations */
-void show_help(void);
-int parse_env_vars(void);
 int parse_cli_params(int argc, char *argv[]);
 int profile_parse_file(const char* file, const char* tool,
     perfexpert_list_t *profiles);
 int profile_check_all(perfexpert_list_t *profiles);
-int profile_check_callpath(perfexpert_list_t *calls, int root);
 int profile_flatten_all(perfexpert_list_t *profiles);
-int profile_flatten_hotspots(profile_t *profile);
-int profile_aggregate_hotspots(profile_t *profile);
-int profile_aggregate_metrics(profile_t *profile, procedure_t *hotspot);
 int lcpi_parse_file(const char *file);
 int lcpi_compute(profile_t *profile);
 int machine_parse_file(const char *file);
 int calculate_importance_variance(profile_t *profile);
 int output_analysis_all(perfexpert_list_t *profiles);
-int output_analysis(profile_t *profile, procedure_t *hotspot);
 int output_metrics_all(perfexpert_list_t *profiles);
-int output_metrics(profile_t *profile, procedure_t *hotspot, FILE *file_FP);
 int hotspot_sort(perfexpert_list_t *profiles);
 
 /* generic_get */
-#include "perfexpert_alloc.h"
-#include "perfexpert_md5.h"
 static inline double generic_get(lcpi_t *db, char key[]) {
     lcpi_t *entry = NULL;
     char *key_md5 = NULL;

@@ -25,32 +25,19 @@
  * $HEADER$
  */
 
-#ifndef ANALYZER_HPCTOOLKIT_H_
-#define ANALYZER_HPCTOOLKIT_H_
+#ifndef ANALYZER_OPTIONS_H_
+#define ANALYZER_OPTIONS_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#ifndef __XML_PARSER_H__
-#include <libxml/parser.h>
-#endif
-
-#include "perfexpert_list.h"
-
-/* HPCToolkit stuff */
-#define PERFEXPERT_TOOL_HPCTOOLKIT_COUNTERS      "papi"
-#define PERFEXPERT_TOOL_HPCTOOLKIT_TOT_INS       "PAPI_TOT_INS"
-#define PERFEXPERT_TOOL_HPCTOOLKIT_TOT_CYC       "PAPI_TOT_CYC"
-
-/* Function declarations */
-int hpctoolkit_parse_file(const char *file, perfexpert_list_t *profiles);
-static int hpctoolkit_parser(xmlDocPtr document, xmlNodePtr node,
-    perfexpert_list_t *profiles, profile_t *profile, callpath_t *parent,
-    int loopdepth);
+/* Function definitions */
+static void show_help(void);
+static int parse_env_vars(void);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* ANALYZER_HPCTOOLKIT_H_ */
+#endif /* ANALYZER_OPTIONS_H_ */

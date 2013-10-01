@@ -33,7 +33,7 @@ extern "C" {
 #include "perfexpert_list.h"
 
 /* Sorting orders */
-sort_t orders[] = {
+static sort_t orders[] = {
     {"relevance",   &sort_by_relevance},
     {"performance", &sort_by_performance},
     {"mixed",       &sort_by_mixed}, // Sorting mixed? It makes no sense :/
@@ -76,7 +76,7 @@ int hotspot_sort(perfexpert_list_t *profiles) {
 }
 
 /* sort_by_relevance */
-int sort_by_relevance(profile_t *profile) {
+static int sort_by_relevance(profile_t *profile) {
     procedure_t *h = NULL, *h2 = NULL, *h_max = NULL;
     perfexpert_list_t sorted;
     double relevance_max = -1;
@@ -136,7 +136,7 @@ int sort_by_relevance(profile_t *profile) {
 }
 
 /* sort_by_performance */
-int sort_by_performance(profile_t *profile) {
+static int sort_by_performance(profile_t *profile) {
     procedure_t *h = NULL, *h2 = NULL, *h_max = NULL;
     perfexpert_list_t sorted;
     double worst_overall = -1;
@@ -198,7 +198,7 @@ int sort_by_performance(profile_t *profile) {
 }
 
 /* sort_by_mixed */
-int sort_by_mixed(profile_t *profile) {
+static int sort_by_mixed(profile_t *profile) {
     procedure_t *h = NULL, *h2 = NULL, *h_max = NULL;
     perfexpert_list_t sorted;
     double index = -1;
