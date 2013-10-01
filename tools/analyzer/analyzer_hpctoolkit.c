@@ -29,6 +29,7 @@ extern "C" {
 
 /* PerfExpert headers */
 #include "analyzer.h" 
+#include "analyzer_hpctoolkit.h" 
 #include "perfexpert_alloc.h"
 #include "perfexpert_constants.h"
 #include "perfexpert_hash.h"
@@ -89,7 +90,7 @@ int hpctoolkit_parse_file(const char *file, perfexpert_list_t *profiles) {
 }
 
 /* hpctoolkit_parser */
-int hpctoolkit_parser(xmlDocPtr document, xmlNodePtr node,
+static int hpctoolkit_parser(xmlDocPtr document, xmlNodePtr node,
     perfexpert_list_t *profiles, profile_t *profile, callpath_t *parent,
     int loopdepth) {
     file_t      *file = NULL;

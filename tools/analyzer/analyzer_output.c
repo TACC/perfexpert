@@ -36,6 +36,7 @@ extern "C" {
 
 /* PerfExpert headers */
 #include "analyzer.h"
+#include "analyzer_output.h"
 #include "analyzer_profile.h"
 #include "perfexpert_alloc.h"
 #include "perfexpert_constants.h"
@@ -121,7 +122,7 @@ int output_analysis_all(perfexpert_list_t *profiles) {
 }
 
 /* output_analysis */
-int output_analysis(profile_t *profile, procedure_t *hotspot) {
+static int output_analysis(profile_t *profile, procedure_t *hotspot) {
     int print_ratio = PERFEXPERT_TRUE;
     loop_t *loop = (loop_t *)hotspot;
     lcpi_t *lcpi = NULL;
@@ -159,27 +160,25 @@ int output_analysis(profile_t *profile, procedure_t *hotspot) {
     PRETTY_PRINT(79, "=");
 
     /* Do we have something meaningful to show? */
-    char UNRELIABLE[] = "making the results unreliable";
-    char SHORTRUNTIME[] = "the runtime for this code section is too short";
     if (ANALYZER_VARIANCE_LIMIT < hotspot->variance) {
-        fprintf(globals.outputfile_FP,
-            "%s the instruction count variation is %.2f%%, %s!\n",
-            _BOLDRED("WARNING:"), hotspot->variance * 100, UNRELIABLE);
+        fprintf(globals.outputfile_FP, "%s the instruction count variation is "
+            "%.2f%%, making the results unreliable!\n", _BOLDRED("WARNING:"),
+            hotspot->variance * 100);
         PRETTY_PRINT(79, "-");
     }
     if (PERFEXPERT_FALSE == hotspot->valid) {
-        fprintf(globals.outputfile_FP, "%s %s, PerfExpert was\n",
-            _BOLDRED("WARNING:"), SHORTRUNTIME);
-        fprintf(globals.outputfile_FP,
-            "unable to collect the performance counters it needs, %s!\n",
-            UNRELIABLE);
+        fprintf(globals.outputfile_FP, "%s the runtime for this code section "
+            "is too short, PerfExpert was\nunable to collect the performance "
+            "counters it needs, making the results unreliable!\n",
+            _BOLDRED("WARNING:"));
         PRETTY_PRINT(79, "-");
     }
-    if (hotspot->cycles < perfexpert_machine_get("CPU_freq")) {
-        fprintf(globals.outputfile_FP,
-            "%s %s to gather meaningful measurements\n", _BOLDRED("WARNING:"),
-            SHORTRUNTIME);
+    if (perfexpert_machine_get("CPU_freq") > hotspot->cycles) {
+        fprintf(globals.outputfile_FP, "%s the runtime for this code section "
+            "is too short to gather meaningful measurements\n",
+            _BOLDRED("WARNING:"));
         PRETTY_PRINT(79, "-");
+        fprintf(globals.outputfile_FP, "\n");
         return PERFEXPERT_SUCCESS;
     }
     if (perfexpert_machine_get("CPI_threshold") >=
@@ -329,7 +328,8 @@ int output_metrics_all(perfexpert_list_t *profiles) {
 }
 
 /* output_metrics */
-int output_metrics(profile_t *profile, procedure_t *hotspot, FILE *file_FP) {
+static int output_metrics(profile_t *profile, procedure_t *hotspot,
+    FILE *file_FP) {
     loop_t *loop = (loop_t *)hotspot;
     metric_t *metric = NULL;
     lcpi_t *lcpi = NULL;
@@ -362,11 +362,20 @@ int output_metrics(profile_t *profile, procedure_t *hotspot, FILE *file_FP) {
     fprintf(file_FP, "code.totalwalltime=%f\n", profile->cycles /
         perfexpert_machine_get("CPU_freq") / sysconf(_SC_NPROCESSORS_ONLN));
 
+    /* Print compiler/language info */
+    if (PERFEXPERT_SUCCESS != get_info(profile, hotspot)) {
+        OUTPUT(("%s (%s)", _ERROR("Error: unable to get compiler/language"),
+            hotspot->name));
+        return PERFEXPERT_ERROR;
+    }
+
+    /* Print LCPI metrics */
     for (lcpi = hotspot->lcpi_by_name; lcpi != NULL;
         lcpi = lcpi->hh_str.next) {
         fprintf(file_FP, "perfexpert.%s=%f\n", lcpi->name, lcpi->value);
     }
 
+    /* Print raw performance counters */
     for (metric = hotspot->metrics_by_name; metric != NULL;
         metric = metric->hh_str.next) {
         fprintf(file_FP, "%s.%s=%.0f\n",
@@ -374,10 +383,17 @@ int output_metrics(profile_t *profile, procedure_t *hotspot, FILE *file_FP) {
             metric->value);
     }
 
+    /* Print machine properties */
     for (metric = globals.machine_by_name; metric != NULL;
         metric = metric->hh_str.next) {
         fprintf(file_FP, "hound.%s=%.2f\n", metric->name, metric->value);
     }
+
+    return PERFEXPERT_SUCCESS;
+}
+
+/* get_info */
+static int get_info(procedure_t *hotspot) {
 
     return PERFEXPERT_SUCCESS;
 }

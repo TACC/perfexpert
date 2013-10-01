@@ -77,7 +77,7 @@ int profile_parse_file(const char* file, const char* tool,
 }
 
 /* profile_aggregate_hotspots */
-int profile_aggregate_hotspots(profile_t *profile) {
+static int profile_aggregate_hotspots(profile_t *profile) {
     procedure_t *hotspot = NULL;
     procedure_t *aggregated_hotspot = NULL;
 
@@ -142,7 +142,7 @@ int profile_aggregate_hotspots(profile_t *profile) {
 }
 
 /* profile_aggregate_metrics */
-int profile_aggregate_metrics(profile_t *profile, procedure_t *hotspot) {
+static int profile_aggregate_metrics(profile_t *profile, procedure_t *hotspot) {
     metric_t *current = NULL;
     metric_t *next = NULL;
     metric_t *next_next = NULL;
@@ -276,7 +276,7 @@ int profile_flatten_all(perfexpert_list_t *profiles) {
 }
 
 /* profile_flatten_hotspots */
-int profile_flatten_hotspots(profile_t *profile) {
+static int profile_flatten_hotspots(profile_t *profile) {
     procedure_t *hotspot_prev = NULL;
     procedure_t *hotspot = NULL;
     metric_t *metric = NULL;
@@ -361,7 +361,7 @@ int profile_check_all(perfexpert_list_t *profiles) {
     while ((perfexpert_list_item_t *)profile != &(profiles->sentinel)) {
         OUTPUT_VERBOSE((10, " [%d] %s", profile->id, _GREEN(profile->name)));
         if (0 < perfexpert_list_get_size(&(profile->callees))) {
-           if (PERFEXPERT_SUCCESS !=
+            if (PERFEXPERT_SUCCESS !=
             profile_check_callpath(&(profile->callees), 0)) {
                 OUTPUT(("%s (%s)", _ERROR("Error: malformed profile"),
                     profile->name));
@@ -374,15 +374,20 @@ int profile_check_all(perfexpert_list_t *profiles) {
 }
 
 /* profile_check_callpath */
-int profile_check_callpath(perfexpert_list_t *calls, int root) {
+static int profile_check_callpath(perfexpert_list_t *calls, int root) {
     callpath_t *callpath = NULL;
-    char *indent = NULL;
+    char indent[256];
     int i = 0;
 
-    PERFEXPERT_ALLOC(char, indent, ((2 * root) + 1));
+    bzero(indent, 256);
+    if (127 < root) {
+        root = 127;
+    }
     for (i = 0; i <= root; i++) {
         strcat(indent, " .");
     }
+
+    OUTPUT(("ENTROU"));
 
     callpath = (callpath_t *)perfexpert_list_get_first(calls);
     while ((perfexpert_list_item_t *)callpath != &(calls->sentinel)) {
@@ -407,7 +412,8 @@ int profile_check_callpath(perfexpert_list_t *calls, int root) {
         }
         callpath = (callpath_t *)perfexpert_list_get_next(callpath);
     }
-    PERFEXPERT_DEALLOC(indent);
+    OUTPUT(("SAIU"));
+    OUTPUT(("DEALLOCOU"));
     return PERFEXPERT_SUCCESS;
 }
 
