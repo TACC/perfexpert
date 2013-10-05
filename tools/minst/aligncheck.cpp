@@ -13,6 +13,37 @@ void aligncheck_t::atTraversalStart() {
 void aligncheck_t::atTraversalEnd() {
 }
 
+bool aligncheck_t::vectorizable(SgStatement* stmt) {
+    if (!stmt)
+        return true;
+
+    if (isSgArithmeticIfStatement(stmt) ||
+        isSgAssertStmt(stmt) ||
+        isSgAssignedGotoStatement(stmt) ||
+        isSgBreakStmt(stmt) ||
+        isSgCaseOptionStmt(stmt) ||
+        isSgComputedGotoStatement(stmt) ||
+        isSgContinueStmt(stmt) ||
+        isSgElseWhereStatement(stmt) ||
+        isSgForInitStatement(stmt) ||
+        isSgGotoStatement(stmt) ||
+        isSgReturnStmt(stmt) ||
+        isSgClassDefinition(stmt) ||
+        isSgDoWhileStmt(stmt) ||
+        isSgForAllStatement(stmt) ||
+        isSgFortranDo(stmt) ||
+        isSgFunctionDefinition(stmt) ||
+        isSgIfStmt(stmt) ||
+        isSgNamespaceDefinitionStatement(stmt) ||
+        isSgSwitchStatement(stmt) ||
+        isSgWhileStmt(stmt) ||
+        isSgWithStatement(stmt)) {
+        return false;
+    }
+
+    return true;
+}
+
 attrib aligncheck_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
     SgExpression* index_expr = NULL;
     SgExpression* instrument_test = NULL;
@@ -21,6 +52,18 @@ attrib aligncheck_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
 
     SgForStatement* for_stmt = isSgForStatement(node);
     if (for_stmt) {
+        // Sanity check to see if this loop contains statements that prevent vectorization.
+        SgStatement* first_stmt = getFirstStatement(for_stmt);
+        SgStatement* stmt = first_stmt;
+        while (stmt) {
+            if (!vectorizable(stmt)) {
+                std::cout << "This loop cannot be vectorized because of the following statement: " << stmt->unparseToString() << "\n";
+                return attr;
+            }
+
+            stmt = getNextStatement(stmt);
+        }
+
         SgExpression* increment_var[2] = {0};
         SgBinaryOp* incr_binary_op = isSgBinaryOp(for_stmt->get_increment());
         SgUnaryOp* incr_unary_op = isSgUnaryOp(for_stmt->get_increment());

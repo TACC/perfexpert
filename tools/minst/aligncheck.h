@@ -6,6 +6,8 @@
 
 class aligncheck_t : public AstTopDownProcessing<attrib> {
     public:
+        bool vectorizable(SgStatement* stmt);
+
         virtual void atTraversalEnd();
         virtual void atTraversalStart();
 
