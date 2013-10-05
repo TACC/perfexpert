@@ -30,7 +30,7 @@ SUBDIRS = libmrt analyze
 bin_PROGRAMS = minst
 dist_bin_SCRIPTS = macpo.sh
 
-minst_SOURCES = minst.cpp instrumentor.cpp main.cpp
+minst_SOURCES = minst.cpp instrumentor.cpp main.cpp aligncheck.cpp
 minst_CXXFLAGS = -Wno-deprecated -I$(srcdir)/common
 minst_LDFLAGS = -lrose -ljvm
 

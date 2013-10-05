@@ -2,6 +2,7 @@
 #include <rose.h>
 
 #include "minst.h"
+#include "aligncheck.h"
 #include "instrumentor.h"
 
 using namespace SageBuilder;
@@ -151,10 +152,11 @@ attrib MINST::evaluateInheritedAttribute(SgNode* node, attrib attr)
 		{
 			SgFunctionDefinition* def = getEnclosingNode<SgFunctionDefinition>(node);
 			std::string function_name = def->get_declaration()->get_name();
-			std::cerr << (action == ACTION_INSTRUMENT ? "Instrumenting" : "Splitting") << " loop in function " << function_name << " at line " << _line_number << std::endl;
 
 			if (action == ACTION_INSTRUMENT)
 			{
+			  std::cerr << "Instrumenting loop in function " << function_name << " at line " << _line_number << std::endl;
+
 				// We found the loop that we wanted to instrument, now insert the indigo__create_map_() function in this file
 				insert_map_function(node);
 
@@ -162,6 +164,12 @@ attrib MINST::evaluateInheritedAttribute(SgNode* node, attrib attr)
 				inst.traverse(node, attr);
 				stream_list = inst.get_stream_list();
 			}
+      else if (action == ACTION_ALIGNCHECK)
+      {
+			  std::cerr << "Placing alignment checks around loop in function " << function_name << " at line " << _line_number << std::endl;
+				aligncheck_t visitor;
+				visitor.traverse(node, attr);
+      }
 		}
 	}
 
