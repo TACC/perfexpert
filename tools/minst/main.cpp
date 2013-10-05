@@ -42,6 +42,8 @@ int parseMinstArgument(char* arg, options_t& options)
 	}
 	else if (strcmp(opt, "instrument") == 0)
 		options.action = ACTION_INSTRUMENT;
+	else if (strcmp(opt, "aligncheck") == 0)
+		options.action = ACTION_ALIGNCHECK;
 	else if (strcmp(opt, "noinst") == 0)
 		options.action = ACTION_NONE;
 	else	return -ERR_PARAMS;
