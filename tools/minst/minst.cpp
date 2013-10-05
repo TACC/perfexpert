@@ -2,8 +2,6 @@
 #include <rose.h>
 
 #include "minst.h"
-#include "expander.h"
-#include "splitter.h"
 #include "instrumentor.h"
 
 using namespace SageBuilder;
@@ -163,14 +161,6 @@ attrib MINST::evaluateInheritedAttribute(SgNode* node, attrib attr)
 				instrumentor_t inst;
 				inst.traverse(node, attr);
 				stream_list = inst.get_stream_list();
-			}
-			else if (action == ACTION_SPLIT_LOOP)
-			{
-				expander_t expander;
-				expander.traverse(node, attr);
-
-				splitter_t splitter;
-				splitter.traverse(node, attr);
 			}
 		}
 	}
