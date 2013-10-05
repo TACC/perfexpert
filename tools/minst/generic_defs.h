@@ -4,7 +4,7 @@
 
 enum { FALSE=0, TRUE };
 enum { SUCCESS=0, ERR_PARAMS };
-enum { ACTION_INSTRUMENT=0, ACTION_SPLIT_LOOP, ACTION_NONE };
+enum { ACTION_INSTRUMENT=0, ACTION_NONE };
 
 typedef	unsigned char	BOOL;
 
