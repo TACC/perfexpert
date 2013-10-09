@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013  University of Texas at Austin. All rights reserved.
+ * Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -8,19 +8,13 @@
  * This file is part of PerfExpert.
  *
  * PerfExpert is free software: you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation, either version 3 of the License, or (at your option) any
- * later version.
- *
+ * the terms of the The University of Texas at Austin Research License
+ * 
  * PerfExpert is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
- * A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with PerfExpert. If not, see <http://www.gnu.org/licenses/>.
- *
- * Author: Leonardo Fialho
+ * A PARTICULAR PURPOSE.
+ * 
+ * Authors: Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
  */
@@ -31,6 +25,26 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/* Structure to handle command line arguments. Try to keep the content of
+ * this structure compatible with the parse_cli_params() and show_help().
+ */
+static struct option long_options[] = {
+    {"aggregate",        no_argument,       NULL, 'a'},
+    {"colorful",         no_argument,       NULL, 'c'},
+    {"help",             no_argument,       NULL, 'h'},
+    {"inputfile",        required_argument, NULL, 'i'},
+    {"lcpifile",         required_argument, NULL, 'l'},
+    {"measurement-tool", required_argument, NULL, 'm'},
+    {"machine",          required_argument, NULL, 'M'},
+    {"outputfile",       required_argument, NULL, 'o'},
+    {"sorting-order",    required_argument, NULL, 'O'},
+    {"threshold",        required_argument, NULL, 't'},
+    {"thread",           required_argument, NULL, 'T'},
+    {"verbose",          required_argument, NULL, 'v'},
+    {"workdir",          required_argument, NULL, 'w'},
+    {0, 0, 0, 0}
+};
 
 /* Function definitions */
 static void show_help(void);

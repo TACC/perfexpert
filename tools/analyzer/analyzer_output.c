@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013  University of Texas at Austin. All rights reserved.
+ * Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -8,19 +8,13 @@
  * This file is part of PerfExpert.
  *
  * PerfExpert is free software: you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation, either version 3 of the License, or (at your option) any
- * later version.
- *
+ * the terms of the The University of Texas at Austin Research License
+ * 
  * PerfExpert is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
- * A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with PerfExpert. If not, see <http://www.gnu.org/licenses/>.
- *
- * Author: Leonardo Fialho
+ * A PARTICULAR PURPOSE.
+ * 
+ * Authors: Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
  */
@@ -40,6 +34,7 @@ extern "C" {
 #include "analyzer_profile.h"
 #include "perfexpert_alloc.h"
 #include "perfexpert_constants.h"
+#include "perfexpert_fork.h"
 #include "perfexpert_hash.h"
 #include "perfexpert_list.h"
 #include "perfexpert_md5.h"
@@ -363,8 +358,8 @@ static int output_metrics(profile_t *profile, procedure_t *hotspot,
         perfexpert_machine_get("CPU_freq") / sysconf(_SC_NPROCESSORS_ONLN));
 
     /* Print compiler/language info */
-    if (PERFEXPERT_SUCCESS != get_info(profile, hotspot)) {
-        OUTPUT(("%s (%s)", _ERROR("Error: unable to get compiler/language"),
+    if (PERFEXPERT_SUCCESS != print_compiler_info(hotspot, file_FP)) {
+        OUTPUT(("%s (%s)", _ERROR("Error: unable to print compiler/language"),
             hotspot->name));
         return PERFEXPERT_ERROR;
     }
@@ -392,8 +387,56 @@ static int output_metrics(profile_t *profile, procedure_t *hotspot,
     return PERFEXPERT_SUCCESS;
 }
 
-/* get_info */
-static int get_info(procedure_t *hotspot) {
+/* print_compiler_info */
+static int print_compiler_info(procedure_t *hotspot, FILE *output_FP) {
+    loop_t *loop = (loop_t *)hotspot;
+    FILE *info_FP = NULL;
+    char buffer[1024];
+    char *argv[3];
+    test_t test;
+
+    argv[0] = GET_COMPILER_INFO_PROGRAM;
+    if ((PERFEXPERT_HOTSPOT_PROGRAM == hotspot->type) ||
+        (PERFEXPERT_HOTSPOT_FUNCTION == hotspot->type)) {
+        argv[1] = hotspot->module->name;
+
+        PERFEXPERT_ALLOC(char, test.output, (strlen(globals.workdir) +
+            strlen(hotspot->module->shortname) + 24));
+        sprintf(test.output, "%s/get_compiler_info_%s.txt", globals.workdir,
+            hotspot->module->shortname);
+
+    } else if (PERFEXPERT_HOTSPOT_LOOP == hotspot->type) {
+        argv[1] = loop->procedure->module->name;
+
+        PERFEXPERT_ALLOC(char, test.output, (strlen(globals.workdir) +
+            strlen(loop->procedure->module->shortname) + 24));
+        sprintf(test.output, "%s/get_compiler_info_%s.txt", globals.workdir,
+            loop->procedure->module->shortname);
+    }
+    test.input = NULL;
+    test.info = NULL;
+    argv[2] = NULL;
+
+    /* fork_and_wait_and_pray */
+    if (0 != fork_and_wait(&test, argv)) {
+        OUTPUT(("   %s [%s]", _RED("error running"), argv[0]));
+    } else {
+        /* Open file and print it */
+        info_FP = fopen(test.output, "r");
+        if (NULL != info_FP) {
+            while (NULL != fgets(buffer, sizeof(buffer), info_FP)) {
+                fprintf(output_FP, "compiler.%s", buffer);
+            }
+            if (ferror(info_FP)) {
+                return PERFEXPERT_ERROR;
+            }
+            fclose(info_FP);
+        } else {
+            return PERFEXPERT_ERROR;
+        }
+    }
+
+    PERFEXPERT_DEALLOC(test.output);
 
     return PERFEXPERT_SUCCESS;
 }

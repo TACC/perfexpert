@@ -1,23 +1,26 @@
+/*
+ * Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
+ *
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * This file is part of PerfExpert.
+ *
+ * PerfExpert is free software: you can redistribute it and/or modify it under
+ * the terms of the The University of Texas at Austin Research License
+ * 
+ * PerfExpert is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+ * A PARTICULAR PURPOSE.
+ * 
+ * Authors: Leonardo Fialho and Ashay Rane
+ *
+ * $HEADER$
+ */
 
 #ifndef CPUID_H_
 #define CPUID_H_
-
-/****************************************************************************
-This file is part of Hound.
-
-Hound is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Hound is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Hound.  If not, see <http://www.gnu.org/licenses/>.
-****************************************************************************/
 
 #include <string.h>
 
