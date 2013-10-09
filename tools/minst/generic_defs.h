@@ -24,55 +24,48 @@
 
 enum { FALSE=0, TRUE };
 enum { SUCCESS=0, ERR_PARAMS };
-enum { ACTION_INSTRUMENT=0, ACTION_SPLIT_LOOP, ACTION_NONE };
+enum { ACTION_INSTRUMENT=0, ACTION_ALIGNCHECK, ACTION_NONE };
 
-typedef	unsigned char	BOOL;
+typedef	unsigned char BOOL;
 
-typedef struct
-{
-	char* function;
+typedef struct {
+    char* function;
 } function_info_t;
 
-typedef struct
-{
-	char* function;
-	int line_number;
+typedef struct {
+    char* function;
+    int line_number;
 } loop_info_t;
 
-typedef struct
-{
-	short action;
-	loop_info_t loopInfo;
-	function_info_t functionInfo;
+typedef struct {
+    short action;
+    loop_info_t loopInfo;
+    function_info_t functionInfo;
 } options_t;
 
-class attrib
-{
-	public:
-	char* inst_func;
-	int line_number;
-	BOOL read, skip, atomic;
+class attrib {
+    public:
+        char* inst_func;
+        int line_number;
+        BOOL read, skip, atomic;
 
-	attrib(BOOL _read, BOOL _skip, char* _inst_func, int _line_number)
-	{
-		atomic=false, read=_read, skip=_skip, inst_func=_inst_func, line_number=_line_number;
-	}
+        attrib(BOOL _read, BOOL _skip, char* _inst_func, int _line_number) {
+            atomic=false, read=_read, skip=_skip, inst_func=_inst_func, line_number=_line_number;
+        }
 };
 
-class attrib_temp
-{
-	public:
-	char* inst_func;
-	int line_number;
-	BOOL read, skip;
+class attrib_temp {
+    public:
+        char* inst_func;
+        int line_number;
+        BOOL read, skip;
 
-	SgNode* currNode;
-	std::string var_name;
+        SgNode* currNode;
+        std::string var_name;
 
-	attrib_temp(BOOL _read, BOOL _skip, char* _inst_func, int _line_number)
-	{
-		var_name="", currNode=NULL, read=_read, skip=_skip, inst_func=_inst_func, line_number=_line_number;
-	}
+        attrib_temp(BOOL _read, BOOL _skip, char* _inst_func, int _line_number) {
+            var_name="", currNode=NULL, read=_read, skip=_skip, inst_func=_inst_func, line_number=_line_number;
+        }
 };
 
 #endif	/* GENERIC_DEFS_H_ */
