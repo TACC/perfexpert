@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013  University of Texas at Austin. All rights reserved.
+ * Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -8,19 +8,13 @@
  * This file is part of PerfExpert.
  *
  * PerfExpert is free software: you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation, either version 3 of the License, or (at your option) any
- * later version.
- *
+ * the terms of the The University of Texas at Austin Research License
+ * 
  * PerfExpert is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
- * A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with PerfExpert. If not, see <http://www.gnu.org/licenses/>.
- *
- * Author: Leonardo Fialho
+ * A PARTICULAR PURPOSE.
+ * 
+ * Authors: Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
  */
@@ -142,10 +136,12 @@ int parse_segment_params(perfexpert_list_t *segments) {
 
         /* Code param: code.filename */
         if (0 == strncmp("code.filename", node->key, 13)) {
-            /* Remove the "./src" string from filename */
-            node->value = strstr(node->value, "./src");
-            memmove(node->value, node->value + strlen("./src"), 1 +
-                strlen(node->value + strlen("./src")));
+            /* Remove the "./src" string from the front of the filename */
+            if (0 == strncmp(node->value, "./src", 5)) {
+                node->value = strstr(node->value, "./src");
+                memmove(node->value, node->value + strlen("./src"), 1 +
+                    strlen(node->value + strlen("./src")));
+            }
             PERFEXPERT_ALLOC(char, item->filename, (strlen(node->value) + 1));
             strcpy(item->filename, node->value);
             OUTPUT_VERBOSE((10, "   (%d) %s [%s]", input_line,
