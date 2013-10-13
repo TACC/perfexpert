@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013  University of Texas at Austin. All rights reserved.
+ * Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -8,19 +8,13 @@
  * This file is part of PerfExpert.
  *
  * PerfExpert is free software: you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation, either version 3 of the License, or (at your option) any
- * later version.
- *
+ * the terms of the The University of Texas at Austin Research License
+ * 
  * PerfExpert is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
- * A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with PerfExpert. If not, see <http://www.gnu.org/licenses/>.
- *
- * Author: Leonardo Fialho
+ * A PARTICULAR PURPOSE.
+ * 
+ * Authors: Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
  */
@@ -36,31 +30,13 @@ extern "C" {
 
 /* PerfExpert headers */
 #include "analyzer.h"
+#include "analyzer_options.h"
 #include "perfexpert_constants.h"
 #include "perfexpert_output.h"
 #include "install_dirs.h"
 
-/* Structure to handle command line arguments. Try to keep the content of
- * this structure compatible with the parse_cli_params() and show_help().
- */
-static struct option long_options[] = {
-    {"aggregate",        no_argument,       NULL, 'a'},
-    {"colorful",         no_argument,       NULL, 'c'},
-    {"help",             no_argument,       NULL, 'h'},
-    {"inputfile",        required_argument, NULL, 'i'},
-    {"lcpifile",         required_argument, NULL, 'l'},
-    {"measurement-tool", required_argument, NULL, 'm'},
-    {"machine",          required_argument, NULL, 'M'},
-    {"outputfile",       required_argument, NULL, 'o'},
-    {"sorting-order",    required_argument, NULL, 'O'},
-    {"threshold",        required_argument, NULL, 't'},
-    {"thread",           required_argument, NULL, 'T'},
-    {"verbose",          required_argument, NULL, 'v'},
-    {0, 0, 0, 0}
-};
-
 /* show_help */
-void show_help(void) {
+static void show_help(void) {
     OUTPUT_VERBOSE((10, "printing help"));
     /*      12345678901234567890123456789012345678901234567890123456789012345678901234567890 */
     printf("Usage: analyzer [-acfhilmMoOTvw]\n\n");
@@ -83,10 +59,11 @@ void show_help(void) {
     printf("                     PerfExpert should take into consideration (> 0 and <= 1)\n");
     printf("  -T --thread        Show information only for a specific thread ID\n");
     printf("  -v --verbose       Enable verbose mode (default: disabled, levels: 1-10)\n");
+    printf("  -w --workdir       Directory where temporary files should be created\n");
 }
 
 /* parse_env_vars */
-int parse_env_vars(void) {
+static int parse_env_vars(void) {
     if (NULL != getenv("PERFEXPERT_ANALYZER_VERBOSE_LEVEL")) {
         globals.verbose = atoi(getenv("PERFEXPERT_ANALYZER_VERBOSE_LEVEL"));
         OUTPUT_VERBOSE((1, "ENV: verbose_level=%d", globals.verbose));
@@ -131,6 +108,10 @@ int parse_env_vars(void) {
         globals.outputmetrics = getenv("PERFEXPERT_ANALYZER_METRICS_FILE");
         OUTPUT_VERBOSE((1, "ENV: outputmetrics=%s", globals.outputmetrics));
     }
+    if (NULL != getenv("PERFEXPERT_ANALYZER_WORKDIR")) {
+        globals.workdir = getenv("PERFEXPERT_ANALYZER_WORKDIR");
+        OUTPUT_VERBOSE((1, "ENV: workdir=%s", globals.workdir));
+    }
     return PERFEXPERT_SUCCESS;
 }
 
@@ -147,7 +128,7 @@ int parse_cli_params(int argc, char *argv[]) {
 
     while (1) {
         /* get parameter */
-        parameter = getopt_long(argc, argv, "achi:l:m:M:o:O:t:T:v:",
+        parameter = getopt_long(argc, argv, "achi:l:m:M:o:O:t:T:v:w:",
             long_options, &option_index);
 
         /* Detect the end of the options */
@@ -217,6 +198,11 @@ int parse_cli_params(int argc, char *argv[]) {
                 globals.verbose = atoi(optarg);
                 OUTPUT_VERBOSE((1, "option 'v' set [%d]", globals.verbose));
                 break;
+            /* Workdir */
+            case 'w':
+                globals.workdir = optarg;
+                OUTPUT_VERBOSE((1, "option 'w' set [%s]", globals.workdir));
+                break;
             /* Unknown option */
             case '?':
             default:
@@ -241,6 +227,7 @@ int parse_cli_params(int argc, char *argv[]) {
     OUTPUT_VERBOSE((7, "   Thread ID:        %d", globals.thread));
     OUTPUT_VERBOSE((7, "   Verbose level:    %d", globals.verbose));
     OUTPUT_VERBOSE((7, "   Output metrcis:   %s", globals.outputmetrics));
+    OUTPUT_VERBOSE((7, "   Workdir:          %s", globals.workdir));
 
     /* Not using OUTPUT_VERBOSE because I want only one line */
     if (8 <= globals.verbose) {

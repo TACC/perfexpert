@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013  University of Texas at Austin. All rights reserved.
+ * Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -8,19 +8,13 @@
  * This file is part of PerfExpert.
  *
  * PerfExpert is free software: you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation, either version 3 of the License, or (at your option) any
- * later version.
- *
+ * the terms of the The University of Texas at Austin Research License
+ * 
  * PerfExpert is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
- * A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with PerfExpert. If not, see <http://www.gnu.org/licenses/>.
- *
- * Author: Leonardo Fialho
+ * A PARTICULAR PURPOSE.
+ * 
+ * Authors: Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
  */
@@ -180,6 +174,7 @@ typedef struct {
     int      colorful;
     char     *outputmetrics;
     char     *order;
+    char     *workdir;
 } globals_t;
 
 extern globals_t globals; /* This variable is defined in analyzer_main.c */
@@ -191,25 +186,17 @@ extern globals_t globals; /* This variable is defined in analyzer_main.c */
 #define PROGRAM_PREFIX "[analyzer]"
 
 /* Function declarations */
-void show_help(void);
-int parse_env_vars(void);
 int parse_cli_params(int argc, char *argv[]);
 int profile_parse_file(const char* file, const char* tool,
     perfexpert_list_t *profiles);
 int profile_check_all(perfexpert_list_t *profiles);
-int profile_check_callpath(perfexpert_list_t *calls, int root);
 int profile_flatten_all(perfexpert_list_t *profiles);
-int profile_flatten_hotspots(profile_t *profile);
-int profile_aggregate_hotspots(profile_t *profile);
-int profile_aggregate_metrics(profile_t *profile, procedure_t *hotspot);
 int lcpi_parse_file(const char *file);
 int lcpi_compute(profile_t *profile);
 int machine_parse_file(const char *file);
 int calculate_importance_variance(profile_t *profile);
 int output_analysis_all(perfexpert_list_t *profiles);
-int output_analysis(profile_t *profile, procedure_t *hotspot);
 int output_metrics_all(perfexpert_list_t *profiles);
-int output_metrics(profile_t *profile, procedure_t *hotspot, FILE *file_FP);
 int hotspot_sort(perfexpert_list_t *profiles);
 
 /* generic_get */

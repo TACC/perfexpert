@@ -1,4 +1,4 @@
-Copyright (c) 2013  University of Texas at Austin. All rights reserved.
+Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
 
 $COPYRIGHT$
 
@@ -7,49 +7,19 @@ Additional copyrights may follow
 This file is part of PerfExpert.
 
 PerfExpert is free software: you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the Free
-Software Foundation, either version 3 of the License, or (at your option) any
-later version.
+the terms of the The University of Texas at Austin Research License
 
 PerfExpert is distributed in the hope that it will be useful, but WITHOUT ANY
 WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
-A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
-details.
-
-You should have received a copy of the GNU Lesser General Public License
-along with PerfExpert. If not, see <http://www.gnu.org/licenses/>.
+A PARTICULAR PURPOSE.
 
 Authors: Leonardo Fialho and Ashay Rane
 
 $HEADER$
 
 
-COMPILING AND INSTALLING:
-=========================
-To compile OptTran just run: 
-
-    $ mkdir _build
-    $ cd _build
-    $ ../configure [options]
-	$ make
-    $ make install
-
-If the 'configure' script is not available on your source tree, probably you
-have retrieved this code from our source code repository. It means you will
-need some GNU tools to generate the 'configure'. The recommended version of the
-tools you will need:
-
-    - M4,       1.4.13 or newer (ftp://ftp.gnu.org/gnu/m4/)
-    - Autoconf  2.63 or newer   (ftp://ftp.gnu.org/gnu/autoconf/)
-    - Automake  1.11.1 or newer (ftp://ftp.gnu.org/gnu/automake/)
-    - Libtool   2.2.6b or newer (ftp://ftp.gnu.org/gnu/libtool/)
-
-If you have all these GNU tools, to generate the 'configure' script just run:
-
-    $ ./autogen.sh
-
-DOCUMENTATION:
-==============
+Documentation:
+--------------
 See doc/ directory.
 
 EOF

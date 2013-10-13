@@ -19,12 +19,23 @@
  * $HEADER$
  */
 
-#ifndef ERR_H_
-#define ERR_H_
+#ifndef ANALYZER_OUTPUT_H_
+#define ANALYZER_OUTPUT_H_
 
-enum {
-    ERR_MEMFAILED,
-    ERR_MULT_INVOCATIONS
-};
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-#endif /* ERR_H_ */
+#define GET_COMPILER_INFO_PROGRAM "perfexpert_get_compiler_info.pl"
+
+/* Function definitions */
+static int output_analysis(profile_t *profile, procedure_t *hotspot);
+static int output_metrics(profile_t *profile, procedure_t *hotspot,
+	FILE *file_FP);
+static int print_compiler_info(procedure_t *hotspot, FILE *file_FP);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* ANALYZER_OUTPUT_H_ */
