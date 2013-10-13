@@ -3,12 +3,13 @@
 #define	MINST_H_
 
 #include "generic_defs.h"
+#include "instrumentor.h"
 
 class MINST : public AstTopDownProcessing<attrib> {
     short action;
     int line_number;
     std::string inst_func;
-    std::vector<std::string> stream_list;
+    std::vector<reference_info_t> reference_list;
 
     SgGlobal* global_node;
     Sg_File_Info* file_info;

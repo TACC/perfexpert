@@ -9,7 +9,7 @@ using namespace SageBuilder;
 using namespace SageInterface;
 
 void instrumentor_t::atTraversalStart() {
-    stream_list.clear();
+    reference_list.clear();
     inst_info_list.clear();
 }
 
@@ -36,8 +36,8 @@ void instrumentor_t::atTraversalEnd() {
     }
 }
 
-std::vector<std::string>& instrumentor_t::get_stream_list() {
-    return stream_list;
+std::vector<reference_info_t>& instrumentor_t::get_reference_list() {
+    return reference_list;
 }
 
 attrib instrumentor_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
@@ -97,11 +97,21 @@ attrib instrumentor_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
                 stream_name = stream_name.substr(0, index);
             }
 
-            std::vector<std::string>::iterator iter = std::find(stream_list.begin(), stream_list.end(), stream_name);
-            size_t idx = std::distance(stream_list.begin(), iter);
-            if (idx == stream_list.size()) {
-                stream_list.push_back(stream_name);
-                idx = stream_list.size()-1;
+            size_t idx = 0;
+            for (std::vector<reference_info_t>::iterator it = reference_list.begin(); it != reference_list.end(); it++) {
+                if (it->name == stream_name) {
+                    break;
+                }
+
+                idx += 1;
+            }
+
+            if (idx == reference_list.size()) {
+                reference_info_t stream_info;
+                stream_info.name = stream_name;
+
+                reference_list.push_back(stream_info);
+                idx = reference_list.size()-1;
             }
 
             Sg_File_Info *fileInfo = Sg_File_Info::generateFileInfoForTransformationNode(

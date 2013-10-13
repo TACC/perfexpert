@@ -10,13 +10,17 @@ typedef struct {
     std::vector<SgExpression*> params;
 } inst_info_t;
 
+typedef struct {
+    std::string name;
+} reference_info_t;
+
 class instrumentor_t : public AstTopDownProcessing<attrib> {
     private:
-        std::vector<std::string> stream_list;
+        std::vector<reference_info_t> reference_list;
         std::vector<inst_info_t> inst_info_list;
 
     public:
-        std::vector<std::string>& get_stream_list();
+        std::vector<reference_info_t>& get_reference_list();
 
         virtual attrib evaluateInheritedAttribute(SgNode* node, attrib attr);
         virtual void atTraversalStart();
