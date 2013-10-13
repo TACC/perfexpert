@@ -37,7 +37,7 @@ void MINST::insert_map_function(SgNode* node) {
 }
 
 void MINST::atTraversalStart() {
-    stream_list.clear();
+    reference_list.clear();
     global_node=NULL, non_def_decl=NULL, def_decl=NULL, file_info=NULL;
 }
 
@@ -47,11 +47,11 @@ void MINST::atTraversalEnd() {
 
     if (def_decl) {
         SgBasicBlock* bb = def_decl->get_definition()->get_body();
-        if (bb && stream_list.size() > 0) {
+        if (bb && reference_list.size() > 0) {
             std::string indigo__write_idx = SageInterface::is_Fortran_language() ? "indigo__write_idx_f" : "indigo__write_idx_c";
-            for (std::vector<std::string>::iterator it=stream_list.begin(); it!=stream_list.end(); it++) {
+            for (std::vector<reference_info_t>::iterator it=reference_list.begin(); it!=reference_list.end(); it++) {
                 // Add a call to indigo__write_idx_[fc]() and place it in the basic block bb
-                std::string stream_name = *it;
+                std::string stream_name = it->name;
 
                 std::vector<SgExpression*> expr_vector;
                 SgStringVal* param_stream_name = new SgStringVal(file_info, stream_name);
@@ -125,7 +125,7 @@ attrib MINST::evaluateInheritedAttribute(SgNode* node, attrib attr)
 
                 instrumentor_t inst;
                 inst.traverse(node, attr);
-                stream_list = inst.get_stream_list();
+                reference_list = inst.get_reference_list();
             }
         }
     }
@@ -143,7 +143,7 @@ attrib MINST::evaluateInheritedAttribute(SgNode* node, attrib attr)
 
                 instrumentor_t inst;
                 inst.traverse(node, attr);
-                stream_list = inst.get_stream_list();
+                reference_list = inst.get_reference_list();
             } else if (action == ACTION_ALIGNCHECK) {
                 std::cerr << "Placing alignment checks around loop in function " << function_name << " at line " << _line_number << std::endl;
                 aligncheck_t visitor;
