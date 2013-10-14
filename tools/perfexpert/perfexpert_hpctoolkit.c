@@ -239,7 +239,7 @@ int run_hpcrun(void) {
             (strlen(globals.stepdir) + 20));
         sprintf(experiment->test.output, "%s/hpcrun.%d.output", globals.stepdir,
             input_line);
-        experiment->test.input = NULL;
+        experiment->test.input = globals.inputfile;
         experiment->test.info = globals.program;
 
         /* Not using OUTPUT_VERBOSE because I want only one line */

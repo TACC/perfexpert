@@ -43,16 +43,24 @@ static arg_options_t arg_options = { 0 };
 
 /* parse_cli_params */
 int parse_cli_params(int argc, char *argv[]) {
+    int i = 0, k = 0;
+
+    /* perfexpert_run_exp compatibility */
+    if (0 == strcmp("perfexpert_run_exp", argv[0])) {
+        globals.only_exp = PERFEXPERT_TRUE;
+    }
+
     /* Set default values for globals */
     arg_options = (arg_options_t) {
-        .program_argv = NULL,
-        .prefix       = NULL,
-        .before       = NULL,
-        .after        = NULL,
-        .knc_prefix   = NULL,
-        .knc_before   = NULL,
-        .knc_after    = NULL,
-        .do_not_run   = PERFEXPERT_FALSE
+        .program_argv      = NULL,
+        .program_argv_temp = { 0 },
+        .prefix            = NULL,
+        .before            = NULL,
+        .after             = NULL,
+        .knc_prefix        = NULL,
+        .knc_before        = NULL,
+        .knc_after         = NULL,
+        .do_not_run        = PERFEXPERT_FALSE
     };
 
     /* If some environment variable is defined, use it! */
@@ -88,6 +96,18 @@ int parse_cli_params(int argc, char *argv[]) {
     if (NULL != arg_options.knc_prefix) {
         perfexpert_string_split(perfexpert_string_remove_spaces(
             arg_options.knc_prefix), globals.knc_prefix, ' ');
+    }
+    while (NULL != arg_options.program_argv[i]) {
+        int j = 0;
+
+        perfexpert_string_split(perfexpert_string_remove_spaces(
+            arg_options.program_argv[i]), arg_options.program_argv_temp, ' ');
+        while (NULL != arg_options.program_argv_temp[j]) {
+            globals.program_argv[k] = arg_options.program_argv_temp[j];
+            j++;
+            k++;
+        }
+        i++;
     }
 
     /* Sanity check: verbose level should be between 1-10 */
@@ -157,16 +177,13 @@ int parse_cli_params(int argc, char *argv[]) {
         OUTPUT(("%s", _RED("Warning: option -A selected without setting MIC")));
     }
 
-    /* Not using OUTPUT_VERBOSE because I want only one line */
-    if (1 <= globals.verbose) {
-        int i = 0;
-    }
-
     OUTPUT_VERBOSE((7, "%s", _BLUE("Summary of options")));
     OUTPUT_VERBOSE((7, "   Verbose level:       %d", globals.verbose));
     OUTPUT_VERBOSE((7, "   Colorful verbose?    %s", globals.colorful ?
         "yes" : "no"));
     OUTPUT_VERBOSE((7, "   Leave garbage?       %s", globals.leave_garbage ?
+        "yes" : "no"));
+    OUTPUT_VERBOSE((7, "   Only experiments?    %s", globals.only_exp ?
         "yes" : "no"));
     OUTPUT_VERBOSE((7, "   Database file:       %s", globals.dbfile));
     OUTPUT_VERBOSE((7, "   Recommendations      %d", globals.rec_count));
@@ -176,12 +193,11 @@ int parse_cli_params(int argc, char *argv[]) {
     OUTPUT_VERBOSE((7, "   Program executable:  %s", globals.program));
     OUTPUT_VERBOSE((7, "   Program path:        %s", globals.program_path));
     OUTPUT_VERBOSE((7, "   Program full path:   %s", globals.program_full));
+    OUTPUT_VERBOSE((7, "   Program input file:  %s", globals.inputfile));
     if (7 <= globals.verbose) {
-        int i = 0;
+        i = 0;
         printf("%s    Program arguments:  ", PROGRAM_PREFIX);
-        while (NULL != arg_options.program_argv[i]) {
-            globals.program_argv[i] = perfexpert_string_remove_spaces(
-                arg_options.program_argv[i]);
+        while (NULL != globals.program_argv[i]) {
             printf(" [%s]", globals.program_argv[i]);
             i++;
         }
@@ -207,7 +223,7 @@ int parse_cli_params(int argc, char *argv[]) {
     }
     OUTPUT_VERBOSE((7, "   MIC card:            %s", globals.knc));
     if (7 <= globals.verbose) {
-        int i = 0;
+        i = 0;
         printf("%s    MIC prefix:         ", PROGRAM_PREFIX);
         while (NULL != globals.knc_prefix[i]) {
             printf(" [%s]", (char *)globals.knc_prefix[i]);
@@ -232,7 +248,7 @@ int parse_cli_params(int argc, char *argv[]) {
 
     /* Not using OUTPUT_VERBOSE because I want only one line */
     if (8 <= globals.verbose) {
-        int i = 0;
+        i = 0;
         printf("%s    %s", PROGRAM_PREFIX, _YELLOW("command line:"));
         for (i = 0; i < argc; i++) {
             printf(" [%s]", argv[i]);
@@ -291,6 +307,13 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
             OUTPUT_VERBOSE((1, "option 'd' set [%s]", globals.dbfile));
             break;
 
+        /* Only experiments */
+        case 'e':
+            globals.only_exp = PERFEXPERT_TRUE;
+            globals.leave_garbage = PERFEXPERT_TRUE;
+            OUTPUT_VERBOSE((1, "option 'e' set"));
+            break;
+
         /* Leave the garbage there? */
         case 'g':
             globals.leave_garbage = PERFEXPERT_TRUE;
@@ -302,6 +325,12 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
             OUTPUT_VERBOSE((1, "option 'h' set"));
             // argp_help(&argp, NULL, ARGP_HELP_LONG, "porra");
             argp_state_help(state, stdout, ARGP_HELP_STD_HELP);
+            break;
+
+        /* Which input file? */
+        case 'i':
+            globals.inputfile = arg;
+            OUTPUT_VERBOSE((1, "option 'i' set [%s]", globals.inputfile));
             break;
 
         /* Verbose level (has an alias: v) */
@@ -366,18 +395,35 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
 
         /* Arguments: threashold and target program and it's arguments */
         case ARGP_KEY_ARG:
-            if (0 == state->arg_num) {
-                globals.threshold = atof(arg);
-                OUTPUT_VERBOSE((1, "option 'threshold' set [%f] (%s)",
-                    globals.threshold, arg));
-            }
-            if (1 == state->arg_num) {
+            if (PERFEXPERT_TRUE == globals.only_exp) {
+                OUTPUT(("%s running PerfExpert in compatibility mode",
+                    _BOLDRED("WARNING:")));
+                OUTPUT((""));
+                globals.leave_garbage = PERFEXPERT_TRUE;
+                OUTPUT_VERBOSE((1, "option 'g' set"));
                 globals.program = arg;
                 OUTPUT_VERBOSE((1, "option 'target_program' set [%s]",
                     globals.program));
+                globals.threshold = 1;
+                OUTPUT_VERBOSE((1, "option 'threshold' set [%f]",
+                    globals.threshold));
                 arg_options.program_argv = &state->argv[state->next];
                 OUTPUT_VERBOSE((1, "option 'program_arguments' set"));
                 state->next = state->argc;
+            } else {
+                if (0 == state->arg_num) {
+                    globals.threshold = atof(arg);
+                    OUTPUT_VERBOSE((1, "option 'threshold' set [%f] (%s)",
+                        globals.threshold, arg));
+                }
+                if (1 == state->arg_num) {
+                    globals.program = arg;
+                    OUTPUT_VERBOSE((1, "option 'target_program' set [%s]",
+                        globals.program));
+                    arg_options.program_argv = &state->argv[state->next];
+                    OUTPUT_VERBOSE((1, "option 'program_arguments' set"));
+                    state->next = state->argc;
+                }
             }
             break;
 
@@ -387,8 +433,14 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
 
         /* Too few options */
         case ARGP_KEY_END:
-            if (2 > state->arg_num) {
-                argp_usage(state);
+            if (PERFEXPERT_TRUE == globals.only_exp) {
+                if (1 > state->arg_num) {
+                    argp_usage(state);
+                }
+            } else {
+                if (2 > state->arg_num) {
+                    argp_usage(state);
+                }
             }
             break;
 
@@ -476,6 +528,11 @@ static int parse_env_vars(void) {
     if (NULL != getenv("PERFEXPERT_ANALYZER_TOOL")) {
         globals.tool = getenv("PERFEXPERT_ANALYZER_TOOL");
         OUTPUT_VERBOSE((1, "ENV: tool=%s", globals.tool));
+    }
+
+    if (NULL != getenv("PERFEXPERT_ANALYZER_INPUT_FILE")) {
+        globals.inputfile = getenv("PERFEXPERT_ANALYZER_INPUT_FILE");
+        OUTPUT_VERBOSE((1, "ENV: tool=%s", globals.inputfile));
     }
 
     return PERFEXPERT_SUCCESS;

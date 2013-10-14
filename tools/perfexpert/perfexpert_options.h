@@ -50,6 +50,9 @@ static struct argp_option options[] = {
     }, 
 #endif
     { 0, 0, 0, 0, "Target program execution options:", 2,
+    }, {"inputfile", 'i', "FILE", 0, "Input file to the target program. Use "
+        "this option instead of input pipe redirect ('<'). Output pipe ('>') "
+        "is not available because PerfExpert already set a default output file",
     }, {"after", 'a', "COMMAND", 0,
         "Command to execute after each run of the target program",
     }, {"before", 'b', "COMMAND", 0,
@@ -87,6 +90,8 @@ static struct argp_option options[] = {
         "Do not remove temporary directory when finalize",
     }, {"do-not-run", 'n', 0, 0,
         "Do not run PerfExpert, just parse the command line (for debugging)",
+    }, {"only-experiments", 'e', 0, 0, "Tell PerfExpert to not perform any "
+        "analysis just run the target program (for further manual analysis)",
     }, {"measurement-tool", 't', "hpctoolkit|vtune", 0, "Set the tool that "
         "should be used to collect performance counter values (default: "
         "hpctoolkit)", },
@@ -109,6 +114,7 @@ static char doc[] = "\nPerfExpert -- an easy-to-use automatic performance "
 
 typedef struct arg_options {
     char  **program_argv;
+    char  *program_argv_temp[PARAM_SIZE];
     char  *prefix;
     char  *before;
     char  *after;

@@ -132,12 +132,12 @@ static inline int fork_and_wait(test_t *test, char *argv[]) {
         if (NULL != test->input) {
             if (-1 == (input_FP = open(test->input, O_RDONLY))) {
                 OUTPUT(("%s (%s)",
-                        _ERROR((char *)"Error: unable to open input file"),
-                        test->input));
+                    _ERROR((char *)"Error: unable to open input file"),
+                    test->input));
                 return PERFEXPERT_ERROR;
             } else {
                 OUTPUT_VERBOSE((10, "      %s   %s", _CYAN((char *)"stdin"),
-                                test->input));
+                    test->input));
                 bzero(buffer, BUFFER_SIZE);
                 while (0 != (r_bytes = read(input_FP, buffer, BUFFER_SIZE))) {
                     w_bytes = write(PARENT_WRITE, buffer, r_bytes);
@@ -151,12 +151,12 @@ static inline int fork_and_wait(test_t *test, char *argv[]) {
         /* Read child process' answer and write it to output file */
         if (NULL != test->output) {
             OUTPUT_VERBOSE((10, "      %s  %s", _CYAN((char *)"stdout"),
-                            test->output));
+                test->output));
 
             if (-1 == (output_FP = open(test->output, O_CREAT|O_WRONLY, 0644))) {
                 OUTPUT(("%s (%s)",
-                        _ERROR((char *)"Error: unable to open output file"),
-                        test->output));
+                    _ERROR((char *)"Error: unable to open output file"),
+                    test->output));
                 return PERFEXPERT_ERROR;
             } else {
                 bzero(buffer, BUFFER_SIZE);
