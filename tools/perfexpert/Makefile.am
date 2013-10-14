@@ -36,4 +36,7 @@ perfexpert_SOURCES = perfexpert_main.c \
 
 dist_bin_SCRIPTS = perfexpert_get_compiler_info.pl
 
+install-exec-local:
+	$(INSTALL) -m 755 perfexpert $(bindir)/perfexpert_run_exp
+
 # EOF

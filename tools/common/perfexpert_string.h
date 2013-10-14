@@ -36,9 +36,20 @@ extern "C" {
 /* perfexpert_string_split */
 static inline int perfexpert_string_split(char *in, char **out, int token) {
     int i = 0, j = 0, c = 0;
+    int quoted = PERFEXPERT_FALSE;
 
     while (0 != in[i]) {
-        if (token == in[i]) {
+        if (('"' == in[i]) && (PERFEXPERT_FALSE == quoted)) {
+            quoted = PERFEXPERT_TRUE;
+            i++;
+            continue;
+        }
+        if (('"' == in[i]) && (PERFEXPERT_TRUE == quoted)) {
+            quoted = PERFEXPERT_FALSE;
+            i++;
+            continue;
+        }
+        if ((token == in[i]) && (PERFEXPERT_FALSE == quoted)) {
             if (0 < (i - j)) {
                 PERFEXPERT_ALLOC(char, out[c], (i - j + 1));
                 memcpy((void *)&(out[c][0]), (void *)&(in[j]), i - j);
