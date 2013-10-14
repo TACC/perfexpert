@@ -24,7 +24,8 @@
 AC_PREREQ(2.63)
 
 # Define the package name, version, author, etc.
-AC_INIT([perfexpert], [4.1], [Leonardo Fialho: fialho@utexas.edu],
+AC_INIT([perfexpert], [4.1.1],
+    [PerfExpert mailing list: perfexpert@lists.tacc.utexas.edu],
     [perfexpert.tar.gz], [http://www.tacc.com.br/perfexpert/])
 AC_COPYRIGHT([University of Texas at Austin])
 AC_REVISION([$Revision: 4.1 $])

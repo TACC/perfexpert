@@ -367,6 +367,7 @@ int profile_check_all(perfexpert_list_t *profiles) {
                     profile->name));
                 return PERFEXPERT_ERROR;
            }
+           globals.found_hotspots = PERFEXPERT_TRUE;
         }
         profile = (profile_t *)perfexpert_list_get_next(profile);
     }

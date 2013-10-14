@@ -120,11 +120,10 @@ int run_hpcrun(void) {
     FILE *exp_file_FP;
     char *exp_file;
     char *exp_prefix;
-    int count;
     char buffer[BUFFER_SIZE];
-    char *argv[2];
     int input_line = 0;
     int rc = PERFEXPERT_SUCCESS;
+    int i = 0;
     test_t test;
     experiment_t *experiment;
     perfexpert_list_t experiments;
@@ -166,16 +165,11 @@ int run_hpcrun(void) {
             experiment->argc = 0;
 
             /* Add PREFIX to argv */
-            if (NULL != globals.prefix) {
-                PERFEXPERT_ALLOC(char, exp_prefix,
-                    (strlen(globals.prefix) + 1));
-                sprintf(exp_prefix, "%s", globals.prefix);
-
-                experiment->argv[0] = strtok(exp_prefix, " ");
-                experiment->argc = 1;
-                while (experiment->argv[experiment->argc] = strtok(NULL, " ")) {
-                    experiment->argc++;
-                }
+            i = 0;
+            while (NULL != globals.prefix[i]) {
+                experiment->argv[experiment->argc] = globals.prefix[i];
+                experiment->argc++;
+                i++;
             }
 
             /* Arguments to run hpcrun */
@@ -208,23 +202,19 @@ int run_hpcrun(void) {
     /* For each experiment... */
     OUTPUT_VERBOSE((5, "   %s", _YELLOW("running experiments")));
     while (0 < perfexpert_list_get_size(&experiments)) {
-        int count = 0;
-
         experiment = (experiment_t *)perfexpert_list_get_first(&experiments);
         input_line++;
 
         /* Run the BEFORE program */
-        if (NULL != globals.before) {
-            argv[0] = globals.before;
-            argv[1]; NULL;
-
+        if (NULL != globals.before[0]) {
             PERFEXPERT_ALLOC(char, test.output, (strlen(globals.stepdir) + 20));
-            sprintf(test.output, "%s/before.%d.output", globals.stepdir, count);
+            sprintf(test.output, "%s/before.%d.output", globals.stepdir,
+                input_line);
             test.input = NULL;
-            test.info = globals.before;
+            test.info = globals.before[0];
 
-            if (0 != fork_and_wait(&test, (char **)argv)) {
-                OUTPUT(("   %s [%s]", _RED("error running"), globals.before));
+            if (0 != fork_and_wait(&test, (char **)globals.before)) {
+                OUTPUT(("   %s", _RED("error running 'before' command")));
             }
             PERFEXPERT_DEALLOC(test.output);
         }
@@ -233,12 +223,15 @@ int run_hpcrun(void) {
         experiment->argv[experiment->argc] = globals.program_full;
         experiment->argc++;
 
-        /* ...and the program arguments to experiment's argv */
-        while (NULL != globals.program_argv[count]) {
-            experiment->argv[experiment->argc] = globals.program_argv[count];
+        /* ...and the program arguments */
+        i = 0;
+        while (NULL != globals.program_argv[i]) {
+            experiment->argv[experiment->argc] = globals.program_argv[i];
             experiment->argc++;
-            count++;
+            i++;
         }
+
+        /* The last of the Mohicans */
         experiment->argv[experiment->argc] = NULL;
 
         /* The super-ninja test sctructure */
@@ -251,7 +244,6 @@ int run_hpcrun(void) {
 
         /* Not using OUTPUT_VERBOSE because I want only one line */
         if (8 <= globals.verbose) {
-            int i;
             printf("%s    %s", PROGRAM_PREFIX, _YELLOW("command line:"));
             for (i = 0; i < experiment->argc; i++) {
                 printf(" %s", experiment->argv[i]);
@@ -259,7 +251,7 @@ int run_hpcrun(void) {
             printf("\n");
         }
 
-        /* Run program and test return code (should I really test it?) */
+        /* (HPC)run program and test return code (should I really test it?) */
         clock_gettime(CLOCK_MONOTONIC, &time_start);
         switch (fork_and_wait(&(experiment->test), (char **)experiment->argv)) {
             case PERFEXPERT_ERROR:
@@ -268,10 +260,10 @@ int run_hpcrun(void) {
 
             case PERFEXPERT_FAILURE:
                 OUTPUT_VERBOSE((7, "   [%s ]", _BOLDRED("FAIL")));
-                break;
+                return PERFEXPERT_ERROR;
 
             case PERFEXPERT_SUCCESS:
-                 OUTPUT_VERBOSE((7, "   [ %s  ]", _BOLDGREEN("OK")));
+                OUTPUT_VERBOSE((7, "   [ %s  ]", _BOLDGREEN("OK")));
                 break;
 
             default:
@@ -283,17 +275,15 @@ int run_hpcrun(void) {
             input_line, (long long)time_diff.tv_sec, time_diff.tv_nsec));
 
         /* Run the AFTER program */
-        if (NULL != globals.after) {
-            argv[0] = globals.after;
-            argv[1]; NULL;
-
+        if (NULL != globals.after[0]) {
             PERFEXPERT_ALLOC(char, test.output, (strlen(globals.stepdir) + 20));
-            sprintf(test.output, "%s/after.%d.output", globals.stepdir, count);
+            sprintf(test.output, "%s/after.%d.output", globals.stepdir,
+                input_line);
             test.input = NULL;
-            test.info = globals.after;
+            test.info = globals.after[0];
 
-            if (0 != fork_and_wait(&test, (char **)argv)) {
-                OUTPUT(("   %s [%s]", _RED("error running"), globals.after));
+            if (0 != fork_and_wait(&test, (char **)globals.after)) {
+                OUTPUT(("   %s", _RED("error running 'after' command")));
             }
             PERFEXPERT_DEALLOC(test.output);
         }

@@ -36,6 +36,7 @@ enum {
     PERFEXPERT_NO_PAT,         /* 3  ...when no pattern matches               */
     PERFEXPERT_NO_TRANS,       /* 4  ...when transformations can't be applied */
     PERFEXPERT_NO_DATA,        /* 5  ...when analyzer return an error         */
+    PERFEXPERT_NO_HOTSPOTS,    /* 6  ...when there no hotspots were found     */
 };
 
 #define PERFEXPERT_TRUE  1 /* used to return boolean values */

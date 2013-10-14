@@ -35,12 +35,26 @@ extern "C" {
 #include "perfexpert_constants.h"
 #include "perfexpert_options.h"
 #include "perfexpert_output.h"
+#include "perfexpert_string.h"
 #include "perfexpert_util.h"
 
 static struct argp argp = { options, parse_options, args_doc, doc };
+static arg_options_t arg_options = { 0 };
 
 /* parse_cli_params */
 int parse_cli_params(int argc, char *argv[]) {
+    /* Set default values for globals */
+    arg_options = (arg_options_t) {
+        .program_argv = NULL,
+        .prefix       = NULL,
+        .before       = NULL,
+        .after        = NULL,
+        .knc_prefix   = NULL,
+        .knc_before   = NULL,
+        .knc_after    = NULL,
+        .do_not_run   = PERFEXPERT_FALSE
+    };
+
     /* If some environment variable is defined, use it! */
     if (PERFEXPERT_SUCCESS != parse_env_vars()) {
         OUTPUT(("%s", _ERROR("Error: parsing environment variables")));
@@ -49,6 +63,32 @@ int parse_cli_params(int argc, char *argv[]) {
 
     /* Parse arguments */
     argp_parse(&argp, argc, argv, 0, 0, &globals);
+
+    /* Expand AFTERs, BEFOREs, PREFIXs and program arguments */
+    if (NULL != arg_options.after) {
+        perfexpert_string_split(perfexpert_string_remove_spaces(
+            arg_options.after), globals.after, ' ');
+    }
+    if (NULL != arg_options.before) {
+        perfexpert_string_split(perfexpert_string_remove_spaces(
+            arg_options.before), globals.before, ' ');
+    }
+    if (NULL != arg_options.prefix) {
+        perfexpert_string_split(perfexpert_string_remove_spaces(
+            arg_options.prefix), globals.prefix, ' ');
+    }
+    if (NULL != arg_options.knc_after) {
+        perfexpert_string_split(perfexpert_string_remove_spaces(
+            arg_options.knc_after), globals.knc_after, ' ');
+    }
+    if (NULL != arg_options.knc_before) {
+        perfexpert_string_split(perfexpert_string_remove_spaces(
+            arg_options.knc_before), globals.knc_before, ' ');
+    }
+    if (NULL != arg_options.knc_prefix) {
+        perfexpert_string_split(perfexpert_string_remove_spaces(
+            arg_options.knc_prefix), globals.knc_prefix, ' ');
+    }
 
     /* Sanity check: verbose level should be between 1-10 */
     if ((0 > globals.verbose) || (10 < globals.verbose)) {
@@ -103,29 +143,23 @@ int parse_cli_params(int argc, char *argv[]) {
     }
 
     /* Sanity check: MIC options without MIC */
-    if ((NULL != globals.knc_prefix) && (NULL == globals.knc)) {
-        OUTPUT(("%s", _RED("Warning: option -P selected without option -k")));
+    if ((NULL != globals.knc_prefix[0]) && (NULL == globals.knc)) {
+        OUTPUT(("%s", _RED("Warning: option -P selected without setting MIC")));
     }
 
     /* Sanity check: MIC options without MIC */
-    if ((NULL != globals.knc_before) && (NULL == globals.knc)) {
-        OUTPUT(("%s", _RED("Warning: option -B selected without option -k")));
+    if ((NULL != globals.knc_before[0]) && (NULL == globals.knc)) {
+        OUTPUT(("%s", _RED("Warning: option -B selected without setting MIC")));
     }
 
     /* Sanity check: MIC options without MIC */
-    if ((NULL != globals.knc_after) && (NULL == globals.knc)) {
-        OUTPUT(("%s", _RED("Warning: option -A selected without option -k")));
+    if ((NULL != globals.knc_after[0]) && (NULL == globals.knc)) {
+        OUTPUT(("%s", _RED("Warning: option -A selected without setting MIC")));
     }
 
     /* Not using OUTPUT_VERBOSE because I want only one line */
-    if (8 <= globals.verbose) {
+    if (1 <= globals.verbose) {
         int i = 0;
-        printf("%s    %s", PROGRAM_PREFIX, _YELLOW("program arguments:"));
-        while (NULL != globals.program_argv[i]) {
-            printf(" [%s]", globals.program_argv[i]);
-            i++;
-        }
-        printf("\n");
     }
 
     OUTPUT_VERBOSE((7, "%s", _BLUE("Summary of options")));
@@ -142,13 +176,57 @@ int parse_cli_params(int argc, char *argv[]) {
     OUTPUT_VERBOSE((7, "   Program executable:  %s", globals.program));
     OUTPUT_VERBOSE((7, "   Program path:        %s", globals.program_path));
     OUTPUT_VERBOSE((7, "   Program full path:   %s", globals.program_full));
-    OUTPUT_VERBOSE((7, "   Prefix:              %s", globals.prefix));
-    OUTPUT_VERBOSE((7, "   Before each run:     %s", globals.before));
-    OUTPUT_VERBOSE((7, "   After each run:      %s", globals.after));
+    if (7 <= globals.verbose) {
+        int i = 0;
+        printf("%s    Program arguments:  ", PROGRAM_PREFIX);
+        while (NULL != arg_options.program_argv[i]) {
+            globals.program_argv[i] = perfexpert_string_remove_spaces(
+                arg_options.program_argv[i]);
+            printf(" [%s]", globals.program_argv[i]);
+            i++;
+        }
+        printf("\n%s    Prefix:             ", PROGRAM_PREFIX);
+        i = 0;
+        while (NULL != globals.prefix[i]) {
+            printf(" [%s]", (char *)globals.prefix[i]);
+            i++;
+        }
+        printf("\n%s    Before each run:    ", PROGRAM_PREFIX);
+        i = 0;
+        while (NULL != globals.before[i]) {
+            printf(" [%s]", (char *)globals.before[i]);
+            i++;
+        }
+        printf("\n%s    After each run:     ", PROGRAM_PREFIX);
+        i = 0;
+        while (NULL != globals.after[i]) {
+            printf(" [%s]", (char *)globals.after[i]);
+            i++;
+        }
+        printf("\n");
+    }
     OUTPUT_VERBOSE((7, "   MIC card:            %s", globals.knc));
-    OUTPUT_VERBOSE((7, "   MIC prefix:          %s", globals.knc_prefix));
-    OUTPUT_VERBOSE((7, "   MIC before each run: %s", globals.knc_before));
-    OUTPUT_VERBOSE((7, "   MIC after each run:  %s", globals.knc_after));
+    if (7 <= globals.verbose) {
+        int i = 0;
+        printf("%s    MIC prefix:         ", PROGRAM_PREFIX);
+        while (NULL != globals.knc_prefix[i]) {
+            printf(" [%s]", (char *)globals.knc_prefix[i]);
+            i++;
+        }
+        printf("\n%s    MIC before each run:", PROGRAM_PREFIX);
+        i = 0;
+        while (NULL != globals.knc_before[i]) {
+            printf(" [%s]", (char *)globals.knc_before[i]);
+            i++;
+        }
+        printf("\n%s    MIC after each run: ", PROGRAM_PREFIX);
+        i = 0;
+        while (NULL != globals.knc_after[i]) {
+            printf(" [%s]", (char *)globals.knc_after[i]);
+            i++;
+        }
+        printf("\n");
+    }
     OUTPUT_VERBOSE((7, "   Sorting order:       %s", globals.order));
     OUTPUT_VERBOSE((7, "   Measurement tool:    %s", globals.tool));
 
@@ -157,11 +235,14 @@ int parse_cli_params(int argc, char *argv[]) {
         int i = 0;
         printf("%s    %s", PROGRAM_PREFIX, _YELLOW("command line:"));
         for (i = 0; i < argc; i++) {
-            printf(" %s", argv[i]);
+            printf(" [%s]", argv[i]);
         }
         printf("\n");
     }
 
+    if (PERFEXPERT_TRUE == arg_options.do_not_run) {
+        exit(0);
+    }
     return PERFEXPERT_SUCCESS;
 }
 
@@ -170,26 +251,26 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
     switch (key) {
         /* Should I run some program after each execution? */
         case 'a':
-            globals.after = arg;
-            OUTPUT_VERBOSE((1, "option 'a' set [%s]", globals.after));
+            arg_options.after = arg;
+            OUTPUT_VERBOSE((1, "option 'a' set [%s]", arg_options.after));
             break;
 
         /* Should I run on the KNC some program after each execution? */
         case 'A':
-            globals.knc_after = arg;
-            OUTPUT_VERBOSE((1, "option 'A' set [%s]", globals.knc_after));
+            arg_options.knc_after = arg;
+            OUTPUT_VERBOSE((1, "option 'A' set [%s]", arg_options.knc_after));
             break;
 
         /* Should I run some program before each execution? */
         case 'b':
-            globals.before = arg;
-            OUTPUT_VERBOSE((1, "option 'b' set [%s]", globals.before));
+            arg_options.before = arg;
+            OUTPUT_VERBOSE((1, "option 'b' set [%s]", arg_options.before));
             break;
 
         /* Should I run on the KNC some program before each execution? */
         case 'B':
-            globals.knc_before = arg;
-            OUTPUT_VERBOSE((1, "option 'B' set [%s]", globals.knc_before));
+            arg_options.knc_before = arg;
+            OUTPUT_VERBOSE((1, "option 'B' set [%s]", arg_options.knc_before));
             break;
 
         /* Activate colorful mode */
@@ -223,10 +304,22 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
             argp_state_help(state, stdout, ARGP_HELP_STD_HELP);
             break;
 
+        /* Verbose level (has an alias: v) */
+        case 'l':
+            globals.verbose = arg ? atoi(arg) : 5;
+            OUTPUT_VERBOSE((1, "option 'l' set [%d]", globals.verbose));
+            break;
+
         /* Use Makefile? */
         case 'm':
             globals.target = arg;
             OUTPUT_VERBOSE((1, "option 'm' set [%s]", globals.target));
+            break;
+
+        /* Do not run */
+        case 'n':
+            arg_options.do_not_run = PERFEXPERT_TRUE;
+            OUTPUT_VERBOSE((1, "option 'n' set [%d]", arg_options.do_not_run));
             break;
 
         /* Sorting order */
@@ -237,14 +330,14 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
 
         /* Should I add a program prefix to the command line? */
         case 'p':
-            globals.prefix = arg;
-            OUTPUT_VERBOSE((1, "option 'p' set [%s]", globals.prefix));
+            arg_options.prefix = arg;
+            OUTPUT_VERBOSE((1, "option 'p' set [%s]", arg_options.prefix));
             break;
 
         /* Should I add a program prefix to the KNC command line? */
         case 'P':
-            globals.knc_prefix = arg;
-            OUTPUT_VERBOSE((1, "option 'P' set [%s]", globals.knc_prefix));
+            arg_options.knc_prefix = arg;
+            OUTPUT_VERBOSE((1, "option 'P' set [%s]", arg_options.knc_prefix));
             break;
 
         /* Number of recommendation to output */
@@ -265,7 +358,7 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
             OUTPUT_VERBOSE((1, "option 't' set [%s]", globals.tool));
             break;
 
-        /* Verbose level */
+        /* Verbose level (has an alias: l) */
         case 'v':
             globals.verbose = arg ? atoi(arg) : 5;
             OUTPUT_VERBOSE((1, "option 'v' set [%d]", globals.verbose));
@@ -282,7 +375,7 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
                 globals.program = arg;
                 OUTPUT_VERBOSE((1, "option 'target_program' set [%s]",
                     globals.program));
-                globals.program_argv = &state->argv[state->next];
+                arg_options.program_argv = &state->argv[state->next];
                 OUTPUT_VERBOSE((1, "option 'program_arguments' set"));
                 state->next = state->argc;
             }
@@ -341,18 +434,18 @@ static int parse_env_vars(void) {
     }
 
     if (NULL != getenv("PERFEXPERT_PREFIX")) {
-        globals.prefix = ("PERFEXPERT_PREFIX");
-        OUTPUT_VERBOSE((1, "ENV: prefix=%s", globals.prefix));
+        arg_options.prefix = ("PERFEXPERT_PREFIX");
+        OUTPUT_VERBOSE((1, "ENV: prefix=%s", arg_options.prefix));
     }
 
     if (NULL != getenv("PERFEXPERT_BEFORE")) {
-        globals.before = ("PERFEXPERT_BEFORE");
-        OUTPUT_VERBOSE((1, "ENV: before=%s", globals.before));
+        arg_options.before = ("PERFEXPERT_BEFORE");
+        OUTPUT_VERBOSE((1, "ENV: before=%s", arg_options.before));
     }
 
     if (NULL != getenv("PERFEXPERT_AFTER")) {
-        globals.after = ("PERFEXPERT_AFTER");
-        OUTPUT_VERBOSE((1, "ENV: after=%s", globals.after));
+        arg_options.after = ("PERFEXPERT_AFTER");
+        OUTPUT_VERBOSE((1, "ENV: after=%s", arg_options.after));
     }
 
     if (NULL != getenv("PERFEXPERT_KNC_CARD")) {
@@ -361,18 +454,18 @@ static int parse_env_vars(void) {
     }
 
     if (NULL != getenv("PERFEXPERT_KNC_PREFIX")) {
-        globals.knc_prefix = ("PERFEXPERT_KNC_PREFIX");
-        OUTPUT_VERBOSE((1, "ENV: knc_prefix=%s", globals.knc_prefix));
+        arg_options.knc_prefix = ("PERFEXPERT_KNC_PREFIX");
+        OUTPUT_VERBOSE((1, "ENV: knc_prefix=%s", arg_options.knc_prefix));
     }
 
     if (NULL != getenv("PERFEXPERT_KNC_BEFORE")) {
-        globals.knc_before = ("PERFEXPERT_KNC_BEFORE");
-        OUTPUT_VERBOSE((1, "ENV: knc_before=%s", globals.knc_before));
+        arg_options.knc_before = ("PERFEXPERT_KNC_BEFORE");
+        OUTPUT_VERBOSE((1, "ENV: knc_before=%s", arg_options.knc_before));
     }
 
     if (NULL != getenv("PERFEXPERT_KNC_AFTER")) {
-        globals.knc_after = ("PERFEXPERT_KNC_AFTER");
-        OUTPUT_VERBOSE((1, "ENV: knc)after=%s", globals.knc_after));
+        arg_options.knc_after = ("PERFEXPERT_KNC_AFTER");
+        OUTPUT_VERBOSE((1, "ENV: knc)after=%s", arg_options.knc_after));
     }
 
     if (NULL != getenv("PERFEXPERT_SORTING_ORDER")) {

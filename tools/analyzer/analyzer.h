@@ -175,6 +175,7 @@ typedef struct {
     char     *outputmetrics;
     char     *order;
     char     *workdir;
+    int      found_hotspots;
 } globals_t;
 
 extern globals_t globals; /* This variable is defined in analyzer_main.c */
