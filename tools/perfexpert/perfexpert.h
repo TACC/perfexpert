@@ -60,6 +60,8 @@ typedef struct {
     char  *knc_after[PARAM_SIZE];
     char  *tool;
     char  *order;
+    char  *inputfile;
+    int   only_exp;
     long int pid;
 } globals_t;
 

@@ -50,30 +50,32 @@ int main(int argc, char** argv) {
     /* Set default values for globals */
     globals = (globals_t) {
         .verbose       = 0,                // int
-        .dbfile        = NULL,             // char *
+        .dbfile        = NULL,             // *char
         .colorful      = PERFEXPERT_FALSE, // int
         .threshold     = 0.0,              // float
         .rec_count     = 3,                // int
         .leave_garbage = PERFEXPERT_FALSE, // int
         .pid           = (long)getpid(),   // long int
-        .target        = NULL,             // char *
-        .sourcefile    = NULL,             // char *
-        .program       = NULL,             // char *
-        .program_path  = NULL,             // char *
-        .program_full  = NULL,             // char *
+        .target        = NULL,             // *char
+        .sourcefile    = NULL,             // *char
+        .program       = NULL,             // *char
+        .program_path  = NULL,             // *char
+        .program_full  = NULL,             // *char
         .program_argv  = { 0 },            // *char[]
         .step          = 1,                // int
-        .workdir       = NULL,             // char *
-        .stepdir       = NULL,             // char *
+        .workdir       = NULL,             // *char
+        .stepdir       = NULL,             // *char
         .prefix        = { 0 },            // *char[]
         .before        = { 0 },            // *char[]
         .after         = { 0 },            // *char[]
-        .knc           = NULL,             // char *
+        .knc           = NULL,             // *char
         .knc_prefix    = { 0 },            // *char[]
         .knc_before    = { 0 },            // *char[]
         .knc_after     = { 0 },            // *char[]
-        .order         = "none",           // char *
-        .tool          = "hpctoolkit"      // char *
+        .inputfile     = NULL,             // *char
+        .only_exp      = PERFEXPERT_FALSE, // int
+        .order         = "none",           // *char
+        .tool          = "hpctoolkit"      // *char
     };
 
     /* Parse command-line parameters */
@@ -127,7 +129,7 @@ int main(int argc, char** argv) {
             if (PERFEXPERT_SUCCESS != compile_program()) {
                 OUTPUT(("%s", _ERROR("Error: program compilation failed")));
                 if (NULL != globals.knc) {
-                    OUTPUT(("Are you adding the flags to to compile for MIC?"));                    
+                    OUTPUT(("Are you adding the flags to to compile for MIC?"));
                 }
                 goto CLEANUP;
             }
@@ -136,6 +138,19 @@ int main(int argc, char** argv) {
         /* Call measurement tool */
         if (PERFEXPERT_SUCCESS != measurements()) {
             OUTPUT(("%s", _ERROR("Error: unable to take measurements")));
+            goto CLEANUP;
+        }
+
+        /* Escape to perfexpert_run_exp */
+        if (PERFEXPERT_TRUE == globals.only_exp) {
+            OUTPUT((""));
+            OUTPUT(("%s experiment.xml file is available in %s/1",
+                _BOLDRED("NOTICE:"), workdir));
+            OUTPUT(("        directory, to analyze results, run:"));
+            OUTPUT((""));
+            OUTPUT(("perfexpert_analyzer threshold %s/1/experiment.xml",
+                workdir));
+            OUTPUT((""));
             goto CLEANUP;
         }
 
