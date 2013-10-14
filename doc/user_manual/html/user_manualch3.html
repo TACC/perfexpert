@@ -1,0 +1,437 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"  
+  "http://www.w3.org/TR/html4/loose.dtd">  
+<html > 
+<head><title>3 Using PerfExpert</title> 
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"> 
+<meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<!-- html,2,sections+ --> 
+<meta name="src" content="user_manual.tex"> 
+<meta name="date" content="2013-10-14 18:02:00"> 
+<link rel="stylesheet" type="text/css" href="user_manual.css"> 
+</head><body 
+>
+   <!--l. 1--><div class="crosslinks"><p class="noindent">[<a 
+href="user_manualch2.html" >prev</a>] [<a 
+href="user_manualch2.html#tailuser_manualch2.html" >prev-tail</a>] [<a 
+href="#tailuser_manualch3.html">tail</a>] [<a 
+href="user_manual.html#user_manualch5.html" >up</a>] </p></div>
+   <h2 class="chapterHead"><span class="titlemark">Chapter&#x00A0;3</span><br /><a 
+href="#x7-230003" id="x7-230003">Using PerfExpert</a></h2>
+<!--l. 3--><p class="noindent" >The objective of this chapter is to explain how to run programs using PerfExpert and how to interpret its output
+using a simple matrix multiplication program. In this chapter, we will use the OpenMP simple matrix multiplication
+program<span class="footnote-mark"><a 
+href="user_manual8.html#fn1x12"><sup class="textsuperscript">1</sup></a></span><a 
+ id="x7-23001f1"></a> .
+This program multiplies two matrices and prints one value from the resulting matrix.
+<div class="center" 
+>
+<!--l. 5--><p class="noindent" >
+<!--l. 5--><p class="noindent" >                                            <div class="minipage">PerfExpert may, if you choose to use the full capabilities for automated optimization, change your source
+code during the process of optimization. PerfExpert always saves the original file with a different name
+(<span 
+class="cmti-10">e.g.</span>, <span 
+class="cmtt-10">omp</span><span 
+class="cmtt-10">_mm.c.old</span><span 
+class="cmtt-10">_27301</span>) as well as adding annotations to your source code for each optimization
+it makes. We cannot, however, fully guarantee that code modifications for optimizations will not break
+your code. We recommend having a full backup of your original source code before using PerfExpert. </div><span 
+class="cmbx-10">CAUTION:</span>
+</div>
+   <h3 class="sectionHead"><span class="titlemark">3.1   </span> <a 
+href="#x7-240003.1" id="x7-240003.1">Environment Configuration</a></h3>
+<!--l. 9--><p class="noindent" >If you are using any of the TACC<span class="footnote-mark"><a 
+href="user_manual9.html#fn2x12"><sup class="textsuperscript">2</sup></a></span><a 
+ id="x7-24001f2"></a> 
+machines, load the appropriate modules:
+                                                                                         
+                                                                                         
+   <div class="verbatim" id="verbatim-13">
+$&#x00A0;module&#x00A0;load&#x00A0;papi&#x00A0;hpctoolkit&#x00A0;perfexpert
+</div>
+<!--l. 13--><p class="nopar" >
+<!--l. 15--><p class="indent" >   The runs with PerfExpert should be made using a data set size for each compute node which is equivalent to full
+production runs but for which execution time is not more than about ten or fifteen minutes since PerfExpert will
+run your application multiple times (actually, three times on Stampede) with different performance counters
+enabled. For that reason, before you run PerfExpert you should either request iterative access to computational
+resources (compute node), or modify the job script that you use to run your application and specify a
+running time that is about 3 (for Stampede) or 6 (for Lonestar) times the normal running time of the
+program.
+<!--l. 17--><p class="indent" >   To request iterative access to a compute node on Stampede, please, have a look on the User
+Guide<span class="footnote-mark"><a 
+href="user_manual10.html#fn3x12"><sup class="textsuperscript">3</sup></a></span><a 
+ id="x7-24002f3"></a> .
+<!--l. 19--><p class="indent" >   Below is an example of a job script file modified to use PerfExpert which runs PerfExpert on the application
+named my_program and generate the performance analysis report. Adding command line options will cause
+suggestions for bottleneck remediation to be generated and output and/or automatic performance optimization to
+be attempted.
+                                                                                         
+                                                                                         
+<!--l. 22--><p class="noindent" >_________________________________________________________________________________________
+                                                                                         
+                                                                                         
+   <div class="verbatim" id="verbatim-14">
+#!/bin/bash
+&#x00A0;<br />#SBATCH&#x00A0;-J&#x00A0;myMPI&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;#&#x00A0;job&#x00A0;name
+&#x00A0;<br />#SBATCH&#x00A0;-o&#x00A0;myMPI.o%j&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;#&#x00A0;output&#x00A0;and&#x00A0;error&#x00A0;filename&#x00A0;(%j&#x00A0;stands&#x00A0;to&#x00A0;jobID)
+&#x00A0;<br />#SBATCH&#x00A0;-n&#x00A0;16&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;#&#x00A0;total&#x00A0;number&#x00A0;of&#x00A0;mpi&#x00A0;tasks&#x00A0;requested
+&#x00A0;<br />#SBATCH&#x00A0;-p&#x00A0;development&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;#&#x00A0;queue&#x00A0;(partition)&#x00A0;--&#x00A0;normal,&#x00A0;development,&#x00A0;etc.
+&#x00A0;<br />#SBATCH&#x00A0;-t&#x00A0;01:30:00&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;#&#x00A0;run&#x00A0;time&#x00A0;(hh:mm:ss)&#x00A0;-&#x00A0;1.5&#x00A0;hours
+&#x00A0;<br />perfexpert&#x00A0;0.1&#x00A0;./my_program&#x00A0;&#x00A0;#&#x00A0;run&#x00A0;the&#x00A0;executable&#x00A0;named&#x00A0;my_program
+</div>
+<!--l. 30--><p class="nopar" >_________________________________________________________________________________________
+   <h3 class="sectionHead"><span class="titlemark">3.2   </span> <a 
+href="#x7-250003.2" id="x7-250003.2">PerfExpert Options</a></h3>
+<!--l. 34--><p class="noindent" >There are several different options for applying PerfExpert. The following summary shows you how to choose the
+options to run PerfExpert to match your needs.
+                                                                                         
+                                                                                         
+   <div class="verbatim" id="verbatim-15">
+$&#x00A0;perfexpert&#x00A0;-h
+&#x00A0;<br />Usage:&#x00A0;perfexpert&#x00A0;&#x003C;threshold&#x003E;&#x00A0;[-m&#x00A0;target|-s&#x00A0;sourcefile]&#x00A0;[-r&#x00A0;count]&#x00A0;[-d&#x00A0;database]
+&#x00A0;<br />&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;[-p&#x00A0;prefix]&#x00A0;[-b&#x00A0;filename]&#x00A0;[-a&#x00A0;filename]&#x00A0;[-l&#x00A0;level]&#x00A0;[-gvch]
+&#x00A0;<br />&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;[-k&#x00A0;card&#x00A0;[-P&#x00A0;prefix]&#x00A0;[-B&#x00A0;filename]&#x00A0;[-A&#x00A0;filename]&#x00A0;]
+&#x00A0;<br />&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x003C;program_executable&#x003E;&#x00A0;[program_arguments]
+&#x00A0;<br />
+&#x00A0;<br />&#x00A0;&#x00A0;&#x003C;threshold&#x003E;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;Define&#x00A0;the&#x00A0;relevance&#x00A0;(in&#x00A0;%&#x00A0;of&#x00A0;runtime)&#x00A0;of&#x00A0;code&#x00A0;fragments&#x00A0;PerfExpert
+&#x00A0;<br />&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;should&#x00A0;take&#x00A0;into&#x00A0;consideration&#x00A0;(&#x003E;&#x00A0;0&#x00A0;and&#x00A0;&#x003C;=&#x00A0;1)
+&#x00A0;<br />&#x00A0;&#x00A0;-m&#x00A0;--makefile&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;Use&#x00A0;GNU&#x00A0;standard&#x00A0;&#8216;make&#8217;&#x00A0;command&#x00A0;to&#x00A0;compile&#x00A0;the&#x00A0;code&#x00A0;(it&#x00A0;requires
+&#x00A0;<br />&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;the&#x00A0;source&#x00A0;code&#x00A0;available&#x00A0;in&#x00A0;current&#x00A0;directory)
+&#x00A0;<br />&#x00A0;&#x00A0;-s&#x00A0;--source&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;Specify&#x00A0;the&#x00A0;source&#x00A0;code&#x00A0;file&#x00A0;(if&#x00A0;your&#x00A0;source&#x00A0;code&#x00A0;has&#x00A0;more&#x00A0;than&#x00A0;one
+&#x00A0;<br />&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;file&#x00A0;please&#x00A0;use&#x00A0;a&#x00A0;Makefile&#x00A0;and&#x00A0;choose&#x00A0;&#8216;-m&#8217;&#x00A0;option&#x00A0;it&#x00A0;also&#x00A0;enables
+&#x00A0;<br />&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;the&#x00A0;automatic&#x00A0;optimization&#x00A0;option&#x00A0;&#8216;-a&#8217;)
+&#x00A0;<br />&#x00A0;&#x00A0;-r&#x00A0;--recommend&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;Number&#x00A0;of&#x00A0;recommendations&#x00A0;(&#8216;count&#8217;)&#x00A0;PerfExpert&#x00A0;should&#x00A0;show
+&#x00A0;<br />&#x00A0;&#x00A0;-d&#x00A0;--database&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;Select&#x00A0;the&#x00A0;recommendation&#x00A0;database&#x00A0;file
+&#x00A0;<br />&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;(default:&#x00A0;PERFEXPERT_VARDIR/RECOMMENDATION_DB)
+&#x00A0;<br />&#x00A0;&#x00A0;-p&#x00A0;--prefix&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;Add&#x00A0;a&#x00A0;prefix&#x00A0;to&#x00A0;the&#x00A0;command&#x00A0;line&#x00A0;(e.g.&#x00A0;mpirun).&#x00A0;Use&#x00A0;double&#x00A0;quotes&#x00A0;to
+&#x00A0;<br />&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;specify&#x00A0;arguments&#x00A0;with&#x00A0;spaces&#x00A0;within&#x00A0;(e.g.&#x00A0;-p&#x00A0;"mpirun&#x00A0;-n&#x00A0;2").&#x00A0;Use&#x00A0;a
+&#x00A0;<br />&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;semicolon&#x00A0;(&#8216;;&#8217;)&#x00A0;to&#x00A0;run&#x00A0;multiple&#x00A0;commands&#x00A0;in&#x00A0;the&#x00A0;same&#x00A0;command&#x00A0;line
+&#x00A0;<br />&#x00A0;&#x00A0;-b&#x00A0;--before&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;Execute&#x00A0;&#8217;filename&#8217;&#x00A0;before&#x00A0;each&#x00A0;run&#x00A0;of&#x00A0;the&#x00A0;application
+&#x00A0;<br />&#x00A0;&#x00A0;-a&#x00A0;--after&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;Execute&#x00A0;&#8217;filename&#8217;&#x00A0;after&#x00A0;each&#x00A0;run&#x00A0;of&#x00A0;the&#x00A0;application
+&#x00A0;<br />&#x00A0;&#x00A0;-k&#x00A0;--knc&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;Tell&#x00A0;PerfExpert&#x00A0;to&#x00A0;run&#x00A0;the&#x00A0;experiments&#x00A0;on&#x00A0;the&#x00A0;KNC&#x00A0;&#8217;card&#8217;
+&#x00A0;<br />&#x00A0;&#x00A0;-p&#x00A0;--prefix-knc&#x00A0;&#x00A0;&#x00A0;&#x00A0;Add&#x00A0;a&#x00A0;prefix&#x00A0;to&#x00A0;the&#x00A0;command&#x00A0;line&#x00A0;(e.g.&#x00A0;mpirun).&#x00A0;Use&#x00A0;double&#x00A0;quotes&#x00A0;to
+&#x00A0;<br />&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;specify&#x00A0;arguments&#x00A0;with&#x00A0;spaces&#x00A0;within&#x00A0;(e.g.&#x00A0;-p&#x00A0;"mpirun&#x00A0;-n&#x00A0;2").&#x00A0;Use&#x00A0;a
+&#x00A0;<br />&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;semicolon&#x00A0;(&#8216;;&#8217;)&#x00A0;to&#x00A0;run&#x00A0;multiple&#x00A0;commands&#x00A0;in&#x00A0;the&#x00A0;same&#x00A0;command&#x00A0;line
+&#x00A0;<br />&#x00A0;&#x00A0;-B&#x00A0;--knc-before&#x00A0;&#x00A0;&#x00A0;&#x00A0;Execute&#x00A0;&#8217;filename&#8217;&#x00A0;before&#x00A0;each&#x00A0;run&#x00A0;of&#x00A0;the&#x00A0;application&#x00A0;on&#x00A0;the&#x00A0;KNC
+&#x00A0;<br />&#x00A0;&#x00A0;-A&#x00A0;--knc-after&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;Execute&#x00A0;&#8217;filename&#8217;&#x00A0;after&#x00A0;each&#x00A0;run&#x00A0;of&#x00A0;the&#x00A0;application&#x00A0;on&#x00A0;the&#x00A0;KNC
+&#x00A0;<br />&#x00A0;&#x00A0;-g&#x00A0;--clean-garbage&#x00A0;Remove&#x00A0;temporary&#x00A0;files&#x00A0;after&#x00A0;run
+&#x00A0;<br />&#x00A0;&#x00A0;-v&#x00A0;--verbose&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;Enable&#x00A0;verbose&#x00A0;mode&#x00A0;using&#x00A0;default&#x00A0;verbose&#x00A0;level&#x00A0;(1)
+&#x00A0;<br />&#x00A0;&#x00A0;-l&#x00A0;--verbose-level&#x00A0;Enable&#x00A0;verbose&#x00A0;mode&#x00A0;using&#x00A0;a&#x00A0;specific&#x00A0;verbose&#x00A0;level&#x00A0;(1-10)
+&#x00A0;<br />&#x00A0;&#x00A0;-c&#x00A0;--colorful&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;Enable&#x00A0;colors&#x00A0;on&#x00A0;verbose&#x00A0;mode,&#x00A0;no&#x00A0;weird&#x00A0;characters&#x00A0;will&#x00A0;appear&#x00A0;on
+&#x00A0;<br />&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;output&#x00A0;files
+&#x00A0;<br />&#x00A0;&#x00A0;-h&#x00A0;--help&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;Show&#x00A0;this&#x00A0;message
+&#x00A0;<br />
+&#x00A0;<br />Use&#x00A0;CC,&#x00A0;CFLAGS&#x00A0;and&#x00A0;LDFLAGS&#x00A0;to&#x00A0;select&#x00A0;compiler&#x00A0;and&#x00A0;compilation/linkage&#x00A0;flags
+</div>
+<!--l. 72--><p class="nopar" >
+<!--l. 74--><p class="indent" >   If you select the <span 
+class="cmtt-10">-m </span>or <span 
+class="cmtt-10">-s </span>options, PerfExpert will try to automatically optimize your code and show you the
+performance analysis report &amp; the list of suggestion for bottleneck remediation when no automatic optimization is
+possible.
+<!--l. 76--><p class="indent" >   For the <span 
+class="cmtt-10">-m </span>or <span 
+class="cmtt-10">-s </span>options, PerfExpert requires access to the application source code. If you select the <span 
+class="cmtt-10">-m </span>option
+and the application is composed of multiple files, your source code tree should have a <span 
+class="cmtt-10">Makefile </span>file to enable
+PerfExpert compile your code. If your application is composed of a single source code file, the option
+<span 
+class="cmtt-10">-s </span>is sufficient for you. If you do not select <span 
+class="cmtt-10">-m </span>or <span 
+class="cmtt-10">-s </span>options, PerfExpert requires only the binary
+code and will show you only the performance analysis report and the list of suggestion for bottleneck
+remediation.
+<!--l. 78--><p class="indent" >   PerfExpert will run your application multiple times to collect different performance metrics. You may use the <span 
+class="cmtt-10">-b</span>
+(or <span 
+class="cmtt-10">-a</span>) options if you want to execute a program or script before (or after) each run. The argument
+                                                                                         
+                                                                                         
+<span 
+class="cmtt-10">program</span><span 
+class="cmtt-10">_executable </span>should be the filename of the application you want to analyze, not a shell script,
+otherwise, PerfExpert will analyze the performance of the shell script instead of the performance of you
+application.
+<!--l. 80--><p class="indent" >   Use the <span 
+class="cmtt-10">-r </span>option to select the number of recommendations for optimization you want for each code section
+which is a performance bottleneck.
+<div class="center" 
+>
+<!--l. 82--><p class="noindent" >
+<!--l. 82--><p class="noindent" >                                            <div class="minipage">If your program takes any argument that starts with a &#8220;<span 
+class="cmtt-10">-</span>&#8221; signal PerfExpert will interpret this as a
+command line option. To help PerfExpert handle <span 
+class="cmtt-10">program</span><span 
+class="cmtt-10">_arguments </span>correctly, use quotes and add a
+space before the program&#8217;s arguments (e.g., &#8220;  <span 
+class="cmtt-10">-s 50</span>&#8221;).                                                             </div><span 
+class="cmbx-10">CAUTION:</span>
+</div>
+<div class="center" 
+>
+<!--l. 84--><p class="noindent" >
+<!--l. 84--><p class="noindent" >                                            <div class="minipage">In case you are trying to optimize a MPI application, you should use the <span 
+class="cmtt-10">-p </span>option to specify the MPI
+launcher and also it&#8217;s arguments.                                                                                          </div><span 
+class="cmbx-10">CAUTION:</span>
+</div>
+<!--l. 86--><p class="indent" >   For this guide, using the OpenMP simple matrix multiply code, we will use the following command line
+options:
+                                                                                         
+                                                                                         
+   <div class="verbatim" id="verbatim-16">
+$&#x00A0;OMP_NUM_THREADS=16&#x00A0;CFLAGS="-fopenmp"&#x00A0;perfexpert&#x00A0;-s&#x00A0;mm_omp.c&#x00A0;0.05&#x00A0;mm_omp
+</div>
+<!--l. 90--><p class="nopar" >
+<!--l. 92--><p class="indent" >   which executes PerfExpert&#8217;s automatic optimizations and will also generate an OpenMP-enabled binary which
+will run with 16 threads. In this case, PerfExpert will compile the <span 
+class="cmtt-10">mm</span><span 
+class="cmtt-10">_omp.c </span>code using the system&#8217;s default
+compiler, which is GCC in the case of Stampede. PerfExpert will take into consideration only code fragments (loops
+and functions) that take more 5% of the runtime.
+<!--l. 94--><p class="indent" >   To select a different compiler, you should specify the <span 
+class="cmtt-10">CC </span>environment variable as below:
+                                                                                         
+                                                                                         
+   <div class="verbatim" id="verbatim-17">
+$&#x00A0;CC="icc"&#x00A0;OMP_NUM_THREADS=16&#x00A0;CFLAGS="-fopenmp"&#x00A0;perfexpert&#x00A0;-s&#x00A0;mm_omp.c&#x00A0;0.05&#x00A0;mm_omp
+</div>
+<!--l. 98--><p class="nopar" >
+<!--l. 100--><p class="indent" >   If you do not want to have PerfExpert trying to optimize the application automatically, just compile your
+program and run the following command:
+                                                                                         
+                                                                                         
+   <div class="verbatim" id="verbatim-18">
+$&#x00A0;OMP_NUM_THREADS=16&#x00A0;perfexpert&#x00A0;0.05&#x00A0;mm_omp
+</div>
+<!--l. 104--><p class="nopar" >
+<div class="center" 
+>
+<!--l. 106--><p class="noindent" >
+<!--l. 106--><p class="noindent" >                                            <div class="minipage">If  the  command  line  you  use  to  run  PerfExpert  includes  the  MPI  launcher  (<span 
+class="cmti-10">i.e.</span>,  <span 
+class="cmtt-10">mpirun -n 2</span>
+<span 
+class="cmtt-10">my</span><span 
+class="cmtt-10">_mpi</span><span 
+class="cmtt-10">_app my</span><span 
+class="cmtt-10">_mpi</span><span 
+class="cmtt-10">_app</span><span 
+class="cmtt-10">_arguments ...</span>),  PerfExpert  will  analyze  the  performance  of  the  MPI
+launcher  instead  of  the  performance  of  your  application.  Use  the  <span 
+class="cmtt-10">-p </span>command  line  argument  of
+PerfExpert to set the MPI launcher and all its arguments (<span 
+class="cmti-10">e.g.</span>, <span 
+class="cmtt-10">-p "mpirun -n 16"</span>).                     </div><span 
+class="cmbx-10">WARNING:</span>
+</div>
+<!--l. 108--><p class="noindent" >
+   <h3 class="sectionHead"><span class="titlemark">3.3   </span> <a 
+href="#x7-260003.3" id="x7-260003.3">The Performance Analysis Report</a></h3>
+<!--l. 110--><p class="noindent" >This section explains the performance analysis report and the metrics shown by PerfExpert. We discuss the
+following sample output:
+                                                                                         
+                                                                                         
+   <div class="verbatim" id="verbatim-19">
+Loop&#x00A0;in&#x00A0;function&#x00A0;compute()&#x00A0;(99.9%&#x00A0;of&#x00A0;the&#x00A0;total&#x00A0;runtime)
+&#x00A0;<br />=========================================================================
+&#x00A0;<br />ratio&#x00A0;to&#x00A0;total&#x00A0;instrns&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;%&#x00A0;&#x00A0;0.......25.........50.......75......100
+&#x00A0;<br />&#x00A0;&#x00A0;&#x00A0;-&#x00A0;floating&#x00A0;point&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;:&#x00A0;&#x00A0;&#x00A0;&#x00A0;6&#x00A0;***
+&#x00A0;<br />&#x00A0;&#x00A0;&#x00A0;-&#x00A0;data&#x00A0;accesses&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;:&#x00A0;&#x00A0;&#x00A0;33&#x00A0;****************
+&#x00A0;<br />
+&#x00A0;<br />*&#x00A0;GFLOPS&#x00A0;(%&#x00A0;max)&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;:&#x00A0;&#x00A0;&#x00A0;&#x00A0;7&#x00A0;***
+&#x00A0;<br />&#x00A0;&#x00A0;&#x00A0;-&#x00A0;packed&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;:&#x00A0;&#x00A0;&#x00A0;&#x00A0;0&#x00A0;*
+&#x00A0;<br />&#x00A0;&#x00A0;&#x00A0;-&#x00A0;scalar&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;:&#x00A0;&#x00A0;&#x00A0;&#x00A0;7&#x00A0;***
+&#x00A0;<br />-----------------------------------------------------------------------
+&#x00A0;<br />performance&#x00A0;assessment&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;LCPI&#x00A0;good....okay....fair....poor....bad...
+&#x00A0;<br />*&#x00A0;overall&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;:&#x00A0;&#x00A0;0.8&#x00A0;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;
+&#x00A0;<br />upper&#x00A0;bound&#x00A0;estimates
+&#x00A0;<br />*&#x00A0;data&#x00A0;accesses&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;:&#x00A0;&#x00A0;2.5&#x00A0;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;+
+&#x00A0;<br />&#x00A0;&#x00A0;&#x00A0;-&#x00A0;L1d&#x00A0;hits&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;:&#x00A0;&#x00A0;1.3&#x00A0;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;
+&#x00A0;<br />&#x00A0;&#x00A0;&#x00A0;-&#x00A0;L2d&#x00A0;hits&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;:&#x00A0;&#x00A0;0.3&#x00A0;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;
+&#x00A0;<br />&#x00A0;&#x00A0;&#x00A0;-&#x00A0;L3d&#x00A0;hits&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;:&#x00A0;&#x00A0;0.0&#x00A0;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;
+&#x00A0;<br />&#x00A0;&#x00A0;&#x00A0;-&#x00A0;LLC&#x00A0;misses&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;:&#x00A0;&#x00A0;0.1&#x00A0;&#x003E;&#x003E;
+&#x00A0;<br />*&#x00A0;instruction&#x00A0;accesses&#x00A0;&#x00A0;&#x00A0;:&#x00A0;&#x00A0;0.3&#x00A0;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;
+&#x00A0;<br />&#x00A0;&#x00A0;&#x00A0;-&#x00A0;L1i&#x00A0;hits&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;:&#x00A0;&#x00A0;0.3&#x00A0;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;
+&#x00A0;<br />&#x00A0;&#x00A0;&#x00A0;-&#x00A0;L2i&#x00A0;hits&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;:&#x00A0;&#x00A0;0.0&#x00A0;&#x003E;
+&#x00A0;<br />&#x00A0;&#x00A0;&#x00A0;-&#x00A0;L2i&#x00A0;misses&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;:&#x00A0;&#x00A0;0.0&#x00A0;&#x003E;
+&#x00A0;<br />*&#x00A0;data&#x00A0;TLB&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;:&#x00A0;&#x00A0;1.5&#x00A0;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;&#x003E;
+&#x00A0;<br />*&#x00A0;instruction&#x00A0;TLB&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;:&#x00A0;&#x00A0;0.0&#x00A0;&#x003E;
+&#x00A0;<br />*&#x00A0;branch&#x00A0;instructions&#x00A0;&#x00A0;&#x00A0;&#x00A0;:&#x00A0;&#x00A0;0.0&#x00A0;&#x003E;
+&#x00A0;<br />&#x00A0;&#x00A0;&#x00A0;-&#x00A0;correctly&#x00A0;predicted&#x00A0;:&#x00A0;&#x00A0;0.0&#x00A0;&#x003E;
+&#x00A0;<br />&#x00A0;&#x00A0;&#x00A0;-&#x00A0;mispredicted&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;:&#x00A0;&#x00A0;0.0&#x00A0;&#x003E;
+&#x00A0;<br />*&#x00A0;floating-point&#x00A0;instr&#x00A0;&#x00A0;&#x00A0;:&#x00A0;&#x00A0;0.2&#x00A0;&#x003E;&#x003E;&#x003E;&#x003E;
+&#x00A0;<br />&#x00A0;&#x00A0;&#x00A0;-&#x00A0;fast&#x00A0;FP&#x00A0;instr&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;:&#x00A0;&#x00A0;0.2&#x00A0;&#x003E;&#x003E;&#x003E;&#x003E;
+&#x00A0;<br />&#x00A0;&#x00A0;&#x00A0;-&#x00A0;slow&#x00A0;FP&#x00A0;instr&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;:&#x00A0;&#x00A0;0.0&#x00A0;&#x003E;
+</div>
+<!--l. 143--><p class="nopar" >
+<!--l. 145--><p class="indent" >   Apart from the total running time, PerfExpert performance analysis report includes, for each code
+segment:
+     <ul class="itemize1">
+     <li class="itemize">Instruction execution ratios (with respect to total instructions);
+     </li>
+     <li class="itemize">Approximate information about the computational efficiency (GFLOPs measurements);
+     </li>
+     <li class="itemize">Overall performance;
+     </li>
+     <li class="itemize">Local Cycles Per Instruction (LCPI) values for the cost of memory accesses.</li></ul>
+<!--l. 154--><p class="indent" >   The program composition part shows what percentage of the total instructions were computational
+(floating-point instructions) and what percentage were instructions that accessed data. This gives a rough estimate
+                                                                                         
+                                                                                         
+in trying to understand whether optimizing the program for either data accesses or floating-point instructions would
+have a significant impact on the total running time of the program.
+<!--l. 156--><p class="indent" >   The PerfExpert performance analysis report also shows the GFLOPs rating, which is the number of
+floating-point operations executed per second in multiples of 109. The value for this metric is displayed as a
+percentage of the maximum possible GFLOP value for that particular machine. Although it is rare for real-world
+programs to match even 50% of the maximum value, this metric can serve as an estimate of how efficiently the code
+performs computations.
+<!--l. 158--><p class="indent" >   The next, and major, section of the PerfExpert performance analysis report shows the LCPI values, which is the
+ratio of cycles spent in the code segment for a specific category, divided by the total number of instructions in the
+code segment. The overall value is the ratio of the total cycles taken by the code segment to the total instructions
+executed in the code segment.
+<!--l. 160--><p class="indent" >   Generally, a value of 0.5 or lower for an LCPI is considered to be good. However, it is only necessary to look at
+the ratings (<span 
+class="cmtt-10">good</span>, <span 
+class="cmtt-10">okay</span>, &#x2026;, <span 
+class="cmtt-10">bad</span>) The rest of the report maps this overall LCPI, into the six constituent categories:
+data accesses, instruction accesses, data TLB accesses, instruction TLB accesses, branches and floating point
+computations. Without getting into the details of instruction operation on Intel and AMD chips, one can say that
+these six categories record performance in non-overlapping ways. That is, they roughly represent six separate
+categories of performance for any application.
+<!--l. 162--><p class="indent" >   The LCPI value is a good indicator of the cost arising from instructions of the specific category. Hence,
+the higher the LCPI, the slower the program. The following is a brief description of each of these
+categories:
+     <dl class="description"><dt class="description">
+<span 
+class="cmbx-10">Data accesses:</span> </dt><dd 
+class="description">                                                                                                       <br 
+class="newline" />counts the LCPI arising from accesses to memory for program variables.
+     </dd><dt class="description">
+<span 
+class="cmbx-10">Instruction accesses:</span> </dt><dd 
+class="description">                                                                                              <br 
+class="newline" />counts the LCPI arising from memory accesses for code (functions and loops).
+     </dd><dt class="description">
+<span 
+class="cmbx-10">Data TLB:</span> </dt><dd 
+class="description">                                                                                                           <br 
+class="newline" />provides an approximate measure of penalty arising from strides in accesses or regularity of accesses.
+     </dd><dt class="description">
+<span 
+class="cmbx-10">Instruction TLB:</span> </dt><dd 
+class="description">                                                                                                   <br 
+class="newline" />reflects cost of fetching instructions due to irregular accesses.
+     </dd><dt class="description">
+<span 
+class="cmbx-10">Branch instructions:</span> </dt><dd 
+class="description">                                                                                               <br 
+class="newline" />counts cost of jumps (i.e. if statements, loop conditions, etc.).
+     </dd><dt class="description">
+<span 
+class="cmbx-10">Floating-point instructions:</span> </dt><dd 
+class="description">                                                                                     <br 
+class="newline" />counts LCPI from executing computational (floating-point) instructions.</dd></dl>
+<!--l. 179--><p class="indent" >   Some of these LCPI categories have subcategories. For instance, the LCPI from data and instruction accesses can
+be divided into LCPI arising from the individual levels of the data and instruction caches and branch LCPIs can be
+divided into LCPIs from correctly predicted and from mispredicted branch instructions. For floating-point
+instructions, the division is based on floating-point instructions that take few cycles to execute (<span 
+class="cmti-10">e.g.</span>, add, subtract
+and multiply instructions) and on floating-point instructions that take longer to execute (<span 
+class="cmti-10">e.g.</span>, divide and
+square-root instructions).
+<!--l. 181--><p class="indent" >   In each case, the classification (data access, instruction access, data TLB, etc.) is shown so that it is easy to
+understand which category is responsible for the performance slowdown. For instance if the overall
+                                                                                         
+                                                                                         
+CPI is &#8220;<span 
+class="cmtt-10">poor</span>&#8221; and the data access LCPI is high, then you should concentrate on access to program
+variables and memory. Additional LCPI details help in relating performance numbers to the process
+architecture.
+<div class="center" 
+>
+<!--l. 183--><p class="noindent" >
+<!--l. 183--><p class="noindent" >                                            <div class="minipage">When PerfExpert runs with automatic performance optimization enabled the performance analysis
+report shown reflects the performance of the code after all possible automatic optimizations have been
+applied.                                                                                                                            </div><span 
+class="cmbx-10">IMPORTANT:</span>
+</div>
+<div class="center" 
+>
+<!--l. 185--><p class="noindent" >
+<!--l. 185--><p class="noindent" >                                            <div class="minipage">PerfExpert creates a <span 
+class="cmtt-10">.perfexpert-temp.XXXXXX </span>directory for each time it is executed. This directory
+has one subdirectory for each optimization cycle PerfExpert completed or attempted. Each subdirectory
+includes  the  intermediate  files  PerfExpert  generated  during  each  cycle,  including  the  performance
+analysis reports.                                                                                                                </div><span 
+class="cmbx-10">NOTICE:</span>
+</div>
+<!--l. 187--><p class="noindent" >
+   <h3 class="sectionHead"><span class="titlemark">3.4   </span> <a 
+href="#x7-270003.4" id="x7-270003.4">List of Recommendations for Optimization</a></h3>
+<!--l. 189--><p class="noindent" >If PerfExpert runs with <span 
+class="cmtt-10">-r </span>option enabled, it will also generate a list of suggestions for performance improvement for
+each bottleneck. This option is always available, it does not depend on which of the other command line option are.
+A list of suggestions for this example is shown below:
+                                                                                         
+                                                                                         
+   <div class="verbatim" id="verbatim-20">
+#--------------------------------------------------
+&#x00A0;<br />#&#x00A0;Recommendations&#x00A0;for&#x00A0;/work/02204/fialho/tutorial/3/mm_omp.c:14
+&#x00A0;<br />#--------------------------------------------------
+&#x00A0;<br />#
+&#x00A0;<br />#&#x00A0;Here&#x00A0;is&#x00A0;a&#x00A0;possible&#x00A0;recommendation&#x00A0;for&#x00A0;this&#x00A0;code&#x00A0;segment
+&#x00A0;<br />#
+&#x00A0;<br />Description:&#x00A0;move&#x00A0;loop&#x00A0;invariant&#x00A0;computations&#x00A0;out&#x00A0;of&#x00A0;loop
+&#x00A0;<br />Reason:&#x00A0;this&#x00A0;optimization&#x00A0;reduces&#x00A0;the&#x00A0;number&#x00A0;of&#x00A0;executed&#x00A0;floating-point&#x00A0;operations
+&#x00A0;<br />Code&#x00A0;example:
+&#x00A0;<br />loop&#x00A0;i
+&#x00A0;<br />&#x00A0;&#x00A0;x&#x00A0;=&#x00A0;x&#x00A0;+&#x00A0;a&#x00A0;*&#x00A0;b&#x00A0;*&#x00A0;c[i];
+&#x00A0;<br />&#x00A0;=====&#x003E;
+&#x00A0;<br />temp&#x00A0;=&#x00A0;a&#x00A0;*&#x00A0;b;
+&#x00A0;<br />loop&#x00A0;i
+&#x00A0;<br />&#x00A0;&#x00A0;x&#x00A0;=&#x00A0;x&#x00A0;+&#x00A0;temp&#x00A0;*&#x00A0;c[i];
+&#x00A0;<br />
+&#x00A0;<br />#
+&#x00A0;<br />#&#x00A0;Here&#x00A0;is&#x00A0;a&#x00A0;possible&#x00A0;recommendation&#x00A0;for&#x00A0;this&#x00A0;code&#x00A0;segment
+&#x00A0;<br />#
+&#x00A0;<br />Description:&#x00A0;change&#x00A0;the&#x00A0;order&#x00A0;of&#x00A0;loops
+&#x00A0;<br />Reason:&#x00A0;this&#x00A0;optimization&#x00A0;may&#x00A0;improve&#x00A0;the&#x00A0;memory&#x00A0;access&#x00A0;pattern&#x00A0;and&#x00A0;make&#x00A0;it&#x00A0;more&#x00A0;cache
+&#x00A0;<br />and&#x00A0;TLB&#x00A0;friendly
+&#x00A0;<br />Code&#x00A0;example:
+&#x00A0;<br />loop&#x00A0;i
+&#x00A0;<br />&#x00A0;&#x00A0;loop&#x00A0;j&#x00A0;{...}
+&#x00A0;<br />&#x00A0;=====&#x003E;
+&#x00A0;<br />loop&#x00A0;j
+&#x00A0;<br />&#x00A0;&#x00A0;loop&#x00A0;i&#x00A0;{...}
+&#x00A0;<br />
+&#x00A0;<br />#
+&#x00A0;<br />#&#x00A0;Here&#x00A0;is&#x00A0;a&#x00A0;possible&#x00A0;recommendation&#x00A0;for&#x00A0;this&#x00A0;code&#x00A0;segment
+&#x00A0;<br />#
+&#x00A0;<br />Description:&#x00A0;componentize&#x00A0;important&#x00A0;loops&#x00A0;by&#x00A0;factoring&#x00A0;them&#x00A0;into&#x00A0;their&#x00A0;own&#x00A0;subroutines
+&#x00A0;<br />Reason:&#x00A0;this&#x00A0;optimization&#x00A0;may&#x00A0;allow&#x00A0;the&#x00A0;compiler&#x00A0;to&#x00A0;optimize&#x00A0;the&#x00A0;loop&#x00A0;independently&#x00A0;and
+&#x00A0;<br />thus&#x00A0;tune&#x00A0;it&#x00A0;better
+&#x00A0;<br />Code&#x00A0;example:
+&#x00A0;<br />loop&#x00A0;i&#x00A0;{...}
+&#x00A0;<br />...
+&#x00A0;<br />loop&#x00A0;j&#x00A0;{...}
+&#x00A0;<br />&#x00A0;=====&#x003E;
+&#x00A0;<br />void&#x00A0;li()&#x00A0;{&#x00A0;loop&#x00A0;i&#x00A0;{...}&#x00A0;}
+&#x00A0;<br />void&#x00A0;lj()&#x00A0;{&#x00A0;loop&#x00A0;j&#x00A0;{...}&#x00A0;}
+&#x00A0;<br />...
+&#x00A0;<br />li();
+&#x00A0;<br />...
+&#x00A0;<br />lj();
+</div>
+<!--l. 238--><p class="nopar" >
+                                                                                         
+                                                                                         
+   <!--l. 1--><div class="crosslinks"><p class="noindent">[<a 
+href="user_manualch2.html" >prev</a>] [<a 
+href="user_manualch2.html#tailuser_manualch2.html" >prev-tail</a>] [<a 
+href="user_manualch3.html" >front</a>] [<a 
+href="user_manual.html#user_manualch5.html" >up</a>] </p></div>
+<!--l. 1--><p class="indent" >   <a 
+ id="tailuser_manualch3.html"></a>   
+</body></html> 
