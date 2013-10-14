@@ -26,9 +26,9 @@ AC_PREREQ(2.63)
 # Define the package name, version, author, etc.
 AC_INIT([perfexpert], [4.1.1],
     [PerfExpert mailing list: perfexpert@lists.tacc.utexas.edu],
-    [perfexpert.tar.gz], [http://www.tacc.com.br/perfexpert/])
+    [perfexpert-4.1.1.tar.gz], [http://www.tacc.com.br/perfexpert/])
 AC_COPYRIGHT([University of Texas at Austin])
-AC_REVISION([$Revision: 4.1 $])
+AC_REVISION([$Revision: 4.1.1 $])
 AC_CONFIG_AUX_DIR(config)
 
 #------------------------------------------------------------------------------
@@ -38,12 +38,6 @@ AC_CONFIG_FILES([Makefile tools/Makefile])
 AC_CONFIG_SRCDIR([tools/common/config.h.in])
 AC_CONFIG_HEADERS([tools/common/config.h])
 AC_CONFIG_FILES([tools/common/install_dirs.h])
-AC_CONFIG_FILES([tools/hound/Makefile])
-AC_CONFIG_FILES([tools/sniffer/Makefile])
-AC_CONFIG_FILES([tools/analyzer/Makefile])
-AC_CONFIG_FILES([tools/perfexpert/Makefile])
-AC_CONFIG_FILES([tools/perfexpert/perfexpert_get_compiler_info.pl],
-    [chmod +x tools/perfexpert/perfexpert_get_compiler_info.pl])
 
 # Initialize Automake
 AM_INIT_AUTOMAKE([foreign -Wall -Werror])
@@ -141,114 +135,177 @@ AC_CHECK_HEADER([time.h],      [], [AC_MSG_ERROR([time.h not found])])
 AC_CHECK_HEADER([unistd.h],    [], [AC_MSG_ERROR([unistd.h not found])])
 
 #------------------------------------------------------------------------------
-# Binaries: Bash shell, PERL, HPCToolkit programs, and SQLite
+# Basic binaries: Bash shell
 #
-AC_PATH_TOOL([BASH_PROGRAM],      [bash])
-AC_PATH_TOOL([PERL_PROGRAM],      [perl])
-AC_PATH_TOOL([HPCSTRUCT_PROGRAM], [hpcstruct])
-AC_PATH_TOOL([HPCRUN_PROGRAM],    [hpcrun])
-AC_PATH_TOOL([HPCPROF_PROGRAM],   [hpcprof])
-AC_PATH_TOOL([SQLITE3_PROGRAM],   [sqlite3])
+AC_PATH_TOOL([BASH_PROGRAM], [bash])
 
 #------------------------------------------------------------------------------
 # Externals (headers, lib)
 #
 AC_ARG_WITH([externals],
     [AS_HELP_STRING([--with-externals],
-        [use this argument to set prefix path of PerfExpert externals])], [
+        [set prefix path of PerfExpert externals])], [
     CPPFLAGS+=" -I$withval/include"
     LDFLAGS+=" -L$withval/lib"])
 
 #------------------------------------------------------------------------------
 # 'perfexpert' requirements
 #
-# Libraries: rt
-#
-AC_CHECK_LIB([rt], [clock_gettime], [], [AC_MSG_ERROR([librt.so not found])])
+AC_ARG_ENABLE([perfexpert],
+    [AS_HELP_STRING([--disable-perfexpert], [disable PerfExpert tool])],
+    [ENABLE_PERFEXPERT=$enableval], [ENABLE_PERFEXPERT=yes])
 
-AS_IF([test "x$PERL_PROGRAM"      == x], [AC_MSG_ERROR([perl not found])])
-AS_IF([test "x$HPCSTRUCT_PROGRAM" == x], [AC_MSG_ERROR([hpcstruct not found])])
-AS_IF([test "x$HPCRUN_PROGRAM"    == x], [AC_MSG_ERROR([hpcrun not found])])
-AS_IF([test "x$HPCPROF_PROGRAM"   == x], [AC_MSG_ERROR([hpcprof not found])])
+AC_MSG_CHECKING([whether to enable PerfExpert])
+AS_IF([test x"$ENABLE_PERFEXPERT" = xyes], [
+    AC_MSG_RESULT([yes])
+
+    #
+    # Libraries: rt
+    #
+    AC_CHECK_LIB([rt], [clock_gettime], [],
+        [AC_MSG_ERROR([librt.so not found])])
+
+    AC_PATH_TOOL([PERL_PROGRAM], [perl],
+        [AC_MSG_ERROR([perl not found])])
+    AC_PATH_TOOL([HPCSTRUCT_PROGRAM], [hpcstruct],
+        [AC_MSG_ERROR([hpcstruct not found])])
+    AC_PATH_TOOL([HPCRUN_PROGRAM], [hpcrun],
+        [AC_MSG_ERROR([hpcrun not found])])
+    AC_PATH_TOOL([HPCPROF_PROGRAM], [hpcprof],
+        [AC_MSG_ERROR([hpcprof not found])])
+
+    ENABLE_PERFEXPERT=perfexpert
+    AC_CONFIG_FILES([tools/perfexpert/Makefile])
+    AC_CONFIG_FILES([tools/perfexpert/perfexpert_get_compiler_info.pl],
+        [chmod +x tools/perfexpert/perfexpert_get_compiler_info.pl])
+], [
+    AC_MSG_RESULT([no])
+    ENABLE_PERFEXPERT=
+])
+AC_SUBST([ENABLE_PERFEXPERT])
 
 #------------------------------------------------------------------------------
 # 'hound' requirements
 #
+AC_ARG_ENABLE([hound],
+    [AS_HELP_STRING([--disable-hound], [disable the performance benchmarks])],
+    [ENABLE_HOUND=$enableval], [ENABLE_HOUND=yes])
+
+AC_MSG_CHECKING([whether to enable the performance benchmarks])
+AS_IF([test x"$ENABLE_HOUND" = xyes], [
+    AC_MSG_RESULT([yes])
+
+    ENABLE_HOUND=hound
+    AC_CONFIG_FILES([tools/hound/Makefile])
+], [
+    AC_MSG_RESULT([no])
+    ENABLE_HOUND=
+])
+AC_SUBST([ENABLE_HOUND])
 
 #------------------------------------------------------------------------------
 # 'sniffer' requirements
 #
-# PAPI support (headers and lib)
-#
-AC_ARG_WITH([papi],
-    [AS_HELP_STRING([--with-papi],
-        [use this argument to set PAPI prefix path (where PAPI library and
-        include directories are located)])], [
-    CPPFLAGS+=" -I$withval/include"
-    LDFLAGS+=" -L$withval/lib"], [])
+AC_ARG_ENABLE([sniffer],
+    [AS_HELP_STRING([--disable-sniffer],
+        [disable the performance counter sniffer])],
+    [ENABLE_SNIFFER=$enableval], [ENABLE_SNIFFER=yes])
 
-AC_ARG_WITH([papi-lib],
-    [AS_HELP_STRING([--with-papi-lib],
-        [use this argument to set PAPI library path])],
-    [LDFLAGS+=" -L$withval"], [])
+AC_MSG_CHECKING([whether to enable the performance counter sniffer tool])
+AS_IF([test x"$ENABLE_SNIFFER" = xyes], [
+    AC_MSG_RESULT([yes])
 
-AC_ARG_WITH([papi-include],
-    [AS_HELP_STRING([--with-papi-include],
-        [use this argument to set PAPI include path])],
-    [CPPFLAGS+=" -I$withval"], [])
+    #
+    # PAPI support (headers and lib)
+    #
+    AC_ARG_WITH([papi],
+        [AS_HELP_STRING([--with-papi],
+            [where PAPI library and include directories are located])], [
+        CPPFLAGS+=" -I$withval/include"
+        LDFLAGS+=" -L$withval/lib"], [])
 
-AC_CHECK_LIB([papi], [PAPI_library_init, PAPI_add_event], [],
-    [AC_MSG_ERROR([papi.so not found])])
-AC_CHECK_HEADER([papi.h], [], [AC_MSG_ERROR([papi.h not found])])
+    AC_ARG_WITH([papi-lib],
+        [AS_HELP_STRING([--with-papi-lib], [set PAPI library path])],
+        [LDFLAGS+=" -L$withval"], [])
+
+    AC_ARG_WITH([papi-include],
+        [AS_HELP_STRING([--with-papi-include], [set PAPI include path])],
+        [CPPFLAGS+=" -I$withval"], [])
+
+    AC_CHECK_LIB([papi], [PAPI_library_init, PAPI_add_event], [],
+        [AC_MSG_ERROR([papi.so not found])])
+    AC_CHECK_HEADER([papi.h], [], [AC_MSG_ERROR([papi.h not found])])
+
+    ENABLE_SNIFFER=sniffer
+    AC_CONFIG_FILES([tools/sniffer/Makefile])
+], [
+    AC_MSG_RESULT([no])
+    ENABLE_SNIFFER=
+])
+AC_SUBST([ENABLE_SNIFFER])
 
 #------------------------------------------------------------------------------
 # 'perfexpert_analyzer' requirements
 #
-# GNU Math Evaluator support (headers and lib)
-#
-AC_ARG_WITH([matheval],
-    [AS_HELP_STRING([--with-matheval],
-        [use this argument to set GNU Math Evaluator prefix path (where matheval
-        library and include directories are located)])], [
-    CPPFLAGS+=" -I$withval/include"
-    LDFLAGS+=" -L$withval/lib"])
+AC_ARG_ENABLE([analyzer],
+    [AS_HELP_STRING([--disable-analyzer], [disable performance analyzer])],
+    [ENABLE_ANALYZER=$enableval], [ENABLE_ANALYZER=yes])
 
-AC_ARG_WITH([matheval-lib],
-    [AS_HELP_STRING([--with-matheval-lib],
-        [use this argument to set GNU matheval library path])],
-    [LDFLAGS+=" -L$withval"])
+AC_MSG_CHECKING([whether to enable the performance analyzer tool])
+AS_IF([test x"$ENABLE_ANALYZER" = xyes], [
+    AC_MSG_RESULT([yes])
 
-AC_ARG_WITH([matheval-include],
-    [AS_HELP_STRING([--with-matheval-include],
-        [use this argument to set GNU matheval include path])],
-    [CPPFLAGS+=" -I$withval"])
+    #
+    # GNU Math Evaluator support (headers and lib)
+    #
+    AC_ARG_WITH([matheval],
+        [AS_HELP_STRING([--with-matheval],
+            [where matheval library and include directories are located])], [
+        CPPFLAGS+=" -I$withval/include"
+        LDFLAGS+=" -L$withval/lib"])
 
-AC_CHECK_LIB([matheval], [evaluator_create], [],
-    [AC_MSG_ERROR([libmatheval.so not found])])
-AC_CHECK_HEADER([matheval.h], [], [AC_MSG_ERROR([matheval.h not found])])
+    AC_ARG_WITH([matheval-lib],
+        [AS_HELP_STRING([--with-matheval-lib],
+            [set GNU matheval library path])],
+        [LDFLAGS+=" -L$withval"])
 
-#
-# XML2 support (headers and lib)
-#
-AC_ARG_WITH([libxml2],
-    [AS_HELP_STRING([--with-libxml2],
-        [use this argument to set LibXML2 prefix path (where LibXML2 library and
-        include directories are located)])], [
-    CPPFLAGS+=" -I$withval/include"
-    LDFLAGS+=" -L$withval/lib"])
+    AC_ARG_WITH([matheval-include],
+        [AS_HELP_STRING([--with-matheval-include],
+            [set GNU matheval include path])],
+        [CPPFLAGS+=" -I$withval"])
 
-AC_ARG_WITH([libxml2-lib],
-    [AS_HELP_STRING([--with-libxml2-lib],
-        [use this argument to set LibXML2 library path])],
-    [LDFLAGS+=" -L$withval"])
+    AC_CHECK_LIB([matheval], [evaluator_create], [],
+        [AC_MSG_ERROR([libmatheval.so not found])])
+    AC_CHECK_HEADER([matheval.h], [], [AC_MSG_ERROR([matheval.h not found])])
 
-AC_ARG_WITH([libxml2-include],
-    [AS_HELP_STRING([--with-libxml2-include],
-        [use this argument to set LibXML2 include path])],
-    [CPPFLAGS+=" -I$withval"])
+    #
+    # XML2 support (headers and lib)
+    #
+    AC_ARG_WITH([libxml2],
+        [AS_HELP_STRING([--with-libxml2],
+            [where LibXML2 library and include directories are located])], [
+        CPPFLAGS+=" -I$withval/include"
+        LDFLAGS+=" -L$withval/lib"])
 
-AC_CHECK_LIB([xml2], [xmlParseFile], [], [AC_MSG_ERROR([libxml2.so not found])])
-AC_CHECK_HEADER([libxml/parser.h], [], [AC_MSG_ERROR([parser.h not found])])
+    AC_ARG_WITH([libxml2-lib],
+        [AS_HELP_STRING([--with-libxml2-lib], [set LibXML2 library path])],
+        [LDFLAGS+=" -L$withval"])
+
+    AC_ARG_WITH([libxml2-include],
+        [AS_HELP_STRING([--with-libxml2-include], [set LibXML2 include path])],
+        [CPPFLAGS+=" -I$withval"])
+
+    AC_CHECK_LIB([xml2], [xmlParseFile], [],
+        [AC_MSG_ERROR([libxml2.so not found])])
+    AC_CHECK_HEADER([libxml/parser.h], [], [AC_MSG_ERROR([parser.h not found])])
+
+    ENABLE_ANALYZER=analyzer
+    AC_CONFIG_FILES([tools/analyzer/Makefile])
+], [
+    AC_MSG_RESULT([no])
+    ENABLE_ANALYZER=
+])
+AC_SUBST([ENABLE_ANALYZER])
 
 #------------------------------------------------------------------------------
 # 'recommender' requirements
@@ -267,21 +324,20 @@ AS_IF([test x"$ENABLE_RECOMMENDER" = xyes], [
     #
     AC_ARG_WITH([sqlite],
         [AS_HELP_STRING([--with-sqlite],
-            [use this argument to set SQLite3 prefix path (where SQLite3 library
-            and include directories are located)])], [
+            [where SQLite3 library and include directories are located])], [
         CPPFLAGS+=" -I$withval/include"
         LDFLAGS+=" -L$withval/lib"])
 
     AC_ARG_WITH([sqlite-lib],
-        [AS_HELP_STRING([--with-sqlite-lib],
-            [use this argument to set SQLite3 library path])],
+        [AS_HELP_STRING([--with-sqlite-lib], [set SQLite3 library path])],
         [LDFLAGS+=" -L$withval"])
 
     AC_ARG_WITH([sqlite-include],
-        [AS_HELP_STRING([--with-sqlite-include],
-            [use this argument to set SQLite3 include path])],
+        [AS_HELP_STRING([--with-sqlite-include], [set SQLite3 include path])],
         [CPPFLAGS+=" -I$withval"])
 
+    AC_PATH_TOOL([SQLITE3_PROGRAM], [sqlite3],
+        [AC_MSG_ERROR([not found: sqlite3])])
     AC_CHECK_LIB([sqlite3], [sqlite3_open, sqlite3_close, sqlite3_exec], [],
         [AC_MSG_ERROR([not found: libsqlit3.so])])
     AC_CHECK_HEADER([sqlite3.h], [], [AC_MSG_ERROR([not found: sqlite3.h])])
@@ -302,8 +358,7 @@ AC_ARG_ENABLE([minst],
     [ENABLE_MINST=$enableval], [ENABLE_MINST=yes])
 
 AC_ARG_WITH([jvm],
-    [AS_HELP_STRING([--with-jvm], 
-        [use this argument to set JVM library path])],
+    [AS_HELP_STRING([--with-jvm], [set JVM library path])],
     [LDFLAGS+=" -L$withval"])
 
 AC_LANG_PUSH([C++])
@@ -323,19 +378,16 @@ AS_IF([test x"$ENABLE_MINST" = xyes], [
     #
     AC_ARG_WITH([rose],
         [AS_HELP_STRING([--with-rose],
-            [use this argument to set ROSE prefix path (where ROSE library and
-            include directories are located)])], [
+            [where ROSE library and include directories are located])], [
         CPPFLAGS+=" -I$withval/include"
         LDFLAGS+=" -L$withval/lib"])
 
     AC_ARG_WITH([rose-libs],
-        [AS_HELP_STRING([--with-rose-libs],
-            [use this argument to set Compiler library path])],
+        [AS_HELP_STRING([--with-rose-libs], [set Compiler library path])],
         [LDFLAGS+=" -L$withval"])
 
     AC_ARG_WITH([rose-include],
-        [AS_HELP_STRING([--with-rose-include],
-            [use this argument to set ROSE include path])],
+        [AS_HELP_STRING([--with-rose-include], [set ROSE include path])],
         [CPPFLAGS+=" -I$withval/include"])
 
     AC_CHECK_HEADER([rose.h], [], [AC_MSG_ERROR([not found: rose.h])])
@@ -345,19 +397,16 @@ AS_IF([test x"$ENABLE_MINST" = xyes], [
     #
     AC_ARG_WITH([gmp],
         [AS_HELP_STRING([--with-gmp],
-            [use this argument to set GNU Multiple Precision Library prefix path
-            (where GMP library and include directories are located)])], [
+            [where GMP library and include directories are located])], [
         CPPFLAGS+=" -I$withval/include"
         LDFLAGS+=" -L$withval/lib"])
 
     AC_ARG_WITH([gmp-lib],
-        [AS_HELP_STRING([--with-gmp-lib],
-            [use this argument to set GMP library path])],
+        [AS_HELP_STRING([--with-gmp-lib], [set GMP library path])],
         [LDFLAGS+=" -L$withval"])
 
     AC_ARG_WITH([gmp-include],
-        [AS_HELP_STRING([--with-gmp-include],
-            [use this argument to set GMP include path])],
+        [AS_HELP_STRING([--with-gmp-include], [set GMP include path])],
         [CPPFLAGS+=" -I$withval"])
 
     AC_CHECK_LIB([gmp], [__gmpf_init, __gmpf_clear], [],
@@ -369,7 +418,7 @@ AS_IF([test x"$ENABLE_MINST" = xyes], [
     #
     AC_ARG_WITH([sparse-hash-include],
         [AS_HELP_STRING([--with-sparse-hash-include],
-            [use this argument to set Google Sparse Hash include path])],
+            [set Google Sparse Hash include path])],
         [CPPFLAGS+=" -I$withval"], [])
 
     AC_CHECK_HEADER([google/sparse_hash_map], [],
@@ -390,8 +439,8 @@ AC_LANG_POP
 #------------------------------------------------------------------------------
 # 'perfexpert_ct' requirements
 #
-AC_ARG_ENABLE([perfexpert_ct],
-    [AS_HELP_STRING([--disable-perfexpert_ct], [disable code transformer])],
+AC_ARG_ENABLE([ct],
+    [AS_HELP_STRING([--disable-ct], [disable code transformer])],
     [ENABLE_CT=$enableval], [ENABLE_CT=yes])
 
 AC_MSG_CHECKING([whether to enable code transformation])
@@ -409,19 +458,16 @@ AS_IF([test x"$ENABLE_CT" = xyes], [
     #
     AC_ARG_WITH([rose],
         [AS_HELP_STRING([--with-rose],
-            [use this argument to set ROSE prefix path (where ROSE library and
-            include directories are located)])], [
+            [where ROSE library and include directories are located])], [
         CPPFLAGS+=" -I$withval/include"
         LDFLAGS+=" -L$withval/lib"])
 
     AC_ARG_WITH([rose-libs],
-        [AS_HELP_STRING([--with-rose-libs],
-            [use this argument to set Compiler library path])],
+        [AS_HELP_STRING([--with-rose-libs], [set Compiler library path])],
         [LDFLAGS+=" -L$withval"])
 
     AC_ARG_WITH([rose-include],
-        [AS_HELP_STRING([--with-rose-include],
-            [use this argument to set ROSE include path])],
+        [AS_HELP_STRING([--with-rose-include], [set ROSE include path])],
         [CPPFLAGS+=" -I$withval/include"])
 
     AC_LANG_PUSH([C++])
@@ -455,5 +501,7 @@ AC_MSG_NOTICE([CPPFLAGS=$CPPFLAGS])
 AC_MSG_NOTICE([CFLAGS=$CFLAGS])
 AC_MSG_NOTICE([CXXFLAGS=$CXXFLAGS])
 AC_MSG_NOTICE([LDFLAGS=$LDFLAGS])
+AC_MSG_NOTICE([Tools enabled: $ENABLE_PERFEXPERT $ENABLE_HOUND $ENABLE_SNIFFER\
+ $ENABLE_ANALYZER $ENABLE_RECOMMENDER $ENABLE_CT $ENABLE_MINST])
 
 # EOF
