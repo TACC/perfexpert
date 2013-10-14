@@ -1,0 +1,429 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"  
+  "http://www.w3.org/TR/html4/loose.dtd">  
+<html > 
+<head><title>2 Installation Instructions</title> 
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"> 
+<meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<!-- html,2,sections+ --> 
+<meta name="src" content="user_manual.tex"> 
+<meta name="date" content="2013-10-14 18:02:00"> 
+<link rel="stylesheet" type="text/css" href="user_manual.css"> 
+</head><body 
+>
+   <!--l. 1--><div class="crosslinks"><p class="noindent">[<a 
+href="user_manualch5.html" >next</a>] [<a 
+href="user_manualch1.html" >prev</a>] [<a 
+href="user_manualch1.html#tailuser_manualch1.html" >prev-tail</a>] [<a 
+href="#tailuser_manualch2.html">tail</a>] [<a 
+href="user_manual.html#user_manualch2.html" >up</a>] </p></div>
+   <h2 class="chapterHead"><span class="titlemark">Chapter&#x00A0;2</span><br /><a 
+href="user_manual.html#QQ2-4-11" id="x4-110002">Installation Instructions</a></h2>
+   <h3 class="sectionHead"><span class="titlemark">2.1   </span> <a 
+href="user_manual.html#QQ2-4-12" id="x4-120002.1">Prerequisites</a></h3>
+<!--l. 5--><p class="noindent" >PerfExpert is based on other tools so that installation of PerfExpert requires that they be installed. These tools
+are:
+     <ul class="itemize1">
+     <li class="itemize"><span 
+class="cmbx-10">PAPI </span>(<a 
+href="http://icl.cs.utk.edu/papi/software/" class="url" ><span 
+class="cmtt-10">http://icl.cs.utk.edu/papi/software/</span></a>): PAPI is required to measure hardware performance
+     metrics like cache misses, branch instructions, etc. The PAPI installation is mostly straightforward:
+     download, <span 
+class="cmtt-10">./configure</span>, <span 
+class="cmtt-10">make</span>, and <span 
+class="cmtt-10">make install</span>. If your Linux kernel version is 2.6.32 or higher, then
+     PAPI will mostly likely use <span 
+class="cmtt-10">perf</span><span 
+class="cmtt-10">_events</span>. Recent versions of PAPI (v3.7.2 and beyond) support using
+     <span 
+class="cmtt-10">perf</span><span 
+class="cmtt-10">_events </span>in the Linux kernel. However, if your kernel version is lower than 2.6.32, then you would
+     require patching the kernel with either <span 
+class="cmtt-10">perfctr</span><span class="footnote-mark"><a 
+href="user_manual5.html#fn1x3"><sup class="textsuperscript">1</sup></a></span><a 
+ id="x4-12001f1"></a> 
+     or <span 
+class="cmtt-10">perfmon</span><span class="footnote-mark"><a 
+href="user_manual6.html#fn2x3"><sup class="textsuperscript">2</sup></a></span><a 
+ id="x4-12002f2"></a> .
+     </li>
+     <li class="itemize"><span 
+class="cmbx-10">HPCToolkit </span>(<a 
+href="http://hpctoolkit.org/software.html" class="url" ><span 
+class="cmtt-10">http://hpctoolkit.org/software.html</span></a>): HPCToolkit is a tool that works on top of
+     PAPI. HPCToolkit is used by PerfExpert to run the program multiple times with specific performance
+     counters enabled. It is also useful for correlating addresses in the compiled binary back to the source
+     code.
+     </li>
+     <li class="itemize"><span 
+class="cmbx-10">Java Virtual Machine </span>and the <span 
+class="cmbx-10">Java Development Kit</span><br 
+class="newline" />(<a 
+href="http://www.oracle.com/technetwork/java/javase/downloads/" class="url" ><span 
+class="cmtt-10">http://www.oracle.com/technetwork/java/javase/downloads/</span></a>).
+     </li>
+     <li class="itemize"><span 
+class="cmbx-10">ROSE  Compiler  </span>(<a 
+href="http://rosecompiler.org/" class="url" ><span 
+class="cmtt-10">http://rosecompiler.org/</span></a>):  ROSE  is  the  framework  PerfExpert  uses  to
+     manipulate the applications source code. It is required only if you wish to compile PerfExpert with
+     performance optimization capability.
+     </li>
+     <li class="itemize"><span 
+class="cmbx-10">Apache Ant </span>(<a 
+href="http://ant.apache.org/bindownload.cgi" class="url" ><span 
+class="cmtt-10">http://ant.apache.org/bindownload.cgi</span></a>): it is required only to compile PerfExpert
+     </li>
+     <li class="itemize"><span 
+class="cmbx-10">SQLite </span>version 3 (<a 
+href="http://www.sqlite.org/" class="url" ><span 
+class="cmtt-10">http://www.sqlite.org/</span></a>): PerfExpert uses a SQLite database to store suggestions
+     for bottleneck remediation and other information for automatic optimization.
+     </li>
+     <li class="itemize"><span 
+class="cmbx-10">GNU Multiple Precision Arithmetic Library </span>(<a 
+href="http://gmplib.org/" class="url" ><span 
+class="cmtt-10">http://gmplib.org/</span></a>): MACPO, one of the tools
+     which compose PerfExpert requires this package.
+     </li>
+     <li class="itemize"><span 
+class="cmbx-10">Google SparseHash </span>(<a 
+href="https://code.google.com/p/sparsehash/" class="url" ><span 
+class="cmtt-10">https://code.google.com/p/sparsehash/</span></a>):<br 
+class="newline" />MACPO, one of the tools which compose PerfExpert requires this package.</li></ul>
+                                                                                         
+                                                                                         
+<!--l. 18--><p class="noindent" >
+   <h4 class="subsectionHead"><span class="titlemark">2.1.1   </span> <a 
+href="user_manualli1.html#QQ2-4-13" id="x4-130002.1.1">Installing Prerequisites</a></h4>
+<!--l. 20--><p class="noindent" >We provide a <span 
+class="cmtt-10">INSTALL </span>script in the <span 
+class="cmtt-10">perfexpert-externals-X.X.tar.gz </span>package. This script is an example of how
+to install some of PerfExpert prerequisites. To install PAPI, Java Virtual Machine, Java Development Kit, and
+SQLite follow the instructions of your Linux distribution.
+<div class="center" 
+>
+<!--l. 22--><p class="noindent" >
+<!--l. 22--><p class="noindent" >                                            <div class="minipage">The <span 
+class="cmtt-10">INSTALL </span>script should be modified to fit for your environment. Do not run it out-of-the-box!      </div><span 
+class="cmbx-10">CAUTION:</span>
+</div>
+<!--l. 24--><p class="noindent" >
+   <h5 class="subsubsectionHead"><a 
+href="#x4-140002.1.1" id="x4-140002.1.1">Apache Ant</a></h5>
+<!--l. 26--><p class="noindent" >The PerfExpert externals package contains another package named <span 
+class="cmtt-10">apache-ant-1.9.1-bin.tar.gz</span>. This is the
+binary version of Apache Ant. As PerfExpert only needs Apache Ant during compilation there is no need to
+install this package in your system. Thus, you should only decompress it. To do that, run the following
+commands:
+                                                                                         
+                                                                                         
+   <div class="verbatim" id="verbatim-1">
+$&#x00A0;tar&#x00A0;-xzvf&#x00A0;./apache-ant-1.9.1-bin.tar.gz
+&#x00A0;<br />$&#x00A0;export&#x00A0;ANT_HOME=&#8216;pwd&#8216;/apache-ant-1.9.1
+</div>
+<!--l. 31--><p class="nopar" >
+<!--l. 33--><p class="noindent" >these commands will decompress Apache Ant and set the <span 
+class="cmtt-10">ANT</span><span 
+class="cmtt-10">_HOME </span>environment variable to reflect the <span 
+class="cmtt-10">PATH </span>where
+such package has been decompressed.
+<!--l. 35--><p class="noindent" >
+   <h5 class="subsubsectionHead"><a 
+href="#x4-150002.1.1" id="x4-150002.1.1">HPCToolkit</a></h5>
+<!--l. 37--><p class="noindent" >All HPCToolkit prerequisites are provided in the package <span 
+class="cmtt-10">hpctoolkit-externals-5.3.2-r4197.tar.gz</span>. The
+PerfExpert externals package provides both HPCToolkit and HPToolkit prerequisites packages. To decompress and
+install the HPCToolkit prerequisites package run the following commands:
+                                                                                         
+                                                                                         
+   <div class="verbatim" id="verbatim-2">
+$&#x00A0;tar&#x00A0;-xzvf&#x00A0;./hpctoolkit-externals-5.3.2-r4197.tar.gz
+&#x00A0;<br />$&#x00A0;cd&#x00A0;hpctoolkit-externals-5.3.2-r4197/
+&#x00A0;<br />$&#x00A0;./configure
+&#x00A0;<br />$&#x00A0;make
+</div>
+<!--l. 44--><p class="nopar" >
+<div class="center" 
+>
+<!--l. 46--><p class="noindent" >
+<!--l. 46--><p class="noindent" >                                            <div class="minipage">The  HPCToolkit  externals  package  does  not  has  to  be  installed  in  your  system,  HPCToolkit  will
+take care of this. However, it should be compiled and available during HPCToolkit compilation and
+installation process.                                                                                                            </div><span 
+class="cmbx-10">NOTICE:</span>
+</div>
+<!--l. 48--><p class="indent" >   After compiling the prerequisites for HPCToolkit, the HPCToolkit package can be installed. For that, run the
+following commands:
+                                                                                         
+                                                                                         
+   <div class="verbatim" id="verbatim-3">
+$&#x00A0;tar&#x00A0;-xzvf&#x00A0;./hpctoolkit-5.3.2-r4197.tar.gz
+&#x00A0;<br />$&#x00A0;cd&#x00A0;hpctoolkit-5.3.2-r4197/
+&#x00A0;<br />$&#x00A0;./configure&#x00A0;--prefix=WHERE_YOU_WANT_TO_INSTALL_IT&#x00A0;\
+&#x00A0;<br />&#x00A0;&#x00A0;&#x00A0;&#x00A0;--with-externals=PATH_TO_HPCTOOLKIT_EXTERNALS_PACKAGE&#x00A0;\
+&#x00A0;<br />&#x00A0;&#x00A0;&#x00A0;&#x00A0;--with-papi=PATH_TO_PAPI_INSTALLATION
+&#x00A0;<br />$&#x00A0;make&#x00A0;install
+</div>
+<!--l. 57--><p class="nopar" >
+<!--l. 59--><p class="noindent" >
+   <h5 class="subsubsectionHead"><a 
+href="#x4-160002.1.1" id="x4-160002.1.1">ROSE</a></h5>
+<!--l. 61--><p class="noindent" >ROSE has several prerequisites. One of the most important one is the compiler. You should have <span 
+class="cmtt-10">GCC</span>
+version 4.4 to compile ROSE. It also requires a specific version of the Boost library (1.47). We do
+provide the Boost library package, but to install <span 
+class="cmtt-10">GCC </span>version 4.4 you should follow the instruction
+of your Linux distribution. To compile and install the Boost library version 1.47 run the following
+commands:
+<div class="center" 
+>
+<!--l. 63--><p class="noindent" >
+<!--l. 63--><p class="noindent" >                                            <div class="minipage">We had successfully compiled and installed ROSE using <span 
+class="cmtt-10">GCC </span>4.6, however according to the ROSE
+documentation this compiler is not supported. If you want to use this version of <span 
+class="cmtt-10">GCC </span>do it carefully.   </div><span 
+class="cmbx-10">NOTICE:</span>
+</div>
+                                                                                         
+                                                                                         
+   <div class="verbatim" id="verbatim-4">
+$&#x00A0;tar&#x00A0;-xzvf&#x00A0;./boost_1_47_0.tar.gz
+&#x00A0;<br />$&#x00A0;cd&#x00A0;boost_1_47_0/
+&#x00A0;<br />$&#x00A0;./bootstrap.sh
+&#x00A0;<br />$&#x00A0;./b2&#x00A0;install&#x00A0;--prefix=${INSTALL_DIR}
+</div>
+<!--l. 70--><p class="nopar" >
+<!--l. 72--><p class="indent" >   After installing successfully the Boost library run the following commands to compile and install
+ROSE:
+                                                                                         
+                                                                                         
+   <div class="verbatim" id="verbatim-5">
+$&#x00A0;tar&#x00A0;-xzvf&#x00A0;./rose-0.9.5a-without-EDG-20584.tar.gz
+&#x00A0;<br />$&#x00A0;cd&#x00A0;rose-0.9.5a-20584/
+&#x00A0;<br />$&#x00A0;mkdir&#x00A0;_build
+&#x00A0;<br />$&#x00A0;cd&#x00A0;_build
+&#x00A0;<br />$&#x00A0;../configure&#x00A0;--prefix=WHERE_YOU_WANT_TO_INSTALL_IT&#x00A0;--with-boost=WHERE_BOOST_IS&#x00A0;\
+&#x00A0;<br />&#x00A0;&#x00A0;&#x00A0;&#x00A0;--disable-tutorial-directory&#x00A0;--disable-projects-directory&#x00A0;--disable-opencl&#x00A0;\
+&#x00A0;<br />&#x00A0;&#x00A0;&#x00A0;&#x00A0;--disable-tests-directory&#x00A0;--disable-php&#x00A0;--disable-cuda&#x00A0;--disable-binary-analysis&#x00A0;\
+&#x00A0;<br />&#x00A0;&#x00A0;&#x00A0;&#x00A0;--disable-java&#x00A0;--with-gomp_omp_runtime_library=WHERE_LIBGOMP_IS&#x00A0;\
+&#x00A0;<br />&#x00A0;&#x00A0;&#x00A0;&#x00A0;--libexecdir=/tmp&#x00A0;--bindir=/tmp&#x00A0;--sbindir=/tmp
+&#x00A0;<br />$&#x00A0;make&#x00A0;install
+</div>
+<!--l. 85--><p class="nopar" >
+<div class="center" 
+>
+<!--l. 87--><p class="noindent" >
+<!--l. 87--><p class="noindent" >                                            <div class="minipage">The <span 
+class="cmtt-10">configure </span>command we shown above avoids the compilation and installation of several features
+of ROSE. We do that to minimize the time required to compile ROSE. Moreover, some binaries that
+ROSE installs and we do not need them have been set to be installed into the <span 
+class="cmtt-10">/tmp </span>directory. It is safe
+to clean the temporary directory after installing ROSE.                                                             </div><span 
+class="cmbx-10">NOTICE:</span>
+</div>
+<div class="center" 
+>
+<!--l. 89--><p class="noindent" >
+<!--l. 89--><p class="noindent" >                                            <div class="minipage">If  you  want  to  PerfExpert  be  able  to  optimize  OpenMP  applications  you  should  set  the
+<span 
+class="cmtt-10">--with-gomp</span><span 
+class="cmtt-10">_omp</span><span 
+class="cmtt-10">_runtime</span><span 
+class="cmtt-10">_library </span>argument to where <span 
+class="cmtt-10">GCC </span>has installed <span 
+class="cmtt-10">libgomp.so</span>.                   </div><span 
+class="cmbx-10">ATTENTION:</span>
+</div>
+<!--l. 91--><p class="noindent" >
+   <h5 class="subsubsectionHead"><a 
+href="#x4-170002.1.1" id="x4-170002.1.1">GNU Multiple Precision Arithmetic Library</a></h5>
+<!--l. 93--><p class="noindent" >Many Linux distributions already have the GNU Multiple Precision Arithmetic Library installed. To check if your
+system has it try to locate the <span 
+class="cmtt-10">libgmp.so </span>file. If your system does not has the GNU Multiple Precision Arithmetic
+Library, run the following commands to install it:
+                                                                                         
+                                                                                         
+   <div class="verbatim" id="verbatim-6">
+$&#x00A0;tar&#x00A0;-xzvf&#x00A0;./gmp-5.1.2.tar.gz
+&#x00A0;<br />$&#x00A0;cd&#x00A0;gmp-5.1.2/
+&#x00A0;<br />$&#x00A0;./configure&#x00A0;--prefix=WHERE_YOU_WANT_TO_INSTALL_IT
+&#x00A0;<br />$&#x00A0;make
+&#x00A0;<br />$&#x00A0;make&#x00A0;check
+&#x00A0;<br />$&#x00A0;make&#x00A0;install
+</div>
+<!--l. 102--><p class="nopar" >
+<div class="center" 
+>
+<!--l. 104--><p class="noindent" >
+<!--l. 104--><p class="noindent" >                                            <div class="minipage">The GNU Multiple Precision Arithmetic Library is required to compile and execute MACPO, one of
+the tools which is part of PerfExpert. If you do not want to install MACPO you do not need to install
+the GNU Multiple Precision Arithmetic Library.                                                                      </div><span 
+class="cmbx-10">NOTICE:</span>
+</div>
+<!--l. 106--><p class="noindent" >
+   <h5 class="subsubsectionHead"><a 
+href="#x4-180002.1.1" id="x4-180002.1.1">Google SparseHash</a></h5>
+<!--l. 108--><p class="noindent" >To install Google SparseHash you should run the following commands:
+                                                                                         
+                                                                                         
+   <div class="verbatim" id="verbatim-7">
+$&#x00A0;tar&#x00A0;-xzvf&#x00A0;./sparsehash-2.0.2.tar.gz
+&#x00A0;<br />$&#x00A0;cd&#x00A0;sparsehash-2.0.2/
+&#x00A0;<br />$&#x00A0;./configure&#x00A0;--prefix=WHERE_YOU_WANT_TO_INSTALL_IT
+&#x00A0;<br />$&#x00A0;make&#x00A0;install
+</div>
+<!--l. 115--><p class="nopar" >
+<div class="center" 
+>
+<!--l. 117--><p class="noindent" >
+<!--l. 117--><p class="noindent" >                                            <div class="minipage">Google SparseHash is required to compile and execute MACPO, one of the tools which is part of
+PerfExpert. If you do not want to install MACPO you do not need to install the Google SparseHash. </div><span 
+class="cmbx-10">NOTICE:</span>
+</div>
+<!--l. 119--><p class="noindent" >
+   <h3 class="sectionHead"><span class="titlemark">2.2   </span> <a 
+href="user_manual.html#QQ2-4-19" id="x4-190002.2">Downloading PerfExpert</a></h3>
+<!--l. 121--><p class="noindent" >PerfExpert is an open-source project. Funding to keep researchers working on PerfExpert depends on the value of
+this tool to the scientific community. For that reason, it is really important to know where and who are using our
+tool. We would really appreciate it if you could send us a message (<a 
+href="mailto:fialho@utexas.edu" ><span 
+class="cmtt-10">fialho@utexas.edu</span></a>) telling us the institution
+(name and country) you are planning to install and test PerfExpert at.
+<!--l. 123--><p class="indent" >   The PerfExpert source code can be downloaded from the registration page:<br 
+class="newline" /><a 
+href="http://www.tacc.utexas.edu/perfexpert/registration" class="url" ><span 
+class="cmtt-10">http://www.tacc.utexas.edu/perfexpert/registration</span></a>.
+<!--l. 125--><p class="indent" >   We encourage people to have a look on the wiki page, send patches, and raise issues on PerfExpert&#8217;s page on
+BitBucket: <a 
+href="https://bitbucket.org/leonardofialho/perfexpert/" class="url" ><span 
+class="cmtt-10">https://bitbucket.org/leonardofialho/perfexpert/</span></a>.
+<!--l. 127--><p class="noindent" >
+   <h3 class="sectionHead"><span class="titlemark">2.3   </span> <a 
+href="user_manual.html#QQ2-4-20" id="x4-200002.3">Setting Up PerfExpert</a></h3>
+<!--l. 129--><p class="noindent" >If you have downloaded PerfExpert from our version control system, you may have already noticed
+that there is no configure script available on the source code tree. To generate it run the following
+command:
+                                                                                         
+                                                                                         
+   <div class="verbatim" id="verbatim-8">
+$&#x00A0;./autogen.sh
+</div>
+<!--l. 133--><p class="nopar" >
+<!--l. 135--><p class="indent" >   <span 
+class="cmtt-10">autogen.sh </span>requires the following packages available:
+     <ul class="itemize1">
+     <li class="itemize">M4 version 1.4.13 or newer (<a 
+href="ftp://ftp.gnu.org/gnu/m4/" class="url" ><span 
+class="cmtt-10">ftp://ftp.gnu.org/gnu/m4/</span></a>)
+     </li>
+     <li class="itemize">Autoconf version 2.63 or newer (<a 
+href="ftp://ftp.gnu.org/gnu/autoconf/" class="url" ><span 
+class="cmtt-10">ftp://ftp.gnu.org/gnu/autoconf/</span></a>)
+     </li>
+     <li class="itemize">Automake version 1.11.1 or newer (<a 
+href="ftp://ftp.gnu.org/gnu/automake/" class="url" ><span 
+class="cmtt-10">ftp://ftp.gnu.org/gnu/automake/</span></a>)
+     </li>
+     <li class="itemize">Libtool version 2.2.6b or newer (<a 
+href="ftp://ftp.gnu.org/gnu/libtool/" class="url" ><span 
+class="cmtt-10">ftp://ftp.gnu.org/gnu/libtool/</span></a>)</li></ul>
+<!--l. 144--><p class="indent" >   PerfExpert comes with a <span 
+class="cmtt-10">Makefile</span>-base source code tree to automate the entire installation process. Thus the
+compilation and installation of PerfExpert is similar to any other GNU package:
+                                                                                         
+                                                                                         
+   <div class="verbatim" id="verbatim-9">
+$&#x00A0;./configure
+&#x00A0;<br />$&#x00A0;make
+&#x00A0;<br />$&#x00A0;make&#x00A0;install
+</div>
+<!--l. 150--><p class="nopar" >
+<!--l. 152--><p class="indent" >   Optionally, you may want to run the set of test we have included into PerfExpert. To do so, just run &#8220;<span 
+class="cmtt-10">make</span>
+<span 
+class="cmtt-10">check</span>&#8221; after compiling your code.
+<!--l. 154--><p class="indent" >   If any of the prerequisites of PerfExpert are not on the <span 
+class="cmtt-10">PATH </span>or <span 
+class="cmtt-10">LD</span><span 
+class="cmtt-10">_LIBRARY</span><span 
+class="cmtt-10">_PATH</span>, you can specify
+the right locations of such files. For that, have a look on the configure script help using the following
+command:
+                                                                                         
+                                                                                         
+   <div class="verbatim" id="verbatim-10">
+$&#x00A0;./configure&#x00A0;--help
+</div>
+<!--l. 158--><p class="nopar" >
+<!--l. 160--><p class="indent" >   A typical command line to run <span 
+class="cmtt-10">configure </span>may looks like this:
+                                                                                         
+                                                                                         
+   <div class="verbatim" id="verbatim-11">
+$&#x00A0;./configure&#x00A0;--prefix=WHERE_YOU_WANT_TO_INSTALL_IT&#x00A0;--with-rose=WHERE_ROSE_IS&#x00A0;\
+&#x00A0;<br />&#x00A0;&#x00A0;&#x00A0;&#x00A0;--with-jvm=WHERE_JVM_IS&#x00A0;--with-papi=WHERE_PAPI_IS&#x00A0;--with-apache-ant=WHERE_ANT_IS
+</div>
+<!--l. 165--><p class="nopar" >
+<!--l. 167--><p class="indent" >   Optionally, you may want to run the set of test we have included into PerfExpert. To do so, just run &#8220;<span 
+class="cmtt-10">make</span>
+<span 
+class="cmtt-10">check</span>&#8221; after compiling your code.
+<!--l. 169--><p class="indent" >   In case you have any problem installing PerfExpert, send us an email<br 
+class="newline" />(<a 
+href="mailto:fialho@utexas.edu" ><span 
+class="cmtt-10">fialho@utexas.edu</span></a>) or use our mailing list: <a 
+href="mailto:perfexpert@googlegroups.com" ><span 
+class="cmtt-10">perfexpert@googlegroups.com</span></a>.
+<!--l. 171--><p class="noindent" >
+   <h3 class="sectionHead"><span class="titlemark">2.4   </span> <a 
+href="user_manual.html#QQ2-4-21" id="x4-210002.4">Characterizing your Machine</a></h3>
+<!--l. 173--><p class="noindent" >During the installation process, PerfExpert will run a set of benchmark applications to characterize your machine.
+This characterization is used to analyze the performance of the applications you want to optimize. For that reason,
+you should be sure the PerfExpert installation is run on a machine of the same kind you are planning to run the
+production code on. If it is not possible, you should run the benchmark application and generate the
+characterization file manually and move it to the directory where PerfExpert has been installed. To do that you
+should execute the <span 
+class="cmtt-10">hound </span>command (which is available inside the <span 
+class="cmtt-10">bin </span>directory of PerfExpert installation) and save
+the output of this command to a file named <span 
+class="cmtt-10">machine.properties </span>inside the <span 
+class="cmtt-10">etc </span>directory where PerfExpert is
+installed.
+<div class="center" 
+>
+<!--l. 175--><p class="noindent" >
+<!--l. 175--><p class="noindent" >                                            <div class="minipage">This  is  one  of  the  most  important  and  sensible  steps  of  PerfExpert  installation  process.  Be  sure
+the  content  of  this  file  reflects  the  characteristics  of  the  machine  where  you  want  analyze  the
+performance of applications. If the content of the <span 
+class="cmtt-10">machine.properties </span>file is not accurate all the
+analysis, recommendations for optimization and also automatic optimization PerfExpert will do on
+your application could not improve it&#8217;s performance.                                                                 </div><span 
+class="cmbx-10">ATTENTION:</span>
+</div>
+<!--l. 177--><p class="noindent" >
+   <h3 class="sectionHead"><span class="titlemark">2.5   </span> <a 
+href="user_manual.html#QQ2-4-22" id="x4-220002.5">Testing PerfExpert Installation</a></h3>
+<!--l. 179--><p class="noindent" >We provide a set of tests you may want to run before using PerfExpert to optimize your applications. To run these
+tests you should run the following command inside the PerfExpert build tree:
+                                                                                         
+                                                                                         
+   <div class="verbatim" id="verbatim-12">
+$&#x00A0;make&#x00A0;check
+</div>
+<!--l. 183--><p class="nopar" >
+<!--l. 185--><p class="indent" >   It is normal that one of the tests (<span 
+class="cmtt-10">mpi</span><span 
+class="cmtt-10">_stampede</span>) fails since it has been designed to be executed only on
+Stampede.
+                                                                                         
+                                                                                         
+   <!--l. 1--><div class="crosslinks"><p class="noindent">[<a 
+href="user_manualch5.html" >next</a>] [<a 
+href="user_manualch1.html" >prev</a>] [<a 
+href="user_manualch1.html#tailuser_manualch1.html" >prev-tail</a>] [<a 
+href="user_manualch2.html" >front</a>] [<a 
+href="user_manual.html#user_manualch2.html" >up</a>] </p></div>
+<!--l. 1--><p class="indent" >   <a 
+ id="tailuser_manualch2.html"></a>   
+</body></html> 

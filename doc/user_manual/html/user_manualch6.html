@@ -1,0 +1,1016 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"  
+  "http://www.w3.org/TR/html4/loose.dtd">  
+<html > 
+<head><title>6 PerfExpert for Advanced Users</title> 
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"> 
+<meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<!-- html,2,sections+ --> 
+<meta name="src" content="user_manual.tex"> 
+<meta name="date" content="2013-10-14 18:02:00"> 
+<link rel="stylesheet" type="text/css" href="user_manual.css"> 
+</head><body 
+>
+   <!--l. 10--><div class="crosslinks"><p class="noindent">[<a 
+href="user_manualch5.html" >prev</a>] [<a 
+href="user_manualch5.html#tailuser_manualch5.html" >prev-tail</a>] [<a 
+href="#tailuser_manualch6.html">tail</a>] [<a 
+href="user_manual.html# " >up</a>] </p></div>
+   <h2 class="chapterHead"><span class="titlemark">Chapter&#x00A0;6</span><br /><a 
+href="#x15-360006" id="x15-360006">PerfExpert for Advanced Users</a></h2>
+<!--l. 12--><p class="noindent" >This chapter covers details of PerfExpert internal operation. While its reading is not required for common users,
+advanced user may appreciate its content.
+   <h3 class="sectionHead"><span class="titlemark">6.1   </span> <a 
+href="#x15-370006.1" id="x15-370006.1">The Big Picture</a></h3>
+<!--l. 16--><p class="noindent" >
+   <h3 class="sectionHead"><span class="titlemark">6.2   </span> <a 
+href="#x15-380006.2" id="x15-380006.2">Tools Which Are Part of PerfExpert</a></h3>
+<!--l. 18--><p class="noindent" >This section describes the usage details of each of the tools which compose PerfExpert.
+<!--l. 20--><p class="noindent" >
+   <h4 class="subsectionHead"><span class="titlemark">6.2.1   </span> <a 
+href="#x15-390006.2.1" id="x15-390006.2.1"><span 
+class="cmtt-10">perfexpert</span></a></h4>
+<!--l. 22--><p class="noindent" >
+   <h5 class="subsubsectionHead"><a 
+href="#x15-400006.2.1" id="x15-400006.2.1">Synopsis</a></h5>
+<!--l. 25--><p class="noindent" ><span 
+class="rm-lmtk-10">perfexpert ¡</span><span class="underline"><span 
+class="rm-lmtl-10">threshold</span></span><span 
+class="rm-lmtk-10">¿ [-m </span><span class="underline"><span 
+class="rm-lmtl-10">tar</span></span><span 
+class="rm-lmtl-10">g</span><span class="underline"><span 
+class="rm-lmtl-10">et</span></span> <span 
+class="rm-lmtk-10">&#8212; -s </span><span class="underline"><span 
+class="rm-lmtl-10">sourcefile</span></span><span 
+class="rm-lmtk-10">] [-r </span><span class="underline"><span 
+class="rm-lmtl-10">count</span></span> <span 
+class="rm-lmtk-10">] [-d </span><span class="underline"><span 
+class="rm-lmtl-10">database</span></span><span 
+class="rm-lmtk-10">] [-p </span><span 
+class="rm-lmtl-10">p</span><span class="underline"><span 
+class="rm-lmtl-10">refix</span></span><span 
+class="rm-lmtk-10">]</span>
+<!--l. 26--><p class="indent" >   <span 
+class="rm-lmtk-10">&#x00A0;</span><span 
+class="rm-lmtk-10">&#x00A0;</span><span 
+class="rm-lmtk-10">&#x00A0;</span><span 
+class="rm-lmtk-10">&#x00A0;</span><span 
+class="rm-lmtk-10">&#x00A0;</span><span 
+class="rm-lmtk-10">&#x00A0;</span><span 
+class="rm-lmtk-10">&#x00A0;</span><span 
+class="rm-lmtk-10">&#x00A0;</span><span 
+class="rm-lmtk-10">&#x00A0;[-b </span><span class="underline"><span 
+class="rm-lmtl-10">before</span></span><span 
+class="rm-lmtk-10">] [-a </span><span class="underline"><span 
+class="rm-lmtl-10">after</span></span><span 
+class="rm-lmtk-10">] [-l </span><span class="underline"><span 
+class="rm-lmtl-10">level</span></span><span 
+class="rm-lmtk-10">] [-k </span><span class="underline"><span 
+class="rm-lmtl-10">card</span></span> <span 
+class="rm-lmtk-10">[-P </span><span 
+class="rm-lmtl-10">p</span><span class="underline"><span 
+class="rm-lmtl-10">refix</span></span><span 
+class="rm-lmtk-10">] [-B </span><span class="underline"><span 
+class="rm-lmtl-10">before</span></span><span 
+class="rm-lmtk-10">] [-A</span>
+<span class="underline"><span 
+class="rm-lmtl-10">after</span></span><span 
+class="rm-lmtk-10">]]</span>
+<!--l. 27--><p class="indent" >   <span 
+class="rm-lmtk-10">&#x00A0;</span><span 
+class="rm-lmtk-10">&#x00A0;</span><span 
+class="rm-lmtk-10">&#x00A0;</span><span 
+class="rm-lmtk-10">&#x00A0;</span><span 
+class="rm-lmtk-10">&#x00A0;</span><span 
+class="rm-lmtk-10">&#x00A0;</span><span 
+class="rm-lmtk-10">&#x00A0;</span><span 
+class="rm-lmtk-10">&#x00A0;</span><span 
+class="rm-lmtk-10">&#x00A0;[-gchv]</span>
+<!--l. 30--><p class="noindent" >
+   <h5 class="subsubsectionHead"><a 
+href="#x15-410006.2.1" id="x15-410006.2.1">Description</a></h5>
+<!--l. 32--><p class="noindent" >
+   <h5 class="subsubsectionHead"><a 
+href="#x15-420006.2.1" id="x15-420006.2.1">Command Line Arguments</a></h5>
+     <dl class="description"><dt class="description">
+<span 
+class="rm-lmtl-10">threshold</span> </dt><dd 
+class="description">                                                                                <br 
+class="newline" />
+     </dd><dt class="description">
+<span 
+class="rm-lmtk-10">-m, --makefile</span> </dt><dd 
+class="description">                                                                           <br 
+class="newline" />
+     </dd><dt class="description">
+<span 
+class="rm-lmtl-10">target</span> </dt><dd 
+class="description">                                                                                   <br 
+class="newline" />
+     </dd><dt class="description">
+<span 
+class="rm-lmtk-10">-s, --source</span> </dt><dd 
+class="description">                                                                             <br 
+class="newline" />
+                                                                                         
+                                                                                         
+     </dd><dt class="description">
+<span 
+class="rm-lmtl-10">sourcefile</span> </dt><dd 
+class="description">                                                                               <br 
+class="newline" />
+     </dd><dt class="description">
+<span 
+class="rm-lmtk-10">-r, --recommendations</span> </dt><dd 
+class="description">                                                                    <br 
+class="newline" />Set the number of optimizations perfexpert should provide.
+     </dd><dt class="description">
+<span 
+class="rm-lmtl-10">count</span> </dt><dd 
+class="description">                                                                                    <br 
+class="newline" />Number of optimizations perfexpert should provide.
+     </dd><dt class="description">
+<span 
+class="rm-lmtk-10">-d, --database</span> </dt><dd 
+class="description">                                                                           <br 
+class="newline" />Full path and name of PerfExpert database file (default: <span 
+class="cmtt-10">PERFEXPERT</span><span 
+class="cmtt-10">_VARDIR/RECOMMENDATION</span><span 
+class="cmtt-10">_DB</span>).
+     </dd><dt class="description">
+<span 
+class="rm-lmtl-10">database</span> </dt><dd 
+class="description">                                                                                 <br 
+class="newline" />Database file (default: <span 
+class="cmtt-10">PERFEXPERT</span><span 
+class="cmtt-10">_VARDIR/RECOMMENDATION</span><span 
+class="cmtt-10">_DB</span>).
+     </dd><dt class="description">
+<span 
+class="rm-lmtk-10">-p, --prefix</span> </dt><dd 
+class="description">                                                                             <br 
+class="newline" />
+     </dd><dt class="description">
+<span 
+class="rm-lmtl-10">prefix</span> </dt><dd 
+class="description">                                                                                   <br 
+class="newline" />
+     </dd><dt class="description">
+<span 
+class="rm-lmtk-10">-b, --before</span> </dt><dd 
+class="description">                                                                             <br 
+class="newline" />
+     </dd><dt class="description">
+<span 
+class="rm-lmtk-10">-a, --after</span> </dt><dd 
+class="description">                                                                              <br 
+class="newline" />
+     </dd><dt class="description">
+<span 
+class="rm-lmtk-10">-P, --knc-prefix</span> </dt><dd 
+class="description">                                                                         <br 
+class="newline" />
+     </dd><dt class="description">
+<span 
+class="rm-lmtk-10">-B, --knc-before</span> </dt><dd 
+class="description">                                                                         <br 
+class="newline" />
+     </dd><dt class="description">
+<span 
+class="rm-lmtk-10">-A, --knc-after</span> </dt><dd 
+class="description">                                                                          <br 
+class="newline" />
+     </dd><dt class="description">
+<span 
+class="rm-lmtk-10">-A, --knc-after</span> </dt><dd 
+class="description">                                                                          <br 
+class="newline" />
+     </dd><dt class="description">
+<span 
+class="rm-lmtk-10">-g, --clean-garbage</span> </dt><dd 
+class="description">                                                                      <br 
+class="newline" />
+                                                                                         
+                                                                                         
+     </dd><dt class="description">
+<span 
+class="rm-lmtk-10">-v, --verbose</span> </dt><dd 
+class="description">                                                                            <br 
+class="newline" />Enable verbose mode (default: level 5).
+     </dd><dt class="description">
+<span 
+class="rm-lmtk-10">-l, --verbose</span><span 
+class="rm-lmtk-10">_level</span> </dt><dd 
+class="description">                                                                      <br 
+class="newline" />Enable verbose mode using a specific verbose level.
+     </dd><dt class="description">
+<span 
+class="rm-lmtl-10">level</span> </dt><dd 
+class="description">                                                                                    <br 
+class="newline" />Verbose level (range: 1-10).
+     </dd><dt class="description">
+<span 
+class="rm-lmtk-10">-c, --colorful</span> </dt><dd 
+class="description">                                                                           <br 
+class="newline" />Enable colors on verbose mode, no weird characters will appear on output files.
+     </dd><dt class="description">
+<span 
+class="rm-lmtk-10">-h, --help</span> </dt><dd 
+class="description">                                                                               <br 
+class="newline" />Show the help message.</dd></dl>
+<!--l. 92--><p class="noindent" >
+   <h5 class="subsubsectionHead"><a 
+href="#x15-430006.2.1" id="x15-430006.2.1">Environment Variables</a></h5>
+<!--l. 94--><p class="noindent" >Here is a complete list of the environment variables PerfExpert uses. The command line arguments overwrite the
+value set by any of the environment variables.
+     <dl class="description"><dt class="description">
+<span 
+class="cmtt-10">PERFEXPERT</span><span 
+class="cmtt-10">_MAKE</span><span 
+class="cmtt-10">_TARGET</span> </dt><dd 
+class="description">                                                                   <br 
+class="newline" />This variable has the same functionality than the <span 
+class="cmtt-10">-m </span>command line option. It&#8217;s value is passed to <span 
+class="cmtt-10">make</span>
+     to compile the source code while using a <span 
+class="cmtt-10">Makefile </span>(<span 
+class="cmti-10">e.g.</span>, if it&#8217;s blue is set to <span 
+class="cmtt-10">all</span>, PerfExpert will
+     compile the user application using the <span 
+class="cmtt-10">make all </span>command). If this variable is set while the user selects
+     the <span 
+class="cmtt-10">-s </span>command line option an error will be generated.
+     </dd><dt class="description">
+<span 
+class="cmtt-10">PERFEXPERT</span><span 
+class="cmtt-10">_SOURCE</span><span 
+class="cmtt-10">_FILE</span> </dt><dd 
+class="description">                                                                   <br 
+class="newline" />This variable has the same functionality than the <span 
+class="cmtt-10">-s </span>command line option. It&#8217;s value should be a valid
+     source code file which will be compiled to obtain the binary executable. If this variable is set while the
+     user selects the <span 
+class="cmtt-10">-m </span>command line option an error will be generated.
+     </dd><dt class="description">
+<span 
+class="cmtt-10">PERFEXPERT</span><span 
+class="cmtt-10">_DATABASE</span><span 
+class="cmtt-10">_FILE</span> </dt><dd 
+class="description">                                                                 <br 
+class="newline" />This variable has the same functionality than the <span 
+class="cmtt-10">-d </span>command line option. It&#8217;s value should be a valid
+     PerfExpert database file. By default, PerfExpert uses the <span 
+class="cmtt-10">.perfexpert.db </span>database file located in the
+     user <span 
+class="cmtt-10">$HOME </span>directory. If this file does not exist, PerfExpert will copy it from the installation directory.
+     </dd><dt class="description">
+<span 
+class="cmtt-10">PERFEXPERT</span><span 
+class="cmtt-10">_REC</span><span 
+class="cmtt-10">_COUNT</span> </dt><dd 
+class="description">                                                                     <br 
+class="newline" />This variable has the same functionality than the <span 
+class="cmtt-10">-r </span>command line option. It&#8217;s value should be a valid
+     integer number higher than <span 
+class="cmtt-10">0</span>.
+     </dd><dt class="description">
+<span 
+class="cmtt-10">PERFEXPERT</span><span 
+class="cmtt-10">_VERBOSE</span><span 
+class="cmtt-10">_LEVEL</span> </dt><dd 
+class="description">                                                                 <br 
+class="newline" />This variable has the same functionality than the <span 
+class="cmtt-10">-l </span>command line option. It&#8217;s value should be a valid
+     integer number within <span 
+class="cmtt-10">1 </span>and <span 
+class="cmtt-10">10</span>.
+                                                                                         
+                                                                                         
+     </dd><dt class="description">
+<span 
+class="cmtt-10">PERFEXPERT</span><span 
+class="cmtt-10">_COLORFUL</span> </dt><dd 
+class="description">                                                                      <br 
+class="newline" />This variable has the same functionality than the <span 
+class="cmtt-10">-c </span>command line option. It&#8217;s value should be <span 
+class="cmtt-10">0 </span>or
+     <span 
+class="cmtt-10">1</span>.
+     </dd><dt class="description">
+<span 
+class="cmtt-10">CC</span> </dt><dd 
+class="description">                                                                                       <br 
+class="newline" />This variable sets the compiler PerfExpert should use to obtain the binary executable. It should be
+     a valid executable file. It is possible to set it&#8217;s value to include the compiler&#8217;s full path. The value
+     of this variable has no effect when PerfExpert runs without the <span 
+class="cmtt-10">-s </span>command line option and the
+     <span 
+class="cmtt-10">PERFEXPERT</span><span 
+class="cmtt-10">_SOURCE</span><span 
+class="cmtt-10">_FILE </span>environment variable is not set. Also, note that the value of this variable
+     has no effect when PerfExpert uses <span 
+class="cmtt-10">Makefile </span>to obtain the binary executable.
+     </dd><dt class="description">
+<span 
+class="cmtt-10">CFLAGS</span> </dt><dd 
+class="description">                                                                                   <br 
+class="newline" />This variable sets the compiler flags PerfExpert should use while compiling the source code. The value
+     of this variable has no effect when PerfExpert runs without the <span 
+class="cmtt-10">-s </span>command line option and the
+     <span 
+class="cmtt-10">PERFEXPERT</span><span 
+class="cmtt-10">_SOURCE</span><span 
+class="cmtt-10">_FILE </span>environment variable is not set. Also, note that the value of this variable
+     has no effect when PerfExpert uses <span 
+class="cmtt-10">Makefile </span>to obtain the binary executable.
+     </dd><dt class="description">
+<span 
+class="cmtt-10">PERFEXPERT</span><span 
+class="cmtt-10">_CFLAGS</span> </dt><dd 
+class="description">                                                                        <br 
+class="newline" />This variable is used by PerfExpert to implement optimization which depends upon compiler flags.
+     This variable should not be used to pass any user defined compiler flags because it&#8217;s content will be
+     freely modified by PerfExpert.
+     </dd><dt class="description">
+<span 
+class="cmtt-10">PERFEXPERT</span><span 
+class="cmtt-10">_PREFIX</span> </dt><dd 
+class="description">                                                                        <br 
+class="newline" />This variable has the same functionality than the <span 
+class="cmtt-10">-p </span>command line option. It&#8217;s value should be a
+     command that will prefix the experiment command line.
+     </dd><dt class="description">
+<span 
+class="cmtt-10">PERFEXPERT</span><span 
+class="cmtt-10">_BEFORE</span> </dt><dd 
+class="description">                                                                        <br 
+class="newline" />This variable has the same functionality than the <span 
+class="cmtt-10">-b </span>command line option. It&#8217;s value should be a
+     command that will be executed before each experiment.
+     </dd><dt class="description">
+<span 
+class="cmtt-10">PERFEXPERT</span><span 
+class="cmtt-10">_AFTER</span> </dt><dd 
+class="description">                                                                         <br 
+class="newline" />This variable has the same functionality than the <span 
+class="cmtt-10">-a </span>command line option. It&#8217;s value should be a
+     command that will be executed after each experiment.
+     </dd><dt class="description">
+<span 
+class="cmtt-10">PERFEXPERT</span><span 
+class="cmtt-10">_KNC</span> </dt><dd 
+class="description">                                                                           <br 
+class="newline" />This variable has the same functionality than the <span 
+class="cmtt-10">-k </span>command line option. It&#8217;s value should be the
+     name of the KNC card (<span 
+class="cmti-10">e.g.</span>, &#8220;<span 
+class="cmtt-10">mic0</span>&#8221;).
+     </dd><dt class="description">
+<span 
+class="cmtt-10">PERFEXPERT</span><span 
+class="cmtt-10">_KNC</span><span 
+class="cmtt-10">_PREFIX</span> </dt><dd 
+class="description">                                                                    <br 
+class="newline" />This variable has the same functionality than the <span 
+class="cmtt-10">-P </span>command line option. It&#8217;s value should be a
+     command that will prefix the command line that will be executed on the KNC.
+     </dd><dt class="description">
+<span 
+class="cmtt-10">PERFEXPERT</span><span 
+class="cmtt-10">_KNC</span><span 
+class="cmtt-10">_BEFORE</span> </dt><dd 
+class="description">                                                                    <br 
+class="newline" />This variable has the same functionality than the <span 
+class="cmtt-10">-B </span>command line option. It&#8217;s value should be a
+     command that will be executed on the KNC before each experiment.
+                                                                                         
+                                                                                         
+     </dd><dt class="description">
+<span 
+class="cmtt-10">PERFEXPERT</span><span 
+class="cmtt-10">_KNC</span><span 
+class="cmtt-10">_AFTER</span> </dt><dd 
+class="description">                                                                     <br 
+class="newline" />This variable has the same functionality than the <span 
+class="cmtt-10">-A </span>command line option. It&#8217;s value should be a
+     command that will be executed on the KNC after each experiment.
+     </dd></dl>
+<!--l. 147--><p class="noindent" >
+   <h5 class="subsubsectionHead"><a 
+href="#x15-440006.2.1" id="x15-440006.2.1">Exit Status</a></h5>
+<!--l. 149--><p class="noindent" >
+   <h4 class="subsectionHead"><span class="titlemark">6.2.2   </span> <a 
+href="#x15-450006.2.2" id="x15-450006.2.2"><span 
+class="cmtt-10">analyzer</span></a></h4>
+<!--l. 151--><p class="noindent" >
+   <h5 class="subsubsectionHead"><a 
+href="#x15-460006.2.2" id="x15-460006.2.2">Synopsis</a></h5>
+<!--l. 153--><p class="noindent" >
+   <h5 class="subsubsectionHead"><a 
+href="#x15-470006.2.2" id="x15-470006.2.2">Description</a></h5>
+<!--l. 155--><p class="noindent" >
+   <h5 class="subsubsectionHead"><a 
+href="#x15-480006.2.2" id="x15-480006.2.2">Command Line Arguments</a></h5>
+<!--l. 157--><p class="noindent" >
+   <h5 class="subsubsectionHead"><a 
+href="#x15-490006.2.2" id="x15-490006.2.2">Exit Status</a></h5>
+<!--l. 159--><p class="noindent" >
+   <h4 class="subsectionHead"><span class="titlemark">6.2.3   </span> <a 
+href="#x15-500006.2.3" id="x15-500006.2.3"><span 
+class="cmtt-10">macpo</span></a></h4>
+<!--l. 161--><p class="noindent" >
+   <h5 class="subsubsectionHead"><a 
+href="#x15-510006.2.3" id="x15-510006.2.3">Synopsis</a></h5>
+<!--l. 163--><p class="noindent" >
+   <h5 class="subsubsectionHead"><a 
+href="#x15-520006.2.3" id="x15-520006.2.3">Description</a></h5>
+<!--l. 165--><p class="noindent" >
+   <h5 class="subsubsectionHead"><a 
+href="#x15-530006.2.3" id="x15-530006.2.3">Command Line Arguments</a></h5>
+                                                                                         
+                                                                                         
+<!--l. 167--><p class="noindent" >
+   <h5 class="subsubsectionHead"><a 
+href="#x15-540006.2.3" id="x15-540006.2.3">Exit Status</a></h5>
+<!--l. 169--><p class="noindent" >
+   <h4 class="subsectionHead"><span class="titlemark">6.2.4   </span> <a 
+href="#x15-550006.2.4" id="x15-550006.2.4"><span 
+class="cmtt-10">recommender</span></a></h4>
+<!--l. 171--><p class="noindent" >
+   <h5 class="subsubsectionHead"><a 
+href="#x15-560006.2.4" id="x15-560006.2.4">Description</a></h5>
+<!--l. 173--><p class="noindent" ><span 
+class="cmtt-10">recommender </span>is part of PerfExpert. It uses PerfExpert database to select possible optimizations for hot-spots
+identified by <span 
+class="cmtt-10">analyzer</span>.
+<!--l. 177--><p class="noindent" >
+   <h5 class="subsubsectionHead"><a 
+href="#x15-570006.2.4" id="x15-570006.2.4">Synopsis</a></h5>
+<!--l. 179--><p class="noindent" ><span 
+class="rm-lmtk-10">recommender -f </span><span class="underline"><span 
+class="rm-lmtl-10">in</span></span><span 
+class="rm-lmtl-10">p</span><span class="underline"><span 
+class="rm-lmtl-10">utfile</span></span> <span 
+class="rm-lmtk-10">[-o </span><span class="underline"><span 
+class="rm-lmtl-10">out</span></span><span 
+class="rm-lmtl-10">p</span><span class="underline"><span 
+class="rm-lmtl-10">utfile</span></span><span 
+class="rm-lmtk-10">] [-a </span><span class="underline"><span 
+class="rm-lmtl-10">workdir</span></span> <span 
+class="rm-lmtk-10">] [-r </span><span class="underline"><span 
+class="rm-lmtl-10">count</span></span><span 
+class="rm-lmtk-10">] [-d </span><span class="underline"><span 
+class="rm-lmtl-10">database</span></span><span 
+class="rm-lmtk-10">] [-l</span>
+<span class="underline"><span 
+class="rm-lmtl-10">level</span></span><span 
+class="rm-lmtk-10">]</span>
+<!--l. 180--><p class="indent" >   <span 
+class="rm-lmtk-10">&#x00A0;</span><span 
+class="rm-lmtk-10">&#x00A0;</span><span 
+class="rm-lmtk-10">&#x00A0;</span><span 
+class="rm-lmtk-10">&#x00A0;</span><span 
+class="rm-lmtk-10">&#x00A0;</span><span 
+class="rm-lmtk-10">&#x00A0;</span><span 
+class="rm-lmtk-10">&#x00A0;</span><span 
+class="rm-lmtk-10">&#x00A0;</span><span 
+class="rm-lmtk-10">&#x00A0;[-m </span><span class="underline"><span 
+class="rm-lmtl-10">metricsfile</span></span><span 
+class="rm-lmtk-10">] [-chnv]</span>
+<!--l. 182--><p class="noindent" >
+   <h5 class="subsubsectionHead"><a 
+href="#x15-580006.2.4" id="x15-580006.2.4">Command Line Arguments</a></h5>
+     <dl class="description"><dt class="description">
+<span 
+class="rm-lmtk-10">-f, --inputfile</span> </dt><dd 
+class="description">                                                                          <br 
+class="newline" />Set the file from where performance measurements should be read (default: <span 
+class="cmtt-10">STDIN</span>).
+     </dd><dt class="description">
+<span 
+class="rm-lmtl-10">inputfile</span> </dt><dd 
+class="description">                                                                                <br 
+class="newline" />File to use as input for performance measurements. File format: each application hot-spot starts with a
+     percent sign (<span 
+class="cmtt-10">%</span>), the <span 
+class="cmtt-10">code </span>metrics are mandatory, the list of metrics may vary, according to the example
+     above:
+                                                                                         
+                                                                                         
+     <div class="verbatim" id="verbatim-26">
+     %&#x00A0;1st&#x00A0;application&#x00A0;hot-spot
+     &#x00A0;<br />code.section_info=Loop&#x00A0;in&#x00A0;function&#x00A0;compute.omp_fn.3()&#x00A0;at&#x00A0;./mm_omp.c:14
+     &#x00A0;<br />code.filename=./mm_omp.c
+     &#x00A0;<br />code.line_number=14
+     &#x00A0;<br />code.type=loop
+     &#x00A0;<br />code.function_name=compute.omp_fn.3
+     &#x00A0;<br />code.extra_info=2
+     &#x00A0;<br />code.representativeness=99.8
+     &#x00A0;<br />code.runtime=22.204
+     &#x00A0;<br />(list&#x00A0;of&#x00A0;metrics)
+     &#x00A0;<br />...
+     &#x00A0;<br />%&#x00A0;2nd&#x00A0;application&#x00A0;hot-spot
+     &#x00A0;<br />...
+</div>
+     <!--l. 204--><p class="nopar" >
+     </dd><dt class="description">
+<span 
+class="rm-lmtk-10">-o, --outputfile</span> </dt><dd 
+class="description">                                                                         <br 
+class="newline" />File to write possible optimizations (default: <span 
+class="cmtt-10">STDOUT</span>). If the file exists it&#8217;s content will be overwrite.
+     </dd><dt class="description">
+<span 
+class="rm-lmtl-10">outputfile</span> </dt><dd 
+class="description">                                                                               <br 
+class="newline" />File to use as output for recommendations (default: <span 
+class="cmtt-10">STDOUT</span>).
+     </dd><dt class="description">
+<span 
+class="rm-lmtk-10">-a, --automatic</span> </dt><dd 
+class="description">                                                                          <br 
+class="newline" />Enable automatic performance optimization and create files into a temporary directory (default: off) This
+     option is available only when PerfExpert is compiled with support to ROSE (<a 
+href="http://rosecompiler.org/" class="url" ><span 
+class="cmtt-10">http://rosecompiler.org/</span></a>).
+     </dd><dt class="description">
+<span 
+class="rm-lmtl-10">workdir</span> </dt><dd 
+class="description">                                                                                  <br 
+class="newline" />Temporary directory where intermediary files for automatic performance optimization are created.
+     </dd><dt class="description">
+<span 
+class="rm-lmtk-10">-r, --recommendations</span> </dt><dd 
+class="description">                                                                    <br 
+class="newline" />Set the number of optimizations perfexpert should provide.
+     </dd><dt class="description">
+<span 
+class="rm-lmtl-10">count</span> </dt><dd 
+class="description">                                                                                    <br 
+class="newline" />Number of optimizations perfexpert should provide.
+     </dd><dt class="description">
+<span 
+class="rm-lmtk-10">-d, --database</span> </dt><dd 
+class="description">                                                                           <br 
+class="newline" />Full path and name of PerfExpert database file (default: <span 
+class="cmtt-10">PERFEXPERT</span><span 
+class="cmtt-10">_VARDIR/RECOMMENDATION</span><span 
+class="cmtt-10">_DB</span>).
+     </dd><dt class="description">
+<span 
+class="rm-lmtl-10">database</span> </dt><dd 
+class="description">                                                                                 <br 
+class="newline" />Database file (default: <span 
+class="cmtt-10">PERFEXPERT</span><span 
+class="cmtt-10">_VARDIR/RECOMMENDATION</span><span 
+class="cmtt-10">_DB</span>).
+                                                                                         
+                                                                                         
+     </dd><dt class="description">
+<span 
+class="rm-lmtk-10">-m, --metricsfile</span> </dt><dd 
+class="description">                                                                        <br 
+class="newline" />Choose a different set of performance metrics. A temporary table will be created, in other words, it
+     automatically enables the <span 
+class="cmtt-10">-n </span>argument.
+     </dd><dt class="description">
+<span 
+class="rm-lmtl-10">metricsfile</span> </dt><dd 
+class="description">                                                                              <br 
+class="newline" />File to define metrics different from the default one. File format: each line represents a metric.
+     </dd><dt class="description">
+<span 
+class="rm-lmtk-10">-n, --newmetrics</span> </dt><dd 
+class="description">                                                                         <br 
+class="newline" />Do not use the system metrics table. A temporary table will be created using the default metrics file (default:
+     <span 
+class="cmtt-10">PERFEXPERT</span><span 
+class="cmtt-10">_ETCDIR/METRICS</span><span 
+class="cmtt-10">_FILE</span>).
+     </dd><dt class="description">
+<span 
+class="rm-lmtk-10">-v, --verbose</span> </dt><dd 
+class="description">                                                                            <br 
+class="newline" />Enable verbose mode (default: level 5).
+     </dd><dt class="description">
+<span 
+class="rm-lmtk-10">-l, --verbose</span><span 
+class="rm-lmtk-10">_level</span> </dt><dd 
+class="description">                                                                      <br 
+class="newline" />Enable verbose mode using a specific verbose level.
+     </dd><dt class="description">
+<span 
+class="rm-lmtl-10">level</span> </dt><dd 
+class="description">                                                                                    <br 
+class="newline" />Verbose level (range: 1-10).
+     </dd><dt class="description">
+<span 
+class="rm-lmtk-10">-c, --colorful</span> </dt><dd 
+class="description">                                                                           <br 
+class="newline" />Enable colors on verbose mode, no weird characters will appear on output files.
+     </dd><dt class="description">
+<span 
+class="rm-lmtk-10">-h, --help</span> </dt><dd 
+class="description">                                                                               <br 
+class="newline" />Show the help message.</dd></dl>
+<!--l. 254--><p class="noindent" >
+   <h5 class="subsubsectionHead"><a 
+href="#x15-590006.2.4" id="x15-590006.2.4">Environment Variables</a></h5>
+<!--l. 256--><p class="noindent" >Here is a complete list of the environment variables <span 
+class="cmtt-10">recommender </span>uses. The command line arguments overwrite the
+value set by any of the environment variables. PerfExpert automatically sets most of these variables, but it does not
+overwrite their values if they are already set. Thus, it is possible to use these variables to pass options to
+<span 
+class="cmtt-10">recommender</span>.
+     <dl class="description"><dt class="description">
+<span 
+class="cmtt-10">PERFEXPERT</span><span 
+class="cmtt-10">_RECOMMENDER</span><span 
+class="cmtt-10">_INPUT</span><span 
+class="cmtt-10">_FILE</span> </dt><dd 
+class="description">                                                        <br 
+class="newline" />This variable has the same functionality than the <span 
+class="cmtt-10">-f </span>command line option. It should be a valid readable
+     file. It is possible to set it&#8217;s value to include a full path. PerfExpert automatically sets the value of this
+     variable.
+     </dd><dt class="description">
+<span 
+class="cmtt-10">PERFEXPERT</span><span 
+class="cmtt-10">_RECOMMENDER</span><span 
+class="cmtt-10">_OUTPUT</span><span 
+class="cmtt-10">_FILE</span> </dt><dd 
+class="description">                                                       <br 
+class="newline" />This variable has the same functionality than the <span 
+class="cmtt-10">-o </span>command line option. It is possible to set it&#8217;s
+     value to include a full path. PerfExpert automatically sets the value of this variable.
+                                                                                         
+                                                                                         
+     </dd><dt class="description">
+<span 
+class="cmtt-10">PERFEXPERT</span><span 
+class="cmtt-10">_RECOMMENDER</span><span 
+class="cmtt-10">_DATABASE</span><span 
+class="cmtt-10">_FILE</span> </dt><dd 
+class="description">                                                     <br 
+class="newline" />This variable has the same functionality than the <span 
+class="cmtt-10">-d </span>command line option. It&#8217;s value should be a valid
+     PerfExpert database file. By default, PerfExpert sets the value of this variable to the database it is
+     using.
+     </dd><dt class="description">
+<span 
+class="cmtt-10">PERFEXPERT</span><span 
+class="cmtt-10">_RECOMMENDER</span><span 
+class="cmtt-10">_METRICS</span><span 
+class="cmtt-10">_FILE</span> </dt><dd 
+class="description">                                                      <br 
+class="newline" />This variable has the same functionality than the <span 
+class="cmtt-10">-m </span>command line option. It should be a valid readable
+     file. It is possible to set it&#8217;s value to include a full path.
+     </dd><dt class="description">
+<span 
+class="cmtt-10">PERFEXPERT</span><span 
+class="cmtt-10">_RECOMMENDER</span><span 
+class="cmtt-10">_REC</span><span 
+class="cmtt-10">_COUNT</span> </dt><dd 
+class="description">                                                         <br 
+class="newline" />This variable has the same functionality than the <span 
+class="cmtt-10">-r </span>command line option. It&#8217;s value should be a valid
+     integer number higher than <span 
+class="cmtt-10">0</span>. By default, PerfExpert sets the value of this variable to value it is set
+     to run with.
+     </dd><dt class="description">
+<span 
+class="cmtt-10">PERFEXPERT</span><span 
+class="cmtt-10">_RECOMMENDER</span><span 
+class="cmtt-10">_WORKDIR</span> </dt><dd 
+class="description">                                                           <br 
+class="newline" />The  variable  controls  where  <span 
+class="cmtt-10">recommender </span>will  generate  intermediary  files  used  for  automatic
+     optimization. The value of this variable is automatically set by PerfExpert and it the same working
+     directory the <span 
+class="cmtt-10">perfexpert </span>itself uses. Usually, it&#8217;s value is like <span 
+class="cmtt-10">.perfexpert-temp.XXXXXX</span>.
+     </dd><dt class="description">
+<span 
+class="cmtt-10">PERFEXPERT</span><span 
+class="cmtt-10">_RECOMMENDER</span><span 
+class="cmtt-10">_PID</span> </dt><dd 
+class="description">                                                               <br 
+class="newline" />This variable is used by PerfExpert to identify calls to <span 
+class="cmtt-10">recommender </span>during the same execution but
+     in a different optimization cycle. It is automatically set by PerfExpert and it&#8217;s value is the PID of the
+     <span 
+class="cmtt-10">perfexpert </span>process.
+     </dd><dt class="description">
+<span 
+class="cmtt-10">PERFEXPERT</span><span 
+class="cmtt-10">_RECOMMENDER</span><span 
+class="cmtt-10">_VERBOSE</span><span 
+class="cmtt-10">_LEVEL</span> </dt><dd 
+class="description">                                                     <br 
+class="newline" />This variable has the same functionality than the <span 
+class="cmtt-10">-l </span>command line option. It&#8217;s value should be a valid
+     integer number within <span 
+class="cmtt-10">1 </span>and <span 
+class="cmtt-10">10</span>. By default, PerfExpert sets the value of this variable to value it is set
+     to run with.
+     </dd><dt class="description">
+<span 
+class="cmtt-10">PERFEXPERT</span><span 
+class="cmtt-10">_RECOMMENDER</span><span 
+class="cmtt-10">_COLORFUL</span> </dt><dd 
+class="description">                                                          <br 
+class="newline" />This variable has the same functionality than the <span 
+class="cmtt-10">-c </span>command line option. It&#8217;s value should be <span 
+class="cmtt-10">0 </span>or <span 
+class="cmtt-10">1</span>.
+     By default, PerfExpert sets the value of this variable to value it is set to run with.</dd></dl>
+<!--l. 287--><p class="noindent" >
+   <h5 class="subsubsectionHead"><a 
+href="#x15-600006.2.4" id="x15-600006.2.4">Exit Status</a></h5>
+<!--l. 289--><p class="noindent" ><span 
+class="cmtt-10">recommender </span>exits 0 on success, 1 for general errors, and 2 when there is no optimization recommendations
+available. Any other exit code, even if not specified here, should be considered as an error.
+<!--l. 291--><p class="noindent" >
+   <h4 class="subsectionHead"><span class="titlemark">6.2.5   </span> <a 
+href="#x15-610006.2.5" id="x15-610006.2.5"><span 
+class="cmtt-10">perfexpert</span><span 
+class="cmtt-10">_ct</span></a></h4>
+                                                                                         
+                                                                                         
+<!--l. 293--><p class="noindent" >
+   <h5 class="subsubsectionHead"><a 
+href="#x15-620006.2.5" id="x15-620006.2.5">Synopsis</a></h5>
+<!--l. 295--><p class="noindent" >
+   <h5 class="subsubsectionHead"><a 
+href="#x15-630006.2.5" id="x15-630006.2.5">Description</a></h5>
+<!--l. 297--><p class="noindent" >
+   <h5 class="subsubsectionHead"><a 
+href="#x15-640006.2.5" id="x15-640006.2.5">Command Line Arguments</a></h5>
+<!--l. 299--><p class="noindent" >
+   <h5 class="subsubsectionHead"><a 
+href="#x15-650006.2.5" id="x15-650006.2.5">Environment Variables</a></h5>
+<!--l. 301--><p class="noindent" >Here is a complete list of the environment variables <span 
+class="cmtt-10">perfexpert</span><span 
+class="cmtt-10">_ct </span>uses. The command line arguments overwrite
+the value set by any of the environment variables. PerfExpert automatically sets most of these variables, but it does
+not overwrite their values if they are already set. Thus, it is possible to use these environment variables to pass
+options to <span 
+class="cmtt-10">perfexpert</span><span 
+class="cmtt-10">_ct</span>.
+     <dl class="description"><dt class="description">
+<span 
+class="cmtt-10">PERFEXPERT</span><span 
+class="cmtt-10">_CT</span><span 
+class="cmtt-10">_INPUT</span><span 
+class="cmtt-10">_FILE</span> </dt><dd 
+class="description">                                                                 <br 
+class="newline" />This variable has the same functionality than the <span 
+class="cmtt-10">-f </span>command line option. It should be a valid readable
+     file. It is possible to set it&#8217;s value to include a full path. PerfExpert automatically sets the value of this
+     variable.
+     </dd><dt class="description">
+<span 
+class="cmtt-10">PERFEXPERT</span><span 
+class="cmtt-10">_CT</span><span 
+class="cmtt-10">_OUTPUT</span><span 
+class="cmtt-10">_FILE</span> </dt><dd 
+class="description">                                                                <br 
+class="newline" />This variable has the same functionality than the <span 
+class="cmtt-10">-o </span>command line option. It is possible to set it&#8217;s
+     value to include a full path. PerfExpert automatically sets the value of this variable.
+     </dd><dt class="description">
+<span 
+class="cmtt-10">PERFEXPERT</span><span 
+class="cmtt-10">_CT</span><span 
+class="cmtt-10">_DATABASE</span><span 
+class="cmtt-10">_FILE</span> </dt><dd 
+class="description">                                                              <br 
+class="newline" />This variable has the same functionality than the <span 
+class="cmtt-10">-d </span>command line option. It&#8217;s value should be a valid
+     PerfExpert database file. By default, PerfExpert sets the value of this variable to the database it is
+     using.
+     </dd><dt class="description">
+<span 
+class="cmtt-10">PERFEXPERT</span><span 
+class="cmtt-10">_CT</span><span 
+class="cmtt-10">_WORKDIR</span> </dt><dd 
+class="description">                                                                    <br 
+class="newline" />The  variable  controls  where  <span 
+class="cmtt-10">recommender </span>will  generate  intermediary  files  used  for  automatic
+     optimization. The value of this variable is automatically set by PerfExpert and it the same working
+     directory the <span 
+class="cmtt-10">perfexpert </span>itself uses. Usually, it&#8217;s value is like <span 
+class="cmtt-10">.perfexpert-temp.XXXXXX</span>.
+     </dd><dt class="description">
+<span 
+class="cmtt-10">PERFEXPERT</span><span 
+class="cmtt-10">_CT</span><span 
+class="cmtt-10">_PID</span> </dt><dd 
+class="description">                                                                        <br 
+class="newline" />This variable is used by PerfExpert to identify calls to <span 
+class="cmtt-10">perfexpert</span><span 
+class="cmtt-10">_ct </span>during the same execution but
+     in a different optimization cycle. It is automatically set by PerfExpert and it&#8217;s value is the PID of the
+     <span 
+class="cmtt-10">perfexpert </span>process.
+     </dd><dt class="description">
+<span 
+class="cmtt-10">PERFEXPERT</span><span 
+class="cmtt-10">_CT</span><span 
+class="cmtt-10">_VERBOSE</span><span 
+class="cmtt-10">_LEVEL</span> </dt><dd 
+class="description">                                                              <br 
+class="newline" />This variable has the same functionality than the <span 
+class="cmtt-10">-l </span>command line option. It&#8217;s value should be a valid
+     integer number within <span 
+class="cmtt-10">1 </span>and <span 
+class="cmtt-10">10</span>. By default, PerfExpert sets the value of this variable to value it is set
+     to run with.
+                                                                                         
+                                                                                         
+     </dd><dt class="description">
+<span 
+class="cmtt-10">PERFEXPERT</span><span 
+class="cmtt-10">_CT</span><span 
+class="cmtt-10">_COLORFUL</span> </dt><dd 
+class="description">                                                                   <br 
+class="newline" />This variable has the same functionality than the <span 
+class="cmtt-10">-c </span>command line option. It&#8217;s value should be <span 
+class="cmtt-10">0 </span>or <span 
+class="cmtt-10">1</span>.
+     By default, PerfExpert sets the value of this variable to value it is set to run with.</dd></dl>
+<!--l. 326--><p class="noindent" >
+   <h5 class="subsubsectionHead"><a 
+href="#x15-660006.2.5" id="x15-660006.2.5">Exit Status</a></h5>
+<!--l. 328--><p class="noindent" >
+   <h5 class="subsubsectionHead"><a 
+href="#x15-670006.2.5" id="x15-670006.2.5">Pattern Recognizers Interface</a></h5>
+<!--l. 330--><p class="noindent" >
+   <h5 class="subsubsectionHead"><a 
+href="#x15-680006.2.5" id="x15-680006.2.5">Code Transformers Interface</a></h5>
+<!--l. 332--><p class="noindent" >
+   <h4 class="subsectionHead"><span class="titlemark">6.2.6   </span> <a 
+href="#x15-690006.2.6" id="x15-690006.2.6">Other Auxiliary Tools</a></h4>
+     <dl class="description"><dt class="description">
+<span 
+class="cmtt-10">hound</span> </dt><dd 
+class="description">                                                                                    <br 
+class="newline" />
+     </dd><dt class="description">
+<span 
+class="cmtt-10">sniffer</span> </dt><dd 
+class="description">                                                                                  <br 
+class="newline" /></dd></dl>
+<!--l. 340--><p class="noindent" >
+   <h3 class="sectionHead"><span class="titlemark">6.3   </span> <a 
+href="#x15-700006.3" id="x15-700006.3">PerfExpert Temporary Directory</a></h3>
+<!--l. 342--><p class="noindent" >Every single time PerfExpert is executed it generates a temporary directory. The name of the directory varies, but it
+always is in the form of <span 
+class="cmtt-10">.perfexpert-temp.FPAEx6 </span>and is located in the directory from where you called the
+<span 
+class="cmtt-10">perfexpert </span>command. Generally, PerfExpert does not remove the temporary directory, unless the user specify in
+contrary using the <span 
+class="cmtt-10">-g </span>command line option.
+<!--l. 344--><p class="indent" >   The temporary directory may be useful in many situations, such as:
+     <ul class="itemize1">
+     <li class="itemize">Re-analyzing results from a previous PerfExpert run.
+     </li>
+     <li class="itemize">Checking the output of the binary executable.
+     </li>
+     <li class="itemize">Comparing the performance of different version of the same code.
+     </li>
+     <li class="itemize">Searching for execution errors.</li></ul>
+<!--l. 353--><p class="indent" >   The basic directory tree of the temporary directory looks like the following:
+                                                                                         
+                                                                                         
+   <div class="verbatim" id="verbatim-27">
+.perfexpert-temp.FPAEx6
+&#x00A0;<br />.perfexpert-temp.FPAEx6/1
+&#x00A0;<br />.perfexpert-temp.FPAEx6/1/database
+&#x00A0;<br />.perfexpert-temp.FPAEx6/1/database/src
+&#x00A0;<br />.perfexpert-temp.FPAEx6/1/measurements
+&#x00A0;<br />.perfexpert-temp.FPAEx6/2
+&#x00A0;<br />.perfexpert-temp.FPAEx6/2/database
+&#x00A0;<br />.perfexpert-temp.FPAEx6/2/database/src
+&#x00A0;<br />.perfexpert-temp.FPAEx6/2/measurements
+&#x00A0;<br />&#x00A0;&#x00A0;(...)
+</div>
+<!--l. 366--><p class="nopar" >
+<!--l. 368--><p class="noindent" >where for each optimization cycle there is a sub-directory named as cardinal numbers. The sub-directories inside
+each of the optimization cycle sub-directories are user for:
+     <dl class="description"><dt class="description">
+<span 
+class="cmtt-10">database</span> </dt><dd 
+class="description">                                                                                 <br 
+class="newline" />Stores the <span 
+class="cmtt-10">experiment.xml </span>file and the sub-directory for the source code. The experiment file, which
+     is generated by <span 
+class="cmtt-10">hpcprof </span>(a tool from HPCToolkit), is the application performance profile.
+     </dd><dt class="description">
+<span 
+class="cmtt-10">database/src</span> </dt><dd 
+class="description">                                                                             <br 
+class="newline" />Stores the source code extracted from the binary executable. The full path of the source code will be
+     represented here and also the statically linked libraries.
+     </dd><dt class="description">
+<span 
+class="cmtt-10">measurements</span> </dt><dd 
+class="description">                                                                             <br 
+class="newline" />Stores the measurement files collected with <span 
+class="cmtt-10">hpcrun </span>(a tool from HPCToolkit). There is a <span 
+class="cmtt-10">.log </span>file for
+     each <span 
+class="cmtt-10">hpcrun </span>invocation and one <span 
+class="cmtt-10">.hpcrun </span>data file for each thread of each invocation of the binary
+     executable, as following:</dd></dl>
+                                                                                         
+                                                                                         
+   <div class="verbatim" id="verbatim-28">
+.perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-000-7281ba5a-91510-0.log
+&#x00A0;<br />.perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-000-7281ba5a-91510-0.hpcrun
+&#x00A0;<br />.perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-001-7281ba5a-91510-0.hpcrun
+&#x00A0;<br />&#x00A0;&#x00A0;(...)
+&#x00A0;<br />.perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-014-7281ba5a-91510-0.hpcrun
+&#x00A0;<br />.perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-015-7281ba5a-91510-0.hpcrun
+&#x00A0;<br />.perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-000-7281ba5a-91614-0.log
+&#x00A0;<br />.perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-000-7281ba5a-91614-0.hpcrun
+&#x00A0;<br />.perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-001-7281ba5a-91614-0.hpcrun
+&#x00A0;<br />&#x00A0;&#x00A0;(...)
+&#x00A0;<br />.perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-014-7281ba5a-91614-0.hpcrun
+&#x00A0;<br />.perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-015-7281ba5a-91614-0.hpcrun
+&#x00A0;<br />.perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-000-7281ba5a-91718-0.log
+&#x00A0;<br />.perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-000-7281ba5a-91718-0.hpcrun
+&#x00A0;<br />.perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-001-7281ba5a-91718-0.hpcrun
+&#x00A0;<br />&#x00A0;&#x00A0;(...)
+&#x00A0;<br />.perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-014-7281ba5a-91718-0.hpcrun
+&#x00A0;<br />.perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-015-7281ba5a-91718-0.hpcrun
+</div>
+<!--l. 400--><p class="nopar" >
+<!--l. 402--><p class="noindent" >where the filenames are composed of the name of the binary executable, the MPI JOBID (if existent), the thread
+ID, the process ID, and other control data. In the example above, we shown the <span 
+class="cmtt-10">.log </span>files and the <span 
+class="cmtt-10">.hpcrun </span>files
+from three invocations of <span 
+class="cmtt-10">hpcrun </span>(the number of invocations may change from one system to other) using 16
+threads each of them.
+<!--l. 404--><p class="indent" >   Besides the sub-directories described above, there are the following files inside each of the optimization cycle
+sub-directory:
+     <dl class="description"><dt class="description">
+<span 
+class="cmtt-10">recommender</span><span 
+class="cmtt-10">_report.txt</span> </dt><dd 
+class="description">                                                                   <br 
+class="newline" />
+     </dd><dt class="description">
+<span 
+class="cmtt-10">analyzer</span><span 
+class="cmtt-10">_report.txt</span> </dt><dd 
+class="description">                                                                      <br 
+class="newline" />
+     </dd><dt class="description">
+<span 
+class="cmtt-10">analyzer</span><span 
+class="cmtt-10">_metrics.txt</span> </dt><dd 
+class="description">                                                                     <br 
+class="newline" />
+     </dd><dt class="description">
+<span 
+class="cmtt-10">mm</span><span 
+class="cmtt-10">_omp.hpcstruct</span> </dt><dd 
+class="description">                                                                         <br 
+class="newline" />
+     </dd><dt class="description">
+<span 
+class="cmtt-10">hpcstruct.output</span><span 
+class="cmbx-10">, </span><span 
+class="cmtt-10">hpcrun.1.output</span><span 
+class="cmbx-10">, </span><span 
+class="cmtt-10">hpcrun.2.output</span><span 
+class="cmbx-10">, </span><span 
+class="cmtt-10">hpcrun.3.output</span><span 
+class="cmbx-10">, </span><span 
+class="cmtt-10">hpcprof.output</span> </dt><dd 
+class="description">        <br 
+class="newline" />
+     </dd></dl>
+                                                                                         
+                                                                                         
+<!--l. 419--><p class="noindent" >
+   <h3 class="sectionHead"><span class="titlemark">6.4   </span> <a 
+href="#x15-710006.4" id="x15-710006.4">Analyzing the Results from a Previous PerfExpert Run</a></h3>
+<!--l. 421--><p class="noindent" >
+   <h3 class="sectionHead"><span class="titlemark">6.5   </span> <a 
+href="#x15-720006.5" id="x15-720006.5">Executing on the Intel<sup class="textsuperscript"><span 
+class="cmr-9">®;</span></sup> Xeon Phi<sup class="textsuperscript"><sup class="textsuperscript"><span 
+class="cmr-9">TM</span></sup></sup> Coprocessors</a></h3>
+                                                                                         
+                                                                                         
+   <!--l. 423--><div class="crosslinks"><p class="noindent">[<a 
+href="user_manualch5.html" >prev</a>] [<a 
+href="user_manualch5.html#tailuser_manualch5.html" >prev-tail</a>] [<a 
+href="user_manualch6.html" >front</a>] [<a 
+href="user_manual.html# " >up</a>] </p></div>
+<!--l. 423--><p class="indent" >   <a 
+ id="tailuser_manualch6.html"></a>   
+</body></html> 
