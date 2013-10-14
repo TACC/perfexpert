@@ -74,6 +74,7 @@ int main(int argc, char** argv) {
         .knc_after     = { 0 },            // *char[]
         .inputfile     = NULL,             // *char
         .only_exp      = PERFEXPERT_FALSE, // int
+        .compat_mode   = PERFEXPERT_FALSE, // int
         .order         = "none",           // *char
         .tool          = "hpctoolkit"      // *char
     };

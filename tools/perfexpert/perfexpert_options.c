@@ -47,7 +47,10 @@ int parse_cli_params(int argc, char *argv[]) {
 
     /* perfexpert_run_exp compatibility */
     if (0 == strcmp("perfexpert_run_exp", argv[0])) {
-        globals.only_exp = PERFEXPERT_TRUE;
+        OUTPUT(("%s running PerfExpert in compatibility mode",
+            _BOLDRED("WARNING:")));
+        OUTPUT((""));
+        globals.compat_mode = PERFEXPERT_TRUE;
     }
 
     /* Set default values for globals */
@@ -310,7 +313,6 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
         /* Only experiments */
         case 'e':
             globals.only_exp = PERFEXPERT_TRUE;
-            globals.leave_garbage = PERFEXPERT_TRUE;
             OUTPUT_VERBOSE((1, "option 'e' set"));
             break;
 
@@ -395,10 +397,9 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
 
         /* Arguments: threashold and target program and it's arguments */
         case ARGP_KEY_ARG:
-            if (PERFEXPERT_TRUE == globals.only_exp) {
-                OUTPUT(("%s running PerfExpert in compatibility mode",
-                    _BOLDRED("WARNING:")));
-                OUTPUT((""));
+            if (PERFEXPERT_TRUE == globals.compat_mode) {
+                globals.only_exp = PERFEXPERT_TRUE;
+                OUTPUT_VERBOSE((1, "option 'e' set"));
                 globals.leave_garbage = PERFEXPERT_TRUE;
                 OUTPUT_VERBOSE((1, "option 'g' set"));
                 globals.program = arg;
