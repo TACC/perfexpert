@@ -57,6 +57,7 @@ int main(int argc, char **argv) {
         .verbose         = 0,                // int
         .colorful        = PERFEXPERT_FALSE, // int
         .order           = "none",           // char *
+        .found_hotspots  = PERFEXPERT_FALSE, // int
         .outputmetrics   = NULL              // char *
     };
 
@@ -127,6 +128,10 @@ int main(int argc, char **argv) {
         OUTPUT(("%s (%s)", _ERROR("Error: flatening profiles"),
             globals.inputfile));
         return PERFEXPERT_ERROR;
+    }
+
+    if (PERFEXPERT_FALSE == globals.found_hotspots) {
+        return PERFEXPERT_NO_HOTSPOTS;
     }
 
     /* Sort hotspots */

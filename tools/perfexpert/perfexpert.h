@@ -32,6 +32,8 @@ extern "C" {
 #endif
 #define PROGRAM_PREFIX "[perfexpert]"
 
+#include "perfexpert_constants.h"
+
 /* Structure to hold global variables */
 typedef struct {
     int   verbose;
@@ -45,17 +47,17 @@ typedef struct {
     char  *program;
     char  *program_path;
     char  *program_full;
-    char  **program_argv;
+    char  *program_argv[PARAM_SIZE];
     int   step;
     char  *workdir;
     char  *stepdir;
-    char  *prefix;
-    char  *before;
-    char  *after;
+    char  *prefix[PARAM_SIZE];
+    char  *before[PARAM_SIZE];
+    char  *after[PARAM_SIZE];
     char  *knc;
-    char  *knc_prefix;
-    char  *knc_before;
-    char  *knc_after;
+    char  *knc_prefix[PARAM_SIZE];
+    char  *knc_before[PARAM_SIZE];
+    char  *knc_after[PARAM_SIZE];
     char  *tool;
     char  *order;
     long int pid;
