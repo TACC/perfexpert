@@ -1,22 +1,22 @@
 /*
- * Copyright (C) 2013 The University of Texas at Austin
+ * Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
+ *
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
  *
  * This file is part of PerfExpert.
  *
  * PerfExpert is free software: you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation, either version 3 of the License, or (at your option) any
- * later version.
- *
+ * the terms of the The University of Texas at Austin Research License
+ * 
  * PerfExpert is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
- * A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * A PARTICULAR PURPOSE.
+ * 
+ * Authors: Leonardo Fialho and Ashay Rane
  *
- * You should have received a copy of the GNU Lesser General Public License
- * along with PerfExpert. If not, see <http://www.gnu.org/licenses/>.
- *
- * Author: Ashay Rane and Leonardo Fialho
+ * $HEADER$
  */
 
 #ifndef SNIFFER_H_
@@ -111,6 +111,8 @@ enum {
     TLB_IM,
     DTLB_LOAD_MISSES_WALK_DURATION,
     ITLB_MISSES_WALK_DURATION,
+    DTLB_LOAD_MISSES_CAUSES_A_WALK,
+    DTLB_STORE_MISSES_CAUSES_A_WALK,
     // Instruction branches, 2 events
     BR_INS,
     BR_MSP,
@@ -137,14 +139,13 @@ enum {
     SIMD_COMP_INST_RETIRED_PACKED_SINGLE,
     SIMD_COMP_INST_RETIRED_SCALAR_DOUBLE,
     SIMD_COMP_INST_RETIRED_SCALAR_SINGLE,
-    DTLB_LOAD_MISSES_CAUSES_A_WALK,
-    DTLB_STORE_MISSES_CAUSES_A_WALK,
     FP_COMP_OPS_EXE_SSE_FP_PACKED_DOUBLE,
     FP_COMP_OPS_EXE_SSE_FP_SCALAR_SINGLE,
     FP_COMP_OPS_EXE_SSE_PACKED_SINGLE,
     FP_COMP_OPS_EXE_SSE_SCALAR_DOUBLE,
     SIMD_FP_256_PACKED_SINGLE,
     SIMD_FP_256_PACKED_DOUBLE,
+    SIMD_FP_256_PACKED_SINGLE_PACKED_DOUBLE,
     ARITH,
     // Do not remothe this!
     PURE_EVENT_COUNT
@@ -182,6 +183,8 @@ event_entry_t event_list[EVENT_COUNT] = {
     -1, 0, 0, SAMPLING_CATEGORY_04, "PAPI_TLB_IM",
     -1, 0, 0, SAMPLING_CATEGORY_04, "DTLB_LOAD_MISSES:WALK_DURATION",
     -1, 0, 0, SAMPLING_CATEGORY_04, "ITLB_MISSES:WALK_DURATION",
+    -1, 0, 0, SAMPLING_CATEGORY_04, "DTLB_LOAD_MISSES:CAUSES_A_WALK",
+    -1, 0, 0, SAMPLING_CATEGORY_04, "DTLB_STORE_MISSES:CAUSES_A_WALK",
     // Instruction branches, 2 events
     -1, 0, 0, SAMPLING_CATEGORY_03, "PAPI_BR_INS",
     -1, 0, 0, SAMPLING_CATEGORY_03, "PAPI_BR_MSP",
@@ -208,14 +211,13 @@ event_entry_t event_list[EVENT_COUNT] = {
     -1, 0, 0, SAMPLING_CATEGORY_02, "SIMD_COMP_INST_RETIRED:PACKED_SINGLE",
     -1, 0, 0, SAMPLING_CATEGORY_02, "SIMD_COMP_INST_RETIRED:SCALAR_DOUBLE",
     -1, 0, 0, SAMPLING_CATEGORY_02, "SIMD_COMP_INST_RETIRED:SCALAR_SINGLE",
-    -1, 0, 0, SAMPLING_CATEGORY_04, "DTLB_LOAD_MISSES:CAUSES_A_WALK",
-    -1, 0, 0, SAMPLING_CATEGORY_04, "DTLB_STORE_MISSES:CAUSES_A_WALK",
     -1, 0, 0, SAMPLING_CATEGORY_02, "FP_COMP_OPS_EXE:SSE_FP_PACKED_DOUBLE",
     -1, 0, 0, SAMPLING_CATEGORY_02, "FP_COMP_OPS_EXE:SSE_FP_SCALAR_SINGLE",
     -1, 0, 0, SAMPLING_CATEGORY_02, "FP_COMP_OPS_EXE:SSE_PACKED_SINGLE",
     -1, 0, 0, SAMPLING_CATEGORY_02, "FP_COMP_OPS_EXE:SSE_SCALAR_DOUBLE",
     -1, 0, 0, SAMPLING_CATEGORY_02, "SIMD_FP_256:PACKED_SINGLE",
     -1, 0, 0, SAMPLING_CATEGORY_02, "SIMD_FP_256:PACKED_DOUBLE",
+    -1, 0, 0, SAMPLING_CATEGORY_02, "SIMD_FP_256:PACKED_SINGLE:PACKED_DOUBLE",
     -1, 0, 0, SAMPLING_CATEGORY_02, "ARITH",
     /* dummy counters ahead */
     -1, 0, 0, SAMPLING_CATEGORY_02, "SSEX_UOPS_RETIRED:SCALAR_DOUBLE:SCALAR_SINGLE",

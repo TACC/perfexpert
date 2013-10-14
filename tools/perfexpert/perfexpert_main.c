@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013  University of Texas at Austin. All rights reserved.
+ * Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -8,19 +8,13 @@
  * This file is part of PerfExpert.
  *
  * PerfExpert is free software: you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation, either version 3 of the License, or (at your option) any
- * later version.
- *
+ * the terms of the The University of Texas at Austin Research License
+ * 
  * PerfExpert is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
- * A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with PerfExpert. If not, see <http://www.gnu.org/licenses/>.
- *
- * Author: Leonardo Fialho
+ * A PARTICULAR PURPOSE.
+ * 
+ * Authors: Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
  */
@@ -67,17 +61,17 @@ int main(int argc, char** argv) {
         .program       = NULL,             // char *
         .program_path  = NULL,             // char *
         .program_full  = NULL,             // char *
-        .program_argv  = NULL,             // char **
+        .program_argv  = { 0 },            // *char[]
         .step          = 1,                // int
         .workdir       = NULL,             // char *
         .stepdir       = NULL,             // char *
-        .prefix        = NULL,             // char *
-        .before        = NULL,             // char *
-        .after         = NULL,             // char *
+        .prefix        = { 0 },            // *char[]
+        .before        = { 0 },            // *char[]
+        .after         = { 0 },            // *char[]
         .knc           = NULL,             // char *
-        .knc_prefix    = NULL,             // char *
-        .knc_before    = NULL,             // char *
-        .knc_after     = NULL,             // char *
+        .knc_prefix    = { 0 },            // *char[]
+        .knc_before    = { 0 },            // *char[]
+        .knc_after     = { 0 },            // *char[]
         .order         = "none",           // char *
         .tool          = "hpctoolkit"      // char *
     };
@@ -149,7 +143,18 @@ int main(int argc, char** argv) {
         switch (analysis()) {
             case PERFEXPERT_FAILURE:
             case PERFEXPERT_ERROR:
+            case 127: // Execution failed, value returned by fork()
                 OUTPUT(("%s", _ERROR("Error: unable to run analyzer")));
+                goto CLEANUP;
+
+            case PERFEXPERT_NO_HOTSPOTS:
+                OUTPUT(("%s no hotspots found. Generally, this happens when the"
+                    " target", _BOLDRED("WARNING:")));
+                OUTPUT(("         program execution is to short, thus "
+                    "PerfExpert is unable"));
+                OUTPUT(("         to collect enough samples from program run. "
+                    "Try again"));
+                OUTPUT(("         using a bigger workload."));
                 goto CLEANUP;
 
             case PERFEXPERT_NO_DATA:
@@ -176,6 +181,7 @@ int main(int argc, char** argv) {
         switch (recommendation()) {
             case PERFEXPERT_ERROR:
             case PERFEXPERT_FAILURE:
+            case 127: // Execution failed, value returned by fork()
                 OUTPUT(("%s", _ERROR("Error: unable to run recommender")));
                 goto CLEANUP;
 
@@ -244,6 +250,7 @@ int main(int argc, char** argv) {
     CLEANUP:
     /* Remove the garbage */
     if (PERFEXPERT_FALSE == globals.leave_garbage) {
+        OUTPUT_VERBOSE((1, "%s", _BLUE("Removing temporary directory")));
         if (PERFEXPERT_SUCCESS != perfexpert_util_remove_dir(globals.workdir)) {
             OUTPUT(("unable to remove work directory (%s)", globals.workdir));
         }        

@@ -19,12 +19,19 @@
  * $HEADER$
  */
 
-#ifndef ERR_H_
-#define ERR_H_
+#ifndef	ALIGNCHEK_H_
+#define	ALIGNCHEK_H_
 
-enum {
-    ERR_MEMFAILED,
-    ERR_MULT_INVOCATIONS
+#include "generic_defs.h"
+
+class aligncheck_t : public AstTopDownProcessing<attrib> {
+    public:
+        bool vectorizable(SgStatement* stmt);
+
+        virtual void atTraversalEnd();
+        virtual void atTraversalStart();
+
+        virtual attrib evaluateInheritedAttribute(SgNode* node, attrib attr);
 };
 
-#endif /* ERR_H_ */
+#endif	/* ALIGNCHEK_H_ */

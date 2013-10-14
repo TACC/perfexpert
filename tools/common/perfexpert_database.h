@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013  University of Texas at Austin. All rights reserved.
+ * Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -8,19 +8,13 @@
  * This file is part of PerfExpert.
  *
  * PerfExpert is free software: you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation, either version 3 of the License, or (at your option) any
- * later version.
- *
+ * the terms of the The University of Texas at Austin Research License
+ * 
  * PerfExpert is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
- * A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with PerfExpert. If not, see <http://www.gnu.org/licenses/>.
- *
- * Author: Leonardo Fialho
+ * A PARTICULAR PURPOSE.
+ * 
+ * Authors: Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
  */
@@ -159,8 +153,8 @@ static inline int perfexpert_database_connect(sqlite3 **db, const char *file) {
     /* Use default database if the user does not define one */
     if (NULL == my_file) {
         PERFEXPERT_ALLOC(char, my_file,
-            (strlen(PERFEXPERT_DB) + strlen(PERFEXPERT_VARDIR) + 2));
-        sprintf(my_file, "%s/%s", PERFEXPERT_VARDIR, PERFEXPERT_DB);
+            (strlen(PERFEXPERT_DB) + strlen(getenv("HOME")) + 2));
+        sprintf(my_file, "%s/%s", getenv("HOME"), PERFEXPERT_DB);
         allocated = PERFEXPERT_TRUE;
     }
 

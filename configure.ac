@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013  University of Texas at Austin. All rights reserved.
+# Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
 #
 # $COPYRIGHT$
 #
@@ -8,28 +8,24 @@
 # This file is part of PerfExpert.
 #
 # PerfExpert is free software: you can redistribute it and/or modify it under
-# the terms of the GNU Lesser General Public License as published by the Free
-# Software Foundation, either version 3 of the License, or (at your option) any
-# later version.
-#
+# the terms of the The University of Texas at Austin Research License
+# 
 # PerfExpert is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
-# A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
-# details.
-#
-# You should have received a copy of the GNU Lesser General Public License
-# along with PerfExpert. If not, see <http://www.gnu.org/licenses/>.
-#
-# Author: Leonardo Fialho and Ashay Rane
+# A PARTICULAR PURPOSE.
+# 
+# Authors: Leonardo Fialho and Ashay Rane
 #
 # $HEADER$
+#
 #------------------------------------------------------------------------------
 
 # Requires autoconf 2.67 at least
 AC_PREREQ(2.63)
 
 # Define the package name, version, author, etc.
-AC_INIT([perfexpert], [4.1], [Leonardo Fialho: fialho@utexas.edu],
+AC_INIT([perfexpert], [4.1.1],
+    [PerfExpert mailing list: perfexpert@lists.tacc.utexas.edu],
     [perfexpert.tar.gz], [http://www.tacc.com.br/perfexpert/])
 AC_COPYRIGHT([University of Texas at Austin])
 AC_REVISION([$Revision: 4.1 $])
@@ -46,7 +42,8 @@ AC_CONFIG_FILES([tools/hound/Makefile])
 AC_CONFIG_FILES([tools/sniffer/Makefile])
 AC_CONFIG_FILES([tools/analyzer/Makefile])
 AC_CONFIG_FILES([tools/perfexpert/Makefile])
-AC_CONFIG_FILES([tools/perfexpert/perfexpert_get_info.pl])
+AC_CONFIG_FILES([tools/perfexpert/perfexpert_get_compiler_info.pl],
+    [chmod +x tools/perfexpert/perfexpert_get_compiler_info.pl])
 
 # Initialize Automake
 AM_INIT_AUTOMAKE([foreign -Wall -Werror])

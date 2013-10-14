@@ -1,22 +1,22 @@
 /*
- * Copyright (C) 2013 The University of Texas at Austin
+ * Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
+ *
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
  *
  * This file is part of PerfExpert.
  *
  * PerfExpert is free software: you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation, either version 3 of the License, or (at your option) any
- * later version.
- *
+ * the terms of the The University of Texas at Austin Research License
+ * 
  * PerfExpert is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
- * A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
+ * A PARTICULAR PURPOSE.
+ * 
+ * Authors: Leonardo Fialho and Ashay Rane
  *
- * You should have received a copy of the GNU Lesser General Public License
- * along with PerfExpert. If not, see <http://www.gnu.org/licenses/>.
- *
- * Author: Ashay Rane and Leonardo Fialho
+ * $HEADER$
  */
 
 #ifdef __cplusplus
@@ -33,7 +33,7 @@ extern "C" {
 #include "perfexpert_list.h"
 
 /* Sorting orders */
-sort_t orders[] = {
+static sort_t orders[] = {
     {"relevance",   &sort_by_relevance},
     {"performance", &sort_by_performance},
     {"mixed",       &sort_by_mixed}, // Sorting mixed? It makes no sense :/
@@ -76,7 +76,7 @@ int hotspot_sort(perfexpert_list_t *profiles) {
 }
 
 /* sort_by_relevance */
-int sort_by_relevance(profile_t *profile) {
+static int sort_by_relevance(profile_t *profile) {
     procedure_t *h = NULL, *h2 = NULL, *h_max = NULL;
     perfexpert_list_t sorted;
     double relevance_max = -1;
@@ -136,7 +136,7 @@ int sort_by_relevance(profile_t *profile) {
 }
 
 /* sort_by_performance */
-int sort_by_performance(profile_t *profile) {
+static int sort_by_performance(profile_t *profile) {
     procedure_t *h = NULL, *h2 = NULL, *h_max = NULL;
     perfexpert_list_t sorted;
     double worst_overall = -1;
@@ -198,7 +198,7 @@ int sort_by_performance(profile_t *profile) {
 }
 
 /* sort_by_mixed */
-int sort_by_mixed(profile_t *profile) {
+static int sort_by_mixed(profile_t *profile) {
     procedure_t *h = NULL, *h2 = NULL, *h_max = NULL;
     perfexpert_list_t sorted;
     double index = -1;

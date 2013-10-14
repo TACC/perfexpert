@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013  University of Texas at Austin. All rights reserved.
+ * Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -8,19 +8,13 @@
  * This file is part of PerfExpert.
  *
  * PerfExpert is free software: you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation, either version 3 of the License, or (at your option) any
- * later version.
- *
+ * the terms of the The University of Texas at Austin Research License
+ * 
  * PerfExpert is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
- * A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with PerfExpert. If not, see <http://www.gnu.org/licenses/>.
- *
- * Author: Leonardo Fialho
+ * A PARTICULAR PURPOSE.
+ * 
+ * Authors: Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
  */
@@ -63,12 +57,10 @@ int run_amplxecl(void) {
     struct timespec time_start, time_end, time_diff;
     FILE *exp_file_FP = NULL;
     char *exp_file = NULL;
-    char *local_prefix = NULL;
     char buffer[BUFFER_SIZE];
     char events[BUFFER_SIZE];
     char *argv[PARAM_SIZE];
-    int argc = 0;
-    int count = 0;
+    int argc = 0, i = 0;
     test_t test;
 
     /* Open experiment file (it is a list of arguments which I use to run) */
@@ -82,11 +74,6 @@ int run_amplxecl(void) {
         return PERFEXPERT_ERROR;
     }
     PERFEXPERT_DEALLOC(exp_file);
-
-    if (NULL != globals.prefix) {
-        PERFEXPERT_ALLOC(char, local_prefix, (strlen(globals.prefix) + 1));
-        sprintf(local_prefix, "%s", globals.prefix);
-    }
 
     bzero(events, BUFFER_SIZE);
     while (NULL != fgets(buffer, BUFFER_SIZE - 1, exp_file_FP)) {
@@ -112,28 +99,24 @@ int run_amplxecl(void) {
     }
 
     /* Run the BEFORE program */
-    if (NULL != globals.before) {
-        argv[0] = globals.before;
-        argv[1] = NULL;
-
-        PERFEXPERT_ALLOC(char, test.output, (strlen(globals.stepdir) + 20));
+    if (NULL != globals.before[0]) {
+        PERFEXPERT_ALLOC(char, test.output, (strlen(globals.stepdir) + 15));
         sprintf(test.output, "%s/before.output", globals.stepdir);
         test.input = NULL;
-        test.info = globals.before;
+        test.info = globals.before[0];
 
-        if (0 != fork_and_wait(&test, (char **)argv)) {
-            OUTPUT(("   %s [%s]", _RED("error running"), globals.before));
+        if (0 != fork_and_wait(&test, (char **)globals.before)) {
+            OUTPUT(("   %s", _RED("error running 'before' command")));
         }
         PERFEXPERT_DEALLOC(test.output);
     }
 
     /* Add PREFIX to argv */
-    if (NULL != globals.prefix) {
-        argv[argc] = strtok(local_prefix, " ");
+    i = 0;
+    while (NULL != globals.prefix[i]) {
+        argv[argc] = globals.prefix[i];
         argc++;
-        while (argv[argc] = strtok(NULL, " ")) {
-            argc++;
-        }
+        i++;
     }
 
     /* Arguments to run VTune */
@@ -157,18 +140,21 @@ int run_amplxecl(void) {
     argc++;
 
     /* ...and it's arguments */
-    while (NULL != globals.program_argv[count]) {
-        argv[argc] = globals.program_argv[count];
+    i = 0;
+    while (NULL != globals.program_argv[i]) {
+        argv[argc] = globals.program_argv[i];
         argc++;
-        count++;
+        i++;
     }
+
+    /* The last of the Mohicans */
     argv[argc] = NULL;
 
     /* Not using OUTPUT_VERBOSE because I want only one line */
     if (8 <= globals.verbose) {
         printf("%s    %s", PROGRAM_PREFIX, _YELLOW("command line:"));
-        for (count = 0; count < argc; count++) {
-            printf(" %s", argv[count]);
+        for (i = 0; i < argc; i++) {
+            printf(" %s", argv[i]);
         }
         printf("\n");
     }
@@ -184,7 +170,6 @@ int run_amplxecl(void) {
     switch (fork_and_wait(&test, (char **)argv)) {
         case PERFEXPERT_ERROR:
             OUTPUT_VERBOSE((7, "   [%s]", _BOLDYELLOW("ERROR")));
-            PERFEXPERT_DEALLOC(local_prefix);
             PERFEXPERT_DEALLOC(test.output);
             return PERFEXPERT_ERROR;
 
@@ -206,23 +191,17 @@ int run_amplxecl(void) {
     PERFEXPERT_DEALLOC(test.output);
     
     /* Run the AFTER program */
-    if (NULL != globals.after) {
-        argv[0] = globals.after;
-        argv[1] = NULL;
-
-        PERFEXPERT_ALLOC(char, test.output, (strlen(globals.stepdir) + 20));
+    if (NULL != globals.after[0]) {
+        PERFEXPERT_ALLOC(char, test.output, (strlen(globals.stepdir) + 14));
         sprintf(test.output, "%s/after.output", globals.stepdir);
-        test.input  = NULL;
-        test.info   = globals.after;
+        test.input = NULL;
+        test.info = globals.after[0];
 
-        if (0 != fork_and_wait(&test, (char **)argv)) {
-            OUTPUT(("   %s [%s]", _RED("error running"), globals.after));
+        if (0 != fork_and_wait(&test, (char **)globals.after)) {
+            OUTPUT(("   %s", _RED("error running 'after' command")));
         }
         PERFEXPERT_DEALLOC(test.output);
     }
-
-    /* Free memory */
-    PERFEXPERT_DEALLOC(local_prefix);
 
     return PERFEXPERT_SUCCESS;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013  University of Texas at Austin. All rights reserved.
+ * Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -8,19 +8,13 @@
  * This file is part of PerfExpert.
  *
  * PerfExpert is free software: you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation, either version 3 of the License, or (at your option) any
- * later version.
- *
+ * the terms of the The University of Texas at Austin Research License
+ * 
  * PerfExpert is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
- * A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with PerfExpert. If not, see <http://www.gnu.org/licenses/>.
- *
- * Author: Leonardo Fialho
+ * A PARTICULAR PURPOSE.
+ * 
+ * Authors: Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
  */
@@ -55,7 +49,6 @@ static struct argp_option options[] = {
         "Use CC, CFLAGS, CPPFLAGS and LDFLAGS to set compiler/linker options",
     }, 
 #endif
-
     { 0, 0, 0, 0, "Target program execution options:", 2,
     }, {"after", 'a', "COMMAND", 0,
         "Command to execute after each run of the target program",
@@ -64,7 +57,7 @@ static struct argp_option options[] = {
     }, {"prefix", 'p', "PREFIX", 0, "Add a prefix to the command line, use "
         "double quotes to set arguments with spaces within (e.g. -p \"mpirun -n"
         " 2\")", },
-
+#if 0
     { 0, 0, 0, 0, "Target program execution on Intel Phi (aka MIC) options:", 3,
     }, {"mic-card", 'C', "NAME", 0,
         "MIC Card where experiments should run on (e.g. -C \"mic0\")",
@@ -75,14 +68,16 @@ static struct argp_option options[] = {
     }, {"mic-prefix", 'P', "PREFIX", 0, "Add a prefix to the command line which"
         " will run on the MIC, use double quotes to set arguments with spaces "
         "within (e.g. -P \"mpirun -n 2\")", },
-
+#endif
     { 0, 0, 0, 0, "Output formating options:", 4,
     }, {"colorful", 'c', 0, 0, "Enable ANSI colors"
-    }, {"verbose", 'v', "LEVEL", OPTION_ARG_OPTIONAL,
+    }, {"verbose", 'v', "LEVEL", 0,
+        "Enable verbose mode (default: 5, range: 0-10)"
+    }, {"verbose-level", 'l', "LEVEL", OPTION_ALIAS,
         "Enable verbose mode (default: 5, range: 0-10)"
     }, {"order", 'o', "relevance|performance|mixed", 0,
         "Order in which hotspots should be sorted (default: unsorted)",
-    }, {"recommendations", 'r', "VALUE", 0,
+    }, {"recommendations", 'r', "COUNT", 0,
         "Number of recommendations PerfExpert should provide (default: 3)", },
 
     { 0, 0, 0, 0, "Other options:", 5,
@@ -90,6 +85,8 @@ static struct argp_option options[] = {
         "Select a recommendation database file different from the default",
     }, {"leave-garbage", 'g', 0, 0,
         "Do not remove temporary directory when finalize",
+    }, {"do-not-run", 'n', 0, 0,
+        "Do not run PerfExpert, just parse the command line (for debugging)",
     }, {"measurement-tool", 't', "hpctoolkit|vtune", 0, "Set the tool that "
         "should be used to collect performance counter values (default: "
         "hpctoolkit)", },
@@ -109,6 +106,17 @@ static char doc[] = "\nPerfExpert -- an easy-to-use automatic performance "
     "scripts)\n"
     "  PROGRAM ARGUMENTS   Program arguments, see documentation if any argument"
     "\n                      starts with a dash sign ('-')";
+
+typedef struct arg_options {
+    char  **program_argv;
+    char  *prefix;
+    char  *before;
+    char  *after;
+    char  *knc_prefix;
+    char  *knc_before;
+    char  *knc_after;
+    int   do_not_run;
+} arg_options_t;
 
 /* Function declarations */
 static int parse_env_vars(void);
