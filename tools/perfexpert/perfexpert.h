@@ -62,6 +62,7 @@ typedef struct {
     char  *order;
     char  *inputfile;
     int   only_exp;
+    int   compat_mode;
     long int pid;
 } globals_t;
 
