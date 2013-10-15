@@ -50,92 +50,89 @@ extern "C" {
 
 /* perfexpert_database_update */
 static inline int perfexpert_database_update(char **file) {
-    // TODO: this functions requires much more tests
-    FILE  *version_file_FP;
-    char  temp_str[6][BUFFER_SIZE];
-    float my_version = 0.0;
-    float sys_version = 0.0;
+    FILE *ver_FP;
+    int  rc = PERFEXPERT_ERROR;
+    char *sys_db = NULL, *my_db = NULL, *command = NULL;
+    char *sys_ver = NULL, *my_ver = NULL, sys_ver_str[10], my_ver_str[10];
 
-    bzero(temp_str[0], BUFFER_SIZE);
-    sprintf(temp_str[0], "%s/%s", PERFEXPERT_VARDIR, PERFEXPERT_DB);
-    bzero(temp_str[1], BUFFER_SIZE);
-    sprintf(temp_str[1], "%s/.%s", getenv("HOME"), PERFEXPERT_DB);
-    bzero(temp_str[2], BUFFER_SIZE);
-    sprintf(temp_str[2], "%s/.%s.version", PERFEXPERT_VARDIR, PERFEXPERT_DB);
-    bzero(temp_str[3], BUFFER_SIZE);
-    sprintf(temp_str[3], "%s/.%s.version", getenv("HOME"), PERFEXPERT_DB);
-    bzero(temp_str[4], BUFFER_SIZE);
-    sprintf(temp_str[4], "%s/.%s~", getenv("HOME"), PERFEXPERT_DB);
-    bzero(temp_str[5], BUFFER_SIZE);
+    PERFEXPERT_ALLOC(char, sys_db,
+        (strlen(PERFEXPERT_VARDIR) + strlen(PERFEXPERT_DB) + 2));
+    sprintf(sys_db, "%s/%s", PERFEXPERT_VARDIR, PERFEXPERT_DB);
 
-    if (PERFEXPERT_SUCCESS == perfexpert_util_file_exists(temp_str[1])) {
-        OUTPUT_VERBOSE((10, "      found local database (%s)", temp_str[1]));
-        if (PERFEXPERT_SUCCESS == perfexpert_util_file_exists(temp_str[3])) {
-            /* My version */
-            version_file_FP = fopen(temp_str[3], "r");
-            if (version_file_FP) {
-                fread(temp_str[5], 1, sizeof(temp_str[5]), version_file_FP);
-                my_version = atof(temp_str[5]);
-                if (ferror(version_file_FP)) {
-                    return PERFEXPERT_ERROR;
-                }
-                fclose(version_file_FP);
-            } else {
-                return PERFEXPERT_ERROR;
-            }
-            OUTPUT_VERBOSE((10, "      local database version (%f)",
-                my_version));
+    PERFEXPERT_ALLOC(char, my_db,
+        (strlen(getenv("HOME")) + strlen(PERFEXPERT_DB) + 3));
+    sprintf(my_db, "%s/.%s", getenv("HOME"), PERFEXPERT_DB);
 
-            /* System's version */
-            version_file_FP = fopen(temp_str[2], "r");
-            if (version_file_FP) {
-                fread(temp_str[5], 1, sizeof(temp_str[5]), version_file_FP);
-                sys_version = atof(temp_str[5]);
-                if (ferror(version_file_FP)) {
-                    return PERFEXPERT_ERROR;
-                }
-                fclose(version_file_FP);
-            } else {
-                return PERFEXPERT_ERROR;
-            }
-            OUTPUT_VERBOSE((10, "      system database version (%f)",
-                sys_version));
+    PERFEXPERT_ALLOC(char, sys_ver,
+        (strlen(PERFEXPERT_VARDIR) + strlen(PERFEXPERT_DB) + 10));
+    sprintf(sys_ver, "%s/%s.version", PERFEXPERT_VARDIR, PERFEXPERT_DB);
 
-            /* Compare */
-            if (my_version > sys_version) {
-                return PERFEXPERT_ERROR;
-            } else if (my_version == sys_version) {
-                goto DATABASE_OK;
-            } else if (my_version < sys_version) {
-                rename(temp_str[1], temp_str[4]);
-                unlink(temp_str[3]);
-            }
-        } else {
-            OUTPUT_VERBOSE((10, "      local database version unknown"));
-            rename(temp_str[1], temp_str[4]);
+    PERFEXPERT_ALLOC(char, my_ver,
+        (strlen(getenv("HOME")) + strlen(PERFEXPERT_DB) + 11));
+    sprintf(my_ver, "%s/.%s.version", getenv("HOME"), PERFEXPERT_DB);
+
+    PERFEXPERT_ALLOC(char, command, (strlen(my_db) + strlen(sys_db) + 16));
+    sprintf(command, "sqlite3 %s < %s.sql", my_db, sys_db);
+
+    /* System version */
+    if (NULL == (ver_FP = fopen(sys_ver, "r"))) {
+        goto CLEAN_UP;
+    }
+    if (0 == fscanf(ver_FP, "%s", sys_ver_str)) {
+        fclose(ver_FP);
+        goto CLEAN_UP;
+    }
+    fclose(ver_FP);
+    OUTPUT_VERBOSE((10, "      system database version (%s)", sys_ver_str));
+
+    /* My version */
+    if ((PERFEXPERT_SUCCESS == perfexpert_util_file_exists(my_db)) &&
+        (PERFEXPERT_SUCCESS == perfexpert_util_file_exists(my_ver))) {
+        OUTPUT_VERBOSE((10, "      found local database (%s)", my_db));
+        if (NULL == (ver_FP = fopen(my_ver, "r"))) {
+            goto CLEAN_UP;
         }
+        if (0 == fscanf(ver_FP, "%s", my_ver_str)) {
+            fclose(ver_FP);
+            goto CLEAN_UP;
+        }
+        fclose(ver_FP);
+        OUTPUT_VERBOSE((10, "      local database version (%s)", my_ver_str));
+    } else {
+        OUTPUT_VERBOSE((10, "      local database not found, creating one"));        
     }
 
-    OUTPUT_VERBOSE((10, "      updating database"));
-    if (PERFEXPERT_SUCCESS != perfexpert_util_file_copy(temp_str[1],
-            temp_str[0])) {
-        OUTPUT(("%s (%s) >> (%s)", _ERROR((char *)"Error: unable to copy file"),
-            temp_str[0], temp_str[1]));
-        return PERFEXPERT_ERROR;
+    /* Compare */
+    if (atof(my_ver_str) > atof(sys_ver_str)) {
+        OUTPUT(("      local database is newer, reporting error"));
+        goto CLEAN_UP;
+    } else if (atof(my_ver_str) == atof(sys_ver_str)) {
+        goto DATABASE_OK;
+    } else { // my_version < sys_version
+        OUTPUT_VERBOSE((10, "      system database is newer, updating"));
     }
-    if (PERFEXPERT_SUCCESS != perfexpert_util_file_copy(temp_str[3],
-        temp_str[2])) {
-        OUTPUT(("%s (%s) >> (%s)", _ERROR((char *)"Error: unable to copy file"),
-            temp_str[0], temp_str[1]));
-        return PERFEXPERT_ERROR;
+
+    OUTPUT_VERBOSE((10, "          %s", (char *)_CYAN(command)));
+    unlink(my_db);
+    if (0 != system(command)) {
+        goto CLEAN_UP;
+    }
+    unlink(my_ver);
+    if (PERFEXPERT_SUCCESS != perfexpert_util_file_copy(my_ver, sys_ver)) {
+        goto CLEAN_UP;
     }
 
     DATABASE_OK:
-    *file = (char *)malloc(strlen(temp_str[1] + 1));
-    bzero(*file, strlen(temp_str[1] + 1));
-    strcpy(*file, temp_str[1]);
+    *file = my_db;
+    rc = PERFEXPERT_SUCCESS;
 
-    return PERFEXPERT_SUCCESS;
+    CLEAN_UP:
+    PERFEXPERT_DEALLOC(my_ver);
+    PERFEXPERT_DEALLOC(sys_db);
+    PERFEXPERT_DEALLOC(sys_ver);
+    PERFEXPERT_DEALLOC(command);
+
+    return rc;
 }
 
 /* perfexpert_database_disconnect */
