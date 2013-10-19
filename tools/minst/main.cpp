@@ -22,6 +22,8 @@
 #include <rose.h>
 #include <stdio.h>
 
+#include <VariableRenaming.h>
+
 #include "macpo_record.h"
 #include "minst.h"
 
@@ -104,6 +106,12 @@ int main (int argc, char *argv[]) {
         // Initializing attributes
         attrib attr(TYPE_UNKNOWN, FALSE, inst_function, options.loopInfo.line_number);
 
+        VariableRenaming var_renaming(project);
+        if (options.action == ACTION_ALIGNCHECK) {
+            // If we are about to check alignment, run the VariableRenaming pass.
+            var_renaming.run();
+        }
+
         // Loop over each file
         SgFilePtrList files = project->get_fileList();
         for (SgFilePtrList::iterator it=files.begin(); it!=files.end(); it++) {
@@ -112,7 +120,7 @@ int main (int argc, char *argv[]) {
             std::string basename = filename.substr(filename.find_last_of("/"));
 
             // Start the traversal!
-            MINST traversal (options.action, options.loopInfo.line_number, inst_function);
+            MINST traversal (options.action, options.loopInfo.line_number, inst_function, &var_renaming);
             traversal.traverseWithinFile (file, attr);
         }
 
