@@ -47,7 +47,7 @@ class aligncheck_t : public AstTopDownProcessing<attrib> {
         void locate_and_place_instrumentation(SgNode* node,
                 SgExpression* instrument_test, SgExpression* instrument_incr);
         void insert_instrumentation(SgNode* node, SgExpression* expr,
-                short type);
+                short type, bool before);
 
         VariableRenaming* var_renaming;
         inst_list_t inst_info_list;
