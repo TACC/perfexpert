@@ -148,6 +148,22 @@ AC_ARG_WITH([externals],
     CPPFLAGS+=" -I$withval/include"
     LDFLAGS+=" -L$withval/lib"])
 
+AC_ARG_WITH([boost],
+    [AS_HELP_STRING([--with-boost],
+        [where Boost library and include directories are located])], [
+    CPPFLAGS+=" -I$withval/include"
+    LDFLAGS+=" -L$withval/lib"])
+
+AC_ARG_WITH([boost-lib],
+    [AS_HELP_STRING([--with-boost-lib],
+        [set Boost library path])],
+    [LDFLAGS+=" -L$withval"])
+
+AC_ARG_WITH([boost-include],
+    [AS_HELP_STRING([--with-boost-include],
+        [set Boost include path])],
+    [CPPFLAGS+=" -I$withval"])
+
 #------------------------------------------------------------------------------
 # 'perfexpert' requirements
 #
@@ -297,7 +313,8 @@ AS_IF([test x"$ENABLE_ANALYZER" = xyes], [
 
     AC_CHECK_LIB([xml2], [xmlParseFile], [],
         [AC_MSG_ERROR([libxml2.so not found])])
-    AC_CHECK_HEADER([libxml/parser.h], [], [AC_MSG_ERROR([parser.h not found])])
+    AC_CHECK_HEADER([libxml/parser.h], [],
+        [AC_MSG_ERROR([parser.h not found])])
 
     ENABLE_ANALYZER=analyzer
     AC_CONFIG_FILES([tools/analyzer/Makefile])
@@ -390,7 +407,8 @@ AS_IF([test x"$ENABLE_MINST" = xyes], [
         [AS_HELP_STRING([--with-rose-include], [set ROSE include path])],
         [CPPFLAGS+=" -I$withval/include"])
 
-    AC_CHECK_HEADER([rose.h], [], [AC_MSG_ERROR([not found: rose.h])])
+    AC_CHECK_HEADER([rose.h], [], [AC_MSG_ERROR([not found: rose.h])],
+        [#include "rose.h"])
 
     #
     # GNU Multiple Precision Arithmetic Library support (headers and lib)
@@ -471,7 +489,8 @@ AS_IF([test x"$ENABLE_CT" = xyes], [
         [CPPFLAGS+=" -I$withval/include"])
 
     AC_LANG_PUSH([C++])
-    AC_CHECK_HEADER([rose.h], [], [AC_MSG_ERROR([not found: rose.h])])
+    AC_CHECK_HEADER([rose.h], [], [AC_MSG_ERROR([not found: rose.h])],
+        [#include "rose.h"])
     AC_LANG_POP
 
     # Check for Lex/Flex and Yacc/Bison
@@ -501,7 +520,7 @@ AC_MSG_NOTICE([CPPFLAGS=$CPPFLAGS])
 AC_MSG_NOTICE([CFLAGS=$CFLAGS])
 AC_MSG_NOTICE([CXXFLAGS=$CXXFLAGS])
 AC_MSG_NOTICE([LDFLAGS=$LDFLAGS])
-AC_MSG_NOTICE([Tools enabled: $ENABLE_PERFEXPERT $ENABLE_HOUND $ENABLE_SNIFFER\
- $ENABLE_ANALYZER $ENABLE_RECOMMENDER $ENABLE_CT $ENABLE_MINST])
+AC_MSG_NOTICE([Enabled tools: $ENABLE_PERFEXPERT $ENABLE_MINST $ENABLE_SNIFFER\
+ $ENABLE_ANALYZER $ENABLE_RECOMMENDER $ENABLE_CT $ENABLE_HOUND])
 
 # EOF
