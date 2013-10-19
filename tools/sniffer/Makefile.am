@@ -27,8 +27,10 @@ sniffer_LDFLAGS = -lpapi
 install-exec-local:
 	./sniffer
 	$(MKDIR_P) $(sysconfdir)
-	$(INSTALL) -m 644 lcpi.conf $(sysconfdir)/
-	$(INSTALL) -m 644 experiment.conf $(sysconfdir)/experiment_hpctoolkit.conf
-	$(INSTALL) -m 644 experiment.conf $(sysconfdir)/experiment_vtune.conf
+	$(INSTALL) -m 644 lcpi.conf $(DESTDIR)$(sysconfdir)/
+	$(INSTALL) -m 644 experiment.conf \
+		$(DESTDIR)$(sysconfdir)/experiment_hpctoolkit.conf
+	$(INSTALL) -m 644 experiment.conf \
+		$(DESTDIR)$(sysconfdir)/experiment_vtune.conf
 
 # EOF
