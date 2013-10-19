@@ -416,8 +416,8 @@ AS_IF([test x"$ENABLE_MINST" = xyes], [
     #
     # Check for Google SparseHash (headers)
     #
-    AC_ARG_WITH([sparse-hash-include],
-        [AS_HELP_STRING([--with-sparse-hash-include],
+    AC_ARG_WITH([sparsehash],
+        [AS_HELP_STRING([--with-sparsehash],
             [set Google Sparse Hash include path])],
         [CPPFLAGS+=" -I$withval"], [])
 
