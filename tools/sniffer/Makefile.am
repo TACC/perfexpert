@@ -26,7 +26,7 @@ sniffer_LDFLAGS = -lpapi
 
 install-exec-local:
 	./sniffer
-	$(MKDIR_P) $(sysconfdir)
+	$(MKDIR_P) $(DESTDIR)$(sysconfdir)
 	$(INSTALL) -m 644 lcpi.conf $(DESTDIR)$(sysconfdir)/
 	$(INSTALL) -m 644 experiment.conf \
 		$(DESTDIR)$(sysconfdir)/experiment_hpctoolkit.conf
