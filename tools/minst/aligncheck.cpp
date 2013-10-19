@@ -244,16 +244,24 @@ void aligncheck_t::locate_and_place_instrumentation(SgNode* node,
                             continue;
                         }
 
-                        insert_instrumentation(def_node, iexpr, itype);
+                        insert_instrumentation(def_node, iexpr, itype, false);
                     }
                 }
             }
         }
     }
+
+    if (instrument_test && !isSgVarRefExp(instrument_test)) {
+        insert_instrumentation(node, instrument_test, LOOP_TEST, true);
+    }
+
+    if (instrument_incr && !isSgVarRefExp(instrument_incr)) {
+        insert_instrumentation(node, instrument_incr, LOOP_INCR, true);
+    }
 }
 
 void aligncheck_t::insert_instrumentation(SgNode* node, SgExpression* expr,
-        short type) {
+        short type, bool before) {
     assert(isSgLocatedNode(node) &&
             "Cannot obtain file information for node to be instrumented.");
 
@@ -276,7 +284,7 @@ void aligncheck_t::insert_instrumentation(SgNode* node, SgExpression* expr,
     inst_info.params.push_back(param_type);
 
     inst_info.function_name = SageInterface::is_Fortran_language() ? "indigo__aligncheck_f" : "indigo__aligncheck_c";
-    inst_info.before = false;
+    inst_info.before = before;
 
     inst_info_list.push_back(inst_info);
 }
