@@ -31,9 +31,9 @@ endif
 
 install-exec-local:
 	./hound > machine.conf
-	$(MKDIR_P) $(sysconfdir)
-	$(INSTALL) -m 644 machine.conf $(sysconfdir)/
+	$(MKDIR_P) $(DESTDIR)$(sysconfdir)
+	$(INSTALL) -m 644 machine.conf $(DESTDIR)$(sysconfdir)/
 	hwloc-info --output-format xml > memory.conf
-	$(INSTALL) -m 644 memory.conf $(sysconfdir)/
+	$(INSTALL) -m 644 memory.conf $(DESTDIR)$(sysconfdir)/
 
 # EOF
