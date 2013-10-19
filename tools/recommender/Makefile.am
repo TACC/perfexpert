@@ -32,12 +32,12 @@ perfexpert_recommender_SOURCES = recommender_main.c \
 
 # Install the recommendation database
 install-exec-local:
-	$(MKDIR_P) $(sysconfdir)
+	$(MKDIR_P) $(DESTDIR)$(sysconfdir)
 	echo 1.23 > perfexpert.db.version
-	$(INSTALL) -m 644 perfexpert.db.version $(sysconfdir)/
+	$(INSTALL) -m 644 perfexpert.db.version $(DESTDIR)$(sysconfdir)/
 	$(INSTALL) -m 644 $(top_srcdir)/tools/recommender/perfexpert.db.sql \
-		$(sysconfdir)/
+		$(DESTDIR)$(sysconfdir)/
 	$(INSTALL) -m 644 $(top_srcdir)/tools/recommender/recommender_metrics.txt \
-		$(sysconfdir)/
+		$(DESTDIR)$(sysconfdir)/
 
 # EOF
