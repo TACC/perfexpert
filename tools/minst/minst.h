@@ -22,29 +22,35 @@
 #ifndef	MINST_H_
 #define	MINST_H_
 
+#include <VariableRenaming.h>
+
 #include "generic_defs.h"
 #include "instrumentor.h"
 
 class MINST : public AstTopDownProcessing<attrib> {
-    short action;
-    int line_number;
-    std::string inst_func;
-    std::vector<reference_info_t> reference_list;
-
-    SgGlobal* global_node;
-    Sg_File_Info* file_info;
-    SgFunctionDeclaration *def_decl, *non_def_decl;
-
     public:
-    MINST(short _action, int _line_number, std::string _inst_func);
+        MINST(short _action, int _line_number, std::string _inst_func, VariableRenaming* _var_renaming);
 
-    void insert_map_function(SgNode* node);
-    void insert_map_prototype(SgNode* node);
+        void insert_map_function(SgNode* node);
+        void insert_map_prototype(SgNode* node);
 
-    virtual void atTraversalEnd();
-    virtual void atTraversalStart();
+        virtual void atTraversalEnd();
+        virtual void atTraversalStart();
 
-    virtual attrib evaluateInheritedAttribute(SgNode* node, attrib attr);
+        virtual attrib evaluateInheritedAttribute(SgNode* node, attrib attr);
+
+    private:
+        short action;
+        int line_number;
+        std::string inst_func;
+        std::vector<reference_info_t> reference_list;
+
+        SgGlobal* global_node;
+        Sg_File_Info* file_info;
+        VariableRenaming* var_renaming;
+        SgFunctionDeclaration *def_decl, *non_def_decl;
+
+        inst_list_t inst_info_list;
 };
 
 #endif	/* MINST_H_ */

@@ -28,8 +28,8 @@
 using namespace SageBuilder;
 using namespace SageInterface;
 
-MINST::MINST(short _action, int _line_number, std::string _inst_func) {
-    action=_action, line_number=_line_number, inst_func=_inst_func;
+MINST::MINST(short _action, int _line_number, std::string _inst_func, VariableRenaming* _var_renaming) {
+    action=_action, line_number=_line_number, inst_func=_inst_func, var_renaming=_var_renaming;
 }
 
 void MINST::insert_map_prototype(SgNode* node) {
@@ -57,6 +57,7 @@ void MINST::insert_map_function(SgNode* node) {
 }
 
 void MINST::atTraversalStart() {
+    inst_info_list.clear();
     reference_list.clear();
     global_node=NULL, non_def_decl=NULL, def_decl=NULL, file_info=NULL;
 }
@@ -83,6 +84,30 @@ void MINST::atTraversalEnd() {
                 SgExprStatement* write_idx_call = buildFunctionCallStmt(SgName(indigo__write_idx), buildVoidType(), buildExprListExp(expr_vector), bb);
                 bb->append_statement(write_idx_call);
             }
+        }
+    }
+
+    for (inst_list_t::iterator it=inst_info_list.begin(); it!=inst_info_list.end(); it++) {
+        inst_info_t& inst_info = *it;
+
+        SgNode* parent = inst_info.bb->get_parent();
+        if (isSgIfStmt(parent)) {
+            SgIfStmt* if_node = static_cast<SgIfStmt*>(parent);
+            if_node->set_use_then_keyword(true);
+            if_node->set_has_end_statement(true);
+        }
+
+        SgExprStatement* fCall = buildFunctionCallStmt(
+                SgName(inst_info.function_name),
+                buildVoidType(),
+                buildExprListExp(inst_info.params),
+                inst_info.bb
+                );
+
+        if (inst_info.before) {
+            insertStatementBefore(inst_info.stmt, fCall);
+        } else {
+            insertStatementAfter(inst_info.stmt, fCall);
         }
     }
 }
@@ -145,7 +170,10 @@ attrib MINST::evaluateInheritedAttribute(SgNode* node, attrib attr)
 
                 instrumentor_t inst;
                 inst.traverse(node, attr);
+
+                // Pull information from AST traversal.
                 reference_list = inst.get_reference_list();
+                inst_info_list.insert(inst_info_list.end(), inst.inst_begin(), inst.inst_end());
             }
         }
     }
@@ -163,11 +191,17 @@ attrib MINST::evaluateInheritedAttribute(SgNode* node, attrib attr)
 
                 instrumentor_t inst;
                 inst.traverse(node, attr);
+
+                // Pull information from AST traversal.
                 reference_list = inst.get_reference_list();
+                inst_info_list.insert(inst_info_list.end(), inst.inst_begin(), inst.inst_end());
             } else if (action == ACTION_ALIGNCHECK) {
                 std::cerr << "Placing alignment checks around loop in function " << function_name << " at line " << _line_number << std::endl;
-                aligncheck_t visitor;
+                aligncheck_t visitor(var_renaming);
                 visitor.traverse(node, attr);
+
+                // Pull information from AST traversal.
+                inst_info_list.insert(inst_info_list.end(), visitor.inst_begin(), visitor.inst_end());
             }
         }
     }

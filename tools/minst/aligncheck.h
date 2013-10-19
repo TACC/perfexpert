@@ -22,16 +22,35 @@
 #ifndef	ALIGNCHEK_H_
 #define	ALIGNCHEK_H_
 
+#include <VariableRenaming.h>
+
 #include "generic_defs.h"
 
 class aligncheck_t : public AstTopDownProcessing<attrib> {
+
+    enum { LOOP_TEST=0, LOOP_INCR, BASE_ALIGNMENT };
+
     public:
+        aligncheck_t(VariableRenaming* _var_renaming);
+
         bool vectorizable(SgStatement* stmt);
 
         virtual void atTraversalEnd();
         virtual void atTraversalStart();
 
         virtual attrib evaluateInheritedAttribute(SgNode* node, attrib attr);
+
+        const inst_list_t::iterator inst_begin();
+        const inst_list_t::iterator inst_end();
+
+    private:
+        void locate_and_place_instrumentation(SgNode* node,
+                SgExpression* instrument_test, SgExpression* instrument_incr);
+        void insert_instrumentation(SgNode* node, SgExpression* expr,
+                short type);
+
+        VariableRenaming* var_renaming;
+        inst_list_t inst_info_list;
 };
 
 #endif	/* ALIGNCHEK_H_ */
