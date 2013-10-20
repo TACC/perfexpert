@@ -132,14 +132,15 @@ int select_recommendations(segment_t *segment) {
         /* Bind ROWID */
         if (SQLITE_OK != sqlite3_bind_int(statement,
             sqlite3_bind_parameter_index(statement, "@RID"), segment->rowid)) {
-            OUTPUT(("         %s (%d)", _RED("ignoring @RID"), segment->rowid));
+            OUTPUT_VERBOSE((9, "         %s (%d)", _RED("ignoring @RID"),
+                segment->rowid));
         }
 
         /* Bind loop depth */
         if (SQLITE_OK != sqlite3_bind_int(statement,
             sqlite3_bind_parameter_index(statement, "@LPD"),
             segment->loopdepth)) {
-            OUTPUT(("         %s (%d)", _RED("ignoring @LPD"),
+            OUTPUT_VERBOSE((9, "         %s (%d)", _RED("ignoring @LPD"),
                 segment->loopdepth));
         }
 

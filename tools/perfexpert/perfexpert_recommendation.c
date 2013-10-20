@@ -109,12 +109,7 @@ int recommendation(void) {
     test.info = temp_str[5];
 
     /* run_and_fork_and_pray */
-    rc = fork_and_wait(&test, argv);
-    if (PERFEXPERT_ERROR == rc) {
-        return PERFEXPERT_ERROR;
-    }
-
-    return rc;
+    return fork_and_wait(&test, argv);
 }
 
 #ifdef __cplusplus

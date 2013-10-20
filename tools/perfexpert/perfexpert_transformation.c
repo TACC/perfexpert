@@ -36,7 +36,7 @@ extern "C" {
 
 /* transformation */
 int transformation(void) {
-    char temp_str[5][BUFFER_SIZE];
+    char temp_str[6][BUFFER_SIZE];
     char *argv[2];
     test_t test;
 
@@ -65,6 +65,12 @@ int transformation(void) {
     bzero(temp_str[4], BUFFER_SIZE);
     sprintf(temp_str[4], "%s/%s", globals.stepdir, RECOMMENDER_METRICS);
     if (0 != setenv("PERFEXPERT_CT_INPUT_FILE", temp_str[4], 1)) {
+        OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
+        return PERFEXPERT_ERROR;
+    }
+    bzero(temp_str[5], BUFFER_SIZE);
+    sprintf(temp_str[5], "%s/%s", globals.stepdir, CT_REPORT);
+    if (0 != setenv("PERFEXPERT_CT_OUTPUT_FILE", temp_str[5], 1)) {
         OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
         return PERFEXPERT_ERROR;
     }

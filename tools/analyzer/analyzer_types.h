@@ -51,6 +51,8 @@ typedef struct module {
     int  id;
     char *name;
     char *shortname;
+    double importance;
+    double cycles;
     perfexpert_hash_handle_t hh_int;
 } module_t;
 

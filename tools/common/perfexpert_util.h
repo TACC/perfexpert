@@ -50,6 +50,10 @@ extern "C" {
 #include <fcntl.h>
 #endif
 
+#ifndef _LINUX_LIMITS_H
+#include <linux/limits.h>
+#endif
+
 #include "perfexpert_alloc.h"
 #include "perfexpert_constants.h"
 #include "perfexpert_output.h"
@@ -206,16 +210,40 @@ static inline int perfexpert_util_path_only(const char *file, char **path) {
         return PERFEXPERT_ERROR;
     }
 
-    PERFEXPERT_ALLOC(char, my_path, (strlen(file) - strlen(prog) + 1));
-    strncpy(my_path, file, (strlen(file) - strlen(prog)));
+    if (0 != strcmp(file, prog)) {
+        PERFEXPERT_ALLOC(char, my_path, (strlen(file) - strlen(prog) + 1));
+        strncpy(my_path, file, (strlen(file) - strlen(prog)));
 
-    if (NULL == realpath(my_path, resolved_path)) {
-        resolved_path = getcwd(NULL, 0);
+        if (NULL == (resolved_path = realpath(my_path, resolved_path))) {
+            resolved_path = getcwd(NULL, 0);
+        }
+        PERFEXPERT_DEALLOC(my_path);
+    } else {
+        /* Search in $PATH */
+        char *env_path = NULL, try_file[PATH_MAX], *try_path;
+        struct stat fin;
+
+        PERFEXPERT_ALLOC(char, env_path, (strlen(getenv("PATH")) + 1));
+        memcpy(env_path, getenv("PATH"), strlen(getenv("PATH")));
+
+        while ((try_path = strsep(&env_path, ":")) != NULL) {
+            if ((*try_path == '\0') || (*try_path == '.')) {
+                try_path = getcwd(NULL, 0);
+            }
+            sprintf(try_file, "%s/%s", try_path, file);
+
+            if ((0 == access(try_file, X_OK)) && (0 == stat(try_file, &fin))) {
+                if ((S_ISREG(fin.st_mode)) && ((0 != getuid()) ||
+                    (0 != (fin.st_mode & (S_IXUSR | S_IXGRP | S_IXOTH))))) {
+                    PERFEXPERT_ALLOC(char, resolved_path, strlen(try_path));
+                    memcpy(resolved_path, try_path, strlen(try_path));
+                }
+            }
+        }
+        PERFEXPERT_DEALLOC(env_path);
     }
 
     *path = resolved_path;
-
-    PERFEXPERT_DEALLOC(my_path);
 
     return PERFEXPERT_SUCCESS;
 }
@@ -295,6 +323,7 @@ static inline int perfexpert_util_file_print(const char *file) {
     } else {
         return PERFEXPERT_ERROR;
     }
+    fflush(stdout);
 
     return PERFEXPERT_SUCCESS;
 }

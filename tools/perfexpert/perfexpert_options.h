@@ -113,15 +113,16 @@ static char doc[] = "\nPerfExpert -- an easy-to-use automatic performance "
     "\n                      starts with a dash sign ('-')";
 
 typedef struct arg_options {
-    char  **program_argv;
-    char  *program_argv_temp[PARAM_SIZE];
-    char  *prefix;
-    char  *before;
-    char  *after;
-    char  *knc_prefix;
-    char  *knc_before;
-    char  *knc_after;
-    int   do_not_run;
+    char *program;
+    char **program_argv;
+    char *program_argv_temp[PARAM_SIZE];
+    char *prefix;
+    char *before;
+    char *after;
+    char *knc_prefix;
+    char *knc_before;
+    char *knc_after;
+    int  do_not_run;
 } arg_options_t;
 
 /* Function declarations */

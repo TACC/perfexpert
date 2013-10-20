@@ -55,6 +55,7 @@ int parse_cli_params(int argc, char *argv[]) {
 
     /* Set default values for globals */
     arg_options = (arg_options_t) {
+        .program           = NULL,
         .program_argv      = NULL,
         .program_argv_temp = { 0 },
         .prefix            = NULL,
@@ -126,18 +127,15 @@ int parse_cli_params(int argc, char *argv[]) {
     }
 
     /* Sanity check: NULL program */
-    if (NULL == globals.program) {
-        OUTPUT(("%s", _ERROR("Error: undefined program")));
-        return PERFEXPERT_ERROR;
-    } else {
+    if (NULL != arg_options.program) {
         if (PERFEXPERT_SUCCESS != perfexpert_util_filename_only(
-            globals.program, &(globals.program))) {
+            arg_options.program, &(globals.program))) {
             OUTPUT(("%s", _ERROR("Error: unable to extract program name")));
             return PERFEXPERT_ERROR;
         }
         OUTPUT_VERBOSE((1, "   program only=[%s]", globals.program));
 
-        if (PERFEXPERT_SUCCESS != perfexpert_util_path_only(globals.program,
+        if (PERFEXPERT_SUCCESS != perfexpert_util_path_only(arg_options.program,
             &(globals.program_path))) {
             OUTPUT(("%s", _ERROR("Error: unable to extract program path")));
             return PERFEXPERT_ERROR;
@@ -157,6 +155,9 @@ int parse_cli_params(int argc, char *argv[]) {
                 globals.program_full));
             return PERFEXPERT_ERROR;
         }
+    } else {
+        OUTPUT(("%s", _ERROR("Error: undefined program")));
+        return PERFEXPERT_ERROR;
     }
 
     /* Sanity check: target and sourcefile at the same time */
@@ -402,9 +403,9 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
                 OUTPUT_VERBOSE((1, "option 'e' set"));
                 globals.leave_garbage = PERFEXPERT_TRUE;
                 OUTPUT_VERBOSE((1, "option 'g' set"));
-                globals.program = arg;
+                arg_options.program = arg;
                 OUTPUT_VERBOSE((1, "option 'target_program' set [%s]",
-                    globals.program));
+                    arg_options.program));
                 globals.threshold = 1;
                 OUTPUT_VERBOSE((1, "option 'threshold' set [%f]",
                     globals.threshold));
@@ -418,9 +419,9 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
                         globals.threshold, arg));
                 }
                 if (1 == state->arg_num) {
-                    globals.program = arg;
+                    arg_options.program = arg;
                     OUTPUT_VERBOSE((1, "option 'target_program' set [%s]",
-                        globals.program));
+                        arg_options.program));
                     arg_options.program_argv = &state->argv[state->next];
                     OUTPUT_VERBOSE((1, "option 'program_arguments' set"));
                     state->next = state->argc;
