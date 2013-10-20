@@ -50,8 +50,8 @@ int main(int argc, char** argv) {
     /* Set default values for globals */
     globals = (globals_t) {
         .verbose       = 0,                // int
-        .dbfile        = NULL,             // *char
         .colorful      = PERFEXPERT_FALSE, // int
+        .dbfile        = NULL,             // *char
         .threshold     = 0.0,              // float
         .rec_count     = 3,                // int
         .leave_garbage = PERFEXPERT_FALSE, // int
@@ -76,7 +76,7 @@ int main(int argc, char** argv) {
         .only_exp      = PERFEXPERT_FALSE, // int
         .compat_mode   = PERFEXPERT_FALSE, // int
         .order         = "none",           // *char
-        .tool          = "hpctoolkit"      // *char
+        .tool          = "hpctoolkit"     // *char
     };
 
     /* Parse command-line parameters */

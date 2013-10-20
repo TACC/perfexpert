@@ -174,12 +174,12 @@ static inline int perfexpert_util_file_is_exec(const char *file) {
 
 /* perfexpert_util_filename_only */
 static inline int perfexpert_util_filename_only(const char *all, char **only) {
-    char *temp = NULL, *token = NULL, *last = NULL;
+    char *local_copy = NULL, *token = NULL, *last = NULL;
 
-    PERFEXPERT_ALLOC(char, temp, (strlen(all) + 1));
-    strcpy(temp, all);
+    PERFEXPERT_ALLOC(char, local_copy, (strlen(all) + 1));
+    strcpy(local_copy, all);
 
-    token = strtok(temp, "/");
+    token = strtok(local_copy, "/");
     while (token = strtok(NULL, "/")) {
         last = token;
     }
@@ -192,32 +192,30 @@ static inline int perfexpert_util_filename_only(const char *all, char **only) {
         *only = token;
     }
 
-    PERFEXPERT_DEALLOC(temp);
+    PERFEXPERT_DEALLOC(local_copy);
 
     return PERFEXPERT_SUCCESS;
 }
 
 /* perfexpert_util_path_only */
 static inline int perfexpert_util_path_only(const char *file, char **path) {
-    char *prog = NULL, *temp = NULL, *given_path = NULL;
+    char *prog = NULL, *my_path = NULL, *resolved_path = NULL;
 
     if (PERFEXPERT_SUCCESS != perfexpert_util_filename_only(file, &prog)) {
         OUTPUT(("%s", _ERROR((char *)"Error: unable to extract path")));
         return PERFEXPERT_ERROR;
     }
 
-    PERFEXPERT_ALLOC(char, temp, (strlen(file) - strlen(prog) + 1));
-    strncpy(temp, file, (strlen(file) - strlen(prog)));
+    PERFEXPERT_ALLOC(char, my_path, (strlen(file) - strlen(prog) + 1));
+    strncpy(my_path, file, (strlen(file) - strlen(prog)));
 
-    if (NULL == realpath(temp, given_path)) {
-        given_path = getcwd(NULL, 0);
+    if (NULL == realpath(my_path, resolved_path)) {
+        resolved_path = getcwd(NULL, 0);
     }
 
-    PERFEXPERT_ALLOC(char, *path, strlen(given_path + 2));
-    strcpy(*path, given_path);
-    strcat(*path, "/");
+    *path = resolved_path;
 
-    PERFEXPERT_DEALLOC(given_path);
+    PERFEXPERT_DEALLOC(my_path);
 
     return PERFEXPERT_SUCCESS;
 }

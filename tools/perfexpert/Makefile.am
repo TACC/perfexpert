@@ -23,16 +23,15 @@ bin_PROGRAMS = perfexpert
 
 perfexpert_CFLAGS = -O3
 perfexpert_LDFLAGS = -lrt
-perfexpert_CPPFLAGS = -I$(srcdir)/../common
+perfexpert_LDADD = ../../modules/libperfexpert_module.la
+perfexpert_CPPFLAGS = -I$(srcdir)/../common -I$(srcdir)/../../modules
 perfexpert_SOURCES = perfexpert_main.c \
 	perfexpert_analysis.c \
 	perfexpert_compile.c \
-	perfexpert_hpctoolkit.c \
 	perfexpert_measurements.c \
 	perfexpert_options.c \
 	perfexpert_recommendation.c \
-	perfexpert_transformation.c \
-	perfexpert_vtune.c
+	perfexpert_transformation.c
 
 dist_bin_SCRIPTS = perfexpert_get_compiler_info.pl
 
