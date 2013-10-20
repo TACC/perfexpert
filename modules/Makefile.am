@@ -19,14 +19,12 @@
 # $HEADER$
 #
 
-ACLOCAL_AMFLAGS = -I m4
+SUBDIRS = $(ENABLE_HPCTOOLKIT)
+SUBDIRS += $(ENABLE_VTUNE)
 
-SUBDIRS = modules tools
-
-.PHONY: check
-
-check:
-	cd $(top_builddir)/tests/ 
-	./run_tests.pl
+lib_LTLIBRARIES = libperfexpert_module.la
+libperfexpert_module_la_SOURCES = perfexpert_module.c
+libperfexpert_module_la_CPPFLAGS = -I$(srcdir)/../tools/common
+libperfexpert_module_la_LDFLAGS = -lltdl -version-info 1:0:0
 
 # EOF

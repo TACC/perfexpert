@@ -30,7 +30,6 @@ extern "C" {
 
 /* PerfExpert headers */
 #include "analyzer.h" 
-#include "analyzer_profile.h"
 #include "perfexpert_constants.h"
 #include "perfexpert_list.h"
 #include "perfexpert_output.h"
@@ -59,7 +58,7 @@ int calculate_importance_variance(profile_t *profile) {
         while ((perfexpert_list_item_t *)metric !=
             &(hotspot->metrics.sentinel)) {
             if (0 == strcmp(metric->name,
-                perfexpert_tool_get_tot_ins(globals.tool))) {
+                globals.toolmodule.total_instructions)) {
                 if (maximum < metric->value) {
                     maximum = metric->value;
                 }
@@ -69,8 +68,7 @@ int calculate_importance_variance(profile_t *profile) {
                 hotspot->instructions += metric->value;
                 count++;
             }
-            if (0 == strcmp(metric->name,
-                perfexpert_tool_get_tot_cyc(globals.tool))) {
+            if (0 == strcmp(metric->name, globals.toolmodule.total_cycles)) {
                 hotspot->cycles += metric->value;
                 profile->cycles += metric->value;
             }

@@ -144,9 +144,9 @@ int parse_cli_params(int argc, char *argv[]) {
         }
         OUTPUT_VERBOSE((1, "   program path=[%s]", globals.program_path));
 
-        PERFEXPERT_ALLOC(char, globals.program_full, (strlen(globals.program) +
-            strlen(globals.program_path) + 1));
-        sprintf(globals.program_full, "%s%s", globals.program_path,
+        PERFEXPERT_ALLOC(char, globals.program_full,
+            (strlen(globals.program) + strlen(globals.program_path) + 2));
+        sprintf(globals.program_full, "%s/%s", globals.program_path,
             globals.program);
         OUTPUT_VERBOSE((1, "   program full path=[%s]", globals.program_full));
 

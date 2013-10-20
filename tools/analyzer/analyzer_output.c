@@ -31,7 +31,6 @@ extern "C" {
 /* PerfExpert headers */
 #include "analyzer.h"
 #include "analyzer_output.h"
-#include "analyzer_profile.h"
 #include "perfexpert_alloc.h"
 #include "perfexpert_constants.h"
 #include "perfexpert_fork.h"
@@ -373,9 +372,8 @@ static int output_metrics(profile_t *profile, procedure_t *hotspot,
     /* Print raw performance counters */
     for (metric = hotspot->metrics_by_name; metric != NULL;
         metric = metric->hh_str.next) {
-        fprintf(file_FP, "%s.%s=%.0f\n",
-            perfexpert_tool_get_prefix(globals.tool), metric->name,
-            metric->value);
+        fprintf(file_FP, "%s.%s=%.0f\n", globals.toolmodule.counter_prefix,
+            metric->name, metric->value);
     }
 
     /* Print machine properties */

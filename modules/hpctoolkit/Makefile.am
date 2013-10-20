@@ -19,14 +19,9 @@
 # $HEADER$
 #
 
-ACLOCAL_AMFLAGS = -I m4
-
-SUBDIRS = modules tools
-
-.PHONY: check
-
-check:
-	cd $(top_builddir)/tests/ 
-	./run_tests.pl
+lib_LTLIBRARIES = libperfexpert_module_hpctoolkit.la
+libperfexpert_module_hpctoolkit_la_SOURCES = hpctoolkit.c
+libperfexpert_module_hpctoolkit_la_CPPFLAGS = -I$(srcdir)/../../tools -I$(srcdir)/.. -I$(abs_srcdir)/../../tools/common
+libperfexpert_module_hpctoolkit_la_LDFLAGS = -lxml2 -module -version-info 1:0:0 -export-symbols $(srcdir)/../perfexpert_module.sym
 
 # EOF

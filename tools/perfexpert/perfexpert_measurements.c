@@ -25,42 +25,30 @@ extern "C" {
 
 /* PerfExpert headers */
 #include "perfexpert.h"
-#include "perfexpert_measurements.h"
 #include "perfexpert_output.h"
-
-/* Measurements tools definition */
-tool_t tools[] = {
-    {
-        "hpctoolkit",
-        &measurements_hpctoolkit,
-        HPCTOOLKIT_PROFILE_FILE
-    }, {
-        "vtune",
-        &measurements_vtune,
-        VTUNE_PROFILE_FILE
-    }, {NULL, NULL, NULL}
-};
+#include "perfexpert_module.h"
 
 /* measurements */
 int measurements(void) {
-    int i = 0;
-
     OUTPUT_VERBOSE((4, "%s", _BLUE("Measurements phase")));
 
-    /* Find the measurement function for this tool */
-    while (NULL != tools[i].name) {
-        if (0 == strcmp(globals.tool, tools[i].name)) {
-            OUTPUT(("%s [%s] using %s", _YELLOW("Running"), globals.program,
-                globals.tool));
-            /* Call the measurement function for this tool */
-            return (*tools[i].function)();
-        }
-        i++;
+    if (PERFEXPERT_SUCCESS !=
+        perfexpert_load_module(globals.tool, &(globals.toolmodule))) {
+        OUTPUT(("%s [%s]", _ERROR("Error: unable to local tool module"),
+            globals.tool));
+        return PERFEXPERT_ERROR;
     }
 
-    OUTPUT(("%s [%s]", _ERROR("Error: unknown measurement tool"),
-        globals.tool));
-    return PERFEXPERT_ERROR;
+    /* Just to be sure... */
+    if (NULL == globals.toolmodule.measurements) {
+        OUTPUT(("%s [%s]",
+            _ERROR("Error: tool module does not implement measurements()"),
+            globals.tool));
+        return PERFEXPERT_ERROR;
+    }
+
+    /* Call the measurement function for this tool */
+    return globals.toolmodule.measurements();
 }
 
 #ifdef __cplusplus

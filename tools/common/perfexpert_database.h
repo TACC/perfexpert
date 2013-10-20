@@ -56,29 +56,31 @@ static inline int perfexpert_database_update(char **file) {
     char *sys_ver = NULL, *my_ver = NULL, sys_ver_str[10], my_ver_str[10];
 
     PERFEXPERT_ALLOC(char, sys_db,
-        (strlen(PERFEXPERT_VARDIR) + strlen(PERFEXPERT_DB) + 2));
-    sprintf(sys_db, "%s/%s", PERFEXPERT_VARDIR, PERFEXPERT_DB);
+        (strlen(PERFEXPERT_ETCDIR) + strlen(PERFEXPERT_DB) + 4));
+    sprintf(sys_db, "%s/%s.sql", PERFEXPERT_ETCDIR, PERFEXPERT_DB);
 
     PERFEXPERT_ALLOC(char, my_db,
         (strlen(getenv("HOME")) + strlen(PERFEXPERT_DB) + 3));
     sprintf(my_db, "%s/.%s", getenv("HOME"), PERFEXPERT_DB);
 
     PERFEXPERT_ALLOC(char, sys_ver,
-        (strlen(PERFEXPERT_VARDIR) + strlen(PERFEXPERT_DB) + 10));
-    sprintf(sys_ver, "%s/%s.version", PERFEXPERT_VARDIR, PERFEXPERT_DB);
+        (strlen(PERFEXPERT_ETCDIR) + strlen(PERFEXPERT_DB) + 10));
+    sprintf(sys_ver, "%s/%s.version", PERFEXPERT_ETCDIR, PERFEXPERT_DB);
 
     PERFEXPERT_ALLOC(char, my_ver,
         (strlen(getenv("HOME")) + strlen(PERFEXPERT_DB) + 11));
     sprintf(my_ver, "%s/.%s.version", getenv("HOME"), PERFEXPERT_DB);
 
-    PERFEXPERT_ALLOC(char, command, (strlen(my_db) + strlen(sys_db) + 16));
-    sprintf(command, "sqlite3 %s < %s.sql", my_db, sys_db);
+    PERFEXPERT_ALLOC(char, command, (strlen(my_db) + strlen(sys_db) + 12));
+    sprintf(command, "sqlite3 %s < %s", my_db, sys_db);
 
     /* System version */
     if (NULL == (ver_FP = fopen(sys_ver, "r"))) {
+        OUTPUT(("%s", _ERROR("Error: unable to open sys DB version file")));
         goto CLEAN_UP;
     }
     if (0 == fscanf(ver_FP, "%s", sys_ver_str)) {
+        OUTPUT(("%s", _ERROR("Error: unable to read sys DB version file")));
         fclose(ver_FP);
         goto CLEAN_UP;
     }
@@ -89,12 +91,8 @@ static inline int perfexpert_database_update(char **file) {
     if ((PERFEXPERT_SUCCESS == perfexpert_util_file_exists(my_db)) &&
         (PERFEXPERT_SUCCESS == perfexpert_util_file_exists(my_ver))) {
         OUTPUT_VERBOSE((10, "      found local database (%s)", my_db));
-        if (NULL == (ver_FP = fopen(my_ver, "r"))) {
-            goto CLEAN_UP;
-        }
-        if (0 == fscanf(ver_FP, "%s", my_ver_str)) {
-            fclose(ver_FP);
-            goto CLEAN_UP;
+        if (NULL != (ver_FP = fopen(my_ver, "r"))) {
+            fscanf(ver_FP, "%s", my_ver_str);
         }
         fclose(ver_FP);
         OUTPUT_VERBOSE((10, "      local database version (%s)", my_ver_str));
@@ -115,6 +113,7 @@ static inline int perfexpert_database_update(char **file) {
     OUTPUT_VERBOSE((10, "          %s", (char *)_CYAN(command)));
     unlink(my_db);
     if (0 != system(command)) {
+        OUTPUT(("%s", _ERROR("Error: unable to create database from SQL")));
         goto CLEAN_UP;
     }
     unlink(my_ver);

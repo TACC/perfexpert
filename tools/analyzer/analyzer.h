@@ -34,133 +34,19 @@ extern "C" {
 #include <libxml/parser.h>
 #endif
 
+#include "analyzer_types.h"
 #include "perfexpert_constants.h"
 #include "perfexpert_hash.h"
 #include "perfexpert_list.h"
-
-/* Structure to hold lcpi metrics */
-typedef struct lcpi {
-    volatile perfexpert_list_item_t *next;
-    volatile perfexpert_list_item_t *prev;
-    char *name;
-    char name_md5[33];
-    double value;
-    perfexpert_hash_handle_t hh_str;
-    /* From this point this structure is different than metric_t */
-    void *expression;
-} lcpi_t;
-
-/* Structure to hold modules */
-typedef struct module {
-    int  id;
-    char *name;
-    char *shortname;
-    perfexpert_hash_handle_t hh_int;
-} module_t;
-
-/* Structure to hold files */
-typedef struct file {
-    int  id;
-    char *name;
-    char *shortname;
-    perfexpert_hash_handle_t hh_int;
-} file_t;
-
-/* Structure to hold metrics and machine characterization */
-typedef struct metric {
-    volatile perfexpert_list_item_t *next;
-    volatile perfexpert_list_item_t *prev;
-    char   *name;
-    char   name_md5[33];
-    double value;
-    perfexpert_hash_handle_t hh_str;
-    /* From this point this structure is different than lcpi_t */
-    int id;
-    int thread;
-    int mpi_rank;
-    int experiment;
-    perfexpert_hash_handle_t hh_int;
-} metric_t;
-
-/* Structure to hold procedures */
-typedef struct procedure {
-    volatile perfexpert_list_item_t *next;
-    volatile perfexpert_list_item_t *prev;
-    int  id;
-    char *name;
-    int  line;
-    int  valid;
-    double variance;
-    double importance;
-    double instructions;
-    double cycles;
-    enum hotspot_type_t type;
-    lcpi_t *lcpi_by_name;
-    metric_t *metrics_by_id;
-    metric_t *metrics_by_name;
-    perfexpert_list_t metrics;
-    /* From this point this struct is different than loop_t */
-    perfexpert_hash_handle_t hh_int;
-    module_t *module;
-    file_t *file;
-} procedure_t;
-
-/* Structure to hold loops */
-typedef struct loop {
-    volatile perfexpert_list_item_t *next;
-    volatile perfexpert_list_item_t *prev;
-    int  id;
-    char *name;
-    int  line;
-    int  valid;
-    double variance;
-    double importance;
-    double instructions;
-    double cycles;
-    enum hotspot_type_t type;
-    lcpi_t *lcpi_by_name;
-    metric_t *metrics_by_id;
-    metric_t *metrics_by_name;
-    perfexpert_list_t metrics;
-    /* From this point this struct is different than procedure_t */
-    procedure_t *procedure;
-    int  depth;
-} loop_t;
-
-/* Structure to hold the call path */
-typedef struct callpath callpath_t;
-struct callpath {
-    volatile perfexpert_list_item_t *next;
-    volatile perfexpert_list_item_t *prev;
-    perfexpert_list_t callees;
-    int id;
-    int scope;
-    int alien;
-    callpath_t *parent;
-    procedure_t *procedure;
-};
-
-/* Structure to hold profiles */
-typedef struct profile {
-    volatile perfexpert_list_item_t *next;
-    volatile perfexpert_list_item_t *prev;
-    perfexpert_list_t callees;
-    int  id;
-    char *name;
-    double cycles;
-    double instructions;
-    file_t *files_by_id;
-    module_t *modules_by_id;
-    metric_t *metrics_by_id;
-    metric_t *metrics_by_name;
-    procedure_t *procedures_by_id;
-    perfexpert_list_t hotspots; /* for both procedure_t and loop_t */
-} profile_t;
+#include "perfexpert_module.h"
 
 /* Structure to hold global variables */
 typedef struct {
+    int      verbose;
+    int      colorful; // These should be the first variables in the structure
     double threshold;
     char     *tool;
+    perfexpert_module_t toolmodule;
     char     *inputfile;
     char     *outputfile;
     FILE     *outputfile_FP;
@@ -170,8 +56,6 @@ typedef struct {
     metric_t *machine_by_name;
     char     *lcpifile;
     lcpi_t   *lcpi_by_name;
-    int      verbose;
-    int      colorful;
     char     *outputmetrics;
     char     *order;
     char     *workdir;

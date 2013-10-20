@@ -29,8 +29,6 @@ extern "C" {
 /* PerfExpert headers */
 #include "analyzer.h"
 #include "analyzer_profile.h"
-#include "analyzer_hpctoolkit.h"
-#include "analyzer_vtune.h"
 #include "perfexpert_alloc.h"
 #include "perfexpert_constants.h"
 #include "perfexpert_list.h"
@@ -38,42 +36,26 @@ extern "C" {
 #include "perfexpert_output.h"
 #include "perfexpert_util.h"
 
-/* Tools definition */
-tool_t tools[] = {
-    {
-        "hpctoolkit",
-        &hpctoolkit_parse_file,
-        PERFEXPERT_TOOL_HPCTOOLKIT_TOT_INS,
-        PERFEXPERT_TOOL_HPCTOOLKIT_TOT_CYC,
-        PERFEXPERT_TOOL_HPCTOOLKIT_COUNTERS
-    }, {
-        "vtune",
-        &vtune_parse_file,
-        PERFEXPERT_TOOL_VTUNE_TOT_INS,
-        PERFEXPERT_TOOL_VTUNE_TOT_CYC,
-        PERFEXPERT_TOOL_VTUNE_COUNTERS
-    }, {NULL, NULL, NULL, NULL, NULL}
-};
-
 /* profile_parse_file */
 int profile_parse_file(const char* file, const char* tool,
     perfexpert_list_t *profiles) {
-    int i = 0;
-
-    OUTPUT_VERBOSE((4, "%s", _BLUE("Measurements phase")));
-
-    /* Find the measurement function for this tool */
-    while (NULL != tools[i].name) {
-        if (0 == strcmp(tool, tools[i].name)) {
-            OUTPUT_VERBOSE((2, "%s (%s)", "Parsing experiments", tool));
-            /* Call the measurement function for this tool */
-            return (*tools[i].function)(file, profiles);
-        }
-        i++;
+    if (PERFEXPERT_SUCCESS !=
+        perfexpert_load_module(globals.tool, &(globals.toolmodule))) {
+        OUTPUT(("%s [%s]", _ERROR("Error: unable to local tool module"),
+            globals.tool));
+        return PERFEXPERT_ERROR;
     }
 
-    OUTPUT(("%s [%s]", _ERROR("Error: unknown measurement tool"), tool));
-    return PERFEXPERT_ERROR;
+    /* Just to be sure... */
+    if (NULL == globals.toolmodule.parse_file) {
+        OUTPUT(("%s [%s]",
+            _ERROR("Error: tool module does not implement measurements()"),
+            globals.tool));
+        return PERFEXPERT_ERROR;
+    }
+
+    /* Call the measurement function for this tool */
+    return globals.toolmodule.parse_file(file, profiles);
 }
 
 /* profile_aggregate_hotspots */
@@ -313,11 +295,11 @@ static int profile_flatten_hotspots(profile_t *profile) {
          * cycles (if present)!
          */
         strcpy(key_md5,
-            perfexpert_md5_string(perfexpert_tool_get_tot_ins(globals.tool)));
+            perfexpert_md5_string(globals.toolmodule.total_instructions));
         perfexpert_hash_find_str(hotspot->metrics_by_name, key_md5, metric);
         if (NULL == metric) {
-            strcpy(key_md5, perfexpert_md5_string(perfexpert_tool_get_tot_cyc(
-                globals.tool)));
+            strcpy(key_md5,
+                perfexpert_md5_string(globals.toolmodule.total_cycles));
             perfexpert_hash_find_str(hotspot->metrics_by_name, key_md5, metric);
             if (NULL != metric) {
                 profile->cycles += metric->value;
@@ -330,7 +312,7 @@ static int profile_flatten_hotspots(profile_t *profile) {
 
             OUTPUT_VERBOSE((8, "      %s (%s not found)",
                 _RED("removed from list of hotspots"),
-                perfexpert_tool_get_tot_cyc(globals.tool)));
+                globals.toolmodule.total_cycles));
         }
         hotspot = (procedure_t *)perfexpert_list_get_next(hotspot);
     }

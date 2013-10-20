@@ -21,18 +21,17 @@
 
 bin_PROGRAMS = perfexpert_analyzer
 
-perfexpert_analyzer_CPPFLAGS = -I$(srcdir)/../common
+perfexpert_analyzer_CPPFLAGS = -I$(srcdir)/../common -I$(srcdir)/../../modules
 perfexpert_analyzer_CFLAGS = -O3
-perfexpert_analyzer_LDFLAGS = -lxml2 -lmatheval
+perfexpert_analyzer_LDFLAGS = -lmatheval
+perfexpert_analyzer_LDADD = ../../modules/libperfexpert_module.la
 perfexpert_analyzer_SOURCES = analyzer_main.c \
-	analyzer_hpctoolkit.c \
 	analyzer_lcpi.c \
 	analyzer_logic.c \
 	analyzer_machine.c \
 	analyzer_options.c \
 	analyzer_output.c \
 	analyzer_profile.c \
-	analyzer_sort.c \
-	analyzer_vtune.c
+	analyzer_sort.c
 
 # EOF

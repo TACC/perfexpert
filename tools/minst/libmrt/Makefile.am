@@ -19,10 +19,12 @@
 # $HEADER$
 #
 
-lib_LIBRARIES = libmrt.a
-libmrt_a_SOURCES = mrt.c
+lib_LTLIBRARIES = libmrt.la
+libmrt_la_SOURCES = mrt.c
+libmrt_la_CFLAGS = -I$(srcdir) -I$(srcdir)/../common
+libmrt_la_LDFLAGS = -static
+
 include_HEADERS = mrt.h ../common/macpo_record.h
 
-libmrt_a_CFLAGS = -I$(srcdir) -I$(srcdir)/../common
 
 # EOF
