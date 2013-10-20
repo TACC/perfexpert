@@ -31,10 +31,11 @@ extern "C" {
 /* measurements */
 int measurements(void) {
     OUTPUT_VERBOSE((4, "%s", _BLUE("Measurements phase")));
+    OUTPUT(("%s [%s]", _YELLOW("Collecting measurements"), globals.tool));
 
     if (PERFEXPERT_SUCCESS !=
         perfexpert_load_module(globals.tool, &(globals.toolmodule))) {
-        OUTPUT(("%s [%s]", _ERROR("Error: unable to local tool module"),
+        OUTPUT(("%s [%s]", _ERROR("Error: unable to load tool module"),
             globals.tool));
         return PERFEXPERT_ERROR;
     }

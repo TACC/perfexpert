@@ -84,17 +84,16 @@ int ct_main(int argc, char** argv) {
 
     /* Print to a file or STDOUT is? */
     if (NULL != globals.outputfile) {
-        OUTPUT_VERBOSE((7, "printing recommendations to file (%s)",
+        OUTPUT_VERBOSE((7, "printing transformations to file (%s)",
             globals.outputfile));
-        globals.outputfile_FP = fopen(globals.outputfile, "w+");
-        if (NULL == globals.outputfile_FP) {
+        if (NULL == (globals.outputfile_FP = fopen(globals.outputfile, "w+"))) {
             OUTPUT(("%s (%s)", _ERROR("Error: unable to open output file"),
                 globals.outputfile));
             rc = PERFEXPERT_ERROR;
             goto CLEAN_UP;
         }
     } else {
-        OUTPUT_VERBOSE((7, "printing recommendations to STDOUT"));
+        OUTPUT_VERBOSE((7, "printing transformations to STDOUT"));
     }
 
     /* Connect to database */

@@ -149,8 +149,8 @@ static inline int perfexpert_database_connect(sqlite3 **db, const char *file) {
     /* Use default database if the user does not define one */
     if (NULL == my_file) {
         PERFEXPERT_ALLOC(char, my_file,
-            (strlen(PERFEXPERT_DB) + strlen(getenv("HOME")) + 2));
-        sprintf(my_file, "%s/%s", getenv("HOME"), PERFEXPERT_DB);
+            (strlen(PERFEXPERT_DB) + strlen(getenv("HOME")) + 3));
+        sprintf(my_file, "%s/.%s", getenv("HOME"), PERFEXPERT_DB);
         allocated = PERFEXPERT_TRUE;
     }
 

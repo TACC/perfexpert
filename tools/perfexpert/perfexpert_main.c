@@ -44,7 +44,7 @@ globals_t globals; // Variable to hold global options, this one is OK
 int main(int argc, char** argv) {
     char workdir_template[] = ".perfexpert-temp.XXXXXX";
     char *workdir;
-    char *report_file;
+    char *file;
     int rc = PERFEXPERT_ERROR;
 
     /* Set default values for globals */
@@ -138,29 +138,29 @@ int main(int argc, char** argv) {
 
         /* Call measurement tool */
         if (PERFEXPERT_SUCCESS != measurements()) {
-            OUTPUT(("%s", _ERROR("Error: unable to take measurements")));
+            OUTPUT(("%s", _ERROR("Error: while taking measurements")));
             goto CLEANUP;
         }
 
         /* Escape to perfexpert_run_exp */
         if (PERFEXPERT_TRUE == globals.only_exp) {
             OUTPUT((""));
-            OUTPUT(("%s experiment.xml file is available in %s/1",
-                _BOLDRED("NOTICE:"), workdir));
+            OUTPUT(("%s measurements are available in %s", _BOLDRED("NOTICE:"),
+                globals.stepdir));
             OUTPUT(("        directory, to analyze results, run:"));
             OUTPUT((""));
-            OUTPUT(("perfexpert_analyzer threshold %s/1/experiment.xml",
-                workdir));
+            OUTPUT(("perfexpert_analyzer threshold %s/%s", globals.stepdir,
+                globals.toolmodule.profile_file));
             OUTPUT((""));
             goto CLEANUP;
         }
 
-        /* Call analyzer and stuff (former perfexpert) */
-        switch (analysis()) {
+        /* Call analyzer */
+        switch ((rc = analysis())) {
             case PERFEXPERT_FAILURE:
             case PERFEXPERT_ERROR:
-            case 127: // Execution failed, value returned by fork()
-                OUTPUT(("%s", _ERROR("Error: unable to run analyzer")));
+            case PERFEXPERT_FORK_ERROR:
+                OUTPUT(("%s", _ERROR("Error: while running analyzer")));
                 goto CLEANUP;
 
             case PERFEXPERT_NO_HOTSPOTS:
@@ -170,97 +170,85 @@ int main(int argc, char** argv) {
                     "PerfExpert is unable"));
                 OUTPUT(("         to collect enough samples from program run. "
                     "Try again"));
-                OUTPUT(("         using a bigger workload."));
-                goto CLEANUP;
-
-            case PERFEXPERT_NO_DATA:
-                OUTPUT(("Unable to analyze your application"));
-
-                /* Print analysis report */
-                PERFEXPERT_ALLOC(char, report_file,
-                    (strlen(globals.stepdir) + strlen(ANALYZER_REPORT) + 2));
-                sprintf(report_file, "%s/%s", globals.stepdir, ANALYZER_REPORT);
-                if (PERFEXPERT_SUCCESS !=
-                    perfexpert_util_file_print(report_file)) {
-                    OUTPUT(("%s",
-                        _ERROR("Error: unable to show analysis report")));
-                }
-                PERFEXPERT_DEALLOC(report_file);
-                rc = PERFEXPERT_NO_DATA;
+                OUTPUT(("         using a bigger workload"));
                 goto CLEANUP;
 
             case PERFEXPERT_SUCCESS:
-                rc = PERFEXPERT_SUCCESS;
+                PERFEXPERT_ALLOC(char, file,
+                    (strlen(globals.stepdir) + strlen(ANALYZER_REPORT) + 2));
+                sprintf(file, "%s/%s", globals.stepdir, ANALYZER_REPORT);
+                if (PERFEXPERT_SUCCESS != perfexpert_util_file_print(file)) {
+                    OUTPUT(("%s", _ERROR("Error: unable to show report file")));
+                }
+                PERFEXPERT_DEALLOC(file);
         }
 
         /* Call recommender */
-        switch (recommendation()) {
+        switch ((rc = recommendation())) {
             case PERFEXPERT_ERROR:
             case PERFEXPERT_FAILURE:
-            case 127: // Execution failed, value returned by fork()
-                OUTPUT(("%s", _ERROR("Error: unable to run recommender")));
+            case PERFEXPERT_FORK_ERROR:
+                OUTPUT(("%s", _ERROR("Error: while running recommender")));
+                goto CLEANUP;
+
+            case PERFEXPERT_NO_HOTSPOTS:
+                OUTPUT(("No hostspots found"));
                 goto CLEANUP;
 
             case PERFEXPERT_NO_REC:
-                OUTPUT(("No recommendation found, printing analysys report"));
-                rc = PERFEXPERT_NO_REC;
-                goto REPORT;
+                OUTPUT(("PerfExpert has no recommendations for this code"));
+                goto CLEANUP;
 
             case PERFEXPERT_SUCCESS:
-                rc = PERFEXPERT_SUCCESS;
+                PERFEXPERT_ALLOC(char, file,
+                    (strlen(globals.stepdir) + strlen(RECOMMENDER_REPORT) + 2));
+                sprintf(file, "%s/%s", globals.stepdir, RECOMMENDER_REPORT);
+                if (PERFEXPERT_SUCCESS != perfexpert_util_file_print(file)) {
+                    OUTPUT(("%s",
+                        _ERROR("Error: unable to show recommendations")));
+                }
+                PERFEXPERT_DEALLOC(file);
         }
 
         if ((NULL != globals.sourcefile) || (NULL != globals.target)) {
             #if HAVE_CODE_TRANSFORMATION
             /* Call code transformer */
-            switch (transformation()) {
+            switch ((rc = transformation())) {
                 case PERFEXPERT_ERROR:
                 case PERFEXPERT_FAILURE:
+                case PERFEXPERT_FORK_ERROR:
                     OUTPUT(("%s",
-                        _ERROR("Error: unable to run code transformer")));
+                        _ERROR("Error: while running code transformer")));
                     goto CLEANUP;
 
                 case PERFEXPERT_NO_TRANS:
-                    OUTPUT(("%s",
-                        _RED("Unable to apply optimizations automatically")));
-                    rc = PERFEXPERT_NO_TRANS;
-                    goto REPORT;
+                    OUTPUT(("PerfExpert has no automatic optimization for this "
+                        "code. If there is"));
+                    OUTPUT(("any recommendation (shown above) try to apply them"
+                        " manually"));
+                    goto CLEANUP;
 
                 case PERFEXPERT_SUCCESS:
-                    rc = PERFEXPERT_SUCCESS;
+                    PERFEXPERT_ALLOC(char, file,
+                        (strlen(globals.stepdir) + strlen(CT_REPORT) + 2));
+                    sprintf(file, "%s/%s", globals.stepdir, CT_REPORT);
+                    if (PERFEXPERT_SUCCESS != perfexpert_util_file_print(file)) {
+                        OUTPUT(("%s",
+                            _ERROR("Error: unable to show transformations")));
+                    }
+                    PERFEXPERT_DEALLOC(file);
             }
             #else
             rc = PERFEXPERT_SUCCESS;
-            goto REPORT;            
+            goto CLEANUP;            
             #endif
         } else {
             rc = PERFEXPERT_SUCCESS;
-            goto REPORT;
+            goto CLEANUP;
         }
         OUTPUT(("%s", _BLUE("Starting another optimization round...")));
         PERFEXPERT_DEALLOC(globals.stepdir);
         globals.step++;
-    }
-
-    /* Print analysis report */
-    REPORT:
-    PERFEXPERT_ALLOC(char, report_file,
-        (strlen(globals.stepdir) + strlen(ANALYZER_REPORT) + 2));
-    sprintf(report_file, "%s/%s", globals.stepdir, ANALYZER_REPORT);
-    if (PERFEXPERT_SUCCESS != perfexpert_util_file_print(report_file)) {
-        OUTPUT(("%s", _ERROR("Error: unable to show analysis report")));
-    }
-    PERFEXPERT_DEALLOC(report_file);
-
-    /* Print recommendations */
-    if ((0 < globals.rec_count) && (PERFEXPERT_NO_REC != rc)) {
-        PERFEXPERT_ALLOC(char, report_file,
-            (strlen(globals.stepdir) + strlen(RECOMMENDER_REPORT) + 2));
-        sprintf(report_file, "%s/%s", globals.stepdir, RECOMMENDER_REPORT);
-        if (PERFEXPERT_SUCCESS != perfexpert_util_file_print(report_file)) {
-            OUTPUT(("%s", _ERROR("Error: unable to show recommendations")));
-        }
-        PERFEXPERT_DEALLOC(report_file);
     }
 
     CLEANUP:

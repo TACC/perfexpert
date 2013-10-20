@@ -86,8 +86,7 @@ int main(int argc, char **argv) {
     if (NULL != globals.outputfile) {
         OUTPUT_VERBOSE((7, "   %s (%s)",
             _YELLOW("printing recommendations to file"), globals.outputfile));
-        globals.outputfile_FP = fopen(globals.outputfile, "w+");
-        if (NULL == globals.outputfile_FP) {
+        if (NULL == (globals.outputfile_FP = fopen(globals.outputfile, "w+"))) {
             OUTPUT(("%s (%s)", _ERROR("Error: unable to open output file"),
                 globals.outputfile));
             return PERFEXPERT_ERROR;
@@ -131,12 +130,17 @@ int main(int argc, char **argv) {
     }
 
     if (PERFEXPERT_FALSE == globals.found_hotspots) {
+        OUTPUT(("%s (%s)", _ERROR("Error: no hotspots found. Empty file?"),
+            globals.inputfile));
         return PERFEXPERT_NO_HOTSPOTS;
     }
 
     /* Sort hotspots */
     if (NULL != globals.order) {
-        hotspot_sort(&profiles);
+        if (PERFEXPERT_SUCCESS != hotspot_sort(&profiles)) {
+            OUTPUT(("%s", _ERROR("Error: while sorting hotspots")));
+            return PERFEXPERT_ERROR;
+        }
     }
 
     /* Output analysis report */
@@ -153,7 +157,7 @@ int main(int argc, char **argv) {
         }
     }
 
-    return 0;
+    return PERFEXPERT_SUCCESS;
 }
 
 #ifdef __cplusplus

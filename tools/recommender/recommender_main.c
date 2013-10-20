@@ -127,7 +127,7 @@ int main(int argc, char** argv) {
     }
 
     /* Parse input parameters */
-    if (PERFEXPERT_SUCCESS != parse_segment_params(&segments)) {
+    if (PERFEXPERT_SUCCESS != (rc = parse_segment_params(&segments))) {
         OUTPUT(("%s", _ERROR("Error: parsing input params")));
         goto CLEANUP;
     }
