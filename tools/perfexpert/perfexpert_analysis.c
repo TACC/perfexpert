@@ -32,7 +32,6 @@ extern "C" {
 #include "perfexpert.h"
 #include "perfexpert_constants.h"
 #include "perfexpert_fork.h"
-#include "perfexpert_measurements.h"
 #include "perfexpert_output.h"
 #include "perfexpert_util.h"
 #include "install_dirs.h"
@@ -78,21 +77,21 @@ int analysis(void) {
         return PERFEXPERT_ERROR;
     }
     bzero(temp_str[6], BUFFER_SIZE);
-    sprintf(temp_str[6], "%s/%s", globals.stepdir,
-        perfexpert_tool_get_profile_file(globals.tool));
-    if (0 != setenv("PERFEXPERT_ANALYZER_INPUT_FILE", temp_str[6], 1)) {
+    sprintf(temp_str[6], "%s/%s", globals.stepdir, ANALYZER_REPORT);
+    if (0 != setenv("PERFEXPERT_ANALYZER_OUTPUT_FILE", temp_str[6], 1)) {
         OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
         return PERFEXPERT_ERROR;
     }
     bzero(temp_str[7], BUFFER_SIZE);
-    sprintf(temp_str[7], "%s/%s", globals.stepdir, ANALYZER_REPORT);
-    if (0 != setenv("PERFEXPERT_ANALYZER_OUTPUT_FILE", temp_str[7], 1)) {
+    sprintf(temp_str[7], "%s/%s", globals.stepdir, ANALYZER_METRICS);
+    if (0 != setenv("PERFEXPERT_ANALYZER_METRICS_FILE", temp_str[7], 1)) {
         OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
         return PERFEXPERT_ERROR;
     }
     bzero(temp_str[8], BUFFER_SIZE);
-    sprintf(temp_str[8], "%s/%s", globals.stepdir, ANALYZER_METRICS);
-    if (0 != setenv("PERFEXPERT_ANALYZER_METRICS_FILE", temp_str[8], 1)) {
+    sprintf(temp_str[8], "%s/%s", globals.stepdir,
+        globals.toolmodule.profile_file);
+    if (0 != setenv("PERFEXPERT_ANALYZER_INPUT_FILE", temp_str[8], 1)) {
         OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
         return PERFEXPERT_ERROR;
     }

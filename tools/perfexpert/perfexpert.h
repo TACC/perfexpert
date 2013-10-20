@@ -33,12 +33,13 @@ extern "C" {
 #define PROGRAM_PREFIX "[perfexpert]"
 
 #include "perfexpert_constants.h"
+#include "perfexpert_module.h"
 
 /* Structure to hold global variables */
 typedef struct {
     int   verbose;
+    int   colorful; // These should be the first variables in the structure
     char  *dbfile;
-    int   colorful;
     float threshold;
     int   rec_count;
     int   leave_garbage;
@@ -59,6 +60,7 @@ typedef struct {
     char  *knc_before[PARAM_SIZE];
     char  *knc_after[PARAM_SIZE];
     char  *tool;
+    perfexpert_module_t toolmodule;
     char  *order;
     char  *inputfile;
     int   only_exp;

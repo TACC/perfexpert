@@ -30,17 +30,19 @@ AC_INIT([perfexpert], [4.1.1],
 AC_COPYRIGHT([University of Texas at Austin])
 AC_REVISION([$Revision: 4.1.1 $])
 AC_CONFIG_AUX_DIR(config)
+AC_CONFIG_MACRO_DIR([m4])
 
 #------------------------------------------------------------------------------
 # Generate output files and global config.h and install_dirs.h files
 #
-AC_CONFIG_FILES([Makefile tools/Makefile])
+AC_CONFIG_FILES([Makefile tools/Makefile modules/Makefile])
 AC_CONFIG_SRCDIR([tools/common/config.h.in])
 AC_CONFIG_HEADERS([tools/common/config.h])
 AC_CONFIG_FILES([tools/common/install_dirs.h])
 
 # Initialize Automake
 AM_INIT_AUTOMAKE([foreign -Wall -Werror])
+
 # Ok Automake 1.12, shut up!
 m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 
@@ -62,9 +64,9 @@ AC_PROG_CXX_C_O
 AC_PROG_MKDIR_P
 AC_PROG_LN_S
 AC_PROG_INSTALL
-AC_PROG_RANLIB
 AC_TYPE_SIZE_T
 AC_FUNC_MALLOC
+LT_INIT
 
 #------------------------------------------------------------------------------
 # Check for the operation system to include specific defines (if needed!)
@@ -165,14 +167,15 @@ AC_ARG_WITH([boost-include],
     [CPPFLAGS+=" -I$withval"])
 
 #------------------------------------------------------------------------------
-# 'perfexpert' requirements
+# HPCToolkikt module requirements
 #
-AC_ARG_ENABLE([perfexpert],
-    [AS_HELP_STRING([--disable-perfexpert], [disable PerfExpert tool])],
-    [ENABLE_PERFEXPERT=$enableval], [ENABLE_PERFEXPERT=yes])
+AC_ARG_ENABLE([module-hpctoolkit],
+    [AS_HELP_STRING([--disable-module-hpctoolkit],
+    [disable HPCToolkit support])], [ENABLE_HPCTOOLKIT=$enableval],
+    [ENABLE_HPCTOOLKIT=yes])
 
-AC_MSG_CHECKING([whether to enable PerfExpert])
-AS_IF([test x"$ENABLE_PERFEXPERT" = xyes], [
+AC_MSG_CHECKING([whether to enable HPCToolkit module])
+AS_IF([test x"$ENABLE_HPCTOOLKIT" = xyes], [
     AC_MSG_RESULT([yes])
 
     #
@@ -189,6 +192,56 @@ AS_IF([test x"$ENABLE_PERFEXPERT" = xyes], [
         [AC_MSG_ERROR([hpcrun not found])])
     AC_PATH_TOOL([HPCPROF_PROGRAM], [hpcprof],
         [AC_MSG_ERROR([hpcprof not found])])
+
+    #
+    # XML2 support (headers and lib)
+    #
+    AC_ARG_WITH([libxml2],
+        [AS_HELP_STRING([--with-libxml2],
+            [where LibXML2 library and include directories are located])], [
+        CPPFLAGS+=" -I$withval/include"
+        LDFLAGS+=" -L$withval/lib"])
+
+    AC_ARG_WITH([libxml2-lib],
+        [AS_HELP_STRING([--with-libxml2-lib], [set LibXML2 library path])],
+        [LDFLAGS+=" -L$withval"])
+
+    AC_ARG_WITH([libxml2-include],
+        [AS_HELP_STRING([--with-libxml2-include], [set LibXML2 include path])],
+        [CPPFLAGS+=" -I$withval"])
+
+    AC_CHECK_LIB([xml2], [xmlParseFile], [],
+        [AC_MSG_ERROR([libxml2.so not found])])
+    AC_CHECK_HEADER([libxml/parser.h], [],
+        [AC_MSG_ERROR([parser.h not found])])
+
+    ENABLE_HPCTOOLKIT=hpctoolkit
+    ENABLE_MODULES+="hpctoolkit "
+    AC_CONFIG_FILES([modules/hpctoolkit/Makefile])
+], [
+    AC_MSG_RESULT([no])
+    ENABLE_HPCTOOLKIT=
+])
+AC_SUBST([ENABLE_HPCTOOLKIT])
+
+#------------------------------------------------------------------------------
+# 'perfexpert' requirements
+#
+AC_ARG_ENABLE([perfexpert],
+    [AS_HELP_STRING([--disable-perfexpert], [disable PerfExpert tool])],
+    [ENABLE_PERFEXPERT=$enableval], [ENABLE_PERFEXPERT=yes])
+
+AC_MSG_CHECKING([whether to enable PerfExpert])
+AS_IF([test x"$ENABLE_PERFEXPERT" = xyes], [
+    AC_MSG_RESULT([yes])
+
+    AC_MSG_CHECKING([for enabled modules])
+    AS_IF([test x"$ENABLE_MODULES" = x], [
+        AC_MSG_RESULT([no])
+        AC_MSG_ERROR([PerfExpert requires at least one module enabled])
+    ], [
+        AC_MSG_RESULT($ENABLE_MODULES)
+    ])
 
     ENABLE_PERFEXPERT=perfexpert
     AC_CONFIG_FILES([tools/perfexpert/Makefile])
@@ -293,28 +346,6 @@ AS_IF([test x"$ENABLE_ANALYZER" = xyes], [
     AC_CHECK_LIB([matheval], [evaluator_create], [],
         [AC_MSG_ERROR([libmatheval.so not found])])
     AC_CHECK_HEADER([matheval.h], [], [AC_MSG_ERROR([matheval.h not found])])
-
-    #
-    # XML2 support (headers and lib)
-    #
-    AC_ARG_WITH([libxml2],
-        [AS_HELP_STRING([--with-libxml2],
-            [where LibXML2 library and include directories are located])], [
-        CPPFLAGS+=" -I$withval/include"
-        LDFLAGS+=" -L$withval/lib"])
-
-    AC_ARG_WITH([libxml2-lib],
-        [AS_HELP_STRING([--with-libxml2-lib], [set LibXML2 library path])],
-        [LDFLAGS+=" -L$withval"])
-
-    AC_ARG_WITH([libxml2-include],
-        [AS_HELP_STRING([--with-libxml2-include], [set LibXML2 include path])],
-        [CPPFLAGS+=" -I$withval"])
-
-    AC_CHECK_LIB([xml2], [xmlParseFile], [],
-        [AC_MSG_ERROR([libxml2.so not found])])
-    AC_CHECK_HEADER([libxml/parser.h], [],
-        [AC_MSG_ERROR([parser.h not found])])
 
     ENABLE_ANALYZER=analyzer
     AC_CONFIG_FILES([tools/analyzer/Makefile])
@@ -522,5 +553,5 @@ AC_MSG_NOTICE([CXXFLAGS=$CXXFLAGS])
 AC_MSG_NOTICE([LDFLAGS=$LDFLAGS])
 AC_MSG_NOTICE([Enabled tools: $ENABLE_PERFEXPERT $ENABLE_MINST $ENABLE_SNIFFER\
  $ENABLE_ANALYZER $ENABLE_RECOMMENDER $ENABLE_CT $ENABLE_HOUND])
-
+AC_MSG_NOTICE([Enabled modules: $ENABLE_MODULES])
 # EOF
