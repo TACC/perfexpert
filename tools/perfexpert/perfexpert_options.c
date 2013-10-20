@@ -435,7 +435,7 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
 
         /* Too few options */
         case ARGP_KEY_END:
-            if (PERFEXPERT_TRUE == globals.only_exp) {
+            if (PERFEXPERT_TRUE == globals.compat_mode) {
                 if (1 > state->arg_num) {
                     argp_usage(state);
                 }
