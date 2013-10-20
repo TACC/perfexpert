@@ -145,9 +145,10 @@ int main(int argc, char** argv) {
         /* Escape to perfexpert_run_exp */
         if (PERFEXPERT_TRUE == globals.only_exp) {
             OUTPUT((""));
-            OUTPUT(("%s measurements are available in %s", _BOLDRED("NOTICE:"),
-                globals.stepdir));
-            OUTPUT(("        directory, to analyze results, run:"));
+            OUTPUT(("%s the performance measurements collected are available",
+                _BOLDRED("NOTICE:")));
+            OUTPUT(("        in %s", _MAGENTA(globals.stepdir)));
+            OUTPUT(("        to analyze them, run:"));
             OUTPUT((""));
             OUTPUT(("perfexpert_analyzer threshold %s/%s", globals.stepdir,
                 globals.toolmodule.profile_file));
