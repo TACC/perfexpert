@@ -37,6 +37,7 @@ enum {
     PERFEXPERT_NO_TRANS,       /* 4  ...when transformations can't be applied */
     PERFEXPERT_NO_DATA,        /* 5  ...when analyzer return an error         */
     PERFEXPERT_NO_HOTSPOTS,    /* 6  ...when there no hotspots were found     */
+    PERFEXPERT_FORK_ERROR,     /* 7  ...in case of fork error :)              */
 };
 
 #define PERFEXPERT_TRUE  1 /* used to return boolean values */
@@ -73,6 +74,7 @@ enum {
 
 #define CT_PROGRAM               "perfexpert_ct"
 #define CT_OUTPUT                "ct.output"
+#define CT_REPORT                "ct_report.txt"
 
 #define METRICS_TABLE            "metric"
 #define METRICS_FILE             "recommender_metrics.txt"

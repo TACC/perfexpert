@@ -122,7 +122,7 @@ static inline int fork_and_wait(test_t *test, char *argv[]) {
         execvp(argv[0], argv);
         
         OUTPUT(("child process failed to run, check if program exists"));
-        exit(127);
+        exit(PERFEXPERT_FORK_ERROR);
     } else {
         /* Parent */
         close(CHILD_READ);
@@ -175,52 +175,18 @@ static inline int fork_and_wait(test_t *test, char *argv[]) {
     }
 
     /* Evaluating the result */
-    switch (rc >> 8) {
-        case PERFEXPERT_FAILURE: /* (-1) Error during fork() or waitpid() */
-            OUTPUT_VERBOSE((7, "      [%s] [%s] >> [%s]",
-                            _BOLDYELLOW((char *)"ERROR"), argv[0], test->info));
-            return rc >> 8;
-
-        case PERFEXPERT_SUCCESS: /* (0) The pattern matches */
-            OUTPUT_VERBOSE((7, "      [ %s  ] [%s] >> [%s]",
-                            _BOLDGREEN((char *)"OK"), argv[0], test->info));
-            return rc >> 8;
-
-        case PERFEXPERT_NO_REC: /* (2) Out of recommendations */
-            OUTPUT_VERBOSE((7, "      [%s] [%s] >> [%s]",
-                            _BOLDYELLOW((char *)"NOREC"), argv[0], test->info));
-            return rc >> 8;
-
-        case PERFEXPERT_NO_PAT: /* (3) NO pattern matches */
-            OUTPUT_VERBOSE((7, "      [%s] [%s] >> [%s]",
-                            _BOLDYELLOW((char *)"NOPAT"), argv[0], test->info));
-            return rc >> 8;
-
-        case PERFEXPERT_NO_TRANS: /* (4) Out of transformations */
-            OUTPUT_VERBOSE((7, "      [%s] [%s] >> [%s]",
-                            _BOLDYELLOW((char *)"NOTRA"), argv[0], test->info));
-            return rc >> 8;
-
-        case PERFEXPERT_NO_DATA: /* (5) analyzer does not have enough data */
-            OUTPUT_VERBOSE((7, "      [%s] [%s] >> [%s]",
-                            _BOLDYELLOW((char *)"NODAT"), argv[0], test->info));
-            return rc >> 8;
-
-        case 127: /* Execution failed */
-            OUTPUT_VERBOSE((7, "      [%s ] [%s] >> [%s]",
-                            _BOLDRED((char *)"FAIL"), argv[0], test->info));
-            return rc >> 8;
-
-        case 255: /* The pattern doesn't match */
-            OUTPUT_VERBOSE((7, "      [%s ] [%s] >> [%s]",
-                            _BOLDRED((char *)"FAIL"), argv[0], test->info));
-            return rc >> 8;
-
-        default: /* Not sure what happened */
-            OUTPUT_VERBOSE((7, "      [%s] [%s] >> [%s]",
-                            _MAGENTA((char *)"UNDEF"), argv[0], test->info));
-            return rc >> 8;
+    if (0 > (rc >> 8)) {
+        OUTPUT_VERBOSE((7, "      [%s] [%s] >> [%s] (rc=%d)",
+            _BOLDYELLOW((char *)"ERROR"), argv[0], test->info, rc >> 8));
+    } else if (0 < (rc >> 8)) {
+        OUTPUT_VERBOSE((7, "      [%s ] [%s] >> [%s] (rc=%d)",
+            _BOLDRED((char *)"FAIL"), argv[0], test->info, rc >> 8));
+    } else {
+        OUTPUT_VERBOSE((7, "      [ %s  ] [%s] >> [%s] (rc=%d)",
+            _BOLDGREEN((char *)"OK"), argv[0], test->info, rc >> 8));
     }
+
+    return rc >> 8;
 }
 
 #ifdef __cplusplus

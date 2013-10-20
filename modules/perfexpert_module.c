@@ -46,9 +46,17 @@ extern globals_t globals; /* This variable is defined in analyzer_main.c */
 
 /* perfexpert_load_module */
 int perfexpert_load_module(const char *toolname, perfexpert_module_t *module) {
+    static const lt_dlinfo *moduleinfo = NULL;
     lt_dlhandle modulehandle = NULL;
-    const lt_dlinfo *moduleinfo;
     char *filename = NULL;
+
+    /* Sanity check #0: is the module already loaded? */
+    if (NULL != moduleinfo) {
+        if (0 < moduleinfo->ref_count) {
+            OUTPUT_VERBOSE((10, "   module already loaded"));
+            return PERFEXPERT_SUCCESS;
+        }        
+    }
 
     OUTPUT_VERBOSE((9, "loading module [%s]", toolname));
 

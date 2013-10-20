@@ -37,6 +37,7 @@ extern "C" {
 /* calculate_importance_variance */
 int calculate_importance_variance(profile_t *profile) {
     procedure_t *hotspot = NULL;
+    module_t *module = NULL, *module_temp = NULL;
     metric_t *metric = NULL;
     double maximum = DBL_MIN, minimum = DBL_MAX;
     int count = 0;
@@ -71,6 +72,14 @@ int calculate_importance_variance(profile_t *profile) {
             if (0 == strcmp(metric->name, globals.toolmodule.total_cycles)) {
                 hotspot->cycles += metric->value;
                 profile->cycles += metric->value;
+
+                if (PERFEXPERT_HOTSPOT_LOOP == hotspot->type) {
+                    loop_t *loop = (loop_t *)hotspot;
+                    loop->procedure->module->cycles += metric->value;
+                }
+                if (PERFEXPERT_HOTSPOT_FUNCTION == hotspot->type) {
+                    hotspot->module->cycles += metric->value;
+                }
             }
             metric = (metric_t *)perfexpert_list_get_next(metric);
         }
@@ -86,7 +95,7 @@ int calculate_importance_variance(profile_t *profile) {
         hotspot = (procedure_t *)perfexpert_list_get_next(hotspot);
     }
 
-    /* Calculate importance */
+    /* Calculate importance for hotspots */
     hotspot = (procedure_t *)perfexpert_list_get_first(&(profile->hotspots));
     while ((perfexpert_list_item_t *)hotspot != &(profile->hotspots.sentinel)) {
 
@@ -99,6 +108,15 @@ int calculate_importance_variance(profile_t *profile) {
 
         /* Move on */
         hotspot = (procedure_t *)perfexpert_list_get_next(hotspot);
+    }
+
+    /* Calculate importance for modules */
+    perfexpert_hash_iter_int(profile->modules_by_id, module, module_temp) {
+        module->importance = module->cycles / profile->cycles;
+
+        OUTPUT_VERBOSE((5, "    [%d] %s [cyc=%g] [importance=%.2f%%]",
+            module->id, _YELLOW(module->name), module->cycles,
+            module->importance * 100));
     }
 
     OUTPUT_VERBOSE((5, "   %s [ins=%g] [cyc=%g]", _MAGENTA("total"),

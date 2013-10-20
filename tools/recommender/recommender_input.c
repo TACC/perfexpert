@@ -250,6 +250,11 @@ int parse_segment_params(perfexpert_list_t *segments) {
         return PERFEXPERT_ERROR;
     }
 
+    /* Return PERFEXPERT_NO_HOTSPOTS list count = 0 */
+    if (0 == perfexpert_list_get_size(segments)) {
+        return PERFEXPERT_NO_HOTSPOTS;
+    }
+
     /* print a summary of 'segments' */
     OUTPUT_VERBOSE((4, "   %s (%d)", _MAGENTA("code segment(s) found"),
         perfexpert_list_get_size(segments)));

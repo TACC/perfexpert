@@ -72,7 +72,7 @@ int hotspot_sort(perfexpert_list_t *profiles) {
     OUTPUT(("   %s unknown sorting order (%s), hotspots are not sorted",
         _RED("WARNING:"), globals.order));
 
-    return PERFEXPERT_ERROR;
+    return PERFEXPERT_SUCCESS;
 }
 
 /* sort_by_relevance */

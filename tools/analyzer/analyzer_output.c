@@ -73,6 +73,7 @@ extern "C" {
 
 /* output_analysis_all */
 int output_analysis_all(perfexpert_list_t *profiles) {
+    module_t *module = NULL, *module_temp = NULL;
     procedure_t *hotspot = NULL;
     profile_t *profile = NULL;
 
@@ -82,6 +83,7 @@ int output_analysis_all(perfexpert_list_t *profiles) {
     profile = (profile_t *)perfexpert_list_get_first(profiles);
     while ((perfexpert_list_item_t *)profile != &(profiles->sentinel)) {
         /* Print total runtime for this profile */
+        PRETTY_PRINT(79, "-");
         fprintf(globals.outputfile_FP,
             "Total running time for %s is %.2f seconds between all %d cores\n",
             _CYAN(profile->name),
@@ -92,6 +94,17 @@ int output_analysis_all(perfexpert_list_t *profiles) {
             _CYAN(profile->name), (profile->cycles /
                 perfexpert_machine_get("CPU_freq") /
                 sysconf(_SC_NPROCESSORS_ONLN)));
+
+        /* For each module in the profile's list of modules... */
+        perfexpert_hash_iter_int(profile->modules_by_id, module, module_temp) {
+            module->importance = module->cycles / profile->cycles;
+
+            fprintf(globals.outputfile_FP,
+                "Module %s takes %.2f%% of the total runtime\n",
+                _MAGENTA(module->shortname), module->importance * 100);
+        }
+        PRETTY_PRINT(79, "-");
+        fprintf(globals.outputfile_FP, "\n");
 
         /* For each hotspot in the profile's list of hotspots... */
         hotspot = (procedure_t *)perfexpert_list_get_first(
@@ -259,9 +272,9 @@ static int output_analysis(profile_t *profile, procedure_t *hotspot) {
                     lcpi->value);
                 PRETTY_PRINT_BAR((int)rint((lcpi->value * 20)), _RED(">"));
             } else {
-                fprintf(globals.outputfile_FP, "%s%5.2f ", _ERROR(description),
-                    lcpi->value);
-                PRETTY_PRINT_BAR((int)rint((lcpi->value * 20)), _ERROR(">"));                
+                fprintf(globals.outputfile_FP, "%s%5.2f ",
+                    _BOLDRED(description), lcpi->value);
+                PRETTY_PRINT_BAR((int)rint((lcpi->value * 20)), _BOLDRED(">"));                
             }
         }
         PERFEXPERT_DEALLOC(temp_str);

@@ -54,7 +54,8 @@ perfexpert_module_t myself_module;
 /* module_measurements */
 int perfexpert_tool_measurements(void) {
     /* First of all, does the file exist? (it is just a double check) */
-    if (PERFEXPERT_SUCCESS != perfexpert_util_file_is_exec(globals.program)) {
+    if (PERFEXPERT_SUCCESS !=
+        perfexpert_util_file_is_exec(globals.program_full)) {
         return PERFEXPERT_ERROR;
     }
     /* Create the program structure file */
@@ -698,6 +699,9 @@ static int hpctoolkit_parser(xmlDocPtr document, xmlNodePtr node,
                     OUTPUT(("%s", _ERROR("Error: unable to find shortname")));
                     return PERFEXPERT_ERROR;
                 }
+
+                module->importance = 0.0;
+                module->cycles = 0.0;
 
                 OUTPUT_VERBOSE((10, "   %s [%d] (%s)", _GREEN("module"),
                     module->id, module->name));

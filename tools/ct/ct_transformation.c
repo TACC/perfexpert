@@ -183,9 +183,11 @@ int test_transformation(fragment_t *fragment, recommendation_t *recommendation,
             rc = PERFEXPERT_ERROR;
             goto CLEAN_UP;
         }
-        OUTPUT(("applying %s to line %d of file %s", transformation->program,
-            fragment->line_number, fragment->filename));
-        OUTPUT(("the original file was renamed to %s", new_file));
+        fprintf(globals.outputfile_FP, "%s was applied to line %d of %s\n",
+            _CYAN(transformation->program), fragment->line_number,
+            fragment->filename);
+        fprintf(globals.outputfile_FP, "The original file was saved as %s\n",
+            _MAGENTA(new_file));
     }
 
     /* Free memory */
