@@ -52,7 +52,7 @@ void instrumentor_t::atTraversalEnd() {
                 inst_info.bb
                 );
 
-        insertStatementBefore(inst_info.exprStmt, fCall);
+        insertStatementBefore(inst_info.stmt, fCall);
     }
 }
 
@@ -100,9 +100,9 @@ attrib instrumentor_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
         }
 
         SgBasicBlock* containingBB = getEnclosingNode<SgBasicBlock>(node);
-        SgExprStatement* containingExprStmt = getEnclosingNode<SgExprStatement>(node);
+        SgStatement* containingStmt = getEnclosingNode<SgStatement>(node);
 
-        if (containingBB && containingExprStmt) {
+        if (containingBB && containingStmt) {
             std::string stream_name = node->unparseToString();
             while (stream_name.at(stream_name.length()-1) == ']') {
                 // Strip off the last [.*]
@@ -150,11 +150,15 @@ attrib instrumentor_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
 
             inst_info_t inst_info;
             inst_info.bb = containingBB;
-            inst_info.exprStmt = containingExprStmt;
+            inst_info.stmt = containingStmt;
             inst_info.params.push_back(param_read_write);
             inst_info.params.push_back(param_line_number);
             inst_info.params.push_back(param_addr);
             inst_info.params.push_back(param_idx);
+
+            inst_info.function_name = SageInterface::is_Fortran_language() ? "indigo__record_f" : "indigo__record_c";
+            inst_info.before = true;
+
             inst_info_list.push_back(inst_info);
 
             // Reset this attribute for any child expressions
@@ -163,4 +167,12 @@ attrib instrumentor_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
     }
 
     return attr;
+}
+
+const inst_list_t::iterator instrumentor_t::inst_begin() {
+    return inst_info_list.begin();
+}
+
+const inst_list_t::iterator instrumentor_t::inst_end() {
+    return inst_info_list.end();
 }

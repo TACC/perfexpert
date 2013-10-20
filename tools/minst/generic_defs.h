@@ -43,6 +43,22 @@ typedef struct {
     function_info_t functionInfo;
 } options_t;
 
+typedef struct {
+    SgBasicBlock* bb;
+    SgStatement* stmt;
+    std::vector<SgExpression*> params;
+
+    // Other fields used while inserting the call.
+    bool before;
+    std::string function_name;
+} inst_info_t;
+
+typedef std::vector<inst_info_t> inst_list_t;
+
+typedef struct {
+    std::string name;
+} reference_info_t;
+
 class attrib {
     public:
         char* inst_func;

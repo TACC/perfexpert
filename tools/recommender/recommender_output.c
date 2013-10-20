@@ -65,7 +65,6 @@ int output_recommendations(void *var, int count, char **val, char **names) {
     /* Pretty print for the user */
     fprintf(globals.outputfile_FP,
         "#\n# Here is a possible recommendation for this code segment\n");
-    fprintf(globals.outputfile_FP, "#\nID: %s\n", val[2]);
     fprintf(globals.outputfile_FP, "Description: %s\n", val[0]);
     fprintf(globals.outputfile_FP, "Reason: %s\n", val[1]);
     fprintf(globals.outputfile_FP, "Code example:\n%s\n", val[3]);
