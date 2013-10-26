@@ -906,12 +906,12 @@ int main(int argc, char* argv[])
 				if (count_sum > 0)
 				{
 					for (int i=0; i<3 && metrics->stride_count[i] > 0; i++)
-						printf ("Stride of %ld cache lines was observed %ld times (%.2f%%).\n", metrics->stride_value[i], metrics->stride_count[i], ((float) metrics->stride_count[i]) / count_sum * 100.0f);
+						printf ("Stride of %d cache lines was observed %ld times (%.2f%%).\n", metrics->stride_value[i], metrics->stride_count[i], ((float) metrics->stride_count[i]) / count_sum * 100.0f);
 				}
 				else
 				{
 					for (int i=0; i<3 && metrics->stride_count[i] > 0; i++)
-						printf ("Stride of %ld cache lines was observed %ld times.\n", metrics->stride_value[i], metrics->stride_count[i]);
+						printf ("Stride of %d cache lines was observed %ld times.\n", metrics->stride_value[i], metrics->stride_count[i]);
 				}
 
 				printf ("\n");
@@ -981,7 +981,7 @@ int main(int argc, char* argv[])
 			{
 				for (int i=0; i<3 && metrics->stride_count[i] > 0; i++)
 				{
-					printf ("%s.stride_%d.value=%ld\n", metrics->var_name.c_str(), i, metrics->stride_value[i]);
+					printf ("%s.stride_%d.value=%d\n", metrics->var_name.c_str(), i, metrics->stride_value[i]);
 					printf ("%s.stride_%d.count=%ld\n", metrics->var_name.c_str(), i, metrics->stride_count[i]);
 				}
 
