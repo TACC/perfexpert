@@ -400,11 +400,11 @@ AS_IF([test x"$ENABLE_RECOMMENDER" = xyes], [
 AC_SUBST([ENABLE_RECOMMENDER])
 
 #------------------------------------------------------------------------------
-# 'minst' (MACPO) requirements
+# 'macpo' requirements
 #
-AC_ARG_ENABLE([minst],
-    [AS_HELP_STRING([--disable-minst], [disable data access instrumentation])],
-    [ENABLE_MINST=$enableval], [ENABLE_MINST=yes])
+AC_ARG_ENABLE([macpo],
+    [AS_HELP_STRING([--disable-macpo], [disable data access instrumentation])],
+    [ENABLE_MACPO=$enableval], [ENABLE_MACPO=yes])
 
 AC_ARG_WITH([jvm],
     [AS_HELP_STRING([--with-jvm], [set JVM library path])],
@@ -412,8 +412,8 @@ AC_ARG_WITH([jvm],
 
 AC_LANG_PUSH([C++])
 
-AC_MSG_CHECKING([whether to enable Minst (MACPO)])
-AS_IF([test x"$ENABLE_MINST" = xyes], [
+AC_MSG_CHECKING([whether to enable MACPO])
+AS_IF([test x"$ENABLE_MACPO" = xyes], [
     AC_MSG_RESULT([yes])
 
     #
@@ -474,16 +474,16 @@ AS_IF([test x"$ENABLE_MINST" = xyes], [
     AC_CHECK_HEADER([google/sparse_hash_map], [],
         [AC_MSG_ERROR([not found: google/sparse_hash_map])])
 
-    ENABLE_MINST=minst
-    AC_CONFIG_FILES([tools/minst/Makefile])
-    AC_CONFIG_FILES([tools/minst/macpo.sh], [chmod +x tools/minst/macpo.sh])
-    AC_CONFIG_FILES([tools/minst/libmrt/Makefile])
-    AC_CONFIG_FILES([tools/minst/analyze/Makefile])
+    ENABLE_MACPO=macpo
+    AC_CONFIG_FILES([tools/macpo/Makefile])
+    AC_CONFIG_FILES([tools/macpo/macpo.sh], [chmod +x tools/macpo/macpo.sh])
+    AC_CONFIG_FILES([tools/macpo/libmrt/Makefile])
+    AC_CONFIG_FILES([tools/macpo/analyze/Makefile])
 ], [
     AC_MSG_RESULT([no])
-    ENABLE_MINST=
+    ENABLE_MACPO=
 ])
-AC_SUBST([ENABLE_MINST])
+AC_SUBST([ENABLE_MACPO])
 AC_LANG_POP
 
 #------------------------------------------------------------------------------
@@ -552,7 +552,7 @@ AC_MSG_NOTICE([CPPFLAGS=$CPPFLAGS])
 AC_MSG_NOTICE([CFLAGS=$CFLAGS])
 AC_MSG_NOTICE([CXXFLAGS=$CXXFLAGS])
 AC_MSG_NOTICE([LDFLAGS=$LDFLAGS])
-AC_MSG_NOTICE([Enabled tools: $ENABLE_PERFEXPERT $ENABLE_MINST $ENABLE_SNIFFER\
+AC_MSG_NOTICE([Enabled tools: $ENABLE_PERFEXPERT $ENABLE_MACPO $ENABLE_SNIFFER\
  $ENABLE_ANALYZER $ENABLE_RECOMMENDER $ENABLE_CT $ENABLE_HOUND])
 AC_MSG_NOTICE([Enabled modules: $ENABLE_MODULES])
 # EOF

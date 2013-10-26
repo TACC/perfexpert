@@ -21,11 +21,11 @@
 
 SUBDIRS = libmrt analyze
 
-bin_PROGRAMS = minst
+bin_PROGRAMS = macpo
 dist_bin_SCRIPTS = macpo.sh
 
-minst_SOURCES = minst.cpp instrumentor.cpp main.cpp aligncheck.cpp
-minst_CXXFLAGS = -Wno-deprecated -I$(srcdir)/common
-minst_LDFLAGS = -lrose -ljvm
+macpo_SOURCES = minst.cpp instrumentor.cpp main.cpp aligncheck.cpp
+macpo_CXXFLAGS = -Wno-deprecated -I$(srcdir)/common
+macpo_LDFLAGS = -lrose -ljvm
 
 # EOF
