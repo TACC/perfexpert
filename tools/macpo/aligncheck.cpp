@@ -70,119 +70,129 @@ bool aligncheck_t::vectorizable(SgStatement* stmt) {
 }
 
 attrib aligncheck_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
-    SgExpression* index_expr = NULL;
-    SgExpression* instrument_test = NULL;
-    SgExpression* instrument_incr = NULL;
-    SgExpression* increment_var[2] = {0};
+    SgExpression *idxv_expr, *init_expr, *test_expr, *incr_expr;
 
     SgForStatement* for_stmt = isSgForStatement(node);
     if (for_stmt) {
-        // Sanity check to see if this loop contains statements that prevent
-        // vectorization.
-        SgStatement* first_stmt = getFirstStatement(for_stmt);
-        SgStatement* stmt = first_stmt;
-        while (stmt) {
-            if (!vectorizable(stmt)) {
-                std::cout << "This loop cannot be vectorized because of the "
-                    << "following statement: " << stmt->unparseToString() <<
-                    "\n";
-                return attr;
-            }
+        get_loop_header_components(for_stmt, idxv_expr, init_expr, test_expr,
+                incr_expr);
+        locate_and_place_instrumentation(node, init_expr, test_expr,
+                incr_expr);
+    }
 
-            stmt = getNextStatement(stmt);
+    return attr;
+}
+
+bool aligncheck_t::get_loop_header_components(SgForStatement* for_stmt,
+        SgExpression*& idxv_expr, SgExpression*& init_expr,
+        SgExpression*& test_expr, SgExpression*& incr_expr) {
+    bool ret = true;
+
+    // Initialization
+    idxv_expr = NULL;
+    init_expr = NULL;
+    test_expr = NULL;
+    incr_expr = NULL;
+
+    // Sanity check to see if this loop contains statements that prevent
+    // vectorization.
+    SgStatement* first_stmt = getFirstStatement(for_stmt);
+    SgStatement* stmt = first_stmt;
+    while (stmt) {
+        if (!vectorizable(stmt)) {
+            std::cout << "This loop cannot be vectorized because of the "
+                << "following statement: " << stmt->unparseToString() <<
+                "\n";
+            return false;
         }
 
-        SgExpression* increment_var[2] = {0};
-        SgBinaryOp* incr_binary_op = isSgBinaryOp(for_stmt->get_increment());
-        SgUnaryOp* incr_unary_op = isSgUnaryOp(for_stmt->get_increment());
-        if (incr_binary_op) {
-            // Check if one of these is a constant,
-            // if so, the compiler has everything to do it's work.
+        stmt = getNextStatement(stmt);
+    }
 
-            increment_var[0] = incr_binary_op->get_lhs_operand();
-            increment_var[1] = incr_binary_op->get_rhs_operand();
-        } else if (incr_unary_op) {
-            increment_var[0] = incr_unary_op->get_operand();
-        }
+    SgExpression* increment_var[2] = {0};
+    SgBinaryOp* incr_binary_op = isSgBinaryOp(for_stmt->get_increment());
+    SgUnaryOp* incr_unary_op = isSgUnaryOp(for_stmt->get_increment());
+    if (incr_binary_op) {
+        // Check if one of these is a constant,
+        // if so, the compiler has everything to do it's work.
 
-        SgExprStatement* test_statement =
-            isSgExprStatement(for_stmt->get_test());
-        if (test_statement) {
-            SgExpression* test_expression = test_statement->get_expression();
-            if (test_expression) {
-                SgBinaryOp* binaryOp = isSgBinaryOp(test_expression);
-                if (binaryOp) {
-                    SgExpression* operand[2];
-                    operand[0] = binaryOp->get_lhs_operand();
-                    operand[1] = binaryOp->get_rhs_operand();
+        increment_var[0] = incr_binary_op->get_lhs_operand();
+        increment_var[1] = incr_binary_op->get_rhs_operand();
+    } else if (incr_unary_op) {
+        increment_var[0] = incr_unary_op->get_operand();
+    }
 
-                    SgExpression* other = NULL;
-                    if (isSgValueExp(operand[0]) ||
+    SgExprStatement* test_statement =
+        isSgExprStatement(for_stmt->get_test());
+    if (test_statement) {
+        SgExpression* test_expression = test_statement->get_expression();
+        if (test_expression) {
+            SgBinaryOp* binaryOp = isSgBinaryOp(test_expression);
+            if (binaryOp) {
+                SgExpression* operand[2];
+                operand[0] = binaryOp->get_lhs_operand();
+                operand[1] = binaryOp->get_rhs_operand();
+
+                SgExpression* other = NULL;
+                if (isSgValueExp(operand[0]) ||
                         isConstType(operand[0]->get_type())) {
-                        other = operand[1];
-                    }
-                    else if (isSgValueExp(operand[1]) ||
+                    other = operand[1];
+                }
+                else if (isSgValueExp(operand[1]) ||
                         isConstType(operand[1]->get_type())) {
-                        other = operand[0];
-                    }
+                    other = operand[0];
+                }
 
-                    if (other == NULL) {
-                        // Is one of these the index variable and other some
-                        // other variable? 
-                        // XXX: Hack: we should be checking if the AST nodes
-                        // are the same but such an API does not seem to exist,
-                        // hence checking string representation.
-                        std::string operand_str[2];
-                        operand_str[0] = operand[0]->unparseToString();
-                        operand_str[1] = operand[1]->unparseToString();
+                if (other == NULL) {
+                    // Is one of these the index variable and other some
+                    // other variable?
+                    // XXX: Hack: we should be checking if the AST nodes
+                    // are the same but such an API does not seem to exist,
+                    // hence checking string representation.
+                    std::string operand_str[2];
+                    operand_str[0] = operand[0]->unparseToString();
+                    operand_str[1] = operand[1]->unparseToString();
 
-                        bool terminate = false;
-                        for (int i=0; i<2 && !terminate; i++) {
-                            if (increment_var[i]) {
-                                std::string increment_str =
-                                    increment_var[i]->unparseToString();
+                    bool terminate = false;
+                    for (int i=0; i<2 && !terminate; i++) {
+                        if (increment_var[i]) {
+                            std::string increment_str =
+                                increment_var[i]->unparseToString();
 
-                                for (int j=0; j<2 && !terminate; j++) {
-                                    if (increment_str == operand_str[j]) {
-                                        // The variable that's common between
-                                        // test and increment is the index
-                                        // variable.
-                                        index_expr = increment_var[i];
+                            for (int j=0; j<2 && !terminate; j++) {
+                                if (increment_str == operand_str[j]) {
+                                    // The variable that's common between
+                                    // test and increment is the index
+                                    // variable.
+                                    idxv_expr = increment_var[i];
 
-                                        // While the uncommon variable is the
-                                        // test expression to be instrumented.
-                                        instrument_test = operand[1-i];
+                                    // While the uncommon variable is the
+                                    // test expression to be instrumented.
+                                    test_expr = operand[1-i];
 
-                                        // The other increment expression may
-                                        // need to be instrumented
-                                        SgExpression* incr = increment_var[1-i];
-                                        if (incr && !isSgValueExp(incr) &&
-                                            !isConstType(incr->get_type()))
-                                            instrument_incr = incr;
+                                    // The other increment expression may
+                                    // need to be instrumented
+                                    incr_expr = increment_var[1-i];
 
-                                        // We're done with this loop.
-                                        terminate = true;
-                                    }
+                                    // We're done with this loop.
+                                    terminate = true;
                                 }
                             }
                         }
-                    } else {
-                        // Check if this is the same variable being used in the
-                        // increment expression
-                        std::string var_string = other->unparseToString();
-                        for (int i=0; i<2; i++) {
-                            if ((increment_var[i] &&
-                                increment_var[i]->unparseToString() ==
-                                var_string)) {
-                                index_expr = other;
+                    }
+                } else {
+                    // Check if this is the same variable being used in the
+                    // increment expression
+                    std::string var_string = other->unparseToString();
+                    for (int i=0; i<2; i++) {
+                        if ((increment_var[i] &&
+                                    increment_var[i]->unparseToString() ==
+                                    var_string)) {
+                            idxv_expr = other;
 
-                                // The other increment expression may need to
-                                // be instrumented
-                                SgExpression* incr = increment_var[1-i];
-                                if (incr && !isSgValueExp(incr) &&
-                                    !isConstType(incr->get_type()))
-                                    instrument_incr = incr;
-                            }
+                            // The other increment expression may need to
+                            // be instrumented
+                            incr_expr = increment_var[1-i];
                         }
                     }
                 }
@@ -190,16 +200,53 @@ attrib aligncheck_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
         }
     }
 
-    locate_and_place_instrumentation(node, instrument_test, instrument_incr);
-    return attr;
+    if (idxv_expr) {
+        // XXX: String comparison again instead of tree comparison.
+        std::string idxv_string = idxv_expr->unparseToString();
+
+        SgStatementPtrList init_list = for_stmt->get_init_stmt();
+        for (SgStatementPtrList::iterator it = init_list.begin();
+                it != init_list.end(); it++) {
+            SgStatement* stmt = *it;
+            if (SgExprStatement* expr_stmt = isSgExprStatement(stmt)) {
+                if (SgAssignOp* assign_op =
+                        isSgAssignOp(expr_stmt->get_expression())) {
+                    SgExpression* operand[2];
+                    operand[0] = assign_op->get_lhs_operand();
+                    operand[1] = assign_op->get_rhs_operand();
+
+                    if (operand[0]->unparseToString() == idxv_string) {
+                        init_expr = operand[1];
+                        break;
+                    } else if (operand[1]->unparseToString() == idxv_string) {
+                        init_expr = operand[0];
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+#if 0
+    std::cout << "idxv: " << (idxv_expr ? idxv_expr->unparseToString() : "?")
+            << ", init: " << (init_expr ? init_expr->unparseToString() : "?")
+            << ", test: " << (test_expr ? test_expr->unparseToString() : "?")
+            << ", incr: " << (incr_expr ? incr_expr->unparseToString() : "?")
+            << "\n";
+#endif
+
+    // Return true if we were able to discover both test and increment exprs.
+    return test_expr && incr_expr;
 }
 
 void aligncheck_t::locate_and_place_instrumentation(SgNode* node,
-        SgExpression* instrument_test, SgExpression* instrument_incr) {
+        SgExpression* instrument_init, SgExpression* instrument_test,
+        SgExpression* instrument_incr) {
     // Reaching definitions provided by the VariableRenaming pass
     // don't work for arrays. Hence we check whether we have at least one
     // scalar expression before proceeding to instrument.
-    if ((instrument_test && isSgVarRefExp(instrument_test)) ||
+    if ((instrument_init && isSgVarRefExp(instrument_init)) ||
+            (instrument_test && isSgVarRefExp(instrument_test)) ||
             (instrument_incr && isSgVarRefExp(instrument_incr))) {
 
         // We need to instrument at least one scalar variable. Can this
@@ -208,6 +255,7 @@ void aligncheck_t::locate_and_place_instrumentation(SgNode* node,
         VariableRenaming::NumNodeRenameTable rename_table =
             var_renaming->getReachingDefsAtNode(node);
 
+        std::string init_string = instrument_init->unparseToString();
         std::string test_string = instrument_test->unparseToString();
         std::string incr_string = instrument_incr->unparseToString();
 
@@ -224,38 +272,65 @@ void aligncheck_t::locate_and_place_instrumentation(SgNode* node,
 
                 std::string var_name = (*name_it)->get_name();
 
-                if (var_name == test_string || var_name == incr_string) {
-                    for (entry_iterator entry_it = entry.begin();
-                            entry_it != entry.end(); entry_it++) {
-                        SgNode* def_node = (*entry_it).second;
+                if (var_name == init_string || var_name == test_string ||
+                        var_name == incr_string) {
+                    if (entry.size() == 1) {
+                        // Only one definition of this variable reaches here.
+                        // If it's value is a constant, we can directly use
+                        // the constant in place of the variable!
+                        SgNode* def_node = entry.begin()->second;
+                        SgInitializedName* init_name =
+                                isSgInitializedName(def_node);
 
-                        short itype;
-                        SgExpression* iexpr;
+                        if (init_name && init_name->get_initializer()) {
+                            // We don't need to instrument this access.
+                        } /* else if (isSgAssignOp(def_node)) {
+                            std::cout << "assign: " << def_node->unparseToString() << "\n";
+                        } */
+                    } else {
+                        for (entry_iterator entry_it = entry.begin();
+                                entry_it != entry.end(); entry_it++) {
+                            SgNode* def_node = (*entry_it).second;
 
-                        if (test_string == var_name &&
-                                isSgVarRefExp(instrument_test)) {
-                            itype = LOOP_TEST;
-                            iexpr = instrument_test;
-                        } else if (incr_string == var_name &&
-                                isSgVarRefExp(instrument_incr)) {
-                            itype = LOOP_INCR;
-                            iexpr = instrument_incr;
-                        } else {
-                            continue;
+                            short itype;
+                            SgExpression* iexpr;
+
+                            if (init_string == var_name &&
+                                    isSgVarRefExp(instrument_init)) {
+                                itype = LOOP_INIT;
+                                iexpr = instrument_init;
+                            } else if (test_string == var_name &&
+                                    isSgVarRefExp(instrument_test)) {
+                                itype = LOOP_TEST;
+                                iexpr = instrument_test;
+                            } else if (incr_string == var_name &&
+                                    isSgVarRefExp(instrument_incr)) {
+                                itype = LOOP_INCR;
+                                iexpr = instrument_incr;
+                            } else {
+                                continue;
+                            }
+
+                            insert_instrumentation(def_node, iexpr, itype, false);
                         }
-
-                        insert_instrumentation(def_node, iexpr, itype, false);
                     }
                 }
             }
         }
     }
 
-    if (instrument_test && !isSgVarRefExp(instrument_test)) {
+    if (instrument_init && !isSgValueExp(instrument_init) &&
+            !isSgVarRefExp(instrument_init)) {
+        insert_instrumentation(node, instrument_init, LOOP_INIT, true);
+    }
+
+    if (instrument_test && !isSgValueExp(instrument_test) &&
+            !isSgVarRefExp(instrument_test)) {
         insert_instrumentation(node, instrument_test, LOOP_TEST, true);
     }
 
-    if (instrument_incr && !isSgVarRefExp(instrument_incr)) {
+    if (instrument_incr && !isSgValueExp(instrument_incr) &&
+            !isSgVarRefExp(instrument_incr)) {
         insert_instrumentation(node, instrument_incr, LOOP_INCR, true);
     }
 }
