@@ -27,7 +27,7 @@
 using namespace SageBuilder;
 using namespace SageInterface;
 
-aligncheck_t::aligncheck_t(VariableRenaming* _var_renaming) {
+aligncheck_t::aligncheck_t(VariableRenaming*& _var_renaming) {
     var_renaming = _var_renaming;
 }
 
@@ -38,7 +38,7 @@ void aligncheck_t::atTraversalStart() {
 void aligncheck_t::atTraversalEnd() {
 }
 
-bool aligncheck_t::vectorizable(SgStatement* stmt) {
+bool aligncheck_t::vectorizable(SgStatement*& stmt) {
     if (!stmt)
         return true;
 
@@ -74,17 +74,39 @@ attrib aligncheck_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
 
     SgForStatement* for_stmt = isSgForStatement(node);
     if (for_stmt) {
-        get_loop_header_components(for_stmt, idxv_expr, init_expr, test_expr,
-                incr_expr);
-        locate_and_place_instrumentation(node, init_expr, test_expr,
-                incr_expr);
+        def_map_t def_map;
+
+        // If we need to instrument at least one scalar variable,
+        // can this instrumentation be relocated to an earlier point
+        // in the program that is outside all loops?
+        VariableRenaming::NumNodeRenameTable rename_table =
+            var_renaming->getReachingDefsAtNode(node);
+
+        // Expand the iterator list into a map for easier lookup.
+        construct_def_map(rename_table, def_map);
+
+        // Extract components from the for-loop header.
+        get_loop_header_components(for_stmt, def_map, idxv_expr, init_expr,
+                test_expr, incr_expr);
+
+        if (init_expr)
+            instrument_loop_header_components(node, def_map, init_expr,
+                    LOOP_INIT);
+
+        if (test_expr)
+            instrument_loop_header_components(node, def_map, test_expr,
+                    LOOP_TEST);
+
+        if (incr_expr)
+            instrument_loop_header_components(node, def_map, incr_expr,
+                    LOOP_INCR);
     }
 
     return attr;
 }
 
-bool aligncheck_t::get_loop_header_components(SgForStatement* for_stmt,
-        SgExpression*& idxv_expr, SgExpression*& init_expr,
+bool aligncheck_t::get_loop_header_components(SgForStatement*& for_stmt,
+        def_map_t& def_map, SgExpression*& idxv_expr, SgExpression*& init_expr,
         SgExpression*& test_expr, SgExpression*& incr_expr) {
     bool ret = true;
 
@@ -205,137 +227,139 @@ bool aligncheck_t::get_loop_header_components(SgForStatement* for_stmt,
         std::string idxv_string = idxv_expr->unparseToString();
 
         SgStatementPtrList init_list = for_stmt->get_init_stmt();
-        for (SgStatementPtrList::iterator it = init_list.begin();
-                it != init_list.end(); it++) {
-            SgStatement* stmt = *it;
-            if (SgExprStatement* expr_stmt = isSgExprStatement(stmt)) {
-                if (SgAssignOp* assign_op =
-                        isSgAssignOp(expr_stmt->get_expression())) {
-                    SgExpression* operand[2];
-                    operand[0] = assign_op->get_lhs_operand();
-                    operand[1] = assign_op->get_rhs_operand();
+        if (init_list.size()) {
+            for (SgStatementPtrList::iterator it = init_list.begin();
+                    it != init_list.end(); it++) {
+                SgStatement* stmt = *it;
+                if (SgExprStatement* expr_stmt = isSgExprStatement(stmt)) {
+                    if (SgAssignOp* assign_op =
+                            isSgAssignOp(expr_stmt->get_expression())) {
+                        SgExpression* operand[2];
+                        operand[0] = assign_op->get_lhs_operand();
+                        operand[1] = assign_op->get_rhs_operand();
 
-                    if (operand[0]->unparseToString() == idxv_string) {
-                        init_expr = operand[1];
-                        break;
-                    } else if (operand[1]->unparseToString() == idxv_string) {
-                        init_expr = operand[0];
-                        break;
-                    }
-                }
-            }
-        }
-    }
-
-#if 0
-    std::cout << "idxv: " << (idxv_expr ? idxv_expr->unparseToString() : "?")
-            << ", init: " << (init_expr ? init_expr->unparseToString() : "?")
-            << ", test: " << (test_expr ? test_expr->unparseToString() : "?")
-            << ", incr: " << (incr_expr ? incr_expr->unparseToString() : "?")
-            << "\n";
-#endif
-
-    // Return true if we were able to discover both test and increment exprs.
-    return test_expr && incr_expr;
-}
-
-void aligncheck_t::locate_and_place_instrumentation(SgNode* node,
-        SgExpression* instrument_init, SgExpression* instrument_test,
-        SgExpression* instrument_incr) {
-    // Reaching definitions provided by the VariableRenaming pass
-    // don't work for arrays. Hence we check whether we have at least one
-    // scalar expression before proceeding to instrument.
-    if ((instrument_init && isSgVarRefExp(instrument_init)) ||
-            (instrument_test && isSgVarRefExp(instrument_test)) ||
-            (instrument_incr && isSgVarRefExp(instrument_incr))) {
-
-        // We need to instrument at least one scalar variable. Can this
-        // instrumentation be relocated to an earlier point in the program that
-        // is outside all loops?
-        VariableRenaming::NumNodeRenameTable rename_table =
-            var_renaming->getReachingDefsAtNode(node);
-
-        std::string init_string = instrument_init->unparseToString();
-        std::string test_string = instrument_test->unparseToString();
-        std::string incr_string = instrument_incr->unparseToString();
-
-        typedef VariableRenaming::NumNodeRenameTable::iterator table_iterator;
-        typedef VariableRenaming::NumNodeRenameEntry::iterator entry_iterator;
-
-        for (table_iterator table_it = rename_table.begin();
-                table_it != rename_table.end(); table_it++) {
-            VariableRenaming::VarName name = table_it->first;
-            VariableRenaming::NumNodeRenameEntry entry = table_it->second;
-
-            for (std::vector<SgInitializedName*>::iterator name_it =
-                    name.begin(); name_it != name.end(); name_it++) {
-
-                std::string var_name = (*name_it)->get_name();
-
-                if (var_name == init_string || var_name == test_string ||
-                        var_name == incr_string) {
-                    if (entry.size() == 1) {
-                        // Only one definition of this variable reaches here.
-                        // If it's value is a constant, we can directly use
-                        // the constant in place of the variable!
-                        SgNode* def_node = entry.begin()->second;
-                        SgInitializedName* init_name =
-                                isSgInitializedName(def_node);
-
-                        if (init_name && init_name->get_initializer()) {
-                            // We don't need to instrument this access.
-                        } /* else if (isSgAssignOp(def_node)) {
-                            std::cout << "assign: " << def_node->unparseToString() << "\n";
-                        } */
-                    } else {
-                        for (entry_iterator entry_it = entry.begin();
-                                entry_it != entry.end(); entry_it++) {
-                            SgNode* def_node = (*entry_it).second;
-
-                            short itype;
-                            SgExpression* iexpr;
-
-                            if (init_string == var_name &&
-                                    isSgVarRefExp(instrument_init)) {
-                                itype = LOOP_INIT;
-                                iexpr = instrument_init;
-                            } else if (test_string == var_name &&
-                                    isSgVarRefExp(instrument_test)) {
-                                itype = LOOP_TEST;
-                                iexpr = instrument_test;
-                            } else if (incr_string == var_name &&
-                                    isSgVarRefExp(instrument_incr)) {
-                                itype = LOOP_INCR;
-                                iexpr = instrument_incr;
-                            } else {
-                                continue;
-                            }
-
-                            insert_instrumentation(def_node, iexpr, itype, false);
+                        if (operand[0]->unparseToString() == idxv_string) {
+                            init_expr = operand[1];
+                            break;
+                        } else if (operand[1]->unparseToString() ==
+                                idxv_string) {
+                            init_expr = operand[0];
+                            break;
                         }
                     }
                 }
             }
+        } else {
+            // Find the reaching definition of the index variable.
+            std::string istr = idxv_expr->unparseToString();
+            if (def_map.find(istr) != def_map.end()) {
+                VariableRenaming::NumNodeRenameEntry entry_list = def_map[istr];
+
+                if (entry_list.size() == 1) {
+                    SgNode* def_node = entry_list.begin()->second;
+                    init_expr = get_expr_value(def_node, istr);
+                } else {
+                    int grandchild_count = 0;
+                    SgExpression* expr_value = NULL;
+                    for (entry_iterator entry_it = entry_list.begin();
+                            entry_it != entry_list.end() &&
+                            grandchild_count < 2; entry_it++) {
+                        SgNode* def_node = (*entry_it).second;
+                        if (isAncestor(for_stmt, def_node))
+                            grandchild_count += 1;
+                        else
+                            expr_value = get_expr_value(def_node, istr);
+                    }
+
+                    if (grandchild_count == 1)
+                        init_expr = expr_value;
+                }
+            }
         }
     }
 
-    if (instrument_init && !isSgValueExp(instrument_init) &&
-            !isSgVarRefExp(instrument_init)) {
-        insert_instrumentation(node, instrument_init, LOOP_INIT, true);
+    // Return true if we were able to discover all three expressions.
+    return init_expr && test_expr && incr_expr;
+}
+
+SgExpression* aligncheck_t::get_expr_value(SgNode*& node,
+        std::string var_name) {
+    SgInitializedName* init_name = isSgInitializedName(node);
+
+    if (init_name && init_name->get_initializer()) {
+        // We don't need to instrument this access.
+        return init_name->get_initializer();
+    } else if (SgAssignOp* asgn_op = isSgAssignOp(node)) {
+        SgExpression* lhs = asgn_op->get_lhs_operand();
+        SgExpression* rhs = asgn_op->get_rhs_operand();
+
+        if (lhs->unparseToString() == var_name)
+            return rhs;
+        else if (rhs->unparseToString() == var_name)
+            return lhs;
     }
 
-    if (instrument_test && !isSgValueExp(instrument_test) &&
-            !isSgVarRefExp(instrument_test)) {
-        insert_instrumentation(node, instrument_test, LOOP_TEST, true);
-    }
+    return NULL;
+}
 
-    if (instrument_incr && !isSgValueExp(instrument_incr) &&
-            !isSgVarRefExp(instrument_incr)) {
-        insert_instrumentation(node, instrument_incr, LOOP_INCR, true);
+void aligncheck_t::construct_def_map(
+        VariableRenaming::NumNodeRenameTable& rename_table,
+        def_map_t& def_map) {
+
+    typedef VariableRenaming::NumNodeRenameTable::iterator table_iterator;
+
+    def_map.clear();
+
+    for (table_iterator table_it = rename_table.begin();
+            table_it != rename_table.end(); table_it++) {
+
+        VariableRenaming::VarName name_list = table_it->first;
+        VariableRenaming::NumNodeRenameEntry entry_list = table_it->second;
+
+        for (std::vector<SgInitializedName*>::iterator name_it =
+                name_list.begin(); name_it != name_list.end(); name_it++) {
+            std::string var_name = (*name_it)->get_name();
+
+            def_map[var_name] = entry_list;
+        }
     }
 }
 
-void aligncheck_t::insert_instrumentation(SgNode* node, SgExpression* expr,
+void aligncheck_t::instrument_loop_header_components(SgNode*& loop_node,
+        def_map_t& def_map, SgExpression*& instrument_expr,
+        short loop_inst_type) {
+
+    std::string expr_str = instrument_expr->unparseToString();
+    if (isSgVarRefExp(instrument_expr) && def_map.find(expr_str) !=
+            def_map.end()) {
+        VariableRenaming::NumNodeRenameEntry entry_list = def_map[expr_str];
+
+        if (entry_list.size() == 1) {
+            // Only one definition of this variable reaches here.
+            // If it's value is a constant, we can directly use
+            // the constant in place of the variable!
+            SgNode* def_node = entry_list.begin()->second;
+            if (get_expr_value(def_node, expr_str) == NULL)
+                 insert_instrumentation(def_node, instrument_expr,
+                        loop_inst_type, false);
+        } else {
+            // Instrument all definitions of this variable.
+            for (entry_iterator entry_it = entry_list.begin();
+                    entry_it != entry_list.end(); entry_it++) {
+                SgNode* def_node = (*entry_it).second;
+                insert_instrumentation(def_node, instrument_expr,
+                        loop_inst_type, false);
+            }
+        }
+    } else if (!isSgValueExp(instrument_expr) &&
+            !isConstType(instrument_expr->get_type())) {
+        // Instrument without using the reaching definition.
+        insert_instrumentation(loop_node, instrument_expr, loop_inst_type,
+                true);
+    }
+}
+
+void aligncheck_t::insert_instrumentation(SgNode*& node, SgExpression*& expr,
         short type, bool before) {
     assert(isSgLocatedNode(node) &&
             "Cannot obtain file information for node to be instrumented.");

@@ -30,27 +30,39 @@ class aligncheck_t : public AstTopDownProcessing<attrib> {
 
     enum { LOOP_TEST=0, LOOP_INCR, LOOP_INIT, BASE_ALIGNMENT };
 
-    public:
-    aligncheck_t(VariableRenaming* _var_renaming);
+    typedef VariableRenaming::NumNodeRenameEntry::iterator entry_iterator;
+    typedef std::map<std::string, VariableRenaming::NumNodeRenameEntry>
+            def_map_t;
 
-    bool vectorizable(SgStatement* stmt);
+    public:
+    aligncheck_t(VariableRenaming*& _var_renaming);
+
+    bool vectorizable(SgStatement*& stmt);
 
     virtual void atTraversalEnd();
     virtual void atTraversalStart();
 
     virtual attrib evaluateInheritedAttribute(SgNode* node, attrib attr);
-    bool get_loop_header_components(SgForStatement* for_stmt,
-            SgExpression*& idxv_expr, SgExpression*& init_expr,
-            SgExpression*& test_expr, SgExpression*& incr_expr);
+
+    bool get_loop_header_components(SgForStatement*& for_stmt,
+            def_map_t& def_map, SgExpression*& idxv_expr,
+            SgExpression*& init_expr, SgExpression*& test_expr,
+            SgExpression*& incr_expr);
 
     const inst_list_t::iterator inst_begin();
     const inst_list_t::iterator inst_end();
 
     private:
-    void locate_and_place_instrumentation(SgNode* node,
-            SgExpression* instrument_init, SgExpression* instrument_test,
-            SgExpression* instrument_incr);
-    void insert_instrumentation(SgNode* node, SgExpression* expr,
+    SgExpression* get_expr_value(SgNode*& node, std::string var_name);
+
+    void construct_def_map(VariableRenaming::NumNodeRenameTable& rename_table,
+        std::map<std::string, VariableRenaming::NumNodeRenameEntry>& def_map);
+
+    void instrument_loop_header_components(SgNode*& loop_node,
+            def_map_t& def_map, SgExpression*& instrument_expr,
+            short loop_inst_type);
+
+    void insert_instrumentation(SgNode*& node, SgExpression*& expr,
             short type, bool before);
 
     VariableRenaming* var_renaming;
