@@ -9,11 +9,11 @@
  *
  * PerfExpert is free software: you can redistribute it and/or modify it under
  * the terms of the The University of Texas at Austin Research License
- * 
+ *
  * PerfExpert is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
- * 
+ *
  * Authors: Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
@@ -25,13 +25,13 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-    
+
 #ifndef _STRING_H
 #include <string.h>
 #endif
 
-#include "perfexpert_alloc.h"
-#include "perfexpert_constants.h"
+#include "common/perfexpert_alloc.h"
+#include "common/perfexpert_constants.h"
 
 /* perfexpert_string_split */
 static inline int perfexpert_string_split(char *in, char **out, int token) {

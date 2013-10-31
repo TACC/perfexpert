@@ -9,11 +9,11 @@
  *
  * PerfExpert is free software: you can redistribute it and/or modify it under
  * the terms of the The University of Texas at Austin Research License
- * 
+ *
  * PerfExpert is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
- * 
+ *
  * Authors: Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
@@ -25,7 +25,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-    
+
 #ifndef _STRING_H
 #include <string.h>
 #endif
@@ -42,10 +42,10 @@ extern "C" {
 #include <sqlite3.h>
 #endif
 
-#include "perfexpert_alloc.h"
-#include "perfexpert_constants.h"
-#include "perfexpert_output.h"
-#include "perfexpert_util.h"
+#include "common/perfexpert_alloc.h"
+#include "common/perfexpert_constants.h"
+#include "common/perfexpert_output.h"
+#include "common/perfexpert_util.h"
 #include "install_dirs.h"
 
 /* perfexpert_database_update */
@@ -97,7 +97,7 @@ static inline int perfexpert_database_update(char **file) {
         fclose(ver_FP);
         OUTPUT_VERBOSE((10, "      local database version (%s)", my_ver_str));
     } else {
-        OUTPUT_VERBOSE((10, "      local database not found, creating one"));        
+        OUTPUT_VERBOSE((10, "      local database not found, creating one"));
     }
 
     /* Compare */
@@ -174,7 +174,7 @@ static inline int perfexpert_database_connect(sqlite3 **db, const char *file) {
         goto CLEAN_UP;
     }
 
-    OUTPUT_VERBOSE((4, "connected to %s", my_file));
+    OUTPUT_VERBOSE((4, "      connected to %s", my_file));
 
     return PERFEXPERT_SUCCESS;
 
@@ -195,12 +195,33 @@ static inline int perfexpert_database_get_int(void *var, int count, char **val,
     return PERFEXPERT_SUCCESS;
 }
 
+/* perfexpert_database_get_unsigned_long_long_int */
+static inline int perfexpert_database_get_long_long_int(void *var,
+    int count, char **val, char **names) {
+    int *temp = (int *)var;
+    if (NULL != val[0]) {
+        *temp = strtoll(val[0], NULL, 10);
+    }
+    return PERFEXPERT_SUCCESS;
+}
+
 /* perfexpert_database_get_double */
 static inline int perfexpert_database_get_double(void *var, int count,
     char **val, char **names) {
     double *temp = (double *)var;
     if (NULL != val[0]) {
         *temp = atof(val[0]);
+    }
+    return PERFEXPERT_SUCCESS;
+}
+
+/* perfexpert_database_get_string */
+static inline int perfexpert_database_get_string(void *var, int count,
+    char **val, char **names) {
+    char **temp = (char **)var;
+    if (NULL != val[0]) {
+        PERFEXPERT_ALLOC(char, *temp, (strlen(val[0]) + 1));
+        strcpy(*temp, val[0]);
     }
     return PERFEXPERT_SUCCESS;
 }

@@ -20,11 +20,11 @@
  *
  * PerfExpert is free software: you can redistribute it and/or modify it under
  * the terms of the The University of Texas at Austin Research License
- * 
+ *
  * PerfExpert is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
- * 
+ *
  * Authors: Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
@@ -36,7 +36,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-    
+
 #ifndef _STDLIB_H
 #include <stdlib.h>
 #endif
@@ -115,6 +115,46 @@ static inline void perfexpert_list_append(perfexpert_list_t *list,
     item->next = sentinel;
     sentinel->prev = item;
     list->length++;
+}
+
+/* perfexpert_list_for */
+#define perfexpert_list_for(item, list, type)  \
+  for (item = (type *)  (list)->sentinel.next; \
+       item != (type *) &(list)->sentinel;     \
+       item = (type *) ((perfexpert_list_item_t *)(item))->next)
+
+/* perfexpert_list_swap */
+static inline void perfexpert_list_swap(perfexpert_list_item_t *a,
+    perfexpert_list_item_t *b) {
+    volatile perfexpert_list_item_t *temp = NULL;
+    temp = a->prev;
+    a->prev = b->prev;
+    b->prev = temp;
+    temp = a->next;
+    a->next = b->next;
+    b->next = temp;
+}
+
+/* perfexpert_list_move_before (move A before B) */
+static inline void perfexpert_list_move_before(perfexpert_list_item_t *a,
+    perfexpert_list_item_t *b) {
+    a->prev->next = a->next;
+    a->next->prev = a->prev;
+    a->prev = b->prev;
+    a->next = b;
+    b->prev->next = a;
+    b->prev = a;
+}
+
+/* perfexpert_list_move_after (move A after B) */
+static inline void perfexpert_list_move_after(perfexpert_list_item_t *a,
+    perfexpert_list_item_t *b) {
+    a->prev->next = a->next;
+    a->next->prev = a->prev;
+    a->next = b->next;
+    a->prev = b;
+    b->next->prev = a;
+    b->next = a;
 }
 
 #ifdef __cplusplus

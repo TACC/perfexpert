@@ -20,11 +20,11 @@
  *
  * PerfExpert is free software: you can redistribute it and/or modify it under
  * the terms of the The University of Texas at Austin Research License
- * 
+ *
  * PerfExpert is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
- * 
+ *
  * Authors: Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
@@ -36,7 +36,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-    
+
 #ifndef _STDIO_H
 #include <stdio.h>
 #endif
@@ -57,7 +57,7 @@ extern "C" {
 #include <unistd.h>
 #endif
 
-#include "perfexpert_constants.h"
+#include "common/perfexpert_constants.h"
 
 /* see perfexpert_output function */
 #ifndef OUTPUT
@@ -121,11 +121,11 @@ static inline void output(const char *format, ...) {
     int rc = 0;
     size_t total_len = 0;
     va_list arglist;
-    
+
     va_start(arglist, format);
     rc = vasprintf(&str, format, arglist);
     total_len = strlen(str) + 14 + strlen(PROGRAM_PREFIX);
-    
+
     temp_str = (char *)malloc(total_len);
     if (NULL == temp_str) {
         printf("%s Error: out of memory\n", PROGRAM_PREFIX);
@@ -133,10 +133,10 @@ static inline void output(const char *format, ...) {
     snprintf(temp_str, total_len, "%s %s\n", PROGRAM_PREFIX, str);
     total_len = write(fileno(stdout), temp_str, (int)strlen(temp_str));
     fflush(stdout);
-    
+
     free(str);
     free(temp_str);
-    
+
     va_end(arglist);
 }
 
@@ -147,12 +147,12 @@ static inline void output_verbose(int level, const char *format, ...) {
     char *str = NULL;
     int rc = 0;
     size_t total_len = 0;
-    
+
     if (globals.verbose >= level) {
         va_start(arglist, format);
         rc = vasprintf(&str, format, arglist);
         total_len = strlen(str) + 14 + strlen(PROGRAM_PREFIX);
-        
+
         temp_str = (char *) malloc(total_len);
         if (NULL == temp_str) {
             printf("%s Error: out of memory\n", PROGRAM_PREFIX);
@@ -160,10 +160,10 @@ static inline void output_verbose(int level, const char *format, ...) {
         snprintf(temp_str, total_len, "%s %s\n", PROGRAM_PREFIX, str);
         total_len = write(fileno(stdout), temp_str, (int)strlen(temp_str));
         fflush(stdout);
-        
+
         free(str);
         free(temp_str);
-        
+
         va_end(arglist);
     }
 }
