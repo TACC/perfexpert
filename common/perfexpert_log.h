@@ -9,11 +9,11 @@
  *
  * PerfExpert is free software: you can redistribute it and/or modify it under
  * the terms of the The University of Texas at Austin Research License
- * 
+ *
  * PerfExpert is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
- * 
+ *
  * Authors: Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
@@ -25,7 +25,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-    
+
 #ifndef _STDIO_H
 #include <stdio.h>
 #endif
@@ -50,7 +50,7 @@ extern "C" {
 #include <time.h>
 #endif
 
-#include "perfexpert_constants.h"
+#include "common/perfexpert_constants.h"
 
 /* see perfexpert_log function */
 #ifndef LOG

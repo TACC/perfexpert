@@ -9,11 +9,11 @@
  *
  * PerfExpert is free software: you can redistribute it and/or modify it under
  * the terms of the The University of Texas at Austin Research License
- * 
+ *
  * PerfExpert is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
- * 
+ *
  * Authors: Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
@@ -54,18 +54,19 @@ extern "C" {
 #include <linux/limits.h>
 #endif
 
-#include "perfexpert_alloc.h"
-#include "perfexpert_constants.h"
-#include "perfexpert_output.h"
+#include "common/perfexpert_alloc.h"
+#include "common/perfexpert_constants.h"
+#include "common/perfexpert_output.h"
 
 /* perfexpert_util_make_path (create directory tree like 'mkdir -p') */
-static inline int perfexpert_util_make_path(const char *path, int nmode) {
+static inline int perfexpert_util_make_path(const char *path) {
     char *p = NULL, *npath = NULL;
     struct stat sb;
+    int nmode = 0755;
 
     /* Check if we can create such directory */
     if (0 == stat(path, &sb)) {
-        if (0 == S_ISDIR (sb.st_mode)) {
+        if (0 == S_ISDIR(sb.st_mode)) {
             OUTPUT(("%s '%s'",
                 _ERROR((char *)"file exists but is not a directory"), path));
             return PERFEXPERT_ERROR;
@@ -107,7 +108,7 @@ static inline int perfexpert_util_make_path(const char *path, int nmode) {
             p++;
         }
     }
-    
+
     /* Create the final directory component */
     if (stat(npath, &sb) && mkdir(npath, nmode)) { // This is not portable
         OUTPUT(("%s '%s' %s", _ERROR((char *)"cannot create directory"),
@@ -132,7 +133,7 @@ static inline int perfexpert_util_dir_exists(const char *dir) {
     }
     if (!S_ISDIR(sb.st_mode)) {
         OUTPUT_VERBOSE((1, "%s (%s)", _RED((char *)"is not a directory"), dir));
-        return PERFEXPERT_ERROR;        
+        return PERFEXPERT_ERROR;
     }
 
     return PERFEXPERT_SUCCESS;
@@ -235,7 +236,8 @@ static inline int perfexpert_util_path_only(const char *file, char **path) {
             if ((0 == access(try_file, X_OK)) && (0 == stat(try_file, &fin))) {
                 if ((S_ISREG(fin.st_mode)) && ((0 != getuid()) ||
                     (0 != (fin.st_mode & (S_IXUSR | S_IXGRP | S_IXOTH))))) {
-                    PERFEXPERT_ALLOC(char, resolved_path, strlen(try_path));
+                    PERFEXPERT_ALLOC(char, resolved_path,
+                        (strlen(try_path) + 1));
                     memcpy(resolved_path, try_path, strlen(try_path));
                 }
             }

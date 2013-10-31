@@ -9,11 +9,11 @@
  *
  * PerfExpert is free software: you can redistribute it and/or modify it under
  * the terms of the The University of Texas at Austin Research License
- * 
+ *
  * PerfExpert is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
- * 
+ *
  * Authors: Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
@@ -37,22 +37,19 @@ enum {
     PERFEXPERT_NO_TRANS,       /* 4  ...when transformations can't be applied */
     PERFEXPERT_NO_DATA,        /* 5  ...when analyzer return an error         */
     PERFEXPERT_NO_HOTSPOTS,    /* 6  ...when there no hotspots were found     */
-    PERFEXPERT_FORK_ERROR,     /* 7  ...in case of fork error :)              */
+    PERFEXPERT_NO_ANALYSIS,    /* 7  ...when no analysis module is selected   */
+    PERFEXPERT_FORK_ERROR,     /* 8  ...in case of fork error :)              */
+    PERFEXPERT_MACPO,          /* 9  ...when analyzer runs with -A option set */
 };
 
 #define PERFEXPERT_TRUE  1 /* used to return boolean values */
 #define PERFEXPERT_FALSE 0 /* used to return boolean values */
 
-/* Buffers size, will be used for:
- * - parsing INPUT file
- * - parsing metrics file
- * - storing SQL statements (including the 'functions')
- * - maybe something else
- */
-#define BUFFER_SIZE       4096
-#define MAX_LOG_ENTRY     1048576
-#define MAX_FRAGMENT_DATA 1048576
-#define PARAM_SIZE        128
+/* Default size of some widely-used arrays */
+#define MAX_BUFFER_SIZE     4096
+#define MAX_LOG_ENTRY       1048576
+#define MAX_FRAGMENT_DATA   1048576
+#define MAX_ARGUMENTS_COUNT 128
 
 /* Default values for some files and directories */
 #define PERFEXPERT_OUTPUT        "perfexpert.output"
@@ -76,6 +73,9 @@ enum {
 #define CT_OUTPUT                "ct.output"
 #define CT_REPORT                "ct_report.txt"
 
+#define MACPO_INSTRUMENT_PROGRAM "macpo.sh"
+#define MACPO_ANALYZE_PROGRAM    "macpo-analyze"
+
 #define METRICS_TABLE            "metric"
 #define METRICS_FILE             "recommender_metrics.txt"
 #define LCPI_FILE                "lcpi.conf"
@@ -87,12 +87,12 @@ enum {
 #define DEFAULT_LDFLAGS  ""
 
 /* Hotspots I know */
-enum hotspot_type_t {
+typedef enum {
     PERFEXPERT_HOTSPOT_UNKNOWN = 0,
     PERFEXPERT_HOTSPOT_PROGRAM,
     PERFEXPERT_HOTSPOT_FUNCTION,
     PERFEXPERT_HOTSPOT_LOOP,
-};
+} hotspot_type_t;
 
 #ifdef __cplusplus
 }
