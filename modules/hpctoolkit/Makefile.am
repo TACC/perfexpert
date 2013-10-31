@@ -9,19 +9,24 @@
 #
 # PerfExpert is free software: you can redistribute it and/or modify it under
 # the terms of the The University of Texas at Austin Research License
-# 
+#
 # PerfExpert is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
 # A PARTICULAR PURPOSE.
-# 
+#
 # Authors: Leonardo Fialho and Ashay Rane
 #
 # $HEADER$
 #
 
 lib_LTLIBRARIES = libperfexpert_module_hpctoolkit.la
-libperfexpert_module_hpctoolkit_la_SOURCES = hpctoolkit.c
-libperfexpert_module_hpctoolkit_la_CPPFLAGS = -I$(srcdir)/../../tools -I$(srcdir)/.. -I$(abs_srcdir)/../../tools/common
-libperfexpert_module_hpctoolkit_la_LDFLAGS = -lxml2 -module -version-info 1:0:0 -export-symbols $(srcdir)/../perfexpert_module.sym
+libperfexpert_module_hpctoolkit_la_CPPFLAGS = -I$(srcdir)/../..
+libperfexpert_module_hpctoolkit_la_LDFLAGS = -lxml2 -lpapi -lsqlite3 -module \
+	-version-info 1:0:0 -export-symbols $(srcdir)/hpctoolkit_module.sym
+libperfexpert_module_hpctoolkit_la_SOURCES = hpctoolkit_module.c \
+	hpctoolkit_database.c \
+	hpctoolkit_parser.c \
+	hpctoolkit_profile.c \
+	hpctoolkit_tools.c
 
 # EOF
