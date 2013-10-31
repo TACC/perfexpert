@@ -41,10 +41,8 @@ extern "C" {
 
 /* database_profiles */
 int database_profiles(perfexpert_list_t *profiles) {
-    char *error = NULL;
     hpctoolkit_profile_t *p = NULL;
-
-    OUTPUT_VERBOSE((5, "%s", _BLUE("Writing profiles to database")));
+    char *error = NULL;
 
     /* Check if the required tables are available */
     char sql[] = "PRAGMA foreign_keys = ON;             \
@@ -67,6 +65,8 @@ int database_profiles(perfexpert_list_t *profiles) {
             value         REAL    NOT NULL,             \
             hotspot_id    INTEGER NOT NULL,             \
         FOREIGN KEY (hotspot_id) REFERENCES hpctoolkit_hotspot(id));";
+
+    OUTPUT_VERBOSE((5, "%s", _BLUE("Writing profiles to database")));
 
     if (SQLITE_OK != sqlite3_exec(globals.db, sql, NULL, NULL, &error)) {
         OUTPUT(("%s %s", _ERROR("Error: SQL error"), error));
@@ -173,7 +173,7 @@ static int database_metrics(hpctoolkit_procedure_t *hotspot) {
 
         OUTPUT_VERBOSE((10, "    [%d] %s SQL: %s", m->id, _CYAN(m->name), sql));
 
-        /* Insert procedure in database */
+        /* Insert metric in database */
         if (SQLITE_OK != sqlite3_exec(globals.db, sql, NULL, NULL, &error)) {
             OUTPUT(("%s %s", _ERROR("Error: SQL error"), error));
             sqlite3_free(error);
