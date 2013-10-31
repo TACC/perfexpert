@@ -9,11 +9,11 @@
 #
 # PerfExpert is free software: you can redistribute it and/or modify it under
 # the terms of the The University of Texas at Austin Research License
-# 
+#
 # PerfExpert is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
 # A PARTICULAR PURPOSE.
-# 
+#
 # Authors: Leonardo Fialho and Ashay Rane
 #
 # $HEADER$
@@ -22,7 +22,7 @@
 SUBDIRS =  $(ENABLE_HOUND)
 SUBDIRS += $(ENABLE_PERFEXPERT)
 SUBDIRS += $(ENABLE_ANALYZER)
-SUBDIRS += $(ENABLE_SNIFFER) 
+SUBDIRS += $(ENABLE_SNIFFER)
 SUBDIRS += $(ENABLE_MACPO)
 SUBDIRS += $(ENABLE_RECOMMENDER)
 SUBDIRS += $(ENABLE_CT)

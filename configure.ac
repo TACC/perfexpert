@@ -9,11 +9,11 @@
 #
 # PerfExpert is free software: you can redistribute it and/or modify it under
 # the terms of the The University of Texas at Austin Research License
-# 
+#
 # PerfExpert is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
 # A PARTICULAR PURPOSE.
-# 
+#
 # Authors: Leonardo Fialho and Ashay Rane
 #
 # $HEADER$
@@ -36,9 +36,9 @@ AC_CONFIG_MACRO_DIR([m4])
 # Generate output files and global config.h and install_dirs.h files
 #
 AC_CONFIG_FILES([Makefile tools/Makefile modules/Makefile])
-AC_CONFIG_SRCDIR([tools/common/config.h.in])
-AC_CONFIG_HEADERS([tools/common/config.h])
-AC_CONFIG_FILES([tools/common/install_dirs.h])
+AC_CONFIG_FILES([common/install_dirs.h])
+AC_CONFIG_SRCDIR([common/config.h.in])
+AC_CONFIG_HEADERS([common/config.h])
 
 # Initialize Automake
 AM_INIT_AUTOMAKE([foreign -Wall -Werror])
@@ -172,10 +172,10 @@ AC_ARG_WITH([boost-include],
 #
 AC_ARG_ENABLE([module-hpctoolkit],
     [AS_HELP_STRING([--disable-module-hpctoolkit],
-    [disable HPCToolkit support])], [ENABLE_HPCTOOLKIT=$enableval],
+    [disable HPCToolkit measurement module])], [ENABLE_HPCTOOLKIT=$enableval],
     [ENABLE_HPCTOOLKIT=yes])
 
-AC_MSG_CHECKING([whether to enable HPCToolkit module])
+AC_MSG_CHECKING([whether to enable HPCToolkit measurement module])
 AS_IF([test x"$ENABLE_HPCTOOLKIT" = xyes], [
     AC_MSG_RESULT([yes])
 
@@ -185,8 +185,9 @@ AS_IF([test x"$ENABLE_HPCTOOLKIT" = xyes], [
     AC_CHECK_LIB([rt], [clock_gettime], [],
         [AC_MSG_ERROR([librt.so not found])])
 
-    AC_PATH_TOOL([PERL_PROGRAM], [perl],
-        [AC_MSG_ERROR([perl not found])])
+    #
+    # Programs: hpcstruct, hpcrun, hpcprof
+    #
     AC_PATH_TOOL([HPCSTRUCT_PROGRAM], [hpcstruct],
         [AC_MSG_ERROR([hpcstruct not found])])
     AC_PATH_TOOL([HPCRUN_PROGRAM], [hpcrun],
@@ -216,14 +217,132 @@ AS_IF([test x"$ENABLE_HPCTOOLKIT" = xyes], [
     AC_CHECK_HEADER([libxml/parser.h], [],
         [AC_MSG_ERROR([parser.h not found])])
 
+    #
+    # PAPI support (headers and lib)
+    #
+    AC_ARG_WITH([papi],
+        [AS_HELP_STRING([--with-papi],
+            [where PAPI library and include directories are located])], [
+        CPPFLAGS+=" -I$withval/include"
+        LDFLAGS+=" -L$withval/lib"], [])
+
+    AC_ARG_WITH([papi-lib],
+        [AS_HELP_STRING([--with-papi-lib], [set PAPI library path])],
+        [LDFLAGS+=" -L$withval"], [])
+
+    AC_ARG_WITH([papi-include],
+        [AS_HELP_STRING([--with-papi-include], [set PAPI include path])],
+        [CPPFLAGS+=" -I$withval"], [])
+
+    AC_CHECK_LIB([papi], [PAPI_library_init, PAPI_add_event], [],
+        [AC_MSG_ERROR([papi.so not found])])
+    AC_CHECK_HEADER([papi.h], [], [AC_MSG_ERROR([papi.h not found])])
+
+    #
+    # SQLite support (headers, lib, and program)
+    #
+    AC_ARG_WITH([sqlite],
+        [AS_HELP_STRING([--with-sqlite],
+            [where SQLite3 library and include directories are located])], [
+        CPPFLAGS+=" -I$withval/include"
+        LDFLAGS+=" -L$withval/lib"])
+
+    AC_ARG_WITH([sqlite-lib],
+        [AS_HELP_STRING([--with-sqlite-lib], [set SQLite3 library path])],
+        [LDFLAGS+=" -L$withval"])
+
+    AC_ARG_WITH([sqlite-include],
+        [AS_HELP_STRING([--with-sqlite-include], [set SQLite3 include path])],
+        [CPPFLAGS+=" -I$withval"])
+
+    AC_PATH_TOOL([SQLITE3_PROGRAM], [sqlite3],
+        [AC_MSG_ERROR([not found: sqlite3])])
+    AC_CHECK_LIB([sqlite3], [sqlite3_open, sqlite3_close, sqlite3_exec], [],
+        [AC_MSG_ERROR([not found: libsqlit3.so])])
+    AC_CHECK_HEADER([sqlite3.h], [], [AC_MSG_ERROR([not found: sqlite3.h])])
+
     ENABLE_HPCTOOLKIT=hpctoolkit
-    ENABLE_MODULES+="hpctoolkit "
+    ENABLED_MODULES+="hpctoolkit "
     AC_CONFIG_FILES([modules/hpctoolkit/Makefile])
 ], [
     AC_MSG_RESULT([no])
     ENABLE_HPCTOOLKIT=
 ])
 AC_SUBST([ENABLE_HPCTOOLKIT])
+
+#------------------------------------------------------------------------------
+# LCPI module requirements
+#
+AC_ARG_ENABLE([module-lcpi],
+    [AS_HELP_STRING([--disable-module-lcpi], [disable LCPI analysis module])],
+    [ENABLE_LCPI=$enableval], [ENABLE_LCPI=yes])
+
+AC_MSG_CHECKING([whether to enable LCPI analysis module])
+AS_IF([test x"$ENABLE_LCPI" = xyes], [
+    AC_MSG_RESULT([yes])
+
+    # TODO: check for hpctoolkit and vtune modules
+
+    #
+    # Math library
+    #
+    AC_CHECK_LIB([m], [isnormal, isnan, isinf], [],
+        [AC_MSG_ERROR([libm.so not found])])
+
+    #
+    # GNU Math Evaluator support (headers and lib)
+    #
+    AC_ARG_WITH([matheval],
+        [AS_HELP_STRING([--with-matheval],
+            [where matheval library and include directories are located])], [
+        CPPFLAGS+=" -I$withval/include"
+        LDFLAGS+=" -L$withval/lib"])
+
+    AC_ARG_WITH([matheval-lib],
+        [AS_HELP_STRING([--with-matheval-lib],
+            [set GNU matheval library path])],
+        [LDFLAGS+=" -L$withval"])
+
+    AC_ARG_WITH([matheval-include],
+        [AS_HELP_STRING([--with-matheval-include],
+            [set GNU matheval include path])],
+        [CPPFLAGS+=" -I$withval"])
+
+    AC_CHECK_LIB([matheval], [evaluator_create], [],
+        [AC_MSG_ERROR([libmatheval.so not found])])
+    AC_CHECK_HEADER([matheval.h], [], [AC_MSG_ERROR([matheval.h not found])])
+
+    #
+    # SQLite support (headers, lib, and program)
+    #
+    AC_ARG_WITH([sqlite],
+        [AS_HELP_STRING([--with-sqlite],
+            [where SQLite3 library and include directories are located])], [
+        CPPFLAGS+=" -I$withval/include"
+        LDFLAGS+=" -L$withval/lib"])
+
+    AC_ARG_WITH([sqlite-lib],
+        [AS_HELP_STRING([--with-sqlite-lib], [set SQLite3 library path])],
+        [LDFLAGS+=" -L$withval"])
+
+    AC_ARG_WITH([sqlite-include],
+        [AS_HELP_STRING([--with-sqlite-include], [set SQLite3 include path])],
+        [CPPFLAGS+=" -I$withval"])
+
+    AC_PATH_TOOL([SQLITE3_PROGRAM], [sqlite3],
+        [AC_MSG_ERROR([not found: sqlite3])])
+    AC_CHECK_LIB([sqlite3], [sqlite3_open, sqlite3_close, sqlite3_exec], [],
+        [AC_MSG_ERROR([not found: libsqlit3.so])])
+    AC_CHECK_HEADER([sqlite3.h], [], [AC_MSG_ERROR([not found: sqlite3.h])])
+
+    ENABLE_LCPI=lcpi
+    ENABLED_MODULES+="lcpi "
+    AC_CONFIG_FILES([modules/lcpi/Makefile])
+], [
+    AC_MSG_RESULT([no])
+    ENABLE_LCPI=
+])
+AC_SUBST([ENABLE_LCPI])
 
 #------------------------------------------------------------------------------
 # 'perfexpert' requirements
@@ -237,14 +356,38 @@ AS_IF([test x"$ENABLE_PERFEXPERT" = xyes], [
     AC_MSG_RESULT([yes])
 
     AC_MSG_CHECKING([for enabled modules])
-    AS_IF([test x"$ENABLE_MODULES" = x], [
+    AS_IF([test x"$ENABLED_MODULES" = x], [
         AC_MSG_RESULT([no])
         AC_MSG_ERROR([PerfExpert requires at least one module enabled])
     ], [
-        AC_MSG_RESULT($ENABLE_MODULES)
+        AC_MSG_RESULT($ENABLED_MODULES)
     ])
 
+    #
+    # SQLite support (headers, lib, and program)
+    #
+    AC_ARG_WITH([sqlite],
+        [AS_HELP_STRING([--with-sqlite],
+            [where SQLite3 library and include directories are located])], [
+        CPPFLAGS+=" -I$withval/include"
+        LDFLAGS+=" -L$withval/lib"])
+
+    AC_ARG_WITH([sqlite-lib],
+        [AS_HELP_STRING([--with-sqlite-lib], [set SQLite3 library path])],
+        [LDFLAGS+=" -L$withval"])
+
+    AC_ARG_WITH([sqlite-include],
+        [AS_HELP_STRING([--with-sqlite-include], [set SQLite3 include path])],
+        [CPPFLAGS+=" -I$withval"])
+
+    AC_PATH_TOOL([SQLITE3_PROGRAM], [sqlite3],
+        [AC_MSG_ERROR([not found: sqlite3])])
+    AC_CHECK_LIB([sqlite3], [sqlite3_open, sqlite3_close, sqlite3_exec], [],
+        [AC_MSG_ERROR([not found: libsqlit3.so])])
+    AC_CHECK_HEADER([sqlite3.h], [], [AC_MSG_ERROR([not found: sqlite3.h])])
+
     ENABLE_PERFEXPERT=perfexpert
+    ENABLED_TOOLS+="perfexpert "
     AC_CONFIG_FILES([tools/perfexpert/Makefile])
     AC_CONFIG_FILES([tools/perfexpert/perfexpert_get_compiler_info.pl],
         [chmod +x tools/perfexpert/perfexpert_get_compiler_info.pl])
@@ -266,6 +409,7 @@ AS_IF([test x"$ENABLE_HOUND" = xyes], [
     AC_MSG_RESULT([yes])
 
     ENABLE_HOUND=hound
+    ENABLED_TOOLS+="hound "
     AC_CONFIG_FILES([tools/hound/Makefile])
 ], [
     AC_MSG_RESULT([no])
@@ -307,6 +451,7 @@ AS_IF([test x"$ENABLE_SNIFFER" = xyes], [
     AC_CHECK_HEADER([papi.h], [], [AC_MSG_ERROR([papi.h not found])])
 
     ENABLE_SNIFFER=sniffer
+    ENABLED_TOOLS+="sniffer "
     AC_CONFIG_FILES([tools/sniffer/Makefile])
 ], [
     AC_MSG_RESULT([no])
@@ -317,51 +462,30 @@ AC_SUBST([ENABLE_SNIFFER])
 #------------------------------------------------------------------------------
 # 'perfexpert_analyzer' requirements
 #
-AC_ARG_ENABLE([analyzer],
-    [AS_HELP_STRING([--disable-analyzer], [disable performance analyzer])],
-    [ENABLE_ANALYZER=$enableval], [ENABLE_ANALYZER=yes])
-
-AC_MSG_CHECKING([whether to enable the performance analyzer tool])
-AS_IF([test x"$ENABLE_ANALYZER" = xyes], [
-    AC_MSG_RESULT([yes])
-
-    #
-    # GNU Math Evaluator support (headers and lib)
-    #
-    AC_ARG_WITH([matheval],
-        [AS_HELP_STRING([--with-matheval],
-            [where matheval library and include directories are located])], [
-        CPPFLAGS+=" -I$withval/include"
-        LDFLAGS+=" -L$withval/lib"])
-
-    AC_ARG_WITH([matheval-lib],
-        [AS_HELP_STRING([--with-matheval-lib],
-            [set GNU matheval library path])],
-        [LDFLAGS+=" -L$withval"])
-
-    AC_ARG_WITH([matheval-include],
-        [AS_HELP_STRING([--with-matheval-include],
-            [set GNU matheval include path])],
-        [CPPFLAGS+=" -I$withval"])
-
-    AC_CHECK_LIB([matheval], [evaluator_create], [],
-        [AC_MSG_ERROR([libmatheval.so not found])])
-    AC_CHECK_HEADER([matheval.h], [], [AC_MSG_ERROR([matheval.h not found])])
-
-    ENABLE_ANALYZER=analyzer
-    AC_CONFIG_FILES([tools/analyzer/Makefile])
-], [
-    AC_MSG_RESULT([no])
-    ENABLE_ANALYZER=
-])
-AC_SUBST([ENABLE_ANALYZER])
+#AC_ARG_ENABLE([analyzer],
+#    [AS_HELP_STRING([--disable-analyzer],
+#    [disable the standalone performance analyzer tool])],
+#    [ENABLE_ANALYZER=$enableval], [ENABLE_ANALYZER=yes])
+#
+#AC_MSG_CHECKING([whether to enable the performance analyzer tool])
+#AS_IF([test x"$ENABLE_ANALYZER" = xyes], [
+#    AC_MSG_RESULT([yes])
+#
+#    ENABLE_ANALYZER=analyzer
+#    ENABLED_TOOLS+="analyzer "
+#    AC_CONFIG_FILES([tools/analyzer/Makefile])
+#], [
+#    AC_MSG_RESULT([no])
+#    ENABLE_ANALYZER=
+#])
+#AC_SUBST([ENABLE_ANALYZER])
 
 #------------------------------------------------------------------------------
 # 'recommender' requirements
 #
 AC_ARG_ENABLE([recommender],
     [AS_HELP_STRING([--disable-recommender],
-        [disable optimization recommender])],
+        [disable optimization recommender tool])],
     [ENABLE_RECOMMENDER=$enableval], [ENABLE_RECOMMENDER=yes])
 
 AC_MSG_CHECKING([whether to enable the optimization recommender tool])
@@ -392,6 +516,7 @@ AS_IF([test x"$ENABLE_RECOMMENDER" = xyes], [
     AC_CHECK_HEADER([sqlite3.h], [], [AC_MSG_ERROR([not found: sqlite3.h])])
 
     ENABLE_RECOMMENDER=recommender
+    ENABLED_TOOLS+="recommender "
     AC_CONFIG_FILES([tools/recommender/Makefile])
 ], [
     AC_MSG_RESULT([no])
@@ -403,7 +528,8 @@ AC_SUBST([ENABLE_RECOMMENDER])
 # 'macpo' requirements
 #
 AC_ARG_ENABLE([macpo],
-    [AS_HELP_STRING([--disable-macpo], [disable data access instrumentation])],
+    [AS_HELP_STRING([--disable-macpo],
+    [disable MACPO, a data-centric measurement and analysis tool])],
     [ENABLE_MACPO=$enableval], [ENABLE_MACPO=yes])
 
 AC_ARG_WITH([jvm],
@@ -475,6 +601,7 @@ AS_IF([test x"$ENABLE_MACPO" = xyes], [
         [AC_MSG_ERROR([not found: google/sparse_hash_map])])
 
     ENABLE_MACPO=macpo
+    ENABLED_TOOLS+="macpo "
     AC_CONFIG_FILES([tools/macpo/Makefile])
     AC_CONFIG_FILES([tools/macpo/macpo.sh], [chmod +x tools/macpo/macpo.sh])
     AC_CONFIG_FILES([tools/macpo/libmrt/Makefile])
@@ -490,7 +617,8 @@ AC_LANG_POP
 # 'perfexpert_ct' requirements
 #
 AC_ARG_ENABLE([ct],
-    [AS_HELP_STRING([--disable-ct], [disable code transformer])],
+    [AS_HELP_STRING([--disable-ct],
+    [disable the automatic code transformer tool])],
     [ENABLE_CT=$enableval], [ENABLE_CT=yes])
 
 AC_MSG_CHECKING([whether to enable code transformation])
@@ -530,6 +658,7 @@ AS_IF([test x"$ENABLE_CT" = xyes], [
     AC_PROG_YACC
 
     ENABLE_CT=ct
+    ENABLED_TOOLS+="perfexpert_ct "
     AC_DEFINE([HAVE_CODE_TRANSFORMATION], [1], [Enable code transformation])
     AC_CONFIG_FILES([tools/ct/Makefile])
     AC_CONFIG_FILES([tools/ct/recognizers/Makefile])
@@ -552,7 +681,7 @@ AC_MSG_NOTICE([CPPFLAGS=$CPPFLAGS])
 AC_MSG_NOTICE([CFLAGS=$CFLAGS])
 AC_MSG_NOTICE([CXXFLAGS=$CXXFLAGS])
 AC_MSG_NOTICE([LDFLAGS=$LDFLAGS])
-AC_MSG_NOTICE([Enabled tools: $ENABLE_PERFEXPERT $ENABLE_MACPO $ENABLE_SNIFFER\
- $ENABLE_ANALYZER $ENABLE_RECOMMENDER $ENABLE_CT $ENABLE_HOUND])
-AC_MSG_NOTICE([Enabled modules: $ENABLE_MODULES])
+AC_MSG_NOTICE([Enabled tools: $ENABLED_TOOLS])
+AC_MSG_NOTICE([Enabled modules: $ENABLED_MODULES])
+
 # EOF
