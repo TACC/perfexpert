@@ -22,4 +22,31 @@ Documentation:
 --------------
 See doc/ directory.
 
+Version 4.1.1:
+==============
+- LLC (last level cache, usually L3) support added;
+- tools were rename to perfexpert_something;
+- perfexpert_analyzer now is C only, thus Apache Ant is not a requirement anymore;
+- improvements and bug fixes on arguments handling:
+    - prefix, before, and after (-p, -b, -a) arguments are split by space to multiple arguments;
+    - quoted target program arguments are split by space to multiple arguments (bug fix);
+    - it is possible to pass a quoted argument to the target program ("this \"is valid\" too");
+- several improvements in MACPO;
+- license updated (UT license);
+- "compatibility mode" which accepts the old perfexpert_run_exp syntax (only run the experiments);
+- added the option -n which does not do anything but permits users to check arguments;
+- the compilation of every single tool is options using --disable-tool;
+- option (-o) to sort performance bottlenecks (three sorting options available);
+- the target program now supports relative path, full path, and path search;
+- improved memory usage (freeing memory when possible);
+- moved pre-requisites (externals) to a separated branch;
+- general improvements on database installing and updating;
+- improved interface with the user:
+	- analyzer shows the relevance of each module;
+	- code transformer shows which optimization has been applied;
+	- analyzer and recommendation reports are now shown for every optimization step;
+	- adding $PATH search to target programs;
+	- clearer messages to the user (outside debug mode);
+- other minor improvements and bug fixes.
+
 EOF
