@@ -9,61 +9,77 @@
  *
  * PerfExpert is free software: you can redistribute it and/or modify it under
  * the terms of the The University of Texas at Austin Research License
- * 
+ *
  * PerfExpert is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
- * 
+ *
  * Authors: Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
  */
 
-#ifndef ANALYZER_HPCTOOLKIT_H_
-#define ANALYZER_HPCTOOLKIT_H_
+#ifndef PERFEXPERT_MODULE_HPCTOOLKIT_H_
+#define PERFEXPERT_MODULE_HPCTOOLKIT_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+#ifdef PROGRAM_PREFIX
+#undef PROGRAM_PREFIX
+#endif
+#define PROGRAM_PREFIX "[perfexpert_module_hpctoolkit]"
+
 #ifndef __XML_PARSER_H__
 #include <libxml/parser.h>
 #endif
 
-#include "perfexpert_list.h"
+/* Tools headers */
+#include "tools/perfexpert/perfexpert_types.h"
+
+/* Modules headers */
+#include "hpctoolkit_module.h"
+#include "hpctoolkit_types.h"
+
+/* PerfExpert common headers */
+#include "common/perfexpert_list.h"
 
 /* HPCToolkit stuff */
-#define PERFEXPERT_TOOL_EXPERIMENT_FILE     "experiment_hpctoolkit.conf"
-#define PERFEXPERT_TOOL_MIC_EXPERIMENT_FILE "experiment_hpctoolkit_mic.conf"
-#define PERFEXPERT_TOOL_PROFILE_FILE        "database/experiment.xml"
-#define PERFEXPERT_TOOL_COUNTER_PREFIX      "papi"
-#define PERFEXPERT_TOOL_TOTAL_INSTRUCTION   "PAPI_TOT_INS"
-#define PERFEXPERT_TOOL_TOTAL_CYCLES        "PAPI_TOT_CYC"
+#define HPCTOOLKIT_PROFILE_FILE "database/experiment.xml"
+#define HPCSTRUCT               "hpcstruct"
+#define HPCRUN                  "hpcrun"
+#define HPCPROF                 "hpcprof"
 
-/* HPCToolkit stuff (binaries should be in the path) */
-#define HPCSTRUCT "hpcstruct"
-#define HPCRUN    "hpcrun"
-#define HPCPROF   "hpcprof"
+/* Private module types */
+typedef struct {
+    hpctoolkit_event_t *events_by_name;
+} my_module_globals_t;
+
+extern my_module_globals_t my_module_globals;
+extern perfexpert_module_hpctoolkit_t myself_module;
 
 /* Module interface */
-int perfexpert_tool_measurements(void);
-int perfexpert_tool_parse_file(const char *file, perfexpert_list_t *profiles);
-char perfexpert_tool_profile_file[] = PERFEXPERT_TOOL_PROFILE_FILE;
-char perfexpert_tool_total_instructions[] = PERFEXPERT_TOOL_TOTAL_INSTRUCTION;
-char perfexpert_tool_total_cycles[] = PERFEXPERT_TOOL_TOTAL_CYCLES;
-char perfexpert_tool_counter_prefix[] = PERFEXPERT_TOOL_COUNTER_PREFIX;
+int module_load(void);
+int module_init(void);
+int module_fini(void);
+int module_measurements(void);
 
-/* Module function declarations */
-static int run_hpcstruct(void);
-static int run_hpcrun(void);
-static int run_hpcrun_knc(void);
-static int run_hpcprof(void);
-static int hpctoolkit_parser(xmlDocPtr document, xmlNodePtr node,
-    perfexpert_list_t *profiles, profile_t *profile, callpath_t *parent,
-    int loopdepth);
+/* Extended module interface */
+int module_set_event(const char *name);
+
+/* Function declarations */
+int parse_file(const char *file);
+int run_hpcstruct(void);
+int run_hpcrun(void);
+int run_hpcrun_knc(void);
+int run_hpcprof(char **file);
+int profile_check_all(perfexpert_list_t *profiles);
+int profile_flatten_all(perfexpert_list_t *profiles);
+int database_profiles(perfexpert_list_t *profiles);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* ANALYZER_HPCTOOLKIT_H_ */
+#endif /* PERFEXPERT_MODULE_HPCTOOLKIT_H_ */
