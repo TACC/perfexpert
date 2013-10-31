@@ -1,0 +1,11 @@
+my_init
+module_globals
+perfexpert_module_load
+perfexpert_module_set_option
+perfexpert_module_init
+perfexpert_module_fini
+perfexpert_module_compile
+perfexpert_module_measurements
+perfexpert_module_analysis
+perfexpert_module_requires
+perfexpert_module_available
