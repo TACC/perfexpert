@@ -9,22 +9,23 @@
 #
 # PerfExpert is free software: you can redistribute it and/or modify it under
 # the terms of the The University of Texas at Austin Research License
-# 
+#
 # PerfExpert is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
 # A PARTICULAR PURPOSE.
-# 
+#
 # Authors: Leonardo Fialho and Ashay Rane
 #
 # $HEADER$
 #
 
 SUBDIRS = $(ENABLE_HPCTOOLKIT)
-SUBDIRS += $(ENABLE_VTUNE)
+SUBDIRS += $(ENABLE_LCPI)
 
-lib_LTLIBRARIES = libperfexpert_module.la
-libperfexpert_module_la_SOURCES = perfexpert_module.c
-libperfexpert_module_la_CPPFLAGS = -I$(srcdir)/../tools/common
-libperfexpert_module_la_LDFLAGS = -lltdl -version-info 1:0:0
+lib_LTLIBRARIES = libperfexpert_module_base.la
+libperfexpert_module_base_la_SOURCES = perfexpert_module_base.c
+libperfexpert_module_base_la_CPPFLAGS = -I$(srcdir)/..
+libperfexpert_module_base_la_LDFLAGS = -lltdl -version-info 1:0:0 \
+	-export-symbols $(srcdir)/perfexpert_module_base.sym
 
 # EOF
