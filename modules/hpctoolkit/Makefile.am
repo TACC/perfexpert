@@ -29,4 +29,10 @@ libperfexpert_module_hpctoolkit_la_SOURCES = hpctoolkit_module.c \
 	hpctoolkit_profile.c \
 	hpctoolkit_tools.c
 
+# Install hpctoolkit module database
+install-exec-local:
+	$(MKDIR_P) $(DESTDIR)$(sysconfdir)
+	$(INSTALL) -m 644 $(top_srcdir)/modules/hpctoolkit/hpctoolkit_module.sql \
+		$(DESTDIR)$(sysconfdir)/
+
 # EOF

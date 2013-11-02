@@ -9,11 +9,11 @@
 #
 # PerfExpert is free software: you can redistribute it and/or modify it under
 # the terms of the The University of Texas at Austin Research License
-# 
+#
 # PerfExpert is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
 # A PARTICULAR PURPOSE.
-# 
+#
 # Authors: Leonardo Fialho and Ashay Rane
 #
 # $HEADER$
@@ -30,10 +30,13 @@ else
 endif
 
 install-exec-local:
-	./hound > machine.conf
+	cp $(top_srcdir)/tools/hound/hound.sql hound.sql
+	./hound >> hound.sql
 	$(MKDIR_P) $(DESTDIR)$(sysconfdir)
-	$(INSTALL) -m 644 machine.conf $(DESTDIR)$(sysconfdir)/
-	hwloc-info --output-format xml > memory.conf
-	$(INSTALL) -m 644 memory.conf $(DESTDIR)$(sysconfdir)/
+	$(INSTALL) -m 644 hound.sql $(DESTDIR)$(sysconfdir)/
+#	hwloc-info --output-format xml > memory.conf
+#	$(INSTALL) -m 644 memory.conf $(DESTDIR)$(sysconfdir)/
+
+# Install hpctoolkit module database
 
 # EOF

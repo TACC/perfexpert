@@ -9,11 +9,11 @@
 #
 # PerfExpert is free software: you can redistribute it and/or modify it under
 # the terms of the The University of Texas at Austin Research License
-# 
+#
 # PerfExpert is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
 # A PARTICULAR PURPOSE.
-# 
+#
 # Authors: Leonardo Fialho and Ashay Rane
 #
 # $HEADER$
@@ -26,7 +26,12 @@ SUBDIRS = modules tools
 .PHONY: check
 
 check:
-	cd $(top_builddir)/tests/ 
+	cd $(top_builddir)/tests/
 	./run_tests.pl
+
+# Set database version
+install-exec-local:
+	echo 1.26 > perfexpert.db.version
+	$(INSTALL) -m 644 perfexpert.db.version $(DESTDIR)$(sysconfdir)/
 
 # EOF
