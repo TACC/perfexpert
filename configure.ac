@@ -451,6 +451,12 @@ AS_IF([test x"$ENABLE_RECOMMENDER" = xyes], [
     AC_MSG_RESULT([yes])
 
     #
+    # Math library
+    #
+    AC_CHECK_LIB([m], [isnormal, isnan, isinf], [],
+        [AC_MSG_ERROR([libm.so not found])])
+
+    #
     # SQLite support (headers, lib, and program)
     #
     AC_ARG_WITH([sqlite],
