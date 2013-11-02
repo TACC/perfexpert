@@ -28,18 +28,14 @@ extern "C" {
 
 /* Return codes that should be used... */
 enum {
-    PERFEXPERT_UNDEFINED = -2, /* -2 ...when the error is unknown             */
-    PERFEXPERT_FAILURE,        /* -1 ...when an error is -1 (GNU standard)    */
-    PERFEXPERT_SUCCESS,        /* 0  ...in case of success                    */
-    PERFEXPERT_ERROR,          /* 1  ...in case of general error              */
-    PERFEXPERT_NO_REC,         /* 2  ...when we run out of recommendation     */
-    PERFEXPERT_NO_PAT,         /* 3  ...when no pattern matches               */
-    PERFEXPERT_NO_TRANS,       /* 4  ...when transformations can't be applied */
-    PERFEXPERT_NO_DATA,        /* 5  ...when analyzer return an error         */
-    PERFEXPERT_NO_HOTSPOTS,    /* 6  ...when there no hotspots were found     */
-    PERFEXPERT_NO_ANALYSIS,    /* 7  ...when no analysis module is selected   */
-    PERFEXPERT_FORK_ERROR,     /* 8  ...in case of fork error :)              */
-    PERFEXPERT_MACPO,          /* 9  ...when analyzer runs with -A option set */
+    PERFEXPERT_UNDEFINED = -2, /* ...when the error is unknown             */
+    PERFEXPERT_FAILURE,        /* ...when an error is -1 (GNU standard)    */
+    PERFEXPERT_SUCCESS,        /* ...in case of success                    */
+    PERFEXPERT_ERROR,          /* ...in case of general error              */
+    PERFEXPERT_NO_REC,         /* ...when we run out of recommendation     */
+    PERFEXPERT_NO_PAT,         /* ...when no pattern matches               */
+    PERFEXPERT_NO_TRANS,       /* ...when transformations can't be applied */
+    PERFEXPERT_FORK_ERROR,     /* ...in case of fork error :)              */
 };
 
 #define PERFEXPERT_TRUE  1 /* used to return boolean values */
