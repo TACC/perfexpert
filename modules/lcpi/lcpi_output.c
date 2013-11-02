@@ -155,7 +155,7 @@ static int output_profile(lcpi_hotspot_t *h) {
     PRETTY_PRINT(79, "=");
 
     /* Do we have something meaningful to show? Some warning? */
-    if (ANALYZER_VARIANCE_LIMIT < h->variance) {
+    if (LCPI_VARIANCE_LIMIT < h->variance) {
         printf("%s the instruction count variation for this bottleneck is "
             "%.2f%%, making\n         the results unreliable\n\n",
             _BOLDRED("WARNING:"), h->variance * 100);

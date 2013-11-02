@@ -67,8 +67,6 @@ enum {
 #define ANALYZER_OUTPUT          "analyzer.output"
 #define ANALYZER_METRICS         "analyzer_metrics.txt"
 #define ANALYZER_REPORT          "analyzer_report.txt"
-#define ANALYZER_VARIANCE_LIMIT  0.2
-
 #define CT_PROGRAM               "perfexpert_ct"
 #define CT_OUTPUT                "ct.output"
 #define CT_REPORT                "ct_report.txt"
