@@ -418,48 +418,6 @@ AS_IF([test x"$ENABLE_HOUND" = xyes], [
 AC_SUBST([ENABLE_HOUND])
 
 #------------------------------------------------------------------------------
-# 'sniffer' requirements
-#
-AC_ARG_ENABLE([sniffer],
-    [AS_HELP_STRING([--disable-sniffer],
-        [disable the performance counter sniffer])],
-    [ENABLE_SNIFFER=$enableval], [ENABLE_SNIFFER=yes])
-
-AC_MSG_CHECKING([whether to enable the performance counter sniffer tool])
-AS_IF([test x"$ENABLE_SNIFFER" = xyes], [
-    AC_MSG_RESULT([yes])
-
-    #
-    # PAPI support (headers and lib)
-    #
-    AC_ARG_WITH([papi],
-        [AS_HELP_STRING([--with-papi],
-            [where PAPI library and include directories are located])], [
-        CPPFLAGS+=" -I$withval/include"
-        LDFLAGS+=" -L$withval/lib"], [])
-
-    AC_ARG_WITH([papi-lib],
-        [AS_HELP_STRING([--with-papi-lib], [set PAPI library path])],
-        [LDFLAGS+=" -L$withval"], [])
-
-    AC_ARG_WITH([papi-include],
-        [AS_HELP_STRING([--with-papi-include], [set PAPI include path])],
-        [CPPFLAGS+=" -I$withval"], [])
-
-    AC_CHECK_LIB([papi], [PAPI_library_init, PAPI_add_event], [],
-        [AC_MSG_ERROR([papi.so not found])])
-    AC_CHECK_HEADER([papi.h], [], [AC_MSG_ERROR([papi.h not found])])
-
-    ENABLE_SNIFFER=sniffer
-    ENABLED_TOOLS+="sniffer "
-    AC_CONFIG_FILES([tools/sniffer/Makefile])
-], [
-    AC_MSG_RESULT([no])
-    ENABLE_SNIFFER=
-])
-AC_SUBST([ENABLE_SNIFFER])
-
-#------------------------------------------------------------------------------
 # 'perfexpert_analyzer' requirements
 #
 #AC_ARG_ENABLE([analyzer],
