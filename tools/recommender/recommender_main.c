@@ -9,11 +9,11 @@
  *
  * PerfExpert is free software: you can redistribute it and/or modify it under
  * the terms of the The University of Texas at Austin Research License
- * 
+ *
  * PerfExpert is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
- * 
+ *
  * Authors: Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
@@ -30,12 +30,13 @@ extern "C" {
 /* Utility headers */
 #include <sqlite3.h>
 
-/* PerfExpert headers */
+/* PerfExpert tool headers */
 #include "recommender.h"
-#include "perfexpert_alloc.h"
-#include "perfexpert_database.h"
-#include "perfexpert_list.h"
-#include "perfexpert_output.h"
+
+/* PerfExpert common headers */
+#include "common/perfexpert_database.h"
+#include "common/perfexpert_list.h"
+#include "common/perfexpert_output.h"
 
 /* Global variables, try to not create them! */
 globals_t globals; // Variable to hold global options, this one is OK
@@ -43,41 +44,25 @@ globals_t globals; // Variable to hold global options, this one is OK
 /* main, life starts here */
 int main(int argc, char** argv) {
     perfexpert_list_t segments;
-    int rc = PERFEXPERT_ERROR;
-    
+
     /* Set default values for globals */
     globals = (globals_t) {
-        .verbose          = 0,                // int
-        .inputfile        = NULL,             // char *
-        .inputfile_FP     = NULL,             // FILE *
-        .outputfile       = NULL,             // char *
-        .outputfile_FP    = stdout,           // FILE *
-        .outputmetrics    = NULL,             // char *
-        .outputmetrics_FP = NULL,             // FILE *
-        .dbfile           = NULL,             // char *
-        .workdir          = NULL,             // char *
-        .pid              = (long)getpid(),   // long int
-        .colorful         = PERFEXPERT_FALSE, // int
-        .metrics_file     = NULL,             // char *
-        .metrics_table    = METRICS_TABLE,    // char *
-        .rec_count        = 3                 // int
+        .verbose          = 0,                 // int
+        .outputfile       = NULL,              // char *
+        .outputfile_FP    = stdout,            // FILE *
+        .outputmetrics    = NULL,              // char *
+        .outputmetrics_FP = NULL,              // FILE *
+        .dbfile           = NULL,              // char *
+        .workdir          = NULL,              // char *
+        .uid              = 0,                 // long long int
+        .colorful         = PERFEXPERT_FALSE , // int
+        .no_rec           = PERFEXPERT_NO_REC, // int
+        .rec_count        = 3                  // int
     };
 
     /* Parse command-line parameters */
     if (PERFEXPERT_SUCCESS != parse_cli_params(argc, argv)) {
         OUTPUT(("%s", _ERROR("Error: parsing command line arguments")));
-        return PERFEXPERT_ERROR;
-    }
-
-    /* Create the list of code bottlenecks */
-    perfexpert_list_construct(&segments);
-    
-    /* Open input file */
-    OUTPUT_VERBOSE((3, "   %s (%s)", _YELLOW("performance analysis input"),
-        globals.inputfile));
-    if (NULL == (globals.inputfile_FP = fopen(globals.inputfile, "r"))) {
-        OUTPUT(("%s (%s)", _ERROR("Error: unable to open input file"),
-            globals.inputfile));
         return PERFEXPERT_ERROR;
     }
 
@@ -87,12 +72,12 @@ int main(int argc, char** argv) {
             globals.outputfile));
         globals.outputfile_FP = fopen(globals.outputfile, "w+");
         if (NULL == globals.outputfile_FP) {
-            OUTPUT(("%s (%s)", _ERROR("Error: unable to open report file"),
+            OUTPUT(("%s (%s)", _ERROR("Error: unable to open output file"),
                 globals.outputfile));
             goto CLEANUP;
         }
     } else {
-        OUTPUT_VERBOSE((7, "   printing report to STDOUT"));
+        OUTPUT_VERBOSE((7, "   printing to STDOUT"));
     }
 
     /* If necessary open outputmetrics_FP */
@@ -101,9 +86,8 @@ int main(int argc, char** argv) {
             globals.outputmetrics));
         globals.outputmetrics_FP = fopen(globals.outputmetrics, "w+");
         if (NULL == globals.outputmetrics_FP) {
-            OUTPUT(("%s (%s)",
-                _ERROR("Error: unable to open output metrics file"),
-                globals.outputmetrics));
+            OUTPUT(("%s (%s)", _ERROR("Error: unable to open code transformer "
+                "output file"), globals.outputmetrics));
             goto CLEANUP;
         }
     }
@@ -115,31 +99,14 @@ int main(int argc, char** argv) {
         goto CLEANUP;
     }
 
-    /* Parse metrics file if 'm' is defined, this will create a temp table */
-    if (NULL != globals.metrics_file) {
-        PERFEXPERT_ALLOC(char, globals.metrics_table, (strlen("metrics_") + 6));
-        sprintf(globals.metrics_table, "metrics_%d", (int)getpid());
-
-        if (PERFEXPERT_SUCCESS != parse_metrics_file()) {
-            OUTPUT(("%s", _ERROR("Error: parsing metrics file")));
-            goto CLEANUP;
-        }
-    }
-
-    /* Parse input parameters */
-    if (PERFEXPERT_SUCCESS != (rc = parse_segment_params(&segments))) {
-        OUTPUT(("%s", _ERROR("Error: parsing input params")));
+    /* Select recommendations */
+    if (PERFEXPERT_SUCCESS != select_recommendations()) {
+        OUTPUT(("%s", _ERROR("Error: selecting recommendations")));
         goto CLEANUP;
     }
 
-    /* Select recommendations */
-    rc = select_recommendations_all(&segments);
-
     CLEANUP:
     /* Close input file */
-    if (NULL != globals.inputfile) {
-        fclose(globals.inputfile_FP);
-    }
     if (NULL != globals.outputfile) {
         fclose(globals.outputfile_FP);
     }
@@ -148,12 +115,7 @@ int main(int argc, char** argv) {
     }
     perfexpert_database_disconnect(globals.db);
 
-    /* Free memory */
-    if (NULL != globals.metrics_file) {
-        PERFEXPERT_DEALLOC(globals.metrics_table);
-    }
-
-    return rc;
+    return globals.no_rec;
 }
 
 #ifdef __cplusplus

@@ -9,11 +9,11 @@
  *
  * PerfExpert is free software: you can redistribute it and/or modify it under
  * the terms of the The University of Texas at Austin Research License
- * 
+ *
  * PerfExpert is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
- * 
+ *
  * Authors: Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
@@ -30,226 +30,226 @@ extern "C" {
 /* Utility headers */
 #include <sqlite3.h>
 
-/* PerfExpert headers */
+/* PerfExpert tool headers */
 #include "recommender.h"
-#include "perfexpert_alloc.h"
-#include "perfexpert_database.h"
-#include "perfexpert_list.h"
-#include "perfexpert_output.h"
-#include "perfexpert_util.h"
+#include "recommender_logic.h"
 
-/* select_recommendations_all */
-int select_recommendations_all(perfexpert_list_t *segments) {
-    int rc = PERFEXPERT_NO_REC;
-    segment_t *segment = NULL;
-
-    OUTPUT_VERBOSE((4, "%s", _BLUE("Selecting recommendations")));
-
-    /* For each code bottleneck... */
-    segment = (segment_t *)perfexpert_list_get_first(segments);
-    while ((perfexpert_list_item_t *)segment != &(segments->sentinel)) {
-        /* ...select recommendations */
-        switch (select_recommendations(segment)) {
-            case PERFEXPERT_NO_REC:
-                OUTPUT(("%s", _GREEN("Sorry, we have no recommendations")));
-                goto MOVE_ON;
-
-            case PERFEXPERT_SUCCESS:
-                rc = PERFEXPERT_SUCCESS;
-                break;
-
-            case PERFEXPERT_ERROR:
-            default: 
-                OUTPUT(("%s", _ERROR("Error: selecting recommendations")));
-                return PERFEXPERT_ERROR;
-        }
-        /* Move to the next code bottleneck */
-        MOVE_ON:
-        segment = (segment_t *)perfexpert_list_get_next(segment);
-    }
-    return rc;
-}
+/* PerfExpert common headers */
+#include "common/perfexpert_alloc.h"
+#include "common/perfexpert_constants.h"
+#include "common/perfexpert_database.h"
+#include "common/perfexpert_list.h"
+#include "common/perfexpert_output.h"
 
 /* select_recommendations */
-int select_recommendations(segment_t *segment) {
-    function_t *function = NULL;
-    char *error_msg = NULL;
-    char sql[BUFFER_SIZE];
-    double weight = 0.0;
+int select_recommendations(void) {
+    char *error = NULL, sql[MAX_BUFFER_SIZE];
+
+    bzero(sql, MAX_BUFFER_SIZE);
+    sprintf(sql, "SELECT id, name, type, file, line, depth FROM hotspot WHERE "
+        "perfexpert_id = %llu", globals.uid);
+
+    /* Select all strategies, accumulate them */
+    OUTPUT_VERBOSE((4, "%s", _BLUE("Accumulating strategies")));
+
+    perfexpert_list_construct(&(globals.strategies));
+
+    if (SQLITE_OK != sqlite3_exec(globals.db,
+        "SELECT id, name, statement FROM recommender_strategy;",
+        accumulate_strategies, (void *)&(globals.strategies), &error)) {
+        OUTPUT(("%s %s", _ERROR("Error: SQL error"), error));
+        sqlite3_free(error);
+        return PERFEXPERT_ERROR;
+    }
+
+    OUTPUT_VERBOSE((8, "%d %s", perfexpert_list_get_size(&(globals.strategies)),
+        _MAGENTA("strategies found")));
+
+    /* Select hotspots */
+    if (SQLITE_OK != sqlite3_exec(globals.db, sql, select_recom_hotspot, NULL,
+        &error)) {
+        OUTPUT(("%s %s", _ERROR("Error: SQL error"), error));
+        sqlite3_free(error);
+        return PERFEXPERT_ERROR;
+    }
+
+    return PERFEXPERT_SUCCESS;
+}
+
+/* accumulate_strategies */
+static int accumulate_strategies(void *strategies, int c, char **val,
+    char **names) {
+    strategy_t *s = NULL;
+
+    PERFEXPERT_ALLOC(strategy_t, s, sizeof(strategy_t));
+    perfexpert_list_item_construct((perfexpert_list_item_t *)s);
+    PERFEXPERT_ALLOC(char, s->name, (strlen(val[1]) + 1));
+    strcpy(s->name, val[1]);
+    PERFEXPERT_ALLOC(char, s->query, (strlen(val[2]) + 1));
+    strcpy(s->query, val[2]);
+    perfexpert_list_append((perfexpert_list_t *)strategies,
+        (perfexpert_list_item_t *)s);
+
+    OUTPUT_VERBOSE((10, "   %s", s->name));
+
+    return PERFEXPERT_SUCCESS;
+}
+
+/* select_recommendations_hotspot */
+static int select_recom_hotspot(void *var, int c, char **val, char **names) {
+    char *error = NULL, sql[MAX_BUFFER_SIZE], *id = val[0], *name =  val[1],
+        *type =  val[2], *file =  val[3], *line =  val[4], *depth = val[5];
+    sqlite3_stmt *statement = NULL;
+    strategy_t *s = NULL;
     int rc = 0;
 
-    OUTPUT_VERBOSE((4, "   %s (%s:%d)", _YELLOW("selecting recommendation for"),
-        segment->filename, segment->line_number));
-
-    /* Select all functions, accumulate them */
-    if (SQLITE_OK != sqlite3_exec(globals.db,
-        "SELECT id, desc, statement FROM function;", accumulate_functions,
-        (void *)&(segment->functions), &error_msg)) {
-        OUTPUT(("%s %s", _ERROR("Error: SQL error"), error_msg));
-        sqlite3_free(error_msg);
-        return PERFEXPERT_ERROR;
-    }
-
-    OUTPUT_VERBOSE((8, "      %s (%d)", _MAGENTA("function(s) found"),
-        perfexpert_list_get_size(&(segment->functions))));
+    OUTPUT(("%s %s:%s", _YELLOW("Selecting recommendations for"), file, line));
 
     /* Create a temporary table to store possible recommendations */
-    bzero(sql, BUFFER_SIZE);
-    sprintf(sql, "%s_%d_%d %s %s", "CREATE TEMP TABLE recommendation",
-        (int)getpid(), segment->rowid, "(function_id INTEGER,",
-        "recommendation_id INTEGER, score FLOAT, weigth FLOAT);");
-    OUTPUT_VERBOSE((10, "      %s", _CYAN("creating temporary table")));
-    OUTPUT_VERBOSE((10, "         SQL: %s", _CYAN(sql)));
+    bzero(sql, MAX_BUFFER_SIZE);
+    sprintf(sql, "CREATE TEMP TABLE temp_%d_%s (rid INTEGER, score FLOAT);",
+        (int)getpid(), id);
 
-    if (SQLITE_OK != sqlite3_exec(globals.db, sql, NULL, NULL, &error_msg)) {
-        OUTPUT(("%s %s", _ERROR("Error: SQL error"), error_msg));
-        sqlite3_free(error_msg);
+    if (SQLITE_OK != sqlite3_exec(globals.db, sql, NULL, NULL, &error)) {
+        OUTPUT(("%s %s", _ERROR("Error: SQL error"), error));
+        sqlite3_free(error);
         return PERFEXPERT_ERROR;
     }
 
-    /* Print recommendations header */
-    if (PERFEXPERT_SUCCESS != output_header(segment)) {
-        OUTPUT(("%s", _ERROR("Error: unable to print recommendations header")));
-        return PERFEXPERT_ERROR;
-    }
+    /* For each strategy... */
+    perfexpert_list_for(s, &(globals.strategies), strategy_t) {
+        OUTPUT_VERBOSE((8, "   %s '%s'", _CYAN("running"), s->name));
 
-    /* For each function... */
-    function = (function_t *)perfexpert_list_get_first(&(segment->functions));
-    while ((perfexpert_list_item_t *)function != &(segment->functions.sentinel)) {
-        sqlite3_stmt *statement;
-        
-        OUTPUT_VERBOSE((8, "      %s '%s' [%d bytes]", _CYAN("running"),
-            function->desc, strlen(function->statement)));
-
-        /* Prepare the SQL statement */
-        if (SQLITE_OK != sqlite3_prepare_v2(globals.db, function->statement,
-            BUFFER_SIZE, &statement, NULL)) {
-            OUTPUT(("%s %s", _ERROR("Error: SQL error"), error_msg));
-            sqlite3_free(error_msg);
+        /* ...prepare the SQL statement... */
+        if (SQLITE_OK != sqlite3_prepare_v2(globals.db, s->query,
+            strlen(s->query), &statement, NULL)) {
+            OUTPUT(("%s %s", _ERROR("Error: SQL error"), error, s->query));
+            sqlite3_free(error);
             return PERFEXPERT_ERROR;
         }
 
-        /* Bind ROWID */
-        if (SQLITE_OK != sqlite3_bind_int(statement,
-            sqlite3_bind_parameter_index(statement, "@RID"), segment->rowid)) {
-            OUTPUT_VERBOSE((9, "         %s (%d)", _RED("ignoring @RID"),
-                segment->rowid));
+        /* ...bind UID... */
+        if (SQLITE_OK != sqlite3_bind_int64(statement,
+            sqlite3_bind_parameter_index(statement, "@HID"),
+            strtoll(id, NULL, 10))) {
+            OUTPUT_VERBOSE((9, "      %s (%llu)", _RED("ignoring @HID"),
+                globals.uid));
         }
 
-        /* Bind loop depth */
-        if (SQLITE_OK != sqlite3_bind_int(statement,
-            sqlite3_bind_parameter_index(statement, "@LPD"),
-            segment->loopdepth)) {
-            OUTPUT_VERBOSE((9, "         %s (%d)", _RED("ignoring @LPD"),
-                segment->loopdepth));
-        }
-
-        /* Run query */
+        /* ...run strategy... */
         while (SQLITE_ROW == (rc = sqlite3_step(statement))) {
-            /* It is possible that this function does not return results... */
-            if (SQLITE_DONE == rc) {
-                continue;
-            }
-
-            /* It is possible that this function returns an error... */
+            /* If this strategy returns an error... */
             if (SQLITE_ROW != rc) {
                 return PERFEXPERT_ERROR;
             }
 
-            /* ... but if there is one row, check if the two first columns are
-             * SQLITE_INTEGER and SQLITE_FLOAT respectivelly
-             */
-            if (SQLITE_INTEGER != sqlite3_column_type(statement, 0)) {
-                OUTPUT(("         %s", _ERROR("1st column is not an integer")));
-                continue;
-            }
-            if (SQLITE_FLOAT != sqlite3_column_type(statement, 1)) {
-                OUTPUT(("         %s", _ERROR("2nd column is not a float")));
+            /* ...if strategy's results are null or in an invalid format... */
+            if ((SQLITE_INTEGER != sqlite3_column_type(statement, 0)) ||
+                (SQLITE_FLOAT != sqlite3_column_type(statement, 1)) ||
+                (SQLITE_DONE == rc)) {
                 continue;
             }
 
-            /* Consider only the results where the score is positive */
-            if (0 < sqlite3_column_double(statement, 1)) {
-                /* Insert recommendation into the temporary table */
-                bzero(sql, BUFFER_SIZE);
-                sprintf(sql, "%s_%d_%d %s (%d, %d, %f, %f);",
-                    "INSERT INTO recommendation", (int)getpid(), segment->rowid,
-                    "VALUES", function->id, sqlite3_column_int(statement, 0),
-                    sqlite3_column_double(statement, 1), weight);
-                if (SQLITE_OK != sqlite3_exec(globals.db, sql, NULL, NULL,
-                    &error_msg)) {
-                    OUTPUT(("%s %s", _ERROR("Error: SQL error"), error_msg));
-                    sqlite3_free(error_msg);
-                    return PERFEXPERT_ERROR;
-                }
+            /* ...insert recommendation into temporary table... */
+            bzero(sql, MAX_BUFFER_SIZE);
+            sprintf(sql, "INSERT INTO temp_%d_%s VALUES (%d, %f);",
+                (int)getpid(), id, sqlite3_column_int(statement, 0),
+                sqlite3_column_double(statement, 1));
 
-                OUTPUT_VERBOSE((10, "         Function=%d, Recom=%d, Score=%f",
-                    function->id, sqlite3_column_int(statement, 0),
-                    sqlite3_column_double(statement, 1)));
+            if (SQLITE_OK != sqlite3_exec(globals.db, sql, NULL, NULL,
+                &error)) {
+                OUTPUT(("%s %s", _ERROR("Error: SQL error"), error));
+                sqlite3_free(error);
+                return PERFEXPERT_ERROR;
             }
+
+            OUTPUT_VERBOSE((10, "      [recommendation=%d], [score=%f]",
+                sqlite3_column_int(statement, 0),
+                sqlite3_column_double(statement, 1)));
         }
 
-        /* Something went wrong :-/ */
+        /* Something went wrong... :-( */
         if (SQLITE_DONE != rc) {
-            OUTPUT(("%s %s", _ERROR("Error: SQL error"), error_msg));
-            sqlite3_free(error_msg);
+            OUTPUT(("%s %s", _ERROR("Error: SQL error"), error));
+            sqlite3_free(error);
             return PERFEXPERT_ERROR;
         }
-        
-        /* SQLite3 cleanup */
+
+        /* ...and cleanup the statement! */
         if (SQLITE_OK != sqlite3_reset(statement)) {
-            OUTPUT(("%s %s", _ERROR("Error: SQL error"), error_msg));
-            sqlite3_free(error_msg);
+            OUTPUT(("%s %s", _ERROR("Error: SQL error"), error));
+            sqlite3_free(error);
             return PERFEXPERT_ERROR;
         }
         if (SQLITE_OK != sqlite3_finalize(statement)) {
-            OUTPUT(("%s %s", _ERROR("Error: SQL error"), error_msg));
-            sqlite3_free(error_msg);
+            OUTPUT(("%s %s", _ERROR("Error: SQL error"), error));
+            sqlite3_free(error);
             return PERFEXPERT_ERROR;
         }
-        
-        /* Move to the next code bottleneck */
-        function = (function_t *)perfexpert_list_get_next(function);
     }
 
-    /* Select top-N recommendations, output them besides the pattern */
-    bzero(sql, BUFFER_SIZE);
-    sprintf(sql, "%s %s%d_%d %s %s %d;",
-        "SELECT r.desc AS desc, r.reason AS reason, r.id AS id, r.example",
-        "AS example FROM recommendation AS r INNER JOIN recommendation_",
-        (int)getpid(), segment->rowid, "AS m ON r.id = m.recommendation_id",
-        "ORDER BY m.score DESC LIMIT", globals.rec_count);
+    /* Check if there is any recommendation */
+    bzero(sql, MAX_BUFFER_SIZE);
+    sprintf(sql, "SELECT COUNT(*) FROM temp_%d_%s;", (int)getpid(), id,
+        globals.rec_count);
 
-    OUTPUT_VERBOSE((10, "      %s [%d]", _CYAN("top-N"), globals.rec_count));
-    OUTPUT_VERBOSE((10, "         SQL: %s", _CYAN(sql)));
-
-    rc = PERFEXPERT_NO_REC;
-    if (SQLITE_OK != sqlite3_exec(globals.db, sql, output_recommendations,
-        (void *)&(rc), &error_msg)) {
-        OUTPUT(("%s %s", _ERROR("Error: SQL error"), error_msg));
-        sqlite3_free(error_msg);
+    if (SQLITE_OK != sqlite3_exec(globals.db, sql, perfexpert_database_get_int,
+        (void *)&rc, &error)) {
+        OUTPUT(("%s %s", _ERROR("Error: SQL error"), error));
+        sqlite3_free(error);
         return PERFEXPERT_ERROR;
     }
 
-    return rc;
+    if (0 == rc) {
+        return PERFEXPERT_SUCCESS;
+    }
+
+    /* Print recommendations header */
+    fprintf(globals.outputfile_FP,
+        "#-----------------------------------------------------------------\n");
+    fprintf(globals.outputfile_FP, "# Recommendations for %s:%s\n", file, line);
+    fprintf(globals.outputfile_FP,
+        "#-----------------------------------------------------------------\n");
+
+    if (NULL != globals.outputmetrics) {
+        fprintf(globals.outputmetrics_FP, "%% Hotspot=%s:%s\n", file, line);
+        fprintf(globals.outputmetrics_FP, "code.filename=%s\n", file);
+        fprintf(globals.outputmetrics_FP, "code.line_number=%s\n", line);
+        fprintf(globals.outputmetrics_FP, "code.type=%s\n", type);
+        fprintf(globals.outputmetrics_FP, "code.function_name=%s\n", name);
+        fprintf(globals.outputmetrics_FP, "code.loopdepth=%s\n", depth);
+    }
+
+    /* Select top-N recommendations, output them besides the pattern */
+    bzero(sql, MAX_BUFFER_SIZE);
+    sprintf(sql,
+        "SELECT name, reason, id, example FROM recommender_recommendation AS r "
+        "INNER JOIN temp_%d_%s AS t ON r.id = t.rid ORDER BY t.score "
+        "DESC LIMIT %d;", (int)getpid(), id, globals.rec_count);
+
+    if (SQLITE_OK != sqlite3_exec(globals.db, sql, print_recom, NULL, &error)) {
+        OUTPUT(("%s %s", _ERROR("Error: SQL error"), error));
+        sqlite3_free(error);
+        return PERFEXPERT_ERROR;
+    }
+
+    return PERFEXPERT_SUCCESS;
 }
 
-/* accumulate_functions */
-int accumulate_functions(void *functions, int count, char **val, char **names) {
-    function_t *function = NULL;
-    
-    /* Copy SQL query result into functions list */
-    PERFEXPERT_ALLOC(function_t, function, sizeof(function_t));
-    perfexpert_list_item_construct((perfexpert_list_item_t *)function);
-    function->id = atoi(val[0]);
-    PERFEXPERT_ALLOC(char, function->desc, (strlen(val[1]) + 1));
-    strncpy(function->desc, val[1], strlen(val[1]));
-    bzero(function->statement, BUFFER_SIZE);
-    strncpy(function->statement, val[2], strlen(val[2]));
-    perfexpert_list_append((perfexpert_list_t *)functions,
-        (perfexpert_list_item_t *)function);
+/* output_recommendations */
+static int print_recom(void *var, int count, char **val, char **names) {
 
-    OUTPUT_VERBOSE((10, "      '%s'", function->desc));
+    globals.no_rec = PERFEXPERT_SUCCESS;
+
+    fprintf(globals.outputfile_FP, "#\n# %s\n#\n",
+        _MAGENTA("Possible optimization:"));
+    fprintf(globals.outputfile_FP, "%s\n%s\n\n", _CYAN("Description:"), val[0]);
+    fprintf(globals.outputfile_FP, "%s\n%s\n\n", _CYAN("Reason:"), val[1]);
+    fprintf(globals.outputfile_FP, "%s\n\n%s\n\n", _CYAN("Example:"), val[3]);
+
+    if (NULL != globals.outputmetrics) {
+        fprintf(globals.outputmetrics_FP, "recommender.rid=%s\n", val[2]);
+    }
 
     return PERFEXPERT_SUCCESS;
 }
