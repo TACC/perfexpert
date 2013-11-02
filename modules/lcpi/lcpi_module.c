@@ -84,11 +84,6 @@ int module_measurements(void) {
         return PERFEXPERT_ERROR;
     }
 
-    if (PERFEXPERT_SUCCESS != metrics_attach_machine()) {
-        OUTPUT(("%s", _ERROR("Error: unable to attach machine profile")));
-        return PERFEXPERT_ERROR;
-    }
-
     return PERFEXPERT_SUCCESS;
 }
 
