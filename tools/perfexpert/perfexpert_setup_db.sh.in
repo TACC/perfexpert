@@ -1,0 +1,59 @@
+#!@BASH_PROGRAM@
+#
+# Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
+#
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# This file is part of PerfExpert.
+#
+# PerfExpert is free software: you can redistribute it and/or modify it under
+# the terms of the The University of Texas at Austin Research License
+#
+# PerfExpert is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+# A PARTICULAR PURPOSE.
+#
+# Authors: Leonardo Fialho and Ashay Rane
+#
+# $HEADER$
+#
+
+prefix="@prefix@"
+
+# Save the old database file (if exists)
+if [ -f ${HOME}/.perfexpert.db ]; then
+    now=`date +%Y%m%d-%H%M%S`
+    mv ${HOME}/.perfexpert.db ${HOME}/.perfexpert.db.${now}
+    echo "Your database was moved to ${now}, a new database will be created"
+fi
+
+# Setup Hound
+if [ -f ${prefix}/etc/hound.sql ]; then
+    sqlite3 ${HOME}/.perfexpert.db < ${prefix}/etc/hound.sql
+    echo "Hound tool set"
+fi
+
+# Setup HPCToolkit module
+if [ -f ${prefix}/etc/hpctoolkit_module.sql ]; then
+    sqlite3 ${HOME}/.perfexpert.db < ${prefix}/etc/hpctoolkit_module.sql
+    echo "HPCToolkit module set"
+fi
+
+# Setup LCPI module
+if [ -f ${prefix}/etc/lcpi_module.sql ]; then
+    sqlite3 ${HOME}/.perfexpert.db < ${prefix}/etc/lcpi_module.sql
+    sqlite3 ${HOME}/.perfexpert.db 'CREATE VIEW IF NOT EXISTS hotspot AS SELECT
+        perfexpert_id, id, name, type, file, line, depth
+        FROM hpctoolkit_hotspot;'
+    echo "LCPI module set"
+fi
+
+# Setup Recommender tool
+if [ -f ${prefix}/etc/recommender.sql ]; then
+    sqlite3 ${HOME}/.perfexpert.db < ${prefix}/etc/recommender.sql
+    echo "Recommender tool set"
+fi
+
+exit 0;

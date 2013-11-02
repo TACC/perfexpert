@@ -389,8 +389,8 @@ AS_IF([test x"$ENABLE_PERFEXPERT" = xyes], [
     ENABLE_PERFEXPERT=perfexpert
     ENABLED_TOOLS+="perfexpert "
     AC_CONFIG_FILES([tools/perfexpert/Makefile])
-    AC_CONFIG_FILES([tools/perfexpert/perfexpert_get_compiler_info.pl],
-        [chmod +x tools/perfexpert/perfexpert_get_compiler_info.pl])
+    AC_CONFIG_FILES([tools/perfexpert/perfexpert_setup_db.sh],
+        [chmod +x tools/perfexpert/perfexpert_setup_db.sh])
 ], [
     AC_MSG_RESULT([no])
     ENABLE_PERFEXPERT=
