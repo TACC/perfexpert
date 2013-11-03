@@ -63,7 +63,7 @@ static void perfexpert_log(const char *format, ...) {
     FILE    *logfile_FP;
     char    *str = NULL;
     char    temp_str[MAX_LOG_ENTRY];
-    char    logfile[BUFFER_SIZE];
+    char    logfile[MAX_BUFFER_SIZE];
     time_t  now_time;
     char    *longdate;
 
@@ -78,7 +78,7 @@ static void perfexpert_log(const char *format, ...) {
     sprintf(temp_str, "%d %s %s %ld --- %s\n", now_time, longdate,
         PROGRAM_PREFIX, globals.pid, str);
 
-    bzero(logfile, BUFFER_SIZE);
+    bzero(logfile, MAX_BUFFER_SIZE);
     sprintf(logfile, "%s/%s", getenv("HOME"), PERFEXPERT_LOGFILE);
 
     logfile_FP = fopen(logfile, "a");
