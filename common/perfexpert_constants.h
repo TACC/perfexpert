@@ -50,8 +50,6 @@ enum {
 /* Default values for some files and directories */
 #define PERFEXPERT_OUTPUT        "perfexpert.output"
 #define PERFEXPERT_DB            "perfexpert.db"
-#define PERFEXPERT_FRAGMENTS_DIR "database/src"
-#define PERFEXPERT_SOURCE_DIR    "source"
 #define PERFEXPERT_LOGFILE       ".perfexpert.log"
 
 #define RECOMMENDER_PROGRAM      "perfexpert_recommender"
