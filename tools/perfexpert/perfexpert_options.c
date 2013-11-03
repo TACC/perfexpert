@@ -9,11 +9,11 @@
  *
  * PerfExpert is free software: you can redistribute it and/or modify it under
  * the terms of the The University of Texas at Austin Research License
- * 
+ *
  * PerfExpert is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
- * 
+ *
  * Authors: Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
@@ -29,14 +29,21 @@ extern "C" {
 #include <string.h>
 #include <argp.h>
 
-/* PerfExpert headers */
+/* Tools headers */
 #include "perfexpert.h"
-#include "perfexpert_alloc.h"
-#include "perfexpert_constants.h"
+#include "perfexpert_types.h"
 #include "perfexpert_options.h"
-#include "perfexpert_output.h"
-#include "perfexpert_string.h"
-#include "perfexpert_util.h"
+
+/* Modules headers */
+#include "modules/perfexpert_module_base.h"
+
+/* PerfExpert common headers */
+#include "common/perfexpert_alloc.h"
+#include "common/perfexpert_constants.h"
+#include "common/perfexpert_list.h"
+#include "common/perfexpert_output.h"
+#include "common/perfexpert_string.h"
+#include "common/perfexpert_util.h"
 
 static struct argp argp = { options, parse_options, args_doc, doc };
 static arg_options_t arg_options = { 0 };
@@ -55,6 +62,7 @@ int parse_cli_params(int argc, char *argv[]) {
 
     /* Set default values for globals */
     arg_options = (arg_options_t) {
+        .modules           = NULL,
         .program           = NULL,
         .program_argv      = NULL,
         .program_argv_temp = { 0 },
@@ -75,6 +83,20 @@ int parse_cli_params(int argc, char *argv[]) {
 
     /* Parse arguments */
     argp_parse(&argp, argc, argv, 0, 0, &globals);
+
+    /* If the list of modules is empty, load the default modules */
+    if ((0 == perfexpert_list_get_size(&(module_globals.modules))) &&
+        (0 == perfexpert_list_get_size(&(module_globals.compile))) &&
+        (0 == perfexpert_list_get_size(&(module_globals.measurements))) &&
+        (0 == perfexpert_list_get_size(&(module_globals.analysis)))) {
+        OUTPUT_VERBOSE((5, "no modules set, loading default modules"));
+        if (PERFEXPERT_SUCCESS != perfexpert_module_load("lcpi")) {
+            OUTPUT(("%s", _ERROR("Error: unable to load default modules")));
+        }
+        if (PERFEXPERT_SUCCESS != perfexpert_module_load("hpctoolkit")) {
+            OUTPUT(("%s", _ERROR("Error: unable to load default modules")));
+        }
+    }
 
     /* Expand AFTERs, BEFOREs, PREFIXs and program arguments */
     if (NULL != arg_options.after) {
@@ -168,17 +190,20 @@ int parse_cli_params(int argc, char *argv[]) {
 
     /* Sanity check: MIC options without MIC */
     if ((NULL != globals.knc_prefix[0]) && (NULL == globals.knc)) {
-        OUTPUT(("%s", _RED("Warning: option -P selected without setting MIC")));
+        OUTPUT(("%s option -P selected but no MIC card was specified, ignoring",
+            _BOLDRED("WARNING:")));
     }
 
     /* Sanity check: MIC options without MIC */
     if ((NULL != globals.knc_before[0]) && (NULL == globals.knc)) {
-        OUTPUT(("%s", _RED("Warning: option -B selected without setting MIC")));
+        OUTPUT(("%s option -B selected but no MIC card was specified, ignoring",
+            _BOLDRED("WARNING:")));
     }
 
     /* Sanity check: MIC options without MIC */
     if ((NULL != globals.knc_after[0]) && (NULL == globals.knc)) {
-        OUTPUT(("%s", _RED("Warning: option -A selected without setting MIC")));
+        OUTPUT(("%s option -A selected but no MIC card was specified, ignoring",
+            _BOLDRED("WARNING:")));
     }
 
     OUTPUT_VERBOSE((7, "%s", _BLUE("Summary of options")));
@@ -198,57 +223,149 @@ int parse_cli_params(int argc, char *argv[]) {
     OUTPUT_VERBOSE((7, "   Program path:        %s", globals.program_path));
     OUTPUT_VERBOSE((7, "   Program full path:   %s", globals.program_full));
     OUTPUT_VERBOSE((7, "   Program input file:  %s", globals.inputfile));
+
     if (7 <= globals.verbose) {
-        i = 0;
         printf("%s    Program arguments:  ", PROGRAM_PREFIX);
-        while (NULL != globals.program_argv[i]) {
-            printf(" [%s]", globals.program_argv[i]);
-            i++;
+        if (NULL == globals.program_argv[0]) {
+            printf(" (null)");
+        } else {
+            i = 0;
+            while (NULL != globals.program_argv[i]) {
+                printf(" [%s]", globals.program_argv[i]);
+                i++;
+            }
         }
+
         printf("\n%s    Prefix:             ", PROGRAM_PREFIX);
-        i = 0;
-        while (NULL != globals.prefix[i]) {
-            printf(" [%s]", (char *)globals.prefix[i]);
-            i++;
+        if (NULL == globals.prefix[0]) {
+            printf(" (null)");
+        } else {
+            i = 0;
+            while (NULL != globals.prefix[i]) {
+                printf(" [%s]", (char *)globals.prefix[i]);
+                i++;
+            }
         }
+
         printf("\n%s    Before each run:    ", PROGRAM_PREFIX);
-        i = 0;
-        while (NULL != globals.before[i]) {
-            printf(" [%s]", (char *)globals.before[i]);
-            i++;
+        if (NULL == globals.before[0]) {
+            printf(" (null)");
+        } else {
+            i = 0;
+            while (NULL != globals.before[i]) {
+                printf(" [%s]", (char *)globals.before[i]);
+                i++;
+            }
         }
+
         printf("\n%s    After each run:     ", PROGRAM_PREFIX);
-        i = 0;
-        while (NULL != globals.after[i]) {
-            printf(" [%s]", (char *)globals.after[i]);
-            i++;
+        if (NULL == globals.after[0]) {
+            printf(" (null)");
+        } else {
+            i = 0;
+            while (NULL != globals.after[i]) {
+                printf(" [%s]", (char *)globals.after[i]);
+                i++;
+            }
         }
         printf("\n");
+        fflush(stdout);
     }
+
+    #if HAVE_KNC_SUPPORT
     OUTPUT_VERBOSE((7, "   MIC card:            %s", globals.knc));
+
     if (7 <= globals.verbose) {
-        i = 0;
         printf("%s    MIC prefix:         ", PROGRAM_PREFIX);
-        while (NULL != globals.knc_prefix[i]) {
-            printf(" [%s]", (char *)globals.knc_prefix[i]);
-            i++;
+        if (NULL == globals.knc_prefix[0]) {
+            printf(" (null)");
+        } else {
+            i = 0;
+            while (NULL != globals.knc_prefix[i]) {
+                printf(" [%s]", (char *)globals.knc_prefix[i]);
+                i++;
+            }
         }
+
         printf("\n%s    MIC before each run:", PROGRAM_PREFIX);
-        i = 0;
-        while (NULL != globals.knc_before[i]) {
-            printf(" [%s]", (char *)globals.knc_before[i]);
-            i++;
+        if (NULL == globals.knc_before[0]) {
+            printf(" (null)");
+        } else {
+            i = 0;
+            while (NULL != globals.knc_before[i]) {
+                printf(" [%s]", (char *)globals.knc_before[i]);
+                i++;
+            }
         }
+
         printf("\n%s    MIC after each run: ", PROGRAM_PREFIX);
-        i = 0;
-        while (NULL != globals.knc_after[i]) {
-            printf(" [%s]", (char *)globals.knc_after[i]);
-            i++;
+        if (NULL == globals.knc_after[0]) {
+            printf(" (null)");
+        } else {
+            i = 0;
+            while (NULL != globals.knc_after[i]) {
+                printf(" [%s]", (char *)globals.knc_after[i]);
+                i++;
+            }
         }
         printf("\n");
+        fflush(stdout);
     }
+    #endif
+
     OUTPUT_VERBOSE((7, "   Sorting order:       %s", globals.order));
-    OUTPUT_VERBOSE((7, "   Measurement tool:    %s", globals.tool));
+
+    if (7 <= globals.verbose) {
+        perfexpert_module_t *module = NULL;
+        perfexpert_ordered_module_t *ordered_module = NULL;
+
+        printf("%s    Modules:            ", PROGRAM_PREFIX);
+        module = (perfexpert_module_t *)perfexpert_list_get_first(
+            &(module_globals.modules));
+        while ((perfexpert_list_item_t *)module !=
+            &(module_globals.modules.sentinel)) {
+            printf(" [%s]", module->name);
+            module = (perfexpert_module_t *)perfexpert_list_get_next(module);
+        }
+        printf("\n%s    Compile order:      ", PROGRAM_PREFIX);
+        ordered_module = (perfexpert_ordered_module_t *)
+            perfexpert_list_get_first(&(module_globals.compile));
+        while ((perfexpert_list_item_t *)ordered_module !=
+            &(module_globals.compile.sentinel)) {
+            printf(" [%s]", ordered_module->name);
+            ordered_module = (perfexpert_ordered_module_t *)
+                perfexpert_list_get_next(ordered_module);
+        }
+        if (0 == perfexpert_list_get_size(&(module_globals.compile))) {
+            printf(" undefined order");
+        }
+        printf("\n%s    Measurements order: ", PROGRAM_PREFIX);
+        ordered_module = (perfexpert_ordered_module_t *)
+            perfexpert_list_get_first(&(module_globals.measurements));
+        while ((perfexpert_list_item_t *)ordered_module !=
+            &(module_globals.measurements.sentinel)) {
+            printf(" [%s]", ordered_module->name);
+            ordered_module = (perfexpert_ordered_module_t *)
+                perfexpert_list_get_next(ordered_module);
+        }
+        if (0 == perfexpert_list_get_size(&(module_globals.measurements))) {
+            printf(" undefined order");
+        }
+        printf("\n%s    Analysis order:     ", PROGRAM_PREFIX);
+        ordered_module = (perfexpert_ordered_module_t *)
+            perfexpert_list_get_first(&(module_globals.analysis));
+        while ((perfexpert_list_item_t *)ordered_module !=
+            &(module_globals.analysis.sentinel)) {
+            printf(" [%s]", ordered_module->name);
+            ordered_module = (perfexpert_ordered_module_t *)
+                perfexpert_list_get_next(ordered_module);
+        }
+        if (0 == perfexpert_list_get_size(&(module_globals.analysis))) {
+            printf(" undefined order");
+        }
+        printf("\n");
+        fflush(stdout);
+    }
 
     /* Not using OUTPUT_VERBOSE because I want only one line */
     if (8 <= globals.verbose) {
@@ -258,6 +375,7 @@ int parse_cli_params(int argc, char *argv[]) {
             printf(" [%s]", argv[i]);
         }
         printf("\n");
+        fflush(stdout);
     }
 
     if (PERFEXPERT_TRUE == arg_options.do_not_run) {
@@ -326,7 +444,13 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
         /* Show help */
         case 'h':
             OUTPUT_VERBOSE((1, "option 'h' set"));
-            // argp_help(&argp, NULL, ARGP_HELP_LONG, "porra");
+            argp_state_help(state, stdout, ARGP_HELP_STD_HELP);
+            break;
+
+        /* Show modules help */
+        case 'H':
+            OUTPUT_VERBOSE((1, "option 'H' set"));
+            // TODO: fix this!
             argp_state_help(state, stdout, ARGP_HELP_STD_HELP);
             break;
 
@@ -348,6 +472,14 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
             OUTPUT_VERBOSE((1, "option 'm' set [%s]", globals.target));
             break;
 
+        /* List of modules */
+        case 'M':
+            OUTPUT_VERBOSE((1, "option 'M' set [%s]", arg));
+            if (PERFEXPERT_SUCCESS != load_module(arg)) {
+                exit(1);
+            }
+            break;
+
         /* Do not run */
         case 'n':
             arg_options.do_not_run = PERFEXPERT_TRUE;
@@ -358,6 +490,14 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
         case 'o':
             globals.order = arg;
             OUTPUT_VERBOSE((1, "option 'o' set [%s]", globals.order));
+            break;
+
+        /* Set module option */
+        case 'O':
+            OUTPUT_VERBOSE((1, "option 'O' set [%s]", arg));
+            if (PERFEXPERT_SUCCESS != set_module_option(arg)) {
+                exit(1);
+            }
             break;
 
         /* Should I add a program prefix to the command line? */
@@ -384,16 +524,28 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
             OUTPUT_VERBOSE((1, "option 's' set [%s]", globals.sourcefile));
             break;
 
-        /* Measurement tool */
-        case 't':
-            globals.tool = arg;
-            OUTPUT_VERBOSE((1, "option 't' set [%s]", globals.tool));
-            break;
-
         /* Verbose level (has an alias: l) */
         case 'v':
             globals.verbose = arg ? atoi(arg) : 5;
             OUTPUT_VERBOSE((1, "option 'v' set [%d]", globals.verbose));
+            break;
+
+        /* Compile modules order */
+        case -1:
+            OUTPUT_VERBOSE((1, "option 'compile-order' set [%s]", arg));
+            set_module_order(arg, PERFEXPERT_MODULE_COMPILE);
+            break;
+
+        /* Measurements modules order */
+        case -2:
+            OUTPUT_VERBOSE((1, "option 'measurements-order' set [%s]", arg));
+            set_module_order(arg, PERFEXPERT_MODULE_MEASUREMENTS);
+            break;
+
+        /* Analysis modules order */
+        case -3:
+            OUTPUT_VERBOSE((1, "option 'analysis-order' set [%s]", arg));
+            set_module_order(arg, PERFEXPERT_MODULE_ANALYSIS);
             break;
 
         /* Arguments: threashold and target program and it's arguments */
@@ -527,16 +679,84 @@ static int parse_env_vars(void) {
         OUTPUT_VERBOSE((1, "ENV: order=%s", globals.order));
     }
 
-    if (NULL != getenv("PERFEXPERT_ANALYZER_TOOL")) {
-        globals.tool = getenv("PERFEXPERT_ANALYZER_TOOL");
-        OUTPUT_VERBOSE((1, "ENV: tool=%s", globals.tool));
+    if (NULL != getenv("PERFEXPERT_MODULES")) {
+        arg_options.modules = getenv("PERFEXPERT_MODULES");
+        OUTPUT_VERBOSE((1, "ENV: tool=%s", arg_options.modules));
     }
 
-    if (NULL != getenv("PERFEXPERT_ANALYZER_INPUT_FILE")) {
-        globals.inputfile = getenv("PERFEXPERT_ANALYZER_INPUT_FILE");
-        OUTPUT_VERBOSE((1, "ENV: tool=%s", globals.inputfile));
-    }
+    return PERFEXPERT_SUCCESS;
+}
 
+/* load_module */
+static int load_module(char *input) {
+    char *names[MAX_ARGUMENTS_COUNT];
+    int i = 0;
+
+    /* Expand list of modules */
+    perfexpert_string_split(input, names, ',');
+    while (NULL != names[i]) {
+        if (PERFEXPERT_SUCCESS != perfexpert_module_load(names[i])) {
+            OUTPUT(("%s [%s]", _ERROR("Error: while adding module"), names[i]));
+            return PERFEXPERT_ERROR;
+        }
+        PERFEXPERT_DEALLOC(names[i]);
+        i++;
+    }
+    return PERFEXPERT_SUCCESS;
+}
+
+/* set_module_option */
+static int set_module_option(char *option) {
+    char *options[MAX_ARGUMENTS_COUNT];
+    int i = 0;
+
+    /* Expand list of modules options */
+    perfexpert_string_split(option, options, ',');
+    while ((NULL != options[i]) && (NULL != options[i + 1])) {
+        if (PERFEXPERT_SUCCESS != perfexpert_module_set_option(options[i],
+            options[i + 1])) {
+            OUTPUT(("%s [%s,%s]", _ERROR("Error: while setting module options"),
+                options[i], options[i + 1]));
+            return PERFEXPERT_ERROR;
+        }
+        OUTPUT_VERBOSE((1, "module [%s] option '%s' set", _CYAN(options[i]),
+            options[i + 1]));
+        PERFEXPERT_DEALLOC(options[i]);
+        PERFEXPERT_DEALLOC(options[i + 1]);
+        i = i + 2;
+    }
+    return PERFEXPERT_SUCCESS;
+}
+
+/* set_module_order */
+static int set_module_order(char *option, module_phase_t order) {
+    perfexpert_ordered_module_t *module = NULL;
+    char *modules[MAX_ARGUMENTS_COUNT];
+    int i = 0;
+
+    /* Expand list of modules options */
+    perfexpert_string_split(option, modules, ',');
+    while (NULL != modules[i]) {
+
+        PERFEXPERT_ALLOC(perfexpert_ordered_module_t, module,
+            sizeof(perfexpert_ordered_module_t));
+        PERFEXPERT_ALLOC(char, module->name, (strlen(modules[i]) + 1));
+        strcpy(module->name, modules[i]);
+
+        if (PERFEXPERT_MODULE_COMPILE == order) {
+            perfexpert_list_append(&(module_globals.compile),
+                (perfexpert_list_item_t *)module);
+        } else if (PERFEXPERT_MODULE_MEASUREMENTS == order) {
+            perfexpert_list_append(&(module_globals.measurements),
+                (perfexpert_list_item_t *)module);
+        } else if (PERFEXPERT_MODULE_ANALYSIS == order) {
+            perfexpert_list_append(&(module_globals.analysis),
+                (perfexpert_list_item_t *)module);
+        }
+
+        PERFEXPERT_DEALLOC(modules[i]);
+        i++;
+    }
     return PERFEXPERT_SUCCESS;
 }
 

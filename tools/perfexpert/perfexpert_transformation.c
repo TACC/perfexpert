@@ -9,11 +9,11 @@
  *
  * PerfExpert is free software: you can redistribute it and/or modify it under
  * the terms of the The University of Texas at Austin Research License
- * 
+ *
  * PerfExpert is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
- * 
+ *
  * Authors: Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
@@ -28,47 +28,50 @@ extern "C" {
 #include <stdlib.h>
 #include <string.h>
 
-/* PerfExpert headers */
+/* Tools headers */
+#include "perfexpert_types.h"
 #include "perfexpert.h"
-#include "perfexpert_output.h"
-#include "perfexpert_fork.h"
-#include "perfexpert_constants.h"
+
+/* PerfExpert common headers */
+#include "common/perfexpert_output.h"
+#include "common/perfexpert_fork.h"
+#include "common/perfexpert_constants.h"
 
 /* transformation */
 int transformation(void) {
-    char temp_str[6][BUFFER_SIZE];
+    char temp_str[6][MAX_BUFFER_SIZE];
     char *argv[2];
     test_t test;
 
     OUTPUT_VERBOSE((4, "%s", _BLUE("Code transformation phase")));
-    OUTPUT(("%s", _YELLOW("Applying optimizations")));
+    OUTPUT(("%s", _YELLOW("Trying to apply optimizations")));
 
     /* Set some environment variables to avoid working arguments */
-    bzero(temp_str[1], BUFFER_SIZE);
+    bzero(temp_str[1], MAX_BUFFER_SIZE);
     sprintf(temp_str[1], "%d", globals.verbose);
     if (0 != setenv("PERFEXPERT_CT_VERBOSE_LEVEL", temp_str[1], 0)) {
         OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
         return PERFEXPERT_ERROR;
     }
-    bzero(temp_str[2], BUFFER_SIZE);
+    bzero(temp_str[2], MAX_BUFFER_SIZE);
     sprintf(temp_str[2], "%d", globals.colorful);
     if (0 != setenv("PERFEXPERT_CT_COLORFUL", temp_str[2], 0)) {
         OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
         return PERFEXPERT_ERROR;
     }
-    bzero(temp_str[3], BUFFER_SIZE);
+    bzero(temp_str[3], MAX_BUFFER_SIZE);
     sprintf(temp_str[3], "%d", (int)getpid());
     if (0 != setenv("PERFEXPERT_CT_PID", temp_str[3], 1)) {
         OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
         return PERFEXPERT_ERROR;
     }
-    bzero(temp_str[4], BUFFER_SIZE);
+    bzero(temp_str[4], MAX_BUFFER_SIZE);
     sprintf(temp_str[4], "%s/%s", globals.stepdir, RECOMMENDER_METRICS);
     if (0 != setenv("PERFEXPERT_CT_INPUT_FILE", temp_str[4], 1)) {
         OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
         return PERFEXPERT_ERROR;
     }
-    bzero(temp_str[5], BUFFER_SIZE);
+    bzero(temp_str[5], MAX_BUFFER_SIZE);
     sprintf(temp_str[5], "%s/%s", globals.stepdir, CT_REPORT);
     if (0 != setenv("PERFEXPERT_CT_OUTPUT_FILE", temp_str[5], 1)) {
         OUTPUT(("%s", _ERROR("Error: unable to set environment variable")));
@@ -88,7 +91,7 @@ int transformation(void) {
     argv[1] = NULL;
 
     /* The super-ninja test sctructure */
-    bzero(temp_str[0], BUFFER_SIZE);
+    bzero(temp_str[0], MAX_BUFFER_SIZE);
     sprintf(temp_str[0], "%s/%s", globals.stepdir, CT_OUTPUT);
     test.output = temp_str[0];
     test.input = NULL;

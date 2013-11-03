@@ -9,11 +9,11 @@
  *
  * PerfExpert is free software: you can redistribute it and/or modify it under
  * the terms of the The University of Texas at Austin Research License
- * 
+ *
  * PerfExpert is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
- * 
+ *
  * Authors: Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
@@ -28,18 +28,21 @@ extern "C" {
 #include <stdlib.h>
 #include <string.h>
 
-/* PerfExpert headers */
+/* Tools headers */
+#include "perfexpert_types.h"
 #include "perfexpert.h"
-#include "perfexpert_output.h"
-#include "perfexpert_util.h"
-#include "perfexpert_fork.h"
-#include "perfexpert_constants.h"
+
+/* PerfExpert common headers */
+#include "common/perfexpert_constants.h"
+#include "common/perfexpert_fork.h"
+#include "common/perfexpert_output.h"
+#include "common/perfexpert_util.h"
 
 /* compile_program */
 int compile_program(void) {
-    char temp_str[BUFFER_SIZE];
-    char *argv[PARAM_SIZE];
-    char flags[BUFFER_SIZE];
+    char *argv[MAX_ARGUMENTS_COUNT];
+    char temp_str[MAX_BUFFER_SIZE];
+    char flags[MAX_BUFFER_SIZE];
     int  argc = 0;
     test_t test;
 
@@ -60,7 +63,7 @@ int compile_program(void) {
         argv[3] = globals.sourcefile;
 
         /* What are the default and user defined compiler flags? */
-        bzero(flags, BUFFER_SIZE);
+        bzero(flags, MAX_BUFFER_SIZE);
         strcat(flags, DEFAULT_CFLAGS);
         if (NULL != getenv("CFLAGS")) {
             strcat(flags, getenv("CFLAGS"));
@@ -81,7 +84,7 @@ int compile_program(void) {
     if (NULL != globals.target) {
         if (PERFEXPERT_SUCCESS != perfexpert_util_file_exists("./Makefile")) {
             OUTPUT(("%s", _ERROR("Error: Makefile file not found")));
-            return PERFEXPERT_ERROR;                    
+            return PERFEXPERT_ERROR;
         }
 
         argv[0] = "make";
@@ -114,7 +117,7 @@ int compile_program(void) {
     /* Fill the ninja test structure... */
     test.info = globals.sourcefile;
     test.input = NULL;
-    bzero(temp_str, BUFFER_SIZE);
+    bzero(temp_str, MAX_BUFFER_SIZE);
     sprintf(temp_str, "%s/compile.output", globals.stepdir);
     test.output = temp_str;
 

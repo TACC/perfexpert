@@ -9,11 +9,11 @@
  *
  * PerfExpert is free software: you can redistribute it and/or modify it under
  * the terms of the The University of Texas at Austin Research License
- * 
+ *
  * PerfExpert is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
- * 
+ *
  * Authors: Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
@@ -26,56 +26,18 @@
 extern "C" {
 #endif
 
-/* WARNING: to include perfexpert_output.h globals have to be defined first */
 #ifdef PROGRAM_PREFIX
 #undef PROGRAM_PREFIX
 #endif
 #define PROGRAM_PREFIX "[perfexpert]"
 
-#include "perfexpert_constants.h"
-#include "perfexpert_module.h"
-
-/* Structure to hold global variables */
-typedef struct {
-    int   verbose;
-    int   colorful; // These should be the first variables in the structure
-    char  *dbfile;
-    float threshold;
-    int   rec_count;
-    int   leave_garbage;
-    char  *target;
-    char  *sourcefile;
-    char  *program;
-    char  *program_path;
-    char  *program_full;
-    char  *program_argv[PARAM_SIZE];
-    int   step;
-    char  *workdir;
-    char  *stepdir;
-    char  *prefix[PARAM_SIZE];
-    char  *before[PARAM_SIZE];
-    char  *after[PARAM_SIZE];
-    char  *knc;
-    char  *knc_prefix[PARAM_SIZE];
-    char  *knc_before[PARAM_SIZE];
-    char  *knc_after[PARAM_SIZE];
-    char  *tool;
-    perfexpert_module_t toolmodule;
-    char  *order;
-    char  *inputfile;
-    int   only_exp;
-    int   compat_mode;
-    long int pid;
-} globals_t;
-
-extern globals_t globals; /* This variable is declared in perfexpert_main.c */
+/* PerfExpert headers */
+#include "perfexpert_types.h"
 
 /* Function declarations */
 void show_help(void);
 int parse_cli_params(int argc, char *argv[]);
 int compile_program(void);
-int measurements(void);
-int analysis(void);
 int recommendation(void);
 int transformation(void);
 
