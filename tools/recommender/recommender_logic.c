@@ -213,11 +213,11 @@ static int select_recom_hotspot(void *var, int c, char **val, char **names) {
 
     if (NULL != globals.outputmetrics) {
         fprintf(globals.outputmetrics_FP, "%% Hotspot=%s:%s\n", file, line);
-        fprintf(globals.outputmetrics_FP, "code.filename=%s\n", file);
-        fprintf(globals.outputmetrics_FP, "code.line_number=%s\n", line);
-        fprintf(globals.outputmetrics_FP, "code.type=%s\n", type);
-        fprintf(globals.outputmetrics_FP, "code.function_name=%s\n", name);
-        fprintf(globals.outputmetrics_FP, "code.loopdepth=%s\n", depth);
+        fprintf(globals.outputmetrics_FP, "source.file=%s\n", file);
+        fprintf(globals.outputmetrics_FP, "source.line=%s\n", line);
+        fprintf(globals.outputmetrics_FP, "source.type=%s\n", type);
+        fprintf(globals.outputmetrics_FP, "source.name=%s\n", name);
+        fprintf(globals.outputmetrics_FP, "source.depth=%s\n", depth);
     }
 
     /* Select top-N recommendations, output them besides the pattern */
