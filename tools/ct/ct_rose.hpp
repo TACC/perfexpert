@@ -9,11 +9,11 @@
  *
  * PerfExpert is free software: you can redistribute it and/or modify it under
  * the terms of the The University of Texas at Austin Research License
- * 
+ *
  * PerfExpert is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
- * 
+ *
  * Authors: Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
@@ -31,9 +31,10 @@
 #include <sage3.h>
 #endif
 
+/* PerfExpert tool headers */
 #include "ct.h"
 
-extern SgProject *userProject; /* This variable is declared in ct_rose.cpp */ 
+extern SgProject *userProject; /* This variable is declared in ct_rose.cpp */
 
 class recommenderTraversal : public AstSimpleProcessing {
     public :

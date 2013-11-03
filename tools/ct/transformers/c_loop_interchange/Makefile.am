@@ -9,11 +9,11 @@
 #
 # PerfExpert is free software: you can redistribute it and/or modify it under
 # the terms of the The University of Texas at Austin Research License
-# 
+#
 # PerfExpert is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
 # A PARTICULAR PURPOSE.
-# 
+#
 # Authors: Leonardo Fialho and Ashay Rane
 #
 # $HEADER$
@@ -21,7 +21,7 @@
 
 bin_PROGRAMS = loop_interchange
 loop_interchange_SOURCES = loop_interchange.cpp
-loop_interchange_CPPFLAGS = -I$(srcdir)/../../../common
+loop_interchange_CPPFLAGS = -I$(srcdir)/../../../..
 loop_interchange_LDFLAGS = -lrose -ljvm
 
 # EOF

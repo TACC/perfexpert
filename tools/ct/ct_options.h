@@ -19,11 +19,18 @@
  * $HEADER$
  */
 
-/* PerfExpert tool headers */
-#include "ct.h"
+#ifndef CT_OPTIONS_H_
+#define CT_OPTIONS_H_
 
-int main(int argc, char** argv) {
-    return ct_main(argc, argv);
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+static void show_help(void);
+static int parse_env_vars(void);
+
+#ifdef __cplusplus
 }
+#endif
 
-// EOF
+#endif /* CT_OPTIONS_H */

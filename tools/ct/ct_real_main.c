@@ -9,11 +9,11 @@
  *
  * PerfExpert is free software: you can redistribute it and/or modify it under
  * the terms of the The University of Texas at Austin Research License
- * 
+ *
  * PerfExpert is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
- * 
+ *
  * Authors: Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
@@ -30,12 +30,14 @@ extern "C" {
 /* Utility headers */
 #include <sqlite3.h>
 
-/* PerfExpert headers */
+/* PerfExpert tool headers */
 #include "ct.h"
-#include "perfexpert_constants.h"
-#include "perfexpert_database.h"
-#include "perfexpert_list.h"
-#include "perfexpert_output.h"
+
+/* PerfExpert common headers */
+#include "common/perfexpert_constants.h"
+#include "common/perfexpert_database.h"
+#include "common/perfexpert_list.h"
+#include "common/perfexpert_output.h"
 
 /* Global variables, try to not create them! */
 globals_t globals; // Variable to hold global options, this one is OK
@@ -79,7 +81,7 @@ int ct_main(int argc, char** argv) {
         OUTPUT_VERBOSE((3, "using (%s) as input for perf measurements",
             globals.inputfile));
     } else {
-        OUTPUT_VERBOSE((3, "using STDIN as input for perf measurements"));        
+        OUTPUT_VERBOSE((3, "using STDIN as input for perf measurements"));
     }
 
     /* Print to a file or STDOUT is? */
@@ -132,7 +134,7 @@ int ct_main(int argc, char** argv) {
                 break;
 
             case PERFEXPERT_ERROR:
-            default: 
+            default:
                 OUTPUT(("%s", _ERROR("Error: selecting transformations")));
                 rc = PERFEXPERT_ERROR;
                 goto CLEAN_UP;

@@ -19,11 +19,20 @@
  * $HEADER$
  */
 
-/* PerfExpert tool headers */
-#include "ct.h"
+#ifndef CT_DATABASE_H_
+#define CT_DATABASE_H_
 
-int main(int argc, char** argv) {
-    return ct_main(argc, argv);
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+static int accumulate_transformations(void *recommendation, int c, char **val,
+    char **names);
+static int accumulate_patterns(void *transformation, int c, char **val,
+    char **names);
+
+#ifdef __cplusplus
 }
+#endif
 
-// EOF
+#endif /* CT_DATABASE_H_ */
