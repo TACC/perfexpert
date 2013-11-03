@@ -9,11 +9,11 @@
  *
  * PerfExpert is free software: you can redistribute it and/or modify it under
  * the terms of the The University of Texas at Austin Research License
- * 
+ *
  * PerfExpert is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
- * 
+ *
  * Authors: Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
@@ -28,14 +28,16 @@
 #include <rose.h>
 #include <sage3.h>
 
-/* PerfExpert headers */
+/* PerfExpert tool headers */
 #include "ct_rose.hpp"
-#include "perfexpert_alloc.h"
-#include "perfexpert_base64.h"
-#include "perfexpert_constants.h"
-#include "perfexpert_log.h"
-#include "perfexpert_output.h"
-#include "perfexpert_util.h"
+
+/* PerfExpert common headers */
+#include "common/perfexpert_alloc.h"
+#include "common/perfexpert_base64.h"
+#include "common/perfexpert_constants.h"
+#include "common/perfexpert_log.h"
+#include "common/perfexpert_output.h"
+#include "common/perfexpert_util.h"
 
 /* Global variables, try to not create them! */
 SgProject *userProject;
@@ -59,7 +61,7 @@ int open_rose(const char *source_file) {
     userProject = NULL;
     userProject = frontend(2, files);
     ROSE_ASSERT(userProject != NULL);
-    
+
     /* I believe now it is OK to free 'argv' */
     PERFEXPERT_DEALLOC(files[0]);
     PERFEXPERT_DEALLOC(files[1]);
@@ -80,9 +82,9 @@ int extract_fragment(fragment_t *fragment) {
 
     /* Create the fragments directory */
     PERFEXPERT_ALLOC(char, fragments_dir,
-        (strlen(globals.workdir) + strlen(PERFEXPERT_FRAGMENTS_DIR) + 2));
-    sprintf(fragments_dir, "%s/%s", globals.workdir, PERFEXPERT_FRAGMENTS_DIR);
-    if (PERFEXPERT_ERROR == perfexpert_util_make_path(fragments_dir, 0755)) {
+        (strlen(globals.workdir) + strlen(FRAGMENTS_DIR) + 2));
+    sprintf(fragments_dir, "%s/%s", globals.workdir, FRAGMENTS_DIR);
+    if (PERFEXPERT_ERROR == perfexpert_util_make_path(fragments_dir)) {
         OUTPUT(("%s", _ERROR((char *)"Error: cannot create fragments dir")));
         PERFEXPERT_DEALLOC(fragments_dir);
         return PERFEXPERT_ERROR;
@@ -95,8 +97,8 @@ int extract_fragment(fragment_t *fragment) {
      * the project node of the AST, using a pre-order traversal
      */
     OUTPUT_VERBOSE((7, "      %s (%s:%d) [code type: %d]",
-        _YELLOW((char *)"extracting fragments from"), fragment->filename,
-        fragment->line_number, fragment->code_type));
+        _YELLOW((char *)"extracting fragments from"), fragment->file,
+        fragment->line, fragment->type));
 
     fragmentTraversal.fragment = fragment;
     fragmentTraversal.traverseInputFiles(userProject, preorder);
@@ -112,9 +114,9 @@ int output_fragment(SgNode *node, Sg_File_Info *info,
 
     /* Set fragment filename */
     PERFEXPERT_ALLOC(char, fragment_file, (strlen(globals.workdir) +
-        strlen(PERFEXPERT_FRAGMENTS_DIR) + strlen(fragment->filename) + 10));
+        strlen(FRAGMENTS_DIR) + strlen(fragment->file) + 10));
     sprintf(fragment_file, "%s/%s/%s_%d", globals.workdir,
-        PERFEXPERT_FRAGMENTS_DIR, fragment->filename, info->get_line());
+        FRAGMENTS_DIR, fragment->file, info->get_line());
     OUTPUT_VERBOSE((8, "         %s (%s)", _YELLOW((char *)"extracting it to"),
         fragment_file));
 
@@ -139,10 +141,10 @@ int output_function(SgNode *node, fragment_t *fragment) {
 
     /* Set fragment filename */
     PERFEXPERT_ALLOC(char, function_file,
-        (strlen(globals.workdir) + strlen(PERFEXPERT_FRAGMENTS_DIR) +
-            strlen(fragment->filename) + strlen(fragment->function_name) + 10));
-    sprintf(function_file, "%s/%s/%s_%s", globals.workdir,
-        PERFEXPERT_FRAGMENTS_DIR, fragment->filename, fragment->function_name);
+        (strlen(globals.workdir) + strlen(FRAGMENTS_DIR) +
+            strlen(fragment->file) + strlen(fragment->name) + 10));
+    sprintf(function_file, "%s/%s/%s_%s", globals.workdir, FRAGMENTS_DIR,
+        fragment->file, fragment->name);
     OUTPUT_VERBOSE((8, "         %s (%s)", _YELLOW((char *)"extracting it to"),
         function_file));
 

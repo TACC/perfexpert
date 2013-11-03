@@ -9,11 +9,11 @@
  *
  * PerfExpert is free software: you can redistribute it and/or modify it under
  * the terms of the The University of Texas at Austin Research License
- * 
+ *
  * PerfExpert is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
- * 
+ *
  * Authors: Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
@@ -28,11 +28,13 @@ extern "C" {
 #include <stdlib.h>
 #include <getopt.h>
 
-/* PerfExpert headers */
+/* PerfExpert tool headers */
 #include "ct.h"
-#include "perfexpert_constants.h"
-#include "perfexpert_list.h"
-#include "perfexpert_output.h"
+
+/* PerfExpert common headers */
+#include "common/perfexpert_constants.h"
+#include "common/perfexpert_list.h"
+#include "common/perfexpert_output.h"
 #include "install_dirs.h"
 
 /* Structure to handle command line arguments. Try to keep the content of
@@ -52,7 +54,7 @@ static struct option long_options[] = {
 };
 
 /* show_help */
-void show_help(void) {
+static void show_help(void) {
     OUTPUT_VERBOSE((10, "printing help"));
     /*      12345678901234567890123456789012345678901234567890123456789012345678901234567890 */
     printf("Usage: perfexpert_ct -f file [-o file] [-vch] [-l level] [-a workdir] [-p pid]");
@@ -72,7 +74,7 @@ void show_help(void) {
 }
 
 /* parse_env_vars */
-int parse_env_vars(void) {
+static int parse_env_vars(void) {
     if (NULL != getenv("PERFEXPERT_CT_VERBOSE_LEVEL")) {
         globals.verbose = atoi(getenv("PERFEXPERT_CT_VERBOSE_LEVEL"));
         OUTPUT_VERBOSE((5, "ENV: verbose_level=%d", globals.verbose));

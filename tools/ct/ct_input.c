@@ -9,11 +9,11 @@
  *
  * PerfExpert is free software: you can redistribute it and/or modify it under
  * the terms of the The University of Texas at Austin Research License
- * 
+ *
  * PerfExpert is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
- * 
+ *
  * Authors: Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
@@ -28,24 +28,26 @@ extern "C" {
 #include <stdlib.h>
 #include <string.h>
 
-/* PerfExpert headers */
+/* PerfExpert tool headers */
 #include "ct.h"
-#include "perfexpert_alloc.h"
-#include "perfexpert_constants.h"
-#include "perfexpert_list.h"
-#include "perfexpert_output.h"
+
+/* PerfExpert common headers */
+#include "common/perfexpert_alloc.h"
+#include "common/perfexpert_constants.h"
+#include "common/perfexpert_list.h"
+#include "common/perfexpert_output.h"
 
 /* parse_transformation_params */
 int parse_transformation_params(perfexpert_list_t *fragments) {
     recommendation_t *recommendation = NULL;
     fragment_t *fragment = NULL;
-    char buffer[BUFFER_SIZE];
+    char buffer[MAX_BUFFER_SIZE];
     int input_line = 0;
 
     OUTPUT_VERBOSE((4, "%s", _BLUE("Parsing fragments")));
 
-    bzero(buffer, BUFFER_SIZE);
-    while (NULL != fgets(buffer, BUFFER_SIZE - 1, globals.inputfile_FP)) {
+    bzero(buffer, MAX_BUFFER_SIZE);
+    while (NULL != fgets(buffer, MAX_BUFFER_SIZE - 1, globals.inputfile_FP)) {
         node_t *node = NULL;
 
         input_line++;
@@ -70,12 +72,12 @@ int parse_transformation_params(perfexpert_list_t *fragments) {
             perfexpert_list_construct(&(fragment->recommendations));
             perfexpert_list_append(fragments,
                 (perfexpert_list_item_t *)fragment);
-            fragment->code_type = PERFEXPERT_HOTSPOT_UNKNOWN;
+            fragment->type = PERFEXPERT_HOTSPOT_UNKNOWN;
             fragment->fragment_file = NULL;
             fragment->outer_loop_fragment_file = NULL;
             fragment->outer_outer_loop_fragment_file = NULL;
-            fragment->outer_loop_line_number = 0;
-            fragment->outer_outer_loop_line_number = 0;
+            fragment->outer_loop_line = 0;
+            fragment->outer_outer_loop_line = 0;
 
             continue;
         }
@@ -85,59 +87,49 @@ int parse_transformation_params(perfexpert_list_t *fragments) {
         node->value = strtok(NULL, "\r\n");
 
         /* Code param: code.filename */
-        if (0 == strncmp("code.filename", node->key, 13)) {
-            PERFEXPERT_ALLOC(char, fragment->filename,
-                (strlen(node->value) + 1));
-            strcpy(fragment->filename, node->value);
-            OUTPUT_VERBOSE((10, "   (%d) filename: [%s]", input_line,
-                fragment->filename));
+        if (0 == strncmp("source.file", node->key, 11)) {
+            PERFEXPERT_ALLOC(char, fragment->file, (strlen(node->value) + 1));
+            strcpy(fragment->file, node->value);
+            OUTPUT_VERBOSE((10, "   (%d) file: [%s]", input_line,
+                fragment->file));
             PERFEXPERT_DEALLOC(node);
             continue;
         }
         /* Code param: code.line_number */
-        if (0 == strncmp("code.line_number", node->key, 16)) {
-            fragment->line_number = atoi(node->value);
-            OUTPUT_VERBOSE((10, "   (%d) line number: [%d]", input_line,
-                fragment->line_number));
+        if (0 == strncmp("source.line", node->key, 11)) {
+            fragment->line = atoi(node->value);
+            OUTPUT_VERBOSE((10, "   (%d) line: [%d]", input_line,
+                fragment->line));
             PERFEXPERT_DEALLOC(node);
             continue;
         }
         /* Code param: code.type */
-        if (0 == strncmp("code.type", node->key, 9)) {
-            fragment->code_type = atoi(node->value);
+        if (0 == strncmp("source.type", node->key, 11)) {
+            fragment->type = atoi(node->value);
             OUTPUT_VERBOSE((10, "   (%d) type: [%d]", input_line,
-                fragment->code_type));
+                fragment->type));
             PERFEXPERT_DEALLOC(node);
             continue;
         }
         /* Code param: code.function_name */
-        if (0 == strncmp("code.function_name", node->key, 18)) {
-            PERFEXPERT_ALLOC(char, fragment->function_name,
-                (strlen(node->value) + 1));
-            strcpy(fragment->function_name, node->value);
-            OUTPUT_VERBOSE((10, "   (%d) function name: [%s]", input_line,
-                fragment->function_name));
+        if (0 == strncmp("source.name", node->key, 11)) {
+            PERFEXPERT_ALLOC(char, fragment->name, (strlen(node->value) + 1));
+            strcpy(fragment->name, node->value);
+            OUTPUT_VERBOSE((10, "   (%d) name: [%s]", input_line,
+                fragment->name));
             PERFEXPERT_DEALLOC(node);
             continue;
         }
         /* Code param: code.loopdepth */
-        if (0 == strncmp("code.loopdepth", node->key, 14)) {
-            fragment->loop_depth = atoi(node->value);
-            OUTPUT_VERBOSE((10, "   (%d) loop depth: [%d]", input_line,
-                fragment->loop_depth));
-            PERFEXPERT_DEALLOC(node);
-            continue;
-        }
-        /* Code param: code.rowid */
-        if (0 == strncmp("code.rowid", node->key, 10)) {
-            fragment->rowid = atoi(node->value);
-            OUTPUT_VERBOSE((10, "   (%d) row id: [%d]", input_line,
-                fragment->rowid));
+        if (0 == strncmp("source.depth", node->key, 12)) {
+            fragment->depth = atoi(node->value);
+            OUTPUT_VERBOSE((10, "   (%d) depth: [%d]", input_line,
+                fragment->depth));
             PERFEXPERT_DEALLOC(node);
             continue;
         }
         /* Code param: recommender.recommendation_id */
-        if (0 == strncmp("recommender.recommendation_id", node->key, 29)) {
+        if (0 == strncmp("recommender.id", node->key, 14)) {
             PERFEXPERT_ALLOC(recommendation_t, recommendation,
                 sizeof(recommendation_t));
             perfexpert_list_item_construct(

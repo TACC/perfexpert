@@ -19,11 +19,25 @@
  * $HEADER$
  */
 
+#ifndef CT_TOOLS_H_
+#define CT_TOOLS_H_
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* PerfExpert tool headers */
 #include "ct.h"
 
-int main(int argc, char** argv) {
-    return ct_main(argc, argv);
-}
+static int apply_transformations(fragment_t *fragment,
+    recommendation_t *recommendation);
+static int apply_patterns(fragment_t *fragment, transformation_t *transformation);
+static int test_transformation(fragment_t *fragment,
+    transformation_t *transformation);
+static int test_pattern(fragment_t *fragment, pattern_t *pattern);
 
-// EOF
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* CT_TOOLS_H_ */

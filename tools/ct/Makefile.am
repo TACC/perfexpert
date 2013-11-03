@@ -9,11 +9,11 @@
 #
 # PerfExpert is free software: you can redistribute it and/or modify it under
 # the terms of the The University of Texas at Austin Research License
-# 
+#
 # PerfExpert is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
 # A PARTICULAR PURPOSE.
-# 
+#
 # Authors: Leonardo Fialho and Ashay Rane
 #
 # $HEADER$
@@ -21,18 +21,16 @@
 
 bin_PROGRAMS = perfexpert_ct
 
-perfexpert_ct_CPPFLAGS = -I$(srcdir)/../common
+perfexpert_ct_CPPFLAGS = -I$(srcdir)/../..
 perfexpert_ct_LDFLAGS = -lsqlite3 -lrose -ljvm
 perfexpert_ct_CFLAGS = -O3
 perfexpert_ct_SOURCES = ct_real_main.c \
+	ct_database.c \
 	ct_input.c \
-	ct_logic.c \
 	ct_main.cpp \
 	ct_options.c \
-	ct_pattern.c \
-	ct_recommendation.c \
 	ct_rose.cpp \
-	ct_transformation.c \
+	ct_tools.c \
 	ct_traversal.cpp
 
 SUBDIRS = recognizers transformers

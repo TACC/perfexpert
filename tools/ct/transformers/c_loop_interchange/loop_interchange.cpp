@@ -9,11 +9,11 @@
  *
  * PerfExpert is free software: you can redistribute it and/or modify it under
  * the terms of the The University of Texas at Austin Research License
- * 
+ *
  * PerfExpert is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
- * 
+ *
  * Authors: Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
@@ -43,7 +43,7 @@ globals_t  globals;
 
 /* PerfExpert headers */
 #include "config.h"
-#include "perfexpert_constants.h"
+#include "common/perfexpert_constants.h"
 
 using namespace std;
 using namespace SageInterface;
@@ -89,7 +89,7 @@ int main(int argc, char** argv) {
         printf("Error: parsing command line arguments\n");
         return PERFEXPERT_ERROR;
     }
-    
+
     /* Open ROSE */
     if (PERFEXPERT_ERROR == open_rose()) {
         printf("Error: starting Rose, exiting...\n");
@@ -116,7 +116,7 @@ static int parse_cli_params(int argc, char *argv[]) {
     int parameter; /** Temporary variable to hold parameter */
     int option_index = 0; /** getopt_long() stores the option index here */
     int rc = PERFEXPERT_ERROR;
-    
+
     while (1) {
         /* get parameter */
         parameter = getopt_long(argc, argv, "l:f:o:r:s:w:",
@@ -196,7 +196,7 @@ int open_rose(void) {
     /* Load files and build AST */
     userProject = frontend(2, files);
     ROSE_ASSERT(userProject != NULL);
-    
+
     return PERFEXPERT_SUCCESS;
 }
 
@@ -221,7 +221,7 @@ int extract_source(void) {
         /* Output source code */
         fprintf(destination_file_FP, "%s",
                 file->unparseToCompleteString().c_str());
-        
+
         /* Close output file */
         fclose(destination_file_FP);
 
