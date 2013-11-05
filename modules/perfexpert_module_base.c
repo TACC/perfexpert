@@ -244,6 +244,8 @@ int perfexpert_module_set_option(const char *module, const char *option) {
             m->argv[m->argc] = fulloption;
             m->argc++;
 
+            OUTPUT_VERBOSE((1, "%s option set [%s]", module, option));
+
             return PERFEXPERT_SUCCESS;
         }
     }
