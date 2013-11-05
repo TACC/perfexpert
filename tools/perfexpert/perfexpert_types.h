@@ -50,15 +50,6 @@ typedef struct {
     int  step;
     char *workdir;
     char *stepdir;
-    char *prefix[MAX_ARGUMENTS_COUNT];
-    char *before[MAX_ARGUMENTS_COUNT];
-    char *after[MAX_ARGUMENTS_COUNT];
-    char *knc;
-    char *knc_prefix[MAX_ARGUMENTS_COUNT];
-    char *knc_before[MAX_ARGUMENTS_COUNT];
-    char *knc_after[MAX_ARGUMENTS_COUNT];
-    char *order;
-    char *inputfile;
     int  only_exp;
     int  compat_mode;
     long int pid;

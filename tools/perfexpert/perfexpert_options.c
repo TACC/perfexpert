@@ -68,12 +68,6 @@ int parse_cli_params(int argc, char *argv[]) {
         .program           = NULL,
         .program_argv      = NULL,
         .program_argv_temp = { 0 },
-        .prefix            = NULL,
-        .before            = NULL,
-        .after             = NULL,
-        .knc_prefix        = NULL,
-        .knc_before        = NULL,
-        .knc_after         = NULL,
         .do_not_run        = PERFEXPERT_FALSE
     };
 
@@ -84,7 +78,7 @@ int parse_cli_params(int argc, char *argv[]) {
     }
 
     /* Parse arguments */
-    argp_parse(&argp, argc, argv, 0, 0, &globals);
+    argp_parse(&argp, argc, argv, 0, 0, NULL);
 
     /* If the list of modules is empty, load the default modules */
     if ((0 == perfexpert_list_get_size(&(module_globals.modules))) &&
@@ -100,31 +94,7 @@ int parse_cli_params(int argc, char *argv[]) {
         }
     }
 
-    /* Expand AFTERs, BEFOREs, PREFIXs and program arguments */
-    if (NULL != arg_options.after) {
-        perfexpert_string_split(perfexpert_string_remove_spaces(
-            arg_options.after), globals.after, ' ');
-    }
-    if (NULL != arg_options.before) {
-        perfexpert_string_split(perfexpert_string_remove_spaces(
-            arg_options.before), globals.before, ' ');
-    }
-    if (NULL != arg_options.prefix) {
-        perfexpert_string_split(perfexpert_string_remove_spaces(
-            arg_options.prefix), globals.prefix, ' ');
-    }
-    if (NULL != arg_options.knc_after) {
-        perfexpert_string_split(perfexpert_string_remove_spaces(
-            arg_options.knc_after), globals.knc_after, ' ');
-    }
-    if (NULL != arg_options.knc_before) {
-        perfexpert_string_split(perfexpert_string_remove_spaces(
-            arg_options.knc_before), globals.knc_before, ' ');
-    }
-    if (NULL != arg_options.knc_prefix) {
-        perfexpert_string_split(perfexpert_string_remove_spaces(
-            arg_options.knc_prefix), globals.knc_prefix, ' ');
-    }
+    /* Expand program arguments */
     while (NULL != arg_options.program_argv[i]) {
         int j = 0;
 
@@ -184,24 +154,6 @@ int parse_cli_params(int argc, char *argv[]) {
         return PERFEXPERT_ERROR;
     }
 
-    /* Sanity check: MIC options without MIC */
-    if ((NULL != globals.knc_prefix[0]) && (NULL == globals.knc)) {
-        OUTPUT(("%s option -P selected but no MIC card was specified, ignoring",
-            _BOLDRED("WARNING:")));
-    }
-
-    /* Sanity check: MIC options without MIC */
-    if ((NULL != globals.knc_before[0]) && (NULL == globals.knc)) {
-        OUTPUT(("%s option -B selected but no MIC card was specified, ignoring",
-            _BOLDRED("WARNING:")));
-    }
-
-    /* Sanity check: MIC options without MIC */
-    if ((NULL != globals.knc_after[0]) && (NULL == globals.knc)) {
-        OUTPUT(("%s option -A selected but no MIC card was specified, ignoring",
-            _BOLDRED("WARNING:")));
-    }
-
     OUTPUT_VERBOSE((7, "%s", _BLUE("Summary of options")));
     OUTPUT_VERBOSE((7, "   Verbose level:       %d", globals.verbose));
     OUTPUT_VERBOSE((7, "   Colorful verbose?    %s", globals.colorful ?
@@ -217,9 +169,11 @@ int parse_cli_params(int argc, char *argv[]) {
     OUTPUT_VERBOSE((7, "   Program executable:  %s", globals.program));
     OUTPUT_VERBOSE((7, "   Program path:        %s", globals.program_path));
     OUTPUT_VERBOSE((7, "   Program full path:   %s", globals.program_full));
-    OUTPUT_VERBOSE((7, "   Program input file:  %s", globals.inputfile));
 
     if (7 <= globals.verbose) {
+        perfexpert_module_t *module = NULL;
+        perfexpert_ordered_module_t *ordered_module = NULL;
+
         printf("%s    Program arguments:  ", PROGRAM_PREFIX);
         if (NULL == globals.program_argv[0]) {
             printf(" (null)");
@@ -230,91 +184,7 @@ int parse_cli_params(int argc, char *argv[]) {
                 i++;
             }
         }
-
-        printf("\n%s    Prefix:             ", PROGRAM_PREFIX);
-        if (NULL == globals.prefix[0]) {
-            printf(" (null)");
-        } else {
-            i = 0;
-            while (NULL != globals.prefix[i]) {
-                printf(" [%s]", (char *)globals.prefix[i]);
-                i++;
-            }
-        }
-
-        printf("\n%s    Before each run:    ", PROGRAM_PREFIX);
-        if (NULL == globals.before[0]) {
-            printf(" (null)");
-        } else {
-            i = 0;
-            while (NULL != globals.before[i]) {
-                printf(" [%s]", (char *)globals.before[i]);
-                i++;
-            }
-        }
-
-        printf("\n%s    After each run:     ", PROGRAM_PREFIX);
-        if (NULL == globals.after[0]) {
-            printf(" (null)");
-        } else {
-            i = 0;
-            while (NULL != globals.after[i]) {
-                printf(" [%s]", (char *)globals.after[i]);
-                i++;
-            }
-        }
-        printf("\n");
-        fflush(stdout);
-    }
-
-    #if HAVE_KNC_SUPPORT
-    OUTPUT_VERBOSE((7, "   MIC card:            %s", globals.knc));
-
-    if (7 <= globals.verbose) {
-        printf("%s    MIC prefix:         ", PROGRAM_PREFIX);
-        if (NULL == globals.knc_prefix[0]) {
-            printf(" (null)");
-        } else {
-            i = 0;
-            while (NULL != globals.knc_prefix[i]) {
-                printf(" [%s]", (char *)globals.knc_prefix[i]);
-                i++;
-            }
-        }
-
-        printf("\n%s    MIC before each run:", PROGRAM_PREFIX);
-        if (NULL == globals.knc_before[0]) {
-            printf(" (null)");
-        } else {
-            i = 0;
-            while (NULL != globals.knc_before[i]) {
-                printf(" [%s]", (char *)globals.knc_before[i]);
-                i++;
-            }
-        }
-
-        printf("\n%s    MIC after each run: ", PROGRAM_PREFIX);
-        if (NULL == globals.knc_after[0]) {
-            printf(" (null)");
-        } else {
-            i = 0;
-            while (NULL != globals.knc_after[i]) {
-                printf(" [%s]", (char *)globals.knc_after[i]);
-                i++;
-            }
-        }
-        printf("\n");
-        fflush(stdout);
-    }
-    #endif
-
-    OUTPUT_VERBOSE((7, "   Sorting order:       %s", globals.order));
-
-    if (7 <= globals.verbose) {
-        perfexpert_module_t *module = NULL;
-        perfexpert_ordered_module_t *ordered_module = NULL;
-
-        printf("%s    Modules:            ", PROGRAM_PREFIX);
+        printf("\n%s    Modules:            ", PROGRAM_PREFIX);
         module = (perfexpert_module_t *)perfexpert_list_get_first(
             &(module_globals.modules));
         while ((perfexpert_list_item_t *)module !=
@@ -381,41 +251,70 @@ int parse_cli_params(int argc, char *argv[]) {
 
 /* parse_options */
 static error_t parse_options(int key, char *arg, struct argp_state *state) {
+    char str[MAX_BUFFER_SIZE];
+
     switch (key) {
-        /* Should I run some program after each execution? */
+        /* Shortcuts for HPCToolkit module (a, A, b, B, C, i, p, P)*/
         case 'a':
-            arg_options.after = arg;
-            OUTPUT_VERBOSE((1, "option 'a' set [%s]", arg_options.after));
-            break;
+            bzero(str, MAX_BUFFER_SIZE);
+            sprintf(str, "hpctoolkit,after=%s", arg);
+            if (PERFEXPERT_SUCCESS != set_module_option(str)) {
+                return PERFEXPERT_ERROR;
+            }
 
-        /* Should I run on the KNC some program after each execution? */
         case 'A':
-            arg_options.knc_after = arg;
-            OUTPUT_VERBOSE((1, "option 'A' set [%s]", arg_options.knc_after));
-            break;
+            bzero(str, MAX_BUFFER_SIZE);
+            sprintf(str, "hpctoolkit,mic-after=%s", arg);
+            if (PERFEXPERT_SUCCESS != set_module_option(str)) {
+                return PERFEXPERT_ERROR;
+            }
 
-        /* Should I run some program before each execution? */
         case 'b':
-            arg_options.before = arg;
-            OUTPUT_VERBOSE((1, "option 'b' set [%s]", arg_options.before));
-            break;
+            bzero(str, MAX_BUFFER_SIZE);
+            sprintf(str, "hpctoolkit,before=%s", arg);
+            if (PERFEXPERT_SUCCESS != set_module_option(str)) {
+                return PERFEXPERT_ERROR;
+            }
 
-        /* Should I run on the KNC some program before each execution? */
         case 'B':
-            arg_options.knc_before = arg;
-            OUTPUT_VERBOSE((1, "option 'B' set [%s]", arg_options.knc_before));
-            break;
+            bzero(str, MAX_BUFFER_SIZE);
+            sprintf(str, "hpctoolkit,mic-before=%s", arg);
+            if (PERFEXPERT_SUCCESS != set_module_option(str)) {
+                return PERFEXPERT_ERROR;
+            }
+
+        case 'C':
+            bzero(str, MAX_BUFFER_SIZE);
+            sprintf(str, "hpctoolkit,mic-card=%s", arg);
+            if (PERFEXPERT_SUCCESS != set_module_option(str)) {
+                return PERFEXPERT_ERROR;
+            }
+
+        case 'i':
+            bzero(str, MAX_BUFFER_SIZE);
+            sprintf(str, "hpctoolkit,inputfile=%s", arg);
+            if (PERFEXPERT_SUCCESS != set_module_option(str)) {
+                return PERFEXPERT_ERROR;
+            }
+
+        case 'p':
+            bzero(str, MAX_BUFFER_SIZE);
+            sprintf(str, "hpctoolkit,prefix=%s", arg);
+            if (PERFEXPERT_SUCCESS != set_module_option(str)) {
+                return PERFEXPERT_ERROR;
+            }
+
+        case 'P':
+            bzero(str, MAX_BUFFER_SIZE);
+            sprintf(str, "hpctoolkit,mic-prefix=%s", arg);
+            if (PERFEXPERT_SUCCESS != set_module_option(str)) {
+                return PERFEXPERT_ERROR;
+            }
 
         /* Activate colorful mode */
         case 'c':
             globals.colorful = PERFEXPERT_TRUE;
             OUTPUT_VERBOSE((1, "option 'c' set"));
-            break;
-
-        /* MIC card */
-        case 'C':
-            globals.knc = arg;
-            OUTPUT_VERBOSE((1, "option 'C' set [%s]", globals.knc));
             break;
 
         /* Which database file? */
@@ -440,12 +339,6 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
         case 'h':
             OUTPUT_VERBOSE((1, "option 'h' set"));
             argp_state_help(state, stdout, ARGP_HELP_STD_HELP);
-            break;
-
-        /* Which input file? */
-        case 'i':
-            globals.inputfile = arg;
-            OUTPUT_VERBOSE((1, "option 'i' set [%s]", globals.inputfile));
             break;
 
         /* Verbose level (has an alias: v) */
@@ -474,30 +367,12 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
             OUTPUT_VERBOSE((1, "option 'n' set [%d]", arg_options.do_not_run));
             break;
 
-        /* Sorting order */
-        case 'o':
-            globals.order = arg;
-            OUTPUT_VERBOSE((1, "option 'o' set [%s]", globals.order));
-            break;
-
         /* Set module option */
         case 'O':
             OUTPUT_VERBOSE((1, "option 'O' set [%s]", arg));
             if (PERFEXPERT_SUCCESS != set_module_option(arg)) {
                 exit(1);
             }
-            break;
-
-        /* Should I add a program prefix to the command line? */
-        case 'p':
-            arg_options.prefix = arg;
-            OUTPUT_VERBOSE((1, "option 'p' set [%s]", arg_options.prefix));
-            break;
-
-        /* Should I add a program prefix to the KNC command line? */
-        case 'P':
-            arg_options.knc_prefix = arg;
-            OUTPUT_VERBOSE((1, "option 'P' set [%s]", arg_options.knc_prefix));
             break;
 
         /* Number of recommendation to output */
@@ -558,7 +433,7 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
 
                 OUTPUT_VERBOSE((1, "option 'threshold' set [0.0]"));
                 if (PERFEXPERT_SUCCESS != set_module_option(
-                    "lcpi,threshold=%s")) {
+                    "lcpi,threshold=0")) {
                     return PERFEXPERT_ERROR;
                 }
 
@@ -567,8 +442,6 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
                 state->next = state->argc;
             } else {
                 if (0 == state->arg_num) {
-                    char str[MAX_BUFFER_SIZE];
-
                     bzero(str, MAX_BUFFER_SIZE);
                     sprintf(str, "lcpi,threshold=%s", arg);
                     OUTPUT_VERBOSE((1, "option 'threshold' set [%s]", arg));
@@ -643,46 +516,6 @@ static int parse_env_vars(void) {
     if (NULL != getenv("PERFEXPERT_SOURCE_FILE")) {
         globals.sourcefile = ("PERFEXPERT_SOURCE_FILE");
         OUTPUT_VERBOSE((1, "ENV: sourcefile=%s", globals.sourcefile));
-    }
-
-    if (NULL != getenv("PERFEXPERT_PREFIX")) {
-        arg_options.prefix = ("PERFEXPERT_PREFIX");
-        OUTPUT_VERBOSE((1, "ENV: prefix=%s", arg_options.prefix));
-    }
-
-    if (NULL != getenv("PERFEXPERT_BEFORE")) {
-        arg_options.before = ("PERFEXPERT_BEFORE");
-        OUTPUT_VERBOSE((1, "ENV: before=%s", arg_options.before));
-    }
-
-    if (NULL != getenv("PERFEXPERT_AFTER")) {
-        arg_options.after = ("PERFEXPERT_AFTER");
-        OUTPUT_VERBOSE((1, "ENV: after=%s", arg_options.after));
-    }
-
-    if (NULL != getenv("PERFEXPERT_KNC_CARD")) {
-        globals.knc = ("PERFEXPERT_KNC_CARD");
-        OUTPUT_VERBOSE((1, "ENV: knc=%s", globals.knc));
-    }
-
-    if (NULL != getenv("PERFEXPERT_KNC_PREFIX")) {
-        arg_options.knc_prefix = ("PERFEXPERT_KNC_PREFIX");
-        OUTPUT_VERBOSE((1, "ENV: knc_prefix=%s", arg_options.knc_prefix));
-    }
-
-    if (NULL != getenv("PERFEXPERT_KNC_BEFORE")) {
-        arg_options.knc_before = ("PERFEXPERT_KNC_BEFORE");
-        OUTPUT_VERBOSE((1, "ENV: knc_before=%s", arg_options.knc_before));
-    }
-
-    if (NULL != getenv("PERFEXPERT_KNC_AFTER")) {
-        arg_options.knc_after = ("PERFEXPERT_KNC_AFTER");
-        OUTPUT_VERBOSE((1, "ENV: knc)after=%s", arg_options.knc_after));
-    }
-
-    if (NULL != getenv("PERFEXPERT_SORTING_ORDER")) {
-        globals.order = getenv("PERFEXPERT_SORTING_ORDER");
-        OUTPUT_VERBOSE((1, "ENV: order=%s", globals.order));
     }
 
     if (NULL != getenv("PERFEXPERT_MODULES")) {
@@ -800,6 +633,7 @@ static void module_help(const char *name) {
                     OUTPUT(("%s [%s]", _ERROR("Error: loading module"), m));
                     exit(0);
                 }
+
                 if (PERFEXPERT_SUCCESS != perfexpert_module_set_option(m,
                     "help")) {
                     OUTPUT(("%s", _ERROR("Error: setting module help")));
@@ -824,10 +658,15 @@ static void module_help(const char *name) {
         }
     }
 
+    printf("\n Modules options: to set these options use "
+        "--module-option=MODULE,OPTION=VALUE\n ================================"
+        "=============================================\n");
     if (PERFEXPERT_SUCCESS != perfexpert_module_init()) {
         OUTPUT(("%s", _ERROR("Error: initializing modules")));
         exit(0);
     }
+    printf(" =================================================================="
+        "===========\n\n");
 
     exit(0);
 }

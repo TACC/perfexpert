@@ -76,18 +76,9 @@ int main(int argc, char** argv) {
         .step          = 1,                // int
         .workdir       = NULL,             // *char
         .stepdir       = NULL,             // *char
-        .prefix        = { 0 },            // *char[]
-        .before        = { 0 },            // *char[]
-        .after         = { 0 },            // *char[]
-        .knc           = NULL,             // *char
-        .knc_prefix    = { 0 },            // *char[]
-        .knc_before    = { 0 },            // *char[]
-        .knc_after     = { 0 },            // *char[]
-        .inputfile     = NULL,             // *char
         .only_exp      = PERFEXPERT_FALSE, // int
         .compat_mode   = PERFEXPERT_FALSE, // int
-        .unique_id     = 0,                // long long int
-        .order         = "none"            // *char
+        .unique_id     = 0                 // long long int
     };
 
     /* Parse command-line parameters */
@@ -153,9 +144,6 @@ int main(int argc, char** argv) {
         if ((NULL != globals.sourcefile) || (NULL != globals.target)) {
             if (PERFEXPERT_SUCCESS != compile_program()) {
                 OUTPUT(("%s", _ERROR("Error: program compilation failed")));
-                if (NULL != globals.knc) {
-                    OUTPUT(("Are you adding the flags to to compile for MIC?"));
-                }
                 goto CLEANUP;
             }
         }
