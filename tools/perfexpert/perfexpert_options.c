@@ -28,6 +28,7 @@ extern "C" {
 #include <stdlib.h>
 #include <string.h>
 #include <argp.h>
+#include <dirent.h>
 
 /* Tools headers */
 #include "perfexpert.h"
@@ -44,6 +45,7 @@ extern "C" {
 #include "common/perfexpert_output.h"
 #include "common/perfexpert_string.h"
 #include "common/perfexpert_util.h"
+#include "install_dirs.h"
 
 static struct argp argp = { options, parse_options, args_doc, doc };
 static arg_options_t arg_options = { 0 };
@@ -440,13 +442,6 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
             argp_state_help(state, stdout, ARGP_HELP_STD_HELP);
             break;
 
-        /* Show modules help */
-        case 'H':
-            OUTPUT_VERBOSE((1, "option 'H' set"));
-            // TODO: fix this!
-            argp_state_help(state, stdout, ARGP_HELP_STD_HELP);
-            break;
-
         /* Which input file? */
         case 'i':
             globals.inputfile = arg;
@@ -541,6 +536,13 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
             set_module_order(arg, PERFEXPERT_MODULE_ANALYSIS);
             break;
 
+        /* Show modules help */
+        case -4:
+            OUTPUT_VERBOSE((1, "option 'module-help' set [%s]", arg));
+            module_help(arg);
+            break;
+
+        /* Arguments: threshold and target program and it's arguments */
         case ARGP_KEY_ARG:
             if (PERFEXPERT_TRUE == globals.compat_mode) {
 
@@ -692,12 +694,12 @@ static int parse_env_vars(void) {
 }
 
 /* load_module */
-static int load_module(char *input) {
+static int load_module(char *module) {
     char *names[MAX_ARGUMENTS_COUNT];
     int i = 0;
 
     /* Expand list of modules */
-    perfexpert_string_split(input, names, ',');
+    perfexpert_string_split(module, names, ',');
     while (NULL != names[i]) {
         if (PERFEXPERT_SUCCESS != perfexpert_module_load(names[i])) {
             OUTPUT(("%s [%s]", _ERROR("Error: while adding module"), names[i]));
@@ -762,6 +764,72 @@ static int set_module_order(char *option, module_phase_t order) {
         i++;
     }
     return PERFEXPERT_SUCCESS;
+}
+
+/* module_help */
+static void module_help(const char *name) {
+    struct dirent *entry = NULL;
+    DIR *directory = NULL;
+    int x = 0, y = 0;
+    char *m = NULL;
+
+    /* Show my help message */
+    argp_help(&argp, stdout, ARGP_HELP_STD_HELP, "perfexpert");
+
+    /* Show module's help messages */
+    if (0 == strcmp("all", name)) {
+        if (NULL == (directory = opendir(PERFEXPERT_LIBDIR))) {
+            OUTPUT(("%s [%s]", _ERROR("Error: unable to open libdir"),
+                PERFEXPERT_LIBDIR));
+            exit(0);
+        }
+        while (NULL != (entry = readdir(directory))) {
+            if ((0 == strncmp(entry->d_name, "libperfexpert_module_", 21)) &&
+                ('.' == entry->d_name[strlen(entry->d_name) - 3]) &&
+                ('s' == entry->d_name[strlen(entry->d_name) - 2]) &&
+                ('o' == entry->d_name[strlen(entry->d_name) - 1]) &&
+                (0 != strcmp(entry->d_name, "libperfexpert_module_base.so"))) {
+
+                PERFEXPERT_ALLOC(char, m, (strlen(entry->d_name) - 24));
+
+                for (x = 21, y = 0; x < (strlen(entry->d_name) - 3); x++, y++) {
+                    m[y] = entry->d_name[x];
+                }
+
+                if (PERFEXPERT_SUCCESS != perfexpert_module_load(m)) {
+                    OUTPUT(("%s [%s]", _ERROR("Error: loading module"), m));
+                    exit(0);
+                }
+                if (PERFEXPERT_SUCCESS != perfexpert_module_set_option(m,
+                    "help")) {
+                    OUTPUT(("%s", _ERROR("Error: setting module help")));
+                    exit(0);
+                }
+
+                PERFEXPERT_DEALLOC(m);
+            }
+        }
+        if (0 != closedir(directory)) {
+            OUTPUT(("%s [%s]", _ERROR("Error: unable to close libdir")));
+            exit(0);
+        }
+    } else {
+        if (PERFEXPERT_SUCCESS != perfexpert_module_load(name)) {
+            OUTPUT(("%s [%s]", _ERROR("Error: loading module"), name));
+            exit(0);
+        }
+        if (PERFEXPERT_SUCCESS != perfexpert_module_set_option(name, "help")) {
+            OUTPUT(("%s", _ERROR("Error: setting module help"), name));
+            exit(0);
+        }
+    }
+
+    if (PERFEXPERT_SUCCESS != perfexpert_module_init()) {
+        OUTPUT(("%s", _ERROR("Error: initializing modules")));
+        exit(0);
+    }
+
+    exit(0);
 }
 
 #ifdef __cplusplus

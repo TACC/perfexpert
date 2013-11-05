@@ -63,6 +63,7 @@ int module_measurements(void);
 int module_analysis(void);
 
 /* Function declarations */
+int parse_module_args(int argc, char *argv[]);
 int metrics_generate(void);
 int metrics_attach_machine(void);
 int database_import(perfexpert_list_t *profiles, const char *table);
