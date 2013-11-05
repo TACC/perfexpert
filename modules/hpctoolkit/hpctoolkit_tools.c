@@ -121,8 +121,8 @@ int run_hpcrun(void) {
 
         /* Add PREFIX to argv */
         count = 0;
-        while (NULL != globals.prefix[count]) {
-            e->argv[e->argc] = globals.prefix[count];
+        while (NULL != my_module_globals.prefix[count]) {
+            e->argv[e->argc] = my_module_globals.prefix[count];
             e->argc++;
             count++;
         }
@@ -154,14 +154,14 @@ int run_hpcrun(void) {
         experiment_count++;
 
         /* Run the BEFORE program */
-        if (NULL != globals.before[0]) {
+        if (NULL != my_module_globals.before[0]) {
             PERFEXPERT_ALLOC(char, test.output, (strlen(globals.stepdir) + 20));
             sprintf(test.output, "%s/before.%d.output", globals.stepdir,
                 experiment_count);
             test.input = NULL;
-            test.info = globals.before[0];
+            test.info = my_module_globals.before[0];
 
-            if (0 != fork_and_wait(&test, (char **)globals.before)) {
+            if (0 != fork_and_wait(&test, (char **)my_module_globals.before)) {
                 OUTPUT(("   %s", _RED("'before' command returns non-zero")));
             }
             PERFEXPERT_DEALLOC(test.output);
@@ -187,7 +187,7 @@ int run_hpcrun(void) {
             (strlen(globals.stepdir) + strlen(HPCRUN) + 25));
         sprintf(e->test.output, "%s/hpctoolkit/%s.%d.output", globals.stepdir,
             HPCRUN, experiment_count);
-        e->test.input = globals.inputfile;
+        e->test.input = my_module_globals.inputfile;
         e->test.info = globals.program;
 
         /* Not using OUTPUT_VERBOSE because I want only one line */
@@ -225,14 +225,14 @@ int run_hpcrun(void) {
             experiment_count, (long long)time_diff.tv_sec, time_diff.tv_nsec));
 
         /* Run the AFTER program */
-        if (NULL != globals.after[0]) {
+        if (NULL != my_module_globals.after[0]) {
             PERFEXPERT_ALLOC(char, test.output, (strlen(globals.stepdir) + 20));
             sprintf(test.output, "%s/after.%d.output", globals.stepdir,
                 experiment_count);
             test.input = NULL;
-            test.info = globals.after[0];
+            test.info = my_module_globals.after[0];
 
-            if (0 != fork_and_wait(&test, (char **)globals.after)) {
+            if (0 != fork_and_wait(&test, (char **)my_module_globals.after)) {
                 OUTPUT(("%s", _RED("'after' command return non-zero")));
             }
             PERFEXPERT_DEALLOC(test.output);
@@ -288,23 +288,23 @@ int run_hpcrun_knc(void) {
             }
 
             /* Add the AFTER program */
-            if (NULL != globals.knc_after) {
+            if (NULL != my_module_globals.knc_after) {
                 fprintf(script_file_FP, "\n\n# AFTER command\n");
-                fprintf(script_file_FP, "%s", globals.knc_after);
+                fprintf(script_file_FP, "%s", my_module_globals.knc_after);
             }
         }
 
         /* Add the BEFORE program */
-        if (NULL != globals.knc_before) {
+        if (NULL != my_module_globals.knc_before) {
             fprintf(script_file_FP, "\n\n# BEFORE command\n");
-            fprintf(script_file_FP, "%s", globals.knc_before);
+            fprintf(script_file_FP, "%s", my_module_globals.knc_before);
         }
 
         fprintf(script_file_FP, "\n\n# HPCRUN (%d)\n", experiment_count);
 
         /* Add PREFIX */
-        if (NULL != globals.knc_prefix) {
-            fprintf(script_file_FP, "%s ", globals.knc_prefix);
+        if (NULL != my_module_globals.knc_prefix) {
+            fprintf(script_file_FP, "%s ", my_module_globals.knc_prefix);
         }
 
         /* Arguments to run hpcrun */
@@ -323,9 +323,9 @@ int run_hpcrun_knc(void) {
     }
 
     /* Add the AFTER program */
-    if (NULL != globals.knc_after) {
+    if (NULL != my_module_globals.knc_after) {
         fprintf(script_file_FP, "\n\n# AFTER command\n");
-        fprintf(script_file_FP, "%s", globals.knc_after);
+        fprintf(script_file_FP, "%s", my_module_globals.knc_after);
     }
     fprintf(script_file_FP, "\n\nexit 0\n\n# EOF\n");
 
@@ -345,7 +345,7 @@ int run_hpcrun_knc(void) {
     test.info = globals.program;
 
     argv[0] = "ssh";
-    argv[1] = globals.knc;
+    argv[1] = my_module_globals.knc;
     argv[2] = script_file;
     argv[3] = NULL;
 

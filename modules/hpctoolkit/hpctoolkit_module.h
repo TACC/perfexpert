@@ -44,9 +44,9 @@ typedef struct {
     volatile perfexpert_list_item_t *prev;
     char *name;
     char *version;
-    int  status;
     int  argc;
     char *argv[MAX_ARGUMENTS_COUNT];
+    module_status_t status;
     perfexpert_module_load_fn_t load;
     perfexpert_module_init_fn_t init;
     perfexpert_module_fini_fn_t fini;

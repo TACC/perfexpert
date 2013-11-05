@@ -53,6 +53,14 @@ extern "C" {
 
 /* Private module types */
 typedef struct {
+    char *prefix[MAX_ARGUMENTS_COUNT];
+    char *before[MAX_ARGUMENTS_COUNT];
+    char *after[MAX_ARGUMENTS_COUNT];
+    char *knc;
+    char *knc_prefix[MAX_ARGUMENTS_COUNT];
+    char *knc_before[MAX_ARGUMENTS_COUNT];
+    char *knc_after[MAX_ARGUMENTS_COUNT];
+    char *inputfile;
     hpctoolkit_event_t *events_by_name;
 } my_module_globals_t;
 

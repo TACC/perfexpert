@@ -67,6 +67,15 @@ int module_init(void) {
     /* Initialize list of events */
     my_module_globals.events_by_name = NULL;
     perfexpert_list_construct(&(myself_module.profiles));
+    my_module_globals.knc = NULL;
+    my_module_globals.inputfile = NULL;
+
+    /* Parse module options */
+    if (PERFEXPERT_SUCCESS != parse_module_args(myself_module.argc,
+        myself_module.argv)) {
+        OUTPUT(("%s", _ERROR("Error: parsing module arguments")));
+        return PERFEXPERT_ERROR;
+    }
 
     OUTPUT_VERBOSE((5, "%s", _MAGENTA("initialized")));
 
@@ -118,7 +127,7 @@ int module_measurements(void) {
     }
 
     /* Collect measurements */
-    if (NULL == globals.knc) {
+    if (NULL == my_module_globals.knc) {
         if (PERFEXPERT_SUCCESS != run_hpcrun()) {
             OUTPUT(("%s", _ERROR("Error: unable to run hpcrun")));
             return PERFEXPERT_ERROR;
