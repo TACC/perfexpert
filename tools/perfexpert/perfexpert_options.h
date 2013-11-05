@@ -79,17 +79,17 @@ static struct argp_option options[] = {
         "within (e.g., -P \"mpirun -n 2\")", },
     #endif
 
-    { 0, 0, 0, 0, "Modules options:", 4, },
+    { 0, 0, 0, 0, "Module handling options:", 4, },
     { "module-option", 'O', "MODULE,OPTION=VALUE", 0, "Set an option to a "
         "specific module (e.g., -O MODULE,OPTION=VALUE or --module-option="
-        "MODULE,OPTION=VALUE). This argument can be defined multiple times. "
-        "This option automatically sets the module (i.e., -M is not required) "
-        "if it is not already set", },
+        "MODULE,OPTION=VALUE). This argument can also be defined multiple "
+        "times. This option automatically sets the module (i.e., -M is not "
+        "required) if it is not already set", },
     { "modules", 'M', "MODULE,MODULE,..", 0, "Set modules that should be used "
         "(default: lcpi,hpctoolkit). Use a comma-separated list to specify "
         "multiple modules (e.g., -M hpctoolkit,macpo or --modules=hpctoolkit,"
-        "macpo). This argument can be defined multiple times. NOTICE: modules "
-        "order matters! See --measurement-order and --analysis-order", },
+        "macpo). This argument can also be defined multiple times. NOTICE: "
+        "module order matters! See --measurement-order and --analysis-order", },
     { "compile-order", -1, "MODULE,MODULE,...", OPTION_HIDDEN, "Set the order "
       "in which compile modules should be called (1st defined, 1st called)", },
     { "measurement-order", -2, "MODULE,MODULE,...", 0, "Set the order in which "
@@ -98,7 +98,8 @@ static struct argp_option options[] = {
     { "analysis-order", -3, "MODULE,MODULE,...", 0, "Set the order in which "
       "analysis modules should be called (1st defined, 1st called). This "
       "option automatically sets the modules (i.e., -M is not required)", },
-    { "modules-help", -4, 0, 0, "Show all modules options" },
+    { "module-help", -4, "MODULE|all", 0, "Show module options. Use 'all' to "
+      "see options for all available module" },
 
     { 0, 0, 0, 0, "Output formating options:", 5, },
     { "colorful", 'c', 0, 0, "Enable ANSI colors" },
@@ -120,7 +121,6 @@ static struct argp_option options[] = {
     { "only-experiments", 'e', 0, 0, "Tell PerfExpert to do not perform any "
         "analysis just take measurements and finalize (for manual analysis)", },
 
-    { 0, 0, 0, 0, "Informational options:", -1, },
     { 0, 'h', 0, OPTION_HIDDEN, "Give a very short usage message" },
     { 0 }
 };
@@ -129,6 +129,9 @@ static char args_doc[] = "THRESHOLD PROGRAM [PROGRAM ARGUMENTS]";
 static char doc[] = "\nPerfExpert -- an easy-to-use automatic performance "
     "diagnosis and optimization\n              tool for HPC applications\n\n"
     "  THRESHOLD           Threshold (relevance % of runtime) to take hotspots "
+    "into\n                      consideration (range: fraction value between 0"
+    " and 1,\n                      translated to --module-option=lcpi,"
+    "threshold=VALUE)\n"
     "  PROGRAM             Program (binary) to analyze (do not use shell "
     "scripts)\n"
     "  PROGRAM ARGUMENTS   Program arguments, see documentation if any argument"
@@ -150,10 +153,11 @@ typedef struct arg_options {
 
 /* Function declarations */
 static int parse_env_vars(void);
-static int load_module(char *name);
+static int load_module(char *module);
 static int set_module_option(char *option);
 static int set_module_order(char *option, module_phase_t order);
 static error_t parse_options(int key, char *arg, struct argp_state *state);
+static void module_help(const char *module);
 
 #ifdef __cplusplus
 }
