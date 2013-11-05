@@ -26,6 +26,7 @@ libperfexpert_module_hpctoolkit_la_LDFLAGS = -lxml2 -lpapi -lsqlite3 -module \
 libperfexpert_module_hpctoolkit_la_SOURCES = hpctoolkit_module.c \
 	hpctoolkit_database.c \
 	hpctoolkit_parser.c \
+	hpctoolkit_options.c \
 	hpctoolkit_profile.c \
 	hpctoolkit_tools.c
 
