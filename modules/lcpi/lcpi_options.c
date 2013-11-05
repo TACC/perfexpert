@@ -58,8 +58,9 @@ int parse_module_args(int argc, char *argv[]) {
     argp_parse(&argp, argc, argv, 0, 0, NULL);
 
     /* Sanity check: threshold is mandatory, check limits */
-    if ((0 >= my_module_globals.threshold) ||
-        (1 < my_module_globals.threshold)) {
+    if (((0 >= my_module_globals.threshold) ||
+        (1 < my_module_globals.threshold)) &&
+        (PERFEXPERT_FALSE == my_module_globals.help_only)) {
         OUTPUT(("%s", _ERROR("Error: invalid threshold")));
         return PERFEXPERT_ERROR;
     }
@@ -88,10 +89,11 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
         case 'h':
             OUTPUT_VERBOSE((1, "option 'h' set"));
             argp_help(&argp, stdout, ARGP_HELP_LONG, NULL);
+            my_module_globals.help_only = PERFEXPERT_TRUE;
             break;
 
         /* Threshold */
-        case -1:
+        case 't':
             my_module_globals.threshold = atof(arg);
             OUTPUT_VERBOSE((1, "option 't' set [%f]",
                 my_module_globals.threshold));

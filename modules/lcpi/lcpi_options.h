@@ -35,11 +35,13 @@ extern "C" {
 
 /* Structure to handle command line arguments */
 static struct argp_option options[] = {
-    { 0, 0, 0, 0, "\nLCPI -- to set these options use --module-option=lcpi,"
-      "OPTION=VALUE\n", 1, },
-    { "threshold", -1, "VALUE", OPTION_DOC, "Threshold (relevance % of runtime)"
-      " to take " "hotspots into consideration (range: fration value between 0 "
-      "and 1)\n", },
+    { 0, 0, 0, 0, "\n[LCPI module options]", 1 },
+
+    { 0, 0, 0, 0, "General options:", 2, },
+    { "threshold", 't', "VALUE", OPTION_DOC, "Threshold (relevance % of "
+      "runtime) to take " "hotspots into consideration (range: fration value "
+      "between 0 and 1)" },
+
     { "help", 'h', 0, OPTION_HIDDEN, "Show help message" },
     { 0 }
 };
