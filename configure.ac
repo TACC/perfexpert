@@ -136,6 +136,7 @@ AC_CHECK_HEADER([sys/stat.h],     [], [AC_MSG_ERROR([sys/stat.h not found])])
 AC_CHECK_HEADER([sys/types.h],    [], [AC_MSG_ERROR([sys/types.h not found])])
 AC_CHECK_HEADER([time.h],         [], [AC_MSG_ERROR([time.h not found])])
 AC_CHECK_HEADER([unistd.h],       [], [AC_MSG_ERROR([unistd.h not found])])
+AC_CHECK_HEADER([dirent.h],       [], [AC_MSG_ERROR([dirent.h not found])])
 
 #------------------------------------------------------------------------------
 # Basic binaries: Bash shell
