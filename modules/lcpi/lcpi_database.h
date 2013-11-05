@@ -22,6 +22,10 @@
 #ifndef PERFEXPERT_MODULE_LCPI_DATABASE_H_
 #define PERFEXPERT_MODULE_LCPI_DATABASE_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Modules headers */
 #include "lcpi_types.h"
 
@@ -40,5 +44,9 @@ static int map_modules_to_hotspots(lcpi_hotspot_t *h, lcpi_module_t *m,
 static int calculate_metadata(lcpi_profile_t *profile, const char *table);
 static int import_instructions(void *hotspot, int n, char **val, char **names);
 static int import_experiment(void *hotspot, int n, char **val, char **names);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* PERFEXPERT_MODULE_LCPI_DATABASE_H_ */
