@@ -9,11 +9,11 @@
  *
  * PerfExpert is free software: you can redistribute it and/or modify it under
  * the terms of the The University of Texas at Austin Research License
- * 
+ *
  * PerfExpert is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
- * 
+ *
  * Author's License follows
  *
  **********************************************************************
@@ -85,7 +85,7 @@ typedef struct MD5_CTX {
     (a) += G ((b), (c), (d)) + (x) + (unsigned int)(ac); \
     (a) = ROLL((a), (s));                                \
     (a) += (b)
-        
+
 #define HH(a, b, c, d, x, s, ac)                         \
     (a) += H ((b), (c), (d)) + (x) + (unsigned int)(ac); \
     (a) = ROLL((a), (s));                                \
@@ -268,7 +268,7 @@ static inline void perfexpert_md5_final(MD5_CTX_t *ctx) {
                  ((unsigned int)ctx->in[ii]);
     }
     perfexpert_md5_transform(ctx->buf, in);
-        
+
     for (i = 0, ii = 0; i < 4; i++, ii += 4) {
         ctx->digest[ii] =   (unsigned char)(ctx->buf[i] & 0xFF);
         ctx->digest[ii+1] = (unsigned char)((ctx->buf[i] >> 8) & 0xFF);
@@ -279,17 +279,13 @@ static inline void perfexpert_md5_final(MD5_CTX_t *ctx) {
 
 /* md5_string */
 static inline char* perfexpert_md5_string(const char *in) {
+    static char rc[33];
     MD5_CTX_t ctx;
-    char *rc = NULL;
 
     perfexpert_md5_init(&ctx);
     perfexpert_md5_update(&ctx, (unsigned char *)in, strlen(in));
     perfexpert_md5_final(&ctx);
 
-    rc = (char *)malloc(33);
-    if (NULL == rc) {
-        return NULL;
-    }
     bzero(rc, 33);
     sprintf(rc,
         "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
@@ -297,7 +293,7 @@ static inline char* perfexpert_md5_string(const char *in) {
         ctx.digest[4],  ctx.digest[5],  ctx.digest[6],  ctx.digest[7],
         ctx.digest[8],  ctx.digest[9],  ctx.digest[10], ctx.digest[11],
         ctx.digest[12], ctx.digest[13], ctx.digest[14], ctx.digest[15]);
-    return rc;
+    return (char *)&rc;
 }
 
 #ifdef __cplusplus
