@@ -90,12 +90,12 @@ typedef struct {
     int  argc;
     char *argv[MAX_ARGUMENTS_COUNT];
     module_status_t status;
-    perfexpert_module_load_fn_t         load;
-    perfexpert_module_init_fn_t         init;
-    perfexpert_module_fini_fn_t         fini;
-    perfexpert_module_compile_fn_t      compile;
+    perfexpert_module_load_fn_t load;
+    perfexpert_module_init_fn_t init;
+    perfexpert_module_fini_fn_t fini;
+    perfexpert_module_compile_fn_t compile;
     perfexpert_module_measurements_fn_t measurements;
-    perfexpert_module_analysis_fn_t     analysis;
+    perfexpert_module_analysis_fn_t analysis;
     /* Extended module interface from this point */
 } perfexpert_module_1_0_0_t;
 
