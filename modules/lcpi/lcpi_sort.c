@@ -26,8 +26,6 @@ extern "C" {
 /* System standard headers */
 #include <string.h>
 
-/* Utility headers */
-
 /* Modules headers */
 #include "lcpi.h"
 #include "lcpi_types.h"
@@ -54,11 +52,11 @@ int hotspot_sort(perfexpert_list_t *profiles) {
 
     /* Find the sorting function for the requested order */
     while (NULL != orders[i].name) {
-        if (0 == strcmp(globals.order, orders[i].name)) {
+        if (0 == strcmp(my_module_globals.order, orders[i].name)) {
             /* For each profile in the list of profiles... */
             perfexpert_list_for(p, profiles, lcpi_profile_t) {
-                OUTPUT_VERBOSE((7, "   sorting [%d] %s by %s", p->id,
-                    _YELLOW(p->name), globals.order));
+                OUTPUT_VERBOSE((7, "   sorting %s by %s", _YELLOW(p->name),
+                    my_module_globals.order));
 
                 /* Call the sorting function */
                 if (PERFEXPERT_SUCCESS != (*orders[i].function)(p)) {
@@ -71,196 +69,112 @@ int hotspot_sort(perfexpert_list_t *profiles) {
         i++;
     }
     OUTPUT(("%s unknown sorting order (%s), hotspots will not be sorted",
-        _BOLDRED("WARNING:"), globals.order));
+        _BOLDRED("WARNING:"), my_module_globals.order));
 
     return PERFEXPERT_SUCCESS;
 }
 
 /* sort_by_relevance */
-static int sort_by_relevance(profile_t *profile) {
-    procedure_t *h = NULL, *h2 = NULL, *h_max = NULL;
-    perfexpert_list_t sorted;
-    double relevance_max = -1;
-    int i = 0;
+static int sort_by_relevance(lcpi_profile_t *profile) {
+    lcpi_hotspot_t *i = NULL, *j = NULL;
+    int swapped = PERFEXPERT_FALSE;
 
-    OUTPUT_VERBOSE((10, "      %s", _CYAN("original order")));
-    h = (procedure_t *)perfexpert_list_get_first(&(profile->hotspots));
-    for (i = 0; i < perfexpert_list_get_size(&(profile->hotspots)); i++) {
-        OUTPUT_VERBOSE((10, "         [%f] %s", h->importance, h->name));
-        h = (procedure_t *)perfexpert_list_get_next(h);
+    OUTPUT_VERBOSE((10, "   %s", _CYAN("original order")));
+    perfexpert_list_for(i, &(profile->hotspots), lcpi_hotspot_t) {
+        OUTPUT_VERBOSE((10, "      [%f] %s", i->importance, i->name));
     }
 
-    perfexpert_list_construct(&sorted);
-
-    for (h = (procedure_t *)perfexpert_list_get_first(&(profile->hotspots));
-        0 < perfexpert_list_get_size(&(profile->hotspots));
-        h = (procedure_t *)perfexpert_list_get_first(&(profile->hotspots))) {
-
-        relevance_max = -1;
-        h_max = h;
-
-        /* Find the highest importance */
-        h2 = (procedure_t *)perfexpert_list_get_first(&(profile->hotspots));
-        h2 = (procedure_t *)h2->next;
-        for (i = 0; i < perfexpert_list_get_size(&(profile->hotspots)) - 1;
-            h2 = (procedure_t *)perfexpert_list_get_next(h2), i++) {
-            if (relevance_max <= h2->importance) {
-                relevance_max = h2->importance;
-                h_max = h2;
+    perfexpert_list_for(i, &(profile->hotspots), lcpi_hotspot_t) {
+        swapped = PERFEXPERT_FALSE;
+        perfexpert_list_reverse_for(j, &(profile->hotspots), lcpi_hotspot_t) {
+            if (j->importance < ((lcpi_hotspot_t *)j->prev)->importance) {
+                perfexpert_list_swap((perfexpert_list_item_t *)j,
+                    (perfexpert_list_item_t *)j->prev);
+                swapped = PERFEXPERT_TRUE;
             }
         }
-        /* Remove h_max from unsorted list */
-        perfexpert_list_remove_item(&(profile->hotspots),
-            (perfexpert_list_item_t *)h_max);
-
-        /* Append h_max to sorted list */
-        perfexpert_list_append(&sorted, (perfexpert_list_item_t *)h_max);
+        if (PERFEXPERT_FALSE == swapped) {
+            break;
+        }
     }
 
-    /* Copy list to unsorted_list and destroy profile's list of hotspot */
-    profile->hotspots.sentinel.next = sorted.sentinel.next;
-    profile->hotspots.sentinel.prev = sorted.sentinel.prev;
-    profile->hotspots.length = sorted.length;
-    profile->hotspots.sentinel.next->prev = &(profile->hotspots.sentinel);
-    profile->hotspots.sentinel.prev->next = &(profile->hotspots.sentinel);
-
-    OUTPUT_VERBOSE((10, "      %s", _CYAN("sorted order (relevance)")));
-    h = (procedure_t *)perfexpert_list_get_first(&(profile->hotspots));
-    for (i = 0; i < perfexpert_list_get_size(&(profile->hotspots)); i++) {
-        OUTPUT_VERBOSE((10, "         [%f] %s", h->importance, h->name));
-        h = (procedure_t *)perfexpert_list_get_next(h);
+    OUTPUT_VERBOSE((10, "   %s", _CYAN("sorted order (relevance)")));
+    perfexpert_list_for(i, &(profile->hotspots), lcpi_hotspot_t) {
+        OUTPUT_VERBOSE((10, "      [%f] %s", i->importance, i->name));
     }
 
-    OUTPUT_VERBOSE((10, "      %s", _MAGENTA("done")));
+    OUTPUT_VERBOSE((10, "   %s", _MAGENTA("done")));
 
     return PERFEXPERT_SUCCESS;
 }
 
 /* sort_by_performance */
-static int sort_by_performance(profile_t *profile) {
-    procedure_t *h = NULL, *h2 = NULL, *h_max = NULL;
-    perfexpert_list_t sorted;
-    double worst_overall = -1;
-    int i = 0;
+static int sort_by_performance(lcpi_profile_t *profile) {
+    lcpi_hotspot_t *i = NULL, *j = NULL;
+    int swapped = PERFEXPERT_FALSE;
 
-    OUTPUT_VERBOSE((10, "      %s", _CYAN("original order")));
-    h = (procedure_t *)perfexpert_list_get_first(&(profile->hotspots));
-    for (i = 0; i < perfexpert_list_get_size(&(profile->hotspots)); i++) {
-        OUTPUT_VERBOSE((10, "         [%f] %s",
-            perfexpert_lcpi_hotspot_get(h, "overall"), h->name));
-        h = (procedure_t *)perfexpert_list_get_next(h);
+    OUTPUT_VERBOSE((10, "   %s", _CYAN("original order")));
+    perfexpert_list_for(i, &(profile->hotspots), lcpi_hotspot_t) {
+        OUTPUT_VERBOSE((10, "      [%f] %s", i->importance, i->name));
     }
 
-    perfexpert_list_construct(&sorted);
-
-    for (h = (procedure_t *)perfexpert_list_get_first(&(profile->hotspots));
-        0 < perfexpert_list_get_size(&(profile->hotspots));
-        h = (procedure_t *)perfexpert_list_get_first(&(profile->hotspots))) {
-
-        worst_overall = -1;
-        h_max = h;
-
-        /* Find the highest importance */
-        h2 = (procedure_t *)perfexpert_list_get_first(&(profile->hotspots));
-        h2 = (procedure_t *)h2->next;
-        for (i = 0; i < perfexpert_list_get_size(&(profile->hotspots)) - 1;
-            h2 = (procedure_t *)perfexpert_list_get_next(h2), i++) {
-            if (worst_overall <= perfexpert_lcpi_hotspot_get(h2, "overall")) {
-                worst_overall = perfexpert_lcpi_hotspot_get(h2, "overall");
-                h_max = h2;
+    perfexpert_list_for(i, &(profile->hotspots), lcpi_hotspot_t) {
+        swapped = PERFEXPERT_FALSE;
+        perfexpert_list_reverse_for(j, &(profile->hotspots), lcpi_hotspot_t) {
+            if (lcpi_get_value(j->metrics_by_name, "overall") < lcpi_get_value(
+                ((lcpi_hotspot_t *)j->prev)->metrics_by_name, "overall")) {
+                perfexpert_list_swap((perfexpert_list_item_t *)j,
+                    (perfexpert_list_item_t *)j->prev);
+                swapped = PERFEXPERT_TRUE;
             }
         }
-        /* Remove h_max from unsorted list */
-        perfexpert_list_remove_item(&(profile->hotspots),
-            (perfexpert_list_item_t *)h_max);
-
-        /* Append h_max to sorted list */
-        perfexpert_list_append(&sorted, (perfexpert_list_item_t *)h_max);
+        if (PERFEXPERT_FALSE == swapped) {
+            break;
+        }
     }
 
-    /* Copy list to unsorted_list and destroy profile's list of hotspot */
-    profile->hotspots.sentinel.next = sorted.sentinel.next;
-    profile->hotspots.sentinel.prev = sorted.sentinel.prev;
-    profile->hotspots.length = sorted.length;
-    profile->hotspots.sentinel.next->prev = &(profile->hotspots.sentinel);
-    profile->hotspots.sentinel.prev->next = &(profile->hotspots.sentinel);
-
-    OUTPUT_VERBOSE((10, "      %s", _CYAN("sorted order (performance)")));
-    h = (procedure_t *)perfexpert_list_get_first(&(profile->hotspots));
-    for (i = 0; i < perfexpert_list_get_size(&(profile->hotspots)); i++) {
-        OUTPUT_VERBOSE((10, "         [%f] %s",
-            perfexpert_lcpi_hotspot_get(h, "overall"), h->name));
-        h = (procedure_t *)perfexpert_list_get_next(h);
+    OUTPUT_VERBOSE((10, "   %s", _CYAN("sorted order (relevance)")));
+    perfexpert_list_for(i, &(profile->hotspots), lcpi_hotspot_t) {
+        OUTPUT_VERBOSE((10, "      [%f] %s", i->importance, i->name));
     }
 
-    OUTPUT_VERBOSE((10, "      %s", _MAGENTA("done")));
+    OUTPUT_VERBOSE((10, "   %s", _MAGENTA("done")));
 
     return PERFEXPERT_SUCCESS;
 }
 
 /* sort_by_mixed */
 static int sort_by_mixed(lcpi_profile_t *profile) {
-    procedure_t *h = NULL, *h2 = NULL, *h_max = NULL;
-    perfexpert_list_t sorted;
-    double index = -1;
-    int i = 0;
+    lcpi_hotspot_t *i = NULL, *j = NULL;
+    int swapped = PERFEXPERT_FALSE;
 
-    OUTPUT_VERBOSE((10, "      %s", _CYAN("original order")));
-    h = (procedure_t *)perfexpert_list_get_first(&(profile->hotspots));
-    for (i = 0; i < perfexpert_list_get_size(&(profile->hotspots)); i++) {
-        OUTPUT_VERBOSE((10, "         [%f] %s",
-            (perfexpert_lcpi_hotspot_get(h, "overall") * h->importance),
-            h->name));
-        h = (procedure_t *)perfexpert_list_get_next(h);
+    OUTPUT_VERBOSE((10, "   %s", _CYAN("original order")));
+    perfexpert_list_for(i, &(profile->hotspots), lcpi_hotspot_t) {
+        OUTPUT_VERBOSE((10, "      [%f] %s", i->importance, i->name));
     }
 
-    perfexpert_list_construct(&sorted);
-
-    for (h = (procedure_t *)perfexpert_list_get_first(&(profile->hotspots));
-        0 < perfexpert_list_get_size(&(profile->hotspots));
-        h = (procedure_t *)perfexpert_list_get_first(&(profile->hotspots))) {
-
-        index = -1;
-        h_max = h;
-
-        /* Find the highest importance */
-        h2 = (procedure_t *)perfexpert_list_get_first(&(profile->hotspots));
-        h2 = (procedure_t *)h2->next;
-        for (i = 0; i < perfexpert_list_get_size(&(profile->hotspots)) - 1;
-            h2 = (procedure_t *)perfexpert_list_get_next(h2), i++) {
-            if (index <=
-                (perfexpert_lcpi_hotspot_get(h2, "overall") * h2->importance)) {
-                index = perfexpert_lcpi_hotspot_get(h2, "overall") *
-                    h2->importance;
-                h_max = h2;
+    perfexpert_list_for(i, &(profile->hotspots), lcpi_hotspot_t) {
+        swapped = PERFEXPERT_FALSE;
+        perfexpert_list_reverse_for(j, &(profile->hotspots), lcpi_hotspot_t) {
+            if ((lcpi_get_value(j->metrics_by_name, "overall") * j->importance) <
+                (lcpi_get_value(((lcpi_hotspot_t *)j->prev)->metrics_by_name,
+                    "overall") * ((lcpi_hotspot_t *)j->prev)->importance)) {
+                perfexpert_list_swap((perfexpert_list_item_t *)j,
+                    (perfexpert_list_item_t *)j->prev);
+                swapped = PERFEXPERT_TRUE;
             }
         }
-        /* Remove h_max from unsorted list */
-        perfexpert_list_remove_item(&(profile->hotspots),
-            (perfexpert_list_item_t *)h_max);
-
-        /* Append h_max to sorted list */
-        perfexpert_list_append(&sorted, (perfexpert_list_item_t *)h_max);
+        if (PERFEXPERT_FALSE == swapped) {
+            break;
+        }
     }
 
-    /* Copy list to unsorted_list and destroy profile's list of hotspot */
-    profile->hotspots.sentinel.next = sorted.sentinel.next;
-    profile->hotspots.sentinel.prev = sorted.sentinel.prev;
-    profile->hotspots.length = sorted.length;
-    profile->hotspots.sentinel.next->prev = &(profile->hotspots.sentinel);
-    profile->hotspots.sentinel.prev->next = &(profile->hotspots.sentinel);
-
-    OUTPUT_VERBOSE((10, "      %s",
-        _CYAN("sorted order (performance * relevance)")));
-    h = (procedure_t *)perfexpert_list_get_first(&(profile->hotspots));
-    for (i = 0; i < perfexpert_list_get_size(&(profile->hotspots)); i++) {
-        OUTPUT_VERBOSE((10, "         [%f] %s",
-            (perfexpert_lcpi_hotspot_get(h, "overall") * h->importance),
-            h->name));
-        h = (procedure_t *)perfexpert_list_get_next(h);
+    OUTPUT_VERBOSE((10, "   %s", _CYAN("sorted order (relevance)")));
+    perfexpert_list_for(i, &(profile->hotspots), lcpi_hotspot_t) {
+        OUTPUT_VERBOSE((10, "      [%f] %s", i->importance, i->name));
     }
 
-    OUTPUT_VERBOSE((10, "      %s", _MAGENTA("done")));
+    OUTPUT_VERBOSE((10, "   %s", _MAGENTA("done")));
 
     return PERFEXPERT_SUCCESS;
 }

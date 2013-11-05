@@ -36,6 +36,7 @@ extern "C" {
 /* PerfExpert common headers */
 #include "common/perfexpert_hash.h"
 #include "common/perfexpert_list.h"
+#include "common/perfexpert_md5.h"
 
 #ifdef PROGRAM_PREFIX
 #undef PROGRAM_PREFIX
@@ -51,6 +52,7 @@ typedef struct {
     lcpi_metric_t *metrics_by_name;
     perfexpert_module_hpctoolkit_t *hpctoolkit;
     double threshold;
+    char *order;
     int help_only;
 } my_module_globals_t;
 
@@ -73,6 +75,20 @@ double database_get_hound(const char *name);
 double database_get_event(const char *name, const char *table, int hotspot_id);
 int logic_lcpi_compute(lcpi_profile_t *profile);
 int output_analysis(perfexpert_list_t *profiles);
+int hotspot_sort(perfexpert_list_t *profiles);
+
+/* lcpi_get_value */
+static inline double lcpi_get_value(lcpi_metric_t *db, const char *key) {
+    lcpi_metric_t *entry = NULL;
+
+    perfexpert_hash_find_str(db, perfexpert_md5_string(key), entry);
+
+    if (NULL == entry) {
+        return 0.0;
+    } else {
+        return entry->value;
+    }
+}
 
 #ifdef __cplusplus
 }
