@@ -149,6 +149,12 @@ int perfexpert_module_load(const char *name) {
     perfexpert_list_append(&(module_globals.modules),
         (perfexpert_list_item_t *)module);
 
+    /* Set argv[0] */
+    if (PERFEXPERT_SUCCESS != perfexpert_module_set_option(module->name, "")) {
+        OUTPUT(("%s", _ERROR("Error: setting module argv[0]")));
+        exit(0);
+    }
+
     OUTPUT_VERBOSE((5, "module %s loaded [version %s]", _CYAN(module->name),
         module->version));
 
@@ -251,8 +257,8 @@ int perfexpert_module_set_option(const char *module, const char *option) {
 
 /* perfexpert_module_init */
 int perfexpert_module_init(void) {
-    perfexpert_module_t *m = NULL;
     perfexpert_ordered_module_t *om = NULL, *prev = NULL;
+    perfexpert_module_t *m = NULL;
 
     /* Load missing modules, set its pointer, and remove non-implemented ones */
     perfexpert_list_for(om, &(module_globals.compile),
@@ -529,46 +535,45 @@ int perfexpert_module_analysis(void) {
 /* perfexpert_module_requires (module A, requires B order in phase) */
 int perfexpert_module_requires(const char *a, const char *b,
     module_order_t order, module_phase_t phase) {
-    perfexpert_ordered_module_t *oma = NULL, *omb = NULL, *temp = NULL;
+    perfexpert_ordered_module_t *oma = NULL, *omb = NULL, *t = NULL;
     perfexpert_module_t *mb = NULL;
     int x = 0, xa = 0, xb = 0;
 
-    if (PERFEXPERT_MODULE_COMPILE == phase) {
-        oma = NULL; omb = NULL; temp = NULL;
-        x = 0; xa = 0, xb = 0;
+    if (NULL == (mb = perfexpert_module_available(b))) {
+        OUTPUT_VERBOSE((1, "%s [%s], it's required by module [%s]",
+            _RED("loading module"), b, a));
+        if (PERFEXPERT_SUCCESS != perfexpert_module_load(b)) {
+            return PERFEXPERT_ERROR;
+        }
+    }
 
-        perfexpert_list_for(temp, &(module_globals.compile),
+    if (PERFEXPERT_MODULE_COMPILE == phase) {
+        oma = NULL; omb = NULL; t = NULL; x = 0; xa = 0, xb = 0;
+
+        perfexpert_list_for(t, &(module_globals.compile),
             perfexpert_ordered_module_t) {
-            if (0 == strcmp(a, temp->name)) {
-                oma = temp;
+            if (0 == strcmp(a, t->name)) {
+                oma = t;
                 xa = x;
             }
-            if (0 == strcmp(b, temp->name)) {
-                omb = temp;
+            if (0 == strcmp(b, t->name)) {
+                omb = t;
                 xb = x;
             }
             x++;
         }
 
         if ((PERFEXPERT_MODULE_BEFORE == order) && (xb > xa)) {
-            OUTPUT(("%s [%s], it requires module [%s] first in compile phase",
-                _RED("reordering module"), oma->name, omb->name));
+            OUTPUT_VERBOSE((1, "%s %s, it requires module %s first in compile "
+                "phase", _RED("reordering module"), oma->name, omb->name));
             perfexpert_list_move_before((perfexpert_list_item_t *)omb,
                 (perfexpert_list_item_t *)oma);
         } else if ((PERFEXPERT_MODULE_AFTER == order) && (xb < xa)) {
-            OUTPUT(("%s [%s], it requires module [%s] after in compile phase",
-                _RED("reordering module"), oma->name, omb->name));
+            OUTPUT_VERBOSE((1, "%s %s, it requires module %s after in compile "
+                "phase", _RED("reordering module"), oma->name, omb->name));
             perfexpert_list_move_after((perfexpert_list_item_t *)omb,
                 (perfexpert_list_item_t *)oma);
         } else if (PERFEXPERT_MODULE_AVAILABLE == order) {
-            if (NULL == (mb = perfexpert_module_available(b))) {
-                OUTPUT(("%s [%s] it is requires by module [%s] in compile "
-                    "phase", _RED("loading module"), omb->name, oma->name));
-                if (PERFEXPERT_SUCCESS != perfexpert_module_load(b)) {
-                    return PERFEXPERT_ERROR;
-                }
-                mb = perfexpert_module_available(b);
-            }
             if (PERFEXPERT_MODULE_NOT_IMPLEMENTED == mb->compile) {
                 return PERFEXPERT_ERROR;
             }
@@ -576,83 +581,63 @@ int perfexpert_module_requires(const char *a, const char *b,
     }
 
     if (PERFEXPERT_MODULE_MEASUREMENTS == phase) {
-        oma = NULL; omb = NULL; temp = NULL;
-        x = 0; xa = 0, xb = 0;
+        oma = NULL; omb = NULL; t = NULL; x = 0; xa = 0, xb = 0;
 
-        perfexpert_list_for(temp, &(module_globals.measurements),
+        perfexpert_list_for(t, &(module_globals.measurements),
             perfexpert_ordered_module_t) {
-            if (0 == strcmp(a, temp->name)) {
-                oma = temp;
+            if (0 == strcmp(a, t->name)) {
+                oma = t;
                 xa = x;
-            }
-            if (0 == strcmp(b, temp->name)) {
-                omb = temp;
+            } else if (0 == strcmp(b, t->name)) {
+                omb = t;
                 xb = x;
             }
             x++;
         }
 
         if ((PERFEXPERT_MODULE_BEFORE == order) && (xb > xa)) {
-            OUTPUT(("%s [%s], it requires module [%s] first in measurements "
-                "phase", _RED("reordering module"), oma->name, omb->name));
+            OUTPUT_VERBOSE((1, "%s %s, it requires module %s first in measureme"
+                "nts phase", _RED("reordering module"), oma->name, omb->name));
             perfexpert_list_move_before((perfexpert_list_item_t *)omb,
                 (perfexpert_list_item_t *)oma);
         } else if ((PERFEXPERT_MODULE_AFTER == order) && (xb < xa)) {
-            OUTPUT(("%s [%s], it requires module [%s] after in measurements "
-                "phase", _RED("reordering module"), oma->name, omb->name));
+            OUTPUT_VERBOSE((1, "%s %s, it requires module %s after in measureme"
+                "nts phase", _RED("reordering module"), oma->name, omb->name));
             perfexpert_list_move_after((perfexpert_list_item_t *)omb,
                 (perfexpert_list_item_t *)oma);
         } else if (PERFEXPERT_MODULE_AVAILABLE == order) {
-            if (NULL == (mb = perfexpert_module_available(b))) {
-                OUTPUT(("%s [%s] it is requires by module [%s] in measurements "
-                    "phase", _RED("loading module"), omb->name, oma->name));
-                if (PERFEXPERT_SUCCESS != perfexpert_module_load(b)) {
-                    return PERFEXPERT_ERROR;
-                }
-                mb = perfexpert_module_available(b);
-            }
-            if (PERFEXPERT_MODULE_NOT_IMPLEMENTED == mb->measurements) {
+            if (PERFEXPERT_MODULE_NOT_IMPLEMENTED == mb->compile) {
                 return PERFEXPERT_ERROR;
             }
         }
     }
 
     if (PERFEXPERT_MODULE_ANALYSIS == phase) {
-        oma = NULL; omb = NULL; temp = NULL;
-        x = 0; xa = 0, xb = 0;
+        oma = NULL; omb = NULL; t = NULL; x = 0; xa = 0, xb = 0;
 
-        perfexpert_list_for(temp, &(module_globals.analysis),
+        perfexpert_list_for(t, &(module_globals.analysis),
             perfexpert_ordered_module_t) {
-            if (0 == strcmp(a, temp->name)) {
-                oma = temp;
+            if (0 == strcmp(a, t->name)) {
+                oma = t;
                 xa = x;
-            }
-            if (0 == strcmp(b, temp->name)) {
-                omb = temp;
+            } else if (0 == strcmp(b, t->name)) {
+                omb = t;
                 xb = x;
             }
             x++;
         }
 
         if ((PERFEXPERT_MODULE_BEFORE == order) && (xb > xa)) {
-            OUTPUT(("%s [%s], it requires module [%s] first in analysis phase",
-                _RED("reordering module"), oma->name, omb->name));
+            OUTPUT_VERBOSE((1, "%s %s, it requires module %s first in analysis "
+                "phase", _RED("reordering module"), oma->name, omb->name));
             perfexpert_list_move_before((perfexpert_list_item_t *)omb,
                 (perfexpert_list_item_t *)oma);
         } else if ((PERFEXPERT_MODULE_AFTER == order) && (xb < xa)) {
-            OUTPUT(("%s [%s], it requires module [%s] after in analysis phase",
-                _RED("reordering module"), oma->name, omb->name));
+            OUTPUT_VERBOSE((1, "%s %s, it requires module %s after in analysis "
+                "phase", _RED("reordering module"), oma->name, omb->name));
             perfexpert_list_move_after((perfexpert_list_item_t *)omb,
                 (perfexpert_list_item_t *)oma);
         } else if (PERFEXPERT_MODULE_AVAILABLE == order) {
-            if (NULL == (mb = perfexpert_module_available(b))) {
-                OUTPUT(("%s [%s] it is requires by module [%s] in analysis "
-                    "phase", _RED("loading module"), omb->name, oma->name));
-                if (PERFEXPERT_SUCCESS != perfexpert_module_load(b)) {
-                    return PERFEXPERT_ERROR;
-                }
-                mb = perfexpert_module_available(b);
-            }
             if (PERFEXPERT_MODULE_NOT_IMPLEMENTED == mb->analysis) {
                 return PERFEXPERT_ERROR;
             }
