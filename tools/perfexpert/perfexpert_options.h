@@ -43,83 +43,64 @@ const char *argp_program_bug_address = PACKAGE_BUGREPORT;
 /* Structure to handle command line arguments */
 static struct argp_option options[] = {
     #if HAVE_CODE_TRANSFORMATION
-    { 0, 0, 0, 0, "Automatic optimization options:", 1, },
+    { 0, 0, 0, 0, "Automatic optimization options:", 1 },
     { "target", 'm', "TARGET", 0, "Use GNU standard 'make' command to compile"
-        " the code (it will run in the current directory)", },
+        " the code (it will run in the current directory)" },
     { "source", 's', "FILE", 0, "Set the source code file (does not work with"
-        " multiple files, choose -m option instead)", },
+        " multiple files, choose -m option instead)" },
     {0, 0, 0, 0,
-        "Use CC, CFLAGS, CPPFLAGS and LDFLAGS to set compiler/linker options",
-    },
+        "Use CC, CFLAGS, CPPFLAGS and LDFLAGS to set compiler/linker options" },
     #endif
 
-    { 0, 0, 0, 0, "Target program execution options:", 2, },
-    { "inputfile", 'i', "FILE", 0, "Input file to the target program. Use this "
-        "option instead of input pipe redirect ('<'). Output pipe ('>') is not "
-        "available because PerfExpert already has its standard output file", },
-    { "after", 'a', "COMMAND", 0, "Command to execute after each run of the "
-        "target program (depends on the measurement module in use)", },
-    { "before", 'b', "COMMAND", 0, "Command to execute before each run of the "
-        "target program (depends on the measurement module in use)", },
-    { "prefix", 'p', "PREFIX", 0, "Add a prefix to the command line, use double"
-        " quotes to set arguments with spaces within (e.g., -p \"mpirun -n"
-        " 2\")", },
+    { 0, 0, 0, 0, "Target program execution options:", 2 },
+    { "inputfile", 'i', "FILE", 0, "Shortcut for --module-option=hpctoolkit,"
+        "inputfile=FILE. See HPCToolkit module help for details" },
+    { "after", 'a', "COMMAND", 0, "Shortcut for --module-option=hpctoolkit,"
+        "after=COMMAND. See HPCToolkit module help for details" },
+    { "before", 'b', "COMMAND", 0, "Shortcut for --module-option=hpctoolkit,"
+        "before=COMMAND. See HPCToolkit module help for details" },
+    { "prefix", 'p', "PREFIX", 0, "Shortcut for --module-option=hpctoolkit,"
+        "prefix=PREFIX. See HPCToolkit module help for details" },
 
-    #define HAVE_KNC_SUPPORT 1
-    #if HAVE_KNC_SUPPORT
-    { 0, 0, 0, 0, "Target program execution on Intel Phi (MIC) options:", 3, },
-    { "mic-card", 'C', "NAME", 0,
-        "MIC Card where experiments should run on (e.g. -C \"mic0\")", },
-    { "mic-after", 'A', "COMMAND", 0,
-        "Command to execute after each run (on MIC) of the target program", },
-    { "mic-before", 'B', "COMMAND", 0,
-        "Command to execute before each run (on MIC) of the target program", },
-    { "mic-prefix", 'P', "PREFIX", 0, "Add a prefix to the command line which"
-        " will run on the MIC, use double quotes to set arguments with spaces "
-        "within (e.g., -P \"mpirun -n 2\")", },
-    #endif
-
-    { 0, 0, 0, 0, "Module handling options:", 4, },
+    { 0, 0, 0, 0, "Module handling options:", 4 },
     { "module-option", 'O', "MODULE,OPTION=VALUE", 0, "Set an option to a "
         "specific module (e.g., -O MODULE,OPTION=VALUE or --module-option="
         "MODULE,OPTION=VALUE). This argument can also be defined multiple "
         "times. This option automatically sets the module (i.e., -M is not "
-        "required) if it is not already set", },
+        "required) if it is not already set" },
     { "modules", 'M', "MODULE,MODULE,..", 0, "Set modules that should be used "
         "(default: lcpi,hpctoolkit). Use a comma-separated list to specify "
         "multiple modules (e.g., -M hpctoolkit,macpo or --modules=hpctoolkit,"
         "macpo). This argument can also be defined multiple times. NOTICE: "
-        "module order matters! See --measurement-order and --analysis-order", },
+        "module order matters! See --measurement-order and --analysis-order" },
     { "compile-order", -1, "MODULE,MODULE,...", OPTION_HIDDEN, "Set the order "
-      "in which compile modules should be called (1st defined, 1st called)", },
+      "in which compile modules should be called (1st defined, 1st called)" },
     { "measurement-order", -2, "MODULE,MODULE,...", 0, "Set the order in which "
       "measurement modules should be called (1st defined, 1st called). This "
-      "option automatically sets the modules (i.e., -M is not required)", },
+      "option automatically sets the modules (i.e., -M is not required)" },
     { "analysis-order", -3, "MODULE,MODULE,...", 0, "Set the order in which "
       "analysis modules should be called (1st defined, 1st called). This "
-      "option automatically sets the modules (i.e., -M is not required)", },
+      "option automatically sets the modules (i.e., -M is not required)" },
     { "module-help", -4, "MODULE|all", 0, "Show module options. Use 'all' to "
       "see options for all available module" },
 
-    { 0, 0, 0, 0, "Output formating options:", 5, },
+    { 0, 0, 0, 0, "Output formating options:", 5 },
     { "colorful", 'c', 0, 0, "Enable ANSI colors" },
     { "verbose", 'v', "LEVEL", 0, "Enable verbose mode (range: 0-10)" },
     { "verbose-level", 'l', "LEVEL", OPTION_ALIAS,
         "Enable verbose mode (default: 5, range: 0-10)" },
-    { "order", 'o', "relevance|performance|mixed", 0,
-        "Order in which hotspots should be sorted (default: unsorted)", },
     { "recommendations", 'r', "COUNT", 0,
-        "Number of recommendations PerfExpert should provide (default: 3)", },
+        "Number of recommendations PerfExpert should provide (default: 3)" },
 
-    { 0, 0, 0, 0, "Other options:", 6, },
+    { 0, 0, 0, 0, "Other options:", 6 },
     { "database", 'd', "FILE", 0, "Select a recommendation database file "
-        "different from the default (I hope you know what you are doing)", },
+        "different from the default (I hope you know what you are doing)" },
     { "leave-garbage", 'g', 0, 0,
-        "Do not remove temporary directory when finalize", },
+        "Do not remove temporary directory when finalize" },
     { "do-not-run", 'n', 0, 0, "Do not run PerfExpert, just parse the command "
-        "line arguments and finalize (for debugging)", },
+        "line arguments and finalize (for debugging)" },
     { "only-experiments", 'e', 0, 0, "Tell PerfExpert to do not perform any "
-        "analysis just take measurements and finalize (for manual analysis)", },
+        "analysis just take measurements and finalize (for manual analysis)" },
 
     { 0, 'h', 0, OPTION_HIDDEN, "Give a very short usage message" },
     { 0 }
@@ -142,12 +123,6 @@ typedef struct arg_options {
     char *program;
     char **program_argv;
     char *program_argv_temp[MAX_ARGUMENTS_COUNT];
-    char *prefix;
-    char *before;
-    char *after;
-    char *knc_prefix;
-    char *knc_before;
-    char *knc_after;
     int  do_not_run;
 } arg_options_t;
 
