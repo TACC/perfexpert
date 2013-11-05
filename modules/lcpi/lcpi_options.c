@@ -66,7 +66,8 @@ int parse_module_args(int argc, char *argv[]) {
     }
 
     OUTPUT_VERBOSE((7, "%s", _BLUE("Summary of options")));
-    OUTPUT_VERBOSE((7, "   Threshold: %f", my_module_globals.threshold));
+    OUTPUT_VERBOSE((7, "   Threshold:     %f", my_module_globals.threshold));
+    OUTPUT_VERBOSE((7, "   Sorting order: %s", my_module_globals.order));
 
     /* Not using OUTPUT_VERBOSE because I want only one line */
     if (8 <= globals.verbose) {
@@ -90,6 +91,12 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
             OUTPUT_VERBOSE((1, "option 'h' set"));
             argp_help(&argp, stdout, ARGP_HELP_LONG, NULL);
             my_module_globals.help_only = PERFEXPERT_TRUE;
+            break;
+
+        /* Sorting order */
+        case 's':
+            my_module_globals.order = arg;
+            OUTPUT_VERBOSE((1, "option 'o' set [%s]", my_module_globals.order));
             break;
 
         /* Threshold */
@@ -118,6 +125,11 @@ static int parse_env_vars(void) {
         my_module_globals.threshold = atof(
             getenv("PERFEXPERT_MODULE_LCPI_THRESHOLD"));
         OUTPUT_VERBOSE((1, "ENV: threshold=%f", my_module_globals.threshold));
+    }
+
+    if (NULL != getenv("PERFEXPERT_MODULE_LCPI_SORT")) {
+        my_module_globals.order = getenv("PERFEXPERT_MODULE_LCPI_SORT");
+        OUTPUT_VERBOSE((1, "ENV: order=%s", my_module_globals.order));
     }
 
     return PERFEXPERT_SUCCESS;

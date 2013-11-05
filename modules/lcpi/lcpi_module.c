@@ -117,12 +117,12 @@ int module_analysis(void) {
         }
     }
 
-    // if (NULL != globals.order) {
-    //     if (PERFEXPERT_SUCCESS != sort_hotspots(&(my_module_globals.profiles))) {
-    //         OUTPUT(("%s", _ERROR("Error: while sorting hotspots")));
-    //         return PERFEXPERT_ERROR;
-    //     }
-    // }
+    if (NULL != my_module_globals.order) {
+        if (PERFEXPERT_SUCCESS != hotspot_sort(&(my_module_globals.profiles))) {
+            OUTPUT(("%s", _ERROR("Error: sorting hotspots")));
+            return PERFEXPERT_ERROR;
+        }
+    }
 
     if (PERFEXPERT_SUCCESS != output_analysis(&(my_module_globals.profiles))) {
         OUTPUT(("%s", _ERROR("Error: printing analysis report")));
