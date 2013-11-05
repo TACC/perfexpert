@@ -38,7 +38,6 @@ extern "C" {
 typedef struct {
     int  verbose;
     int  colorful; // These should be the first variables in the structure
-    double threshold;
     char *dbfile;
     int  rec_count;
     int  leave_garbage;

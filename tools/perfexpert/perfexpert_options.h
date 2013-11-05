@@ -129,8 +129,6 @@ static char args_doc[] = "THRESHOLD PROGRAM [PROGRAM ARGUMENTS]";
 static char doc[] = "\nPerfExpert -- an easy-to-use automatic performance "
     "diagnosis and optimization\n              tool for HPC applications\n\n"
     "  THRESHOLD           Threshold (relevance % of runtime) to take hotspots "
-    "into\n                      consideration (range: between 0 and 1, accepts"
-    " fraction)\n"
     "  PROGRAM             Program (binary) to analyze (do not use shell "
     "scripts)\n"
     "  PROGRAM ARGUMENTS   Program arguments, see documentation if any argument"
