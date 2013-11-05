@@ -123,6 +123,12 @@ static inline void perfexpert_list_append(perfexpert_list_t *list,
        item != (type *) &(list)->sentinel;     \
        item = (type *) ((perfexpert_list_item_t *)(item))->next)
 
+/* perfexpert_list_reverse_for */
+#define perfexpert_list_reverse_for(item, list, type)  \
+  for (item = (type *)  (list)->sentinel.prev; \
+       item != (type *) &(list)->sentinel;     \
+       item = (type *) ((perfexpert_list_item_t *)(item))->prev)
+
 /* perfexpert_list_swap */
 static inline void perfexpert_list_swap(perfexpert_list_item_t *a,
     perfexpert_list_item_t *b) {
