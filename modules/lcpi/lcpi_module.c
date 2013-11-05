@@ -52,13 +52,17 @@ int module_load(void) {
 /* module_init */
 int module_init(void) {
 
+    /* Module pre-requisites */
     perfexpert_module_requires("lcpi", "hpctoolkit", PERFEXPERT_MODULE_AFTER,
         PERFEXPERT_MODULE_MEASUREMENTS);
 
+    /* Initialize list of events */
     perfexpert_list_construct(&(my_module_globals.profiles));
     my_module_globals.metrics_by_name = NULL;
     my_module_globals.threshold = 0.0;
+    my_module_globals.help_only = PERFEXPERT_FALSE;
 
+    /* Parse module options */
     if (PERFEXPERT_SUCCESS != parse_module_args(myself_module.argc,
         myself_module.argv)) {
         OUTPUT(("%s", _ERROR("Error: parsing module arguments")));
