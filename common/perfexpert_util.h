@@ -227,8 +227,8 @@ static inline int perfexpert_util_path_only(const char *file, char **path) {
         PERFEXPERT_ALLOC(char, env_path, (strlen(getenv("PATH")) + 1));
         memcpy(env_path, getenv("PATH"), strlen(getenv("PATH")));
 
-        while ((try_path = strsep(&env_path, ":")) != NULL) {
-            if ((*try_path == '\0') || (*try_path == '.')) {
+        while (NULL != (try_path = strsep(&env_path, ":"))) {
+            if (('\0' == *try_path) || ('.' == *try_path)) {
                 try_path = getcwd(NULL, 0);
             }
             sprintf(try_file, "%s/%s", try_path, file);
@@ -245,6 +245,9 @@ static inline int perfexpert_util_path_only(const char *file, char **path) {
         PERFEXPERT_DEALLOC(env_path);
     }
 
+    if (NULL == resolved_path) {
+        resolved_path = getcwd(NULL, 0);
+    }
     *path = resolved_path;
 
     return PERFEXPERT_SUCCESS;
