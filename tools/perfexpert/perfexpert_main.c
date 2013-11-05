@@ -64,7 +64,6 @@ int main(int argc, char** argv) {
         .verbose       = 0,                // int
         .colorful      = PERFEXPERT_FALSE, // int
         .dbfile        = NULL,             // *char
-        .threshold     = 0.0,              // float
         .rec_count     = 3,                // int
         .leave_garbage = PERFEXPERT_FALSE, // int
         .pid           = (long)getpid(),   // long int

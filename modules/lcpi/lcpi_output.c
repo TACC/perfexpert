@@ -106,7 +106,7 @@ int output_analysis(perfexpert_list_t *profiles) {
 
         /* For each hotspot in the profile's list of hotspots... */
         perfexpert_list_for(h, &(p->hotspots), lcpi_hotspot_t) {
-            if (globals.threshold <= h->importance) {
+            if (my_module_globals.threshold <= h->importance) {
                 if (PERFEXPERT_SUCCESS != output_profile(h)) {
                     OUTPUT(("%s (%s)",
                         _ERROR("Error: printing hotspot analysis"), h->name));

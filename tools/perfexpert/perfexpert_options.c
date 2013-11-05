@@ -142,12 +142,6 @@ int parse_cli_params(int argc, char *argv[]) {
         return PERFEXPERT_ERROR;
     }
 
-    /* Sanity check: threshold is mandatory */
-    if ((0 >= globals.threshold) || (1 < globals.threshold)) {
-        OUTPUT(("%s", _ERROR("Error: undefined or invalid threshold")));
-        return PERFEXPERT_ERROR;
-    }
-
     /* Sanity check: NULL program */
     if (NULL != arg_options.program) {
         if (PERFEXPERT_SUCCESS != perfexpert_util_filename_only(
@@ -216,7 +210,6 @@ int parse_cli_params(int argc, char *argv[]) {
         "yes" : "no"));
     OUTPUT_VERBOSE((7, "   Database file:       %s", globals.dbfile));
     OUTPUT_VERBOSE((7, "   Recommendations      %d", globals.rec_count));
-    OUTPUT_VERBOSE((7, "   Threshold:           %f", globals.threshold));
     OUTPUT_VERBOSE((7, "   Make target:         %s", globals.target));
     OUTPUT_VERBOSE((7, "   Program source file: %s", globals.sourcefile));
     OUTPUT_VERBOSE((7, "   Program executable:  %s", globals.program));
@@ -548,27 +541,38 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
             set_module_order(arg, PERFEXPERT_MODULE_ANALYSIS);
             break;
 
-        /* Arguments: threashold and target program and it's arguments */
         case ARGP_KEY_ARG:
             if (PERFEXPERT_TRUE == globals.compat_mode) {
+
                 globals.only_exp = PERFEXPERT_TRUE;
                 OUTPUT_VERBOSE((1, "option 'e' set"));
+
                 globals.leave_garbage = PERFEXPERT_TRUE;
                 OUTPUT_VERBOSE((1, "option 'g' set"));
+
                 arg_options.program = arg;
                 OUTPUT_VERBOSE((1, "option 'target_program' set [%s]",
                     arg_options.program));
-                globals.threshold = 1;
-                OUTPUT_VERBOSE((1, "option 'threshold' set [%f]",
-                    globals.threshold));
+
+                OUTPUT_VERBOSE((1, "option 'threshold' set [0.0]"));
+                if (PERFEXPERT_SUCCESS != set_module_option(
+                    "lcpi,threshold=%s")) {
+                    return PERFEXPERT_ERROR;
+                }
+
                 arg_options.program_argv = &state->argv[state->next];
                 OUTPUT_VERBOSE((1, "option 'program_arguments' set"));
                 state->next = state->argc;
             } else {
                 if (0 == state->arg_num) {
-                    globals.threshold = atof(arg);
-                    OUTPUT_VERBOSE((1, "option 'threshold' set [%f] (%s)",
-                        globals.threshold, arg));
+                    char str[MAX_BUFFER_SIZE];
+
+                    bzero(str, MAX_BUFFER_SIZE);
+                    sprintf(str, "lcpi,threshold=%s", arg);
+                    OUTPUT_VERBOSE((1, "option 'threshold' set [%s]", arg));
+                    if (PERFEXPERT_SUCCESS != set_module_option(str)) {
+                        return PERFEXPERT_ERROR;
+                    }
                 }
                 if (1 == state->arg_num) {
                     arg_options.program = arg;

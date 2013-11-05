@@ -57,6 +57,13 @@ int module_init(void) {
 
     perfexpert_list_construct(&(my_module_globals.profiles));
     my_module_globals.metrics_by_name = NULL;
+    my_module_globals.threshold = 0.0;
+
+    if (PERFEXPERT_SUCCESS != parse_module_args(myself_module.argc,
+        myself_module.argv)) {
+        OUTPUT(("%s", _ERROR("Error: parsing module arguments")));
+        return PERFEXPERT_ERROR;
+    }
 
     OUTPUT_VERBOSE((5, "%s", _MAGENTA("initialized")));
 

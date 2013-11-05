@@ -50,6 +50,7 @@ typedef struct {
     perfexpert_list_t profiles;
     lcpi_metric_t *metrics_by_name;
     perfexpert_module_hpctoolkit_t *hpctoolkit;
+    double threshold;
 } my_module_globals_t;
 
 extern my_module_globals_t my_module_globals;
