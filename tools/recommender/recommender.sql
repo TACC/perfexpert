@@ -51,8 +51,7 @@ CREATE TABLE IF NOT EXISTS recommender_recommendation (
 
 CREATE TABLE IF NOT EXISTS recommender_language (
     id    INTEGER PRIMARY KEY,
-    name  VARCHAR NOT NULL,
-    short VARCHAR NOT NULL
+    name  VARCHAR NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS recommender_pattern (
@@ -125,10 +124,34 @@ CREATE TABLE IF NOT EXISTS recommender_rf (
 --
 BEGIN TRANSACTION;
 
-INSERT INTO recommender_language (id, short, name) VALUES
-    (1, 'c', 'ANSI C, C90, C99, ...');
-INSERT INTO recommender_language (id, short, name) VALUES
-    (2, 'fortran', 'Fortran 90, Fortran 95, ...');
+INSERT INTO recommender_language (id, name) VALUES (1, 'C89');
+INSERT INTO recommender_language (id, name) VALUES (2, 'C');
+INSERT INTO recommender_language (id, name) VALUES (3, 'Ada83');
+INSERT INTO recommender_language (id, name) VALUES (4, 'C_plus_plus');
+INSERT INTO recommender_language (id, name) VALUES (5, 'Cobol74');
+INSERT INTO recommender_language (id, name) VALUES (6, 'Cobol85');
+INSERT INTO recommender_language (id, name) VALUES (7, 'Fortran77');
+INSERT INTO recommender_language (id, name) VALUES (8, 'Fortran90');
+INSERT INTO recommender_language (id, name) VALUES (9, 'Pascal83');
+INSERT INTO recommender_language (id, name) VALUES (10, 'Modula2');
+INSERT INTO recommender_language (id, name) VALUES (11, 'Java');
+INSERT INTO recommender_language (id, name) VALUES (12, 'C99');
+INSERT INTO recommender_language (id, name) VALUES (13, 'Ada95');
+INSERT INTO recommender_language (id, name) VALUES (14, 'Fortran95');
+INSERT INTO recommender_language (id, name) VALUES (15, 'PLI');
+INSERT INTO recommender_language (id, name) VALUES (16, 'ObjC');
+INSERT INTO recommender_language (id, name) VALUES (17, 'ObjC_plus_plus');
+INSERT INTO recommender_language (id, name) VALUES (18, 'UPC');
+INSERT INTO recommender_language (id, name) VALUES (19, 'D');
+INSERT INTO recommender_language (id, name) VALUES (20, 'Python');
+INSERT INTO recommender_language (id, name) VALUES (21, 'OpenCL');
+INSERT INTO recommender_language (id, name) VALUES (22, 'Go');
+INSERT INTO recommender_language (id, name) VALUES (32768, 'lo_user');
+INSERT INTO recommender_language (id, name) VALUES (32769, 'Mips_Assembler');
+INSERT INTO recommender_language (id, name) VALUES (34661, 'Upc');
+INSERT INTO recommender_language (id, name) VALUES (37121, 'ALTIUM_Assembler');
+INSERT INTO recommender_language (id, name) VALUES (36865, 'SUN_Assembler');
+INSERT INTO recommender_language (id, name) VALUES (65535, 'hi_user');
 
 INSERT INTO recommender_architecture (id, short, name) VALUES
     (1, 'x86_64', '64 bit extension of the x86 instruction set');

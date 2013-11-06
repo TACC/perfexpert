@@ -168,6 +168,34 @@ AC_ARG_WITH([boost-include],
         [set Boost include path])],
     [CPPFLAGS+=" -I$withval"])
 
+
+#------------------------------------------------------------------------------
+# readelf module requirements
+#
+AC_ARG_ENABLE([module-readelf],
+    [AS_HELP_STRING([--disable-module-readelf], [disable ReadELF module])],
+    [ENABLE_READELF=$enableval], [ENABLE_READELF=yes])
+
+AC_MSG_CHECKING([whether to enable readelf module])
+AS_IF([test x"$ENABLE_READELF" = xyes], [
+    AC_MSG_RESULT([yes])
+
+    # DWARF (library and header files)
+    #
+    AC_CHECK_LIB([dwarf], [dwarf_init], [NOOP=noop],
+        [AC_MSG_ERROR([libdwarf.so not found])], [-lelf])
+    AC_CHECK_HEADER([dwarf.h],    [], [AC_MSG_ERROR([dwarf.h not found])])
+    AC_CHECK_HEADER([libdwarf.h], [], [AC_MSG_ERROR([libdwarf.h not found])])
+
+    ENABLE_READELF=readelf
+    ENABLED_MODULES+="readelf "
+    AC_CONFIG_FILES([modules/readelf/Makefile])
+], [
+    AC_MSG_RESULT([no])
+    ENABLE_READELF=
+])
+AC_SUBST([ENABLE_READELF])
+
 #------------------------------------------------------------------------------
 # HPCToolkikt module requirements
 #
