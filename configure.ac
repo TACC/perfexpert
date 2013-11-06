@@ -144,7 +144,7 @@ AC_CHECK_HEADER([dirent.h],       [], [AC_MSG_ERROR([dirent.h not found])])
 AC_PATH_TOOL([BASH_PROGRAM], [bash])
 
 #------------------------------------------------------------------------------
-# Externals (headers, lib)
+# Argument for pre-requirements (headers, lib)
 #
 AC_ARG_WITH([externals],
     [AS_HELP_STRING([--with-externals],
@@ -153,21 +153,101 @@ AC_ARG_WITH([externals],
     LDFLAGS+=" -L$withval/lib"])
 
 AC_ARG_WITH([boost],
-    [AS_HELP_STRING([--with-boost],
-        [where Boost library and include directories are located])], [
+    [AS_HELP_STRING([--with-boost], [set Boost library and include path])], [
     CPPFLAGS+=" -I$withval/include"
     LDFLAGS+=" -L$withval/lib"])
 
 AC_ARG_WITH([boost-lib],
-    [AS_HELP_STRING([--with-boost-lib],
-        [set Boost library path])],
+    [AS_HELP_STRING([--with-boost-lib], [set Boost library path])],
     [LDFLAGS+=" -L$withval"])
 
 AC_ARG_WITH([boost-include],
-    [AS_HELP_STRING([--with-boost-include],
-        [set Boost include path])],
+    [AS_HELP_STRING([--with-boost-include], [set Boost include path])],
     [CPPFLAGS+=" -I$withval"])
 
+AC_ARG_WITH([libxml2],
+    [AS_HELP_STRING([--with-libxml2], [set LibXML2 library and include path])],
+    [CPPFLAGS+=" -I$withval/include"
+    LDFLAGS+=" -L$withval/lib"])
+
+AC_ARG_WITH([libxml2-lib],
+    [AS_HELP_STRING([--with-libxml2-lib], [set LibXML2 library path])],
+    [LDFLAGS+=" -L$withval"])
+
+AC_ARG_WITH([libxml2-include],
+    [AS_HELP_STRING([--with-libxml2-include], [set LibXML2 include path])],
+    [CPPFLAGS+=" -I$withval"])
+
+AC_ARG_WITH([papi],
+    [AS_HELP_STRING([--with-papi], [set PAPI library and include path])], [
+    CPPFLAGS+=" -I$withval/include"
+    LDFLAGS+=" -L$withval/lib"])
+
+AC_ARG_WITH([papi-lib],
+    [AS_HELP_STRING([--with-papi-lib], [set PAPI library path])],
+    [LDFLAGS+=" -L$withval"])
+
+AC_ARG_WITH([papi-include],
+    [AS_HELP_STRING([--with-papi-include], [set PAPI include path])],
+    [CPPFLAGS+=" -I$withval"])
+
+AC_ARG_WITH([sqlite],
+    [AS_HELP_STRING([--with-sqlite], [set SQLite3 library and include path])], [
+    CPPFLAGS+=" -I$withval/include"
+    LDFLAGS+=" -L$withval/lib"])
+
+AC_ARG_WITH([sqlite-lib],
+    [AS_HELP_STRING([--with-sqlite-lib], [set SQLite3 library path])],
+    [LDFLAGS+=" -L$withval"])
+
+AC_ARG_WITH([sqlite-include],
+    [AS_HELP_STRING([--with-sqlite-include], [set SQLite3 include path])],
+    [CPPFLAGS+=" -I$withval"])
+
+AC_ARG_WITH([matheval],
+    [AS_HELP_STRING([--with-matheval],
+        [set GNU matheval library and include path])], [
+    CPPFLAGS+=" -I$withval/include"
+    LDFLAGS+=" -L$withval/lib"])
+
+AC_ARG_WITH([matheval-lib],
+    [AS_HELP_STRING([--with-matheval-lib], [set GNU matheval library path])],
+    [LDFLAGS+=" -L$withval"])
+
+AC_ARG_WITH([matheval-include],
+    [AS_HELP_STRING([--with-matheval-include],
+        [set GNU matheval include path])],
+    [CPPFLAGS+=" -I$withval"])
+
+AC_ARG_WITH([rose],
+    [AS_HELP_STRING([--with-rose], [set ROSE library and include path])], [
+    CPPFLAGS+=" -I$withval/include"
+    LDFLAGS+=" -L$withval/lib"])
+
+AC_ARG_WITH([rose-libs],
+    [AS_HELP_STRING([--with-rose-libs], [set ROSE library path])],
+    [LDFLAGS+=" -L$withval"])
+
+AC_ARG_WITH([rose-include],
+    [AS_HELP_STRING([--with-rose-include], [set ROSE include path])],
+    [CPPFLAGS+=" -I$withval/include"])
+
+AC_ARG_WITH([gmp],
+    [AS_HELP_STRING([--with-gmp], [set GMP library and include path])], [
+    CPPFLAGS+=" -I$withval/include"
+    LDFLAGS+=" -L$withval/lib"])
+
+AC_ARG_WITH([gmp-lib],
+    [AS_HELP_STRING([--with-gmp-lib], [set GMP library path])],
+    [LDFLAGS+=" -L$withval"])
+
+AC_ARG_WITH([gmp-include],
+    [AS_HELP_STRING([--with-gmp-include], [set GMP include path])],
+    [CPPFLAGS+=" -I$withval"])
+
+AC_ARG_WITH([sparsehash],
+    [AS_HELP_STRING([--with-sparsehash], [set Google SparseHash include path])],
+    [CPPFLAGS+=" -I$withval"], [])
 
 #------------------------------------------------------------------------------
 # readelf module requirements
@@ -197,24 +277,22 @@ AS_IF([test x"$ENABLE_READELF" = xyes], [
 AC_SUBST([ENABLE_READELF])
 
 #------------------------------------------------------------------------------
-# HPCToolkikt module requirements
+# HPCToolkit module requirements
 #
 AC_ARG_ENABLE([module-hpctoolkit],
     [AS_HELP_STRING([--disable-module-hpctoolkit],
-    [disable HPCToolkit measurement module])], [ENABLE_HPCTOOLKIT=$enableval],
-    [ENABLE_HPCTOOLKIT=yes])
+        [disable HPCToolkit measurement module])],
+    [ENABLE_HPCTOOLKIT=$enableval], [ENABLE_HPCTOOLKIT=yes])
 
 AC_MSG_CHECKING([whether to enable HPCToolkit measurement module])
 AS_IF([test x"$ENABLE_HPCTOOLKIT" = xyes], [
     AC_MSG_RESULT([yes])
 
-    #
-    # Libraries: rt
+    # Real Time library
     #
     AC_CHECK_LIB([rt], [clock_gettime], [],
         [AC_MSG_ERROR([librt.so not found])])
 
-    #
     # Programs: hpcstruct, hpcrun, hpcprof
     #
     AC_PATH_TOOL([HPCSTRUCT_PROGRAM], [hpcstruct],
@@ -224,66 +302,21 @@ AS_IF([test x"$ENABLE_HPCTOOLKIT" = xyes], [
     AC_PATH_TOOL([HPCPROF_PROGRAM], [hpcprof],
         [AC_MSG_ERROR([hpcprof not found])])
 
-    #
     # XML2 support (headers and lib)
     #
-    AC_ARG_WITH([libxml2],
-        [AS_HELP_STRING([--with-libxml2],
-            [where LibXML2 library and include directories are located])], [
-        CPPFLAGS+=" -I$withval/include"
-        LDFLAGS+=" -L$withval/lib"])
-
-    AC_ARG_WITH([libxml2-lib],
-        [AS_HELP_STRING([--with-libxml2-lib], [set LibXML2 library path])],
-        [LDFLAGS+=" -L$withval"])
-
-    AC_ARG_WITH([libxml2-include],
-        [AS_HELP_STRING([--with-libxml2-include], [set LibXML2 include path])],
-        [CPPFLAGS+=" -I$withval"])
-
     AC_CHECK_LIB([xml2], [xmlParseFile], [],
         [AC_MSG_ERROR([libxml2.so not found])])
     AC_CHECK_HEADER([libxml/parser.h], [],
         [AC_MSG_ERROR([parser.h not found])])
 
-    #
     # PAPI support (headers and lib)
     #
-    AC_ARG_WITH([papi],
-        [AS_HELP_STRING([--with-papi],
-            [where PAPI library and include directories are located])], [
-        CPPFLAGS+=" -I$withval/include"
-        LDFLAGS+=" -L$withval/lib"], [])
-
-    AC_ARG_WITH([papi-lib],
-        [AS_HELP_STRING([--with-papi-lib], [set PAPI library path])],
-        [LDFLAGS+=" -L$withval"], [])
-
-    AC_ARG_WITH([papi-include],
-        [AS_HELP_STRING([--with-papi-include], [set PAPI include path])],
-        [CPPFLAGS+=" -I$withval"], [])
-
     AC_CHECK_LIB([papi], [PAPI_library_init, PAPI_add_event], [],
         [AC_MSG_ERROR([papi.so not found])])
     AC_CHECK_HEADER([papi.h], [], [AC_MSG_ERROR([papi.h not found])])
 
-    #
     # SQLite support (headers, lib, and program)
     #
-    AC_ARG_WITH([sqlite],
-        [AS_HELP_STRING([--with-sqlite],
-            [where SQLite3 library and include directories are located])], [
-        CPPFLAGS+=" -I$withval/include"
-        LDFLAGS+=" -L$withval/lib"])
-
-    AC_ARG_WITH([sqlite-lib],
-        [AS_HELP_STRING([--with-sqlite-lib], [set SQLite3 library path])],
-        [LDFLAGS+=" -L$withval"])
-
-    AC_ARG_WITH([sqlite-include],
-        [AS_HELP_STRING([--with-sqlite-include], [set SQLite3 include path])],
-        [CPPFLAGS+=" -I$withval"])
-
     AC_PATH_TOOL([SQLITE3_PROGRAM], [sqlite3],
         [AC_MSG_ERROR([not found: sqlite3])])
     AC_CHECK_LIB([sqlite3], [sqlite3_open, sqlite3_close, sqlite3_exec], [],
@@ -312,52 +345,19 @@ AS_IF([test x"$ENABLE_LCPI" = xyes], [
 
     # TODO: check for hpctoolkit and vtune modules
 
-    #
     # Math library
     #
     AC_CHECK_LIB([m], [isnormal, isnan, isinf], [],
         [AC_MSG_ERROR([libm.so not found])])
 
-    #
     # GNU Math Evaluator support (headers and lib)
     #
-    AC_ARG_WITH([matheval],
-        [AS_HELP_STRING([--with-matheval],
-            [where matheval library and include directories are located])], [
-        CPPFLAGS+=" -I$withval/include"
-        LDFLAGS+=" -L$withval/lib"])
-
-    AC_ARG_WITH([matheval-lib],
-        [AS_HELP_STRING([--with-matheval-lib],
-            [set GNU matheval library path])],
-        [LDFLAGS+=" -L$withval"])
-
-    AC_ARG_WITH([matheval-include],
-        [AS_HELP_STRING([--with-matheval-include],
-            [set GNU matheval include path])],
-        [CPPFLAGS+=" -I$withval"])
-
     AC_CHECK_LIB([matheval], [evaluator_create], [],
         [AC_MSG_ERROR([libmatheval.so not found])])
     AC_CHECK_HEADER([matheval.h], [], [AC_MSG_ERROR([matheval.h not found])])
 
-    #
     # SQLite support (headers, lib, and program)
     #
-    AC_ARG_WITH([sqlite],
-        [AS_HELP_STRING([--with-sqlite],
-            [where SQLite3 library and include directories are located])], [
-        CPPFLAGS+=" -I$withval/include"
-        LDFLAGS+=" -L$withval/lib"])
-
-    AC_ARG_WITH([sqlite-lib],
-        [AS_HELP_STRING([--with-sqlite-lib], [set SQLite3 library path])],
-        [LDFLAGS+=" -L$withval"])
-
-    AC_ARG_WITH([sqlite-include],
-        [AS_HELP_STRING([--with-sqlite-include], [set SQLite3 include path])],
-        [CPPFLAGS+=" -I$withval"])
-
     AC_PATH_TOOL([SQLITE3_PROGRAM], [sqlite3],
         [AC_MSG_ERROR([not found: sqlite3])])
     AC_CHECK_LIB([sqlite3], [sqlite3_open, sqlite3_close, sqlite3_exec], [],
@@ -392,23 +392,8 @@ AS_IF([test x"$ENABLE_PERFEXPERT" = xyes], [
         AC_MSG_RESULT($ENABLED_MODULES)
     ])
 
-    #
     # SQLite support (headers, lib, and program)
     #
-    AC_ARG_WITH([sqlite],
-        [AS_HELP_STRING([--with-sqlite],
-            [where SQLite3 library and include directories are located])], [
-        CPPFLAGS+=" -I$withval/include"
-        LDFLAGS+=" -L$withval/lib"])
-
-    AC_ARG_WITH([sqlite-lib],
-        [AS_HELP_STRING([--with-sqlite-lib], [set SQLite3 library path])],
-        [LDFLAGS+=" -L$withval"])
-
-    AC_ARG_WITH([sqlite-include],
-        [AS_HELP_STRING([--with-sqlite-include], [set SQLite3 include path])],
-        [CPPFLAGS+=" -I$withval"])
-
     AC_PATH_TOOL([SQLITE3_PROGRAM], [sqlite3],
         [AC_MSG_ERROR([not found: sqlite3])])
     AC_CHECK_LIB([sqlite3], [sqlite3_open, sqlite3_close, sqlite3_exec], [],
@@ -470,8 +455,7 @@ AC_SUBST([ENABLE_HOUND])
 #------------------------------------------------------------------------------
 # 'recommender' requirements
 #
-AC_ARG_ENABLE([recommender],
-    [AS_HELP_STRING([--disable-recommender],
+AC_ARG_ENABLE([recommender], [AS_HELP_STRING([--disable-recommender],
         [disable optimization recommender tool])],
     [ENABLE_RECOMMENDER=$enableval], [ENABLE_RECOMMENDER=yes])
 
@@ -479,29 +463,13 @@ AC_MSG_CHECKING([whether to enable the optimization recommender tool])
 AS_IF([test x"$ENABLE_RECOMMENDER" = xyes], [
     AC_MSG_RESULT([yes])
 
-    #
     # Math library
     #
     AC_CHECK_LIB([m], [isnormal, isnan, isinf], [],
         [AC_MSG_ERROR([libm.so not found])])
 
-    #
     # SQLite support (headers, lib, and program)
     #
-    AC_ARG_WITH([sqlite],
-        [AS_HELP_STRING([--with-sqlite],
-            [where SQLite3 library and include directories are located])], [
-        CPPFLAGS+=" -I$withval/include"
-        LDFLAGS+=" -L$withval/lib"])
-
-    AC_ARG_WITH([sqlite-lib],
-        [AS_HELP_STRING([--with-sqlite-lib], [set SQLite3 library path])],
-        [LDFLAGS+=" -L$withval"])
-
-    AC_ARG_WITH([sqlite-include],
-        [AS_HELP_STRING([--with-sqlite-include], [set SQLite3 include path])],
-        [CPPFLAGS+=" -I$withval"])
-
     AC_PATH_TOOL([SQLITE3_PROGRAM], [sqlite3],
         [AC_MSG_ERROR([not found: sqlite3])])
     AC_CHECK_LIB([sqlite3], [sqlite3_open, sqlite3_close, sqlite3_exec], [],
@@ -520,9 +488,8 @@ AC_SUBST([ENABLE_RECOMMENDER])
 #------------------------------------------------------------------------------
 # 'macpo' requirements
 #
-AC_ARG_ENABLE([macpo],
-    [AS_HELP_STRING([--disable-macpo],
-    [disable MACPO, a data-centric measurement and analysis tool])],
+AC_ARG_ENABLE([macpo], [AS_HELP_STRING([--disable-macpo],
+        [disable MACPO, a data-centric measurement and analysis tool])],
     [ENABLE_MACPO=$enableval], [ENABLE_MACPO=yes])
 
 AC_ARG_WITH([jvm],
@@ -535,61 +502,24 @@ AC_MSG_CHECKING([whether to enable MACPO])
 AS_IF([test x"$ENABLE_MACPO" = xyes], [
     AC_MSG_RESULT([yes])
 
-    #
     # JVM support
     #
     AC_CHECK_LIB([jvm], [JVM_Open, JVM_Close], [],
         [AC_MSG_ERROR([not found: libjvm.so (Java Virtual Machine)])])
 
-    #
     # ROSE Compiler support (headers and lib)
     #
-    AC_ARG_WITH([rose],
-        [AS_HELP_STRING([--with-rose],
-            [where ROSE library and include directories are located])], [
-        CPPFLAGS+=" -I$withval/include"
-        LDFLAGS+=" -L$withval/lib"])
-
-    AC_ARG_WITH([rose-libs],
-        [AS_HELP_STRING([--with-rose-libs], [set Compiler library path])],
-        [LDFLAGS+=" -L$withval"])
-
-    AC_ARG_WITH([rose-include],
-        [AS_HELP_STRING([--with-rose-include], [set ROSE include path])],
-        [CPPFLAGS+=" -I$withval/include"])
-
     AC_CHECK_HEADER([rose.h], [], [AC_MSG_ERROR([not found: rose.h])],
         [#include "rose.h"])
 
-    #
     # GNU Multiple Precision Arithmetic Library support (headers and lib)
     #
-    AC_ARG_WITH([gmp],
-        [AS_HELP_STRING([--with-gmp],
-            [where GMP library and include directories are located])], [
-        CPPFLAGS+=" -I$withval/include"
-        LDFLAGS+=" -L$withval/lib"])
-
-    AC_ARG_WITH([gmp-lib],
-        [AS_HELP_STRING([--with-gmp-lib], [set GMP library path])],
-        [LDFLAGS+=" -L$withval"])
-
-    AC_ARG_WITH([gmp-include],
-        [AS_HELP_STRING([--with-gmp-include], [set GMP include path])],
-        [CPPFLAGS+=" -I$withval"])
-
     AC_CHECK_LIB([gmp], [__gmpf_init, __gmpf_clear], [],
         [AC_MSG_ERROR([not found: libgmp.so])])
     AC_CHECK_HEADER([gmp.h], [], [AC_MSG_ERROR([not found: gmp.h])])
 
-    #
     # Check for Google SparseHash (headers)
     #
-    AC_ARG_WITH([sparsehash],
-        [AS_HELP_STRING([--with-sparsehash],
-            [set Google Sparse Hash include path])],
-        [CPPFLAGS+=" -I$withval"], [])
-
     AC_CHECK_HEADER([google/sparse_hash_map], [],
         [AC_MSG_ERROR([not found: google/sparse_hash_map])])
 
@@ -609,42 +539,23 @@ AC_LANG_POP
 #------------------------------------------------------------------------------
 # 'perfexpert_ct' requirements
 #
-AC_ARG_ENABLE([ct],
-    [AS_HELP_STRING([--disable-ct],
-    [disable the automatic code transformer tool])],
+AC_ARG_ENABLE([ct], [AS_HELP_STRING([--disable-ct],
+        [disable the automatic code transformer tool])],
     [ENABLE_CT=$enableval], [ENABLE_CT=yes])
 
 AC_MSG_CHECKING([whether to enable code transformation])
 AS_IF([test x"$ENABLE_CT" = xyes], [
     AC_MSG_RESULT([yes])
 
-    #
     # JVM support
     #
     AC_CHECK_LIB([jvm], [JVM_Open, JVM_Close], [],
         [AC_MSG_ERROR([not found: libjvm.so (Java Virtual Machine)])])
 
-    #
     # ROSE Compiler support (headers and lib)
     #
-    AC_ARG_WITH([rose],
-        [AS_HELP_STRING([--with-rose],
-            [where ROSE library and include directories are located])], [
-        CPPFLAGS+=" -I$withval/include"
-        LDFLAGS+=" -L$withval/lib"])
-
-    AC_ARG_WITH([rose-libs],
-        [AS_HELP_STRING([--with-rose-libs], [set Compiler library path])],
-        [LDFLAGS+=" -L$withval"])
-
-    AC_ARG_WITH([rose-include],
-        [AS_HELP_STRING([--with-rose-include], [set ROSE include path])],
-        [CPPFLAGS+=" -I$withval/include"])
-
-    AC_LANG_PUSH([C++])
     AC_CHECK_HEADER([rose.h], [], [AC_MSG_ERROR([not found: rose.h])],
         [#include "rose.h"])
-    AC_LANG_POP
 
     # Check for Lex/Flex and Yacc/Bison
     AC_PROG_LEX
