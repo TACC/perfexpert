@@ -64,6 +64,7 @@ int perfexpert_module_load(const char *name) {
     perfexpert_ordered_module_t *ordered = NULL;
     perfexpert_module_t *module = NULL;
     lt_dlhandle modulehandle = NULL;
+    int is_in_list = PERFEXPERT_FALSE;
 
     /* Sanity check: is this module already loaded? */
     perfexpert_list_for(module, &(module_globals.modules), perfexpert_module_t) {
@@ -126,12 +127,48 @@ int perfexpert_module_load(const char *name) {
         module->measurements = PERFEXPERT_MODULE_NOT_IMPLEMENTED;
         OUTPUT_VERBOSE((8, "   %s does not implement module_measurements",
             name));
+    } else {
+        is_in_list = PERFEXPERT_FALSE;
+        perfexpert_list_for(ordered, &(module_globals.measurements),
+            perfexpert_ordered_module_t) {
+            if (0 == strcmp(ordered->name, module->name)) {
+                is_in_list = PERFEXPERT_TRUE;
+            }
+        }
+        if (is_in_list == PERFEXPERT_FALSE) {
+            PERFEXPERT_ALLOC(perfexpert_ordered_module_t, ordered,
+                sizeof(perfexpert_ordered_module_t));
+            PERFEXPERT_ALLOC(char, ordered->name, (strlen(module->name) + 1));
+            strcpy(ordered->name, module->name);
+            ordered->module = module;
+            perfexpert_list_item_construct((perfexpert_list_item_t *)ordered);
+            perfexpert_list_append(&(module_globals.measurements),
+                (perfexpert_list_item_t *)ordered);
+        }
     }
 
     module->analysis = lt_dlsym(modulehandle, "module_analysis");
     if (NULL == module->analysis) {
         module->analysis = PERFEXPERT_MODULE_NOT_IMPLEMENTED;
         OUTPUT_VERBOSE((8, "   %s does not implement module_analysis", name));
+    } else {
+        is_in_list = PERFEXPERT_FALSE;
+        perfexpert_list_for(ordered, &(module_globals.analysis),
+            perfexpert_ordered_module_t) {
+            if (0 == strcmp(ordered->name, module->name)) {
+                is_in_list = PERFEXPERT_TRUE;
+            }
+        }
+        if (is_in_list == PERFEXPERT_FALSE) {
+            PERFEXPERT_ALLOC(perfexpert_ordered_module_t, ordered,
+                sizeof(perfexpert_ordered_module_t));
+            PERFEXPERT_ALLOC(char, ordered->name, (strlen(module->name) + 1));
+            strcpy(ordered->name, module->name);
+            ordered->module = module;
+            perfexpert_list_item_construct((perfexpert_list_item_t *)ordered);
+            perfexpert_list_append(&(module_globals.analysis),
+                (perfexpert_list_item_t *)ordered);
+        }
     }
 
     /* Call module's load function */
@@ -150,10 +187,8 @@ int perfexpert_module_load(const char *name) {
         (perfexpert_list_item_t *)module);
 
     /* Set argv[0] */
-    if (PERFEXPERT_SUCCESS != perfexpert_module_set_option(module->name, "")) {
-        OUTPUT(("%s", _ERROR("Error: setting module argv[0]")));
-        exit(0);
-    }
+    module->argv[0] = module->name;
+    module->argc++;
 
     OUTPUT_VERBOSE((5, "module %s loaded [version %s]", _CYAN(module->name),
         module->version));
@@ -329,66 +364,6 @@ int perfexpert_module_init(void) {
             PERFEXPERT_DEALLOC(om->name);
             PERFEXPERT_DEALLOC(om);
             om = prev;
-        }
-    }
-
-    /* If a module is not in a list but implements such phase, add it to list */
-    perfexpert_list_for(m, &(module_globals.modules), perfexpert_module_t) {
-        int is_in_list = PERFEXPERT_FALSE;
-        perfexpert_list_for(om, &(module_globals.compile),
-            perfexpert_ordered_module_t) {
-            if (0 == strcmp(om->name, m->name)) {
-                is_in_list = PERFEXPERT_TRUE;
-            }
-        }
-        if ((is_in_list == PERFEXPERT_FALSE) &&
-            (PERFEXPERT_MODULE_NOT_IMPLEMENTED != m->compile)) {
-            PERFEXPERT_ALLOC(perfexpert_ordered_module_t, om,
-                sizeof(perfexpert_ordered_module_t));
-            PERFEXPERT_ALLOC(char, om->name, (strlen(m->name) + 1));
-            strcpy(om->name, m->name);
-            om->module = m;
-            perfexpert_list_item_construct((perfexpert_list_item_t *)om);
-            perfexpert_list_append(&(module_globals.compile),
-                (perfexpert_list_item_t *)om);
-        }
-
-        is_in_list = PERFEXPERT_FALSE;
-        perfexpert_list_for(om, &(module_globals.measurements),
-            perfexpert_ordered_module_t) {
-            if (0 == strcmp(om->name, m->name)) {
-                is_in_list = PERFEXPERT_TRUE;
-            }
-        }
-        if ((is_in_list == PERFEXPERT_FALSE) &&
-            (PERFEXPERT_MODULE_NOT_IMPLEMENTED != m->measurements)) {
-            PERFEXPERT_ALLOC(perfexpert_ordered_module_t, om,
-                sizeof(perfexpert_ordered_module_t));
-            PERFEXPERT_ALLOC(char, om->name, (strlen(m->name) + 1));
-            strcpy(om->name, m->name);
-            om->module = m;
-            perfexpert_list_item_construct((perfexpert_list_item_t *)om);
-            perfexpert_list_append(&(module_globals.measurements),
-                (perfexpert_list_item_t *)om);
-        }
-
-        is_in_list = PERFEXPERT_FALSE;
-        perfexpert_list_for(om, &(module_globals.analysis),
-            perfexpert_ordered_module_t) {
-            if (0 == strcmp(om->name, m->name)) {
-                is_in_list = PERFEXPERT_TRUE;
-            }
-        }
-        if ((is_in_list == PERFEXPERT_FALSE) &&
-            (PERFEXPERT_MODULE_NOT_IMPLEMENTED != m->analysis)) {
-            PERFEXPERT_ALLOC(perfexpert_ordered_module_t, om,
-                sizeof(perfexpert_ordered_module_t));
-            PERFEXPERT_ALLOC(char, om->name, (strlen(m->name) + 1));
-            strcpy(om->name, m->name);
-            om->module = m;
-            perfexpert_list_item_construct((perfexpert_list_item_t *)om);
-            perfexpert_list_append(&(module_globals.analysis),
-                (perfexpert_list_item_t *)om);
         }
     }
 
