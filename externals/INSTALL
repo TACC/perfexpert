@@ -7,6 +7,28 @@ mkdir -p ${INSTALL_DIR}
 export JRE_HOME=/usr/java/latest/jre
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${INSTALL_DIR}/lib:$JRE_HOME/lib/amd64/server/
 
+tar -xzvf ./libelf-0.8.13.tar.gz
+cd libelf-0.8.13
+mkdir _build
+cd _build
+../configure --prefix=${INSTALL_DIR}
+make install
+cd ../../
+
+tar -xzvf ./libdwarf-20120410.tar.gz
+cd dwarf-20120410/libdwarf
+mkdir _build
+cd _build
+CFLAGS=" -fPIC -I${INSTALL_DIR}/include" \
+  LDFLAGS="-L${INSTALL_DIR}/lib" \
+  CPPFLAGS="-I${INSTALL_DIR}/include" \
+  ../configure --prefix=${INSTALL_DIR} --enable-shared
+make
+cp libdwarf.so ${INSTALL_DIR}/lib/
+cp dwarf.h ${INSTALL_DIR}/include/
+cp libdwarf.h ${INSTALL_DIR}/include/
+cd ../../..
+
 tar -xzvf ./libmatheval-1.1.11.tar.gz
 cd libmatheval-1.1.11
 mkdir _build
