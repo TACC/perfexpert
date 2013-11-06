@@ -19,14 +19,16 @@
 # $HEADER$
 #
 
-SUBDIRS = $(ENABLE_HPCTOOLKIT)
-SUBDIRS += $(ENABLE_LCPI)
-SUBDIRS += $(ENABLE_READELF)
+lib_LTLIBRARIES = libperfexpert_module_readelf.la
+libperfexpert_module_readelf_la_CPPFLAGS = -I$(srcdir)/../..
+libperfexpert_module_readelf_la_LDFLAGS = -module -lelf -ldwarf \
+	-version-info 1:0:0 -export-symbols $(srcdir)/readelf_module.sym
+libperfexpert_module_readelf_la_SOURCES = readelf_module.c readelf.c
 
-lib_LTLIBRARIES = libperfexpert_module_base.la
-libperfexpert_module_base_la_SOURCES = perfexpert_module_base.c
-libperfexpert_module_base_la_CPPFLAGS = -I$(srcdir)/..
-libperfexpert_module_base_la_LDFLAGS = -lltdl -version-info 1:0:0 \
-	-export-symbols $(srcdir)/perfexpert_module_base.sym
+# Install readelf module database
+install-exec-local:
+	$(MKDIR_P) $(DESTDIR)$(sysconfdir)
+	$(INSTALL) -m 644 $(top_srcdir)/modules/readelf/readelf_module.sql \
+		$(DESTDIR)$(sysconfdir)/
 
 # EOF
