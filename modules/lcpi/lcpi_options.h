@@ -41,8 +41,10 @@ static struct argp_option options[] = {
     { "threshold", 't', "VALUE", OPTION_DOC, "Threshold (relevance % of "
       "runtime) to take " "hotspots into consideration (range: fration value "
       "between 0 and 1)" },
+    { "threshold", 't', "VALUE", OPTION_HIDDEN, 0 },
     { "sort-order", 's', "relevance|performance|mixed", OPTION_DOC,
         "Order in which hotspots should be sorted (default: unsorted)" },
+    { "sort-order", 's', "relevance|performance|mixed", OPTION_HIDDEN, 0 },
 
     { "help", 'h', 0, OPTION_HIDDEN, "Show help message" },
     { 0 }
