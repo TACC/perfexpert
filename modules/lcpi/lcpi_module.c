@@ -85,7 +85,7 @@ int module_fini(void) {
 /* module_measurements */
 int module_measurements(void) {
 
-    OUTPUT(("%s", _YELLOW("Collecting measurements")));
+    OUTPUT(("%s", _YELLOW("Setting performance events")));
 
     my_module_globals.hpctoolkit = (perfexpert_module_hpctoolkit_t *)
         perfexpert_module_available("hpctoolkit");
