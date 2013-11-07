@@ -34,6 +34,7 @@ extern "C" {
 #include "recommender.h"
 
 /* PerfExpert common headers */
+#include "common/perfexpert_constants.h"
 #include "common/perfexpert_database.h"
 #include "common/perfexpert_list.h"
 #include "common/perfexpert_output.h"
