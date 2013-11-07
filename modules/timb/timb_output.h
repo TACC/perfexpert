@@ -19,15 +19,15 @@
  * $HEADER$
  */
 
-#ifndef PERFEXPERT_MODULE_LCPI_OUTPUT_H_
-#define PERFEXPERT_MODULE_LCPI_OUTPUT_H_
+#ifndef PERFEXPERT_MODULE_TIMB_OUTPUT_H_
+#define PERFEXPERT_MODULE_TIMB_OUTPUT_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /* Modules headers */
-#include "lcpi_types.h"
+// #include "lcpi_types.h"
 
 static int output_profile(lcpi_hotspot_t *h);
 
@@ -35,4 +35,4 @@ static int output_profile(lcpi_hotspot_t *h);
 }
 #endif
 
-#endif /* PERFEXPERT_MODULE_LCPI_OUTPUT_H_ */
+#endif /* PERFEXPERT_MODULE_TIMB_OUTPUT_H_ */
