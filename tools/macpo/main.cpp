@@ -62,6 +62,8 @@ int parseMinstArgument(char* arg, options_t& options) {
         options.action = ACTION_INSTRUMENT;
     else if (strcmp(opt, "aligncheck") == 0)
         options.action = ACTION_ALIGNCHECK;
+    else if (strcmp(opt, "nocompile") == 0)
+        options.flags |= FLAG_NOCOMPILE;
     else if (strcmp(opt, "noinst") == 0)
         options.action = ACTION_NONE;
     else	return -ERR_PARAMS;
@@ -124,11 +126,21 @@ int main (int argc, char *argv[]) {
             traversal.traverseWithinFile (file, attr);
         }
 
-        // FIXME: ROSE tests seem to be broken, operand of AddressOfOp is not allowed to be an l-value
-        // AstTests::runAllTests (project);
-        return backend (project) == 0 ? 0 : 1;
+        if (!(options.flags & FLAG_NOCOMPILE)) {
+            // FIXME: ROSE tests seem to be broken, operand of AddressOfOp is not allowed to be an l-value
+            // AstTests::runAllTests (project);
+            return backend (project) == 0 ? 0 : 1;
+        } else {
+            project->unparse();
+            return 0;
+        }
     } else {
         SgProject *project = frontend (arguments);
-        return backend (project) == 0 ? 0 : 1;
+        if (!(options.flags & FLAG_NOCOMPILE)) {
+            return backend (project) == 0 ? 0 : 1;
+        } else {
+            project->unparse();
+            return 0;
+        }
     }
 }
