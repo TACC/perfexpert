@@ -106,7 +106,8 @@ int module_fini(void) {
 int module_measurements(void) {
     char *workdir = NULL, *file = NULL;
 
-    OUTPUT(("%s", _YELLOW("Collecting measurements")));
+    OUTPUT(("%s (%d events)", _YELLOW("Collecting measurements"),
+        perfexpert_hash_count_str(my_module_globals.events_by_name)));
 
     /* First of all, does the file exist? (it is just a double check) */
     if (PERFEXPERT_SUCCESS !=
