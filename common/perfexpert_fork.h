@@ -38,6 +38,10 @@ extern "C" {
 #include <fcntl.h>
 #endif
 
+#ifndef _ERRNO_H
+#include <errno.h>
+#endif
+
 #include "common/perfexpert_constants.h"
 #include "common/perfexpert_output.h"
 #include "common/perfexpert_list.h"
@@ -93,7 +97,7 @@ static inline int fork_and_wait(test_t *test, char *argv[]) {
         close(PARENT_WRITE);
         close(PARENT_READ);
 
-        OUTPUT_VERBOSE((10, "      %s %s", _CYAN((char *)"program"), argv[0]));
+        OUTPUT_VERBOSE((10, "   %s %s", _CYAN((char *)"program"), argv[0]));
 
         if (-1 == dup2(CHILD_READ, STDIN_FILENO)) {
             OUTPUT(("%s", _ERROR((char *)"Error: unable to DUP STDIN")));
@@ -112,7 +116,8 @@ static inline int fork_and_wait(test_t *test, char *argv[]) {
 
         execvp(argv[0], argv);
 
-        OUTPUT(("child process failed to run, check if program exists"));
+        OUTPUT(("child process failed to run, check if program exists (%s)",
+            errno));
         exit(PERFEXPERT_FORK_ERROR);
     } else {
         /* Parent */
@@ -127,7 +132,7 @@ static inline int fork_and_wait(test_t *test, char *argv[]) {
                     test->input));
                 return PERFEXPERT_ERROR;
             } else {
-                OUTPUT_VERBOSE((10, "      %s   %s", _CYAN((char *)"stdin"),
+                OUTPUT_VERBOSE((10, "   %s   %s", _CYAN((char *)"stdin"),
                     test->input));
                 bzero(buffer, MAX_BUFFER_SIZE);
                 while (0 != (r_bytes = read(input_FP, buffer,
@@ -142,7 +147,7 @@ static inline int fork_and_wait(test_t *test, char *argv[]) {
 
         /* Read child process' answer and write it to output file */
         if (NULL != test->output) {
-            OUTPUT_VERBOSE((10, "      %s  %s", _CYAN((char *)"stdout"),
+            OUTPUT_VERBOSE((10, "   %s  %s", _CYAN((char *)"stdout"),
                 test->output));
 
             if (-1 == (output_FP = open(test->output, O_CREAT|O_WRONLY|O_APPEND,
@@ -165,18 +170,18 @@ static inline int fork_and_wait(test_t *test, char *argv[]) {
 
         /* Just wait for the child... */
         wait(&rc);
-        OUTPUT_VERBOSE((10, "      %s  %d", _CYAN((char *)"result"), rc >> 8));
+        OUTPUT_VERBOSE((10, "   %s  %d", _CYAN((char *)"result"), rc >> 8));
     }
 
     /* Evaluating the result */
     if (0 > (rc >> 8)) {
-        OUTPUT_VERBOSE((7, "      [%s] [%s] >> [%s] (rc=%d)",
+        OUTPUT_VERBOSE((7, "   [%s] [%s] >> [%s] (rc=%d)",
             _BOLDYELLOW((char *)"ERROR"), argv[0], test->info, rc >> 8));
     } else if (0 < (rc >> 8)) {
-        OUTPUT_VERBOSE((7, "      [%s ] [%s] >> [%s] (rc=%d)",
+        OUTPUT_VERBOSE((7, "   [%s ] [%s] >> [%s] (rc=%d)",
             _BOLDRED((char *)"FAIL"), argv[0], test->info, rc >> 8));
     } else {
-        OUTPUT_VERBOSE((7, "      [ %s  ] [%s] >> [%s] (rc=%d)",
+        OUTPUT_VERBOSE((7, "   [ %s  ] [%s] >> [%s] (rc=%d)",
             _BOLDGREEN((char *)"OK"), argv[0], test->info, rc >> 8));
     }
 
