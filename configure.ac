@@ -67,6 +67,7 @@ AC_PROG_INSTALL
 AC_TYPE_SIZE_T
 AC_FUNC_MALLOC
 LT_INIT
+PKG_PROG_PKG_CONFIG
 
 #------------------------------------------------------------------------------
 # Check for the operation system to include specific defines (if needed!)
@@ -137,6 +138,7 @@ AC_CHECK_HEADER([sys/types.h],    [], [AC_MSG_ERROR([sys/types.h not found])])
 AC_CHECK_HEADER([time.h],         [], [AC_MSG_ERROR([time.h not found])])
 AC_CHECK_HEADER([unistd.h],       [], [AC_MSG_ERROR([unistd.h not found])])
 AC_CHECK_HEADER([dirent.h],       [], [AC_MSG_ERROR([dirent.h not found])])
+AC_CHECK_HEADER([errno.h],        [], [AC_MSG_ERROR([errno.h not found])])
 
 #------------------------------------------------------------------------------
 # Basic binaries: Bash shell
@@ -253,10 +255,11 @@ AC_ARG_WITH([sparsehash],
 # readelf module requirements
 #
 AC_ARG_ENABLE([module-readelf],
-    [AS_HELP_STRING([--disable-module-readelf], [disable ReadELF module])],
+    [AS_HELP_STRING([--disable-module-readelf],
+        [disable ReadELF measurement module])],
     [ENABLE_READELF=$enableval], [ENABLE_READELF=yes])
 
-AC_MSG_CHECKING([whether to enable readelf module])
+AC_MSG_CHECKING([whether to enable readelf measurement module])
 AS_IF([test x"$ENABLE_READELF" = xyes], [
     AC_MSG_RESULT([yes])
 
@@ -304,6 +307,8 @@ AS_IF([test x"$ENABLE_HPCTOOLKIT" = xyes], [
 
     # XML2 support (headers and lib)
     #
+    PKG_CHECK_MODULES(XML2, libxml-2.0 >= 2.4)
+    CPPFLAGS+=" $XML2_CFLAGS"
     AC_CHECK_LIB([xml2], [xmlParseFile], [],
         [AC_MSG_ERROR([libxml2.so not found])])
     AC_CHECK_HEADER([libxml/parser.h], [],
@@ -343,7 +348,10 @@ AC_MSG_CHECKING([whether to enable LCPI analysis module])
 AS_IF([test x"$ENABLE_LCPI" = xyes], [
     AC_MSG_RESULT([yes])
 
-    # TODO: check for hpctoolkit and vtune modules
+    # Requires HPCToolkit module
+    #
+    AS_IF([test x"$ENABLE_HPCTOOLKIT" = x],
+        [AC_MSG_ERROR([LCPI module requires HPTCoolkit module])], [])
 
     # Math library
     #
@@ -389,7 +397,7 @@ AS_IF([test x"$ENABLE_PERFEXPERT" = xyes], [
         AC_MSG_RESULT([no])
         AC_MSG_ERROR([PerfExpert requires at least one module enabled])
     ], [
-        AC_MSG_RESULT($ENABLED_MODULES)
+        AC_MSG_RESULT($ENABLED_MODULES: OK!)
     ])
 
     # SQLite support (headers, lib, and program)
