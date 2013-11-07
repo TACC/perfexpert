@@ -45,14 +45,14 @@ extern "C" {
 int select_recommendations(void) {
     char *error = NULL, sql[MAX_BUFFER_SIZE];
 
-    bzero(sql, MAX_BUFFER_SIZE);
-    sprintf(sql, "SELECT id, name, type, file, line, depth FROM hotspot WHERE "
-        "perfexpert_id = %llu", globals.uid);
-
-    /* Select all strategies, accumulate them */
     OUTPUT_VERBOSE((4, "%s", _BLUE("Accumulating strategies")));
 
     perfexpert_list_construct(&(globals.strategies));
+
+    /* Select all strategies, accumulate them */
+    bzero(sql, MAX_BUFFER_SIZE);
+    sprintf(sql, "SELECT id, name, type, file, line, depth FROM hotspot WHERE "
+        "perfexpert_id = %llu", globals.uid);
 
     if (SQLITE_OK != sqlite3_exec(globals.db,
         "SELECT id, name, statement FROM recommender_strategy;",
