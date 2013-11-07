@@ -90,7 +90,7 @@ int run_hpcstruct(void) {
 
 /* run_hpcrun */
 int run_hpcrun(void) {
-    int experiment_count = 0, rc = PERFEXPERT_SUCCESS, count = 0;
+    int experiment_count = 0, rc = PERFEXPERT_SUCCESS, i = 0, event_count = 0;
     struct timespec time_start, time_end, time_diff;
     hpctoolkit_event_t *event = NULL, *t = NULL;
     perfexpert_list_t experiments;
@@ -100,7 +100,7 @@ int run_hpcrun(void) {
     /* Initiate the list of experiments by adding the events */
     perfexpert_list_construct(&experiments);
     perfexpert_hash_iter_str(my_module_globals.events_by_name, event, t) {
-        if (0 < count) {
+        if (0 < event_count) {
             /* Add event */
             e->argv[e->argc] = "--event";
             e->argc++;
@@ -109,7 +109,7 @@ int run_hpcrun(void) {
                 get_sampling_rate(event->name));
             e->argc++;
 
-            count--;
+            event_count--;
             continue;
         }
 
@@ -120,11 +120,11 @@ int run_hpcrun(void) {
         e->argc = 0;
 
         /* Add PREFIX to argv */
-        count = 0;
-        while (NULL != my_module_globals.prefix[count]) {
-            e->argv[e->argc] = my_module_globals.prefix[count];
+        i = 0;
+        while (NULL != my_module_globals.prefix[i]) {
+            e->argv[e->argc] = my_module_globals.prefix[i];
             e->argc++;
-            count++;
+            i++;
         }
 
         /* Arguments to run hpcrun */
@@ -144,7 +144,18 @@ int run_hpcrun(void) {
             get_sampling_rate(event->name));
         e->argc++;
 
-        count = max_events() - 1;
+        event_count = max_events() - 1;
+
+        /* Add event */
+        e->argv[e->argc] = "--event";
+        e->argc++;
+        PERFEXPERT_ALLOC(char, e->argv[e->argc], strlen(event->name) + 10);
+        sprintf(e->argv[e->argc], "%s:%d", event->name,
+            get_sampling_rate(event->name));
+        e->argc++;
+
+        event_count--;
+        continue;
     }
 
     /* For each experiment... */
@@ -172,11 +183,11 @@ int run_hpcrun(void) {
         e->argc++;
 
         /* ...and the program arguments */
-        count = 0;
-        while (NULL != globals.program_argv[count]) {
-            e->argv[e->argc] = globals.program_argv[count];
+        i = 0;
+        while (NULL != globals.program_argv[i]) {
+            e->argv[e->argc] = globals.program_argv[i];
             e->argc++;
-            count++;
+            i++;
         }
 
         /* The last of the Mohicans */
@@ -193,8 +204,8 @@ int run_hpcrun(void) {
         /* Not using OUTPUT_VERBOSE because I want only one line */
         if (8 <= globals.verbose) {
             printf("%s %s", PROGRAM_PREFIX, _YELLOW("command line:"));
-            for (count = 0; count < e->argc; count++) {
-                printf(" %s", e->argv[count]);
+            for (i = 0; i < e->argc; i++) {
+                printf(" %s", e->argv[i]);
             }
             printf("\n");
         }
