@@ -167,6 +167,11 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
 
 /* parse_env_vars */
 static int parse_env_vars(void) {
+    if (NULL != getenv("PERFEXPERT_RECOMMENDER_VERBOSE_LEVEL")) {
+        globals.verbose = atoi(getenv("PERFEXPERT_RECOMMENDER_VERBOSE_LEVEL"));
+        OUTPUT_VERBOSE((5, "ENV: verbose_level=%d", globals.verbose));
+    }
+
     if ((NULL != getenv("PERFEXPERT_RECOMMENDER_COLORFUL")) &&
         (1 == atoi(getenv("PERFEXPERT_RECOMMENDER_COLORFUL")))) {
         globals.colorful = 1;
@@ -191,11 +196,6 @@ static int parse_env_vars(void) {
     if (NULL != getenv("PERFEXPERT_RECOMMENDER_REC_COUNT")) {
         globals.rec_count = atoi(getenv("PERFEXPERT_RECOMMENDER_REC_COUNT"));
         OUTPUT_VERBOSE((5, "ENV: rec_count=%d", globals.rec_count));
-    }
-
-    if (NULL != getenv("PERFEXPERT_RECOMMENDER_VERBOSE_LEVEL")) {
-        globals.verbose = atoi(getenv("PERFEXPERT_RECOMMENDER_VERBOSE_LEVEL"));
-        OUTPUT_VERBOSE((5, "ENV: verbose_level=%d", globals.verbose));
     }
 
     if (NULL != getenv("PERFEXPERT_RECOMMENDER_WORKDIR")) {
