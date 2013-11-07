@@ -24,7 +24,10 @@
 
 enum { FALSE=0, TRUE };
 enum { SUCCESS=0, ERR_PARAMS };
-enum { ACTION_INSTRUMENT=0, ACTION_ALIGNCHECK, ACTION_NONE };
+enum { ACTION_NONE=0, ACTION_INSTRUMENT, ACTION_ALIGNCHECK };
+
+const int FLAG_NONE = 0;
+const int FLAG_NOCOMPILE = 1 << 0;
 
 typedef	unsigned char BOOL;
 
@@ -38,6 +41,7 @@ typedef struct {
 } loop_info_t;
 
 typedef struct {
+    int flags;
     short action;
     loop_info_t loopInfo;
     function_info_t functionInfo;
