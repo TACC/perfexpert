@@ -41,6 +41,12 @@ if [ -f ${prefix}/etc/hpctoolkit_module.sql ]; then
     echo "HPCToolkit module set"
 fi
 
+# Setup ReadELF module
+if [ -f ${prefix}/etc/readelf_module.sql ]; then
+    sqlite3 ${HOME}/.perfexpert.db < ${prefix}/etc/readelf_module.sql
+    echo "ReadELF module set"
+fi
+
 # Setup LCPI module
 if [ -f ${prefix}/etc/lcpi_module.sql ]; then
     sqlite3 ${HOME}/.perfexpert.db < ${prefix}/etc/lcpi_module.sql
