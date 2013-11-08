@@ -23,15 +23,15 @@ ACLOCAL_AMFLAGS = -I m4
 
 SUBDIRS = modules tools
 
-.PHONY: check
+# .PHONY: check
 
-check:
-	cd $(top_builddir)/tests/
-	./run_tests.pl
+# check:
+#	cd $(top_builddir)/tests/
+#	./run_tests.pl
 
 # Set database version
 install-exec-local:
-	echo 1.26 > perfexpert.db.version
+	echo 1.27 > perfexpert.db.version
 	$(INSTALL) -m 644 perfexpert.db.version $(DESTDIR)$(sysconfdir)/
 
 # EOF
