@@ -19,17 +19,22 @@
  * $HEADER$
  */
 
-#ifndef PERFEXPERT_MODULE_TIMB_OUTPUT_H_
-#define PERFEXPERT_MODULE_TIMB_OUTPUT_H_
+#ifndef PREFEXPERT_MODULE_TIMB_MODULE_H_
+#define PREFEXPERT_MODULE_TIMB_MODULE_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-static inline int output_thread(void *var, int c, char **val, char **names);
+/* Modules headers */
+#include "modules/perfexpert_module_base.h"
+
+/* LCPI module interface */
+typedef perfexpert_module_t perfexpert_module_timb_1_0_0_t;
+typedef perfexpert_module_timb_1_0_0_t perfexpert_module_timb_t;
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* PERFEXPERT_MODULE_TIMB_OUTPUT_H_ */
+#endif /* PREFEXPERT_MODULE_TIMB_MODULE_H_ */
