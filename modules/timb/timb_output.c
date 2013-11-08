@@ -95,13 +95,14 @@ int output_analysis(void) {
 
     /* Print report header */
     PRETTY_PRINT(79, "=");
-    printf(" Thread    Cycles     %%    %s\n", PERCENTAGE);
-
-    /* Do we have something meaningful to show? Some warning? */
     if (0.0 == my_module_globals.total) {
         printf("%s the cycles count is zero, measurement problems?\n\n",
             _BOLDRED("WARNING:"));
     }
+    printf("%s this analysis does not take into consideration synchronization "
+        "between\n         threads, only the total number of cycles each thread"
+        " consumed\n\n", _BOLDRED("WARNING:"));
+    printf(" Thread    Cycles     %%    %s\n", PERCENTAGE);
 
     /* Get thread cycles */
     bzero(sql, MAX_BUFFER_SIZE);
@@ -122,7 +123,7 @@ int output_analysis(void) {
     printf("%5d   %10.2g 100.00%% << total cycle count for %s\n",
         my_module_globals.threads, my_module_globals.total,
         _CYAN(globals.program));
-    printf("                              with a variance of %.2f%%\n",
+    printf("                              with a variance up to %.2f%%\n",
         (100 * ((my_module_globals.maximum - my_module_globals.minimum) /
             my_module_globals.maximum)));
     PRETTY_PRINT(79, "-");
@@ -136,8 +137,8 @@ static inline int output_thread(void *var, int c, char **val, char **names) {
 
     printf("%5d   %10.2g %6.2f  ", atoi(val[1]), atof(val[2]),
         (atof(val[2]) * 100 / my_module_globals.total));
-    PRETTY_PRINT_BAR((int)rint(atof(val[2]) * 100 / my_module_globals.total),
-        "*");
+    PRETTY_PRINT_BAR((int)rint((atof(val[2]) * 100) /
+        (my_module_globals.total * 2)), "*");
 
     if (atof(val[2]) > my_module_globals.maximum) {
         my_module_globals.maximum = atof(val[2]);
