@@ -80,7 +80,7 @@ int module_measurements(void) {
 
     if (PERFEXPERT_SUCCESS != my_module_globals.hpctoolkit->set_event(
         "PAPI_TOT_CYC")) {
-        OUTPUT(("%s", _ERROR("Error: unable to generate add PAPI_TOT_CYC")));
+        OUTPUT(("%s", _ERROR("unable to generate add PAPI_TOT_CYC")));
         return PERFEXPERT_ERROR;
     }
 
@@ -93,7 +93,7 @@ int module_analysis(void) {
     OUTPUT(("%s", _YELLOW("Analysing measurements")));
 
     if (PERFEXPERT_SUCCESS != output_analysis()) {
-        OUTPUT(("%s", _ERROR("Error: printing analysis report")));
+        OUTPUT(("%s", _ERROR("printing analysis report")));
         return PERFEXPERT_ERROR;
     }
 

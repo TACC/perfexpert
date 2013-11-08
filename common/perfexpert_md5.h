@@ -107,7 +107,7 @@ static unsigned char PADDING[64] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
-/* md5_transform */
+/* perfexpert_md5_transform */
 static inline void perfexpert_md5_transform(unsigned int *buf,
     unsigned int *in) {
     unsigned int a = buf[0], b = buf[1], c = buf[2], d = buf[3];
@@ -206,7 +206,7 @@ static inline void perfexpert_md5_transform(unsigned int *buf,
     buf[3] += d;
 }
 
-/* md5_init */
+/* perfexpert_md5_init */
 static inline void perfexpert_md5_init(MD5_CTX_t *ctx) {
     ctx->i[0] = ctx->i[1] = (unsigned int)0;
     ctx->buf[0] = (unsigned int)0x67452301;
@@ -215,7 +215,7 @@ static inline void perfexpert_md5_init(MD5_CTX_t *ctx) {
     ctx->buf[3] = (unsigned int)0x10325476;
 }
 
-/* md5_update */
+/* perfexpert_md5_update */
 static inline void perfexpert_md5_update(MD5_CTX_t *ctx, unsigned char *inBuf,
     unsigned int inLen) {
     unsigned int in[16];
@@ -246,7 +246,7 @@ static inline void perfexpert_md5_update(MD5_CTX_t *ctx, unsigned char *inBuf,
     }
 }
 
-/* md5_final */
+/* perfexpert_md5_final */
 static inline void perfexpert_md5_final(MD5_CTX_t *ctx) {
     unsigned int in[16];
     unsigned int i, ii;
@@ -277,10 +277,14 @@ static inline void perfexpert_md5_final(MD5_CTX_t *ctx) {
     }
 }
 
-/* md5_string */
+/* perfexpert_md5_string */
 static inline char* perfexpert_md5_string(const char *in) {
     static char rc[33];
     MD5_CTX_t ctx;
+
+    if (NULL == in) {
+        return NULL;
+    }
 
     perfexpert_md5_init(&ctx);
     perfexpert_md5_update(&ctx, (unsigned char *)in, strlen(in));

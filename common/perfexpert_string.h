@@ -35,8 +35,11 @@ extern "C" {
 
 /* perfexpert_string_split */
 static inline int perfexpert_string_split(char *in, char **out, int token) {
-    int i = 0, j = 0, c = 0;
-    int quoted = PERFEXPERT_FALSE;
+    int i = 0, j = 0, c = 0, quoted = PERFEXPERT_FALSE;
+
+    if (NULL == in) {
+        return PERFEXPERT_ERROR;
+    }
 
     while (0 != in[i]) {
         if (('"' == in[i]) && (PERFEXPERT_FALSE == quoted)) {
@@ -72,6 +75,10 @@ static inline int perfexpert_string_split(char *in, char **out, int token) {
 static inline char* perfexpert_string_remove_spaces(char *str) {
     int i;
 
+    if (NULL == str) {
+        return NULL;
+    }
+
     while (' ' == str[0]) {
         for (i = 0; (i + 1) < strlen(str); i++) {
             str[i] = str[i + 1];
@@ -89,6 +96,10 @@ static inline char* perfexpert_string_remove_char_pos(char *str, int token,
     int pos) {
     int i;
 
+    if (NULL == str) {
+        return NULL;
+    }
+
     if (str[pos] == (char)token) {
         for (i = pos; (i + 1) < strlen(str); i++) {
             str[i] = str[i + 1];
@@ -102,6 +113,10 @@ static inline char* perfexpert_string_remove_char_pos(char *str, int token,
 static inline char* perfexpert_string_remove_char(char *str, int token) {
     char *output = str;
     int i, j;
+
+    if (NULL == str) {
+        return NULL;
+    }
 
     for (i = 0, j = 0; i < strlen(str); i++, j++) {
         if (str[i] != (char)token) {
@@ -117,6 +132,10 @@ static inline char* perfexpert_string_remove_char(char *str, int token) {
 /* perfexpert_string_replace_char */
 static inline char* perfexpert_string_replace_char(char *str, int out, int in) {
     int i;
+
+    if (NULL == str) {
+        return NULL;
+    }
 
     for (i = 0; i < strlen(str); i++) {
         if (str[i] == (char)out) {

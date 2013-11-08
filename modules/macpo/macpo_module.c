@@ -66,7 +66,7 @@ int module_measurements(void) {
     OUTPUT(("%s", _YELLOW("Collecting measurements")));
 
     if (PERFEXPERT_SUCCESS != macpo_inst_all()) {
-        OUTPUT(("%s", _ERROR("Error: instrumenting files")));
+        OUTPUT(("%s", _ERROR("instrumenting files")));
         return PERFEXPERT_ERROR;
     }
 

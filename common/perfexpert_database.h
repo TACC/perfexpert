@@ -68,11 +68,11 @@ static inline int perfexpert_database_update(char **file) {
 
     /* System version */
     if (NULL == (ver_FP = fopen(sys_ver, "r"))) {
-        OUTPUT(("%s", _ERROR("Error: unable to open sys DB version file")));
+        OUTPUT(("%s", _ERROR("unable to open sys DB version file")));
         goto CLEAN_UP;
     }
     if (0 == fscanf(ver_FP, "%s", sys_ver)) {
-        OUTPUT(("%s", _ERROR("Error: unable to read sys DB version file")));
+        OUTPUT(("%s", _ERROR("unable to read sys DB version file")));
         fclose(ver_FP);
         goto CLEAN_UP;
     }
@@ -84,7 +84,11 @@ static inline int perfexpert_database_update(char **file) {
         (PERFEXPERT_SUCCESS == perfexpert_util_file_exists(my_ver))) {
         OUTPUT_VERBOSE((10, "      found local database (%s)", my_db));
         if (NULL != (ver_FP = fopen(my_ver, "r"))) {
-            fscanf(ver_FP, "%s", my_ver);
+            if (0 == fscanf(ver_FP, "%s", my_ver)) {
+                OUTPUT(("%s", _ERROR("unable to read user DB version file")));
+                fclose(ver_FP);
+                goto CLEAN_UP;
+            }
         }
         fclose(ver_FP);
         OUTPUT_VERBOSE((10, "      local database version (%s)", my_ver));
@@ -104,7 +108,7 @@ static inline int perfexpert_database_update(char **file) {
 
     /* Setup a new database */
     if (0 != system("perfexpert_setup_db.sh")) {
-        OUTPUT(("%s", _ERROR("Error: unable to setup PerfExpert database")));
+        OUTPUT(("%s", _ERROR("unable to setup PerfExpert database")));
         goto CLEAN_UP;
     }
     sprintf(sys_ver, "%s/%s.version", PERFEXPERT_ETCDIR, PERFEXPERT_DB);
@@ -147,20 +151,19 @@ static inline int perfexpert_database_connect(sqlite3 **db, const char *file) {
 
     /* Check if file exists and if it is writable */
     if (-1 == access(my_file, F_OK)) {
-        OUTPUT(("%s (%s)", _ERROR((char *)"Error: file not found"), my_file));
+        OUTPUT(("%s (%s)", _ERROR((char *)"file not found"), my_file));
         goto CLEAN_UP;
     }
     if (-1 == access(my_file, W_OK)) {
         OUTPUT(("%s (%s)",
-            _ERROR((char *)"Error: you don't have permissions to write on"),
-            my_file));
+            _ERROR((char *)"you don't have permissions to write on"), my_file));
         goto CLEAN_UP;
     }
 
     /* Connect to the DB */
     if (SQLITE_OK != sqlite3_open(my_file, db)) {
-        OUTPUT(("%s (%s), %s", _ERROR((char *)"Error: openning database"),
-            my_file, sqlite3_errmsg(*db)));
+        OUTPUT(("%s (%s), %s", _ERROR((char *)"openning database"), my_file,
+            sqlite3_errmsg(*db)));
         perfexpert_database_disconnect(*db);
         goto CLEAN_UP;
     }

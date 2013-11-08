@@ -118,6 +118,7 @@ AM_CONDITIONAL([ENABLE_DEBUG], [test x"$ENABLE_DEBUG" = x"yes"])
 #
 # perfexpert, analyzer, recommender, hound, and sniffer
 AC_CHECK_HEADER([argp.h],         [], [AC_MSG_ERROR([argp.h not found])])
+AC_CHECK_HEADER([dirent.h],       [], [AC_MSG_ERROR([dirent.h not found])])
 AC_CHECK_HEADER([errno.h],        [], [AC_MSG_ERROR([errno.h not found])])
 AC_CHECK_HEADER([fcntl.h],        [], [AC_MSG_ERROR([fcntl.h not found])])
 AC_CHECK_HEADER([float.h],        [], [AC_MSG_ERROR([float.h not found])])
@@ -126,6 +127,7 @@ AC_CHECK_HEADER([inttypes.h],     [], [AC_MSG_ERROR([inttypes.h not found])])
 AC_CHECK_HEADER([linux/limits.h], [], [AC_MSG_ERROR([linux/limits.h not found])])
 AC_CHECK_HEADER([math.h],         [], [AC_MSG_ERROR([math.h not found])])
 AC_CHECK_HEADER([sched.h],        [], [AC_MSG_ERROR([sched.h not found])])
+AC_CHECK_HEADER([signal.h],       [], [AC_MSG_ERROR([signal.h not found])])
 AC_CHECK_HEADER([stdarg.h],       [], [AC_MSG_ERROR([stdarg.h not found])])
 AC_CHECK_HEADER([stddef.h],       [], [AC_MSG_ERROR([stddef.h not found])])
 AC_CHECK_HEADER([stdio.h],        [], [AC_MSG_ERROR([stdio.h not found])])
@@ -137,8 +139,6 @@ AC_CHECK_HEADER([sys/stat.h],     [], [AC_MSG_ERROR([sys/stat.h not found])])
 AC_CHECK_HEADER([sys/types.h],    [], [AC_MSG_ERROR([sys/types.h not found])])
 AC_CHECK_HEADER([time.h],         [], [AC_MSG_ERROR([time.h not found])])
 AC_CHECK_HEADER([unistd.h],       [], [AC_MSG_ERROR([unistd.h not found])])
-AC_CHECK_HEADER([dirent.h],       [], [AC_MSG_ERROR([dirent.h not found])])
-AC_CHECK_HEADER([errno.h],        [], [AC_MSG_ERROR([errno.h not found])])
 
 #------------------------------------------------------------------------------
 # Basic binaries: Bash shell

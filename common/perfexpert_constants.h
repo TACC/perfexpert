@@ -48,18 +48,18 @@ enum {
 #define MAX_ARGUMENTS_COUNT 128
 
 /* Default values for some files and directories */
-#define PERFEXPERT_OUTPUT        "perfexpert.output"
-#define PERFEXPERT_DB            "perfexpert.db"
-#define PERFEXPERT_LOGFILE       ".perfexpert.log"
+#define PERFEXPERT_OUTPUT  "perfexpert.output"
+#define PERFEXPERT_DB      "perfexpert.db"
+#define PERFEXPERT_LOGFILE ".perfexpert.log"
 
-#define RECOMMENDER_PROGRAM      "perfexpert_recommender"
-#define RECOMMENDER_OUTPUT       "recommender.output"
-#define RECOMMENDER_METRICS      "recommender_metrics.txt"
-#define RECOMMENDER_REPORT       "recommender_report.txt"
+#define RECOMMENDER_PROGRAM "perfexpert_recommender"
+#define RECOMMENDER_OUTPUT  "recommender.output"
+#define RECOMMENDER_METRICS "recommender_metrics.txt"
+#define RECOMMENDER_REPORT  "recommender_report.txt"
 
-#define CT_PROGRAM               "perfexpert_ct"
-#define CT_OUTPUT                "ct.output"
-#define CT_REPORT                "ct_report.txt"
+#define CT_PROGRAM "perfexpert_ct"
+#define CT_OUTPUT  "ct.output"
+#define CT_REPORT  "ct_report.txt"
 
 /* Default compiler and compilation options */
 #define DEFAULT_COMPILER "cc"

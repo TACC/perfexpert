@@ -73,7 +73,7 @@ int module_init(void) {
     /* Parse module options */
     if (PERFEXPERT_SUCCESS != parse_module_args(myself_module.argc,
         myself_module.argv)) {
-        OUTPUT(("%s", _ERROR("Error: parsing module arguments")));
+        OUTPUT(("%s", _ERROR("parsing module arguments")));
         return PERFEXPERT_ERROR;
     }
 
@@ -123,19 +123,19 @@ int module_measurements(void) {
 
     /* Create the program structure file */
     if (PERFEXPERT_SUCCESS != run_hpcstruct()) {
-        OUTPUT(("%s", _ERROR("Error: unable to run hpcstruct")));
+        OUTPUT(("%s", _ERROR("unable to run hpcstruct")));
         return PERFEXPERT_ERROR;
     }
 
     /* Collect measurements */
     if (NULL == my_module_globals.knc) {
         if (PERFEXPERT_SUCCESS != run_hpcrun()) {
-            OUTPUT(("%s", _ERROR("Error: unable to run hpcrun")));
+            OUTPUT(("%s", _ERROR("unable to run hpcrun")));
             return PERFEXPERT_ERROR;
         }
     } else {
         if (PERFEXPERT_SUCCESS != run_hpcrun_knc()) {
-            OUTPUT(("%s", _ERROR("Error: unable to run hpcrun on KNC")));
+            OUTPUT(("%s", _ERROR("unable to run hpcrun on KNC")));
             OUTPUT(("Are you adding the flags to compile for MIC?"));
             return PERFEXPERT_ERROR;
         }
@@ -143,31 +143,31 @@ int module_measurements(void) {
 
     /* Sumarize results */
     if (PERFEXPERT_SUCCESS != run_hpcprof(&file)) {
-        OUTPUT(("%s", _ERROR("Error: unable to run hpcprof")));
+        OUTPUT(("%s", _ERROR("unable to run hpcprof")));
         return PERFEXPERT_ERROR;
     }
 
     /* Parse results */
     if (PERFEXPERT_SUCCESS != parse_file(file)) {
-        OUTPUT(("%s [%s]", _ERROR("Error: unable to parse file"), file));
+        OUTPUT(("%s [%s]", _ERROR("unable to parse file"), file));
         return PERFEXPERT_ERROR;
     }
 
     /* Check profiles */
     if (PERFEXPERT_SUCCESS != profile_check_all(&(myself_module.profiles))) {
-        OUTPUT(("%s", _ERROR("Error: checking profile")));
+        OUTPUT(("%s", _ERROR("checking profile")));
         return PERFEXPERT_ERROR;
     }
 
     /* Flatten profiles */
     if (PERFEXPERT_SUCCESS != profile_flatten_all(&(myself_module.profiles))) {
-        OUTPUT(("%s", _ERROR("Error: flatening profiles")));
+        OUTPUT(("%s", _ERROR("flatening profiles")));
         return PERFEXPERT_ERROR;
     }
 
     /* Write profiles to database */
     if (PERFEXPERT_SUCCESS != database_profiles(&(myself_module.profiles))) {
-        OUTPUT(("%s", _ERROR("Error: writing profiles to database")));
+        OUTPUT(("%s", _ERROR("writing profiles to database")));
         return PERFEXPERT_ERROR;
     }
 
@@ -190,17 +190,15 @@ int module_set_event(const char *name) {
 
     /* Check if event exists */
     if (PAPI_VER_CURRENT != PAPI_library_init(PAPI_VER_CURRENT)) {
-        OUTPUT(("%s", _ERROR("Error: while initializing PAPI")));
+        OUTPUT(("%s", _ERROR("while initializing PAPI")));
         return PERFEXPERT_ERROR;
     }
     if (PAPI_OK != PAPI_event_name_to_code((char *)name, &event_code)) {
-        OUTPUT(("%s [%s]", _ERROR("Error: event not available (name->code)"),
-            name));
+        OUTPUT(("%s [%s]", _ERROR("event not available (name->code)"), name));
         return HPCTOOLKIT_INVALID_EVENT;
     }
     if (PAPI_OK != PAPI_query_event(event_code)) {
-        OUTPUT(("%s [%s]", _ERROR("Error: event not available (query code)"),
-            name));
+        OUTPUT(("%s [%s]", _ERROR("event not available (query code)"), name));
         return HPCTOOLKIT_INVALID_EVENT;
     }
 

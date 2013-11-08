@@ -58,13 +58,9 @@ typedef struct test {
 
 /* fork_and_wait */
 static inline int fork_and_wait(test_t *test, char *argv[]) {
-    int  pipe1[2], pipe2[2];
-    int  pid = 0;
-    int  input_FP = 0, output_FP = 0;
-    int  r_bytes = 0, w_bytes = 0;
-    int  rc = PERFEXPERT_UNDEFINED;
-    char temp_str[MAX_BUFFER_SIZE];
-    char buffer[MAX_BUFFER_SIZE];
+    int pipe1[2], pipe2[2], pid = 0, input_FP = 0, output_FP = 0;
+    int r_bytes = 0, w_bytes = 0, rc = PERFEXPERT_UNDEFINED;
+    char temp_str[MAX_BUFFER_SIZE], buffer[MAX_BUFFER_SIZE];
 
     #define PARENT_READ  pipe1[0]
     #define CHILD_WRITE  pipe1[1]
@@ -77,18 +73,18 @@ static inline int fork_and_wait(test_t *test, char *argv[]) {
 
     /* Creating pipes */
     if (-1 == pipe(pipe1)) {
-        OUTPUT(("%s", _ERROR((char *)"Error: unable to create pipe1")));
+        OUTPUT(("%s", _ERROR((char *)"unable to create pipe1")));
         return PERFEXPERT_ERROR;
     }
     if (-1 == pipe(pipe2)) {
-        OUTPUT(("%s", _ERROR((char *)"Error: unable to create pipe2")));
+        OUTPUT(("%s", _ERROR((char *)"unable to create pipe2")));
         return PERFEXPERT_ERROR;
     }
 
     /* Forking child */
     pid = fork();
     if (-1 == pid) {
-        OUTPUT(("%s", _ERROR((char *)"Error: unable to fork")));
+        OUTPUT(("%s", _ERROR((char *)"unable to fork")));
         return PERFEXPERT_ERROR;
     }
 
@@ -100,16 +96,16 @@ static inline int fork_and_wait(test_t *test, char *argv[]) {
         OUTPUT_VERBOSE((10, "   %s %s", _CYAN((char *)"program"), argv[0]));
 
         if (-1 == dup2(CHILD_READ, STDIN_FILENO)) {
-            OUTPUT(("%s", _ERROR((char *)"Error: unable to DUP STDIN")));
+            OUTPUT(("%s", _ERROR((char *)"unable to DUP STDIN")));
             return PERFEXPERT_ERROR;
         }
         if (NULL != test->output) {
             if (-1 == dup2(CHILD_WRITE, STDOUT_FILENO)) {
-                OUTPUT(("%s", _ERROR((char *)"Error: unable to DUP STDOUT")));
+                OUTPUT(("%s", _ERROR((char *)"unable to DUP STDOUT")));
                 return PERFEXPERT_ERROR;
             }
             if (-1 == dup2(CHILD_WRITE, STDERR_FILENO)) {
-                OUTPUT(("%s", _ERROR((char *)"Error: unable to DUP STDERR")));
+                OUTPUT(("%s", _ERROR((char *)"unable to DUP STDERR")));
                 return PERFEXPERT_ERROR;
             }
         }
@@ -127,8 +123,7 @@ static inline int fork_and_wait(test_t *test, char *argv[]) {
         /* If there is any input file, open and send it to the child process */
         if (NULL != test->input) {
             if (-1 == (input_FP = open(test->input, O_RDONLY))) {
-                OUTPUT(("%s (%s)",
-                    _ERROR((char *)"Error: unable to open input file"),
+                OUTPUT(("%s (%s)", _ERROR((char *)"unable to open input file"),
                     test->input));
                 return PERFEXPERT_ERROR;
             } else {
@@ -152,8 +147,7 @@ static inline int fork_and_wait(test_t *test, char *argv[]) {
 
             if (-1 == (output_FP = open(test->output, O_CREAT|O_WRONLY|O_APPEND,
                 0644))) {
-                OUTPUT(("%s (%s)",
-                    _ERROR((char *)"Error: unable to open output file"),
+                OUTPUT(("%s (%s)", _ERROR((char *)"unable to open output file"),
                     test->output));
                 return PERFEXPERT_ERROR;
             } else {
@@ -176,13 +170,16 @@ static inline int fork_and_wait(test_t *test, char *argv[]) {
     /* Evaluating the result */
     if (0 > (rc >> 8)) {
         OUTPUT_VERBOSE((7, "   [%s] [%s] >> [%s] (rc=%d)",
-            _BOLDYELLOW((char *)"ERROR"), argv[0], test->info, rc >> 8));
+            _BOLDYELLOW((char *)"ERROR"), argv[0], test->info ? test->info : "",
+            rc >> 8));
     } else if (0 < (rc >> 8)) {
         OUTPUT_VERBOSE((7, "   [%s ] [%s] >> [%s] (rc=%d)",
-            _BOLDRED((char *)"FAIL"), argv[0], test->info, rc >> 8));
+            _BOLDRED((char *)"FAIL"), argv[0], test->info ? test->info : "",
+            rc >> 8));
     } else {
         OUTPUT_VERBOSE((7, "   [ %s  ] [%s] >> [%s] (rc=%d)",
-            _BOLDGREEN((char *)"OK"), argv[0], test->info, rc >> 8));
+            _BOLDGREEN((char *)"OK"), argv[0], test->info ? test->info : "",
+            rc >> 8));
     }
 
     return rc >> 8;

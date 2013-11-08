@@ -57,7 +57,7 @@ int select_recommendations(void) {
     if (SQLITE_OK != sqlite3_exec(globals.db,
         "SELECT id, name, statement FROM recommender_strategy;",
         accumulate_strategies, (void *)&(globals.strategies), &error)) {
-        OUTPUT(("%s %s", _ERROR("Error: SQL error"), error));
+        OUTPUT(("%s %s", _ERROR("SQL error"), error));
         sqlite3_free(error);
         return PERFEXPERT_ERROR;
     }
@@ -68,7 +68,7 @@ int select_recommendations(void) {
     /* Select hotspots */
     if (SQLITE_OK != sqlite3_exec(globals.db, sql, select_recom_hotspot, NULL,
         &error)) {
-        OUTPUT(("%s %s", _ERROR("Error: SQL error"), error));
+        OUTPUT(("%s %s", _ERROR("SQL error"), error));
         sqlite3_free(error);
         return PERFEXPERT_ERROR;
     }
@@ -111,7 +111,7 @@ static int select_recom_hotspot(void *var, int c, char **val, char **names) {
         (int)getpid(), id);
 
     if (SQLITE_OK != sqlite3_exec(globals.db, sql, NULL, NULL, &error)) {
-        OUTPUT(("%s %s", _ERROR("Error: SQL error"), error));
+        OUTPUT(("%s %s", _ERROR("SQL error"), error));
         sqlite3_free(error);
         return PERFEXPERT_ERROR;
     }
@@ -123,7 +123,7 @@ static int select_recom_hotspot(void *var, int c, char **val, char **names) {
         /* ...prepare the SQL statement... */
         if (SQLITE_OK != sqlite3_prepare_v2(globals.db, s->query,
             strlen(s->query), &statement, NULL)) {
-            OUTPUT(("%s %s", _ERROR("Error: SQL error"), error, s->query));
+            OUTPUT(("%s %s", _ERROR("SQL error"), error, s->query));
             sqlite3_free(error);
             return PERFEXPERT_ERROR;
         }
@@ -158,7 +158,7 @@ static int select_recom_hotspot(void *var, int c, char **val, char **names) {
 
             if (SQLITE_OK != sqlite3_exec(globals.db, sql, NULL, NULL,
                 &error)) {
-                OUTPUT(("%s %s", _ERROR("Error: SQL error"), error));
+                OUTPUT(("%s %s", _ERROR("SQL error"), error));
                 sqlite3_free(error);
                 return PERFEXPERT_ERROR;
             }
@@ -170,19 +170,19 @@ static int select_recom_hotspot(void *var, int c, char **val, char **names) {
 
         /* Something went wrong... :-( */
         if (SQLITE_DONE != rc) {
-            OUTPUT(("%s %s", _ERROR("Error: SQL error"), error));
+            OUTPUT(("%s %s", _ERROR("SQL error"), error));
             sqlite3_free(error);
             return PERFEXPERT_ERROR;
         }
 
         /* ...and cleanup the statement! */
         if (SQLITE_OK != sqlite3_reset(statement)) {
-            OUTPUT(("%s %s", _ERROR("Error: SQL error"), error));
+            OUTPUT(("%s %s", _ERROR("SQL error"), error));
             sqlite3_free(error);
             return PERFEXPERT_ERROR;
         }
         if (SQLITE_OK != sqlite3_finalize(statement)) {
-            OUTPUT(("%s %s", _ERROR("Error: SQL error"), error));
+            OUTPUT(("%s %s", _ERROR("SQL error"), error));
             sqlite3_free(error);
             return PERFEXPERT_ERROR;
         }
@@ -195,7 +195,7 @@ static int select_recom_hotspot(void *var, int c, char **val, char **names) {
 
     if (SQLITE_OK != sqlite3_exec(globals.db, sql, perfexpert_database_get_int,
         (void *)&rc, &error)) {
-        OUTPUT(("%s %s", _ERROR("Error: SQL error"), error));
+        OUTPUT(("%s %s", _ERROR("SQL error"), error));
         sqlite3_free(error);
         return PERFEXPERT_ERROR;
     }
@@ -228,7 +228,7 @@ static int select_recom_hotspot(void *var, int c, char **val, char **names) {
         "DESC LIMIT %d;", (int)getpid(), id, globals.rec_count);
 
     if (SQLITE_OK != sqlite3_exec(globals.db, sql, print_recom, NULL, &error)) {
-        OUTPUT(("%s %s", _ERROR("Error: SQL error"), error));
+        OUTPUT(("%s %s", _ERROR("SQL error"), error));
         sqlite3_free(error);
         return PERFEXPERT_ERROR;
     }

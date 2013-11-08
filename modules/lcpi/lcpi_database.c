@@ -70,7 +70,7 @@ int database_export(perfexpert_list_t *profiles) {
     OUTPUT_VERBOSE((5, "%s", _BLUE("Writing profiles to database")));
 
     if (SQLITE_OK != sqlite3_exec(globals.db, sql_table, NULL, NULL, &error)) {
-        OUTPUT(("%s %s", _ERROR("Error: SQL error"), error));
+        OUTPUT(("%s %s", _ERROR("SQL error"), error));
         sqlite3_free(error);
         return PERFEXPERT_ERROR;
     }
@@ -78,7 +78,7 @@ int database_export(perfexpert_list_t *profiles) {
     /* Begin a transaction to improve SQLite performance */
     if (SQLITE_OK != sqlite3_exec(globals.db, "BEGIN TRANSACTION;", NULL, NULL,
         &error)) {
-        OUTPUT(("%s %s", _ERROR("Error: SQL error"), error));
+        OUTPUT(("%s %s", _ERROR("SQL error"), error));
         sqlite3_free(error);
         return PERFEXPERT_ERROR;
     }
@@ -99,7 +99,7 @@ int database_export(perfexpert_list_t *profiles) {
 
                 if (SQLITE_OK != sqlite3_exec(globals.db, sql, NULL, NULL,
                     &error)) {
-                    OUTPUT(("%s %s", _ERROR("Error: SQL error"), error));
+                    OUTPUT(("%s %s", _ERROR("SQL error"), error));
                     sqlite3_free(error);
                     return PERFEXPERT_ERROR;
                 }
@@ -110,7 +110,7 @@ int database_export(perfexpert_list_t *profiles) {
     /* End transaction */
     if (SQLITE_OK != sqlite3_exec(globals.db, "END TRANSACTION;", NULL, NULL,
         &error)) {
-        OUTPUT(("%s %s", _ERROR("Error: SQL error"), error));
+        OUTPUT(("%s %s", _ERROR("SQL error"), error));
         sqlite3_free(error);
         return PERFEXPERT_ERROR;
     }
@@ -126,20 +126,20 @@ int database_import(perfexpert_list_t *profiles, const char *table) {
     /* Select and import profiles */
     OUTPUT_VERBOSE((5, "%s", _YELLOW("Importing profiles")));
     if (PERFEXPERT_SUCCESS != select_profiles(profiles, table)) {
-        OUTPUT(("%s", _ERROR("Error: importing profiles")));
+        OUTPUT(("%s", _ERROR("importing profiles")));
     }
 
     /* For each profile, select and import its modules */
     perfexpert_list_for(p, profiles, lcpi_profile_t) {
         OUTPUT_VERBOSE((5, "%s", _YELLOW("Importing modules")));
         if (PERFEXPERT_SUCCESS != select_modules(p, table)) {
-            OUTPUT(("%s", _ERROR("Error: importing modules")));
+            OUTPUT(("%s", _ERROR("importing modules")));
         }
 
         /* Select and import hotspots */
         OUTPUT_VERBOSE((5, "%s", _YELLOW("Importing hotspots")));
         if (PERFEXPERT_SUCCESS != select_hotspots(&(p->hotspots), table)) {
-            OUTPUT(("%s", _ERROR("Error: importing hotspots")));
+            OUTPUT(("%s", _ERROR("importing hotspots")));
         }
 
         /* Map modules to hotspots */
@@ -147,14 +147,14 @@ int database_import(perfexpert_list_t *profiles, const char *table) {
         perfexpert_list_for(h, &(p->hotspots), lcpi_hotspot_t) {
             if (PERFEXPERT_SUCCESS != map_modules_to_hotspots(h,
                 p->modules_by_name, table)) {
-                OUTPUT(("%s", _ERROR("Error: mapping hotspots <-> modules")));
+                OUTPUT(("%s", _ERROR("mapping hotspots <-> modules")));
             }
         }
 
         /* Calculate metadata (cycles, instructions, relevance, and variance) */
         OUTPUT_VERBOSE((5, "%s", _YELLOW("Calculating metadata")));
         if (PERFEXPERT_SUCCESS != calculate_metadata(p, table)) {
-            OUTPUT(("%s", _ERROR("Error: calculating metadata")));
+            OUTPUT(("%s", _ERROR("calculating metadata")));
         }
     }
 
@@ -172,7 +172,7 @@ static int select_profiles(perfexpert_list_t *profiles, const char *table) {
 
     if (SQLITE_OK != sqlite3_exec(globals.db, sql, import_profiles,
         (void *)profiles, &error)) {
-        OUTPUT(("%s %s", _ERROR("Error: SQL error"), error));
+        OUTPUT(("%s %s", _ERROR("SQL error"), error));
         sqlite3_free(error);
         return PERFEXPERT_ERROR;
     }
@@ -211,7 +211,7 @@ static int select_modules(lcpi_profile_t *profile, const char *table) {
 
     if (SQLITE_OK != sqlite3_exec(globals.db, sql, import_modules,
         (void *)profile, &error)) {
-        OUTPUT(("%s %s", _ERROR("Error: SQL error"), error));
+        OUTPUT(("%s %s", _ERROR("SQL error"), error));
         sqlite3_free(error);
         return PERFEXPERT_ERROR;
     }
@@ -249,7 +249,7 @@ static int select_hotspots(perfexpert_list_t *hotspots, const char *table) {
 
     if (SQLITE_OK != sqlite3_exec(globals.db, sql, import_hotspots,
         (void *)hotspots, &error)) {
-        OUTPUT(("%s %s", _ERROR("Error: SQL error"), error));
+        OUTPUT(("%s %s", _ERROR("SQL error"), error));
         sqlite3_free(error);
         return PERFEXPERT_ERROR;
     }
@@ -300,7 +300,7 @@ static int map_modules_to_hotspots(lcpi_hotspot_t *h, lcpi_module_t *db,
 
     if (SQLITE_OK != sqlite3_exec(globals.db, sql,
         perfexpert_database_get_string, (void *)&module_name, &error)) {
-        OUTPUT(("%s %s", _ERROR("Error: SQL error"), error));
+        OUTPUT(("%s %s", _ERROR("SQL error"), error));
         sqlite3_free(error);
         return PERFEXPERT_ERROR;
     }
@@ -308,7 +308,7 @@ static int map_modules_to_hotspots(lcpi_hotspot_t *h, lcpi_module_t *db,
     perfexpert_hash_find_str(db, perfexpert_md5_string(module_name), h->module);
     PERFEXPERT_DEALLOC(module_name);
     if (NULL == h->module) {
-        OUTPUT(("%s", _ERROR("Error: module not found")));
+        OUTPUT(("%s", _ERROR("module not found")));
         return PERFEXPERT_ERROR;
     }
 
@@ -331,7 +331,7 @@ static int calculate_metadata(lcpi_profile_t *profile, const char *table) {
 
         if (SQLITE_OK != sqlite3_exec(globals.db, sql, import_instructions,
             (void *)h, &error)) {
-            OUTPUT(("%s %s", _ERROR("Error: SQL error"), error));
+            OUTPUT(("%s %s", _ERROR("SQL error"), error));
             sqlite3_free(error);
             return PERFEXPERT_ERROR;
         }
@@ -344,7 +344,7 @@ static int calculate_metadata(lcpi_profile_t *profile, const char *table) {
 
         if (SQLITE_OK != sqlite3_exec(globals.db, sql,
             perfexpert_database_get_double, (void *)&(h->max_inst), &error)) {
-            OUTPUT(("%s %s", _ERROR("Error: SQL error"), error));
+            OUTPUT(("%s %s", _ERROR("SQL error"), error));
             sqlite3_free(error);
             return PERFEXPERT_ERROR;
         }
@@ -357,7 +357,7 @@ static int calculate_metadata(lcpi_profile_t *profile, const char *table) {
 
         if (SQLITE_OK != sqlite3_exec(globals.db, sql,
             perfexpert_database_get_double, (void *)&(h->min_inst), &error)) {
-            OUTPUT(("%s %s", _ERROR("Error: SQL error"), error));
+            OUTPUT(("%s %s", _ERROR("SQL error"), error));
             sqlite3_free(error);
             return PERFEXPERT_ERROR;
         }
@@ -369,7 +369,7 @@ static int calculate_metadata(lcpi_profile_t *profile, const char *table) {
 
         if (SQLITE_OK != sqlite3_exec(globals.db, sql, import_experiment,
             (void *)h, &error)) {
-            OUTPUT(("%s %s", _ERROR("Error: SQL error"), error));
+            OUTPUT(("%s %s", _ERROR("SQL error"), error));
             sqlite3_free(error);
             return PERFEXPERT_ERROR;
         }
@@ -381,7 +381,7 @@ static int calculate_metadata(lcpi_profile_t *profile, const char *table) {
 
         if (SQLITE_OK != sqlite3_exec(globals.db, sql,
             perfexpert_database_get_double, (void *)&(h->cycles), &error)) {
-            OUTPUT(("%s %s", _ERROR("Error: SQL error"), error));
+            OUTPUT(("%s %s", _ERROR("SQL error"), error));
             sqlite3_free(error);
             return PERFEXPERT_ERROR;
         }
@@ -443,7 +443,7 @@ double database_get_hound(const char *name) {
 
     if (SQLITE_OK != sqlite3_exec(globals.db, sql,
         perfexpert_database_get_double, (void *)&value, &error)) {
-        OUTPUT(("%s %s", _ERROR("Error: SQL error"), error));
+        OUTPUT(("%s %s", _ERROR("SQL error"), error));
         sqlite3_free(error);
     }
 
@@ -461,7 +461,7 @@ double database_get_event(const char *name, const char *table, int hotspot_id) {
 
     if (SQLITE_OK != sqlite3_exec(globals.db, sql,
         perfexpert_database_get_double, (void *)&value, &error)) {
-        OUTPUT(("%s %s", _ERROR("Error: SQL error"), error));
+        OUTPUT(("%s %s", _ERROR("SQL error"), error));
         sqlite3_free(error);
     }
 

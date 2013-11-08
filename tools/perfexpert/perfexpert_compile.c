@@ -83,7 +83,7 @@ int compile_program(void) {
     /* If the user chose a Makefile... */
     if (NULL != globals.target) {
         if (PERFEXPERT_SUCCESS != perfexpert_util_file_exists("./Makefile")) {
-            OUTPUT(("%s", _ERROR("Error: Makefile file not found")));
+            OUTPUT(("%s", _ERROR("Makefile file not found")));
             return PERFEXPERT_ERROR;
         }
 
@@ -109,7 +109,7 @@ int compile_program(void) {
         int i;
         printf("%s    %s", PROGRAM_PREFIX, _YELLOW("command line:"));
         for (i = 0; i < argc; i++) {
-            printf(" %s", argv[i]);
+            printf(" %s", argv[i] ? argv[i] : "(null)");
         }
         printf("\n");
     }

@@ -65,7 +65,7 @@ int module_init(void) {
     /* Parse module options */
     if (PERFEXPERT_SUCCESS != parse_module_args(myself_module.argc,
         myself_module.argv)) {
-        OUTPUT(("%s", _ERROR("Error: parsing module arguments")));
+        OUTPUT(("%s", _ERROR("parsing module arguments")));
         return PERFEXPERT_ERROR;
     }
 
@@ -91,7 +91,7 @@ int module_measurements(void) {
         perfexpert_module_available("hpctoolkit");
 
     if (PERFEXPERT_SUCCESS != metrics_generate()) {
-        OUTPUT(("%s", _ERROR("Error: unable to generate LCPI metrics")));
+        OUTPUT(("%s", _ERROR("unable to generate LCPI metrics")));
         return PERFEXPERT_ERROR;
     }
 
@@ -106,31 +106,31 @@ int module_analysis(void) {
 
     if (PERFEXPERT_SUCCESS != database_import(&(my_module_globals.profiles),
         my_module_globals.hpctoolkit->name)) {
-        OUTPUT(("%s", _ERROR("Error: unable to import HPCToolkit profiles")));
+        OUTPUT(("%s", _ERROR("unable to import HPCToolkit profiles")));
         return PERFEXPERT_ERROR;
     }
 
     perfexpert_list_for(p, &(my_module_globals.profiles), lcpi_profile_t) {
         if (PERFEXPERT_SUCCESS != logic_lcpi_compute(p)) {
-            OUTPUT(("%s", _ERROR("Error: unable to compute LCPI")));
+            OUTPUT(("%s", _ERROR("unable to compute LCPI")));
             return PERFEXPERT_ERROR;
         }
     }
 
     if (NULL != my_module_globals.order) {
         if (PERFEXPERT_SUCCESS != hotspot_sort(&(my_module_globals.profiles))) {
-            OUTPUT(("%s", _ERROR("Error: sorting hotspots")));
+            OUTPUT(("%s", _ERROR("sorting hotspots")));
             return PERFEXPERT_ERROR;
         }
     }
 
     if (PERFEXPERT_SUCCESS != output_analysis(&(my_module_globals.profiles))) {
-        OUTPUT(("%s", _ERROR("Error: printing analysis report")));
+        OUTPUT(("%s", _ERROR("printing analysis report")));
         return PERFEXPERT_ERROR;
     }
 
     if (PERFEXPERT_SUCCESS != database_export(&(my_module_globals.profiles))) {
-        OUTPUT(("%s", _ERROR("Error: writing metrics to database")));
+        OUTPUT(("%s", _ERROR("writing metrics to database")));
         return PERFEXPERT_ERROR;
     }
 

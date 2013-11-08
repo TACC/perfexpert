@@ -64,6 +64,11 @@ static inline int perfexpert_util_make_path(const char *path) {
     struct stat sb;
     int nmode = 0755;
 
+    if (NULL == path) {
+        OUTPUT(("%s", _ERROR((char *)"path is NULL")));
+        return PERFEXPERT_ERROR;
+    }
+
     /* Check if we can create such directory */
     if (0 == stat(path, &sb)) {
         if (0 == S_ISDIR(sb.st_mode)) {
@@ -125,6 +130,11 @@ static inline int perfexpert_util_make_path(const char *path) {
 static inline int perfexpert_util_dir_exists(const char *dir) {
     struct stat sb;
 
+    if (NULL == dir) {
+        OUTPUT(("%s", _ERROR((char *)"dir is NULL")));
+        return PERFEXPERT_ERROR;
+    }
+
     if (0 != stat(dir, &sb)) {
         OUTPUT_VERBOSE((1, "%s (%s)",
             _RED((char *)"directory not found or you do not have permissions"),
@@ -143,6 +153,11 @@ static inline int perfexpert_util_dir_exists(const char *dir) {
 static inline int perfexpert_util_remove_dir(const char *dir) {
     char *command = NULL;
 
+    if (NULL == dir) {
+        OUTPUT(("%s", _ERROR((char *)"dir is NULL")));
+        return PERFEXPERT_ERROR;
+    }
+
     if (PERFEXPERT_SUCCESS != perfexpert_util_dir_exists(dir)) {
         return PERFEXPERT_ERROR;
     }
@@ -160,6 +175,11 @@ static inline int perfexpert_util_remove_dir(const char *dir) {
 
 /* perfexpert_util_file_exists */
 static inline int perfexpert_util_file_exists(const char *file) {
+    if (NULL == file) {
+        OUTPUT(("%s", _ERROR((char *)"file is NULL")));
+        return PERFEXPERT_ERROR;
+    }
+
     if (0 != access(file, F_OK)) {
         OUTPUT_VERBOSE((10, "%s (%s)", _RED((char *)"file not found"), file));
         return PERFEXPERT_ERROR;
@@ -169,6 +189,11 @@ static inline int perfexpert_util_file_exists(const char *file) {
 
 /* perfexpert_util_file_is_exec */
 static inline int perfexpert_util_file_is_exec(const char *file) {
+    if (NULL == file) {
+        OUTPUT(("%s", _ERROR((char *)"file is NULL")));
+        return PERFEXPERT_ERROR;
+    }
+
     if (0 != access(file, X_OK)) {
         OUTPUT_VERBOSE((10, "%s (%s)",
             _RED((char *)"file is not executable or does not exist"), file));
@@ -178,11 +203,16 @@ static inline int perfexpert_util_file_is_exec(const char *file) {
 }
 
 /* perfexpert_util_filename_only */
-static inline int perfexpert_util_filename_only(const char *all, char **only) {
+static inline int perfexpert_util_filename_only(const char *file, char **only) {
     char *local_copy = NULL, *token = NULL, *last = NULL;
 
-    PERFEXPERT_ALLOC(char, local_copy, (strlen(all) + 1));
-    strcpy(local_copy, all);
+    if (NULL == file) {
+        OUTPUT(("%s", _ERROR((char *)"file is NULL")));
+        return PERFEXPERT_ERROR;
+    }
+
+    PERFEXPERT_ALLOC(char, local_copy, (strlen(file) + 1));
+    strcpy(local_copy, file);
 
     token = strtok(local_copy, "/");
     while (token = strtok(NULL, "/")) {
@@ -190,7 +220,7 @@ static inline int perfexpert_util_filename_only(const char *all, char **only) {
     }
 
     if (NULL == last) {
-        *only = (char *)all;
+        *only = (char *)file;
     } else {
         PERFEXPERT_ALLOC(char, token, (strlen(last) + 1));
         strcpy(token, last);
@@ -206,8 +236,13 @@ static inline int perfexpert_util_filename_only(const char *all, char **only) {
 static inline int perfexpert_util_path_only(const char *file, char **path) {
     char *prog = NULL, *my_path = NULL, *resolved_path = NULL;
 
+    if (NULL == file) {
+        OUTPUT(("%s", _ERROR((char *)"file is NULL")));
+        return PERFEXPERT_ERROR;
+    }
+
     if (PERFEXPERT_SUCCESS != perfexpert_util_filename_only(file, &prog)) {
-        OUTPUT(("%s", _ERROR((char *)"Error: unable to extract path")));
+        OUTPUT(("%s", _ERROR((char *)"unable to extract path")));
         return PERFEXPERT_ERROR;
     }
 
@@ -258,6 +293,16 @@ static inline int perfexpert_util_file_copy(const char *to, const char *from) {
     int fd_to = 0, fd_from = 0, saved_errno = 0;
     char buffer[1024];
     ssize_t nread = 0;
+
+    if (NULL == to) {
+        OUTPUT(("%s", _ERROR((char *)"destination file is NULL")));
+        return PERFEXPERT_ERROR;
+    }
+    if (NULL == from) {
+        OUTPUT(("%s", _ERROR((char *)"origin file is NULL")));
+        return PERFEXPERT_ERROR;
+    }
+
 
     fd_from = open(from, O_RDONLY);
     if (0 > fd_from) {
@@ -311,6 +356,11 @@ static inline int perfexpert_util_file_print(const char *file) {
     FILE *file_FP = NULL;
     char buffer[1024];
     size_t nread = 0;
+
+    if (NULL == file) {
+        OUTPUT(("%s", _ERROR((char *)"file is NULL")));
+        return PERFEXPERT_ERROR;
+    }
 
     if (PERFEXPERT_SUCCESS != perfexpert_util_file_exists(file)) {
         return PERFEXPERT_ERROR;

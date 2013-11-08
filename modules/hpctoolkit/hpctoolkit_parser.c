@@ -52,21 +52,20 @@ int parse_file(const char *file) {
 
     /* Open file */
     if (NULL == (document = xmlParseFile(file))) {
-        OUTPUT(("%s", _ERROR("Error: malformed XML document")));
+        OUTPUT(("%s", _ERROR("malformed XML document")));
         return PERFEXPERT_ERROR;
     }
 
     /* Check if it is not empty */
     if (NULL == (node = xmlDocGetRootElement(document))) {
-        OUTPUT(("%s", _ERROR("Error: empty XML document")));
+        OUTPUT(("%s", _ERROR("empty XML document")));
         xmlFreeDoc(document);
         return PERFEXPERT_ERROR;
     }
 
     /* Check if it is a HPCToolkit experiment file */
     if (xmlStrcmp(node->name, (const xmlChar *)"HPCToolkitExperiment")) {
-        OUTPUT(("%s (%s)",
-            _ERROR("Error: file is not a valid HPCToolkit experiment"), file));
+        OUTPUT(("%s (%s)", _ERROR("not a valid HPCToolkit experiment"), file));
         xmlFreeDoc(document);
         return PERFEXPERT_ERROR;
     } else {
@@ -77,7 +76,7 @@ int parse_file(const char *file) {
     /* Parse the document */
     if (PERFEXPERT_SUCCESS != parse_profile(document, node->xmlChildrenNode,
         &(myself_module.profiles), NULL, NULL, 0)) {
-        OUTPUT(("%s", _ERROR("Error: unable to parse experiment file")));
+        OUTPUT(("%s", _ERROR("unable to parse experiment file")));
         xmlFreeDoc(document);
         return PERFEXPERT_ERROR;
     }
@@ -133,7 +132,7 @@ static int parse_profile(xmlDocPtr document, xmlNodePtr node,
             /* Call the call path profile parser */
             if (PERFEXPERT_SUCCESS != parse_profile(document,
                 node->xmlChildrenNode, profiles, profile, parent, loopdepth)) {
-                OUTPUT(("%s (%s)", _ERROR("Error: unable to parse profile"),
+                OUTPUT(("%s (%s)", _ERROR("unable to parse profile"),
                     xmlGetProp(node, "n")));
                 return PERFEXPERT_ERROR;
             }
@@ -212,7 +211,7 @@ static int parse_profile(xmlDocPtr document, xmlNodePtr node,
 
                 if (PERFEXPERT_SUCCESS != perfexpert_util_filename_only(
                     module->name, &(module->shortname))) {
-                    OUTPUT(("%s", _ERROR("Error: unable to find shortname")));
+                    OUTPUT(("%s", _ERROR("unable to find shortname")));
                     return PERFEXPERT_ERROR;
                 }
 
@@ -237,7 +236,7 @@ static int parse_profile(xmlDocPtr document, xmlNodePtr node,
 
                 if (PERFEXPERT_SUCCESS != perfexpert_util_filename_only(
                     file->name, &(file->shortname))) {
-                    OUTPUT(("%s", _ERROR("Error: unable to find shortname")));
+                    OUTPUT(("%s", _ERROR("unable to find shortname")));
                     return PERFEXPERT_ERROR;
                 }
 
@@ -292,7 +291,7 @@ static int parse_profile(xmlDocPtr document, xmlNodePtr node,
                 (NULL == xmlGetProp(node, "l")) ||
                 (NULL == xmlGetProp(node, "lm")) ||
                 (NULL == xmlGetProp(node, "i"))) {
-                OUTPUT(("%s", _ERROR("Error: malformed callpath")));
+                OUTPUT(("%s", _ERROR("malformed callpath")));
                 return PERFEXPERT_ERROR;
             }
 
@@ -306,7 +305,7 @@ static int parse_profile(xmlDocPtr document, xmlNodePtr node,
             temp_int = atoi(xmlGetProp(node, "f"));
             perfexpert_hash_find_int(profile->files_by_id, &temp_int, file);
             if (NULL == file) {
-                OUTPUT_VERBOSE((10, "%s", _ERROR("Error: unknown file")));
+                OUTPUT_VERBOSE((10, "%s", _ERROR("unknown file")));
                 return PERFEXPERT_ERROR;
             }
 
@@ -314,7 +313,7 @@ static int parse_profile(xmlDocPtr document, xmlNodePtr node,
             temp_int = atoi(xmlGetProp(node, "lm"));
             perfexpert_hash_find_int(profile->modules_by_id, &temp_int, module);
             if (NULL == module) {
-                OUTPUT_VERBOSE((10, "%s", _ERROR("Error: unknown module")));
+                OUTPUT_VERBOSE((10, "%s", _ERROR("unknown module")));
                 return PERFEXPERT_ERROR;
             }
 
@@ -323,7 +322,7 @@ static int parse_profile(xmlDocPtr document, xmlNodePtr node,
             perfexpert_hash_find_int(profile->procedures_by_id, &temp_int,
                 procedure);
             if (NULL == procedure) {
-                OUTPUT_VERBOSE((10, "%s", _ERROR("Error: unknown procedure")));
+                OUTPUT_VERBOSE((10, "%s", _ERROR("unknown procedure")));
                 PERFEXPERT_DEALLOC(callpath);
                 return PERFEXPERT_ERROR;
             } else {
@@ -331,19 +330,19 @@ static int parse_profile(xmlDocPtr document, xmlNodePtr node,
                 if ((procedure->line != atoi(xmlGetProp(node, "l"))) &&
                     (-1 != procedure->line)) {
                     OUTPUT_VERBOSE((10, "%s",
-                        _ERROR("Error: procedure line doesn't match")));
+                        _ERROR("procedure line doesn't match")));
                     return PERFEXPERT_ERROR;
                 }
                 if ((file->id != atoi(xmlGetProp(node, "f"))) &&
                     (NULL != procedure->file)) {
                     OUTPUT_VERBOSE((10, "%s",
-                        _ERROR("Error: procedure file doesn't match")));
+                        _ERROR("procedure file doesn't match")));
                     return PERFEXPERT_ERROR;
                 }
                 if ((module->id != atoi(xmlGetProp(node, "lm"))) &&
                     (NULL != procedure->module)) {
                     OUTPUT_VERBOSE((10, "%s",
-                        _ERROR("Error: procedure module doesn't match")));
+                        _ERROR("procedure module doesn't match")));
                     return PERFEXPERT_ERROR;
                 }
 
@@ -377,7 +376,7 @@ static int parse_profile(xmlDocPtr document, xmlNodePtr node,
             /* Keep Walking! (Johnny Walker) */
             if (PERFEXPERT_SUCCESS != parse_profile(document,
                 node->xmlChildrenNode, profiles, profile, callpath, loopdepth)) {
-                OUTPUT(("%s", _ERROR("Error: unable to parse children")));
+                OUTPUT(("%s", _ERROR("unable to parse children")));
                 return PERFEXPERT_ERROR;
             }
         }
@@ -394,7 +393,7 @@ static int parse_profile(xmlDocPtr document, xmlNodePtr node,
             if ((NULL == xmlGetProp(node, "s")) ||
                 (NULL == xmlGetProp(node, "i")) ||
                 (NULL == xmlGetProp(node, "l"))) {
-                OUTPUT(("%s", _ERROR("Error: malformed loop")));
+                OUTPUT(("%s", _ERROR("malformed loop")));
             }
 
             /* Alocate callpath and initialize it */
@@ -477,7 +476,7 @@ static int parse_profile(xmlDocPtr document, xmlNodePtr node,
             /* Keep Walking! (Johnny Walker) */
             if (PERFEXPERT_SUCCESS != parse_profile(document,
                 node->xmlChildrenNode, profiles, profile, callpath, loopdepth)) {
-                OUTPUT(("%s", _ERROR("Error: unable to parse children")));
+                OUTPUT(("%s", _ERROR("unable to parse children")));
                 return PERFEXPERT_ERROR;
             }
         }
@@ -490,12 +489,12 @@ static int parse_profile(xmlDocPtr document, xmlNodePtr node,
             /* Just to be sure it will work */
             if ((NULL == xmlGetProp(node, "n")) ||
                 (NULL == xmlGetProp(node, "v"))) {
-                OUTPUT(("%s", _ERROR("Error: malformed metric")));
+                OUTPUT(("%s", _ERROR("malformed metric")));
             }
 
             /* Are we in the callpath? */
             if (NULL == parent) {
-                OUTPUT(("%s", _ERROR("Error: metric outside callpath")));
+                OUTPUT(("%s", _ERROR("metric outside callpath")));
                 return PERFEXPERT_ERROR;
             }
 
@@ -504,12 +503,13 @@ static int parse_profile(xmlDocPtr document, xmlNodePtr node,
             perfexpert_hash_find_int(profile->metrics_by_id, &temp_int,
                 metric_entry);
             if (NULL == metric_entry) {
-                OUTPUT_VERBOSE((10, "%s", _ERROR("Error: unknown metric")));
+                OUTPUT_VERBOSE((10, "%s", _ERROR("unknown metric")));
                 return PERFEXPERT_ERROR;
             }
 
             /* Alocate metric and initialize it */
-            PERFEXPERT_ALLOC(hpctoolkit_metric_t, metric, sizeof(hpctoolkit_metric_t));
+            PERFEXPERT_ALLOC(hpctoolkit_metric_t, metric,
+                sizeof(hpctoolkit_metric_t));
             metric->id = metric_entry->id;
             metric->name = metric_entry->name;
             metric->thread = metric_entry->thread;
@@ -538,7 +538,7 @@ static int parse_profile(xmlDocPtr document, xmlNodePtr node,
             (!xmlStrcmp(node->name, (const xmlChar *)"C"))) {
             if (PERFEXPERT_SUCCESS != parse_profile(document,
                 node->xmlChildrenNode, profiles, profile, parent, loopdepth)) {
-                OUTPUT(("%s", _ERROR("Error: unable to parsing children")));
+                OUTPUT(("%s", _ERROR("unable to parsing children")));
                 return PERFEXPERT_ERROR;
             }
         }

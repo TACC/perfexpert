@@ -49,7 +49,7 @@ int macpo_inst_all(void) {
         "%llu", globals.unique_id);
 
     if (SQLITE_OK != sqlite3_exec(globals.db, sql, macpo_inst, NULL, &error)) {
-        OUTPUT(("%s %s", _ERROR("Error: SQL error"), error));
+        OUTPUT(("%s %s", _ERROR("SQL error"), error));
         sqlite3_free(error);
         return PERFEXPERT_ERROR;
     }

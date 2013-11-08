@@ -63,7 +63,7 @@ int main(int argc, char** argv) {
 
     /* Parse command-line parameters */
     if (PERFEXPERT_SUCCESS != parse_cli_params(argc, argv)) {
-        OUTPUT(("%s", _ERROR("Error: parsing command line arguments")));
+        OUTPUT(("%s", _ERROR("parsing command line arguments")));
         return PERFEXPERT_ERROR;
     }
 
@@ -73,7 +73,7 @@ int main(int argc, char** argv) {
             globals.outputfile));
         globals.outputfile_FP = fopen(globals.outputfile, "w+");
         if (NULL == globals.outputfile_FP) {
-            OUTPUT(("%s (%s)", _ERROR("Error: unable to open output file"),
+            OUTPUT(("%s (%s)", _ERROR("unable to open output file"),
                 globals.outputfile));
             goto CLEANUP;
         }
@@ -87,8 +87,8 @@ int main(int argc, char** argv) {
             globals.outputmetrics));
         globals.outputmetrics_FP = fopen(globals.outputmetrics, "w+");
         if (NULL == globals.outputmetrics_FP) {
-            OUTPUT(("%s (%s)", _ERROR("Error: unable to open code transformer "
-                "output file"), globals.outputmetrics));
+            OUTPUT(("%s (%s)", _ERROR("unable to open output file"),
+                globals.outputmetrics));
             goto CLEANUP;
         }
     }
@@ -96,13 +96,13 @@ int main(int argc, char** argv) {
     /* Connect to database */
     if (PERFEXPERT_SUCCESS != perfexpert_database_connect(&(globals.db),
         globals.dbfile)) {
-        OUTPUT(("%s", _ERROR("Error: connecting to database")));
+        OUTPUT(("%s", _ERROR("connecting to database")));
         goto CLEANUP;
     }
 
     /* Select recommendations */
     if (PERFEXPERT_SUCCESS != select_recommendations()) {
-        OUTPUT(("%s", _ERROR("Error: selecting recommendations")));
+        OUTPUT(("%s", _ERROR("selecting recommendations")));
         goto CLEANUP;
     }
 

@@ -45,7 +45,7 @@ int parse_module_args(int argc, char *argv[]) {
 
     /* If some environment variable is defined, use it! */
     if (PERFEXPERT_SUCCESS != parse_env_vars()) {
-        OUTPUT(("%s", _ERROR("Error: parsing environment variables")));
+        OUTPUT(("%s", _ERROR("parsing environment variables")));
         return PERFEXPERT_ERROR;
     }
 
@@ -56,7 +56,7 @@ int parse_module_args(int argc, char *argv[]) {
     if (((0 >= my_module_globals.threshold) ||
         (1 < my_module_globals.threshold)) &&
         (PERFEXPERT_FALSE == my_module_globals.help_only)) {
-        OUTPUT(("%s", _ERROR("Error: invalid threshold")));
+        OUTPUT(("%s", _ERROR("invalid threshold")));
         return PERFEXPERT_ERROR;
     }
 

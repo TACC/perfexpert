@@ -85,7 +85,7 @@ int extract_fragment(fragment_t *fragment) {
         (strlen(globals.workdir) + strlen(FRAGMENTS_DIR) + 2));
     sprintf(fragments_dir, "%s/%s", globals.workdir, FRAGMENTS_DIR);
     if (PERFEXPERT_ERROR == perfexpert_util_make_path(fragments_dir)) {
-        OUTPUT(("%s", _ERROR((char *)"Error: cannot create fragments dir")));
+        OUTPUT(("%s", _ERROR((char *)"cannot create fragments dir")));
         PERFEXPERT_DEALLOC(fragments_dir);
         return PERFEXPERT_ERROR;
     } else {

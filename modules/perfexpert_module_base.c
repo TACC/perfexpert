@@ -82,7 +82,7 @@ int perfexpert_module_load(const char *name) {
     /* Link the basic module interface symbol */
     module = (perfexpert_module_t *)lt_dlsym(modulehandle, "myself_module");
     if (NULL == module) {
-        OUTPUT(("%s", _ERROR("Error: 'myself_module' symbol not found")));
+        OUTPUT(("%s", _ERROR("'myself_module' symbol not found")));
         goto MODULE_ERROR;
     }
 
@@ -94,25 +94,25 @@ int perfexpert_module_load(const char *name) {
 
     module->version = (char *)lt_dlsym(modulehandle, "module_version");
     if (NULL == module->version) {
-        OUTPUT(("%s", _ERROR("Error: 'module_version' symbol not found")));
+        OUTPUT(("%s", _ERROR("'module_version' symbol not found")));
         goto MODULE_ERROR;
     }
 
     module->load = lt_dlsym(modulehandle, "module_load");
     if (NULL == module->load) {
-        OUTPUT(("%s", _ERROR("Error: 'module_load()' not found")));
+        OUTPUT(("%s", _ERROR("'module_load()' not found")));
         goto MODULE_ERROR;
     }
 
     module->init = lt_dlsym(modulehandle, "module_init");
     if (NULL == module->init) {
-        OUTPUT(("%s", _ERROR("Error: 'module_init()' not found")));
+        OUTPUT(("%s", _ERROR("'module_init()' not found")));
         goto MODULE_ERROR;
     }
 
     module->fini = lt_dlsym(modulehandle, "module_fini");
     if (NULL == module->fini) {
-        OUTPUT(("%s", _ERROR("Error: 'module_fini()' not found")));
+        OUTPUT(("%s", _ERROR("'module_fini()' not found")));
         goto MODULE_ERROR;
     }
 
@@ -210,12 +210,12 @@ static lt_dlhandle perfexpert_module_open(const char *name) {
 
     /* Initialize LIBTOOL */
     if (0 != lt_dlinit()) {
-        OUTPUT(("%s [%s]", _ERROR("Error: unable to initialize libtool"),
+        OUTPUT(("%s [%s]", _ERROR("unable to initialize libtool"),
             lt_dlerror()));
         return NULL;
     }
     if (0 != lt_dlsetsearchpath(PERFEXPERT_LIBDIR)) {
-        OUTPUT(("%s [%s]", _ERROR("Error: unable to set libtool search path"),
+        OUTPUT(("%s [%s]", _ERROR("unable to set libtool search path"),
             lt_dlerror()));
         return NULL;
     }
@@ -232,8 +232,8 @@ static lt_dlhandle perfexpert_module_open(const char *name) {
     handle = lt_dlopenext(filename);
 
     if (NULL == handle) {
-        OUTPUT(("%s [%s] [%s] %s", _ERROR("Error: cannot load module"),
-            filename, lt_dlerror(), PERFEXPERT_LIBDIR));
+        OUTPUT(("%s [%s] [%s] %s", _ERROR("cannot load module"), filename,
+            lt_dlerror(), PERFEXPERT_LIBDIR));
         goto MODULE_ERROR;
     }
     PERFEXPERT_DEALLOC(filename);
@@ -286,7 +286,7 @@ int perfexpert_module_set_option(const char *module, const char *option) {
     }
 
     if (PERFEXPERT_SUCCESS != perfexpert_module_load(module)) {
-        OUTPUT(("%s [%s]", _ERROR("Error: while adding module"), module));
+        OUTPUT(("%s [%s]", _ERROR("while adding module"), module));
         return PERFEXPERT_ERROR;
     }
     goto SEARCH_MODULE;
@@ -302,8 +302,7 @@ int perfexpert_module_init(void) {
         perfexpert_ordered_module_t) {
         if (NULL == (m = perfexpert_module_available(om->name))) {
             if (PERFEXPERT_SUCCESS != perfexpert_module_load(om->name)) {
-                OUTPUT(("%s [%s]", _ERROR("Error: while adding module"),
-                    om->name));
+                OUTPUT(("%s [%s]", _ERROR("while adding module"), om->name));
                 return PERFEXPERT_ERROR;
             }
             m = perfexpert_module_available(om->name);
@@ -325,8 +324,7 @@ int perfexpert_module_init(void) {
         perfexpert_ordered_module_t) {
         if (NULL == (m = perfexpert_module_available(om->name))) {
             if (PERFEXPERT_SUCCESS != perfexpert_module_load(om->name)) {
-                OUTPUT(("%s [%s]", _ERROR("Error: while adding module"),
-                    om->name));
+                OUTPUT(("%s [%s]", _ERROR("while adding module"), om->name));
                 return PERFEXPERT_ERROR;
             }
             m = perfexpert_module_available(om->name);
@@ -348,8 +346,7 @@ int perfexpert_module_init(void) {
         perfexpert_ordered_module_t) {
         if (NULL == (m = perfexpert_module_available(om->name))) {
             if (PERFEXPERT_SUCCESS != perfexpert_module_load(om->name)) {
-                OUTPUT(("%s [%s]", _ERROR("Error: while adding module"),
-                    om->name));
+                OUTPUT(("%s [%s]", _ERROR("while adding module"), om->name));
                 return PERFEXPERT_ERROR;
             }
             m = perfexpert_module_available(om->name);
@@ -374,14 +371,13 @@ int perfexpert_module_init(void) {
         }
 
         if (PERFEXPERT_MODULE_LOADED != m->status) {
-            OUTPUT(("%s [%s]", _ERROR("Error: module status different from"
+            OUTPUT(("%s [%s]", _ERROR("module status different from"
                 "PERFEXPERT_MODULE_LOADED"), m->name));
             return PERFEXPERT_ERROR;
         }
 
         if (PERFEXPERT_SUCCESS != m->init()) {
-            OUTPUT(("%s [%s]", _ERROR("Error: while initializing module"),
-                m->name));
+            OUTPUT(("%s [%s]", _ERROR("while initializing module"), m->name));
             return PERFEXPERT_ERROR;
         }
 
@@ -427,14 +423,13 @@ int perfexpert_module_fini(void) {
         }
 
         if (PERFEXPERT_MODULE_INITIALIZED != m->status) {
-            OUTPUT(("%s [%s]", _ERROR("Error: module status different from"
+            OUTPUT(("%s [%s]", _ERROR("module status different from"
                 "PERFEXPERT_MODULE_INITIALIZED"), m->name));
             return PERFEXPERT_ERROR;
         }
 
         if (PERFEXPERT_SUCCESS != m->fini()) {
-            OUTPUT(("%s [%s]", _ERROR("Error: while finalizing module"),
-                m->name));
+            OUTPUT(("%s [%s]", _ERROR("while finalizing module"), m->name));
             return PERFEXPERT_ERROR;
         }
 
@@ -453,13 +448,13 @@ int perfexpert_module_compile(void) {
     perfexpert_list_for(m, &(module_globals.compile),
         perfexpert_ordered_module_t) {
         if (PERFEXPERT_MODULE_INITIALIZED != m->module->status) {
-            OUTPUT(("%s [%s]", _ERROR("Error: module status different from "
+            OUTPUT(("%s [%s]", _ERROR("module status different from "
                 "PERFEXPERT_MODULE_INITIALIZED"), m->module->name));
             return PERFEXPERT_ERROR;
         }
 
         if (PERFEXPERT_SUCCESS != m->module->compile()) {
-            OUTPUT(("%s [%s]", _ERROR("Error: compiling"), m->module->name));
+            OUTPUT(("%s [%s]", _ERROR("compiling"), m->module->name));
             return PERFEXPERT_ERROR;
         }
     }
@@ -474,13 +469,13 @@ int perfexpert_module_measurements(void) {
     perfexpert_list_for(m, &(module_globals.measurements),
         perfexpert_ordered_module_t) {
         if (PERFEXPERT_MODULE_INITIALIZED != m->module->status) {
-            OUTPUT(("%s [%s]", _ERROR("Error: module status different from "
+            OUTPUT(("%s [%s]", _ERROR("module status different from "
                 "PERFEXPERT_MODULE_INITIALIZED"), m->module->name));
             return PERFEXPERT_ERROR;
         }
 
         if (PERFEXPERT_SUCCESS != m->module->measurements()) {
-            OUTPUT(("%s [%s]", _ERROR("Error: collecting measurements"),
+            OUTPUT(("%s [%s]", _ERROR("collecting measurements"),
                 m->module->name));
             return PERFEXPERT_ERROR;
         }
@@ -496,13 +491,13 @@ int perfexpert_module_analysis(void) {
     perfexpert_list_for(m, &(module_globals.analysis),
         perfexpert_ordered_module_t) {
         if (PERFEXPERT_MODULE_INITIALIZED != m->module->status) {
-            OUTPUT(("%s [%s]", _ERROR("Error: module status different from "
+            OUTPUT(("%s [%s]", _ERROR("module status different from "
                 "PERFEXPERT_MODULE_INITIALIZED"), m->module->name));
             return PERFEXPERT_ERROR;
         }
 
         if (PERFEXPERT_SUCCESS != m->module->analysis()) {
-            OUTPUT(("%s [%s]", _ERROR("Error: analysing"), m->module->name));
+            OUTPUT(("%s [%s]", _ERROR("analysing"), m->module->name));
             return PERFEXPERT_ERROR;
         }
     }

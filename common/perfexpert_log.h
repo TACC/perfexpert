@@ -60,12 +60,10 @@ extern "C" {
 /* perfexpert_log */
 static void perfexpert_log(const char *format, ...) {
     va_list arglist;
-    FILE    *logfile_FP;
-    char    *str = NULL;
-    char    temp_str[MAX_LOG_ENTRY];
-    char    logfile[MAX_BUFFER_SIZE];
-    time_t  now_time;
-    char    *longdate;
+    char *str = NULL, temp_str[MAX_LOG_ENTRY], logfile[MAX_BUFFER_SIZE],
+        *longdate = NULL;
+    FILE *logfile_FP;
+    time_t now_time;
 
     time(&now_time);
     longdate = asctime(localtime(&now_time));

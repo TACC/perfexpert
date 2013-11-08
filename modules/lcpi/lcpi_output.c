@@ -109,7 +109,7 @@ int output_analysis(perfexpert_list_t *profiles) {
             if (my_module_globals.threshold <= h->importance) {
                 if (PERFEXPERT_SUCCESS != output_profile(h)) {
                     OUTPUT(("%s (%s)",
-                        _ERROR("Error: printing hotspot analysis"), h->name));
+                        _ERROR("printing hotspot analysis"), h->name));
                     return PERFEXPERT_ERROR;
                 }
             }

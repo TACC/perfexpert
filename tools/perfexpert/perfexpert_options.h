@@ -106,13 +106,13 @@ static struct argp_option options[] = {
     { 0 }
 };
 
-static char args_doc[] = "THRESHOLD PROGRAM [PROGRAM ARGUMENTS]";
+static char args_doc[] = "[THRESHOLD] PROGRAM [PROGRAM ARGUMENTS]";
 static char doc[] = "\nPerfExpert -- an easy-to-use automatic performance "
     "diagnosis and optimization\n              tool for HPC applications\n\n"
     "  THRESHOLD           Threshold (relevance % of runtime) to take hotspots "
     "into\n                      consideration (range: fraction value between 0"
     " and 1,\n                      translated to --module-option=lcpi,"
-    "threshold=VALUE)\n"
+    "threshold=VALUE,\n                      ignored if out of range)\n"
     "  PROGRAM             Program (binary) to analyze (do not use shell "
     "scripts)\n"
     "  PROGRAM ARGUMENTS   Program arguments, see documentation if any argument"
