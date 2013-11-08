@@ -526,8 +526,8 @@ AC_SUBST([ENABLE_RECOMMENDER])
 #------------------------------------------------------------------------------
 # 'macpo' requirements
 #
-AC_ARG_ENABLE([macpo], [AS_HELP_STRING([--disable-macpo],
-        [disable MACPO, a data-centric measurement and analysis tool])],
+AC_ARG_ENABLE([macpo], [AS_HELP_STRING([--disable-macpo], [disable MACPO tool
+and module (data-centric instrumentation, measurement, and analysis)])],
     [ENABLE_MACPO=$enableval], [ENABLE_MACPO=yes])
 
 AC_ARG_WITH([jvm],
@@ -536,7 +536,7 @@ AC_ARG_WITH([jvm],
 
 AC_LANG_PUSH([C++])
 
-AC_MSG_CHECKING([whether to enable MACPO])
+AC_MSG_CHECKING([whether to enable MACPO tool and MACPO module])
 AS_IF([test x"$ENABLE_MACPO" = xyes], [
     AC_MSG_RESULT([yes])
 
@@ -563,10 +563,12 @@ AS_IF([test x"$ENABLE_MACPO" = xyes], [
 
     ENABLE_MACPO=macpo
     ENABLED_TOOLS+="macpo "
+    ENABLED_MODULES+="macpo "
     AC_CONFIG_FILES([tools/macpo/Makefile])
     AC_CONFIG_FILES([tools/macpo/macpo.sh], [chmod +x tools/macpo/macpo.sh])
     AC_CONFIG_FILES([tools/macpo/libmrt/Makefile])
     AC_CONFIG_FILES([tools/macpo/analyze/Makefile])
+    AC_CONFIG_FILES([modules/macpo/Makefile])
 ], [
     AC_MSG_RESULT([no])
     ENABLE_MACPO=
