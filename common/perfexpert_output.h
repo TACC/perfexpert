@@ -87,22 +87,61 @@ extern "C" {
 #define COLOR_WHITE   7
 
 /* colorful (never call this function directly ) */
-static inline char* colorful(int attr, int fg, int bg, char* str) {
+static inline char* colorful(int attr, int fg, int bg, char *s) {
     if (PERFEXPERT_TRUE == globals.colorful) {
         static char *colored;
+        static int size;
 
-        colored = (char *)realloc(colored, strlen(str) + 15);
-        bzero(colored, strlen(str) + 15);
-        sprintf(colored, "\x1b[%d;%d;%dm%s\x1b[0m", attr, fg+30, bg+40, str);
+        if ((strlen(s) + 15) > size) {
+            colored = (char *)realloc(colored, (strlen(s) + 15));
+            size = strlen(s) + 15;
+        }
+        bzero(colored, size);
+        sprintf(colored, "\x1b[%d;%d;%dm%s\x1b[0m", attr, fg + 30, bg + 40, s);
 
         return colored;
     } else {
-        return str;
+        return s;
+    }
+}
+
+/* colorful_err (never call this function directly ) */
+static inline char* colorful_err(int attr, int fg, int bg, const char *s,
+    const char *file, int line, const char *function) {
+    if (PERFEXPERT_TRUE == globals.colorful) {
+        static char *colored_err;
+        static int size = 0;
+
+        if ((strlen(s) + strlen(file) + strlen(function) + 25) > size) {
+            colored_err = (char *)realloc(colored_err,
+                (strlen(s) + strlen(file) + strlen(function) + 25));
+            size = strlen(s) + 25;
+        }
+        bzero(colored_err, size);
+        sprintf(colored_err, "[%s@%s:%d] \x1b[%d;%d;%dm%s\x1b[0m", function,
+            file, line, attr, fg + 30, bg + 40, s);
+
+        return colored_err;
+    } else {
+        static char *err;
+        static int size;
+
+        if ((strlen(s) + strlen(file) + strlen(function) + 10) > size) {
+            err = (char *)realloc(err,
+                (strlen(s) + strlen(file) + strlen(function) + 25));
+            size = strlen(s) + 10;
+        }
+        bzero(err, size);
+        sprintf(err, "[%s@%s:%d] %s", function, file, line, s);
+
+        return err;
     }
 }
 
 /* Use all your artistic side to combine the color as you prefer */
-#define _ERROR(a)      colorful(ATTR_BLINK,  COLOR_RED,     COLOR_BLACK, a)
+#define _ERROR(a) colorful_err(ATTR_BRIGHT, COLOR_RED, COLOR_BLACK, a, \
+    __FILE__, __LINE__, __func__)
+
 #define _RED(a)        colorful(ATTR_NONE,   COLOR_RED,     COLOR_BLACK, a)
 #define _GREEN(a)      colorful(ATTR_NONE,   COLOR_GREEN,   COLOR_BLACK, a)
 #define _YELLOW(a)     colorful(ATTR_NONE,   COLOR_YELLOW,  COLOR_BLACK, a)
@@ -128,7 +167,7 @@ static inline void output(const char *format, ...) {
 
     temp_str = (char *)malloc(total_len);
     if (NULL == temp_str) {
-        printf("%s Error: out of memory\n", PROGRAM_PREFIX);
+        printf("%s out of memory\n", PROGRAM_PREFIX);
     }
     snprintf(temp_str, total_len, "%s %s\n", PROGRAM_PREFIX, str);
     total_len = write(fileno(stdout), temp_str, (int)strlen(temp_str));
@@ -155,7 +194,7 @@ static inline void output_verbose(int level, const char *format, ...) {
 
         temp_str = (char *) malloc(total_len);
         if (NULL == temp_str) {
-            printf("%s Error: out of memory\n", PROGRAM_PREFIX);
+            printf("%s out of memory\n", PROGRAM_PREFIX);
         }
         snprintf(temp_str, total_len, "%s %s\n", PROGRAM_PREFIX, str);
         total_len = write(fileno(stdout), temp_str, (int)strlen(temp_str));

@@ -66,7 +66,7 @@ int select_transformations(fragment_t *fragment) {
 
         if (SQLITE_OK != sqlite3_exec(globals.db, sql,
             accumulate_transformations, (void *)r, &error)) {
-            fprintf(stderr, "Error: SQL error: %s\n", error);
+            OUTPUT(("%s (%s)\n", _ERROR("SQL error"), error));
             sqlite3_free(error);
             return PERFEXPERT_ERROR;
         }
@@ -100,7 +100,7 @@ static int accumulate_transformations(void *recommendation, int c, char **val,
 
     if (SQLITE_OK != sqlite3_exec(globals.db, sql, accumulate_patterns,
         (void *)t, &error)) {
-        fprintf(stderr, "Error: SQL error: %s\n", error);
+        OUTPUT(("%s (%s)\n", _ERROR("SQL error"), error));
         sqlite3_free(error);
         return PERFEXPERT_ERROR;
     }

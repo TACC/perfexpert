@@ -73,7 +73,7 @@ int profile_flatten_all(perfexpert_list_t *profiles) {
     perfexpert_list_for(p, profiles, hpctoolkit_profile_t) {
         OUTPUT_VERBOSE((10, " [%d] %s", p->id, _GREEN(p->name)));
         if (PERFEXPERT_SUCCESS != profile_flatten_hotspots(p)) {
-            OUTPUT(("%s (%s)", _ERROR("Error: flattening profile"), p->name));
+            OUTPUT(("%s (%s)", _ERROR("flattening profile"), p->name));
             return PERFEXPERT_ERROR;
         }
     }
@@ -101,8 +101,7 @@ static int profile_flatten_hotspots(hpctoolkit_profile_t *profile) {
         }
 
         if (PERFEXPERT_SUCCESS != profile_aggregate_metrics(h)) {
-            OUTPUT(("%s (%s)", _ERROR("Error: aggregating metrics"),
-                h->name));
+            OUTPUT(("%s (%s)", _ERROR("aggregating metrics"), h->name));
             return PERFEXPERT_ERROR;
         }
     }
@@ -120,7 +119,7 @@ int profile_check_all(perfexpert_list_t *profiles) {
         if (0 < perfexpert_list_get_size(&(p->callees))) {
             if (PERFEXPERT_SUCCESS !=
                 profile_check_callpath(&(p->callees), 0)) {
-                OUTPUT(("%s (%s)", _ERROR("Error: bad profile"), p->name));
+                OUTPUT(("%s (%s)", _ERROR("bad profile"), p->name));
                 return PERFEXPERT_ERROR;
            }
         }

@@ -61,7 +61,7 @@ int parse_module_args(int argc, char *argv[]) {
 
     /* If some environment variable is defined, use it! */
     if (PERFEXPERT_SUCCESS != parse_env_vars()) {
-        OUTPUT(("%s", _ERROR("Error: parsing environment variables")));
+        OUTPUT(("%s", _ERROR("parsing environment variables")));
         return PERFEXPERT_ERROR;
     }
 

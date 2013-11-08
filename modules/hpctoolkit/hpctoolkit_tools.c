@@ -271,7 +271,7 @@ int run_hpcrun_knc(void) {
     sprintf(script_file, "%s/knc_hpcrun.sh", globals.stepdir);
 
     if (NULL == (script_file_FP = fopen(script_file, "w"))) {
-        OUTPUT(("%s (%s)", _ERROR("Error: unable to open file"), script_file));
+        OUTPUT(("%s (%s)", _ERROR("unable to open file"), script_file));
         return PERFEXPERT_ERROR;
     }
 
@@ -343,8 +343,7 @@ int run_hpcrun_knc(void) {
     /* Close file and set mode */
     fclose(script_file_FP);
     if (-1 == chmod(script_file, S_IRWXU)) {
-        OUTPUT(("%s (%s)", _ERROR((char *)"Error: unable to set script mode"),
-            script_file));
+        OUTPUT(("%s (%s)", _ERROR("unable to set script mode"), script_file));
         PERFEXPERT_DEALLOC(script_file);
         return PERFEXPERT_ERROR;
     }
@@ -452,7 +451,7 @@ static int max_events(void) {
 
     /* Find the maximum number of events per experiment */
     if (PAPI_OK != (papi_rc = PAPI_create_eventset(&event_set))) {
-        OUTPUT(("%s [%s]", _ERROR("Error: could not create PAPI event set"),
+        OUTPUT(("%s [%s]", _ERROR("could not create PAPI event set"),
             PAPI_strerror(papi_rc)));
         return PERFEXPERT_FAILURE;
     }
@@ -460,7 +459,7 @@ static int max_events(void) {
     perfexpert_hash_iter_str(my_module_globals.events_by_name, e, t) {
         if (PAPI_OK != PAPI_event_name_to_code(e->name, &event_code)) {
             OUTPUT(("%s [%s]",
-                _ERROR("Error: event not available (name->code)"), e->name));
+                _ERROR("event not available (name->code)"), e->name));
             return PERFEXPERT_FAILURE;
         }
         if (PAPI_OK != PAPI_add_event(event_set, event_code)) {
@@ -529,17 +528,15 @@ static int get_sampling_rate(const char *name) {
     };
 
     if (PAPI_OK != PAPI_event_name_to_code((char *)name, &event_code)) {
-        OUTPUT(("%s [%s]", _ERROR("Error: event not available (name->code)"),
-            name));
+        OUTPUT(("%s [%s]", _ERROR("event not available (name->code)"), name));
         return PERFEXPERT_FAILURE;
     }
     if (PAPI_OK != PAPI_query_event(event_code)) {
-        OUTPUT(("%s [%s]", _ERROR("Error: event not available (query code)"),
-            name));
+        OUTPUT(("%s [%s]", _ERROR("event not available (query code)"), name));
         return PERFEXPERT_FAILURE;
     }
     if (PAPI_OK != PAPI_get_event_info(event_code, &info)) {
-        OUTPUT(("%s [%s]", _ERROR("Error: event info not available"), name));
+        OUTPUT(("%s [%s]", _ERROR("event info not available"), name));
         return PERFEXPERT_FAILURE;
     }
 
@@ -556,7 +553,7 @@ static int get_sampling_rate(const char *name) {
 
         if (0 >= (rate = get_prime(sample[cat].last ?
             sample[cat].last : sample[cat + 1].end, sample[cat].end))) {
-            OUTPUT(("%s [%s]", _ERROR("Error: unable to get prime"), name));
+            OUTPUT(("%s [%s]", _ERROR("unable to get prime"), name));
             return PERFEXPERT_FAILURE;
         }
         sample[cat].last = rate;

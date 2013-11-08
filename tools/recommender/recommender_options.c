@@ -45,7 +45,7 @@ int parse_cli_params(int argc, char *argv[]) {
 
     /* If some environment variable is defined, use it! */
     if (PERFEXPERT_SUCCESS != parse_env_vars()) {
-        OUTPUT(("%s", _ERROR("Error: parsing environment variables")));
+        OUTPUT(("%s", _ERROR("parsing environment variables")));
         return PERFEXPERT_ERROR;
     }
 
@@ -54,13 +54,13 @@ int parse_cli_params(int argc, char *argv[]) {
 
     /* Sanity check: verbose level should be between 1-10 */
     if ((0 > globals.verbose) || (10 < globals.verbose)) {
-        OUTPUT(("%s", _ERROR("Error: invalid verbose level")));
+        OUTPUT(("%s", _ERROR("invalid verbose level")));
         return PERFEXPERT_ERROR;
     }
 
     /* Sanity check: unique ID is mandatory */
     if (0 == globals.uid) {
-        OUTPUT(("%s", _ERROR("Error: undefined uid")));
+        OUTPUT(("%s", _ERROR("undefined uid")));
         return PERFEXPERT_ERROR;
     }
 

@@ -59,7 +59,7 @@ void recommenderTraversal::visit(SgNode *node) {
 
         /* Extract the loop fragment */
         if (PERFEXPERT_SUCCESS != output_fragment(node, info, fragment)) {
-            OUTPUT(("%s", _ERROR((char *)"Error: extracting fragment")));
+            OUTPUT(("%s", _ERROR((char *)"extracting fragment")));
             rc = PERFEXPERT_ERROR;
             return;
         }
@@ -91,8 +91,7 @@ void recommenderTraversal::visit(SgNode *node) {
                 /* Extract the parent loop fragment */
                 if (PERFEXPERT_SUCCESS != output_fragment(parent, info,
                     fragment)) {
-                    OUTPUT(("%s",
-                        _ERROR((char *)"Error: extracting fragment")));
+                    OUTPUT(("%s", _ERROR((char *)"extracting fragment")));
                     rc = PERFEXPERT_ERROR;
                     return;
                 }
@@ -128,7 +127,7 @@ void recommenderTraversal::visit(SgNode *node) {
                         if (PERFEXPERT_SUCCESS != output_fragment(grandparent,
                             info, fragment)) {
                             OUTPUT(("%s",
-                                _ERROR((char *)"Error: extracting fragment")));
+                                _ERROR((char *)"extracting fragment")));
                             rc = PERFEXPERT_ERROR;
                             return;
                         }
@@ -158,7 +157,7 @@ void recommenderTraversal::visit(SgNode *node) {
 
             /* Extract the function */
             if (PERFEXPERT_SUCCESS != output_function(node, fragment)) {
-                OUTPUT(("%s", _ERROR((char *)"Error: extracting function")));
+                OUTPUT(("%s", _ERROR((char *)"extracting function")));
                 rc = PERFEXPERT_ERROR;
                 return;
             }

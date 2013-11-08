@@ -88,7 +88,7 @@ int output_analysis(void) {
     if (SQLITE_OK != sqlite3_exec(globals.db, sql,
         perfexpert_database_get_double, (void *)&my_module_globals.total,
         &error)) {
-        OUTPUT(("%s %s", _ERROR("Error: SQL error"), error));
+        OUTPUT(("%s %s", _ERROR("SQL error"), error));
         sqlite3_free(error);
         return PERFEXPERT_ERROR;
     }
@@ -113,7 +113,7 @@ int output_analysis(void) {
 
     if (SQLITE_OK != sqlite3_exec(globals.db, sql, output_thread, NULL,
         &error)) {
-        OUTPUT(("%s %s", _ERROR("Error: SQL error"), error));
+        OUTPUT(("%s %s", _ERROR("SQL error"), error));
         sqlite3_free(error);
         return PERFEXPERT_ERROR;
     }

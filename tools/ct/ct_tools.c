@@ -161,15 +161,13 @@ static int apply_patterns(fragment_t *f, transformation_t *t) {
 
     /* Did HPCToolkit identified the file */
     if (0 == strcmp("~unknown-file~", f->file)) {
-        OUTPUT(("%s (%s)", _ERROR((char *)"Error: unknown source file"),
-            f->file));
+        OUTPUT(("%s (%s)", _ERROR((char *)"unknown source file"), f->file));
         return PERFEXPERT_NO_PAT;
     }
 
     /* First of all, check if file exists */
     if (-1 == access(f->file, R_OK )) {
-        OUTPUT(("%s (%s)", _ERROR((char *)"Error: source file not found"),
-            f->file));
+        OUTPUT(("%s (%s)", _ERROR((char *)"source file not found"), f->file));
         return PERFEXPERT_NO_PAT;
     }
 
@@ -177,17 +175,17 @@ static int apply_patterns(fragment_t *f, transformation_t *t) {
     perfexpert_list_for(p, &(t->patterns), pattern_t) {
         /* Extract fragments, for that we have to open ROSE */
         if (PERFEXPERT_ERROR == open_rose(f->file)) {
-            OUTPUT(("%s", _RED("Error: starting Rose")));
+            OUTPUT(("%s", _RED("starting Rose")));
             return PERFEXPERT_FAILURE;
         } else {
             /* Hey ROSE, here we go... */
             if (PERFEXPERT_ERROR == extract_fragment(f)) {
-                OUTPUT(("%s (%s:%d)", _ERROR("Error: extracting fragments for"),
+                OUTPUT(("%s (%s:%d)", _ERROR("extracting fragments for"),
                     f->file, f->line));
             }
             /* Close Rose */
             if (PERFEXPERT_SUCCESS != close_rose()) {
-                OUTPUT(("%s", _ERROR("Error: closing Rose")));
+                OUTPUT(("%s", _ERROR("closing Rose")));
                 return PERFEXPERT_ERROR;
             }
         }

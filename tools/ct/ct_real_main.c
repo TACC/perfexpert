@@ -64,7 +64,7 @@ int ct_main(int argc, char** argv) {
 
     /* Parse command-line parameters */
     if (PERFEXPERT_SUCCESS != parse_cli_params(argc, argv)) {
-        OUTPUT(("%s", _ERROR("Error: parsing command line arguments")));
+        OUTPUT(("%s", _ERROR("parsing command line arguments")));
         return PERFEXPERT_ERROR;
     }
 
@@ -74,7 +74,7 @@ int ct_main(int argc, char** argv) {
     /* Open input file */
     if (NULL != globals.inputfile) {
         if (NULL == (globals.inputfile_FP = fopen(globals.inputfile, "r"))) {
-            OUTPUT(("%s (%s)", _ERROR("Error: unable to open input file"),
+            OUTPUT(("%s (%s)", _ERROR("unable to open input file"),
                 globals.inputfile));
             return PERFEXPERT_ERROR;
         }
@@ -89,7 +89,7 @@ int ct_main(int argc, char** argv) {
         OUTPUT_VERBOSE((7, "printing transformations to file (%s)",
             globals.outputfile));
         if (NULL == (globals.outputfile_FP = fopen(globals.outputfile, "w+"))) {
-            OUTPUT(("%s (%s)", _ERROR("Error: unable to open output file"),
+            OUTPUT(("%s (%s)", _ERROR("unable to open output file"),
                 globals.outputfile));
             rc = PERFEXPERT_ERROR;
             goto CLEAN_UP;
@@ -101,14 +101,14 @@ int ct_main(int argc, char** argv) {
     /* Connect to database */
     if (PERFEXPERT_SUCCESS != perfexpert_database_connect(&(globals.db),
         globals.dbfile)) {
-        OUTPUT(("%s", _ERROR("Error: connecting to database")));
+        OUTPUT(("%s", _ERROR("connecting to database")));
         rc = PERFEXPERT_ERROR;
         goto CLEAN_UP;
     }
 
     /* Parse input parameters */
     if (PERFEXPERT_SUCCESS != parse_transformation_params(&fragments)) {
-        OUTPUT(("%s", _ERROR("Error: parsing input params")));
+        OUTPUT(("%s", _ERROR("parsing input params")));
         rc = PERFEXPERT_ERROR;
         goto CLEAN_UP;
     }
@@ -118,7 +118,7 @@ int ct_main(int argc, char** argv) {
     while ((perfexpert_list_item_t *)fragment != &(fragments.sentinel)) {
         /* Query DB for transformations */
         if (PERFEXPERT_SUCCESS != select_transformations(fragment)) {
-            OUTPUT(("%s", _ERROR("Error: applying transformation")));
+            OUTPUT(("%s", _ERROR("applying transformation")));
             rc = PERFEXPERT_ERROR;
             goto CLEAN_UP;
         }
@@ -135,7 +135,7 @@ int ct_main(int argc, char** argv) {
 
             case PERFEXPERT_ERROR:
             default:
-                OUTPUT(("%s", _ERROR("Error: selecting transformations")));
+                OUTPUT(("%s", _ERROR("selecting transformations")));
                 rc = PERFEXPERT_ERROR;
                 goto CLEAN_UP;
         }

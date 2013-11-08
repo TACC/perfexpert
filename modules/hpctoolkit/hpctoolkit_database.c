@@ -69,7 +69,7 @@ int database_profiles(perfexpert_list_t *profiles) {
     OUTPUT_VERBOSE((5, "%s", _BLUE("Writing profiles to database")));
 
     if (SQLITE_OK != sqlite3_exec(globals.db, sql, NULL, NULL, &error)) {
-        OUTPUT(("%s %s", _ERROR("Error: SQL error"), error));
+        OUTPUT(("%s %s", _ERROR("SQL error"), error));
         sqlite3_free(error);
         return PERFEXPERT_ERROR;
     }
@@ -78,7 +78,7 @@ int database_profiles(perfexpert_list_t *profiles) {
     perfexpert_list_for(p, profiles, hpctoolkit_profile_t) {
         OUTPUT_VERBOSE((8, "[%d] %s", p->id, _GREEN(p->name)));
         if (PERFEXPERT_SUCCESS != database_hotspots(p)) {
-            OUTPUT(("%s (%s)", _ERROR("Error: writing profile"), p->name));
+            OUTPUT(("%s (%s)", _ERROR("writing profile"), p->name));
             return PERFEXPERT_ERROR;
         }
     }
@@ -122,14 +122,14 @@ static int database_hotspots(hpctoolkit_profile_t *profile) {
 
         /* Insert procedure in database */
         if (SQLITE_OK != sqlite3_exec(globals.db, sql, NULL, NULL, &error)) {
-            OUTPUT(("%s %s", _ERROR("Error: SQL error"), error));
+            OUTPUT(("%s %s", _ERROR("SQL error"), error));
             sqlite3_free(error);
             return PERFEXPERT_ERROR;
         }
 
         /* Do the same with its metrics */
         if (PERFEXPERT_SUCCESS != database_metrics(h)) {
-            OUTPUT(("%s (%s)", _ERROR("Error: writing hotspot"),
+            OUTPUT(("%s (%s)", _ERROR("writing hotspot"),
                 h->name));
             return PERFEXPERT_ERROR;
         }
@@ -151,7 +151,7 @@ static int database_metrics(hpctoolkit_procedure_t *hotspot) {
 
     if (SQLITE_OK != sqlite3_exec(globals.db, sql,
         perfexpert_database_get_long_long_int, (void *)&id, &error)) {
-        OUTPUT(("%s %s", _ERROR("Error: SQL error"), error));
+        OUTPUT(("%s %s", _ERROR("SQL error"), error));
         sqlite3_free(error);
         return PERFEXPERT_ERROR;
     }
@@ -159,7 +159,7 @@ static int database_metrics(hpctoolkit_procedure_t *hotspot) {
     /* Begin a transaction to improve SQLite performance */
     if (SQLITE_OK != sqlite3_exec(globals.db, "BEGIN TRANSACTION;", NULL, NULL,
         &error)) {
-        OUTPUT(("%s %s", _ERROR("Error: SQL error"), error));
+        OUTPUT(("%s %s", _ERROR("SQL error"), error));
         sqlite3_free(error);
         return PERFEXPERT_ERROR;
     }
@@ -175,7 +175,7 @@ static int database_metrics(hpctoolkit_procedure_t *hotspot) {
 
         /* Insert metric in database */
         if (SQLITE_OK != sqlite3_exec(globals.db, sql, NULL, NULL, &error)) {
-            OUTPUT(("%s %s", _ERROR("Error: SQL error"), error));
+            OUTPUT(("%s %s", _ERROR("SQL error"), error));
             sqlite3_free(error);
             return PERFEXPERT_ERROR;
         }
@@ -184,7 +184,7 @@ static int database_metrics(hpctoolkit_procedure_t *hotspot) {
     /* End transaction */
     if (SQLITE_OK != sqlite3_exec(globals.db, "END TRANSACTION;", NULL, NULL,
         &error)) {
-        OUTPUT(("%s %s", _ERROR("Error: SQL error"), error));
+        OUTPUT(("%s %s", _ERROR("SQL error"), error));
         sqlite3_free(error);
         return PERFEXPERT_ERROR;
     }

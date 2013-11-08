@@ -64,7 +64,7 @@ int module_measurements(void) {
     OUTPUT(("%s", _YELLOW("Collecting measurements")));
 
 	if (PERFEXPERT_SUCCESS != get_compiler_info()) {
-		OUTPUT(("%s", _ERROR("Error: reading compiler info")));
+		OUTPUT(("%s", _ERROR("reading compiler info")));
 		return PERFEXPERT_ERROR;
 	}
 

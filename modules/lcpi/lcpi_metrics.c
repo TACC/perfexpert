@@ -50,7 +50,7 @@ int metrics_generate(void) {
     OUTPUT_VERBOSE((4, "%s", _YELLOW("Generating LCPI metrics")));
 
     if (PAPI_VER_CURRENT != PAPI_library_init(PAPI_VER_CURRENT)) {
-        OUTPUT(("%s", _ERROR("Error: initializing PAPI")));
+        OUTPUT(("%s", _ERROR("initializing PAPI")));
         return PERFEXPERT_ERROR;
     }
 
@@ -130,7 +130,7 @@ static int generate_ratio_floating_point(void) {
         USE_EVENT("PAPI_FP_INS");
         strcpy(a, "PAPI_FP_INS / PAPI_TOT_INS");
     } else {
-        OUTPUT(("%s", "Error: unable to calculate 'ratio.floating_point'"));
+        OUTPUT(("%s", "unable to calculate 'ratio.floating_point'"));
         return PERFEXPERT_ERROR;
     }
 
@@ -141,7 +141,7 @@ static int generate_ratio_floating_point(void) {
     m->value = 0.0;
     m->expression = evaluator_create(a);
     if (NULL == m->expression) {
-        OUTPUT(("%s (%s) [%s]", _ERROR("Error: invalid expression"), m->name, a));
+        OUTPUT(("%s (%s) [%s]", _ERROR("invalid expression"), m->name, a));
         return PERFEXPERT_ERROR;
     }
     perfexpert_hash_add_str(my_module_globals.metrics_by_name, name_md5, m);
@@ -162,7 +162,7 @@ static int generate_ratio_data_accesses(void) {
         USE_EVENT("PAPI_LD_INS");
         strcpy(a, "PAPI_LD_INS / PAPI_TOT_INS");
     } else {
-        OUTPUT(("%s", "Error: unable to calculate 'ratio.data_accesses'"));
+        OUTPUT(("%s", "unable to calculate 'ratio.data_accesses'"));
         return PERFEXPERT_ERROR;
     }
 
@@ -173,7 +173,7 @@ static int generate_ratio_data_accesses(void) {
     m->value = 0.0;
     m->expression = evaluator_create(a);
     if (NULL == m->expression) {
-        OUTPUT(("%s (%s)", _ERROR("Error: invalid expression"), m->name));
+        OUTPUT(("%s (%s)", _ERROR("invalid expression"), m->name));
         return PERFEXPERT_ERROR;
     }
     perfexpert_hash_add_str(my_module_globals.metrics_by_name, name_md5, m);
@@ -262,7 +262,7 @@ static int generate_gflops(void) {
         strcpy(scalar, "((FP_COMP_OPS_EXE_SSE_FP_SCALAR_SINGLE + "
             "FP_COMP_OPS_EXE_SSE_SCALAR_DOUBLE) / PAPI_TOT_CYC) / 8");
     } else {
-        OUTPUT(("%s", "Error: unable to calculate 'GFLOPS_(%%_max)'"));
+        OUTPUT(("%s", "unable to calculate 'GFLOPS_(%%_max)'"));
         return PERFEXPERT_ERROR;
     }
 
@@ -274,7 +274,7 @@ static int generate_gflops(void) {
     m->value = 0.0;
     m->expression = evaluator_create(overall);
     if (NULL == m->expression) {
-        OUTPUT(("%s (%s)", _ERROR("Error: invalid expression"), m->name));
+        OUTPUT(("%s (%s)", _ERROR("invalid expression"), m->name));
         return PERFEXPERT_ERROR;
     }
     perfexpert_hash_add_str(my_module_globals.metrics_by_name, name_md5, m);
@@ -287,7 +287,7 @@ static int generate_gflops(void) {
     m->value = 0.0;
     m->expression = evaluator_create(scalar);
     if (NULL == m->expression) {
-        OUTPUT(("%s (%s)", _ERROR("Error: invalid expression"), m->name));
+        OUTPUT(("%s (%s)", _ERROR("invalid expression"), m->name));
         return PERFEXPERT_ERROR;
     }
     perfexpert_hash_add_str(my_module_globals.metrics_by_name, name_md5, m);
@@ -300,7 +300,7 @@ static int generate_gflops(void) {
     m->value = 0.0;
     m->expression = evaluator_create(packed);
     if (NULL == m->expression) {
-        OUTPUT(("%s (%s)", _ERROR("Error: invalid expression"), m->name));
+        OUTPUT(("%s (%s)", _ERROR("invalid expression"), m->name));
         return PERFEXPERT_ERROR;
     }
     perfexpert_hash_add_str(my_module_globals.metrics_by_name, name_md5, m);
@@ -314,7 +314,7 @@ static int generate_overall(void) {
 
     /* Check the basic ones first */
     if ((!event_avail("PAPI_TOT_CYC")) || (!event_avail("PAPI_TOT_INS"))) {
-        OUTPUT(("%s", "Error: unable to calculate 'overall'"));
+        OUTPUT(("%s", "unable to calculate 'overall'"));
         return PERFEXPERT_ERROR;
     }
     USE_EVENT("PAPI_TOT_CYC");
@@ -327,7 +327,7 @@ static int generate_overall(void) {
     m->value = 0.0;
     m->expression = evaluator_create("PAPI_TOT_CYC / PAPI_TOT_INS");
     if (NULL == m->expression) {
-        OUTPUT(("%s (%s)", _ERROR("Error: invalid expression"), m->name));
+        OUTPUT(("%s (%s)", _ERROR("invalid expression"), m->name));
         return PERFEXPERT_ERROR;
     }
     perfexpert_hash_add_str(my_module_globals.metrics_by_name, name_md5, m);
@@ -400,7 +400,7 @@ static int generate_data_accesses(void) {
 
     /* L1 and L2 are mandatory, L3 is optional */
     if ((0 == strlen(a)) || (0 == strlen(b))) {
-        OUTPUT(("%s", "Error: unable to calculate 'data_accesses'"));
+        OUTPUT(("%s", "unable to calculate 'data_accesses'"));
         return PERFEXPERT_ERROR;
     }
 
@@ -413,7 +413,7 @@ static int generate_data_accesses(void) {
     m->value = 0.0;
     m->expression = evaluator_create(overall);
     if (NULL == m->expression) {
-        OUTPUT(("%s (%s)", _ERROR("Error: invalid expression"), m->name));
+        OUTPUT(("%s (%s)", _ERROR("invalid expression"), m->name));
         return PERFEXPERT_ERROR;
     }
     perfexpert_hash_add_str(my_module_globals.metrics_by_name, name_md5, m);
@@ -427,7 +427,7 @@ static int generate_data_accesses(void) {
     m->value = 0.0;
     m->expression = evaluator_create(L1d_hits);
     if (NULL == m->expression) {
-        OUTPUT(("%s (%s)", _ERROR("Error: invalid expression"), m->name));
+        OUTPUT(("%s (%s)", _ERROR("invalid expression"), m->name));
         return PERFEXPERT_ERROR;
     }
     perfexpert_hash_add_str(my_module_globals.metrics_by_name, name_md5, m);
@@ -441,7 +441,7 @@ static int generate_data_accesses(void) {
     m->value = 0.0;
     m->expression = evaluator_create(L2d_hits);
     if (NULL == m->expression) {
-        OUTPUT(("%s (%s)", _ERROR("Error: invalid expression"), m->name));
+        OUTPUT(("%s (%s)", _ERROR("invalid expression"), m->name));
         return PERFEXPERT_ERROR;
     }
     perfexpert_hash_add_str(my_module_globals.metrics_by_name, name_md5, m);
@@ -456,7 +456,7 @@ static int generate_data_accesses(void) {
         m->value = 0.0;
         m->expression = evaluator_create(L3d_hits);
         if (NULL == m->expression) {
-            OUTPUT(("%s (%s)", _ERROR("Error: invalid expression"), m->name));
+            OUTPUT(("%s (%s)", _ERROR("invalid expression"), m->name));
             return PERFEXPERT_ERROR;
         }
         perfexpert_hash_add_str(my_module_globals.metrics_by_name, name_md5, m);
@@ -471,7 +471,7 @@ static int generate_data_accesses(void) {
     m->value = 0.0;
     m->expression = evaluator_create(LLC_misses);
     if (NULL == m->expression) {
-        OUTPUT(("%s (%s)", _ERROR("Error: invalid expression"), m->name));
+        OUTPUT(("%s (%s)", _ERROR("invalid expression"), m->name));
         return PERFEXPERT_ERROR;
     }
     perfexpert_hash_add_str(my_module_globals.metrics_by_name, name_md5, m);
@@ -515,7 +515,7 @@ static int generate_instruction_accesses(void) {
     }
 
     if ((0 == strlen(a)) || (0 == strlen(b)) || (0 == strlen(c))) {
-        OUTPUT(("%s", "Error: unable to calculate 'instruction_accesses'"));
+        OUTPUT(("%s", "unable to calculate 'instruction_accesses'"));
         return PERFEXPERT_ERROR;
     }
 
@@ -538,7 +538,7 @@ static int generate_instruction_accesses(void) {
     m->value = 0.0;
     m->expression = evaluator_create(overall);
     if (NULL == m->expression) {
-        OUTPUT(("%s (%s)", _ERROR("Error: invalid expression"), m->name));
+        OUTPUT(("%s (%s)", _ERROR("invalid expression"), m->name));
         return PERFEXPERT_ERROR;
     }
     perfexpert_hash_add_str(my_module_globals.metrics_by_name, name_md5, m);
@@ -552,7 +552,7 @@ static int generate_instruction_accesses(void) {
     m->value = 0.0;
     m->expression = evaluator_create(L1i_hits);
     if (NULL == m->expression) {
-        OUTPUT(("%s (%s)", _ERROR("Error: invalid expression"), m->name));
+        OUTPUT(("%s (%s)", _ERROR("invalid expression"), m->name));
         return PERFEXPERT_ERROR;
     }
     perfexpert_hash_add_str(my_module_globals.metrics_by_name, name_md5, m);
@@ -566,7 +566,7 @@ static int generate_instruction_accesses(void) {
     m->value = 0.0;
     m->expression = evaluator_create(L2i_hits);
     if (NULL == m->expression) {
-        OUTPUT(("%s (%s)", _ERROR("Error: invalid expression"), m->name));
+        OUTPUT(("%s (%s)", _ERROR("invalid expression"), m->name));
         return PERFEXPERT_ERROR;
     }
     perfexpert_hash_add_str(my_module_globals.metrics_by_name, name_md5, m);
@@ -580,7 +580,7 @@ static int generate_instruction_accesses(void) {
     m->value = 0.0;
     m->expression = evaluator_create(L2i_misses);
     if (NULL == m->expression) {
-        OUTPUT(("%s (%s)", _ERROR("Error: invalid expression"), m->name));
+        OUTPUT(("%s (%s)", _ERROR("invalid expression"), m->name));
         return PERFEXPERT_ERROR;
     }
     perfexpert_hash_add_str(my_module_globals.metrics_by_name, name_md5, m);
@@ -607,7 +607,7 @@ static int generate_tlb_metrics(void) {
         strcpy(a, "(DTLB_LOAD_MISSES_CAUSES_A_WALK + "
             "DTLB_STORE_MISSES_CAUSES_A_WALK) * TLB_lat / PAPI_TOT_INS");
     } else {
-        OUTPUT(("%s", "Error: unable to calculate 'data_TLB.overall'"));
+        OUTPUT(("%s", "unable to calculate 'data_TLB.overall'"));
         return PERFEXPERT_ERROR;
     }
 
@@ -618,7 +618,7 @@ static int generate_tlb_metrics(void) {
     m->value = 0.0;
     m->expression = evaluator_create(a);
     if (NULL == m->expression) {
-        OUTPUT(("%s (%s)", _ERROR("Error: invalid expression"), m->name));
+        OUTPUT(("%s (%s)", _ERROR("invalid expression"), m->name));
         return PERFEXPERT_ERROR;
     }
     perfexpert_hash_add_str(my_module_globals.metrics_by_name, name_md5, m);
@@ -631,7 +631,7 @@ static int generate_tlb_metrics(void) {
         USE_EVENT("PAPI_TLB_IM");
         str_cpy(a, "PAPI_TLB_IM * TLB_lat / PAPI_TOT_INS");
     } else {
-        OUTPUT(("%s", "Error: unable to calculate 'instruction_TLB.overall'"));
+        OUTPUT(("%s", "unable to calculate 'instruction_TLB.overall'"));
         return PERFEXPERT_ERROR;
     }
 
@@ -642,7 +642,7 @@ static int generate_tlb_metrics(void) {
     m->value = 0.0;
     m->expression = evaluator_create(a);
     if (NULL == m->expression) {
-        OUTPUT(("%s (%s)", _ERROR("Error: invalid expression"), m->name));
+        OUTPUT(("%s (%s)", _ERROR("invalid expression"), m->name));
         return PERFEXPERT_ERROR;
     }
     perfexpert_hash_add_str(my_module_globals.metrics_by_name, name_md5, m);
@@ -658,7 +658,7 @@ static int generate_branch_metrics(void) {
         USE_EVENT("PAPI_BR_INS");
         USE_EVENT("PAPI_BR_MSP");
     } else {
-        OUTPUT(("%s", "Error: unable to calculate 'branch_instructions'"));
+        OUTPUT(("%s", "unable to calculate 'branch_instructions'"));
         return PERFEXPERT_ERROR;
     }
 
@@ -672,7 +672,7 @@ static int generate_branch_metrics(void) {
     m->expression = evaluator_create("(PAPI_BR_INS * BR_lat + PAPI_BR_MSP "
         "* BR_miss_lat) / PAPI_TOT_INS");
     if (NULL == m->expression) {
-        OUTPUT(("%s (%s)", _ERROR("Error: invalid expression"), m->name));
+        OUTPUT(("%s (%s)", _ERROR("invalid expression"), m->name));
         return PERFEXPERT_ERROR;
     }
     perfexpert_hash_add_str(my_module_globals.metrics_by_name, name_md5, m);
@@ -686,7 +686,7 @@ static int generate_branch_metrics(void) {
     m->value = 0.0;
     m->expression = evaluator_create("PAPI_BR_INS * BR_lat / PAPI_TOT_INS");
     if (NULL == m->expression) {
-        OUTPUT(("%s (%s)", _ERROR("Error: invalid expression"), m->name));
+        OUTPUT(("%s (%s)", _ERROR("invalid expression"), m->name));
         return PERFEXPERT_ERROR;
     }
     perfexpert_hash_add_str(my_module_globals.metrics_by_name, name_md5, m);
@@ -701,7 +701,7 @@ static int generate_branch_metrics(void) {
     m->expression = evaluator_create(
         "PAPI_BR_MSP * BR_miss_lat / PAPI_TOT_INS");
     if (NULL == m->expression) {
-        OUTPUT(("%s (%s)", _ERROR("Error: invalid expression"), m->name));
+        OUTPUT(("%s (%s)", _ERROR("invalid expression"), m->name));
         return PERFEXPERT_ERROR;
     }
     perfexpert_hash_add_str(my_module_globals.metrics_by_name, name_md5, m);
@@ -762,7 +762,7 @@ static int generate_floating_point_instr(void) {
         USE_EVENT("ARITH");
         strcpy(a, "ARITH * FP_lat");
     } else {
-        OUTPUT(("%s", "Error: unable to calculate 'fast_FP_instr'"));
+        OUTPUT(("%s", "unable to calculate 'fast_FP_instr'"));
         return PERFEXPERT_ERROR;
     }
 
@@ -773,7 +773,7 @@ static int generate_floating_point_instr(void) {
         USE_EVENT("ARITH:CYCLES_DIV_BUSY");
         strcpy(b, "ARITH_CYCLES_DIV_BUSY");
     } else {
-        OUTPUT(("%s", "Error: unable to calculate 'slow_FP_instr'"));
+        OUTPUT(("%s", "unable to calculate 'slow_FP_instr'"));
         return PERFEXPERT_ERROR;
     }
 
@@ -793,7 +793,7 @@ static int generate_floating_point_instr(void) {
     m->value = 0.0;
     m->expression = evaluator_create(overall);
     if (NULL == m->expression) {
-        OUTPUT(("%s (%s)", _ERROR("Error: invalid expression"), m->name));
+        OUTPUT(("%s (%s)", _ERROR("invalid expression"), m->name));
         return PERFEXPERT_ERROR;
     }
     perfexpert_hash_add_str(my_module_globals.metrics_by_name, name_md5, m);
@@ -807,7 +807,7 @@ static int generate_floating_point_instr(void) {
     m->value = 0.0;
     m->expression = evaluator_create(fast);
     if (NULL == m->expression) {
-        OUTPUT(("%s (%s)", _ERROR("Error: invalid expression"), m->name));
+        OUTPUT(("%s (%s)", _ERROR("invalid expression"), m->name));
         return PERFEXPERT_ERROR;
     }
     perfexpert_hash_add_str(my_module_globals.metrics_by_name, name_md5, m);
@@ -821,7 +821,7 @@ static int generate_floating_point_instr(void) {
     m->value = 0.0;
     m->expression = evaluator_create(slow);
     if (NULL == m->expression) {
-        OUTPUT(("%s (%s)", _ERROR("Error: invalid expression"), m->name));
+        OUTPUT(("%s (%s)", _ERROR("invalid expression"), m->name));
         return PERFEXPERT_ERROR;
     }
     perfexpert_hash_add_str(my_module_globals.metrics_by_name, name_md5, m);

@@ -60,7 +60,7 @@ int hotspot_sort(perfexpert_list_t *profiles) {
 
                 /* Call the sorting function */
                 if (PERFEXPERT_SUCCESS != (*orders[i].function)(p)) {
-                    OUTPUT(("%s", _ERROR("Error: unable to sort hotspots")));
+                    OUTPUT(("%s", _ERROR("unable to sort hotspots")));
                     return PERFEXPERT_ERROR;
                 }
             }
