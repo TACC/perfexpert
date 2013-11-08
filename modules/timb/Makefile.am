@@ -19,15 +19,11 @@
 # $HEADER$
 #
 
-SUBDIRS = $(ENABLE_HPCTOOLKIT)
-SUBDIRS += $(ENABLE_LCPI)
-SUBDIRS += $(ENABLE_READELF)
-SUBDIRS += $(ENABLE_TIMB)
-
-lib_LTLIBRARIES = libperfexpert_module_base.la
-libperfexpert_module_base_la_SOURCES = perfexpert_module_base.c
-libperfexpert_module_base_la_CPPFLAGS = -I$(srcdir)/..
-libperfexpert_module_base_la_LDFLAGS = -lltdl -version-info 1:0:0 \
-	-export-symbols $(srcdir)/perfexpert_module_base.sym
+lib_LTLIBRARIES = libperfexpert_module_timb.la
+libperfexpert_module_timb_la_CPPFLAGS = -I$(srcdir)/../..
+libperfexpert_module_timb_la_LDFLAGS = -module -lsqlite3 -lm \
+	-version-info 1:0:0 -export-symbols $(srcdir)/timb_module.sym
+libperfexpert_module_timb_la_SOURCES = timb_module.c \
+	timb_output.c
 
 # EOF

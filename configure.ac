@@ -338,6 +338,36 @@ AS_IF([test x"$ENABLE_HPCTOOLKIT" = xyes], [
 AC_SUBST([ENABLE_HPCTOOLKIT])
 
 #------------------------------------------------------------------------------
+# timb module requirements
+#
+AC_ARG_ENABLE([module-timb],
+    [AS_HELP_STRING([--disable-module-timb],
+        [disable TIMB (thread imbalance) analysis module])],
+    [ENABLE_TIMB=$enableval], [ENABLE_TIMB=yes])
+
+AC_MSG_CHECKING([whether to enable TIMB (thread imbalance) analysis module])
+AS_IF([test x"$ENABLE_TIMB" = xyes], [
+    AC_MSG_RESULT([yes])
+
+    # Math library
+    #
+    AC_CHECK_LIB([m], [rint], [], [AC_MSG_ERROR([libm.so not found])])
+
+    # Requires HPCToolkit module
+    #
+    AS_IF([test x"$ENABLE_HPCTOOLKIT" = x],
+        [AC_MSG_ERROR([TIMB module requires HPTCoolkit module])], [])
+
+    ENABLE_TIMB=timb
+    ENABLED_MODULES+="timb "
+    AC_CONFIG_FILES([modules/timb/Makefile])
+], [
+    AC_MSG_RESULT([no])
+    ENABLE_TIMB=
+])
+AC_SUBST([ENABLE_TIMB])
+
+#------------------------------------------------------------------------------
 # LCPI module requirements
 #
 AC_ARG_ENABLE([module-lcpi],
