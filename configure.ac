@@ -234,6 +234,10 @@ AC_ARG_WITH([rose-include],
     [AS_HELP_STRING([--with-rose-include], [set ROSE include path])],
     [CPPFLAGS+=" -I$withval/include"])
 
+AC_ARG_WITH([jvm],
+    [AS_HELP_STRING([--with-jvm], [set JVM library path])],
+    [LDFLAGS+=" -L$withval"])
+
 AC_ARG_WITH([gmp],
     [AS_HELP_STRING([--with-gmp], [set GMP library and include path])], [
     CPPFLAGS+=" -I$withval/include"
@@ -530,12 +534,6 @@ AC_ARG_ENABLE([macpo], [AS_HELP_STRING([--disable-macpo], [disable MACPO tool
 and module (data-centric instrumentation, measurement, and analysis)])],
     [ENABLE_MACPO=$enableval], [ENABLE_MACPO=yes])
 
-AC_ARG_WITH([jvm],
-    [AS_HELP_STRING([--with-jvm], [set JVM library path])],
-    [LDFLAGS+=" -L$withval"])
-
-AC_LANG_PUSH([C++])
-
 AC_MSG_CHECKING([whether to enable MACPO tool and MACPO module])
 AS_IF([test x"$ENABLE_MACPO" = xyes], [
     AC_MSG_RESULT([yes])
@@ -547,8 +545,12 @@ AS_IF([test x"$ENABLE_MACPO" = xyes], [
 
     # ROSE Compiler support (headers and lib)
     #
+    AC_LANG_PUSH([C++])
+    AC_CHECK_LIB([rose], [validate_operands_and_clobbers], [],
+        [AC_MSG_ERROR([not found: librose.so])])
     AC_CHECK_HEADER([rose.h], [], [AC_MSG_ERROR([not found: rose.h])],
         [#include "rose.h"])
+    AC_LANG_POP
 
     # GNU Multiple Precision Arithmetic Library support (headers and lib)
     #
@@ -558,8 +560,10 @@ AS_IF([test x"$ENABLE_MACPO" = xyes], [
 
     # Check for Google SparseHash (headers)
     #
+    AC_LANG_PUSH([C++])
     AC_CHECK_HEADER([google/sparse_hash_map], [],
         [AC_MSG_ERROR([not found: google/sparse_hash_map])])
+    AC_LANG_POP
 
     ENABLE_MACPO=macpo
     ENABLED_TOOLS+="macpo "
@@ -574,7 +578,6 @@ AS_IF([test x"$ENABLE_MACPO" = xyes], [
     ENABLE_MACPO=
 ])
 AC_SUBST([ENABLE_MACPO])
-AC_LANG_POP
 
 #------------------------------------------------------------------------------
 # 'perfexpert_ct' requirements
@@ -594,12 +597,16 @@ AS_IF([test x"$ENABLE_CT" = xyes], [
 
     # ROSE Compiler support (headers and lib)
     #
+    AC_LANG_PUSH([C++])
+    AC_CHECK_LIB([rose], [validate_operands_and_clobbers], [],
+        [AC_MSG_ERROR([not found: librose.so])])
     AC_CHECK_HEADER([rose.h], [], [AC_MSG_ERROR([not found: rose.h])],
         [#include "rose.h"])
+    AC_LANG_POP
 
     # Check for Lex/Flex and Yacc/Bison
-    AC_PROG_LEX
     AC_PROG_YACC
+    AC_PROG_LEX
 
     ENABLE_CT=ct
     ENABLED_TOOLS+="perfexpert_ct "
