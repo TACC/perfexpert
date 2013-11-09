@@ -326,8 +326,8 @@ static int calculate_metadata(lcpi_profile_t *profile, const char *table) {
     perfexpert_list_for(h, &(profile->hotspots), lcpi_hotspot_t) {
         /* Import instructions (sum of all experiments) */
         bzero(sql, MAX_BUFFER_SIZE);
-        sprintf(sql, "SELECT SUM(value) FROM %s_event WHERE hotspot_id = %d AND"
-            " name = 'PAPI_TOT_INS' GROUP BY experiment;", table, h->id);
+        sprintf(sql, "SELECT SUM(value) FROM %s_event WHERE hotspot_id = %llu "
+            "AND name = 'PAPI_TOT_INS' GROUP BY experiment;", table, h->id);
 
         if (SQLITE_OK != sqlite3_exec(globals.db, sql, import_instructions,
             (void *)h, &error)) {
@@ -340,7 +340,7 @@ static int calculate_metadata(lcpi_profile_t *profile, const char *table) {
         bzero(sql, MAX_BUFFER_SIZE);
         sprintf(sql,
             "SELECT MAX(a) FROM (SELECT SUM(value) AS a FROM %s_event WHERE "
-            "hotspot_id = %d AND name = 'PAPI_TOT_INS');", table, h->id);
+            "hotspot_id = %llu AND name = 'PAPI_TOT_INS');", table, h->id);
 
         if (SQLITE_OK != sqlite3_exec(globals.db, sql,
             perfexpert_database_get_double, (void *)&(h->max_inst), &error)) {
@@ -353,7 +353,7 @@ static int calculate_metadata(lcpi_profile_t *profile, const char *table) {
         bzero(sql, MAX_BUFFER_SIZE);
         sprintf(sql,
             "SELECT MIN(a) FROM (SELECT SUM(value) AS a FROM %s_event WHERE "
-            "hotspot_id = %d AND name = 'PAPI_TOT_INS');", table, h->id);
+            "hotspot_id = %llu AND name = 'PAPI_TOT_INS');", table, h->id);
 
         if (SQLITE_OK != sqlite3_exec(globals.db, sql,
             perfexpert_database_get_double, (void *)&(h->min_inst), &error)) {
@@ -365,7 +365,7 @@ static int calculate_metadata(lcpi_profile_t *profile, const char *table) {
         /* Import number of experiments */
         bzero(sql, MAX_BUFFER_SIZE);
         sprintf(sql, "SELECT DISTINCT experiment FROM %s_event WHERE "
-            "hotspot_id = %d;", table, h->id);
+            "hotspot_id = %llu;", table, h->id);
 
         if (SQLITE_OK != sqlite3_exec(globals.db, sql, import_experiment,
             (void *)h, &error)) {
@@ -376,8 +376,8 @@ static int calculate_metadata(lcpi_profile_t *profile, const char *table) {
 
         /* Import cycles */
         bzero(sql, MAX_BUFFER_SIZE);
-        sprintf(sql, "SELECT SUM(value) FROM %s_event WHERE hotspot_id = %d AND"
-            " name = 'PAPI_TOT_CYC';", table, h->id);
+        sprintf(sql, "SELECT SUM(value) FROM %s_event WHERE hotspot_id = %llu "
+            "AND name = 'PAPI_TOT_CYC';", table, h->id);
 
         if (SQLITE_OK != sqlite3_exec(globals.db, sql,
             perfexpert_database_get_double, (void *)&(h->cycles), &error)) {
