@@ -267,6 +267,9 @@ int main(int argc, char** argv) {
             globals.workdir));
     }
 
+    OUTPUT(("%s %llu", _YELLOW("The unique ID of this PerfExpert run is:"),
+        globals.unique_id));
+
     /* Free memory */
     PERFEXPERT_DEALLOC(globals.workdir);
     PERFEXPERT_DEALLOC(globals.stepdir);
