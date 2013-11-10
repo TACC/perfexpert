@@ -259,137 +259,137 @@ int run_hpcrun(void) {
 }
 
 /* run_hpcrun_knc */
-int run_hpcrun_knc(void) {
-    hpctoolkit_event_t *event = NULL, *t = NULL;
-    int experiment_count = 0, count = 0, rc = PERFEXPERT_SUCCESS;
-    char *script_file, *argv[4];
-    FILE *script_file_FP;
-    test_t test;
+// int run_hpcrun_knc(void) {
+//     hpctoolkit_event_t *event = NULL, *t = NULL;
+//     int experiment_count = 0, count = 0, rc = PERFEXPERT_SUCCESS;
+//     char *script_file, *argv[4];
+//     FILE *script_file_FP;
+//     test_t test;
 
-    /* If this command should run on the MIC, encapsulate it in a script */
-    PERFEXPERT_ALLOC(char, script_file, (strlen(globals.stepdir) + 15));
-    sprintf(script_file, "%s/knc_hpcrun.sh", globals.stepdir);
+//     /* If this command should run on the MIC, encapsulate it in a script */
+//     PERFEXPERT_ALLOC(char, script_file, (strlen(globals.stepdir) + 15));
+//     sprintf(script_file, "%s/knc_hpcrun.sh", globals.stepdir);
 
-    if (NULL == (script_file_FP = fopen(script_file, "w"))) {
-        OUTPUT(("%s (%s)", _ERROR("unable to open file"), script_file));
-        return PERFEXPERT_ERROR;
-    }
+//     if (NULL == (script_file_FP = fopen(script_file, "w"))) {
+//         OUTPUT(("%s (%s)", _ERROR("unable to open file"), script_file));
+//         return PERFEXPERT_ERROR;
+//     }
 
-    fprintf(script_file_FP, "#!/bin/sh");
+//     fprintf(script_file_FP, "#!/bin/sh");
 
-    /* Fill the script file with all the experiments, before, and after */
-    perfexpert_hash_iter_str(my_module_globals.events_by_name, event, t) {
-        if (0 < count) {
-            /* Add event */
-            fprintf(script_file_FP, " --event %s:%d", event->name,
-                get_sampling_rate(event->name));
+//     /* Fill the script file with all the experiments, before, and after */
+//     perfexpert_hash_iter_str(my_module_globals.events_by_name, event, t) {
+//         if (0 < count) {
+//             /* Add event */
+//             fprintf(script_file_FP, " --event %s:%d", event->name,
+//                 get_sampling_rate(event->name));
 
-            count--;
-            continue;
-        }
+//             count--;
+//             continue;
+//         }
 
-        /* Is this a new experiment, but not the first? */
-        if (0 < experiment_count) {
-            /* Add the program and the program arguments to experiment */
-            fprintf(script_file_FP, " %s", globals.program_full);
-            count = 0;
-            while (NULL != globals.program_argv[count]) {
-                fprintf(script_file_FP, " %s", globals.program_argv[count]);
-                count++;
-            }
+//         /* Is this a new experiment, but not the first? */
+//         if (0 < experiment_count) {
+//             /* Add the program and the program arguments to experiment */
+//             fprintf(script_file_FP, " %s", globals.program_full);
+//             count = 0;
+//             while (NULL != globals.program_argv[count]) {
+//                 fprintf(script_file_FP, " %s", globals.program_argv[count]);
+//                 count++;
+//             }
 
-            /* Add the AFTER program */
-            if (NULL != my_module_globals.knc_after) {
-                fprintf(script_file_FP, "\n\n# AFTER command\n");
-                fprintf(script_file_FP, "%s", my_module_globals.knc_after);
-            }
-        }
+//             /* Add the AFTER program */
+//             if (NULL != my_module_globals.knc_after) {
+//                 fprintf(script_file_FP, "\n\n# AFTER command\n");
+//                 fprintf(script_file_FP, "%s", my_module_globals.knc_after);
+//             }
+//         }
 
-        /* Add the BEFORE program */
-        if (NULL != my_module_globals.knc_before) {
-            fprintf(script_file_FP, "\n\n# BEFORE command\n");
-            fprintf(script_file_FP, "%s", my_module_globals.knc_before);
-        }
+//         /* Add the BEFORE program */
+//         if (NULL != my_module_globals.knc_before) {
+//             fprintf(script_file_FP, "\n\n# BEFORE command\n");
+//             fprintf(script_file_FP, "%s", my_module_globals.knc_before);
+//         }
 
-        fprintf(script_file_FP, "\n\n# HPCRUN (%d)\n", experiment_count);
+//         fprintf(script_file_FP, "\n\n# HPCRUN (%d)\n", experiment_count);
 
-        /* Add PREFIX */
-        if (NULL != my_module_globals.knc_prefix) {
-            fprintf(script_file_FP, "%s ", my_module_globals.knc_prefix);
-        }
+//         /* Add PREFIX */
+//         if (NULL != my_module_globals.knc_prefix) {
+//             fprintf(script_file_FP, "%s ", my_module_globals.knc_prefix);
+//         }
 
-        /* Arguments to run hpcrun */
-        fprintf(script_file_FP, "%s --output %s/measurements", HPCRUN,
-            globals.stepdir);
+//          Arguments to run hpcrun
+//         fprintf(script_file_FP, "%s --output %s/measurements", HPCRUN,
+//             globals.stepdir);
 
-        experiment_count++;
-    }
+//         experiment_count++;
+//     }
 
-    /* Add the program and the program arguments to experiment's */
-    fprintf(script_file_FP, " %s", globals.program_full);
-    count = 0;
-    while (NULL != globals.program_argv[count]) {
-        fprintf(script_file_FP, " %s", globals.program_argv[count]);
-        count++;
-    }
+//     /* Add the program and the program arguments to experiment's */
+//     fprintf(script_file_FP, " %s", globals.program_full);
+//     count = 0;
+//     while (NULL != globals.program_argv[count]) {
+//         fprintf(script_file_FP, " %s", globals.program_argv[count]);
+//         count++;
+//     }
 
-    /* Add the AFTER program */
-    if (NULL != my_module_globals.knc_after) {
-        fprintf(script_file_FP, "\n\n# AFTER command\n");
-        fprintf(script_file_FP, "%s", my_module_globals.knc_after);
-    }
-    fprintf(script_file_FP, "\n\nexit 0\n\n# EOF\n");
+//     /* Add the AFTER program */
+//     if (NULL != my_module_globals.knc_after) {
+//         fprintf(script_file_FP, "\n\n# AFTER command\n");
+//         fprintf(script_file_FP, "%s", my_module_globals.knc_after);
+//     }
+//     fprintf(script_file_FP, "\n\nexit 0\n\n# EOF\n");
 
-    /* Close file and set mode */
-    fclose(script_file_FP);
-    if (-1 == chmod(script_file, S_IRWXU)) {
-        OUTPUT(("%s (%s)", _ERROR("unable to set script mode"), script_file));
-        PERFEXPERT_DEALLOC(script_file);
-        return PERFEXPERT_ERROR;
-    }
+//     /* Close file and set mode */
+//     fclose(script_file_FP);
+//     if (-1 == chmod(script_file, S_IRWXU)) {
+//         OUTPUT(("%s (%s)", _ERROR("unable to set script mode"), script_file));
+//         PERFEXPERT_DEALLOC(script_file);
+//         return PERFEXPERT_ERROR;
+//     }
 
-    /* The super-ninja test sctructure */
-    PERFEXPERT_ALLOC(char, test.output, (strlen(globals.stepdir) + 19));
-    sprintf(test.output, "%s/knc_hpcrun.output", globals.stepdir);
-    test.input = NULL;
-    test.info = globals.program;
+//     /* The super-ninja test sctructure */
+//     PERFEXPERT_ALLOC(char, test.output, (strlen(globals.stepdir) + 19));
+//     sprintf(test.output, "%s/knc_hpcrun.output", globals.stepdir);
+//     test.input = NULL;
+//     test.info = globals.program;
 
-    argv[0] = "ssh";
-    argv[1] = my_module_globals.knc;
-    argv[2] = script_file;
-    argv[3] = NULL;
+//     argv[0] = "ssh";
+//     argv[1] = my_module_globals.knc;
+//     argv[2] = script_file;
+//     argv[3] = NULL;
 
-    /* Not using OUTPUT_VERBOSE because I want only one line */
-    if (8 <= globals.verbose) {
-        printf("%s %s %s %s %s\n", PROGRAM_PREFIX, _YELLOW("command line:"),
-            argv[0], argv[1], argv[2]);
-    }
+//     /* Not using OUTPUT_VERBOSE because I want only one line */
+//     if (8 <= globals.verbose) {
+//         printf("%s %s %s %s %s\n", PROGRAM_PREFIX, _YELLOW("command line:"),
+//             argv[0], argv[1], argv[2]);
+//     }
 
-    /* Run program and test return code (should I really test it?) */
-    switch (rc = fork_and_wait(&test, argv)) {
-        case PERFEXPERT_ERROR:
-            OUTPUT_VERBOSE((7, "[%s]", _BOLDYELLOW("ERROR")));
-            break;
+//     /* Run program and test return code (should I really test it?) */
+//     switch (rc = fork_and_wait(&test, argv)) {
+//         case PERFEXPERT_ERROR:
+//             OUTPUT_VERBOSE((7, "[%s]", _BOLDYELLOW("ERROR")));
+//             break;
 
-        case PERFEXPERT_FAILURE:
-        case 255:
-            OUTPUT_VERBOSE((7, "[%s ]", _BOLDRED("FAIL")));
-            break;
+//         case PERFEXPERT_FAILURE:
+//         case 255:
+//             OUTPUT_VERBOSE((7, "[%s ]", _BOLDRED("FAIL")));
+//             break;
 
-        case PERFEXPERT_SUCCESS:
-            OUTPUT_VERBOSE((7, "[ %s  ]", _BOLDGREEN("OK")));
-            break;
+//         case PERFEXPERT_SUCCESS:
+//             OUTPUT_VERBOSE((7, "[ %s  ]", _BOLDGREEN("OK")));
+//             break;
 
-        default:
-            OUTPUT_VERBOSE((7, "[UNKNO]"));
-            break;
-    }
+//         default:
+//             OUTPUT_VERBOSE((7, "[UNKNO]"));
+//             break;
+//     }
 
-    PERFEXPERT_DEALLOC(script_file);
-    PERFEXPERT_DEALLOC(test.output);
+//     PERFEXPERT_DEALLOC(script_file);
+//     PERFEXPERT_DEALLOC(test.output);
 
-    return rc;
-}
+//     return rc;
+// }
 
 /* run_hpcprof */
 int run_hpcprof(char **file) {

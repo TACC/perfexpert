@@ -629,7 +629,7 @@ static int generate_tlb_metrics(void) {
         strcpy(a, "ITLB_MISSES_WALK_DURATION / PAPI_TOT_INS");
     } else if (event_avail("PAPI_TLB_IM")) {
         USE_EVENT("PAPI_TLB_IM");
-        str_cpy(a, "PAPI_TLB_IM * TLB_lat / PAPI_TOT_INS");
+        strcpy(a, "PAPI_TLB_IM * TLB_lat / PAPI_TOT_INS");
     } else {
         OUTPUT(("%s", "unable to calculate 'instruction_TLB.overall'"));
         return PERFEXPERT_ERROR;
