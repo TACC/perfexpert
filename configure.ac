@@ -329,7 +329,7 @@ AS_IF([test x"$ENABLE_HPCTOOLKIT" = xyes], [
     AC_PATH_TOOL([SQLITE3_PROGRAM], [sqlite3],
         [AC_MSG_ERROR([not found: sqlite3])])
     AC_CHECK_LIB([sqlite3], [sqlite3_open, sqlite3_close, sqlite3_exec], [],
-        [AC_MSG_ERROR([not found: libsqlit3.so])])
+        [AC_MSG_ERROR([not found: libsqlite3.so])])
     AC_CHECK_HEADER([sqlite3.h], [], [AC_MSG_ERROR([not found: sqlite3.h])])
 
     ENABLE_HPCTOOLKIT=hpctoolkit
@@ -403,7 +403,7 @@ AS_IF([test x"$ENABLE_LCPI" = xyes], [
     AC_PATH_TOOL([SQLITE3_PROGRAM], [sqlite3],
         [AC_MSG_ERROR([not found: sqlite3])])
     AC_CHECK_LIB([sqlite3], [sqlite3_open, sqlite3_close, sqlite3_exec], [],
-        [AC_MSG_ERROR([not found: libsqlit3.so])])
+        [AC_MSG_ERROR([not found: libsqlite3.so])])
     AC_CHECK_HEADER([sqlite3.h], [], [AC_MSG_ERROR([not found: sqlite3.h])])
 
     ENABLE_LCPI=lcpi
@@ -439,7 +439,7 @@ AS_IF([test x"$ENABLE_PERFEXPERT" = xyes], [
     AC_PATH_TOOL([SQLITE3_PROGRAM], [sqlite3],
         [AC_MSG_ERROR([not found: sqlite3])])
     AC_CHECK_LIB([sqlite3], [sqlite3_open, sqlite3_close, sqlite3_exec], [],
-        [AC_MSG_ERROR([not found: libsqlit3.so])])
+        [AC_MSG_ERROR([not found: libsqlite3.so])])
     AC_CHECK_HEADER([sqlite3.h], [], [AC_MSG_ERROR([not found: sqlite3.h])])
 
     ENABLE_PERFEXPERT=perfexpert
@@ -515,7 +515,7 @@ AS_IF([test x"$ENABLE_RECOMMENDER" = xyes], [
     AC_PATH_TOOL([SQLITE3_PROGRAM], [sqlite3],
         [AC_MSG_ERROR([not found: sqlite3])])
     AC_CHECK_LIB([sqlite3], [sqlite3_open, sqlite3_close, sqlite3_exec], [],
-        [AC_MSG_ERROR([not found: libsqlit3.so])])
+        [AC_MSG_ERROR([not found: libsqlite3.so])])
     AC_CHECK_HEADER([sqlite3.h], [], [AC_MSG_ERROR([not found: sqlite3.h])])
 
     ENABLE_RECOMMENDER=recommender
