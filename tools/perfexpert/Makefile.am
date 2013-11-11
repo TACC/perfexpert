@@ -22,7 +22,7 @@
 bin_PROGRAMS = perfexpert
 
 perfexpert_CFLAGS = -O3
-perfexpert_LDFLAGS = -lrt -lsqlite3
+perfexpert_LDFLAGS = -lsqlite3
 perfexpert_LDADD = ../../modules/libperfexpert_module_base.la
 perfexpert_CPPFLAGS = -I$(srcdir)/../..
 perfexpert_SOURCES = perfexpert_main.c \
