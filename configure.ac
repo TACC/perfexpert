@@ -144,6 +144,7 @@ AC_CHECK_HEADER([unistd.h],       [], [AC_MSG_ERROR([unistd.h not found])])
 # Basic binaries: Bash shell
 #
 AC_PATH_TOOL([BASH_PROGRAM], [bash])
+AS_IF([test x"$BASH_PROGRAM" = x], [AC_MSG_ERROR([Shell is not Bash])])
 
 #------------------------------------------------------------------------------
 # Argument for pre-requirements (headers, lib)
@@ -302,12 +303,18 @@ AS_IF([test x"$ENABLE_HPCTOOLKIT" = xyes], [
 
     # Programs: hpcstruct, hpcrun, hpcprof
     #
-    AC_PATH_TOOL([HPCSTRUCT_PROGRAM], [hpcstruct],
-        [AC_MSG_ERROR([hpcstruct not found])])
-    AC_PATH_TOOL([HPCRUN_PROGRAM], [hpcrun],
-        [AC_MSG_ERROR([hpcrun not found])])
-    AC_PATH_TOOL([HPCPROF_PROGRAM], [hpcprof],
-        [AC_MSG_ERROR([hpcprof not found])])
+    AC_PATH_TOOL([HPCSTRUCT_PROGRAM], [hpcstruct])
+    AC_PATH_TOOL([HPCRUN_PROGRAM], [hpcrun])
+    AC_PATH_TOOL([HPCPROF_PROGRAM], [hpcprof])
+    AS_IF([test x"$HPCSTRUCT_PROGRAM" = x], [
+        AC_MSG_ERROR([hpcstruct not found. Do you have HPCToolkit installed?])
+    ])
+    AS_IF([test x"$HPCRUN_PROGRAM" = x], [
+        AC_MSG_ERROR([hpcstruct not found. Do you have HPCToolkit installed?])
+    ])
+    AS_IF([test x"$HPCPROF_PROGRAM" = x], [
+        AC_MSG_ERROR([hpcstruct not found. Do you have HPCToolkit installed?])
+    ])
 
     # XML2 support (headers and lib)
     #
@@ -326,8 +333,10 @@ AS_IF([test x"$ENABLE_HPCTOOLKIT" = xyes], [
 
     # SQLite support (headers, lib, and program)
     #
-    AC_PATH_TOOL([SQLITE3_PROGRAM], [sqlite3],
-        [AC_MSG_ERROR([not found: sqlite3])])
+    AC_PATH_TOOL([SQLITE3_PROGRAM], [sqlite3])
+    AS_IF([test x"$SQLITE3_PROGRAM" = x], [
+        AC_MSG_ERROR([sqlite3 not found. Do you have SQLite3 installed?])
+    ])
     AC_CHECK_LIB([sqlite3], [sqlite3_open, sqlite3_close, sqlite3_exec], [],
         [AC_MSG_ERROR([not found: libsqlite3.so])])
     AC_CHECK_HEADER([sqlite3.h], [], [AC_MSG_ERROR([not found: sqlite3.h])])
@@ -400,8 +409,10 @@ AS_IF([test x"$ENABLE_LCPI" = xyes], [
 
     # SQLite support (headers, lib, and program)
     #
-    AC_PATH_TOOL([SQLITE3_PROGRAM], [sqlite3],
-        [AC_MSG_ERROR([not found: sqlite3])])
+    AC_PATH_TOOL([SQLITE3_PROGRAM], [sqlite3])
+    AS_IF([test x"$SQLITE3_PROGRAM" = x], [
+        AC_MSG_ERROR([sqlite3 not found. Do you have SQLite3 installed?])
+    ])
     AC_CHECK_LIB([sqlite3], [sqlite3_open, sqlite3_close, sqlite3_exec], [],
         [AC_MSG_ERROR([not found: libsqlite3.so])])
     AC_CHECK_HEADER([sqlite3.h], [], [AC_MSG_ERROR([not found: sqlite3.h])])
@@ -436,8 +447,10 @@ AS_IF([test x"$ENABLE_PERFEXPERT" = xyes], [
 
     # SQLite support (headers, lib, and program)
     #
-    AC_PATH_TOOL([SQLITE3_PROGRAM], [sqlite3],
-        [AC_MSG_ERROR([not found: sqlite3])])
+    AC_PATH_TOOL([SQLITE3_PROGRAM], [sqlite3])
+    AS_IF([test x"$SQLITE3_PROGRAM" = x], [
+        AC_MSG_ERROR([sqlite3 not found. Do you have SQLite3 installed?])
+    ])
     AC_CHECK_LIB([sqlite3], [sqlite3_open, sqlite3_close, sqlite3_exec], [],
         [AC_MSG_ERROR([not found: libsqlite3.so])])
     AC_CHECK_HEADER([sqlite3.h], [], [AC_MSG_ERROR([not found: sqlite3.h])])
@@ -512,8 +525,10 @@ AS_IF([test x"$ENABLE_RECOMMENDER" = xyes], [
 
     # SQLite support (headers, lib, and program)
     #
-    AC_PATH_TOOL([SQLITE3_PROGRAM], [sqlite3],
-        [AC_MSG_ERROR([not found: sqlite3])])
+    AC_PATH_TOOL([SQLITE3_PROGRAM], [sqlite3])
+    AS_IF([test x"$SQLITE3_PROGRAM" = x], [
+        AC_MSG_ERROR([sqlite3 not found. Do you have SQLite3 installed?])
+    ])
     AC_CHECK_LIB([sqlite3], [sqlite3_open, sqlite3_close, sqlite3_exec], [],
         [AC_MSG_ERROR([not found: libsqlite3.so])])
     AC_CHECK_HEADER([sqlite3.h], [], [AC_MSG_ERROR([not found: sqlite3.h])])
