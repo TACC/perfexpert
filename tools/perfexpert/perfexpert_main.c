@@ -27,7 +27,6 @@ extern "C" {
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <limits.h>
@@ -267,6 +266,9 @@ int main(int argc, char** argv) {
         OUTPUT(("%s [%s]", _CYAN("Temporary files are available in"),
             globals.workdir));
     }
+
+    OUTPUT(("%s %llu", _YELLOW("The unique ID of this PerfExpert run is:"),
+        globals.unique_id));
 
     /* Free memory */
     PERFEXPERT_DEALLOC(globals.workdir);

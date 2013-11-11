@@ -88,9 +88,13 @@ int parse_cli_params(int argc, char *argv[]) {
         OUTPUT_VERBOSE((5, "no modules set, loading default modules"));
         if (PERFEXPERT_SUCCESS != perfexpert_module_load("lcpi")) {
             OUTPUT(("%s", _ERROR("unable to load default modules")));
+            OUTPUT(("Is %s in your LD_LIBRARY_PATH?", PERFEXPERT_LIBDIR));
+            return PERFEXPERT_ERROR;
         }
         if (PERFEXPERT_SUCCESS != perfexpert_module_load("hpctoolkit")) {
             OUTPUT(("%s", _ERROR("unable to load default modules")));
+            OUTPUT(("Is %s in your LD_LIBRARY_PATH?", PERFEXPERT_LIBDIR));
+            return PERFEXPERT_ERROR;
         }
     }
 
@@ -630,7 +634,9 @@ static void module_help(const char *name) {
                 }
 
                 if (PERFEXPERT_SUCCESS != perfexpert_module_load(m)) {
-                    OUTPUT(("%s [%s]", _ERROR("loading module"), m));
+                    OUTPUT(("%s [%s]", _ERROR("unable to load module"), m));
+                    OUTPUT(("Is %s in your LD_LIBRARY_PATH?",
+                        PERFEXPERT_LIBDIR));
                     exit(0);
                 }
 
@@ -649,7 +655,8 @@ static void module_help(const char *name) {
         }
     } else {
         if (PERFEXPERT_SUCCESS != perfexpert_module_load(name)) {
-            OUTPUT(("%s [%s]", _ERROR("loading module"), name));
+            OUTPUT(("%s [%s]", _ERROR("unable to load module"), name));
+            OUTPUT(("Is %s in your LD_LIBRARY_PATH?", PERFEXPERT_LIBDIR));
             exit(0);
         }
         if (PERFEXPERT_SUCCESS != perfexpert_module_set_option(name, "help")) {

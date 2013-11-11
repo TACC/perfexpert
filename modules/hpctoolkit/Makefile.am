@@ -21,8 +21,8 @@
 
 lib_LTLIBRARIES = libperfexpert_module_hpctoolkit.la
 libperfexpert_module_hpctoolkit_la_CPPFLAGS = -I$(srcdir)/../..
-libperfexpert_module_hpctoolkit_la_LDFLAGS = -lxml2 -lpapi -lsqlite3 -module \
-	-version-info 1:0:0 -export-symbols $(srcdir)/hpctoolkit_module.sym
+libperfexpert_module_hpctoolkit_la_LDFLAGS = -lxml2 -lpapi -lsqlite3 -lrt \
+	 -module -version-info 1:0:0 -export-symbols $(srcdir)/hpctoolkit_module.sym
 libperfexpert_module_hpctoolkit_la_SOURCES = hpctoolkit_module.c \
 	hpctoolkit_database.c \
 	hpctoolkit_parser.c \
