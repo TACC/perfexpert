@@ -30,7 +30,7 @@ else
 endif
 
 install-exec-local:
-	cp $(top_srcdir)/tools/hound/hound.sql hound.sql
+#	cp $(top_srcdir)/tools/hound/hound.sql hound.sql
 	./hound >> hound.sql
 	$(MKDIR_P) $(DESTDIR)$(sysconfdir)
 	$(INSTALL) -m 644 hound.sql $(DESTDIR)$(sysconfdir)/
