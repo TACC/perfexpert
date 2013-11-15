@@ -22,6 +22,7 @@
 #include <rose.h>
 
 #include "minst.h"
+#include "ir_methods.h"
 #include "aligncheck.h"
 #include "instrumentor.h"
 
@@ -88,36 +89,12 @@ void MINST::atTraversalEnd() {
     }
 
     for (inst_list_t::iterator it=inst_info_list.begin(); it!=inst_info_list.end(); it++) {
-        inst_info_t& inst_info = *it;
-
-        SgNode* parent = inst_info.bb->get_parent();
-        if (isSgIfStmt(parent)) {
-            SgIfStmt* if_node = static_cast<SgIfStmt*>(parent);
-            if_node->set_use_then_keyword(true);
-            if_node->set_has_end_statement(true);
-        }
-
-        SgExprStatement* fCall = buildFunctionCallStmt(
-                SgName(inst_info.function_name),
-                buildVoidType(),
-                buildExprListExp(inst_info.params),
-                inst_info.bb
-                );
-
-        if (inst_info.before) {
-            insertStatementBefore(inst_info.stmt, fCall);
-        } else {
-            insertStatementAfter(inst_info.stmt, fCall);
-        }
+        ir_methods::insert_instrumentation_call(*it);
     }
 }
 
-attrib MINST::evaluateInheritedAttribute(SgNode* node, attrib attr)
+void MINST::visit(SgNode* node)
 {
-    // If explicit instructions to skip this node, then just return
-    if (attr.skip)
-        return attr;
-
     // Add header file for indigo's record function
     if (isSgGlobal(node)) {
         global_node = static_cast<SgGlobal*>(node);
@@ -146,21 +123,31 @@ attrib MINST::evaluateInheritedAttribute(SgNode* node, attrib attr)
             }
 
             if(statement == NULL)
-                return attr;
+                return;
 
             std::string indigo__init = SageInterface::is_Fortran_language() ? "indigo__init" : "indigo__init_";
             std::string indigo__create_map = "indigo__create_map";
-            SgExprStatement* init_call = buildFunctionCallStmt(SgName(indigo__init), buildVoidType(), NULL, body);
-            SgExprStatement* map_call  = buildFunctionCallStmt(SgName(indigo__create_map), buildVoidType(), NULL, body);
-            insertStatementBefore(statement, init_call);
-            insertStatementAfter (init_call, map_call);
+
+            inst_info_t init_call;
+            init_call.bb = body;
+            init_call.stmt = statement;
+            init_call.function_name = indigo__init;
+            init_call.before = true;
+            SgExprStatement* expr_stmt = ir_methods::insert_instrumentation_call(init_call);
+
+            inst_info_t map_call;
+            map_call.bb = body;
+            map_call.stmt = expr_stmt;
+            map_call.function_name = indigo__create_map;
+            map_call.before = false;
+            ir_methods::insert_instrumentation_call(map_call);
 
             insert_map_prototype(node);
         }
 
         if (line_number == 0) {
             if (function_name != inst_func)
-                return attr;
+                return;
 
             std::cerr << "Operating on function " << function_name << std::endl;
 
@@ -169,7 +156,7 @@ attrib MINST::evaluateInheritedAttribute(SgNode* node, attrib attr)
                 insert_map_function(node);
 
                 instrumentor_t inst;
-                inst.traverse(node, attr);
+                inst.traverse(node, attrib());
 
                 // Pull information from AST traversal.
                 reference_list = inst.get_reference_list();
@@ -190,7 +177,7 @@ attrib MINST::evaluateInheritedAttribute(SgNode* node, attrib attr)
                 insert_map_function(node);
 
                 instrumentor_t inst;
-                inst.traverse(node, attr);
+                inst.traverse(node, attrib());
 
                 // Pull information from AST traversal.
                 reference_list = inst.get_reference_list();
@@ -198,13 +185,11 @@ attrib MINST::evaluateInheritedAttribute(SgNode* node, attrib attr)
             } else if (action == ACTION_ALIGNCHECK) {
                 std::cerr << "Placing alignment checks around loop in function " << function_name << " at line " << _line_number << std::endl;
                 aligncheck_t visitor(var_renaming);
-                visitor.traverse(node, attr);
+                visitor.traverse(node, preorder);
 
                 // Pull information from AST traversal.
                 inst_info_list.insert(inst_info_list.end(), visitor.inst_begin(), visitor.inst_end());
             }
         }
     }
-
-    return attr;
 }

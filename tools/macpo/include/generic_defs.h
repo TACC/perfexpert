@@ -22,14 +22,12 @@
 #ifndef	GENERIC_DEFS_H_
 #define	GENERIC_DEFS_H_
 
-enum { FALSE=0, TRUE };
-enum { SUCCESS=0, ERR_PARAMS };
+#include "macpo_record.h"
+
 enum { ACTION_NONE=0, ACTION_INSTRUMENT, ACTION_ALIGNCHECK };
 
 const int FLAG_NONE = 0;
 const int FLAG_NOCOMPILE = 1 << 0;
-
-typedef	unsigned char BOOL;
 
 typedef struct {
     char* function;
@@ -65,26 +63,11 @@ typedef struct {
 
 class attrib {
     public:
-        char* inst_func;
-        int line_number;
-        BOOL read, skip, atomic;
+        bool access_type, skip;
 
-        attrib(BOOL _read, BOOL _skip, char* _inst_func, int _line_number) {
-            atomic=false, read=_read, skip=_skip, inst_func=_inst_func, line_number=_line_number;
-        }
-};
-
-class attrib_temp {
-    public:
-        char* inst_func;
-        int line_number;
-        BOOL read, skip;
-
-        SgNode* currNode;
-        std::string var_name;
-
-        attrib_temp(BOOL _read, BOOL _skip, char* _inst_func, int _line_number) {
-            var_name="", currNode=NULL, read=_read, skip=_skip, inst_func=_inst_func, line_number=_line_number;
+        attrib() {
+            access_type = TYPE_UNKNOWN;
+            skip = false;
         }
 };
 

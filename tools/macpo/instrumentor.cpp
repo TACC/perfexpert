@@ -22,8 +22,9 @@
 #include <algorithm>
 #include <rose.h>
 
-#include "macpo_record.h"
 #include "instrumentor.h"
+#include "ir_methods.h"
+#include "macpo_record.h"
 
 using namespace SageBuilder;
 using namespace SageInterface;
@@ -34,26 +35,9 @@ void instrumentor_t::atTraversalStart() {
 }
 
 void instrumentor_t::atTraversalEnd() {
-    std::string indigo__record = SageInterface::is_Fortran_language() ? "indigo__record_f" : "indigo__record_c";
-    for (std::vector<inst_info_t>::iterator it=inst_info_list.begin(); it!=inst_info_list.end(); it++) {
-        inst_info_t& inst_info = *it;
-
-        SgNode* parent = inst_info.bb->get_parent();
-        if (isSgIfStmt(parent)) {
-            SgIfStmt* if_node = static_cast<SgIfStmt*>(parent);
-            if_node->set_use_then_keyword(true);
-            if_node->set_has_end_statement(true);
-        }
-
-        SgExprStatement* fCall = buildFunctionCallStmt(
-                SgName(indigo__record),
-                buildVoidType(),
-                buildExprListExp(inst_info.params),
-                inst_info.bb
-                );
-
-        insertStatementBefore(inst_info.stmt, fCall);
-    }
+    for (std::vector<inst_info_t>::iterator it=inst_info_list.begin();
+            it!=inst_info_list.end(); it++)
+        ir_methods::insert_instrumentation_call(*it);
 }
 
 std::vector<reference_info_t>& instrumentor_t::get_reference_list() {
@@ -62,35 +46,35 @@ std::vector<reference_info_t>& instrumentor_t::get_reference_list() {
 
 attrib instrumentor_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
     // If explicit instructions to skip this node, then just return
-    if (attr.skip == TRUE)
+    if (attr.skip)
         return attr;
 
     SgNode* parent = node->get_parent();
 
     // Decide whether read / write depending on the operand of AssignOp
     if (parent && isSgAssignOp(parent))
-        attr.read = parent->getChildIndex(node) == 0 ? TYPE_WRITE : TYPE_READ;
+        attr.access_type = parent->getChildIndex(node) == 0 ? TYPE_WRITE : TYPE_READ;
 
     if (parent && isSgCompoundAssignOp(parent))
-        attr.read = parent->getChildIndex(node) == 0 ? TYPE_READ_AND_WRITE : TYPE_READ;
+        attr.access_type = parent->getChildIndex(node) == 0 ? TYPE_READ_AND_WRITE : TYPE_READ;
 
-    if (parent && (isSgPlusPlusOp(parent) || isSgMinusMinusOp(parent)) && attr.read == TYPE_UNKNOWN)
-        attr.read = TYPE_READ_AND_WRITE;
+    if (parent && (isSgPlusPlusOp(parent) || isSgMinusMinusOp(parent)) && attr.access_type == TYPE_UNKNOWN)
+        attr.access_type = TYPE_READ_AND_WRITE;
 
-    if (parent && (isSgUnaryOp(parent) || isSgBinaryOp(parent)) && attr.read == TYPE_UNKNOWN)
-        attr.read = TYPE_READ;
+    if (parent && (isSgUnaryOp(parent) || isSgBinaryOp(parent)) && attr.access_type == TYPE_UNKNOWN)
+        attr.access_type = TYPE_READ;
 
     // LHS operand of PntrArrRefExp is always skipped
     if (parent && isSgPntrArrRefExp(parent) && parent->getChildIndex(node) == 0) {
-        attr.skip=TRUE;
+        attr.skip = true;
         return attr;
     }
 
     // RHS operand of PntrArrRefExp is always read and never written
     if (parent && isSgPntrArrRefExp(parent) && parent->getChildIndex(node) > 0)
-        attr.read = TYPE_READ;
+        attr.access_type = TYPE_READ;
 
-    if (attr.read != TYPE_UNKNOWN	// Are we sure whether this is a read or a write operation?
+    if (attr.access_type != TYPE_UNKNOWN	// Are we sure whether this is a read or a write operation?
             && isSgPntrArrRefExp(node)	// Is this an array reference statement?
             && parent
             && (!isSgPntrArrRefExp(parent)|| (isSgPntrArrRefExp(parent) && parent->getChildIndex(node) > 0))) { // Is this node representing the top-level dimension of an array or if this array expression is used to read from another array?
@@ -146,7 +130,7 @@ attrib instrumentor_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
 
             SgIntVal* param_line_number = new SgIntVal(fileInfo, line_number);
             SgIntVal* param_idx = new SgIntVal(fileInfo, idx);
-            SgIntVal* param_read_write = new SgIntVal(fileInfo, attr.read);
+            SgIntVal* param_read_write = new SgIntVal(fileInfo, attr.access_type);
 
             inst_info_t inst_info;
             inst_info.bb = containingBB;

@@ -26,7 +26,7 @@
 
 #include "generic_defs.h"
 
-class aligncheck_t : public AstTopDownProcessing<attrib> {
+class aligncheck_t : public AstSimpleProcessing {
 
     enum { LOOP_TEST=0, LOOP_INCR, LOOP_INIT, BASE_ALIGNMENT };
 
@@ -41,8 +41,7 @@ class aligncheck_t : public AstTopDownProcessing<attrib> {
 
     virtual void atTraversalEnd();
     virtual void atTraversalStart();
-
-    virtual attrib evaluateInheritedAttribute(SgNode* node, attrib attr);
+    virtual void visit(SgNode* node);
 
     bool get_loop_header_components(SgForStatement*& for_stmt,
             def_map_t& def_map, SgExpression*& idxv_expr,

@@ -27,7 +27,7 @@
 #include "generic_defs.h"
 #include "instrumentor.h"
 
-class MINST : public AstTopDownProcessing<attrib> {
+class MINST : public AstSimpleProcessing {
     public:
         MINST(short _action, int _line_number, std::string _inst_func, VariableRenaming* _var_renaming);
 
@@ -36,8 +36,7 @@ class MINST : public AstTopDownProcessing<attrib> {
 
         virtual void atTraversalEnd();
         virtual void atTraversalStart();
-
-        virtual attrib evaluateInheritedAttribute(SgNode* node, attrib attr);
+        virtual void visit(SgNode* node);
 
     private:
         short action;

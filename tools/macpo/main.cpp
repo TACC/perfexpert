@@ -20,7 +20,6 @@
  */
 
 #include <rose.h>
-#include <stdio.h>
 
 #include <VariableRenaming.h>
 
@@ -34,23 +33,23 @@ int parseMinstArgument(char* arg, options_t& options) {
     char* colon = strchr(arg, ':');
     assert (colon && *(++colon) && "Malformed option string");
 
-    if (!eq)	eq = arg + strlen(arg);
+    if (!eq)    eq = arg + strlen(arg);
 
     strncpy(opt, colon, eq-colon);
     opt[eq-colon] = '\0';
 
     // Do something with 'opt' and 'val'
     if (strcmp(opt, "function") == 0) {
-        if (!eq || !*(++eq))	return -ERR_PARAMS;	// No '=' sign
+        if (!eq || !*(++eq))    return -1; // No '=' sign
         options.functionInfo.function = eq;
     } else if (strcmp(opt, "loop") == 0) {
-        if (!eq || !*(++eq))	return -ERR_PARAMS;	// No '=' sign
+        if (!eq || !*(++eq))    return -1; // No '=' sign
 
         // Split the value into <function>:<line#>
         char* function = eq;
         char* lineNum = strchr(eq, ':');
         if (lineNum == NULL || !*(++lineNum))
-            return -ERR_PARAMS;
+            return -1;
 
         // XXX: UNSAFE! Modifying the argument list itself but better than allocating handful of bytes and having to free it later
         *(lineNum-1) = '\0';
@@ -66,9 +65,9 @@ int parseMinstArgument(char* arg, options_t& options) {
         options.flags |= FLAG_NOCOMPILE;
     else if (strcmp(opt, "noinst") == 0)
         options.action = ACTION_NONE;
-    else	return -ERR_PARAMS;
+    else    return -1;
 
-    return SUCCESS;
+    return 0;
 }
 
 int main (int argc, char *argv[]) {
@@ -81,10 +80,10 @@ int main (int argc, char *argv[]) {
     arguments.push_back(argv[0]);
 
     for (int i=1; i<argc; i++) {
-        if (strstr(argv[i], "--macpo:") == argv[i])	{ // If "--macpo:" was found at the start of argv[i]
-            if (parseMinstArgument(argv[i], options) == -ERR_PARAMS) {
+        if (strstr(argv[i], "--macpo:") == argv[i]) { // If "--macpo:" was found at the start of argv[i]
+            if (parseMinstArgument(argv[i], options) < 0) {
                 fprintf (stdout, "Unknown parameter: %s, aborting...\n", argv[i]);
-                return -ERR_PARAMS;
+                return -1;
             }
         } else {
             arguments.push_back(argv[i]);
@@ -97,16 +96,13 @@ int main (int argc, char *argv[]) {
         if (!options.functionInfo.function && !options.loopInfo.function) {
             fprintf (stderr, "USAGE: %s <options>\n", argv[0]);
             fprintf (stderr, "Did not find valid options on the command line\n");
-            return -ERR_PARAMS;
+            return -1;
         }
 
         char* inst_function = options.loopInfo.function ? options.loopInfo.function : options.functionInfo.function;
 
         SgProject *project = frontend (arguments);
         ROSE_ASSERT (project != NULL);
-
-        // Initializing attributes
-        attrib attr(TYPE_UNKNOWN, FALSE, inst_function, options.loopInfo.line_number);
 
         VariableRenaming var_renaming(project);
         if (options.action == ACTION_ALIGNCHECK) {
@@ -123,7 +119,7 @@ int main (int argc, char *argv[]) {
 
             // Start the traversal!
             MINST traversal (options.action, options.loopInfo.line_number, inst_function, &var_renaming);
-            traversal.traverseWithinFile (file, attr);
+            traversal.traverseWithinFile (file, preorder);
         }
 
         if (!(options.flags & FLAG_NOCOMPILE)) {

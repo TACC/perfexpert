@@ -21,10 +21,10 @@
 
 lib_LTLIBRARIES = libmrt.la
 libmrt_la_SOURCES = mrt.c
-libmrt_la_CFLAGS = -I$(srcdir) -I$(srcdir)/../common
+libmrt_la_CFLAGS = -I$(srcdir) -I$(srcdir)/../include
 libmrt_la_LDFLAGS = -static
 
-include_HEADERS = mrt.h ../common/macpo_record.h
+include_HEADERS = mrt.h ../include/macpo_record.h
 
 
 # EOF
