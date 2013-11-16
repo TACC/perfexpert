@@ -22,6 +22,7 @@
 #ifndef	GENERIC_DEFS_H_
 #define	GENERIC_DEFS_H_
 
+#include <rose.h>
 #include "macpo_record.h"
 
 enum { ACTION_NONE=0, ACTION_INSTRUMENT, ACTION_ALIGNCHECK };
@@ -30,19 +31,10 @@ const int FLAG_NONE = 0;
 const int FLAG_NOCOMPILE = 1 << 0;
 
 typedef struct {
-    char* function;
-} function_info_t;
-
-typedef struct {
-    char* function;
-    int line_number;
-} loop_info_t;
-
-typedef struct {
-    int flags;
     short action;
-    loop_info_t loopInfo;
-    function_info_t functionInfo;
+    int line_number;
+    bool no_compile;
+    std::string function_name;
 } options_t;
 
 typedef struct {

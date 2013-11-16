@@ -19,13 +19,18 @@
 # $HEADER$
 #
 
-SUBDIRS = libmrt analyze tests
+AM_CPPFLAGS = -g -pthread
+AM_CXXFLAGS = -Wno-deprecated -I$(srcdir)/../include -I$(GTEST_DIR) -isystem \
+                $(GTEST_DIR)/include
+AM_LDFLAGS = -lpthread -lgtest -lrose -ljvm
 
-bin_PROGRAMS = macpo
-dist_bin_SCRIPTS = macpo.sh
+GTEST_DIR = $(srcdir)/../../../contrib/gtest
 
-macpo_SOURCES = argparse.cpp minst.cpp instrumentor.cpp main.cpp aligncheck.cpp ir_methods.cpp
-macpo_CXXFLAGS = -Wno-deprecated -I$(srcdir)/include
-macpo_LDFLAGS = -lrose -ljvm
+check_LTLIBRARIES = libgtest.la
+libgtest_la_SOURCES = $(GTEST_DIR)/src/gtest-all.cc \
+                        $(GTEST_DIR)/src/gtest_main.cc
 
-# EOF
+check_PROGRAMS = test_0001
+TESTS = test_0001
+
+test_0001_SOURCES = $(srcdir)/../argparse.cpp $(srcdir)/argparse-tests.cpp
