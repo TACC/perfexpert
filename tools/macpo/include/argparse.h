@@ -32,6 +32,7 @@ class argparse {
         static bool parse_location(std::string& argument,
                 std::string& function_name, int& line_number);
         static int parse_arguments(char* arg, options_t& options);
+        static void init_options(options_t& options);
 };
 
 #endif  /* ARGPARSE_H_ */

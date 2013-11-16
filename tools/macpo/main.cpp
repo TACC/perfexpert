@@ -26,10 +26,8 @@
 #include "minst.h"
 
 int main (int argc, char *argv[]) {
-    options_t options={0};
-
-    // Default action is to instrument the code
-    options.action = ACTION_INSTRUMENT;
+    options_t options;
+    argparse::init_options(options);
 
     std::vector<std::string> arguments;
     arguments.push_back(argv[0]);
@@ -49,13 +47,37 @@ int main (int argc, char *argv[]) {
     if (options.action != ACTION_NONE) {
         // Check if at least a function or a loop was specified on the command line
         if (options.function_name.size() == 0) {
-            fprintf (stderr, "USAGE: %s <options>\n", argv[0]);
-            fprintf (stderr, "Did not find valid options on the command line\n");
+            std::cerr << "USAGE: " << argv[0] << " <options>\n";
+            std::cerr << "Did not find valid options on the command line\n";
             return -1;
         }
 
         SgProject *project = frontend (arguments);
         ROSE_ASSERT (project != NULL);
+
+        SgFilePtrList files = project->get_fileList();
+
+        if (options.backup_filename.size()) {
+            // We need to save the input file to a backup file.
+            if (files.size() != 1) {
+                std::cerr << "Backup option can be specified with only a single"
+                    << " file for compilation, terminating.\n";
+                return -1;
+            }
+
+            SgSourceFile* file = isSgSourceFile(*(files.begin()));
+            std::string source = file->get_file_info()->get_filenameString();
+
+            // Copy the file over.
+            if (argparse::copy_file(source.c_str(),
+                        options.backup_filename.c_str()) < 0) {
+                std::cerr << "Error backing up file.\n";
+                return -1;
+            }
+
+            std::cout << "Saved " << source << " into " <<
+                    options.backup_filename << ".\n";
+        }
 
         VariableRenaming var_renaming(project);
         if (options.action == ACTION_ALIGNCHECK) {
@@ -64,7 +86,6 @@ int main (int argc, char *argv[]) {
         }
 
         // Loop over each file
-        SgFilePtrList files = project->get_fileList();
         for (SgFilePtrList::iterator it=files.begin(); it!=files.end(); it++) {
             SgSourceFile* file = isSgSourceFile(*it);
             std::string filename = file->get_file_info()->get_filenameString();

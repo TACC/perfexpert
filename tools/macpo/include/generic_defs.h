@@ -35,6 +35,7 @@ typedef struct {
     int line_number;
     bool no_compile;
     std::string function_name;
+    std::string backup_filename;
 } options_t;
 
 typedef struct {

@@ -70,7 +70,7 @@ bool argparse::parse_location(std::string& argument, std::string& function_name,
 
     // Initialize
     function_name = "";
-    line_number = -1;
+    line_number = 0;
 
     size_t pos;
     if ((pos = str_argument.find_first_of("#")) != std::string::npos) {
@@ -82,7 +82,7 @@ bool argparse::parse_location(std::string& argument, std::string& function_name,
         }
     } else {
         function_name = str_argument;
-        line_number = -1;
+        line_number = 0;
     }
 
     return true;
@@ -91,12 +91,7 @@ bool argparse::parse_location(std::string& argument, std::string& function_name,
 #define CHECK_EQUAL_SIGN(eq)    if (!eq || !*(++eq))    return -1;
 
 int argparse::parse_arguments(char* arg, options_t& options) {
-    // Initialize
     std::string argument = arg, option, value;
-
-    options.action = ACTION_NONE;
-    options.no_compile = false;
-    options.line_number = -1;
 
     if (argument.compare(0, 8, "--macpo:") != 0)
         return -1;
@@ -127,10 +122,23 @@ int argparse::parse_arguments(char* arg, options_t& options) {
 
         options.action = ACTION_ALIGNCHECK;
         parse_location(value, options.function_name, options.line_number);
+    } else if (option == "backup-filename") {
+        if (!value.size())
+            return -1;
+
+        options.backup_filename = value;
     } else if (option == "no-compile") {
         options.no_compile = true;
     } else
         return -1;
 
     return 0;
+}
+
+void argparse::init_options(options_t& options) {
+    options.action = ACTION_NONE;
+    options.no_compile = false;
+    options.line_number = 0;
+    options.function_name = "";
+    options.backup_filename = "";
 }
