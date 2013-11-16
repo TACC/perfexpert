@@ -48,7 +48,7 @@ int main (int argc, char *argv[]) {
     // Check if we have explicit instructions not to change anything
     if (options.action != ACTION_NONE) {
         // Check if at least a function or a loop was specified on the command line
-        if (options.function_name.size() == 0 || options.line_number < 0) {
+        if (options.function_name.size() == 0) {
             fprintf (stderr, "USAGE: %s <options>\n", argv[0]);
             fprintf (stderr, "Did not find valid options on the command line\n");
             return -1;
