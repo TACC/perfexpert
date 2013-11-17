@@ -65,8 +65,13 @@ void aligncheck_t::visit(SgNode* node) {
         // Instrument the loop only if all headers are available.
         if ((init_expr || idxv_expr) && test_expr && incr_expr) {
             streams_t streams;
-            streams.traverse(node, attrib());
+            streams.traverse(for_stmt->get_loop_body(), attrib());
             reference_list_t& reference_list = streams.get_reference_list();
+
+            // If no references in this list, then MACPO gives up
+            // as it cannot (yet) handle pointer-based array references.
+            if (reference_list.size() == 0)
+                return;
 
             // Sanity check: Only linear array references.
             for (reference_list_t::iterator it = reference_list.begin();
@@ -76,11 +81,8 @@ void aligncheck_t::visit(SgNode* node) {
 
                 // Check if ref_node is a linear array reference
                 SgPntrArrRefExp* pntr = isSgPntrArrRefExp(ref_node);
-                if (pntr && pntr->get_rhs_operand() &&
-                        !isSgVarRefExp(pntr->get_rhs_operand())) {
-                    // Non-linear array reference, cannot vectorize.
+                if (pntr && !ir_methods::is_linear_reference(pntr, false))
                     return;
-                }
             }
 
             std::set<std::string> stream_set;
@@ -94,7 +96,6 @@ void aligncheck_t::visit(SgNode* node) {
                 reference_info_t& reference_info = *it;
                 SgNode* ref_node = reference_info.node;
 
-                // Check if ref_node is a linear array reference
                 SgPntrArrRefExp* pntr = isSgPntrArrRefExp(ref_node);
                 if (pntr) {
                     std::string stream_name = pntr->unparseToString();
@@ -117,36 +118,45 @@ void aligncheck_t::visit(SgNode* node) {
             int line_number = for_stmt->get_file_info()->get_raw_line();
             SgIntVal* param_line_number = new SgIntVal(fileInfo, line_number);
 
+            inst_info_t inst_info;
+            inst_info.bb = outer_bb;
+            inst_info.stmt = for_stmt;
+
+            // FIXME: Handle the case when init_expr is NULL.
+            // Solution: Use idxv_expr in place of init_expr but
+            // this requires that the call be placed before the loop body.
+            inst_info.params.push_back(init_expr);
+            inst_info.params.push_back(test_expr);
+            inst_info.params.push_back(incr_expr);
+            inst_info.params.push_back(param_line_number);
+
+            inst_info.function_name = function_name;
+
+            // FIXME: Setting before to true causes AST to be repeatedly traversed.
+            inst_info.before = false;
+
             for (expr_list_t::iterator it = expr_list.begin();
                     it != expr_list.end(); it++) {
-                SgPntrArrRefExp*& expr = *it;
+                SgPntrArrRefExp*& init_ref = *it;
 
-                // Replace idxv in expr with init value
-                ir_methods::replace_expr(expr, idxv_expr, init_expr);
+                if (init_ref) {
+                    // Replace idxv in init_ref with init value
+                    SgBinaryOp* bin_op = isSgBinaryOp(init_ref);
+                    if (bin_op) {
+                        ir_methods::replace_expr(bin_op, idxv_expr, init_expr);
 
-                inst_info_t inst_info;
-                inst_info.bb = outer_bb;
-                inst_info.stmt = for_stmt;
-                SgExpression *param_addr = SageInterface::is_Fortran_language()
-                        ? (SgExpression*) expr : buildCastExp (
-                        buildAddressOfOp((SgExpression*) expr),
-                        buildPointerType(buildVoidType()));
+                        SgExpression *param_addr = SageInterface::is_Fortran_language()
+                            ? (SgExpression*) init_ref : buildCastExp (
+                                    buildAddressOfOp((SgExpression*) init_ref),
+                                    buildPointerType(buildVoidType()));
 
-                inst_info.params.push_back(param_addr);
-                inst_info.params.push_back(param_line_number);
-
-                inst_info.function_name = function_name;
-
-                // FIXME: Setting before to true causes AST to be repeatedly traversed.
-                inst_info.before = false;
-                inst_info_list.push_back(inst_info);
+                        if (param_addr)
+                            inst_info.params.push_back(param_addr);
+                    }
+                }
             }
 
-            // Instrument the loop only if the compiler cannot vectorize it.
-            if ((init_expr && !ir_methods::is_known(init_expr)) ||
-                    !ir_methods::is_known(test_expr) ||
-                    !ir_methods::is_known(test_expr)) {
-            }
+            inst_info_list.push_back(inst_info);
 
             if (init_expr) {
                 instrument_loop_header_components(node, def_map, init_expr,

@@ -344,26 +344,49 @@ bool ir_methods::is_known(const SgExpression* expr) {
     return isSgValueExp(expr) || isConstType(expr->get_type());
 }
 
-void ir_methods::replace_expr(SgPntrArrRefExp*& containing_expr,
-    SgExpression*& search_expr,
-    SgExpression*& replace_expr) {
-    if (containing_expr && search_expr && replace_expr) {
-        SgExpression* lhs = containing_expr->get_lhs_operand();
-        SgExpression* rhs = containing_expr->get_rhs_operand();
+bool ir_methods::is_linear_reference(const SgBinaryOp* reference,
+        bool check_lhs_operand) {
+    if (reference) {
+        SgExpression* lhs = reference->get_lhs_operand();
+        SgExpression* rhs = reference->get_rhs_operand();
+
+        if (check_lhs_operand && lhs && isSgPntrArrRefExp(lhs))
+            return false;
+
+        if (rhs && isSgPntrArrRefExp(rhs))
+            return false;
+
+        SgBinaryOp* bin_op = isSgBinaryOp(lhs);
+        if (lhs && bin_op && !ir_methods::is_linear_reference(bin_op, true))
+            return false;
+
+        bin_op = isSgBinaryOp(rhs);
+        if (rhs && bin_op && !ir_methods::is_linear_reference(bin_op, true))
+            return false;
+    }
+
+    return true;
+}
+
+void ir_methods::replace_expr(SgBinaryOp*& bin_op, SgExpression*& search_expr,
+        SgExpression*& replace_expr) {
+    if (bin_op && search_expr && replace_expr) {
+        SgExpression* lhs = bin_op->get_lhs_operand();
+        SgExpression* rhs = bin_op->get_rhs_operand();
 
         // If either operand matches, replace it!
         if (lhs && lhs->unparseToString() == search_expr->unparseToString())
-            containing_expr->set_lhs_operand(replace_expr);
+            bin_op->set_lhs_operand(replace_expr);
 
         if (rhs && rhs->unparseToString() == search_expr->unparseToString())
-            containing_expr->set_rhs_operand(replace_expr);
+            bin_op->set_rhs_operand(replace_expr);
 
         // Check if we need to call recursively.
-        SgPntrArrRefExp* pntr = NULL;
-        if (lhs && (pntr = isSgPntrArrRefExp(lhs)))
+        SgBinaryOp* pntr = NULL;
+        if (lhs && (pntr = isSgBinaryOp(lhs)))
             ir_methods::replace_expr(pntr, search_expr, replace_expr);
 
-        if (rhs && (pntr = isSgPntrArrRefExp(rhs)))
+        if (rhs && (pntr = isSgBinaryOp(rhs)))
             ir_methods::replace_expr(pntr, search_expr, replace_expr);
     }
 }

@@ -41,9 +41,12 @@ class ir_methods {
 
         static bool is_known(const SgExpression* expr);
 
-        static void replace_expr(SgPntrArrRefExp*& containing_expr,
+        static void replace_expr(SgBinaryOp*& bin_op,
                 SgExpression*& search_expr,
                 SgExpression*& replace_expr);
+
+        static bool is_linear_reference(const SgBinaryOp* reference,
+                bool check_lhs_operand);
 };   /* ir_methods */
 
 #endif  /* IR_METHODS_H_ */
