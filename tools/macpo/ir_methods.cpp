@@ -295,3 +295,75 @@ SgExprStatement* ir_methods::insert_instrumentation_call(inst_info_t& inst_info)
         insertStatementAfter(inst_info.stmt, fCall);
     }
 }
+
+long ir_methods::get_reference_index(reference_list_t& reference_list,
+        std::string& stream_name) {
+    if (stream_name.size() == 0)
+        return -1;
+
+    size_t idx = 0;
+    for (reference_list_t::iterator it = reference_list.begin();
+            it != reference_list.end(); it++) {
+        if (it->name == stream_name) {
+            break;
+        }
+
+        idx += 1;
+    }
+
+    if (idx == reference_list.size()) {
+        reference_info_t stream_info;
+        stream_info.name = stream_name;
+
+        reference_list.push_back(stream_info);
+        idx = reference_list.size() - 1;
+    }
+
+    return idx;
+}
+
+std::string ir_methods::strip_index_expr(const std::string& stream_name) {
+    std::string return_string = stream_name;
+    while (return_string.at(return_string.length()-1) == ']') {
+        // Strip off the last [.*]
+        unsigned index = return_string.find_last_of('[');
+        return_string = return_string.substr(0, index);
+    }
+
+    // For fortran array notation
+    while (return_string.at(return_string.length()-1) == ')') {
+        // Strip off the last [.*]
+        unsigned index = return_string.find_last_of('(');
+        return_string = return_string.substr(0, index);
+    }
+
+    return return_string;
+}
+
+bool ir_methods::is_known(const SgExpression* expr) {
+    return isSgValueExp(expr) || isConstType(expr->get_type());
+}
+
+void ir_methods::replace_expr(SgPntrArrRefExp*& containing_expr,
+    SgExpression*& search_expr,
+    SgExpression*& replace_expr) {
+    if (containing_expr && search_expr && replace_expr) {
+        SgExpression* lhs = containing_expr->get_lhs_operand();
+        SgExpression* rhs = containing_expr->get_rhs_operand();
+
+        // If either operand matches, replace it!
+        if (lhs && lhs->unparseToString() == search_expr->unparseToString())
+            containing_expr->set_lhs_operand(replace_expr);
+
+        if (rhs && rhs->unparseToString() == search_expr->unparseToString())
+            containing_expr->set_rhs_operand(replace_expr);
+
+        // Check if we need to call recursively.
+        SgPntrArrRefExp* pntr = NULL;
+        if (lhs && (pntr = isSgPntrArrRefExp(lhs)))
+            ir_methods::replace_expr(pntr, search_expr, replace_expr);
+
+        if (rhs && (pntr = isSgPntrArrRefExp(rhs)))
+            ir_methods::replace_expr(pntr, search_expr, replace_expr);
+    }
+}

@@ -19,25 +19,21 @@
  * $HEADER$
  */
 
-#ifndef	INSTRUMENTOR_H_
-#define	INSTRUMENTOR_H_
+#ifndef	STREAMS_H_
+#define	STREAMS_H_
 
 #include "generic_defs.h"
 
-class instrumentor_t : public AstTopDownProcessing<attrib> {
+class streams_t : public AstTopDownProcessing<attrib> {
     public:
-        name_list_t& get_stream_list();
+        reference_list_t& get_reference_list();
 
         virtual attrib evaluateInheritedAttribute(SgNode* node, attrib attr);
         virtual void atTraversalStart();
         virtual void atTraversalEnd();
 
-        const inst_list_t::iterator inst_begin();
-        const inst_list_t::iterator inst_end();
-
     private:
-        inst_list_t inst_info_list;
-        name_list_t stream_list;
+        reference_list_t reference_list;
 };
 
-#endif	/* INSTRUMENTOR_H_ */
+#endif	/* STREAMS_H_ */

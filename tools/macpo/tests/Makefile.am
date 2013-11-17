@@ -30,7 +30,8 @@ check_LTLIBRARIES = libgtest.la
 libgtest_la_SOURCES = $(GTEST_DIR)/src/gtest-all.cc \
                         $(GTEST_DIR)/src/gtest_main.cc
 
-check_PROGRAMS = test_0001
-TESTS = test_0001
+check_PROGRAMS = test_0001 test_0002
+TESTS = $(check_PROGRAMS)
 
 test_0001_SOURCES = $(srcdir)/../argparse.cpp $(srcdir)/argparse-tests.cpp
+test_0002_SOURCES = $(srcdir)/../ir_methods.cpp $(srcdir)/irmethods-tests.cpp

@@ -50,9 +50,16 @@ typedef struct {
 
 typedef std::vector<inst_info_t> inst_list_t;
 
+typedef std::vector<std::string> name_list_t;
+
 typedef struct {
     std::string name;
+    short access_type;
+    long idx;
+    SgNode* node;
 } reference_info_t;
+
+typedef std::vector<reference_info_t> reference_list_t;
 
 class attrib {
     public:

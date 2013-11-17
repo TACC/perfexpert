@@ -59,7 +59,7 @@ void MINST::insert_map_function(SgNode* node) {
 
 void MINST::atTraversalStart() {
     inst_info_list.clear();
-    reference_list.clear();
+    stream_list.clear();
     global_node=NULL, non_def_decl=NULL, def_decl=NULL, file_info=NULL;
 }
 
@@ -69,11 +69,11 @@ void MINST::atTraversalEnd() {
 
     if (def_decl) {
         SgBasicBlock* bb = def_decl->get_definition()->get_body();
-        if (bb && reference_list.size() > 0) {
+        if (bb && stream_list.size() > 0) {
             std::string indigo__write_idx = SageInterface::is_Fortran_language() ? "indigo__write_idx_f" : "indigo__write_idx_c";
-            for (std::vector<reference_info_t>::iterator it=reference_list.begin(); it!=reference_list.end(); it++) {
+            for (name_list_t::iterator it = stream_list.begin(); it != stream_list.end(); it++) {
                 // Add a call to indigo__write_idx_[fc]() and place it in the basic block bb
-                std::string stream_name = it->name;
+                std::string stream_name = *it;
 
                 std::vector<SgExpression*> expr_vector;
                 SgStringVal* param_stream_name = new SgStringVal(file_info, stream_name);
@@ -86,10 +86,6 @@ void MINST::atTraversalEnd() {
                 bb->append_statement(write_idx_call);
             }
         }
-    }
-
-    for (inst_list_t::iterator it=inst_info_list.begin(); it!=inst_info_list.end(); it++) {
-        ir_methods::insert_instrumentation_call(*it);
     }
 }
 
@@ -108,7 +104,8 @@ void MINST::visit(SgNode* node)
     // Check if this is the function that we are told to instrument
     if (isSgFunctionDefinition(node)) {
         std::string function_name = ((SgFunctionDefinition*) node)->get_declaration()->get_name();
-        if (function_name == "main" && action == ACTION_INSTRUMENT) {
+        if (function_name == "main" && (action == ACTION_INSTRUMENT ||
+                    action == ACTION_ALIGNCHECK)) {
             // Found main, now insert calls to indigo__init() and indigo__create_map()
             SgBasicBlock* body = ((SgFunctionDefinition*) node)->get_body();
 
@@ -149,46 +146,79 @@ void MINST::visit(SgNode* node)
             if (function_name != inst_func)
                 return;
 
-            std::cerr << "Operating on function " << function_name << std::endl;
-
             if (action == ACTION_INSTRUMENT) {
-                // We found the function that we wanted to instrument, now insert the indigo__create_map_() function in this file
+                std::cerr << "Instrumenting function " << function_name <<
+                    std::endl;
+
+                // We found the function that we wanted to instrument,
+                // now insert the indigo__create_map_() function in this file.
                 insert_map_function(node);
 
                 instrumentor_t inst;
                 inst.traverse(node, attrib());
 
                 // Pull information from AST traversal.
-                reference_list = inst.get_reference_list();
-                inst_info_list.insert(inst_info_list.end(), inst.inst_begin(), inst.inst_end());
-            }
-        }
-    }
-    else if (line_number != 0 && isSgLocatedNode(node))	{ // We have to instrument some loops
-        int _line_number = ((SgLocatedNode *) node)->get_file_info()->get_line();
-        if (_line_number == line_number && (isSgFortranDo(node) || isSgForStatement(node) || isSgWhileStmt(node) || isSgDoWhileStmt(node))) {
-            SgFunctionDefinition* def = getEnclosingNode<SgFunctionDefinition>(node);
-            std::string function_name = def->get_declaration()->get_name();
-
-            if (action == ACTION_INSTRUMENT) {
-                std::cerr << "Instrumenting loop in function " << function_name << " at line " << _line_number << std::endl;
-
-                // We found the loop that we wanted to instrument, now insert the indigo__create_map_() function in this file
-                insert_map_function(node);
-
-                instrumentor_t inst;
-                inst.traverse(node, attrib());
-
-                // Pull information from AST traversal.
-                reference_list = inst.get_reference_list();
-                inst_info_list.insert(inst_info_list.end(), inst.inst_begin(), inst.inst_end());
+                stream_list = inst.get_stream_list();
+                inst_info_list.insert(inst_info_list.end(), inst.inst_begin(),
+                        inst.inst_end());
             } else if (action == ACTION_ALIGNCHECK) {
-                std::cerr << "Placing alignment checks around loop in function " << function_name << " at line " << _line_number << std::endl;
+                std::cerr << "Placing alignment-related checks around loop(s) "
+                    << "in function " << function_name << std::endl;
+
+                // We found the function that we wanted to instrument,
+                // now insert the indigo__create_map_() function in this file.
+                insert_map_function(node);
+
                 aligncheck_t visitor(var_renaming);
                 visitor.traverse(node, preorder);
 
                 // Pull information from AST traversal.
-                inst_info_list.insert(inst_info_list.end(), visitor.inst_begin(), visitor.inst_end());
+                inst_info_list.insert(inst_info_list.end(),
+                        visitor.inst_begin(), visitor.inst_end());
+            }
+        }
+    }
+    else if (line_number != 0 && isSgLocatedNode(node))	{
+        // We have to instrument some loops
+        int _line_number = ((SgLocatedNode *)
+                node)->get_file_info()->get_line();
+        if (_line_number == line_number && (isSgFortranDo(node) ||
+                    isSgForStatement(node) || isSgWhileStmt(node) ||
+                    isSgDoWhileStmt(node))) {
+            SgFunctionDefinition* def =
+                getEnclosingNode<SgFunctionDefinition>(node);
+            std::string function_name = def->get_declaration()->get_name();
+
+            if (action == ACTION_INSTRUMENT) {
+                std::cerr << "Instrumenting loop in function " << function_name
+                    << " at line " << _line_number << std::endl;
+
+                // We found the loop that we wanted to instrument,
+                // now insert the indigo__create_map_() function in this file.
+                insert_map_function(node);
+
+                instrumentor_t inst;
+                inst.traverse(node, attrib());
+
+                // Pull information from AST traversal.
+                stream_list = inst.get_stream_list();
+                inst_info_list.insert(inst_info_list.end(), inst.inst_begin(),
+                        inst.inst_end());
+            } else if (action == ACTION_ALIGNCHECK) {
+                std::cerr << "Placing alignment checks around loop in function "
+                    << function_name << " at line " << _line_number <<
+                    std::endl;
+
+                // We found the function that we wanted to instrument,
+                // now insert the indigo__create_map_() function in this file.
+                insert_map_function(node);
+
+                aligncheck_t visitor(var_renaming);
+                visitor.traverse(node, preorder);
+
+                // Pull information from AST traversal.
+                inst_info_list.insert(inst_info_list.end(),
+                        visitor.inst_begin(), visitor.inst_end());
             }
         }
     }
