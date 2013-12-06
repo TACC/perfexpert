@@ -35,6 +35,12 @@ if [ -f ${prefix}/etc/hound.sql ]; then
     echo "Hound tool set"
 fi
 
+# Setup Memory Sniffer
+if [ -f ${prefix}/etc/memsniffer.sql ]; then
+    sqlite3 ${HOME}/.perfexpert.db < ${prefix}/etc/memsniffer.sql
+    echo "Memory Sniffer tool set"
+fi
+
 # Setup HPCToolkit module
 if [ -f ${prefix}/etc/hpctoolkit_module.sql ]; then
     sqlite3 ${HOME}/.perfexpert.db < ${prefix}/etc/hpctoolkit_module.sql

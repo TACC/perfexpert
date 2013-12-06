@@ -19,12 +19,13 @@
 # $HEADER$
 #
 
-SUBDIRS =  $(ENABLE_HOUND)
-SUBDIRS += $(ENABLE_PERFEXPERT)
-SUBDIRS += $(ENABLE_ANALYZER)
-SUBDIRS += $(ENABLE_MACPO)
-SUBDIRS += $(ENABLE_RECOMMENDER)
-SUBDIRS += $(ENABLE_CT)
-SUBDIRS += $(ENABLE_MEMSNIFFER)
+bin_PROGRAMS = memsniffer
+memsniffer_SOURCES = memsniffer.c
+memsniffer_LDFLAGS = -lhwloc
+
+install-exec-local:
+	./memsniffer > memsniffer.sql
+	$(MKDIR_P) $(DESTDIR)$(sysconfdir)
+	$(INSTALL) -m 644 memsniffer.sql $(DESTDIR)$(sysconfdir)/
 
 # EOF
