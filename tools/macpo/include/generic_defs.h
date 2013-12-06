@@ -22,29 +22,20 @@
 #ifndef	GENERIC_DEFS_H_
 #define	GENERIC_DEFS_H_
 
-enum { FALSE=0, TRUE };
-enum { SUCCESS=0, ERR_PARAMS };
+#include <rose.h>
+#include "macpo_record.h"
+
 enum { ACTION_NONE=0, ACTION_INSTRUMENT, ACTION_ALIGNCHECK };
 
 const int FLAG_NONE = 0;
 const int FLAG_NOCOMPILE = 1 << 0;
 
-typedef	unsigned char BOOL;
-
 typedef struct {
-    char* function;
-} function_info_t;
-
-typedef struct {
-    char* function;
-    int line_number;
-} loop_info_t;
-
-typedef struct {
-    int flags;
     short action;
-    loop_info_t loopInfo;
-    function_info_t functionInfo;
+    int line_number;
+    bool no_compile;
+    std::string function_name;
+    std::string backup_filename;
 } options_t;
 
 typedef struct {
@@ -59,32 +50,24 @@ typedef struct {
 
 typedef std::vector<inst_info_t> inst_list_t;
 
+typedef std::vector<std::string> name_list_t;
+
 typedef struct {
     std::string name;
+    short access_type;
+    long idx;
+    SgNode* node;
 } reference_info_t;
+
+typedef std::vector<reference_info_t> reference_list_t;
 
 class attrib {
     public:
-        char* inst_func;
-        int line_number;
-        BOOL read, skip, atomic;
+        bool access_type, skip;
 
-        attrib(BOOL _read, BOOL _skip, char* _inst_func, int _line_number) {
-            atomic=false, read=_read, skip=_skip, inst_func=_inst_func, line_number=_line_number;
-        }
-};
-
-class attrib_temp {
-    public:
-        char* inst_func;
-        int line_number;
-        BOOL read, skip;
-
-        SgNode* currNode;
-        std::string var_name;
-
-        attrib_temp(BOOL _read, BOOL _skip, char* _inst_func, int _line_number) {
-            var_name="", currNode=NULL, read=_read, skip=_skip, inst_func=_inst_func, line_number=_line_number;
+        attrib() {
+            access_type = TYPE_UNKNOWN;
+            skip = false;
         }
 };
 

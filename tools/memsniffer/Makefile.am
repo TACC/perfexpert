@@ -9,22 +9,23 @@
 #
 # PerfExpert is free software: you can redistribute it and/or modify it under
 # the terms of the The University of Texas at Austin Research License
-# 
+#
 # PerfExpert is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
 # A PARTICULAR PURPOSE.
-# 
+#
 # Authors: Leonardo Fialho and Ashay Rane
 #
 # $HEADER$
 #
 
-lib_LTLIBRARIES = libmrt.la
-libmrt_la_SOURCES = mrt.c
-libmrt_la_CFLAGS = -I$(srcdir) -I$(srcdir)/../include
-libmrt_la_LDFLAGS = -static
+bin_PROGRAMS = memsniffer
+memsniffer_SOURCES = memsniffer.c
+memsniffer_LDFLAGS = -lhwloc
 
-include_HEADERS = mrt.h ../include/macpo_record.h
-
+install-exec-local:
+	./memsniffer > memsniffer.sql
+	$(MKDIR_P) $(DESTDIR)$(sysconfdir)
+	$(INSTALL) -m 644 memsniffer.sql $(DESTDIR)$(sysconfdir)/
 
 # EOF

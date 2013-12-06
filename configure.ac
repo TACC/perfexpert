@@ -235,6 +235,19 @@ AC_ARG_WITH([rose-include],
     [AS_HELP_STRING([--with-rose-include], [set ROSE include path])],
     [CPPFLAGS+=" -I$withval/include"])
 
+AC_ARG_WITH([hwloc],
+    [AS_HELP_STRING([--with-hwloc], [set HWLOC library and include path])], [
+    CPPFLAGS+=" -I$withval/include"
+    LDFLAGS+=" -L$withval/lib"])
+
+AC_ARG_WITH([hwloc-libs],
+    [AS_HELP_STRING([--with-hwloc-libs], [set HWLOC library path])],
+    [LDFLAGS+=" -L$withval"])
+
+AC_ARG_WITH([hwloc-include],
+    [AS_HELP_STRING([--with-hwloc-include], [set HWLOC include path])],
+    [CPPFLAGS+=" -I$withval/include"])
+
 AC_ARG_WITH([jvm],
     [AS_HELP_STRING([--with-jvm], [set JVM library path])],
     [LDFLAGS+=" -L$withval"])
@@ -487,6 +500,32 @@ AS_IF([test x"$ENABLE_HOUND" = xyes], [
 AC_SUBST([ENABLE_HOUND])
 
 #------------------------------------------------------------------------------
+# 'memsniffer' requirements
+#
+AC_ARG_ENABLE([memsniffer],
+    [AS_HELP_STRING([--disable-memsniffer], [disable the memory sniffer])],
+    [ENABLE_MEMSNIFFER=$enableval], [ENABLE_MEMSNIFFER=yes])
+
+AC_MSG_CHECKING([whether to enable the memory sniffer])
+AS_IF([test x"$ENABLE_MEMSNIFFER" = xyes], [
+    AC_MSG_RESULT([yes])
+
+    # HWLOC support (headers and lib)
+    #
+    AC_CHECK_LIB([hwloc], [hwloc_topology_init, hwloc_topology_load], [],
+        [AC_MSG_ERROR([not found: libhwloc.so])])
+    AC_CHECK_HEADER([hwloc.h], [], [AC_MSG_ERROR([not found: hcloc.h])])
+
+    ENABLE_MEMSNIFFER=memsniffer
+    ENABLED_TOOLS+="memsniffer "
+    AC_CONFIG_FILES([tools/memsniffer/Makefile])
+], [
+    AC_MSG_RESULT([no])
+    ENABLE_MEMSNIFFER=
+])
+AC_SUBST([ENABLE_MEMSNIFFER])
+
+#------------------------------------------------------------------------------
 # 'perfexpert_analyzer' requirements
 #
 #AC_ARG_ENABLE([analyzer],
@@ -587,6 +626,7 @@ AS_IF([test x"$ENABLE_MACPO" = xyes], [
     AC_CONFIG_FILES([tools/macpo/macpo.sh], [chmod +x tools/macpo/macpo.sh])
     AC_CONFIG_FILES([tools/macpo/libmrt/Makefile])
     AC_CONFIG_FILES([tools/macpo/analyze/Makefile])
+    AC_CONFIG_FILES([tools/macpo/tests/Makefile])
     AC_CONFIG_FILES([modules/macpo/Makefile])
 ], [
     AC_MSG_RESULT([no])

@@ -21,8 +21,7 @@
 
 bin_PROGRAMS = macpo-analyze
 macpo_analyze_SOURCES = main.cpp
-macpo_analyze_CXXFLAGS = -I$(srcdir)/../common -Wno-deprecated \
-	-I/scratch/cluster/ashay/apps/sparsehash/include -fopenmp
+macpo_analyze_CXXFLAGS = -I$(srcdir)/../include -Wno-deprecated -fopenmp
 macpo_analyze_LDFLAGS = -lgmp -fopenmp
 
 # EOF
