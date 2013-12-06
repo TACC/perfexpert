@@ -90,7 +90,8 @@ int run_hpcstruct(void) {
 
 /* run_hpcrun */
 int run_hpcrun(void) {
-    int experiment_count = 0, rc = PERFEXPERT_SUCCESS, i = 0, event_count = 0;
+    int experiment_count = 0, rc = PERFEXPERT_SUCCESS, i = 0, event_count = 0,
+        experiment_total = 0;
     struct timespec time_start, time_end, time_diff;
     hpctoolkit_event_t *event = NULL, *t = NULL;
     perfexpert_list_t experiments;
@@ -157,6 +158,8 @@ int run_hpcrun(void) {
         event_count--;
         continue;
     }
+
+    experiment_total = perfexpert_list_get_size(&experiments);
 
     /* For each experiment... */
     OUTPUT_VERBOSE((5, "%s", _YELLOW("running experiments")));
@@ -232,8 +235,9 @@ int run_hpcrun(void) {
 
         clock_gettime(CLOCK_MONOTONIC, &time_end);
         perfexpert_time_diff(&time_diff, &time_start, &time_end);
-        OUTPUT(("   [%d] %lld.%.9ld seconds (includes measurement overhead)",
-            experiment_count, (long long)time_diff.tv_sec, time_diff.tv_nsec));
+        OUTPUT(("   [%d/%d] %lld.%.9ld seconds (includes measurement overhead)",
+            experiment_count, experiment_total,
+            (long long)time_diff.tv_sec, time_diff.tv_nsec));
 
         /* Run the AFTER program */
         if (NULL != my_module_globals.after[0]) {
