@@ -29,6 +29,13 @@ cp dwarf.h ${INSTALL_DIR}/include/
 cp libdwarf.h ${INSTALL_DIR}/include/
 cd ../../..
 
+tar -xzvf ./hwloc-1.9-0.tar.gz
+cd hwloc-1.9-0
+mkdir _build
+../configure --prefix=$HOME/perfexpert/externals --enable-libpci
+make install
+cd ../../
+
 tar -xzvf ./libmatheval-1.1.11.tar.gz
 cd libmatheval-1.1.11
 mkdir _build
