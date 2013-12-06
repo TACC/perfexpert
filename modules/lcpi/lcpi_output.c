@@ -55,23 +55,28 @@ extern "C" {
     }
 
 /* prety_print_bar */
-#define PRETTY_PRINT_BAR(size, symbol) \
-    {                                  \
-        int i = size;                  \
-        if (50 < i) {                  \
-            i = 49;                    \
-            while (i > 0) {            \
-                printf("%s", symbol);  \
-                i--;                   \
-            }                          \
-            printf("+");               \
-        } else {                       \
-            while (i > 0) {            \
-                printf("%s", symbol);  \
-                i--;                   \
-            }                          \
-        }                              \
-        printf("\n");                  \
+#define PRETTY_PRINT_BAR(size, symbol)        \
+    {                                         \
+        int n = 0;                            \
+        printf("[");                          \
+        for (n = 0; n < 50; n++) {            \
+            if (size > n) {                   \
+                if ((n != 49) &&              \
+                    (size <= 50)) {           \
+                    printf("%s", symbol);     \
+                } else {                      \
+                    printf("+");              \
+                }                             \
+            } else {                          \
+                if ((0 == (n+1) % 5)          \
+                    && (n != 49)) {           \
+                    printf("%s", _BLUE(".")); \
+                } else {                      \
+                    printf(" ");              \
+                }                             \
+            }                                 \
+        }                                     \
+        printf("]\n");                        \
     }
 
 /* output_analysis */
@@ -86,7 +91,7 @@ int output_analysis(perfexpert_list_t *profiles) {
     /* For each profile in the list of profiles... */
     perfexpert_list_for(p, profiles, lcpi_profile_t) {
         /* Print total runtime for this profile */
-        PRETTY_PRINT(79, "-");
+        PRETTY_PRINT(81, "-");
         printf(
             "Total running time for %s is %.2f seconds between all %d cores\n",
             _CYAN(p->name), p->cycles / database_get_hound("CPU_freq"),
@@ -120,7 +125,7 @@ int output_analysis(perfexpert_list_t *profiles) {
 
 /* output_profile */
 static int output_profile(lcpi_hotspot_t *h) {
-    int print_ratio = PERFEXPERT_TRUE;
+    int print_ratio = PERFEXPERT_TRUE, warn_fp_ratio = PERFEXPERT_FALSE;
     lcpi_metric_t *l = NULL, *t = NULL;
     char *shortname = NULL;
 
@@ -152,41 +157,9 @@ static int output_profile(lcpi_hotspot_t *h) {
     }
 
     /* Print an horizontal double-line */
-    PRETTY_PRINT(79, "=");
+    PRETTY_PRINT(81, "=");
 
-    /* Do we have something meaningful to show? Some warning? */
-    if (LCPI_VARIANCE_LIMIT < h->variance) {
-        printf("%s the instruction count variation for this bottleneck is "
-            "%.2f%%, making\n         the results unreliable\n\n",
-            _BOLDRED("WARNING:"), h->variance * 100);
-    }
-    // if (PERFEXPERT_FALSE == h->valid) {
-    //     printf("%s the runtime for this code section is too short,
-    // PerfExpert was unable\n         to collect the "
-    //         "performance counters it needs, making the results\n"
-    //         "         unreliable!\n\n", _BOLDRED("WARNING:"));
-    // }
-    if (database_get_hound("CPU_freq") > h->cycles) {
-        printf("%s the runtime for this code section is too short to gather "
-            "meaningful\n         measurements\n\n", _BOLDRED("WARNING:"));
-        PRETTY_PRINT(79, "-");
-        printf("\n");
-        return PERFEXPERT_SUCCESS;
-    }
-    if (database_get_hound("CPI_threshold") >= h->cycles / h->instructions) {
-        printf("%s\n\n",
-            _GREEN("The performance of this code section is good!"));
-    }
-    // if (100 > (perfexpert_lcpi_hotspot_get(h, "ratio_floating_point") * 100)) {
-    //     printf("%s this architecture overcounts floating-point operations,
-    // expect to see\n         "
-    //         "more than 100%% of these instructions!\n\n", _BOLDRED("WARNING:"));
-    // }
-
-    /* For each LCPI, print it's value */
-    char PERCENTAGE[] = "0..........25..........50..........75..........100";
-    char GOOD_BAD[] = "good.......okay........fair........poor........bad";
-    print_ratio = PERFEXPERT_TRUE;
+    /* For each metric... */
     perfexpert_hash_iter_str(h->metrics_by_name, l, t) {
         char *temp = NULL, *cat = NULL, *subcat = NULL, desc[24];
 
@@ -212,51 +185,83 @@ static int output_profile(lcpi_hotspot_t *h) {
         if ((0 == strcmp(cat, "ratio")) ||
             (0 == strncmp(cat, "GFLOPS", 6))) {
             if (PERFEXPERT_TRUE == print_ratio) {
-                printf("ratio to total instrns    %%  %s\n", _CYAN(PERCENTAGE));
+                printf("%s", _WHITE("Instructions Ratio        %   "));
+                printf("%s\n", _CYAN("0..........25..........50...........75"
+                    ".........100"));
                 print_ratio = PERFEXPERT_FALSE;
             }
             if (100 > (l->value * 100)) {
                 printf("%s %4.1f ", desc, (l->value * 100));
-                PRETTY_PRINT((int)rint((l->value * 50)), "*");
+                PRETTY_PRINT_BAR((int)rint((l->value * 50)), ">");
             } else {
                 printf("%s%4.1f ", desc, (l->value * 100));
-                PRETTY_PRINT(50, "*");
+                PRETTY_PRINT_BAR(50, ">");
+                warn_fp_ratio = PERFEXPERT_TRUE;
             }
         }
 
-        /* Print the LCPI section */
-        if (NULL == subcat) {
-            PRETTY_PRINT(79, "-");
-            printf("performance assessment  LCPI %s\n", _CYAN(GOOD_BAD));
-        }
-        if ((0 == strcmp(cat, "data accesses")) ||
-            (0 == strcmp(cat, "instruction accesses")) ||
-            (0 == strcmp(cat, "data TLB")) ||
-            (0 == strcmp(cat, "instruction TLB")) ||
-            (0 == strcmp(cat, "branch instructions")) ||
-            (0 == strcmp(cat, "floating-point instr"))) {
-            printf("%s%5.2f ", desc, l->value);
-            PRETTY_PRINT_BAR((int)rint((l->value * 20)), ">");
-        }
-        /* Special colors for overall */
+        /* Print LCPI section: special colors for overall */
         if (0 == strcmp(cat, "overall")) {
+            printf("\n%s", _WHITE("Performance Assessment  LCPI  "));
+            printf("%s\n", _CYAN("good.......okay........fair........poor"
+                "........bad"));
             if (0.5 >= l->value) {
                 printf("%s%5.2f ", _GREEN(desc), l->value);
                 PRETTY_PRINT_BAR((int)rint((l->value * 20)), _GREEN(">"));
-            } else if ((0.5 < l->value) && (1.0 >= l->value)) {
+            } else if ((0.5 < l->value) && (1.5 >= l->value)) {
                 printf("%s%5.2f ", _YELLOW(desc), l->value);
                 PRETTY_PRINT_BAR((int)rint((l->value * 20)), _YELLOW(">"));
-            } else if ((1.0 < l->value) && (2.0 >= l->value)) {
+            } else if ((1.5 < l->value) && (2.5 >= l->value)) {
                 printf("%s%5.2f ", _RED(desc), l->value);
                 PRETTY_PRINT_BAR((int)rint((l->value * 20)), _RED(">"));
             } else {
                 printf("%s%5.2f ", _BOLDRED(desc), l->value);
                 PRETTY_PRINT_BAR((int)rint((l->value * 20)), _BOLDRED(">"));
             }
+            printf("\n%s\n", _WHITE("Performance Breakdown   LCPI    "
+                "(interpretation varies according to the metric)"));
+        } else if ((0 == strcmp(cat, "data accesses")) ||
+            (0 == strcmp(cat, "instruction accesses")) ||
+            (0 == strcmp(cat, "data TLB")) ||
+            (0 == strcmp(cat, "instruction TLB")) ||
+            (0 == strcmp(cat, "branch instructions")) ||
+            (0 == strcmp(cat, "FP instructions"))) {
+            printf("%s%5.2f ", desc, l->value);
+            PRETTY_PRINT_BAR((int)rint((l->value * 20)), ">");
         }
         PERFEXPERT_DEALLOC(temp);
     }
-    PRETTY_PRINT(79, "-");
+
+    /* Do we have something meaningful to show? Some warning? */
+    if (LCPI_VARIANCE_LIMIT < h->variance) {
+        printf("\n%s the instruction count variation for this bottleneck is "
+            "%.2f%%, making\n         the results unreliable!",
+            _BOLDRED("WARNING:"), h->variance * 100);
+    }
+    if ((0 == h->cycles) || (0 == h->instructions)) {
+        printf("\n%s the runtime for this code section is too short, PerfExpert"
+            " was unable\n         to collect the performance counters it needs"
+            ", making the results\n         unreliable!",
+            _BOLDRED("WARNING:"));
+    }
+    if (database_get_hound("CPU_freq") > h->cycles) {
+        printf("\n%s the runtime for this code section is too short to gather "
+            "meaningful\n         measurements!\n", _BOLDRED("WARNING:"));
+        PRETTY_PRINT(81, "-");
+        printf("\n");
+        return PERFEXPERT_SUCCESS;
+    }
+    if (database_get_hound("CPI_threshold") >= h->cycles / h->instructions) {
+        printf("\n%s this code section performs just fine!",
+            _BOLDGREEN("NOTICE: "));
+    }
+    if (PERFEXPERT_TRUE == warn_fp_ratio) {
+        printf("\n%s this architecture overcounts floating-point operations, "
+            "expect to see\n         more than 100%% of these instructions!",
+            _BOLDRED("WARNING:"));
+    }
+    printf("\n");
+    PRETTY_PRINT(81, "-");
     printf("\n");
 
     return PERFEXPERT_SUCCESS;
