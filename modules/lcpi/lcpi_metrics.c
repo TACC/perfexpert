@@ -421,8 +421,8 @@ static int generate_data_accesses(void) {
     /* Data accesses: L1d_hits */
     PERFEXPERT_ALLOC(lcpi_metric_t, m, sizeof(lcpi_metric_t));
     PERFEXPERT_ALLOC(char, m->name,
-        (strlen("data_accesses.L1d_hits") + 1));
-    strcpy(m->name, "data_accesses.L1d_hits");
+        (strlen("data_accesses.L1_cache_hits") + 1));
+    strcpy(m->name, "data_accesses.L1_cache_hits");
     strcpy(m->name_md5, perfexpert_md5_string(m->name));
     m->value = 0.0;
     m->expression = evaluator_create(L1d_hits);
@@ -435,8 +435,8 @@ static int generate_data_accesses(void) {
     /* Data accesses: L2d_hits */
     PERFEXPERT_ALLOC(lcpi_metric_t, m, sizeof(lcpi_metric_t));
     PERFEXPERT_ALLOC(char, m->name,
-        (strlen("data_accesses.L2d_hits") + 1));
-    strcpy(m->name, "data_accesses.L2d_hits");
+        (strlen("data_accesses.L2_cache_hits") + 1));
+    strcpy(m->name, "data_accesses.L2_cache_hits");
     strcpy(m->name_md5, perfexpert_md5_string(m->name));
     m->value = 0.0;
     m->expression = evaluator_create(L2d_hits);
@@ -450,8 +450,8 @@ static int generate_data_accesses(void) {
     if (0 < strlen(c)) {
         PERFEXPERT_ALLOC(lcpi_metric_t, m, sizeof(lcpi_metric_t));
         PERFEXPERT_ALLOC(char, m->name,
-            (strlen("data_accesses.L3d_hits") + 1));
-        strcpy(m->name, "data_accesses.L3d_hits");
+            (strlen("data_accesses.L3_cache_hits") + 1));
+        strcpy(m->name, "data_accesses.L3_cache_hits");
         strcpy(m->name_md5, perfexpert_md5_string(m->name));
         m->value = 0.0;
         m->expression = evaluator_create(L3d_hits);
@@ -465,8 +465,8 @@ static int generate_data_accesses(void) {
     /* Data accesses: LLC_misses */
     PERFEXPERT_ALLOC(lcpi_metric_t, m, sizeof(lcpi_metric_t));
     PERFEXPERT_ALLOC(char, m->name,
-        (strlen("data_accesses.LLC_misses") + 1));
-    strcpy(m->name, "data_accesses.LLC_misses");
+        (strlen("data_accesses.LLC_misses_(memory)") + 1));
+    strcpy(m->name, "data_accesses.LLC_misses_(memory)");
     strcpy(m->name_md5, perfexpert_md5_string(m->name));
     m->value = 0.0;
     m->expression = evaluator_create(LLC_misses);
@@ -546,8 +546,8 @@ static int generate_instruction_accesses(void) {
     /* Instruction accesses: L1 hits */
     PERFEXPERT_ALLOC(lcpi_metric_t, m, sizeof(lcpi_metric_t));
     PERFEXPERT_ALLOC(char, m->name,
-        (strlen("instruction_accesses.L1i_hits") + 1));
-    strcpy(m->name, "instruction_accesses.L1i_hits");
+        (strlen("instruction_accesses.L1_hits") + 1));
+    strcpy(m->name, "instruction_accesses.L1_hits");
     strcpy(m->name_md5, perfexpert_md5_string(m->name));
     m->value = 0.0;
     m->expression = evaluator_create(L1i_hits);
@@ -560,8 +560,8 @@ static int generate_instruction_accesses(void) {
     /* Instruction accesses: L2 hits */
     PERFEXPERT_ALLOC(lcpi_metric_t, m, sizeof(lcpi_metric_t));
     PERFEXPERT_ALLOC(char, m->name,
-        (strlen("instruction_accesses.L2i_hits") + 1));
-    strcpy(m->name, "instruction_accesses.L2i_hits");
+        (strlen("instruction_accesses.L2_hits") + 1));
+    strcpy(m->name, "instruction_accesses.L2_hits");
     strcpy(m->name_md5, perfexpert_md5_string(m->name));
     m->value = 0.0;
     m->expression = evaluator_create(L2i_hits);
@@ -574,8 +574,8 @@ static int generate_instruction_accesses(void) {
     /* Instruction accesses: L2 misses */
     PERFEXPERT_ALLOC(lcpi_metric_t, m, sizeof(lcpi_metric_t));
     PERFEXPERT_ALLOC(char, m->name,
-        (strlen("instruction_accesses.L2i_misses") + 1));
-    strcpy(m->name, "instruction_accesses.L2i_misses");
+        (strlen("instruction_accesses.L2_misses") + 1));
+    strcpy(m->name, "instruction_accesses.L2_misses");
     strcpy(m->name_md5, perfexpert_md5_string(m->name));
     m->value = 0.0;
     m->expression = evaluator_create(L2i_misses);
@@ -787,8 +787,8 @@ static int generate_floating_point_instr(void) {
     /* Floating-point instructions: overall */
     PERFEXPERT_ALLOC(lcpi_metric_t, m, sizeof(lcpi_metric_t));
     PERFEXPERT_ALLOC(char, m->name,
-        (strlen("point_instr.overall") + 1));
-    strcpy(m->name, "point_instr.overall");
+        (strlen("FP_instructions.overall") + 1));
+    strcpy(m->name, "FP_instructions.overall");
     strcpy(m->name_md5, perfexpert_md5_string(m->name));
     m->value = 0.0;
     m->expression = evaluator_create(overall);
@@ -801,8 +801,8 @@ static int generate_floating_point_instr(void) {
     /* Floating-point instructions: fast */
     PERFEXPERT_ALLOC(lcpi_metric_t, m, sizeof(lcpi_metric_t));
     PERFEXPERT_ALLOC(char, m->name,
-        (strlen("point_instr.fast_FP_instr") + 1));
-    strcpy(m->name, "point_instr.fast_FP_instr");
+        (strlen("FP_instructions.fast_FP_instructions") + 1));
+    strcpy(m->name, "FP_instructions.fast_FP_instructions");
     strcpy(m->name_md5, perfexpert_md5_string(m->name));
     m->value = 0.0;
     m->expression = evaluator_create(fast);
@@ -815,8 +815,8 @@ static int generate_floating_point_instr(void) {
     /* Floating-point instructions: slow */
     PERFEXPERT_ALLOC(lcpi_metric_t, m, sizeof(lcpi_metric_t));
     PERFEXPERT_ALLOC(char, m->name,
-        (strlen("point_instr.slow_FP_instr") + 1));
-    strcpy(m->name, "point_instr.slow_FP_instr");
+        (strlen("FP_instructions.slow_FP_instructions") + 1));
+    strcpy(m->name, "FP_instructions.slow_FP_instructions");
     strcpy(m->name_md5, perfexpert_md5_string(m->name));
     m->value = 0.0;
     m->expression = evaluator_create(slow);
