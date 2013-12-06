@@ -30,13 +30,8 @@ else
 endif
 
 install-exec-local:
-#	cp $(top_srcdir)/tools/hound/hound.sql hound.sql
-	./hound >> hound.sql
+	./hound > hound.sql
 	$(MKDIR_P) $(DESTDIR)$(sysconfdir)
 	$(INSTALL) -m 644 hound.sql $(DESTDIR)$(sysconfdir)/
-#	hwloc-info --output-format xml > memory.conf
-#	$(INSTALL) -m 644 memory.conf $(DESTDIR)$(sysconfdir)/
-
-# Install hpctoolkit module database
 
 # EOF
