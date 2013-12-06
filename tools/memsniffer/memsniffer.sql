@@ -23,11 +23,11 @@
 -- Create tables if not exist
 --
 CREATE TABLE IF NOT EXISTS memsniffer (
-	id            INTEGER NOT NULL,
-	parent        INTEGER NOT NULL,
+    id            INTEGER NOT NULL,
+    parent        INTEGER NOT NULL,
     name          VARCHAR NOT NULL,
     size          INTEGER NOT NULL,
     depth         INTEGER,
-    linesize	  INTEGER,
+    linesize      INTEGER,
     associativity INTEGER
 );
