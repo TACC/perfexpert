@@ -223,9 +223,39 @@ int main( int argc, char * argv[] ) {
         #endif
     }
 
-    // Version string
-    printf("-- Generated using hound\n");
-    printf("-- version 2.0\n");
+    // Header
+    printf("--\n\
+-- Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.\n\
+--\n\
+-- $COPYRIGHT$\n\
+--\n\
+-- Additional copyrights may follow\n\
+--\n\
+-- This file is part of PerfExpert.\n\
+--\n\
+-- PerfExpert is free software: you can redistribute it and/or modify it under\n\
+-- the terms of the The University of Texas at Austin Research License\n\
+--\n\
+-- PerfExpert is distributed in the hope that it will be useful, but WITHOUT ANY\n\
+-- WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR\n\
+-- A PARTICULAR PURPOSE.\n\
+--\n\
+-- Authors: Leonardo Fialho and Ashay Rane\n\
+--\n\
+-- $HEADER$\n\
+--\n\
+\n\
+-- Generated using hound\n\
+-- version 2.0\n\
+\n\
+--\n\
+-- Create tables if not exist\n\
+--\n\
+CREATE TABLE IF NOT EXISTS hound (\n\
+    name          VARCHAR NOT NULL,\n\
+    value         REAL    NOT NULL\n\
+);\n\n");
+
     printf("INSERT INTO hound (name, value) VALUES ('CPI_threshold', 0.5);\n");
 
     if (processor == PROC_UNKNOWN) {
