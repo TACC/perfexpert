@@ -296,12 +296,12 @@ static inline void fill_struct(int read_write, int line_number, size_t p, int va
 	write(fd, &node, sizeof(node_t));
 }
 
-inline void indigo__record_c(int read_write, int line_number, void* addr, int var_idx)
+void indigo__record_c(int read_write, int line_number, void* addr, int var_idx)
 {
 	if (fd >= 0)	fill_struct(read_write, line_number, (size_t) addr, var_idx);
 }
 
-inline void indigo__record_f_(int *read_write, int *line_number, void* addr, int *var_idx)
+void indigo__record_f_(int *read_write, int *line_number, void* addr, int *var_idx)
 {
 	if (fd >= 0)	fill_struct(*read_write, *line_number, (size_t) addr, *var_idx);
 }

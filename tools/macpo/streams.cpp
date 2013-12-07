@@ -22,9 +22,10 @@
 #include <algorithm>
 #include <rose.h>
 
-#include "streams.h"
+#include "inst_defs.h"
 #include "ir_methods.h"
 #include "macpo_record.h"
+#include "streams.h"
 
 using namespace SageBuilder;
 using namespace SageInterface;

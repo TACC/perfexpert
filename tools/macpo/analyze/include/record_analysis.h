@@ -19,26 +19,16 @@
  * $HEADER$
  */
 
-#ifndef	INSTRUMENTOR_H_
-#define	INSTRUMENTOR_H_
+#ifndef RECORD_ANALYSIS_H_
+#define RECORD_ANALYSIS_H_
 
 #include "generic_defs.h"
-#include "inst_defs.h"
+#include "macpo_record.h"
 
-class instrumentor_t : public AstTopDownProcessing<attrib> {
-    public:
-        name_list_t& get_stream_list();
+#define CUT             0.8f
+#define LINE_NUM_LIMIT  1000
 
-        virtual attrib evaluateInheritedAttribute(SgNode* node, attrib attr);
-        virtual void atTraversalStart();
-        virtual void atTraversalEnd();
+int analyze_records(const global_data_t& global_data, int analysis_flags);
+int filter_low_freq_records(global_data_t& global_data);
 
-        const inst_list_t::iterator inst_begin();
-        const inst_list_t::iterator inst_end();
-
-    private:
-        inst_list_t inst_info_list;
-        name_list_t stream_list;
-};
-
-#endif	/* INSTRUMENTOR_H_ */
+#endif  /* RECORD_ANALYSIS_H_ */

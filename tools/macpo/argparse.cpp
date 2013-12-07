@@ -20,8 +20,11 @@
  * $HEADER$
  */
 
+#include <cstring>
+#include <cstdlib>
 #include <fcntl.h>
-#include <string.h>
+#include <iostream>
+#include <unistd.h>
 
 #include "argparse.h"
 
@@ -32,8 +35,8 @@ bool argparse::copy_file(const char *source_file,
 
     struct stat stat_buf; 
 
-    if (stat(source_file, &stat_buf) == -1) {
-        std::cerr << "Cannot read permissions of file: " << source_file << "\n";
+    if (access(source_file, R_OK) < 0) {
+        std::cerr << "Cannot read file: " << source_file << "\n";
         return false;
     }
 

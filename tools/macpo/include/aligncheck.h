@@ -25,6 +25,7 @@
 #include <VariableRenaming.h>
 
 #include "generic_defs.h"
+#include "inst_defs.h"
 
 class aligncheck_t : public AstSimpleProcessing {
     enum { LOOP_TEST=0, LOOP_INCR, LOOP_INIT, BASE_ALIGNMENT };

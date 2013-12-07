@@ -19,26 +19,11 @@
  * $HEADER$
  */
 
-#ifndef	INSTRUMENTOR_H_
-#define	INSTRUMENTOR_H_
+#ifndef MACPO_RECORD_CXX_H_
+#define MACPO_RECORD_CXX_H_
 
-#include "generic_defs.h"
-#include "inst_defs.h"
+#include <deque>
 
-class instrumentor_t : public AstTopDownProcessing<attrib> {
-    public:
-        name_list_t& get_stream_list();
+typedef std::deque<mem_info_t> mem_info_list_t;
 
-        virtual attrib evaluateInheritedAttribute(SgNode* node, attrib attr);
-        virtual void atTraversalStart();
-        virtual void atTraversalEnd();
-
-        const inst_list_t::iterator inst_begin();
-        const inst_list_t::iterator inst_end();
-
-    private:
-        inst_list_t inst_info_list;
-        name_list_t stream_list;
-};
-
-#endif	/* INSTRUMENTOR_H_ */
+#endif  /* MACPO_RECORD_CXX_H_ */

@@ -22,6 +22,7 @@
 #include <algorithm>
 #include <rose.h>
 
+#include "inst_defs.h"
 #include "instrumentor.h"
 #include "ir_methods.h"
 #include "macpo_record.h"

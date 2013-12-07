@@ -66,11 +66,11 @@ fi
 mktemp=`which mktemp`
 if [ -n "$mktemp" ]
 then
-	tmp_macpo=`mktemp --tmpdir -t macpo.XXXXX`
-	tmp_gfort=`mktemp --tmpdir -t macpo.XXXXX`
+    tmp_macpo=`mktemp --tmpdir -t macpo.XXXXX`
+    tmp_gfort=`mktemp --tmpdir -t macpo.XXXXX`
 else
-	tmp_macpo=/tmp/macpo.inst
-	tmp_gfort=/tmp/macpo.gfort
+    tmp_macpo=/tmp/macpo.inst
+    tmp_gfort=/tmp/macpo.gfort
 fi
 
 # Check if we have a --help in the arguments
@@ -101,39 +101,43 @@ do
 done
 
 # Finally, invoke the macpo executable
-${MINST_PATH} -I${MRT_INCLUDE_DIR} -L${MRT_LIB_DIR} $* -lmrt &> "$tmp_macpo"
+${MINST_PATH} -I${MRT_INCLUDE_DIR} -L${MRT_LIB_DIR} $* -lmrt -lstdc++ &> \
+    "$tmp_macpo"
 
 if [ $? != 0 ]
 then
-	# try running with gfortran
-	if [ -z "${GNU_FORTRAN_COMPILER}" ]
-	then
-		GNU_FORTRAN_COMPILER=`which gfortran`
-	fi
+    # try running with gfortran
+    if [ -z "${GNU_FORTRAN_COMPILER}" ]
+    then
+        GNU_FORTRAN_COMPILER=`which gfortran`
+    fi
 
-	if [ -n "$GNU_FORTRAN_COMPILER" -a -f "$GNU_FORTRAN_COMPILER" ]
-	then
-		"$GNU_FORTRAN_COMPILER" -L${MRT_LIB_DIR} $* -lmrt &> "$tmp_gfort"
+    if [ -n "$GNU_FORTRAN_COMPILER" -a -f "$GNU_FORTRAN_COMPILER" ]
+    then
+        "$GNU_FORTRAN_COMPILER" -L${MRT_LIB_DIR} $* -lmrt -lstdc++ &> \
+            "$tmp_gfort"
 
-		# If this also resulted in an error, show the original macpo error
-		if [ $? != 0 ]
-		then
-			cat "$tmp_macpo"
+        # If this also resulted in an error, show the original macpo error
+        if [ $? != 0 ]
+        then
+            cat "$tmp_macpo"
             echo
             echo "Failed to run the following two commands:"
-            echo "${MINST_PATH} -I${MRT_INCLUDE_DIR} -L${MRT_LIB_DIR} $* -lmrt"
-		    echo "$GNU_FORTRAN_COMPILER -L${MRT_LIB_DIR} $* -lmrt"
-		else
-			cat "$tmp_gfort"
-		fi
-	else
-		cat "$tmp_macpo"
+            echo "${MINST_PATH} -I${MRT_INCLUDE_DIR} -L${MRT_LIB_DIR} $*" \
+                "-lmrt -lstdc++"
+            echo "$GNU_FORTRAN_COMPILER -L${MRT_LIB_DIR} $* -lmrt -lstdc++"
+        else
+            cat "$tmp_gfort"
+        fi
+    else
+        cat "$tmp_macpo"
         echo
         echo "Failed to run the following command:"
-        echo "${MINST_PATH} -I${MRT_INCLUDE_DIR} -L${MRT_LIB_DIR} $* -lmrt"
-	fi
+        echo "${MINST_PATH} -I${MRT_INCLUDE_DIR} -L${MRT_LIB_DIR} $* -lmrt " \
+            "-lstdc++"
+    fi
 else
-	cat "$tmp_macpo"
+    cat "$tmp_macpo"
 fi
 
 # Clean up

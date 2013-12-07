@@ -21,10 +21,11 @@
 
 #include <rose.h>
 
-#include "minst.h"
-#include "ir_methods.h"
 #include "aligncheck.h"
+#include "inst_defs.h"
 #include "instrumentor.h"
+#include "ir_methods.h"
+#include "minst.h"
 
 using namespace SageBuilder;
 using namespace SageInterface;
@@ -131,6 +132,7 @@ void MINST::visit(SgNode* node)
             init_call.function_name = indigo__init;
             init_call.before = true;
             SgExprStatement* expr_stmt = ir_methods::insert_instrumentation_call(init_call);
+            ROSE_ASSERT(expr_stmt);
 
             inst_info_t map_call;
             map_call.bb = body;

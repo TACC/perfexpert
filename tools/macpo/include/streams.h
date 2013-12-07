@@ -23,6 +23,7 @@
 #define	STREAMS_H_
 
 #include "generic_defs.h"
+#include "inst_defs.h"
 
 class streams_t : public AstTopDownProcessing<attrib> {
     public:

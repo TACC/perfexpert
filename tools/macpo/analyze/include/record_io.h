@@ -19,26 +19,19 @@
  * $HEADER$
  */
 
-#ifndef	INSTRUMENTOR_H_
-#define	INSTRUMENTOR_H_
+#ifndef RECORD_IO_H_
+#define RECORD_IO_H_
 
+#include <cstring>
+#include <ctime>
+#include <fcntl.h>
+#include <vector>
+#include <iostream>
+
+#include "analysis_defs.h"
 #include "generic_defs.h"
-#include "inst_defs.h"
+#include "macpo_record.h"
 
-class instrumentor_t : public AstTopDownProcessing<attrib> {
-    public:
-        name_list_t& get_stream_list();
+int read_file(const char* filename, global_data_t& global_data);
 
-        virtual attrib evaluateInheritedAttribute(SgNode* node, attrib attr);
-        virtual void atTraversalStart();
-        virtual void atTraversalEnd();
-
-        const inst_list_t::iterator inst_begin();
-        const inst_list_t::iterator inst_end();
-
-    private:
-        inst_list_t inst_info_list;
-        name_list_t stream_list;
-};
-
-#endif	/* INSTRUMENTOR_H_ */
+#endif  /* RECORD_IO_H_ */

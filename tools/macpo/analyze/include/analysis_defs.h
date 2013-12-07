@@ -19,26 +19,28 @@
  * $HEADER$
  */
 
-#ifndef	INSTRUMENTOR_H_
-#define	INSTRUMENTOR_H_
+#ifndef ANALYSIS_DEFS_H_
+#define ANALYSIS_DEFS_H_
 
 #include "generic_defs.h"
-#include "inst_defs.h"
+#include "macpo_record.h"
+#include "macpo_record_cxx.h"
 
-class instrumentor_t : public AstTopDownProcessing<attrib> {
-    public:
-        name_list_t& get_stream_list();
+// Holds a list of lists of mem_info_t type.
+typedef std::vector<mem_info_list_t> mem_info_bucket_t;
 
-        virtual attrib evaluateInheritedAttribute(SgNode* node, attrib attr);
-        virtual void atTraversalStart();
-        virtual void atTraversalEnd();
+typedef struct {
+    size_t size, lines;
+} cache_data_t;
 
-        const inst_list_t::iterator inst_begin();
-        const inst_list_t::iterator inst_end();
+typedef struct {
+    cache_data_t l1_data, l2_data;
+    name_list_t stream_list;
+    mem_info_bucket_t mem_info_bucket;
+} global_data_t;
 
-    private:
-        inst_list_t inst_info_list;
-        name_list_t stream_list;
-};
+typedef struct {
+    long long count, l1_conflicts, l2_conflicts;
+} stream_list_t;
 
-#endif	/* INSTRUMENTOR_H_ */
+#endif /* ANALYSIS_DEFS_H_ */
