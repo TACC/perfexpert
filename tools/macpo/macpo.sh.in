@@ -119,11 +119,18 @@ then
 		if [ $? != 0 ]
 		then
 			cat "$tmp_macpo"
+            echo
+            echo "Failed to run the following two commands:"
+            echo "${MINST_PATH} -I${MRT_INCLUDE_DIR} -L${MRT_LIB_DIR} $* -lmrt"
+		    echo "$GNU_FORTRAN_COMPILER -L${MRT_LIB_DIR} $* -lmrt"
 		else
 			cat "$tmp_gfort"
 		fi
 	else
 		cat "$tmp_macpo"
+        echo
+        echo "Failed to run the following command:"
+        echo "${MINST_PATH} -I${MRT_INCLUDE_DIR} -L${MRT_LIB_DIR} $* -lmrt"
 	fi
 else
 	cat "$tmp_macpo"
