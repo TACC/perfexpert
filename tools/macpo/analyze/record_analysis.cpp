@@ -102,9 +102,8 @@ int analyze_records(const global_data_t& global_data, int analysis_flags) {
             gsl_histogram_set_ranges_uniform (hist, 0, 20);
             for (int j=0; j<list.size(); j++) {
                 const mem_info_t& mem_info = list.at(j);
-                long long distance = tree.get_distance(mem_info.address);
-
-                if (distance >= 0) {
+                if (tree.contains(mem_info.address)) {
+                    size_t distance = tree.get_distance(mem_info.address);
                     // TODO: Add distance to histogram.
                 }
 

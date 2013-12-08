@@ -40,7 +40,7 @@ typedef struct {
 } global_data_t;
 
 typedef struct {
-    long long count, l1_conflicts, l2_conflicts;
+    size_t count, l1_conflicts, l2_conflicts;
 } stream_list_t;
 
 #endif /* ANALYSIS_DEFS_H_ */

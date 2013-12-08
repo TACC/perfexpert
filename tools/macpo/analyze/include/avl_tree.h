@@ -13,14 +13,15 @@ class avl_tree {
         avl_tree();
         void print();
         void destroy();
-        long long get_distance(size_t address);
+        bool contains(size_t address);
+        size_t get_distance(size_t address);
         bool insert(const mem_info_t *data_ptr);
 
     private:
         typedef struct tag_avl_node {
             int height;
             const mem_info_t *data_ptr;
-            long long key;
+            size_t key;
             struct tag_avl_node *left, *right;
         } avl_node_t;
 
@@ -37,7 +38,7 @@ class avl_tree {
         avl_node_t* single_rotate_with_right(avl_node_t* k1);
 
         avl_node_t* root;
-        long long last_key;
+        size_t last_key;
 
         std::map<size_t, avl_node_t*> addr_to_node;
 };

@@ -25,7 +25,12 @@ void avl_tree::_destroy(avl_node_t* t) {
     }
 }
 
-long long avl_tree::get_distance(size_t address) {
+bool avl_tree::contains(size_t address) {
+    std::map<size_t, avl_node_t*>::iterator it = addr_to_node.find(address);
+    return (it != addr_to_node.end());
+}
+
+size_t avl_tree::get_distance(size_t address) {
     std::map<size_t, avl_node_t*>::iterator it = addr_to_node.find(address);
     if (it != addr_to_node.end()) {
         avl_node_t* node = addr_to_node[address];

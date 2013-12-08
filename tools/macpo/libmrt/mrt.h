@@ -33,7 +33,7 @@
 #define	AWAKE_USEC		12500
 #endif
 
-static long numCores = 0;
+static size_t numCores = 0;
 static __thread int coreID=-1;
 static char szFilename[256]={0};
 static volatile sig_atomic_t sleeping=0, access_count=0;

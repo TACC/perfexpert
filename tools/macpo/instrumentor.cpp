@@ -55,7 +55,7 @@ attrib instrumentor_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
 
     reference_list_t& reference_list = streams.get_reference_list();
 
-    long count = 0;
+    size_t count = 0;
     for(reference_list_t::iterator it = reference_list.begin();
             it != reference_list.end(); it++) {
         reference_info_t& reference_info = *it;
@@ -73,7 +73,7 @@ attrib instrumentor_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
         SgNode* ref_node = reference_info.node;
         std::string stream = reference_info.name;
         short ref_access_type = reference_info.access_type;
-        long ref_idx = reference_info.idx;
+        size_t ref_idx = reference_info.idx;
 
         SgBasicBlock* containingBB = getEnclosingNode<SgBasicBlock>(ref_node);
         SgStatement* containingStmt = getEnclosingNode<SgStatement>(ref_node);

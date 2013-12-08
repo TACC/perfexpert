@@ -35,8 +35,8 @@ void streams_t::atTraversalStart() {
 }
 
 void streams_t::atTraversalEnd() {
-    long count = 0;
-    std::map<std::string, long> stream_idx_map;
+    size_t count = 0;
+    std::map<std::string, size_t> stream_idx_map;
 
     for(reference_list_t::iterator it = reference_list.begin();
             it != reference_list.end(); it++) {

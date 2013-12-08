@@ -33,8 +33,8 @@ typedef struct {
 	unsigned short coreID;
 	unsigned short read_write:2;
 	size_t address;
-	unsigned long var_idx;
-	int line_number;
+	size_t var_idx;
+	size_t line_number;
 } mem_info_t;
 
 typedef struct {
