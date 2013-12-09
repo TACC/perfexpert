@@ -671,6 +671,7 @@ AS_IF([test x"$ENABLE_CT" = xyes], [
     AC_CONFIG_FILES([tools/ct/recognizers/nested_c_loops/Makefile])
     AC_CONFIG_FILES([tools/ct/transformers/Makefile])
     AC_CONFIG_FILES([tools/ct/transformers/c_loop_interchange/Makefile])
+    AC_CONFIG_FILES([tools/ct/transformers/c_loop_tiling/Makefile])
 ], [
     AC_MSG_RESULT([no])
     ENABLE_CT=
