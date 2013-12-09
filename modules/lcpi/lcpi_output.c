@@ -218,7 +218,7 @@ static int output_profile(lcpi_hotspot_t *h) {
                 printf("%s%5.2f ", _BOLDRED(desc), l->value);
                 PRETTY_PRINT_BAR((int)rint((l->value * 20)), _BOLDRED(">"));
             }
-            printf("\n%s\n", _WHITE("Performance Breakdown   LCPI    "
+            printf("\n%s\n", _WHITE("Slowdown Caused By      LCPI    "
                 "(interpretation varies according to the metric)"));
         } else if ((0 == strcmp(cat, "data accesses")) ||
             (0 == strcmp(cat, "instruction accesses")) ||
@@ -252,8 +252,8 @@ static int output_profile(lcpi_hotspot_t *h) {
         return PERFEXPERT_SUCCESS;
     }
     if (database_get_hound("CPI_threshold") >= h->cycles / h->instructions) {
-        printf("\n%s this code section performs just fine!",
-            _BOLDGREEN("NOTICE: "));
+        printf("\n%s  this code section performs just fine!",
+            _BOLDGREEN("NOTICE:"));
     }
     if (PERFEXPERT_TRUE == warn_fp_ratio) {
         printf("\n%s this architecture overcounts floating-point operations, "
