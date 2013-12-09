@@ -65,7 +65,7 @@ int main(int argc, char *argv[]) {
         return code;
     }
 
-    int analysis_flags = 0;
+    int analysis_flags = ANALYSIS_ALL;
 
     // TODO: Set analysis_flags based on analyses selected via arguments.
 

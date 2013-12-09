@@ -83,7 +83,7 @@ int filter_low_freq_records(global_data_t& global_data) {
     return 0;
 }
 
-void free_counters(histogram_matrix_t& hist_matrix, avl_tree_list_t& tree_list,
+static void free_counters(histogram_matrix_t& hist_matrix, avl_tree_list_t& tree_list,
         int num_cores, int num_streams) {
     for (int i=0; i<num_cores; i++) {
         delete tree_list[i];
@@ -96,7 +96,7 @@ void free_counters(histogram_matrix_t& hist_matrix, avl_tree_list_t& tree_list,
     }
 }
 
-bool init_counters(histogram_matrix_t& hist_matrix, avl_tree_list_t& tree_list,
+static bool init_counters(histogram_matrix_t& hist_matrix, avl_tree_list_t& tree_list,
         int num_cores, int num_streams) {
     int j;
 
@@ -125,7 +125,7 @@ bool init_counters(histogram_matrix_t& hist_matrix, avl_tree_list_t& tree_list,
     return true;
 }
 
-bool conflict(histogram_matrix_t& hist_matrix, avl_tree_list_t& tree_list,
+static bool conflict(histogram_matrix_t& hist_matrix, avl_tree_list_t& tree_list,
         int num_cores, int var_idx, int core_id, size_t address) {
     int i;
     bool conflict = false;
@@ -155,7 +155,7 @@ bool conflict(histogram_matrix_t& hist_matrix, avl_tree_list_t& tree_list,
     return conflict;
 }
 
-size_t calculate_distance(histogram_matrix_t& hist_matrix,
+static size_t calculate_distance(histogram_matrix_t& hist_matrix,
         avl_tree_list_t& tree_list, int num_cores, int core_id, size_t var_idx,
         size_t address) {
     if (tree_list[core_id]->contains(address)) {
@@ -170,9 +170,7 @@ size_t calculate_distance(histogram_matrix_t& hist_matrix,
     }
 }
 
-int analyze_records(const global_data_t& global_data, int analysis_flags) {
-    // Loop over all buckets.
-    // Process them in parallel.
+static int reuse_distance_analysis(const global_data_t& global_data) {
     const mem_info_bucket_t& bucket = global_data.mem_info_bucket;
     const int num_cores = sysconf(_SC_NPROCESSORS_CONF);
     const int num_streams = global_data.stream_list.size();
@@ -265,6 +263,18 @@ end_iteration:
     for (int i=0; i<num_streams; i++) {
         if(reuse_distance_list[i] != NULL)
             free(reuse_distance_list[i]);
+    }
+
+    return 0;
+}
+
+int analyze_records(const global_data_t& global_data, int analysis_flags) {
+    int code = 0;
+    if (analysis_flags & ANALYSIS_REUSE_DISTANCE) {
+        std::cout << mprefix << "Analyzing records for reuse distance analysis."
+            << std::endl;
+        if ((code = reuse_distance_analysis(global_data)) < 0)
+            return code;
     }
 
     return 0;
