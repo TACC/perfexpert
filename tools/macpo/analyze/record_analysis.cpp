@@ -21,6 +21,7 @@
 
 #include <set>
 #include <gsl/gsl_histogram.h>
+#include <iostream>
 
 #include "analysis_defs.h"
 #include "avl_tree.h"
@@ -82,34 +83,188 @@ int filter_low_freq_records(global_data_t& global_data) {
     return 0;
 }
 
+void free_counters(histogram_matrix_t& hist_matrix, avl_tree_list_t& tree_list,
+        int num_cores, int num_streams) {
+    for (int i=0; i<num_cores; i++) {
+        delete tree_list[i];
+
+        for (int j=0; j<num_streams; j++) {
+            if (hist_matrix[i][j] != NULL) {
+                free(hist_matrix[i][j]);
+            }
+        }
+    }
+}
+
+bool init_counters(histogram_matrix_t& hist_matrix, avl_tree_list_t& tree_list,
+        int num_cores, int num_streams) {
+    int j;
+
+    for (j=0; j<num_cores; j++) {
+        tree_list[j] = new avl_tree();
+        hist_matrix[j].resize(num_streams);
+
+        if (tree_list[j] == NULL)
+            break;
+
+        for (int k=0; k<num_streams; k++) {
+            hist_matrix[j][k] = NULL;
+        }
+    }
+
+    // Clean up if we couldn't allocate memory.
+    if (j != num_cores) {
+        for (j -= 1; j >= 0; j--) {
+            delete tree_list[j];
+        }
+
+        // Return failure.
+        return false;
+    }
+
+    return true;
+}
+
+bool conflict(histogram_matrix_t& hist_matrix, avl_tree_list_t& tree_list,
+        int num_cores, int var_idx, int core_id, size_t address) {
+    int i;
+    bool conflict = false;
+
+    for (i=0; i<num_cores; i++) {
+        size_t dist = tree_list[i]->get_distance(address);
+        if (i != core_id && dist >= 0 && dist < DIST_INFINITY) {
+            conflict = true;
+
+            tree_list[i]->set_distance(address, DIST_INFINITY);
+
+            if (hist_matrix[i][var_idx] == NULL) {
+                hist_matrix[i][var_idx] = gsl_histogram_alloc (DIST_INFINITY);
+
+                if (hist_matrix[i][var_idx] == NULL)
+                    break;
+
+                gsl_histogram_set_ranges_uniform (hist_matrix[i][var_idx], 0,
+                        DIST_INFINITY);
+            }
+
+            gsl_histogram_accumulate(hist_matrix[i][var_idx], dist, -1.0);
+            gsl_histogram_increment(hist_matrix[i][var_idx], DIST_INFINITY);
+        }
+    }
+
+    return conflict;
+}
+
+size_t calculate_distance(histogram_matrix_t& hist_matrix,
+        avl_tree_list_t& tree_list, int num_cores, int core_id, size_t var_idx,
+        size_t address) {
+    if (tree_list[core_id]->contains(address)) {
+        if (conflict(hist_matrix, tree_list, num_cores, var_idx, core_id,
+                    address)) {
+            return DIST_INFINITY;
+        } else {
+            return tree_list[core_id]->get_distance(address);
+        }
+    } else {
+        return DIST_INFINITY;
+    }
+}
+
 int analyze_records(const global_data_t& global_data, int analysis_flags) {
     // Loop over all buckets.
     // Process them in parallel.
     const mem_info_bucket_t& bucket = global_data.mem_info_bucket;
+    const int num_cores = sysconf(_SC_NPROCESSORS_CONF);
+    const int num_streams = global_data.stream_list.size();
 
-    {
-        // Declare thread-local storage.
-        for (int i=0; i<bucket.size(); i++) {
-            const mem_info_list_t& list = bucket.at(i);
+    histogram_list_t reuse_distance_list;
+    reuse_distance_list.resize(num_streams);    // Lazy initialization.
 
-            avl_tree tree;
-            // Create a new histogram.
-            gsl_histogram *hist = gsl_histogram_alloc (20);
-            if (hist == NULL) {
-                return -ERR_NO_MEM;
-            }
+    #pragma omp parallel for
+    for (int i=0; i<bucket.size(); i++) {
+        const mem_info_list_t& list = bucket.at(i);
 
-            gsl_histogram_set_ranges_uniform (hist, 0, 20);
+        avl_tree_list_t tree_list;
+
+        histogram_matrix_t histogram_matrix;
+        histogram_matrix.resize(num_cores);
+        tree_list.resize(num_cores);
+
+        bool valid_allocation = init_counters(histogram_matrix, tree_list,
+                num_cores, num_streams);
+
+        if (valid_allocation) {
             for (int j=0; j<list.size(); j++) {
+                bool valid_data = true;
                 const mem_info_t& mem_info = list.at(j);
-                if (tree.contains(mem_info.address)) {
-                    size_t distance = tree.get_distance(mem_info.address);
-                    // TODO: Add distance to histogram.
-                }
 
-                tree.insert(&(list.at(j)));
+                const unsigned short core_id = mem_info.coreID;
+                const size_t var_idx = mem_info.var_idx;
+                const size_t address = mem_info.address;
+
+                // Quick validation check.
+                if (core_id >= 0 && core_id < num_cores ||
+                        var_idx >= 0 && var_idx < num_streams) {
+
+                    size_t distance = calculate_distance(histogram_matrix,
+                            tree_list, num_cores, core_id, var_idx, address);
+
+                    gsl_histogram* hist = histogram_matrix[core_id][var_idx];
+                    // Check if hist has been allocated.
+                    if (hist == NULL) {
+                        hist = gsl_histogram_alloc (DIST_INFINITY);
+                        if (hist == NULL) {
+                            goto end_iteration;
+                        }
+
+                        gsl_histogram_set_ranges_uniform(hist, 0,
+                                DIST_INFINITY);
+
+                        histogram_matrix[i][var_idx] = hist;
+                    }
+
+                    gsl_histogram_increment(hist, distance);
+
+                    avl_tree* tree = tree_list[core_id];
+                    tree->insert(&(list.at(j)));
+                }
             }
+
+            // Sum up the histogram values from all cores.
+            #pragma omp single
+            for (int j=0; j<num_cores; j++) {
+                for (int k=0; k<num_streams; k++) {
+                    gsl_histogram* h1 = reuse_distance_list[k];
+                    gsl_histogram* h2 = histogram_matrix[j][k];
+
+                    if (h2 != NULL) {
+                        if (h1 == NULL) {
+                            h1 = gsl_histogram_alloc (DIST_INFINITY);
+                            if (h1 != NULL) {
+                                gsl_histogram_set_ranges_uniform(h1, 0,
+                                        DIST_INFINITY);
+                                reuse_distance_list[k] = h1;
+                            }
+                        }
+
+                        if (h1 != NULL) {
+                            gsl_histogram_add(h1, h2);
+                        }
+                    }
+                }
+            }
+
+end_iteration:
+            free_counters(histogram_matrix, tree_list, num_cores, num_streams);
+        } else {    /* valid_allocation */
+            // Do nothing because init_counters takes care of freeing memory
+            // if all required memory could not be allocated.
         }
+    }
+
+    for (int i=0; i<num_streams; i++) {
+        if(reuse_distance_list[i] != NULL)
+            free(reuse_distance_list[i]);
     }
 
     return 0;

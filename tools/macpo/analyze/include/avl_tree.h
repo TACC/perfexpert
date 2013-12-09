@@ -14,8 +14,9 @@ class avl_tree {
         void print();
         void destroy();
         bool contains(size_t address);
-        size_t get_distance(size_t address);
-        bool insert(const mem_info_t *data_ptr);
+        long long get_distance(size_t address);
+        void set_distance(size_t address, long long distance);
+        bool insert(const mem_info_t *data_ptr, long long delta = 0);
 
     private:
         typedef struct tag_avl_node {

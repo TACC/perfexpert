@@ -30,7 +30,17 @@ bool avl_tree::contains(size_t address) {
     return (it != addr_to_node.end());
 }
 
-size_t avl_tree::get_distance(size_t address) {
+void avl_tree::set_distance(size_t address, long long distance) {
+    std::map<size_t, avl_node_t*>::iterator it = addr_to_node.find(address);
+    if (it != addr_to_node.end()) {
+        avl_node_t* node = addr_to_node[address];
+        if (node) {
+            node->key = last_key - distance - 1;
+        }
+    }
+}
+
+long long avl_tree::get_distance(size_t address) {
     std::map<size_t, avl_node_t*>::iterator it = addr_to_node.find(address);
     if (it != addr_to_node.end()) {
         avl_node_t* node = addr_to_node[address];
@@ -93,13 +103,13 @@ avl_tree::avl_node_t* avl_tree::double_rotate_with_right(avl_node_t* k1) {
     return single_rotate_with_right(k1);
 }
 
-bool avl_tree::insert(const mem_info_t *data_ptr) {
+bool avl_tree::insert(const mem_info_t *data_ptr, long long delta) {
     if (data_ptr) {
         avl_node_t* node_to_insert = (avl_node_t*) malloc(sizeof(avl_node_t));
         if (node_to_insert) {
             node_to_insert->data_ptr = data_ptr;
             node_to_insert->height = 0;
-            node_to_insert->key = last_key;
+            node_to_insert->key = last_key - delta;
             node_to_insert->left = node_to_insert->right = NULL;
 
             avl_node_t* node = _insert(data_ptr, &root, node_to_insert);
