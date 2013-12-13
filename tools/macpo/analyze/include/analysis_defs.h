@@ -38,6 +38,9 @@ typedef std::vector<histogram_list_t> histogram_matrix_t;
 
 typedef std::vector<avl_tree*> avl_tree_list_t;
 
+typedef std::pair<size_t, size_t> pair_t;
+typedef std::vector<pair_t> pair_list_t;
+
 typedef struct {
     size_t size, lines;
 } cache_data_t;

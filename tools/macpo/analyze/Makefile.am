@@ -21,7 +21,7 @@
 
 bin_PROGRAMS = macpo-analyze
 macpo_analyze_SOURCES = main.cpp record_io.cpp record_analysis.cpp \
-    avl_tree.cpp cache_info.cpp
+    avl_tree.cpp cache_info.cpp reuse_dist_analysis.cpp
 macpo_analyze_CXXFLAGS = -I$(srcdir)/../include -I$(srcdir)/include -fopenmp
 macpo_analyze_LDFLAGS = -fopenmp
 

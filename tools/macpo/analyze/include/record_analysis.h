@@ -27,7 +27,6 @@
 
 #define CUT             0.8f
 #define LINE_NUM_LIMIT  1000
-#define DIST_INFINITY   20  // FIXME: Use number of cache lines.
 
 int analyze_records(const global_data_t& global_data, int analysis_flags);
 int filter_low_freq_records(global_data_t& global_data);
