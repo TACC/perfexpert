@@ -272,10 +272,6 @@ AC_ARG_WITH([gsl],
     LDFLAGS+=" -L$withval/lib -lgsl -lgslcblas"
     ], [])
 
-AC_ARG_WITH([sparsehash],
-    [AS_HELP_STRING([--with-sparsehash], [set Google SparseHash include path])],
-    [CPPFLAGS+=" -I$withval"], [])
-
 #------------------------------------------------------------------------------
 # readelf module requirements
 #
@@ -618,13 +614,6 @@ AS_IF([test x"$ENABLE_MACPO" = xyes], [
     AC_CHECK_LIB([gmp], [__gmpf_init, __gmpf_clear], [],
         [AC_MSG_ERROR([not found: libgmp.so])])
     AC_CHECK_HEADER([gmp.h], [], [AC_MSG_ERROR([not found: gmp.h])])
-
-    # Check for Google SparseHash (headers)
-    #
-    AC_LANG_PUSH([C++])
-    AC_CHECK_HEADER([google/sparse_hash_map], [],
-        [AC_MSG_ERROR([not found: google/sparse_hash_map])])
-    AC_LANG_POP
 
     # Check for GNU Scientific library
     #
