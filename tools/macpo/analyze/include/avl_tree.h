@@ -21,7 +21,7 @@ class avl_tree {
     private:
         typedef struct tag_avl_node {
             int height;
-            const mem_info_t *data_ptr;
+            mem_info_t data;
             size_t key;
             struct tag_avl_node *left, *right;
         } avl_node_t;
@@ -30,8 +30,7 @@ class avl_tree {
         int max(avl_node_t* n);
         int height(avl_node_t* n);
         void _destroy(avl_node_t* t);
-        avl_node_t* _insert(const mem_info_t *data_ptr, avl_node_t** t,
-                avl_node_t* node_to_insert);
+        avl_node_t* _insert(avl_node_t** t, avl_node_t* node_to_insert);
 
         avl_node_t* double_rotate_with_left(avl_node_t* k3);
         avl_node_t* double_rotate_with_right(avl_node_t* k1);

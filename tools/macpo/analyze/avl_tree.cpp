@@ -1,6 +1,7 @@
 
 /* Adapted from: http://www.zentut.com/c-tutorial/c-avl-tree/ */
 
+#include <cassert>
 #include <cstdlib>
 #include <iostream>
 
@@ -45,6 +46,7 @@ long long avl_tree::get_distance(size_t address) {
     if (it != addr_to_node.end()) {
         avl_node_t* node = addr_to_node[address];
         if (node) {
+            assert(node->data.address == address);
             return last_key - node->key - 1;
         }
     }
@@ -71,6 +73,11 @@ avl_tree::avl_node_t* avl_tree::single_rotate_with_left(avl_node_t* k2) {
     k2->height = MAX(height(k2->left), height(k2->right)) + 1;
     k1->height = MAX(height(k1->left), k2->height) + 1;
 
+    if (k1)         addr_to_node[k1->data.address] = k1;
+    if (k2)         addr_to_node[k2->data.address] = k2;
+    if (k1->right)  addr_to_node[k1->right->data.address] = k1->right;
+    if (k2->left)   addr_to_node[k2->left->data.address] = k2->left;
+
     return k1; /* new root */
 }
 
@@ -84,12 +91,19 @@ avl_tree::avl_node_t* avl_tree::single_rotate_with_right(avl_node_t* k1) {
     k1->height = MAX(height(k1->left), height(k1->right)) + 1;
     k2->height = MAX(height(k2->right), k1->height) + 1;
 
+    if (k1)         addr_to_node[k1->data.address] = k1;
+    if (k2)         addr_to_node[k2->data.address] = k2;
+    if (k1->right)  addr_to_node[k1->right->data.address] = k1->right;
+    if (k2->left)   addr_to_node[k2->left->data.address] = k2->left;
+
     return k2;  /* New root */
 }
 
 avl_tree::avl_node_t* avl_tree::double_rotate_with_left(avl_node_t* k3) {
     /* Rotate between k1 and k2 */
     k3->left = single_rotate_with_right(k3->left);
+
+    // if (k3->left)   addr_to_node[k3->left->data.address] = k3->left;
 
     /* Rotate between K3 and k2 */
     return single_rotate_with_left(k3);
@@ -99,6 +113,8 @@ avl_tree::avl_node_t* avl_tree::double_rotate_with_right(avl_node_t* k1) {
     /* rotate between K3 and k2 */
     k1->right = single_rotate_with_left(k1->right);
 
+    // if (k1->right)  addr_to_node[k1->right->data.address] = k1->right;
+
     /* rotate between k1 and k2 */
     return single_rotate_with_right(k1);
 }
@@ -107,12 +123,12 @@ bool avl_tree::insert(const mem_info_t *data_ptr, long long delta) {
     if (data_ptr) {
         avl_node_t* node_to_insert = (avl_node_t*) malloc(sizeof(avl_node_t));
         if (node_to_insert) {
-            node_to_insert->data_ptr = data_ptr;
+            node_to_insert->data = *data_ptr;
             node_to_insert->height = 0;
             node_to_insert->key = last_key - delta;
             node_to_insert->left = node_to_insert->right = NULL;
 
-            avl_node_t* node = _insert(data_ptr, &root, node_to_insert);
+            avl_node_t* node = _insert(&root, node_to_insert);
             if (node) {
                 addr_to_node[data_ptr->address] = node;
                 last_key += 1;
@@ -124,12 +140,12 @@ bool avl_tree::insert(const mem_info_t *data_ptr, long long delta) {
     return false;
 }
 
-avl_tree::avl_node_t* avl_tree::_insert(const mem_info_t* data_ptr,
-        avl_node_t** t, avl_node_t* node_to_insert) {
+avl_tree::avl_node_t* avl_tree::_insert(avl_node_t** t,
+        avl_node_t* node_to_insert) {
     if(*t == NULL) {
         *t = node_to_insert;
     } else if(node_to_insert->key < (*t)->key) {
-        (*t)->left = _insert(data_ptr, &((*t)->left), node_to_insert);
+        (*t)->left = _insert(&((*t)->left), node_to_insert);
         if(height((*t)->left) - height((*t)->right) == 2)
             if(node_to_insert->key < (*t)->left->key) {
                 *t = single_rotate_with_left(*t);
@@ -137,7 +153,7 @@ avl_tree::avl_node_t* avl_tree::_insert(const mem_info_t* data_ptr,
                 *t = double_rotate_with_left(*t);
             }
     } else if(node_to_insert->key > (*t)->key) {
-        (*t)->right = _insert(data_ptr, &((*t)->right), node_to_insert);
+        (*t)->right = _insert(&((*t)->right), node_to_insert);
         if(height((*t)->right) - height((*t)->left) == 2)
             if(node_to_insert->key > (*t)->right->key) {
                 *t = single_rotate_with_right(*t);
@@ -160,14 +176,14 @@ void avl_tree::_print(avl_node_t* t)
         return;
     }
 
-    std::cout << *((int*) t->data_ptr);
+    std::cout << &(t->data);
 
     if(t->left != NULL) {
-        std::cout << "(L:" << *((int*) t->left->data_ptr) << ")";
+        std::cout << "(L:" << &(t->left->data) << ")";
     }
 
     if(t->right != NULL) {
-        std::cout << "(R:" << *((int*) t->right->data_ptr) << ")";
+        std::cout << "(R:" << &(t->right->data) << ")";
     }
 
     std::cout << std::endl;

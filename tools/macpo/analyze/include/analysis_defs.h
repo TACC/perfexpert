@@ -52,10 +52,14 @@ typedef struct {
     size_t count, l1_conflicts, l2_conflicts;
 } stream_list_t;
 
+/* Different kinds of analyses options. */
 #define ANALYSIS_REUSE_DISTANCE     (1 << 0)
 #define ANALYSIS_CACHE_CONFLICTS    (1 << 1)
 #define ANALYSIS_PREFETCH_STREAMS   (1 << 2)
 
 #define ANALYSIS_ALL                (~0)
+
+/* Number of reuse distance entries to display for each stream. */
+#define REUSE_DISTANCE_COUNT        3
 
 #endif /* ANALYSIS_DEFS_H_ */
