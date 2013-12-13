@@ -19,13 +19,12 @@
  * $HEADER$
  */
 
-#include <gsl/gsl_histogram.h>
 #include <iostream>
 
 #include "analysis_defs.h"
 #include "avl_tree.h"
 #include "histogram.h"
-#include "reuse_dist_analysis.h"
+#include "latency_analysis.h"
 
 static void free_counters(histogram_matrix_t& hist_matrix,
         avl_tree_list_t& tree_list, int num_cores, int num_streams) {
@@ -110,8 +109,33 @@ static size_t calculate_distance(histogram_matrix_t& hist_matrix,
     }
 }
 
+int print_cache_conflicts(const global_data_t& global_data,
+        double_list_t& conflict_list) {
+    std::cout << std::endl << mprefix << "Cache conflicts:" << std::endl;
+
+    const int num_streams = global_data.stream_list.size();
+    for (int i=0; i<num_streams; i++) {
+        double conflict_percentage = 100.0 * conflict_list[i];
+
+        if (conflict_percentage < 0)
+            conflict_percentage = 0.0;
+
+        if (conflict_percentage > 100)
+            conflict_percentage = 100.0;
+
+        std::cout << "var: " << global_data.stream_list[i] <<
+                ", conflict ratio: " << (double) conflict_percentage << "%." <<
+                std::endl;
+    }
+
+    std::cout << std::endl;
+    return 0;
+}
+
 int print_reuse_distances(const global_data_t& global_data,
         histogram_list_t& rd_list) {
+    std::cout << std::endl << mprefix << "Cache conflicts:" << std::endl;
+
     const int num_streams = global_data.stream_list.size();
     for (int i=0; i<num_streams; i++) {
         if(rd_list[i] != NULL) {
@@ -137,17 +161,40 @@ int print_reuse_distances(const global_data_t& global_data,
     return 0;
 }
 
-int reuse_distance_analysis(const global_data_t& global_data,
-        histogram_list_t& rd_list) {
+int latency_analysis(const global_data_t& global_data,
+        histogram_list_t& rd_list, double_list_t& conflict_list) {
     const mem_info_bucket_t& bucket = global_data.mem_info_bucket;
     const int num_cores = sysconf(_SC_NPROCESSORS_CONF);
     const int num_streams = global_data.stream_list.size();
 
-    // #pragma omp parallel for
+    int_list_t hit_list;
+    int_list_t miss_list;
+
+    hit_list.resize(num_streams);
+    miss_list.resize(num_streams);
+
+    for (int j=0; j<num_streams; j++) {
+        hit_list[j] = 0;
+        miss_list[j] = 0;
+    }
+
+    #pragma omp parallel for
     for (int i=0; i<bucket.size(); i++) {
         const mem_info_list_t& list = bucket.at(i);
 
+        int_list_t local_hit_list;
+        int_list_t local_miss_list;
+
+        local_hit_list.resize(num_streams);
+        local_miss_list.resize(num_streams);
+
+        for (int j=0; j<num_streams; j++) {
+            local_hit_list[j] = 0;
+            local_miss_list[j] = 0;
+        }
+
         avl_tree_list_t tree_list;
+        std::map<size_t, short> cache_line_owner;
 
         histogram_matrix_t histogram_matrix;
         histogram_matrix.resize(num_cores);
@@ -164,6 +211,7 @@ int reuse_distance_analysis(const global_data_t& global_data,
                 const unsigned short core_id = mem_info.coreID;
                 const size_t var_idx = mem_info.var_idx;
                 const size_t address = mem_info.address;
+                const short read_write = mem_info.read_write;
 
                 // Quick validation check.
                 if (core_id >= 0 && core_id < num_cores ||
@@ -187,6 +235,31 @@ int reuse_distance_analysis(const global_data_t& global_data,
 
                     avl_tree* tree = tree_list[core_id];
                     tree->insert(&mem_info);
+
+                    // Check if this cache line has been access earlier,
+                    // and thus, if it has an owner.
+                    if (cache_line_owner.find(address) ==
+                            cache_line_owner.end()) {
+                        if (read_write == TYPE_WRITE) {
+                            cache_line_owner[address] = core_id;
+                            local_hit_list[var_idx] += 1;
+                        }
+                    } else {
+                        // This cache line already has an owner.
+                        if (read_write == TYPE_WRITE) {
+                            // Chances of a conflict between owner and core_id.
+                            short owner = cache_line_owner[address];
+                            if (owner == core_id) {
+                                local_hit_list[var_idx] += 1;
+                            } else {
+                                local_miss_list[var_idx] += 1;
+                            }
+                        } else {
+                            // This cache line is only being read,
+                            // no conflicts here.
+                            local_hit_list[var_idx] += 1;
+                        }
+                    }
                 }
             }
 
@@ -205,6 +278,13 @@ int reuse_distance_analysis(const global_data_t& global_data,
                 }
             }
 
+            // Sum up the histogram values into result histogram.
+            #pragma omp single
+            for (int j=0; j<num_streams; j++) {
+                hit_list[j] += local_hit_list[j];
+                miss_list[j] += local_miss_list[j];
+            }
+
 end_iteration:
             free_counters(histogram_matrix, tree_list, num_cores, num_streams);
         } else {    /* valid_allocation */
@@ -213,6 +293,15 @@ end_iteration:
         }
     }
 
+    for (int j=0; j<num_streams; j++) {
+        double hits = hit_list[j];
+        double misses = miss_list[j];
+
+        // Approximate answers are fine.
+        if (hits + misses > 0) {
+            conflict_list[j] = misses + (hits + misses);
+        }
+    }
+
     return 0;
 }
-

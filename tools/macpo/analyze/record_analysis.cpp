@@ -26,8 +26,7 @@
 #include "err_codes.h"
 #include "record_analysis.h"
 
-#include "cache_conflict_analysis.h"
-#include "reuse_dist_analysis.h"
+#include "latency_analysis.h"
 #include "stride_analysis.h"
 
 int filter_low_freq_records(global_data_t& global_data) {
@@ -89,35 +88,19 @@ int analyze_records(const global_data_t& global_data, int analysis_flags) {
     int code = 0;
     const int num_streams = global_data.stream_list.size();
 
-    if (analysis_flags & ANALYSIS_REUSE_DISTANCE) {
-        std::cout << mprefix << "Analyzing records for reuse distance analysis."
-            << std::endl;
+    if (analysis_flags & (ANALYSIS_CACHE_CONFLICTS | ANALYSIS_REUSE_DISTANCE)) {
+        std::cout << mprefix << "Analyzing records for latency." << std::endl;
 
         histogram_list_t rd_list;
         rd_list.resize(num_streams);
 
-        if ((code = reuse_distance_analysis(global_data, rd_list)) < 0)
-            return code;
-
-        print_reuse_distances(global_data, rd_list);
-
-        for (int i=0; i<num_streams; i++) {
-            if(rd_list[i] != NULL)
-                gsl_histogram_free(rd_list[i]);
-        }
-
-        std::cout << std::endl;
-    }
-
-    if (analysis_flags & ANALYSIS_CACHE_CONFLICTS) {
-        std::cout << mprefix << "Analyzing records for cache conflict." <<
-                std::endl;
-
         double_list_t conflict_list;
         conflict_list.resize(num_streams);
 
-        if ((code = cache_conflict_analysis(global_data, conflict_list)) < 0)
+        if ((code = latency_analysis(global_data, rd_list, conflict_list)) < 0)
             return code;
+
+        print_reuse_distances(global_data, rd_list);
 
         print_cache_conflicts(global_data, conflict_list);
     }

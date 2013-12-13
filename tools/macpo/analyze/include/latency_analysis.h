@@ -19,19 +19,14 @@
  * $HEADER$
  */
 
-#ifndef REUSE_DIST_ANALYSIS_H_
-#define REUSE_DIST_ANALYSIS_H_
+#ifndef LATENCY_ANALYSIS_H_
+#define LATENCY_ANALYSIS_H_
 
-#include <gsl/gsl_histogram.h>
-#include <iostream>
-
+#include "analysis_defs.h"
 #include "avl_tree.h"
+#include "histogram.h"
 
-#define DIST_INFINITY   20  // FIXME: Use number of cache lines.
-
-bool pair_sort(const pair_t& p1, const pair_t& p2);
-
-int flatten_and_sort_histogram(gsl_histogram*& hist, pair_list_t& pair_list);
+#define DIST_INFINITY   20  // TODO: Get from cache sizes.
 
 static void free_counters(histogram_matrix_t& hist_matrix,
         avl_tree_list_t& tree_list, int num_cores, int num_streams);
@@ -47,10 +42,13 @@ static size_t calculate_distance(histogram_matrix_t& hist_matrix,
         avl_tree_list_t& tree_list, int num_cores, int core_id, size_t var_idx,
         size_t address);
 
+int print_cache_conflicts(const global_data_t& global_data,
+        double_list_t& conflict_list);
+
 int print_reuse_distances(const global_data_t& global_data,
         histogram_list_t& rd_list);
 
-int reuse_distance_analysis(const global_data_t& global_data,
-        histogram_list_t& rd_list);
+int latency_analysis(const global_data_t& global_data,
+        histogram_list_t& rd_list, double_list_t& conflict_list);
 
-#endif  /* REUSE_DIST_ANALYSIS_H_ */
+#endif  /* LATENCY_ANALYSIS_H_ */
