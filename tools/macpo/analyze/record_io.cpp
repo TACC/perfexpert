@@ -51,7 +51,8 @@ static int handle_metadata_msg(const metadata_info_t& metadata_info) {
     // so use it and discard it instead of saving it for later.
     std::cout << mprefix << "Analyzing logs created from the binary " <<
         metadata_info.binary_name << " at " <<
-        ctime(&metadata_info.execution_timestamp);
+        ctime(&metadata_info.execution_timestamp) << std::endl;
+
     return 0;
 }
 

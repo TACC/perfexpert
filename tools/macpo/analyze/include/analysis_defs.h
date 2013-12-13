@@ -41,6 +41,9 @@ typedef std::vector<avl_tree*> avl_tree_list_t;
 typedef std::pair<size_t, size_t> pair_t;
 typedef std::vector<pair_t> pair_list_t;
 
+typedef std::vector<double> double_list_t;
+typedef std::vector<int> int_list_t;
+
 typedef struct {
     size_t size, lines;
 } cache_data_t;

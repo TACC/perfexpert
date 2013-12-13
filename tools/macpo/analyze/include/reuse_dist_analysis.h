@@ -22,7 +22,6 @@
 #ifndef REUSE_DIST_ANALYSIS_H_
 #define REUSE_DIST_ANALYSIS_H_
 
-#include <algorithm>
 #include <gsl/gsl_histogram.h>
 #include <iostream>
 

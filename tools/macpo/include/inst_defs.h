@@ -24,7 +24,7 @@
 
 #include <rose.h>
 
-enum { TYPE_UNKNOWN=0, TYPE_READ, TYPE_WRITE, TYPE_READ_AND_WRITE };
+#include "macpo_record.h"
 
 typedef struct {
     SgBasicBlock* bb;

@@ -20,10 +20,10 @@
  */
 
 #include <set>
-#include <gsl/gsl_histogram.h>
 #include <iostream>
 
 #include "analysis_defs.h"
+#include "cache_conflict_analysis.h"
 #include "err_codes.h"
 #include "record_analysis.h"
 #include "reuse_dist_analysis.h"
@@ -85,11 +85,11 @@ int filter_low_freq_records(global_data_t& global_data) {
 
 int analyze_records(const global_data_t& global_data, int analysis_flags) {
     int code = 0;
+    const int num_streams = global_data.stream_list.size();
+
     if (analysis_flags & ANALYSIS_REUSE_DISTANCE) {
         std::cout << mprefix << "Analyzing records for reuse distance analysis."
             << std::endl;
-
-        const int num_streams = global_data.stream_list.size();
 
         histogram_list_t rd_list;
         rd_list.resize(num_streams);
@@ -103,6 +103,21 @@ int analyze_records(const global_data_t& global_data, int analysis_flags) {
             if(rd_list[i] != NULL)
                 gsl_histogram_free(rd_list[i]);
         }
+
+        std::cout << std::endl;
+    }
+
+    if (analysis_flags & ANALYSIS_CACHE_CONFLICTS) {
+        std::cout << mprefix << "Analyzing records for cache conflict." <<
+                std::endl;
+
+        double_list_t conflict_list;
+        conflict_list.resize(num_streams);
+
+        if ((code = cache_conflict_analysis(global_data, conflict_list)) < 0)
+            return code;
+
+        print_cache_conflicts(global_data, conflict_list);
     }
 
     return 0;

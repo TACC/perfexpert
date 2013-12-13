@@ -19,36 +19,13 @@
  * $HEADER$
  */
 
-#include <algorithm>
 #include <gsl/gsl_histogram.h>
 #include <iostream>
 
 #include "analysis_defs.h"
 #include "avl_tree.h"
+#include "histogram.h"
 #include "reuse_dist_analysis.h"
-
-bool pair_sort(const pair_t& p1, const pair_t& p2) {
-    size_t val_1 = p1.second;
-    size_t val_2 = p2.second;
-
-    return val_1 > val_2;
-}
-
-int flatten_and_sort_histogram(gsl_histogram*& hist, pair_list_t& pair_list) {
-    // Initialize.
-    pair_list.clear();
-
-    size_t bin_count = gsl_histogram_bins(hist);
-    pair_list.resize(bin_count);
-
-    for (int i=0; i<bin_count; i++) {
-        size_t count = gsl_histogram_get(hist, i);
-        pair_list[i] = pair_t(i, count);
-    }
-
-    // Sort based on values.
-    std::sort(pair_list.begin(), pair_list.end(), pair_sort);
-}
 
 static void free_counters(histogram_matrix_t& hist_matrix,
         avl_tree_list_t& tree_list, int num_cores, int num_streams) {
@@ -155,10 +132,10 @@ int print_reuse_distances(const global_data_t& global_data,
                 size_t max_val = pair_list[j].second;
 
                 if (max_val > 0)
-                    std::cout << " " << max_bin << "[" << max_val << " times]";
+                    std::cout << " " << max_bin << " (" << max_val << " times)";
             }
 
-            std::cout << std::endl;
+            std::cout << "." << std::endl;
         }
     }
 
@@ -173,7 +150,6 @@ int reuse_distance_analysis(const global_data_t& global_data,
 
     // #pragma omp parallel for
     for (int i=0; i<bucket.size(); i++) {
-        std::cout << "starting new bucket\n";
         const mem_info_list_t& list = bucket.at(i);
 
         avl_tree_list_t tree_list;
