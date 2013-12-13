@@ -134,7 +134,7 @@ int print_cache_conflicts(const global_data_t& global_data,
 
 int print_reuse_distances(const global_data_t& global_data,
         histogram_list_t& rd_list) {
-    std::cout << std::endl << mprefix << "Cache conflicts:" << std::endl;
+    std::cout << std::endl << mprefix << "Reuse distances:" << std::endl;
 
     const int num_streams = global_data.stream_list.size();
     for (int i=0; i<num_streams; i++) {
