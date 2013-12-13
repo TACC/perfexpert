@@ -19,6 +19,9 @@
 # $HEADER$
 #
 
-SUBDIRS = c_loop_interchange c_loop_tiling
+bin_PROGRAMS = loop_tiling
+loop_tiling_SOURCES = loop_tiling.cpp
+loop_tiling_CPPFLAGS = -I$(srcdir)/../../../..
+loop_tiling_LDFLAGS = -lrose -ljvm -lsqlite3
 
 # EOF
