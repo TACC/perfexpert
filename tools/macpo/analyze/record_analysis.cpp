@@ -23,10 +23,12 @@
 #include <iostream>
 
 #include "analysis_defs.h"
-#include "cache_conflict_analysis.h"
 #include "err_codes.h"
 #include "record_analysis.h"
+
+#include "cache_conflict_analysis.h"
 #include "reuse_dist_analysis.h"
+#include "stride_analysis.h"
 
 int filter_low_freq_records(global_data_t& global_data) {
     mem_info_bucket_t& bucket = global_data.mem_info_bucket;
@@ -118,6 +120,19 @@ int analyze_records(const global_data_t& global_data, int analysis_flags) {
             return code;
 
         print_cache_conflicts(global_data, conflict_list);
+    }
+
+    if (analysis_flags & ANALYSIS_STRIDES) {
+        std::cout << mprefix << "Analyzing records for stride values." <<
+                std::endl;
+
+        histogram_list_t stride_list;
+        stride_list.resize(num_streams);
+
+        if ((code = stride_analysis(global_data, stride_list)) < 0)
+            return code;
+
+        print_strides(global_data, stride_list);
     }
 
     return 0;

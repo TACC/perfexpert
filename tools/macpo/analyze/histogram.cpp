@@ -48,3 +48,15 @@ int flatten_and_sort_histogram(gsl_histogram*& hist, pair_list_t& pair_list) {
     std::sort(pair_list.begin(), pair_list.end(), pair_sort);
 }
 
+int create_histogram_if_null(gsl_histogram*& hist, size_t bins) {
+    if (hist == NULL) {
+        hist = gsl_histogram_alloc (bins);
+
+        if (hist == NULL)
+            return -1;
+
+        gsl_histogram_set_ranges_uniform (hist, 0, bins);
+    }
+
+    return 0;
+}

@@ -19,18 +19,18 @@
  * $HEADER$
  */
 
-#ifndef HISTOGRAM_H_
-#define HISTOGRAM_H_
+#ifndef STRIDE_ANALYSIS_H_
+#define STRIDE_ANALYSIS_H_
 
-#include <algorithm>
-#include <gsl/gsl_histogram.h>
+#include "histogram.h"
 
-#include "analysis_defs.h"
+#define MAX_STRIDE      128
+#define STRIDE_COUNT    3
 
-bool pair_sort(const pair_t& p1, const pair_t& p2);
+int stride_analysis(const global_data_t& global_data,
+        histogram_list_t& stride_list);
 
-int flatten_and_sort_histogram(gsl_histogram*& hist, pair_list_t& pair_list);
+int print_strides(const global_data_t& global_data,
+        histogram_list_t& stride_list);
 
-int create_histogram_if_null(gsl_histogram*& hist, size_t bins);
-
-#endif  /* HISTOGRAM_H_ */
+#endif  /* STRIDE_ANALYSIS_H_ */

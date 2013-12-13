@@ -62,6 +62,7 @@ typedef struct {
 #define ANALYSIS_REUSE_DISTANCE     (1 << 0)
 #define ANALYSIS_CACHE_CONFLICTS    (1 << 1)
 #define ANALYSIS_PREFETCH_STREAMS   (1 << 2)
+#define ANALYSIS_STRIDES            (1 << 3)
 
 #define ANALYSIS_ALL                (~0)
 

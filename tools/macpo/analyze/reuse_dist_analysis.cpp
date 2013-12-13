@@ -82,14 +82,9 @@ static bool conflict(histogram_matrix_t& hist_matrix,
 
             tree_list[i]->set_distance(address, DIST_INFINITY);
 
-            if (hist_matrix[i][var_idx] == NULL) {
-                hist_matrix[i][var_idx] = gsl_histogram_alloc (DIST_INFINITY);
-
-                if (hist_matrix[i][var_idx] == NULL)
-                    break;
-
-                gsl_histogram_set_ranges_uniform (hist_matrix[i][var_idx], 0,
-                        DIST_INFINITY);
+            if (create_histogram_if_null(hist_matrix[i][var_idx],
+                        DIST_INFINITY) < 0) {
+                break;
             }
 
             gsl_histogram_accumulate(hist_matrix[i][var_idx], dist, -1.0);
@@ -177,18 +172,10 @@ int reuse_distance_analysis(const global_data_t& global_data,
                     size_t distance = calculate_distance(histogram_matrix,
                             tree_list, num_cores, core_id, var_idx, address);
 
-                    gsl_histogram* hist = histogram_matrix[core_id][var_idx];
-                    // Check if hist has been allocated.
-                    if (hist == NULL) {
-                        hist = gsl_histogram_alloc (DIST_INFINITY);
-                        if (hist == NULL) {
-                            goto end_iteration;
-                        }
-
-                        gsl_histogram_set_ranges_uniform(hist, 0,
-                                DIST_INFINITY);
-
-                        histogram_matrix[core_id][var_idx] = hist;
+                    if (create_histogram_if_null(
+                                histogram_matrix[core_id][var_idx],
+                                DIST_INFINITY) < 0) {
+                        goto end_iteration;
                     }
 
                     // Occupy the last bin in case of overflow.
@@ -207,21 +194,12 @@ int reuse_distance_analysis(const global_data_t& global_data,
             #pragma omp single
             for (int j=0; j<num_cores; j++) {
                 for (int k=0; k<num_streams; k++) {
-                    gsl_histogram* h1 = rd_list[k];
                     gsl_histogram* h2 = histogram_matrix[j][k];
 
                     if (h2 != NULL) {
-                        if (h1 == NULL) {
-                            h1 = gsl_histogram_alloc (DIST_INFINITY);
-                            if (h1 != NULL) {
-                                gsl_histogram_set_ranges_uniform(h1, 0,
-                                        DIST_INFINITY);
-                                rd_list[k] = h1;
-                            }
-                        }
-
-                        if (h1 != NULL) {
-                            gsl_histogram_add(h1, h2);
+                        if (create_histogram_if_null(rd_list[k],
+                                    DIST_INFINITY) == 0) {
+                            gsl_histogram_add(rd_list[k], h2);
                         }
                     }
                 }
