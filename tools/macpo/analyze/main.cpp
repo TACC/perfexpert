@@ -32,6 +32,7 @@ int main(int argc, char *argv[]) {
     int code = 0;
     struct arg_info info;
     global_data_t global_data;
+    memset(&global_data, 0, sizeof(global_data));
 
     memset (&info, 0, sizeof(struct arg_info));
     argp_parse (&argp, argc, argv, 0, 0, &info);

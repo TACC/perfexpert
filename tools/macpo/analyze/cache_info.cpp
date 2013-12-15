@@ -22,6 +22,7 @@ int update_cache_fields(cache_data_t& cache_data, size_t cache_level,
         cache_data.size = cache_size;
         cache_data.line_size = line_size;
         cache_data.associativity = associativity;
+
         return 0;
     }
 }
@@ -45,19 +46,16 @@ int insert_cache_type(global_data_t& global_data, size_t cache_level,
             return update_cache_fields(l2_data, cache_level, cache_size,
                     line_size, associativity);
 
-            return 0;
-
         case 3:
             return update_cache_fields(l3_data, cache_level, cache_size,
                     line_size, associativity);
-
-            return 0;
     }
 
     return -1;
 }
 
 int load_cache_info(global_data_t& global_data) {
+    int code = 0;
     hwloc_topology_t topology;
 
     // Load the CPU topology.
@@ -71,8 +69,9 @@ int load_cache_info(global_data_t& global_data) {
             hwloc_obj_t obj = hwloc_get_obj_by_depth(topology, i, j);
             if (obj->type == HWLOC_OBJ_CACHE) {
                 hwloc_obj_attr_u::hwloc_cache_attr_s& cache = obj->attr->cache;
-                insert_cache_type(global_data, cache.depth, cache.size,
-                        cache.linesize, cache.associativity);
+                if ((code = insert_cache_type(global_data, cache.depth, cache.size,
+                        cache.linesize, cache.associativity)) < 0)
+                    return code;
             }
         }
     }

@@ -71,7 +71,7 @@ static bool init_counters(histogram_matrix_t& hist_matrix,
 
 static bool conflict(histogram_matrix_t& hist_matrix,
         avl_tree_list_t& tree_list, int num_cores, int var_idx, int core_id,
-        size_t address, short read_or_write) {
+        size_t address, short read_or_write, const int DIST_INFINITY) {
     int i;
     bool conflict = false;
 
@@ -98,10 +98,10 @@ static bool conflict(histogram_matrix_t& hist_matrix,
 
 static size_t calculate_distance(histogram_matrix_t& hist_matrix,
         avl_tree_list_t& tree_list, int num_cores, int core_id, size_t var_idx,
-        size_t address, short read_or_write) {
+        size_t address, short read_or_write, const int DIST_INFINITY) {
     assert(tree_list[core_id]->contains(address));
     if (conflict(hist_matrix, tree_list, num_cores, var_idx, core_id,
-                address, read_or_write)) {
+                address, read_or_write, DIST_INFINITY)) {
         return DIST_INFINITY;
     } else {
         return tree_list[core_id]->get_distance(address);
@@ -132,7 +132,7 @@ int print_cache_conflicts(const global_data_t& global_data,
 }
 
 int print_reuse_distances(const global_data_t& global_data,
-        histogram_list_t& rd_list) {
+        histogram_list_t& rd_list, const int DIST_INFINITY) {
     std::cout << std::endl << mprefix << "Reuse distances:" << std::endl;
 
     const int num_streams = global_data.stream_list.size();
@@ -169,7 +169,8 @@ int print_reuse_distances(const global_data_t& global_data,
 }
 
 int latency_analysis(const global_data_t& global_data,
-        histogram_list_t& rd_list, double_list_t& conflict_list) {
+        histogram_list_t& rd_list, double_list_t& conflict_list,
+        const int DIST_INFINITY) {
     const mem_info_bucket_t& bucket = global_data.mem_info_bucket;
     const int num_cores = sysconf(_SC_NPROCESSORS_CONF);
     const int num_streams = global_data.stream_list.size();
@@ -228,7 +229,7 @@ int latency_analysis(const global_data_t& global_data,
                     if (tree->contains(address)) {
                         size_t distance = calculate_distance(histogram_matrix,
                                 tree_list, num_cores, core_id, var_idx, address,
-                                read_write);
+                                read_write, DIST_INFINITY);
 
                         if (create_histogram_if_null(
                                     histogram_matrix[core_id][var_idx],

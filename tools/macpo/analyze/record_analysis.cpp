@@ -19,8 +19,9 @@
  * $HEADER$
  */
 
-#include <set>
+#include <cmath>
 #include <iostream>
+#include <set>
 
 #include "analysis_defs.h"
 #include "err_codes.h"
@@ -97,10 +98,25 @@ int analyze_records(const global_data_t& global_data, int analysis_flags) {
         double_list_t conflict_list;
         conflict_list.resize(num_streams);
 
-        if ((code = latency_analysis(global_data, rd_list, conflict_list)) < 0)
+        int DIST_INFINITY;
+        if (global_data.l3_data.size != 0) {
+            const cache_data_t& l3_data = global_data.l3_data;
+            DIST_INFINITY = ceil(((double) l3_data.size) / l3_data.line_size);
+        } else if (global_data.l2_data.size != 0) {
+            const cache_data_t& l2_data = global_data.l2_data;
+            DIST_INFINITY = ceil(((double) l2_data.size) / l2_data.line_size);
+        } else if (global_data.l1_data.size != 0) {
+            const cache_data_t& l1_data = global_data.l1_data;
+            DIST_INFINITY = ceil(((double) l1_data.size) / l1_data.line_size);
+        } else {
+            return -ERR_INV_CACHE;
+        }
+
+        if ((code = latency_analysis(global_data, rd_list, conflict_list,
+                        DIST_INFINITY)) < 0)
             return code;
 
-        print_reuse_distances(global_data, rd_list);
+        print_reuse_distances(global_data, rd_list, DIST_INFINITY);
 
         print_cache_conflicts(global_data, conflict_list);
     }
