@@ -45,11 +45,11 @@ typedef std::vector<double> double_list_t;
 typedef std::vector<int> int_list_t;
 
 typedef struct {
-    size_t size, lines;
+    size_t size, line_size, associativity, count;
 } cache_data_t;
 
 typedef struct {
-    cache_data_t l1_data, l2_data;
+    cache_data_t l1_data, l2_data, l3_data;
     name_list_t stream_list;
     mem_info_bucket_t mem_info_bucket;
 } global_data_t;

@@ -26,4 +26,10 @@
 
 int load_cache_info(global_data_t& global_data);
 
+int update_cache_fields(cache_data_t& cache_data, size_t cache_level,
+        size_t cache_size, size_t line_size, size_t associativity);
+
+int insert_cache_type(global_data_t& global_data, size_t cache_level,
+        size_t cache_size, size_t line_size, size_t associativity);
+
 #endif  /* CACHE_INFO_H_ */
