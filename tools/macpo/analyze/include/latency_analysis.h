@@ -36,11 +36,11 @@ static bool init_counters(histogram_matrix_t& hist_matrix,
 
 static bool conflict(histogram_matrix_t& hist_matrix,
         avl_tree_list_t& tree_list, int num_cores, int var_idx, int core_id,
-        size_t address);
+        size_t address, short read_or_write);
 
 static size_t calculate_distance(histogram_matrix_t& hist_matrix,
         avl_tree_list_t& tree_list, int num_cores, int core_id, size_t var_idx,
-        size_t address);
+        size_t address, short read_or_write);
 
 int print_cache_conflicts(const global_data_t& global_data,
         double_list_t& conflict_list);

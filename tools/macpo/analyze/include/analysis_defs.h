@@ -30,10 +30,11 @@
 #include "macpo_record.h"
 #include "macpo_record_cxx.h"
 
-// Holds a list of lists of mem_info_t type.
+typedef gsl_histogram histogram_t;
+
 typedef std::vector<mem_info_list_t> mem_info_bucket_t;
 
-typedef std::vector<gsl_histogram*> histogram_list_t;
+typedef std::vector<histogram_t*> histogram_list_t;
 typedef std::vector<histogram_list_t> histogram_matrix_t;
 
 typedef std::vector<avl_tree*> avl_tree_list_t;

@@ -19,6 +19,7 @@
  * $HEADER$
  */
 
+#include <cassert>
 #include <iostream>
 
 #include "analysis_defs.h"
@@ -70,13 +71,14 @@ static bool init_counters(histogram_matrix_t& hist_matrix,
 
 static bool conflict(histogram_matrix_t& hist_matrix,
         avl_tree_list_t& tree_list, int num_cores, int var_idx, int core_id,
-        size_t address) {
+        size_t address, short read_or_write) {
     int i;
     bool conflict = false;
 
     for (i=0; i<num_cores; i++) {
         size_t dist = tree_list[i]->get_distance(address);
-        if (i != core_id && dist >= 0 && dist < DIST_INFINITY) {
+        if (read_or_write == TYPE_WRITE && i != core_id && dist >= 0 &&
+                dist < DIST_INFINITY) {
             conflict = true;
 
             tree_list[i]->set_distance(address, DIST_INFINITY);
@@ -96,16 +98,13 @@ static bool conflict(histogram_matrix_t& hist_matrix,
 
 static size_t calculate_distance(histogram_matrix_t& hist_matrix,
         avl_tree_list_t& tree_list, int num_cores, int core_id, size_t var_idx,
-        size_t address) {
-    if (tree_list[core_id]->contains(address)) {
-        if (conflict(hist_matrix, tree_list, num_cores, var_idx, core_id,
-                    address)) {
-            return DIST_INFINITY;
-        } else {
-            return tree_list[core_id]->get_distance(address);
-        }
-    } else {
+        size_t address, short read_or_write) {
+    assert(tree_list[core_id]->contains(address));
+    if (conflict(hist_matrix, tree_list, num_cores, var_idx, core_id,
+                address, read_or_write)) {
         return DIST_INFINITY;
+    } else {
+        return tree_list[core_id]->get_distance(address);
     }
 }
 
@@ -150,8 +149,16 @@ int print_reuse_distances(const global_data_t& global_data,
                 size_t max_bin = pair_list[j].first;
                 size_t max_val = pair_list[j].second;
 
-                if (max_val > 0)
-                    std::cout << " " << max_bin << " (" << max_val << " times)";
+                if (max_bin != DIST_INFINITY - 1) {
+                    if (max_val > 0) {
+                        std::cout << " " << max_bin << " (" << max_val <<
+                            " times)";
+                    }
+                } else {
+                    if (max_val > 0) {
+                        std::cout << " inf. (" << max_val << " times)";
+                    }
+                }
             }
 
             std::cout << "." << std::endl;
@@ -217,23 +224,26 @@ int latency_analysis(const global_data_t& global_data,
                 if (core_id >= 0 && core_id < num_cores ||
                         var_idx >= 0 && var_idx < num_streams) {
 
-                    size_t distance = calculate_distance(histogram_matrix,
-                            tree_list, num_cores, core_id, var_idx, address);
+                    avl_tree* tree = tree_list[core_id];
+                    if (tree->contains(address)) {
+                        size_t distance = calculate_distance(histogram_matrix,
+                                tree_list, num_cores, core_id, var_idx, address,
+                                read_write);
 
-                    if (create_histogram_if_null(
-                                histogram_matrix[core_id][var_idx],
-                                DIST_INFINITY) < 0) {
-                        goto end_iteration;
+                        if (create_histogram_if_null(
+                                    histogram_matrix[core_id][var_idx],
+                                    DIST_INFINITY) < 0) {
+                            goto end_iteration;
+                        }
+
+                        // Occupy the last bin in case of overflow.
+                        if (distance >= DIST_INFINITY)
+                            distance = DIST_INFINITY - 1;
+
+                        histogram_t* hist = histogram_matrix[core_id][var_idx];
+                        gsl_histogram_increment(hist,  distance);
                     }
 
-                    // Occupy the last bin in case of overflow.
-                    if (distance >= DIST_INFINITY)
-                        distance = DIST_INFINITY - 1;
-
-                    gsl_histogram_increment(histogram_matrix[core_id][var_idx],
-                            distance);
-
-                    avl_tree* tree = tree_list[core_id];
                     tree->insert(&mem_info);
 
                     // Check if this cache line has been access earlier,
@@ -242,7 +252,6 @@ int latency_analysis(const global_data_t& global_data,
                             cache_line_owner.end()) {
                         if (read_write == TYPE_WRITE) {
                             cache_line_owner[address] = core_id;
-                            local_hit_list[var_idx] += 1;
                         }
                     } else {
                         // This cache line already has an owner.
@@ -267,7 +276,7 @@ int latency_analysis(const global_data_t& global_data,
             #pragma omp single
             for (int j=0; j<num_cores; j++) {
                 for (int k=0; k<num_streams; k++) {
-                    gsl_histogram* h2 = histogram_matrix[j][k];
+                    histogram_t* h2 = histogram_matrix[j][k];
 
                     if (h2 != NULL) {
                         if (create_histogram_if_null(rd_list[k],
