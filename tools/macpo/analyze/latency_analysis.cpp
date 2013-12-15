@@ -274,7 +274,7 @@ int latency_analysis(const global_data_t& global_data,
             }
 
             // Sum up the histogram values from all cores.
-            #pragma omp single
+            #pragma omp critical
             for (int j=0; j<num_cores; j++) {
                 for (int k=0; k<num_streams; k++) {
                     histogram_t* h2 = histogram_matrix[j][k];
@@ -289,7 +289,7 @@ int latency_analysis(const global_data_t& global_data,
             }
 
             // Sum up the histogram values into result histogram.
-            #pragma omp single
+            #pragma omp critical
             for (int j=0; j<num_streams; j++) {
                 hit_list[j] += local_hit_list[j];
                 miss_list[j] += local_miss_list[j];

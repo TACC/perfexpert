@@ -72,7 +72,7 @@ int stride_analysis(const global_data_t& global_data,
         }
 
         // Sum up the histogram values into result histogram.
-        #pragma omp single
+        #pragma omp critical
         for (int j=0; j<num_streams; j++) {
             if (local_stride_list[j] != NULL) {
                 if (create_histogram_if_null(stride_list[j], MAX_STRIDE) == 0) {
