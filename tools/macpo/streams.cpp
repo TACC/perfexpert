@@ -62,6 +62,7 @@ attrib streams_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
     if (attr.skip)
         return attr;
 
+    attr.access_type = TYPE_UNKNOWN;
     SgNode* parent = node->get_parent();
 
     // Decide whether read / write depending on the operand of AssignOp

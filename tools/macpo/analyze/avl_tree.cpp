@@ -130,7 +130,7 @@ bool avl_tree::insert(const mem_info_t *data_ptr, long long delta) {
 
             avl_node_t* node = _insert(&root, node_to_insert);
             if (node) {
-                addr_to_node[data_ptr->address] = node;
+                addr_to_node[data_ptr->address] = node_to_insert;
                 last_key += 1;
                 return true;
             }

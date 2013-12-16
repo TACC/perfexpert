@@ -49,7 +49,8 @@ typedef std::vector<reference_info_t> reference_list_t;
 
 class attrib {
     public:
-        bool access_type, skip;
+        bool skip;
+        short access_type;
 
         attrib() {
             access_type = TYPE_UNKNOWN;

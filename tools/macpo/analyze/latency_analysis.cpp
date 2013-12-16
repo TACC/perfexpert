@@ -77,19 +77,24 @@ static bool conflict(histogram_matrix_t& hist_matrix,
 
     for (i=0; i<num_cores; i++) {
         size_t dist = tree_list[i]->get_distance(address);
-        if (read_or_write == TYPE_WRITE && i != core_id && dist >= 0 &&
-                dist < DIST_INFINITY) {
+        if ((read_or_write == TYPE_WRITE ||
+                read_or_write == TYPE_READ_AND_WRITE) && i != core_id &&
+                dist >= 0 && dist < DIST_INFINITY) {
             conflict = true;
 
-            tree_list[i]->set_distance(address, DIST_INFINITY);
+            tree_list[i]->set_distance(address, DIST_INFINITY-1);
 
             if (create_histogram_if_null(hist_matrix[i][var_idx],
                         DIST_INFINITY) < 0) {
                 break;
             }
 
-            gsl_histogram_accumulate(hist_matrix[i][var_idx], dist, -1.0);
-            gsl_histogram_increment(hist_matrix[i][var_idx], DIST_INFINITY);
+            double existing_count = gsl_histogram_get(hist_matrix[i][var_idx],
+                    dist);
+
+            gsl_histogram_accumulate(hist_matrix[i][var_idx], dist,
+                    -1.0 * existing_count);
+            gsl_histogram_increment(hist_matrix[i][var_idx], DIST_INFINITY-1);
         }
     }
 
@@ -242,7 +247,7 @@ int latency_analysis(const global_data_t& global_data,
                             distance = DIST_INFINITY - 1;
 
                         histogram_t* hist = histogram_matrix[core_id][var_idx];
-                        gsl_histogram_increment(hist,  distance);
+                        gsl_histogram_increment(hist, distance);
                     }
 
                     tree->insert(&mem_info);
@@ -251,12 +256,14 @@ int latency_analysis(const global_data_t& global_data,
                     // and thus, if it has an owner.
                     if (cache_line_owner.find(address) ==
                             cache_line_owner.end()) {
-                        if (read_write == TYPE_WRITE) {
+                        if (read_write == TYPE_WRITE ||
+                                read_write == TYPE_READ_AND_WRITE) {
                             cache_line_owner[address] = core_id;
                         }
                     } else {
                         // This cache line already has an owner.
-                        if (read_write == TYPE_WRITE) {
+                        if (read_write == TYPE_WRITE ||
+                                read_write == TYPE_READ_AND_WRITE) {
                             // Chances of a conflict between owner and core_id.
                             short owner = cache_line_owner[address];
                             if (owner == core_id) {
@@ -309,7 +316,7 @@ end_iteration:
 
         // Approximate answers are fine.
         if (hits + misses > 0) {
-            conflict_list[j] = misses + (hits + misses);
+            conflict_list[j] = misses / (hits + misses);
         }
     }
 
