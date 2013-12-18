@@ -328,6 +328,10 @@ void indigo__write_idx_f_(const char* var_name, const int* length)
 
 #define MAX_ADDR    128
 
+/**
+    indigo__aligncheck_c()
+    Checks for alignment to cache line boundary and memory overlap.
+*/
 void indigo__aligncheck_c(int line_number, int stream_count, ...) {
     va_list args;
 
@@ -347,6 +351,11 @@ void indigo__aligncheck_c(int line_number, int stream_count, ...) {
     for (i=0; i<stream_count; i++) {
         void* start = va_arg(args, void*);
         void* end = va_arg(args, void*);
+
+        if (((long) start) % 64) {
+            fprintf (stderr, "MACPO :: Reference in loop at line %d is not "
+                    "aligned at cache line boundary.\n", line_number);
+        }
 
         // Really simple and inefficient (n^2) algorightm to check duplicates.
         short overlap = 0;
