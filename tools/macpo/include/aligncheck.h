@@ -27,31 +27,26 @@
 #include "generic_defs.h"
 #include "inst_defs.h"
 
-class aligncheck_t : public AstSimpleProcessing {
-    enum { LOOP_TEST=0, LOOP_INCR, LOOP_INIT, BASE_ALIGNMENT };
-
+class aligncheck_t {
     typedef VariableRenaming::NumNodeRenameEntry::iterator entry_iterator;
     typedef std::map<std::string, VariableRenaming::NumNodeRenameEntry>
         def_map_t;
 
     public:
+    typedef std::map<SgExpression*, SgExpression*> expr_map_t;
+    typedef std::vector<SgPntrArrRefExp*> pntr_list_t;
+    typedef std::vector<SgExpression*> expr_list_t;
+
     aligncheck_t(VariableRenaming*& _var_renaming);
 
-    virtual void atTraversalEnd();
-    virtual void atTraversalStart();
-    virtual void visit(SgNode* node);
+    void atTraversalEnd();
+    void atTraversalStart();
 
-    const inst_list_t::iterator inst_begin();
-    const inst_list_t::iterator inst_end();
+    void process_node(SgNode* node);
+    void process_loop(SgForStatement* for_stmt, loop_info_t& loop_info_t,
+            expr_map_t& initial_values, expr_map_t& final_values);
 
     private:
-    void instrument_loop_header_components(SgNode*& loop_node,
-            def_map_t& def_map, SgExpression*& instrument_expr,
-            short loop_inst_type);
-
-    void insert_instrumentation(SgNode*& node, SgExpression*& expr,
-            short type, bool before, SgNode*& loop_node);
-
     VariableRenaming* var_renaming;
     inst_list_t inst_info_list;
 };

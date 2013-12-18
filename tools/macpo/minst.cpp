@@ -25,6 +25,7 @@
 #include "inst_defs.h"
 #include "instrumentor.h"
 #include "ir_methods.h"
+#include "loop_traversal.h"
 #include "minst.h"
 
 using namespace SageBuilder;
@@ -172,11 +173,7 @@ void MINST::visit(SgNode* node)
                 insert_map_function(node);
 
                 aligncheck_t visitor(var_renaming);
-                visitor.traverse(node, preorder);
-
-                // Pull information from AST traversal.
-                inst_info_list.insert(inst_info_list.end(),
-                        visitor.inst_begin(), visitor.inst_end());
+                visitor.process_node(node);
             }
         }
     }
@@ -216,11 +213,7 @@ void MINST::visit(SgNode* node)
                 insert_map_function(node);
 
                 aligncheck_t visitor(var_renaming);
-                visitor.traverse(node, preorder);
-
-                // Pull information from AST traversal.
-                inst_info_list.insert(inst_info_list.end(),
-                        visitor.inst_begin(), visitor.inst_end());
+                visitor.process_node(node);
             }
         }
     }

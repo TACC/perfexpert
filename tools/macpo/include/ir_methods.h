@@ -22,9 +22,11 @@
 #ifndef IR_METHODS_H_
 #define IR_METHODS_H_
 
-#include "rose.h"
+#include <rose.h>
+#include <VariableRenaming.h>
+
 #include "generic_defs.h"
-#include "VariableRenaming.h"
+#include "inst_defs.h"
 
 class ir_methods {
     public:
@@ -60,6 +62,9 @@ class ir_methods {
         static std::string strip_index_expr(const std::string& stream_name);
 
         static bool is_known(const SgExpression* expr);
+
+        static bool contains_expr(SgBinaryOp*& bin_op,
+                SgExpression*& search_expr);
 
         static void replace_expr(SgBinaryOp*& bin_op,
                 SgExpression*& search_expr,

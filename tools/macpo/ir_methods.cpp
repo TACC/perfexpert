@@ -162,8 +162,13 @@ int ir_methods::get_loop_header_components(VariableRenaming*& var_renaming,
                                     test_expr = operand[1-i];
 
                                     // The other increment expression may
-                                    // need to be instrumented
-                                    incr_expr = increment_var[1-i];
+                                    // need to be instrumented, unless
+                                    // this is a unary increment operation.
+                                    if (increment_var[1-i]) {
+                                        incr_expr = increment_var[1-i];
+                                    } else {
+                                        incr_expr = increment_var[i];
+                                    }
 
                                     // We're done with this loop.
                                     terminate = true;
@@ -182,8 +187,12 @@ int ir_methods::get_loop_header_components(VariableRenaming*& var_renaming,
                             idxv_expr = other;
 
                             // The other increment expression may need to
-                            // be instrumented
-                            incr_expr = increment_var[1-i];
+                            // be instrumented, unless this is a unary op.
+                            if (increment_var[1-i]) {
+                                incr_expr = increment_var[1-i];
+                            } else {
+                                incr_expr = increment_var[i];
+                            }
                         }
                     }
                 }
@@ -390,6 +399,33 @@ bool ir_methods::is_linear_reference(const SgBinaryOp* reference,
     }
 
     return true;
+}
+
+bool ir_methods::contains_expr(SgBinaryOp*& bin_op,
+        SgExpression*& search_expr) {
+    if (bin_op && search_expr) {
+        SgExpression* lhs = bin_op->get_lhs_operand();
+        SgExpression* rhs = bin_op->get_rhs_operand();
+
+        // If either operand matches, replace it!
+        if (lhs && lhs->unparseToString() == search_expr->unparseToString())
+            return true;
+
+        if (rhs && rhs->unparseToString() == search_expr->unparseToString())
+            return true;
+
+        // Check if we need to call recursively.
+        SgBinaryOp* pntr = NULL;
+        if (lhs && (pntr = isSgBinaryOp(lhs)))
+            if (ir_methods::contains_expr(pntr, search_expr))
+                return true;
+
+        if (rhs && (pntr = isSgBinaryOp(rhs)))
+            if (ir_methods::contains_expr(pntr, search_expr))
+                return true;
+    }
+
+    return false;
 }
 
 void ir_methods::replace_expr(SgBinaryOp*& bin_op, SgExpression*& search_expr,

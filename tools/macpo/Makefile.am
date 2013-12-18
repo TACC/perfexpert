@@ -25,7 +25,7 @@ bin_PROGRAMS = macpo
 dist_bin_SCRIPTS = macpo.sh
 
 macpo_SOURCES = argparse.cpp minst.cpp instrumentor.cpp main.cpp streams.cpp \
-                aligncheck.cpp ir_methods.cpp
+                aligncheck.cpp ir_methods.cpp loop_traversal.cpp
 macpo_CXXFLAGS = -Wno-deprecated -I$(srcdir)/include
 macpo_LDFLAGS = -lrose -ljvm
 

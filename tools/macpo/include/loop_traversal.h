@@ -19,26 +19,24 @@
  * $HEADER$
  */
 
-#ifndef	STREAMS_H_
-#define	STREAMS_H_
+#ifndef	LOOP_TRAVERSAL_H_
+#define	LOOP_TRAVERSAL_H_
 
 #include "generic_defs.h"
 #include "inst_defs.h"
 
-class streams_t : public AstTopDownProcessing<attrib> {
+class loop_traversal_t : public AstTopDownProcessing<attrib> {
     public:
-        streams_t(bool _deep_search = true);
+        loop_traversal_t(VariableRenaming*& _var_renaming);
 
-        reference_list_t& get_reference_list();
-
+        loop_info_list_t& get_loop_info_list();
         virtual attrib evaluateInheritedAttribute(SgNode* node, attrib attr);
-        virtual void atTraversalStart();
-        virtual void atTraversalEnd();
 
     private:
-        bool deep_search;
-        SgForStatement* init_for_stmt;
+        SgForStatement* for_stmt;
         reference_list_t reference_list;
+        loop_info_list_t loop_info_list;
+        VariableRenaming* var_renaming;
 };
 
-#endif	/* STREAMS_H_ */
+#endif	/* LOOP_TRAVERSAL_H_ */

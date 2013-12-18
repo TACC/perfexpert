@@ -47,6 +47,20 @@ typedef struct {
 
 typedef std::vector<reference_info_t> reference_list_t;
 
+struct tag_loop_info_t;
+typedef std::vector<struct tag_loop_info_t> loop_info_list_t;
+
+typedef struct tag_loop_info_t {
+    SgForStatement* for_stmt;
+    SgExpression* idxv_expr;
+    SgExpression* init_expr;
+    SgExpression* test_expr;
+    SgExpression* incr_expr;
+
+    reference_list_t reference_list;
+    std::vector<loop_info_list_t> child_loop_info;
+} loop_info_t;
+
 class attrib {
     public:
         bool skip;

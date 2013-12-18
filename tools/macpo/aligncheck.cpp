@@ -19,10 +19,13 @@
  * $HEADER$
  */
 
+#include <algorithm>
 #include <rose.h>
 
 #include "aligncheck.h"
+#include "inst_defs.h"
 #include "ir_methods.h"
+#include "loop_traversal.h"
 #include "streams.h"
 
 using namespace SageBuilder;
@@ -37,254 +40,237 @@ void aligncheck_t::atTraversalStart() {
 }
 
 void aligncheck_t::atTraversalEnd() {
-    for (inst_list_t::iterator it = inst_info_list.begin(); it != inst_info_list.end(); it++) {
+    for (inst_list_t::iterator it = inst_info_list.begin();
+            it != inst_info_list.end(); it++) {
         ir_methods::insert_instrumentation_call(*it);
     }
 }
 
-void aligncheck_t::visit(SgNode* node) {
-    SgExpression *idxv_expr, *init_expr, *test_expr, *incr_expr;
+void aligncheck_t::process_loop(SgForStatement* outer_for_stmt,
+        loop_info_t& loop_info, expr_map_t& initial_values,
+        expr_map_t& final_values) {
+    pntr_list_t pntr_list;
+    std::set<std::string> stream_set;
 
-    SgForStatement* for_stmt = isSgForStatement(node);
-    if (for_stmt) {
-        def_map_t def_map;
+    SgForStatement* for_stmt = loop_info.for_stmt;
 
-        // If we need to instrument at least one scalar variable,
-        // can this instrumentation be relocated to an earlier point
-        // in the program that is outside all loops?
-        VariableRenaming::NumNodeRenameTable rename_table =
-            var_renaming->getReachingDefsAtNode(node);
+    SgExpression* idxv = loop_info.idxv_expr;
+    SgExpression* init = loop_info.init_expr;
+    SgExpression* test = loop_info.test_expr;
 
-        // Expand the iterator list into a map for easier lookup.
-        ir_methods::construct_def_map(rename_table, def_map);
+    initial_values[idxv] = init;
+    final_values[idxv] = test;
 
-        // Extract components from the for-loop header.
-        ir_methods::get_loop_header_components(var_renaming, for_stmt, def_map,
-                idxv_expr, init_expr, test_expr, incr_expr);
+    reference_list_t& reference_list = loop_info.reference_list;
 
-        // Instrument the loop only if all headers are available.
-        if ((init_expr || idxv_expr) && test_expr && incr_expr) {
-            streams_t streams;
-            streams.traverse(for_stmt->get_loop_body(), attrib());
-            reference_list_t& reference_list = streams.get_reference_list();
+    for (reference_list_t::iterator it2 = reference_list.begin();
+            it2 != reference_list.end(); it2++) {
+        reference_info_t& reference_info = *it2;
+        SgNode* ref_node = reference_info.node;
 
-            // If no references in this list, then MACPO gives up
-            // as it cannot (yet) handle pointer-based array references.
-            if (reference_list.size() == 0)
-                return;
+        SgPntrArrRefExp* pntr = isSgPntrArrRefExp(ref_node);
 
-            // Sanity check: Only linear array references.
-            for (reference_list_t::iterator it = reference_list.begin();
-                    it != reference_list.end(); it++) {
-                reference_info_t& reference_info = *it;
-                SgNode* ref_node = reference_info.node;
-
-                // Check if ref_node is a linear array reference
-                SgPntrArrRefExp* pntr = isSgPntrArrRefExp(ref_node);
-                if (pntr && !ir_methods::is_linear_reference(pntr, false))
-                    return;
-            }
-
-            std::set<std::string> stream_set;
-
-            typedef std::vector<SgPntrArrRefExp*> expr_list_t;
-            expr_list_t expr_list;
-
-            // Extract array references for alignment checking.
-            for (reference_list_t::iterator it = reference_list.begin();
-                    it != reference_list.end(); it++) {
-                reference_info_t& reference_info = *it;
-                SgNode* ref_node = reference_info.node;
-
-                SgPntrArrRefExp* pntr = isSgPntrArrRefExp(ref_node);
-                if (pntr) {
-                    std::string stream_name = pntr->unparseToString();
-                    if (stream_set.find(stream_name) == stream_set.end()) {
-                        stream_set.insert(stream_name);
-                        SgPntrArrRefExp* copy_pntr = isSgPntrArrRefExp(
-                                copyExpression(pntr));
-
-                        if (copy_pntr)
-                            expr_list.push_back(copy_pntr);
-                    }
-                }
-            }
-
-            std::string function_name = SageInterface::is_Fortran_language()
-                ? "indigo__aligncheck_f" : "indigo__aligncheck_c";
-            SgBasicBlock* outer_bb = getEnclosingNode<SgBasicBlock>(for_stmt);
-            Sg_File_Info *fileInfo = Sg_File_Info::generateFileInfoForTransformationNode(
-                    ((SgLocatedNode*) for_stmt)->get_file_info()->get_filenameString());
-            int line_number = for_stmt->get_file_info()->get_raw_line();
-            SgIntVal* param_line_number = new SgIntVal(fileInfo, line_number);
-
-            inst_info_t inst_info;
-            inst_info.bb = outer_bb;
-            inst_info.stmt = for_stmt;
-
-            // FIXME: Handle the case when init_expr is NULL.
-            // Solution: Use idxv_expr in place of init_expr but
-            // this requires that the call be placed before the loop body.
-            inst_info.params.push_back(init_expr);
-            inst_info.params.push_back(test_expr);
-            inst_info.params.push_back(incr_expr);
-            inst_info.params.push_back(param_line_number);
-
-            inst_info.function_name = function_name;
-
-            // FIXME: Setting before to true causes AST to be repeatedly traversed.
-            inst_info.before = false;
-
-            for (expr_list_t::iterator it = expr_list.begin();
-                    it != expr_list.end(); it++) {
-                SgPntrArrRefExp*& init_ref = *it;
-
-                if (init_ref) {
-                    // Replace idxv in init_ref with init value
-                    SgBinaryOp* bin_op = isSgBinaryOp(init_ref);
-                    if (bin_op) {
-                        ir_methods::replace_expr(bin_op, idxv_expr, init_expr);
-
-                        SgExpression *param_addr = SageInterface::is_Fortran_language()
-                            ? (SgExpression*) init_ref : buildCastExp (
-                                    buildAddressOfOp((SgExpression*) init_ref),
-                                    buildPointerType(buildVoidType()));
-
-                        if (param_addr)
-                            inst_info.params.push_back(param_addr);
-                    }
-                }
-            }
-
-            inst_info_list.push_back(inst_info);
-
-            if (init_expr) {
-                instrument_loop_header_components(node, def_map, init_expr,
-                        LOOP_INIT);
-            } else {
-                instrument_loop_header_components(node, def_map, idxv_expr,
-                        LOOP_INIT);
-            }
-
-            instrument_loop_header_components(node, def_map, test_expr,
-                    LOOP_TEST);
-
-            instrument_loop_header_components(node, def_map, incr_expr,
-                    LOOP_INCR);
-        }
-    }
-}
-
-void aligncheck_t::instrument_loop_header_components(SgNode*& loop_node,
-        def_map_t& def_map, SgExpression*& instrument_expr,
-        short loop_inst_type) {
-
-    std::string expr_str = instrument_expr->unparseToString();
-    if (loop_inst_type != LOOP_INIT && isSgVarRefExp(instrument_expr) &&
-            def_map.find(expr_str) != def_map.end()) {
-        VariableRenaming::NumNodeRenameEntry entry_list = def_map[expr_str];
-
-        if (entry_list.size() == 1) {
-            // Only one definition of this variable reaches here.
-            // If it's value is a constant, we can directly use
-            // the constant in place of the variable!
-            SgNode* def_node = entry_list.begin()->second;
-            insert_instrumentation(def_node, instrument_expr,
-                    loop_inst_type, false, loop_node);
-        } else {
-            // FIXME: Use post-dominator tree, instrument only where required.
-#if 0
-            // Instrument all definitions of this variable.
-            for (entry_iterator entry_it = entry_list.begin();
-                    entry_it != entry_list.end(); entry_it++) {
-                SgNode* def_node = (*entry_it).second;
-                insert_instrumentation(def_node, instrument_expr,
-                        loop_inst_type, false, loop_node);
-            }
-#else
-            // Instrument just before the loop without reaching def analysis..
-            if (!isSgValueExp(instrument_expr) &&
-                    !isConstType(instrument_expr->get_type())) {
-                insert_instrumentation(loop_node, instrument_expr,
-                        loop_inst_type, true, loop_node);
-            }
-#endif
-        }
-    } else if (!isSgValueExp(instrument_expr) &&
-            !isConstType(instrument_expr->get_type())) {
-        // Instrument without using the reaching definition.
-        insert_instrumentation(loop_node, instrument_expr, loop_inst_type,
-                true, loop_node);
-    }
-}
-
-void aligncheck_t::insert_instrumentation(SgNode*& node, SgExpression*& expr,
-        short type, bool before, SgNode*& loop_node) {
-    assert(isSgLocatedNode(node) &&
-            "Cannot obtain file information for node to be instrumented.");
-
-    std::string function_name;
-    switch(type) {
-        case LOOP_INIT:
-            function_name = SageInterface::is_Fortran_language() ?
-                    "indigo__initcheck_f" : "indigo__initcheck_c";
-            break;
-
-        case LOOP_TEST:
-            function_name = SageInterface::is_Fortran_language() ?
-                    "indigo__testcheck_f" : "indigo__testcheck_c";
-            break;
-
-        case LOOP_INCR:
-            function_name = SageInterface::is_Fortran_language() ?
-                    "indigo__incrcheck_f" : "indigo__incrcheck_c";
-            break;
-
-        default:
-            std::cerr << "Invalid loop type value." << std::endl;
+        // Check if pntr is a linear array reference.
+        if (pntr && !ir_methods::is_linear_reference(pntr, false)) {
+            std::cout << "Found non-linear references in loop.\n";
             return;
+        }
     }
 
-    Sg_File_Info *fileInfo = Sg_File_Info::generateFileInfoForTransformationNode(
-            ((SgLocatedNode*) node)->get_file_info()->get_filenameString());
+    for (reference_list_t::iterator it2 = reference_list.begin();
+            it2 != reference_list.end(); it2++) {
+        reference_info_t& reference_info = *it2;
+        SgNode* ref_node = reference_info.node;
 
-    SgBasicBlock* outer_basic_block = getEnclosingNode<SgBasicBlock>(node);
-    SgStatement* outer_statement = isSgStatement(node) ? :
-            getEnclosingNode<SgStatement>(node);
+        SgPntrArrRefExp* pntr = isSgPntrArrRefExp(ref_node);
 
-    SgStatement* loop_statement = isSgStatement(loop_node) ? :
-            getEnclosingNode<SgStatement>(loop_node);
+        if (pntr) {
+            std::string stream_name = pntr->unparseToString();
+            if (stream_set.find(stream_name) == stream_set.end()) {
+                stream_set.insert(stream_name);
+                SgPntrArrRefExp* copy_pntr = isSgPntrArrRefExp(
+                        copyExpression(pntr));
 
-    assert(outer_basic_block);
-    assert(outer_statement);
-
-    int line_number = 0;
-
-    // Statement that represents the loop.
-    if (!loop_statement) {
-        std::cerr << "Failed to find the statement corresponding to loop," <<
-            " continuing..." << std::endl;
+                if (copy_pntr)
+                    pntr_list.push_back(copy_pntr);
+            }
+        }
     }
 
-    line_number = loop_statement->get_file_info()->get_raw_line();
-    SgIntVal* param_line_number = new SgIntVal(fileInfo, line_number);
+    std::string function_name = SageInterface::is_Fortran_language()
+        ? "indigo__aligncheck_f" : "indigo__aligncheck_c";
+    SgBasicBlock* outer_bb = getEnclosingNode<SgBasicBlock>(for_stmt);
 
-    inst_info_t inst_info;
-    inst_info.bb = outer_basic_block;
-    inst_info.stmt = outer_statement;
-    inst_info.params.push_back(expr);
-    inst_info.params.push_back(param_line_number);
+    std::set<std::string> expr_set;
+    expr_list_t param_list;
+    for (pntr_list_t::iterator it = pntr_list.begin(); it != pntr_list.end();
+            it++) {
+        SgPntrArrRefExp*& init_ref = *it;
 
-    inst_info.function_name = function_name;
-    inst_info.before = before;
+        if (init_ref) {
+            SgBinaryOp* bin_op = isSgBinaryOp(init_ref);
+            SgBinaryOp* bin_copy = isSgBinaryOp(copyExpression(bin_op));
 
-    inst_info_list.push_back(inst_info);
+            if (bin_op && bin_copy) {
+                // Replace all known index variables
+                // with initial and final values.
+                for (expr_map_t::iterator it2 = initial_values.begin();
+                        it2 != initial_values.end(); it2++) {
+                    SgExpression* idxv = it2->first;
+                    SgExpression* init = it2->second;
+
+                    if (ir_methods::contains_expr(bin_op, idxv)) {
+                        if (!isSgValueExp(init))
+                            expr_set.insert(init->unparseToString());
+
+                        ir_methods::replace_expr(bin_op, idxv, init);
+                    }
+                }
+
+                for (expr_map_t::iterator it2 = final_values.begin();
+                        it2 != final_values.end(); it2++) {
+                    SgExpression* idxv = it2->first;
+                    SgExpression* test = it2->second;
+
+                    if (ir_methods::contains_expr(bin_copy, idxv)) {
+                        if (!isSgValueExp(test))
+                            expr_set.insert(test->unparseToString());
+
+                        ir_methods::replace_expr(bin_copy, idxv, test);
+                    }
+                }
+
+                SgExpression *param_addr_initial =
+                    SageInterface::is_Fortran_language() ?
+                    (SgExpression*) bin_op : buildCastExp (
+                            buildAddressOfOp((SgExpression*) bin_op),
+                            buildPointerType(buildVoidType()));
+
+                SgExpression *param_addr_final =
+                    SageInterface::is_Fortran_language() ?
+                    (SgExpression*) bin_copy : buildCastExp (
+                            buildAddressOfOp((SgExpression*) bin_copy),
+                            buildPointerType(buildVoidType()));
+
+                assert(param_addr_initial);
+                assert(param_addr_final);
+
+                param_list.push_back(param_addr_initial);
+                param_list.push_back(param_addr_final);
+            } else {
+                std::cout << "Failed to create copy.\n";
+            }
+        } else {
+            std::cout << "NULL init_ref\n";
+        }
+    }
+
+    if (pntr_list.size()) {
+        Sg_File_Info *fileInfo =
+            Sg_File_Info::generateFileInfoForTransformationNode(
+                    ((SgLocatedNode*)
+                     outer_for_stmt)->get_file_info()->get_filenameString());
+
+        int line_number = outer_for_stmt->get_file_info()->get_raw_line();
+
+        SgIntVal* param_count = new SgIntVal(fileInfo, param_list.size() / 2);
+        SgIntVal* param_line_no = new SgIntVal(fileInfo, line_number);
+
+        // FIXME: Handle more than one expressions.
+        if (expr_set.size() == 1) {
+            def_map_t def_map;
+            std::string expr = *(expr_set.begin());
+
+            VariableRenaming::NumNodeRenameTable rename_table =
+                var_renaming->getReachingDefsAtNode(for_stmt);
+
+            // Expand the iterator list into a map for easier lookup.
+            ir_methods::construct_def_map(rename_table, def_map);
+
+            if (def_map.find(expr) != def_map.end()) {
+                VariableRenaming::NumNodeRenameEntry entry_list = def_map[expr];
+                for (entry_iterator entry_it = entry_list.begin();
+                        entry_it != entry_list.end(); entry_it++) {
+                    SgNode* def_node = (*entry_it).second;
+                    if (isSgInitializedName(def_node)) {
+                        // Instrument at start of loop.
+                        inst_info_t inst_info;
+                        inst_info.stmt = outer_for_stmt;
+                        inst_info.bb =
+                            getEnclosingNode<SgBasicBlock>(outer_for_stmt);
+                        inst_info.params.push_back(param_line_no);
+                        inst_info.params.push_back(param_count);
+                        inst_info.params.insert(inst_info.params.end(),
+                                param_list.begin(), param_list.end());
+                        inst_info.function_name = function_name;
+                        inst_info.before = true;
+
+                        inst_info_list.push_back(inst_info);
+                    } else {
+
+                        inst_info_t inst_info;
+                        inst_info.stmt = isSgStatement(def_node) ?
+                            isSgStatement(def_node) :
+                            getEnclosingNode<SgStatement>(def_node);
+                        inst_info.bb = getEnclosingNode<SgBasicBlock>(def_node);
+                        inst_info.params.push_back(param_line_no);
+                        inst_info.params.push_back(param_count);
+                        inst_info.params.insert(inst_info.params.end(),
+                                param_list.begin(), param_list.end());
+                        inst_info.function_name = function_name;
+                        inst_info.before = false;
+
+                        inst_info_list.push_back(inst_info);
+                    }
+                }
+            } else {
+                std::cout << "no definitions, placing before outermost for loop.\n";
+                // TODO: Place function call before the start of the outermost loop.
+                inst_info_t inst_info;
+                inst_info.stmt = outer_for_stmt;
+                inst_info.bb = getEnclosingNode<SgBasicBlock>(outer_for_stmt);
+                inst_info.params.push_back(param_line_no);
+                inst_info.params.push_back(param_count);
+                inst_info.params.insert(inst_info.params.end(),
+                        param_list.begin(), param_list.end());
+                inst_info.function_name = function_name;
+                inst_info.before = true;
+
+                inst_info_list.push_back(inst_info);
+            }
+        }
+    }
+
+    for(std::vector<loop_info_list_t>::iterator it =
+                loop_info.child_loop_info.begin();
+                it != loop_info.child_loop_info.end(); it++) {
+        loop_info_list_t& loop_info_list = *it;
+        for(loop_info_list_t::iterator it2 = loop_info_list.begin();
+                it2 != loop_info_list.end(); it2++) {
+            loop_info_t& loop_info = *it2;
+            process_loop(outer_for_stmt, loop_info, initial_values,
+                    final_values);
+        }
+    }
 }
 
-const std::vector<inst_info_t>::iterator aligncheck_t::inst_begin() {
-    return inst_info_list.begin();
-}
+void aligncheck_t::process_node(SgNode* node) {
+    // Since this is not really a traversal, manually invoke init function.
+    atTraversalStart();
 
-const std::vector<inst_info_t>::iterator aligncheck_t::inst_end() {
-    return inst_info_list.end();
+    loop_traversal_t loop_traversal(var_renaming);
+    loop_traversal.traverse(node, attrib());
+    loop_info_list_t& loop_info_list = loop_traversal.get_loop_info_list();
+
+    expr_map_t initial_values, final_values;
+
+    for(loop_info_list_t::iterator it = loop_info_list.begin();
+            it != loop_info_list.end(); it++) {
+        loop_info_t& loop_info = *it;
+        process_loop(loop_info.for_stmt, loop_info, initial_values,
+                final_values);
+    }
+
+    // Since this is not really a traversal, manually invoke atTraversalEnd();
+    atTraversalEnd();
 }

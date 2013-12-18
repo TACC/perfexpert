@@ -30,6 +30,11 @@
 using namespace SageBuilder;
 using namespace SageInterface;
 
+streams_t::streams_t(bool _deep_search) {
+    init_for_stmt = NULL;
+    deep_search = _deep_search;
+}
+
 void streams_t::atTraversalStart() {
     reference_list.clear();
 }
@@ -64,6 +69,19 @@ attrib streams_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
 
     attr.access_type = TYPE_UNKNOWN;
     SgNode* parent = node->get_parent();
+
+    if (deep_search == false) {
+        // If this is an inner for loop, skip it.
+        if (SgForStatement* for_stmt = isSgForStatement(node)) {
+            if (init_for_stmt == NULL) {
+                init_for_stmt = for_stmt;
+            } else {
+                // This for loop is inside an outer for loop.
+                attr.skip = true;
+                return attr;
+            }
+        }
+    }
 
     // Decide whether read / write depending on the operand of AssignOp
     if (parent && isSgAssignOp(parent))
