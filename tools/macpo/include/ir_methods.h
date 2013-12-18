@@ -36,6 +36,12 @@ class ir_methods {
         static const int INVALID_TEST = 1 << 3;
         static const int INVALID_INCR = 1 << 4;
 
+        static const int INVALID_OP = 1 << 0;
+        static const int OP_ADD     = 1 << 1;
+        static const int OP_SUB     = 1 << 2;
+        static const int OP_MUL     = 1 << 3;
+        static const int OP_DIV     = 1 << 4;
+
         typedef VariableRenaming::NumNodeRenameEntry::iterator entry_iterator;
         typedef std::map<std::string, VariableRenaming::NumNodeRenameEntry>
             def_map_t;
@@ -45,7 +51,7 @@ class ir_methods {
         static int get_loop_header_components(VariableRenaming*& var_renaming,
                 SgForStatement*& for_stmt, def_map_t& def_map, SgExpression*&
                 idxv_expr, SgExpression*& init_expr, SgExpression*& test_expr,
-                SgExpression*& incr_expr);
+                SgExpression*& incr_expr, int& incr_op);
 
         static void construct_def_map(VariableRenaming::NumNodeRenameTable&
                 rename_table, std::map<std::string,
@@ -72,6 +78,9 @@ class ir_methods {
 
         static bool is_linear_reference(const SgBinaryOp* reference,
                 bool check_lhs_operand);
+
+        static SgExpression* get_final_value(Sg_File_Info* file_info,
+                SgExpression* test_expr, SgExpression* incr_expr, int incr_op);
 };   /* ir_methods */
 
 #endif  /* IR_METHODS_H_ */

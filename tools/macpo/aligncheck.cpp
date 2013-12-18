@@ -47,8 +47,7 @@ void aligncheck_t::atTraversalEnd() {
 }
 
 void aligncheck_t::process_loop(SgForStatement* outer_for_stmt,
-        loop_info_t& loop_info, expr_map_t& initial_values,
-        expr_map_t& final_values) {
+        loop_info_t& loop_info, expr_map_t& loop_map) {
     pntr_list_t pntr_list;
     std::set<std::string> stream_set;
 
@@ -58,8 +57,7 @@ void aligncheck_t::process_loop(SgForStatement* outer_for_stmt,
     SgExpression* init = loop_info.init_expr;
     SgExpression* test = loop_info.test_expr;
 
-    initial_values[idxv] = init;
-    final_values[idxv] = test;
+    loop_map[idxv] = &loop_info;
 
     reference_list_t& reference_list = loop_info.reference_list;
 
@@ -72,7 +70,7 @@ void aligncheck_t::process_loop(SgForStatement* outer_for_stmt,
 
         // Check if pntr is a linear array reference.
         if (pntr && !ir_methods::is_linear_reference(pntr, false)) {
-            std::cout << "Found non-linear references in loop.\n";
+            std::cout << "Found non-linear reference(s) in loop.\n";
             return;
         }
     }
@@ -101,6 +99,11 @@ void aligncheck_t::process_loop(SgForStatement* outer_for_stmt,
         ? "indigo__aligncheck_f" : "indigo__aligncheck_c";
     SgBasicBlock* outer_bb = getEnclosingNode<SgBasicBlock>(for_stmt);
 
+    Sg_File_Info *fileInfo =
+        Sg_File_Info::generateFileInfoForTransformationNode(
+                ((SgLocatedNode*)
+                 outer_for_stmt)->get_file_info()->get_filenameString());
+
     std::set<std::string> expr_set;
     expr_list_t param_list;
     for (pntr_list_t::iterator it = pntr_list.begin(); it != pntr_list.end();
@@ -114,10 +117,15 @@ void aligncheck_t::process_loop(SgForStatement* outer_for_stmt,
             if (bin_op && bin_copy) {
                 // Replace all known index variables
                 // with initial and final values.
-                for (expr_map_t::iterator it2 = initial_values.begin();
-                        it2 != initial_values.end(); it2++) {
+                for (expr_map_t::iterator it2 = loop_map.begin();
+                        it2 != loop_map.end(); it2++) {
                     SgExpression* idxv = it2->first;
-                    SgExpression* init = it2->second;
+                    loop_info_t* loop_info = it2->second;
+
+                    SgExpression* init = loop_info->init_expr;
+                    SgExpression* test = loop_info->test_expr;
+                    SgExpression* incr = loop_info->incr_expr;
+                    int incr_op = loop_info->incr_op;
 
                     if (ir_methods::contains_expr(bin_op, idxv)) {
                         if (!isSgValueExp(init))
@@ -125,18 +133,19 @@ void aligncheck_t::process_loop(SgForStatement* outer_for_stmt,
 
                         ir_methods::replace_expr(bin_op, idxv, init);
                     }
-                }
-
-                for (expr_map_t::iterator it2 = final_values.begin();
-                        it2 != final_values.end(); it2++) {
-                    SgExpression* idxv = it2->first;
-                    SgExpression* test = it2->second;
 
                     if (ir_methods::contains_expr(bin_copy, idxv)) {
                         if (!isSgValueExp(test))
                             expr_set.insert(test->unparseToString());
 
-                        ir_methods::replace_expr(bin_copy, idxv, test);
+                        // Construct final value based on
+                        // the expressions: test, incr_op and incr_expr.
+                        SgExpression* final_value = NULL;
+                        final_value = ir_methods::get_final_value(fileInfo,
+                                test, incr, incr_op);
+                        assert(final_value);
+
+                        ir_methods::replace_expr(bin_copy, idxv, final_value);
                     }
                 }
 
@@ -166,11 +175,6 @@ void aligncheck_t::process_loop(SgForStatement* outer_for_stmt,
     }
 
     if (pntr_list.size()) {
-        Sg_File_Info *fileInfo =
-            Sg_File_Info::generateFileInfoForTransformationNode(
-                    ((SgLocatedNode*)
-                     outer_for_stmt)->get_file_info()->get_filenameString());
-
         int line_number = outer_for_stmt->get_file_info()->get_raw_line();
 
         SgIntVal* param_count = new SgIntVal(fileInfo, param_list.size() / 2);
@@ -248,8 +252,7 @@ void aligncheck_t::process_loop(SgForStatement* outer_for_stmt,
         for(loop_info_list_t::iterator it2 = loop_info_list.begin();
                 it2 != loop_info_list.end(); it2++) {
             loop_info_t& loop_info = *it2;
-            process_loop(outer_for_stmt, loop_info, initial_values,
-                    final_values);
+            process_loop(outer_for_stmt, loop_info, loop_map);
         }
     }
 }
@@ -262,13 +265,12 @@ void aligncheck_t::process_node(SgNode* node) {
     loop_traversal.traverse(node, attrib());
     loop_info_list_t& loop_info_list = loop_traversal.get_loop_info_list();
 
-    expr_map_t initial_values, final_values;
+    expr_map_t loop_map;
 
     for(loop_info_list_t::iterator it = loop_info_list.begin();
             it != loop_info_list.end(); it++) {
         loop_info_t& loop_info = *it;
-        process_loop(loop_info.for_stmt, loop_info, initial_values,
-                final_values);
+        process_loop(loop_info.for_stmt, loop_info, loop_map);
     }
 
     // Since this is not really a traversal, manually invoke atTraversalEnd();

@@ -61,7 +61,7 @@ bool ir_methods::vectorizable(SgStatement*& stmt) {
 int ir_methods::get_loop_header_components(VariableRenaming*& var_renaming,
         SgForStatement*& for_stmt, def_map_t& def_map, SgExpression*&
         idxv_expr, SgExpression*& init_expr, SgExpression*& test_expr,
-        SgExpression*& incr_expr) {
+        SgExpression*& incr_expr, int& incr_op) {
 
     int return_value = 0;
 
@@ -70,6 +70,7 @@ int ir_methods::get_loop_header_components(VariableRenaming*& var_renaming,
     init_expr = NULL;
     test_expr = NULL;
     incr_expr = NULL;
+    incr_op = INVALID_OP;
 
     if (!for_stmt)
         return INVALID_LOOP;
@@ -102,12 +103,47 @@ int ir_methods::get_loop_header_components(VariableRenaming*& var_renaming,
     SgBinaryOp* incr_binary_op = isSgBinaryOp(for_stmt->get_increment());
     SgUnaryOp* incr_unary_op = isSgUnaryOp(for_stmt->get_increment());
     if (incr_binary_op) {
-        // Check if one of these is a constant,
-        // if so, the compiler has everything to do it's work.
+        if (SgPlusAssignOp* minus_op = isSgPlusAssignOp(incr_binary_op)) {
+            incr_op = OP_SUB;
+            incr_expr = minus_op->get_rhs_operand();
+        } else if (SgPlusAssignOp* plus_op = isSgPlusAssignOp(incr_binary_op)) {
+            incr_op = OP_ADD;
+            incr_expr = plus_op->get_rhs_operand();
+        } else if (SgAssignOp* assign_op = isSgAssignOp(incr_binary_op)) {
+            SgExpression* rhs_operand = assign_op->get_rhs_operand();
+            if (SgAddOp* add_op = isSgAddOp(rhs_operand)) {
+                incr_op = OP_ADD;
+                // Can't set incr_expr as we don't know
+                // whether lhs or rhs is incr value.
+            } else if (SgSubtractOp* sub_op = isSgSubtractOp(rhs_operand)) {
+                incr_op = OP_SUB;
+                // Can't set incr_expr as we don't know
+                // whether lhs or rhs is incr value.
+            }
+        }
 
         increment_var[0] = incr_binary_op->get_lhs_operand();
         increment_var[1] = incr_binary_op->get_rhs_operand();
     } else if (incr_unary_op) {
+        Sg_File_Info *fileInfo =
+            Sg_File_Info::generateFileInfoForTransformationNode(
+                    ((SgLocatedNode*)
+                    for_stmt)->get_file_info()->get_filenameString());
+
+        if (SgPlusAssignOp* minus_op = isSgPlusAssignOp(incr_unary_op)) {
+            incr_op = OP_SUB;
+            incr_expr = minus_op->get_rhs_operand();
+        } else if (SgPlusAssignOp* plus_op = isSgPlusAssignOp(incr_unary_op)) {
+            incr_op = OP_ADD;
+            incr_expr = plus_op->get_rhs_operand();
+        } else if (SgMinusMinusOp* minus_op = isSgMinusMinusOp(incr_unary_op)) {
+            incr_op = OP_SUB;
+            incr_expr = new SgIntVal(fileInfo, 1);
+        } else if (SgPlusPlusOp* plus_op = isSgPlusPlusOp(incr_unary_op)) {
+            incr_op = OP_ADD;
+            incr_expr = new SgIntVal(fileInfo, 1);
+        }
+
         increment_var[0] = incr_unary_op->get_operand();
     }
 
@@ -127,8 +163,7 @@ int ir_methods::get_loop_header_components(VariableRenaming*& var_renaming,
                         isConstType(operand[0]->get_type())) {
                     other = operand[1];
                     test_expr = operand[0];
-                }
-                else if (isSgValueExp(operand[1]) ||
+                } else if (isSgValueExp(operand[1]) ||
                         isConstType(operand[1]->get_type())) {
                     other = operand[0];
                     test_expr = operand[1];
@@ -161,13 +196,17 @@ int ir_methods::get_loop_header_components(VariableRenaming*& var_renaming,
                                     // test expression to be instrumented.
                                     test_expr = operand[1-i];
 
-                                    // The other increment expression may
-                                    // need to be instrumented, unless
-                                    // this is a unary increment operation.
-                                    if (increment_var[1-i]) {
-                                        incr_expr = increment_var[1-i];
-                                    } else {
-                                        incr_expr = increment_var[i];
+                                    // incr_expr may have already been set
+                                    // if the increment was a unary operation.
+                                    if (incr_expr == NULL) {
+                                        // The other increment expression may
+                                        // need to be instrumented, unless
+                                        // this is a unary increment operation.
+                                        if (increment_var[1-i]) {
+                                            incr_expr = increment_var[1-i];
+                                        } else {
+                                            incr_expr = increment_var[i];
+                                        }
                                     }
 
                                     // We're done with this loop.
@@ -449,4 +488,27 @@ void ir_methods::replace_expr(SgBinaryOp*& bin_op, SgExpression*& search_expr,
         if (rhs && (pntr = isSgBinaryOp(rhs)))
             ir_methods::replace_expr(pntr, search_expr, replace_expr);
     }
+}
+
+SgExpression* ir_methods::get_final_value(Sg_File_Info* file_info,
+        SgExpression* test_expr, SgExpression* incr_expr, int incr_op) {
+    if (test_expr && incr_expr) {
+        SgType* type = test_expr->get_type();
+
+        switch(incr_op) {
+            case OP_ADD:
+                return new SgSubtractOp(file_info, test_expr, incr_expr, type);
+
+            case OP_SUB:
+                return new SgAddOp(file_info, test_expr, incr_expr, type);
+
+            case OP_MUL:
+                return new SgDivideOp(file_info, test_expr, incr_expr, type);
+
+            case OP_DIV:
+                return new SgMultiplyOp(file_info, test_expr, incr_expr, type);
+        }
+    }
+
+    return NULL;
 }

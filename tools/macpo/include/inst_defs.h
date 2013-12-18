@@ -57,6 +57,7 @@ typedef struct tag_loop_info_t {
     SgExpression* test_expr;
     SgExpression* incr_expr;
 
+    int incr_op;
     reference_list_t reference_list;
     std::vector<loop_info_list_t> child_loop_info;
 } loop_info_t;

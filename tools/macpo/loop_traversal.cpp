@@ -49,6 +49,7 @@ attrib loop_traversal_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
         SgExpression* init = NULL;
         SgExpression* test = NULL;
         SgExpression* incr = NULL;
+        int incr_op = ir_methods::INVALID_OP;
 
         VariableRenaming::NumNodeRenameTable rename_table =
             var_renaming->getReachingDefsAtNode(node);
@@ -57,7 +58,7 @@ attrib loop_traversal_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
         ir_methods::construct_def_map(rename_table, def_map);
 
         ir_methods::get_loop_header_components(var_renaming, for_stmt, def_map,
-                idxv, init, test, incr);
+                idxv, init, test, incr, incr_op);
 
         streams_t streams(false);
         streams.traverse(for_stmt, attrib());
@@ -74,6 +75,7 @@ attrib loop_traversal_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
         loop_info.init_expr = init;
         loop_info.test_expr = test;
         loop_info.incr_expr = incr;
+        loop_info.incr_op = incr_op;
 
         loop_info.reference_list = _ref_list;
         loop_info.child_loop_info.push_back(child_list);

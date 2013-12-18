@@ -33,7 +33,7 @@ class aligncheck_t {
         def_map_t;
 
     public:
-    typedef std::map<SgExpression*, SgExpression*> expr_map_t;
+    typedef std::map<SgExpression*, loop_info_t*> expr_map_t;
     typedef std::vector<SgPntrArrRefExp*> pntr_list_t;
     typedef std::vector<SgExpression*> expr_list_t;
 
@@ -44,7 +44,7 @@ class aligncheck_t {
 
     void process_node(SgNode* node);
     void process_loop(SgForStatement* for_stmt, loop_info_t& loop_info_t,
-            expr_map_t& initial_values, expr_map_t& final_values);
+            expr_map_t& loop_map);
 
     private:
     VariableRenaming* var_renaming;
