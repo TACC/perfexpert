@@ -25,9 +25,10 @@
 
 #include <time.h>
 #include <fcntl.h>
+#include <signal.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <signal.h>
 #include <unistd.h>
 #include <sys/time.h>
 #include <sys/types.h>
@@ -323,4 +324,46 @@ void indigo__write_idx_c(const char* var_name, const int length)
 void indigo__write_idx_f_(const char* var_name, const int* length)
 {
 	indigo__write_idx_c(var_name, *length);
+}
+
+#define MAX_ADDR    128
+
+void indigo__aligncheck_c(int line_number, int stream_count, ...) {
+    va_list args;
+
+    void* start_list[MAX_ADDR] = {0};
+    void* end_list[MAX_ADDR] = {0};
+
+    if (stream_count >= MAX_ADDR) {
+        fprintf (stderr, "MACPO :: Stream count too large, truncating to %d "
+                " for memory disambiguation.\n", MAX_ADDR);
+
+        stream_count = MAX_ADDR-1;
+    }
+
+    int i, j;
+    va_start(args, stream_count);
+
+    for (i=0; i<stream_count; i++) {
+        void* start = va_arg(args, void*);
+        void* end = va_arg(args, void*);
+
+        // Really simple and inefficient (n^2) algorightm to check duplicates.
+        short overlap = 0;
+        for (j=0; j<i && overlap == 0; j++) {
+            if (!(start_list[j] > end_list[i] || end_list[j] < start_list[i])) {
+                overlap = 1;
+            }
+        }
+
+        if (overlap == 1) {
+            fprintf (stderr, "MACPO :: Found overlap among references for loop "
+                    "at line %d.\n", line_number);
+        }
+
+        start_list[i] = start;
+        end_list[i] = end;
+    }
+
+    va_end(args);
 }

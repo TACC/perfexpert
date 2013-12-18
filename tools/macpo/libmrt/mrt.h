@@ -93,4 +93,12 @@ void indigo__record_f_(int* read_write, int* line_number, void* addr, int* var_i
 }
 #endif
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+void indigo__aligncheck_c(int line_number, int stream_count, ...);
+#if defined (__cplusplus)
+}
+#endif
+
 #endif	/* LIBMRT_H_ */
