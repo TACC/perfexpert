@@ -29,8 +29,36 @@
 
 #define	AWAKE_SEC		0
 
+/***
+
+The following analysis takes the numbers from Stampede as reference. Using a
+different referene machine will influence the duration of the sampling window
+(AWAKE_USEC).
+
+Let's first set the 'infinite' reuse distance to something based on intuition.
+Consider that any reuse distance more than the twice the size of the L3 cache is
+'too high' to be of use while tracking. The L3 cache on Stampede (Sandy Bridge
+process) is 20MB. We can, thus, set the infinite reuse distance value to 40MB.
+Assuming each cache line is 64 bytes long, the reuse distance is equal to 640K
+cache lines.
+
+Experience from analysing programs using PerfExpert tells that most
+poorly-performing programs that are bottlenecked on memory typically take about
+3 cycles on each memory access. Assuming out-of-order instruction execution
+does not leave any bubbles among access to the memory subsystem, MACPO needs to
+keep the instrumentation window for 640K * 3 cycles = 1.92M cycles.
+
+Note that for most multi-threaded programs, a shorter time interval is okay as
+well. Multiple threads will access the memory simultaneously, thus filling up
+the 640K cache line 'buffer' faster than a single-threaded program.
+
+The Sandy Bridges on Stampede are clocked at 2.7GHz, so 1.92M cycles correspond
+to 711 micro-seconds. And thus, we set AWAKE_USEC to 711.
+
+*/
+
 #ifndef	AWAKE_USEC
-#define	AWAKE_USEC		12500
+#define	AWAKE_USEC		711
 #endif
 
 static size_t numCores = 0;

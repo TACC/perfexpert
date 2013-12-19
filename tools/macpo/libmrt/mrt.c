@@ -125,7 +125,7 @@ static void signalHandler(int sig)
 		sleep_sec = new_sleep_sec;
 		new_sleep_sec = temp;
 
-		itimer_new.it_value.tv_sec = 3+sleep_sec*4;
+		itimer_new.it_value.tv_sec = 3+sleep_sec*3;
 		itimer_new.it_value.tv_usec = 0;
 		setitimer(ITIMER_PROF, &itimer_new, &itimer_old);
 		access_count = 0;
