@@ -65,7 +65,8 @@ bool aligncheck_t::contains_non_linear_reference(
 }
 
 void aligncheck_t::process_loop(SgForStatement* outer_for_stmt,
-        loop_info_t& loop_info, expr_map_t& loop_map) {
+        loop_info_t& loop_info, expr_map_t& loop_map,
+        name_list_t& stream_list) {
     pntr_list_t pntr_list;
     std::set<std::string> stream_set;
 
@@ -204,13 +205,20 @@ void aligncheck_t::process_loop(SgForStatement* outer_for_stmt,
 
         if (pntr) {
             std::string stream_name = pntr->unparseToString();
-            if (stream_set.find(stream_name) == stream_set.end()) {
-                stream_set.insert(stream_name);
-                SgPntrArrRefExp* copy_pntr = isSgPntrArrRefExp(
-                        copyExpression(pntr));
+            // FIXME: Rather rudimentary check, using just the stream name
+            // instead of using the index expression as well.
+            if (std::find(stream_list.begin(), stream_list.end(), stream_name)
+                    == stream_list.end()) {
+                stream_list.push_back(stream_name);
 
-                if (copy_pntr)
-                    pntr_list.push_back(copy_pntr);
+                if (stream_set.find(stream_name) == stream_set.end()) {
+                    stream_set.insert(stream_name);
+                    SgPntrArrRefExp* copy_pntr = isSgPntrArrRefExp(
+                            copyExpression(pntr));
+
+                    if (copy_pntr)
+                        pntr_list.push_back(copy_pntr);
+                }
             }
         }
     }
@@ -367,7 +375,7 @@ void aligncheck_t::process_loop(SgForStatement* outer_for_stmt,
         for(loop_info_list_t::iterator it2 = loop_info_list.begin();
                 it2 != loop_info_list.end(); it2++) {
             loop_info_t& loop_info = *it2;
-            process_loop(outer_for_stmt, loop_info, loop_map);
+            process_loop(outer_for_stmt, loop_info, loop_map, stream_list);
         }
     }
 }
@@ -381,11 +389,12 @@ void aligncheck_t::process_node(SgNode* node) {
     loop_info_list_t& loop_info_list = loop_traversal.get_loop_info_list();
 
     expr_map_t loop_map;
+    name_list_t stream_list;
 
     for(loop_info_list_t::iterator it = loop_info_list.begin();
             it != loop_info_list.end(); it++) {
         loop_info_t& loop_info = *it;
-        process_loop(loop_info.for_stmt, loop_info, loop_map);
+        process_loop(loop_info.for_stmt, loop_info, loop_map, stream_list);
     }
 
     // Since this is not really a traversal, manually invoke atTraversalEnd();
