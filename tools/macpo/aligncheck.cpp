@@ -46,6 +46,24 @@ void aligncheck_t::atTraversalEnd() {
     }
 }
 
+bool aligncheck_t::contains_non_linear_reference(
+        const reference_list_t& reference_list) {
+    for (reference_list_t::const_iterator it2 = reference_list.begin();
+            it2 != reference_list.end(); it2++) {
+        const reference_info_t& reference_info = *it2;
+        const SgNode* ref_node = reference_info.node;
+
+        const SgPntrArrRefExp* pntr = isSgPntrArrRefExp(ref_node);
+
+        // Check if pntr is a linear array reference.
+        if (pntr && !ir_methods::is_linear_reference(pntr, false)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 void aligncheck_t::process_loop(SgForStatement* outer_for_stmt,
         loop_info_t& loop_info, expr_map_t& loop_map) {
     pntr_list_t pntr_list;
@@ -60,18 +78,120 @@ void aligncheck_t::process_loop(SgForStatement* outer_for_stmt,
     loop_map[idxv] = &loop_info;
 
     reference_list_t& reference_list = loop_info.reference_list;
+    if (contains_non_linear_reference(reference_list)) {
+        std::cout << "Found non-linear reference(s) in loop.\n";
+        return;
+    }
 
+    Sg_File_Info *fileInfo =
+        Sg_File_Info::generateFileInfoForTransformationNode(
+                ((SgLocatedNode*)
+                 outer_for_stmt)->get_file_info()->get_filenameString());
+
+    // Extract streaming stores from array references in the loop.
+    sstore_map_t sstore_map;
     for (reference_list_t::iterator it2 = reference_list.begin();
             it2 != reference_list.end(); it2++) {
         reference_info_t& reference_info = *it2;
-        SgNode* ref_node = reference_info.node;
+        std::string& ref_stream = reference_info.name;
 
-        SgPntrArrRefExp* pntr = isSgPntrArrRefExp(ref_node);
+        switch (reference_info.access_type) {
+            case TYPE_WRITE:
+                sstore_map[ref_stream].push_back(reference_info.node);
+                break;
 
-        // Check if pntr is a linear array reference.
-        if (pntr && !ir_methods::is_linear_reference(pntr, false)) {
-            std::cout << "Found non-linear reference(s) in loop.\n";
-            return;
+            case TYPE_READ:
+            case TYPE_READ_AND_WRITE:
+            case TYPE_UNKNOWN:  // Handle unknown type the same way as a read.
+                sstore_map_t::iterator it = sstore_map.find(ref_stream);
+                if (it != sstore_map.end()) {
+                    sstore_map.erase(it);
+                }
+
+                break;
+        }
+    }
+
+    for (sstore_map_t::iterator it = sstore_map.begin(); it != sstore_map.end();
+            it++) {
+        const std::string& key = it->first;
+        node_list_t& value = it->second;
+
+        // Replace index variable with init expression.
+        expr_list_t expr_list;
+        for (node_list_t::iterator it2 = value.begin(); it2 != value.end();
+                it2++) {
+            SgExpression* node = isSgExpression(*it2);
+            if (node) {
+                SgBinaryOp* copy_node = isSgBinaryOp(copyExpression(node));
+                for (expr_map_t::iterator it2 = loop_map.begin();
+                        it2 != loop_map.end(); it2++) {
+                    SgExpression* idxv = it2->first;
+                    loop_info_t* loop_info = it2->second;
+
+                    SgExpression* init = loop_info->init_expr;
+
+                    if (ir_methods::contains_expr(copy_node, idxv)) {
+                        ir_methods::replace_expr(copy_node, idxv, init);
+                    }
+                }
+
+                expr_list.push_back(copy_node);
+
+            }
+        }
+
+        // Remove duplicates.
+        std::map<std::string, SgExpression*> string_expr_map;
+        for (expr_list_t::iterator it2 = expr_list.begin();
+                it2 != expr_list.end(); it2++) {
+            SgExpression* expr = *it2;
+            std::string expr_string = expr->unparseToString();
+            if (string_expr_map.find(expr_string) == string_expr_map.end()) {
+                string_expr_map[expr_string] = expr;
+            } else {
+                // An expression with the same string representation has
+                // already been seen, so we skip this expression.
+            }
+        }
+
+        // Reuse the same expression list from earlier.
+        expr_list.clear();
+
+        // Finally, loop over the map to get the unique expressions.
+        for (std::map<std::string, SgExpression*>::iterator it2 =
+                string_expr_map.begin(); it2 != string_expr_map.end(); it2++) {
+            SgExpression* expr = it2->second;
+
+            SgExpression *addr_expr =
+                SageInterface::is_Fortran_language() ?
+                (SgExpression*) expr : buildCastExp (
+                        buildAddressOfOp((SgExpression*) expr),
+                        buildPointerType(buildVoidType()));
+
+            expr_list.push_back(addr_expr);
+        }
+
+        // If we have any expressions, add the instrumentation call.
+        if (expr_list.size()) {
+            int line_number = for_stmt->get_file_info()->get_raw_line();
+            SgIntVal* param_line_number = new SgIntVal(fileInfo, line_number);
+            SgIntVal* param_count = new SgIntVal(fileInfo, expr_list.size());
+
+            std::string function_name = SageInterface::is_Fortran_language()
+                ? "indigo__sstore_aligncheck_f" : "indigo__sstore_aligncheck_c";
+
+            inst_info_t inst_info;
+            inst_info.stmt = for_stmt;
+            inst_info.bb = getEnclosingNode<SgBasicBlock>(for_stmt);
+            inst_info.params.push_back(param_line_number);
+            inst_info.params.push_back(param_count);
+            inst_info.params.insert(inst_info.params.end(), expr_list.begin(),
+                    expr_list.end());
+            inst_info.function_name = function_name;
+            inst_info.before = true;
+
+            inst_info_list.push_back(inst_info);
         }
     }
 
@@ -98,11 +218,6 @@ void aligncheck_t::process_loop(SgForStatement* outer_for_stmt,
     std::string function_name = SageInterface::is_Fortran_language()
         ? "indigo__aligncheck_f" : "indigo__aligncheck_c";
     SgBasicBlock* outer_bb = getEnclosingNode<SgBasicBlock>(for_stmt);
-
-    Sg_File_Info *fileInfo =
-        Sg_File_Info::generateFileInfoForTransformationNode(
-                ((SgLocatedNode*)
-                 outer_for_stmt)->get_file_info()->get_filenameString());
 
     std::set<std::string> expr_set;
     expr_list_t param_list;
