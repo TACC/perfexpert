@@ -294,7 +294,6 @@ void aligncheck_t::process_loop(SgForStatement* outer_for_stmt,
         SgIntVal* param_count = new SgIntVal(fileInfo, param_list.size() / 2);
         SgIntVal* param_line_no = new SgIntVal(fileInfo, line_number);
 
-        // FIXME: Handle more than one expressions.
         if (expr_set.size() == 1) {
             def_map_t def_map;
             std::string expr = *(expr_set.begin());
@@ -356,6 +355,19 @@ void aligncheck_t::process_loop(SgForStatement* outer_for_stmt,
 
                 inst_info_list.push_back(inst_info);
             }
+        } else {
+            // Instrument just before the loop under consideration.
+            inst_info_t inst_info;
+            inst_info.stmt = for_stmt;
+            inst_info.bb = getEnclosingNode<SgBasicBlock>(for_stmt);
+            inst_info.params.push_back(param_line_no);
+            inst_info.params.push_back(param_count);
+            inst_info.params.insert(inst_info.params.end(), param_list.begin(),
+                    param_list.end());
+            inst_info.function_name = function_name;
+            inst_info.before = true;
+
+            inst_info_list.push_back(inst_info);
         }
     }
 
