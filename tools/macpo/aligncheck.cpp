@@ -125,20 +125,11 @@ void aligncheck_t::process_loop(SgForStatement* outer_for_stmt,
             SgExpression* node = isSgExpression(*it2);
             if (node) {
                 SgBinaryOp* copy_node = isSgBinaryOp(copyExpression(node));
-                for (expr_map_t::iterator it2 = loop_map.begin();
-                        it2 != loop_map.end(); it2++) {
-                    SgExpression* idxv = it2->first;
-                    loop_info_t* loop_info = it2->second;
-
-                    SgExpression* init = loop_info->init_expr;
-
-                    if (ir_methods::contains_expr(copy_node, idxv)) {
-                        ir_methods::replace_expr(copy_node, idxv, init);
-                    }
+                if (ir_methods::contains_expr(copy_node, idxv)) {
+                    ir_methods::replace_expr(copy_node, idxv, init);
                 }
 
                 expr_list.push_back(copy_node);
-
             }
         }
 
