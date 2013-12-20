@@ -19,8 +19,6 @@
  * $HEADER$
  */
 
-// For CPU_ZERO and CPU_SET
-#define	_GNU_SOURCE
 #include <sched.h>
 
 #include <csignal>
@@ -28,6 +26,9 @@
 #include <cstdio>
 #include <cstdlib>
 #include <ctime>
+
+#include <algorithm>
+#include <map>
 
 #include <fcntl.h>
 #include <unistd.h>
@@ -39,6 +40,20 @@
 #include "macpo_record.h"
 
 static short proc = PROC_UNKNOWN;
+static std::map<int, long*> sstore_align_map;
+volatile static short lock_var;
+
+static inline void lock() {
+    while (__sync_bool_compare_and_swap(&lock_var, 0, 1) == false)
+        ;
+
+    asm volatile("lfence" ::: "memory");
+}
+
+static inline void unlock() {
+    lock_var = 0;
+    asm volatile("sfence" ::: "memory");
+}
 
 static int getCoreID()
 {
@@ -269,10 +284,51 @@ void indigo__init_()
 	atexit(indigo__exit);
 }
 
+static bool index_comparator(const val_idx_pair& v1, const val_idx_pair& v2) {
+    return v1.first < v2.first;
+}
+
 static void indigo__exit()
 {
 	if (fd >= 0)	close(fd);
 	if (intel_apic_mapping)	free(intel_apic_mapping);
+
+    for (std::map<int, long*>::iterator it = sstore_align_map.begin();
+            it != sstore_align_map.end(); it++) {
+        int line_number = it->first;
+        long* histogram = it->second;
+
+        if (histogram) {
+            val_idx_pair pair_histogram[CACHE_LINE_SIZE];
+            for (int i=0; i<CACHE_LINE_SIZE; i++) {
+                pair_histogram[i] = val_idx_pair(histogram[i], i);
+            }
+
+            std::sort(pair_histogram, pair_histogram + CACHE_LINE_SIZE);
+            if (pair_histogram[CACHE_LINE_SIZE-1].first > 0) {
+                // At least one non-zero entry.
+                fprintf (stderr, "MACPO :: Printing top %d entries from "
+                        "alignment histogram for streaming stores in loop at "
+                        "line %d:\n", ALIGN_ENTRIES, line_number);
+
+                fprintf (stderr, "offset %d found %ld times.\n",
+                        pair_histogram[CACHE_LINE_SIZE-1].second,
+                        pair_histogram[CACHE_LINE_SIZE-1].first);
+                fprintf (stderr, "offset %d found %ld times.\n",
+                        pair_histogram[CACHE_LINE_SIZE-2].second,
+                        pair_histogram[CACHE_LINE_SIZE-2].first);
+                fprintf (stderr, "offset %d found %ld times.\n\n",
+                        pair_histogram[CACHE_LINE_SIZE-3].second,
+                        pair_histogram[CACHE_LINE_SIZE-3].first);
+            } else {
+                fprintf (stderr, "MACPO :: All entries from alignment "
+                        "histogram for streaming stores in loop at line %d "
+                        "have desired alignment.\n\n", line_number);
+            }
+
+            free(histogram);
+        }
+    }
 }
 
 static inline void fill_struct(int read_write, int line_number, size_t p, int var_idx)
@@ -373,6 +429,57 @@ void indigo__aligncheck_c(int line_number, int stream_count, ...) {
 
         start_list[i] = start;
         end_list[i] = end;
+    }
+
+    va_end(args);
+}
+
+/**
+    Helper function to allocate / get histograms for alignment checking.
+*/
+long* get_alignment_histogram(int line_number) {
+    // Obtain lock.
+    lock();
+
+    long* return_value = NULL;
+    std::map<int, long*>::iterator it = sstore_align_map.find(line_number);
+    if (it == sstore_align_map.end()) {
+        // Allocate a new histogram.
+        long* histogram = (long*) malloc(sizeof(long) * CACHE_LINE_SIZE);
+        sstore_align_map[line_number] = histogram;
+        return_value = histogram;
+
+        if (histogram != NULL) {
+            memset(histogram, 0, sizeof(long) * CACHE_LINE_SIZE);
+        }
+    } else {
+        return_value = it->second;
+    }
+
+    // Release lock.
+    unlock();
+
+    return return_value;
+}
+
+/**
+    indigo__sstore_aligncheck_c()
+    Checks for alignment of streaming stores to cache line boundary.
+*/
+void indigo__sstore_aligncheck_c(int line_number, int stream_count, ...) {
+    va_list args;
+
+    int i, j;
+    long* histogram = get_alignment_histogram(line_number);
+    if (histogram == NULL)
+        return;
+
+    va_start(args, stream_count);
+
+    for (i=0; i<stream_count; i++) {
+        void* addr = va_arg(args, void*);
+        int remainder = ((long) addr) % 64;
+        histogram[remainder]++;
     }
 
     va_end(args);
