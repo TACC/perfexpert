@@ -40,7 +40,8 @@
 #include "macpo_record.h"
 
 static short proc = PROC_UNKNOWN;
-static std::map<int, long*> sstore_align_map;
+static std::map<int, long*> sstore_align_map, align_map;
+static std::map<int, bool> overlap_bin;
 volatile static short lock_var;
 
 static inline void lock() {
@@ -288,45 +289,75 @@ static bool index_comparator(const val_idx_pair& v1, const val_idx_pair& v2) {
     return v1.first < v2.first;
 }
 
+static void print_histogram(int line_number, long* histogram) {
+    if (histogram) {
+        val_idx_pair pair_histogram[CACHE_LINE_SIZE];
+        for (int i=0; i<CACHE_LINE_SIZE; i++) {
+            pair_histogram[i] = val_idx_pair(histogram[i], i);
+        }
+
+        std::sort(pair_histogram, pair_histogram + CACHE_LINE_SIZE);
+        if (pair_histogram[CACHE_LINE_SIZE-1].first > 0) {
+            // At least one non-zero entry.
+            fprintf (stderr, "MACPO :: Top %d entries for loop at line %d: ",
+                    ALIGN_ENTRIES, line_number);
+
+            fprintf (stderr, "offset %d found %ld times, ",
+                    pair_histogram[CACHE_LINE_SIZE-1].second,
+                    pair_histogram[CACHE_LINE_SIZE-1].first);
+            fprintf (stderr, "offset %d found %ld times, ",
+                    pair_histogram[CACHE_LINE_SIZE-2].second,
+                    pair_histogram[CACHE_LINE_SIZE-2].first);
+            fprintf (stderr, "offset %d found %ld times.\n",
+                    pair_histogram[CACHE_LINE_SIZE-3].second,
+                    pair_histogram[CACHE_LINE_SIZE-3].first);
+        } else {
+            fprintf (stderr, "MACPO :: All entries from alignment histogram "
+                    "in loop at line %d have the desired alignment.\n",
+                    line_number);
+        }
+    }
+}
+
 static void indigo__exit()
 {
 	if (fd >= 0)	close(fd);
 	if (intel_apic_mapping)	free(intel_apic_mapping);
 
+    fprintf (stderr, "MACPO :: Alignments for streaming stores:\n");
     for (std::map<int, long*>::iterator it = sstore_align_map.begin();
             it != sstore_align_map.end(); it++) {
         int line_number = it->first;
         long* histogram = it->second;
+        print_histogram(line_number, histogram);
 
-        if (histogram) {
-            val_idx_pair pair_histogram[CACHE_LINE_SIZE];
-            for (int i=0; i<CACHE_LINE_SIZE; i++) {
-                pair_histogram[i] = val_idx_pair(histogram[i], i);
-            }
-
-            std::sort(pair_histogram, pair_histogram + CACHE_LINE_SIZE);
-            if (pair_histogram[CACHE_LINE_SIZE-1].first > 0) {
-                // At least one non-zero entry.
-                fprintf (stderr, "MACPO :: Printing top %d entries from "
-                        "alignment histogram for streaming stores in loop at "
-                        "line %d:\n", ALIGN_ENTRIES, line_number);
-
-                fprintf (stderr, "offset %d found %ld times.\n",
-                        pair_histogram[CACHE_LINE_SIZE-1].second,
-                        pair_histogram[CACHE_LINE_SIZE-1].first);
-                fprintf (stderr, "offset %d found %ld times.\n",
-                        pair_histogram[CACHE_LINE_SIZE-2].second,
-                        pair_histogram[CACHE_LINE_SIZE-2].first);
-                fprintf (stderr, "offset %d found %ld times.\n\n",
-                        pair_histogram[CACHE_LINE_SIZE-3].second,
-                        pair_histogram[CACHE_LINE_SIZE-3].first);
-            } else {
-                fprintf (stderr, "MACPO :: All entries from alignment "
-                        "histogram for streaming stores in loop at line %d "
-                        "have desired alignment.\n\n", line_number);
-            }
-
+        if (histogram)
             free(histogram);
+    }
+
+    fprintf (stderr, "MACPO :: Alignments for loop references:\n");
+    for (std::map<int, long*>::iterator it = align_map.begin();
+            it != align_map.end(); it++) {
+        int line_number = it->first;
+        long* histogram = it->second;
+        print_histogram(line_number, histogram);
+
+        if (histogram)
+            free(histogram);
+    }
+
+    fprintf (stderr, "MACPO :: Overlap among loop references:\n");
+    for (std::map<int, bool>::iterator it = overlap_bin.begin();
+            it != overlap_bin.end(); it++) {
+        int line_number = it->first;
+        bool overlap = it->second;
+
+        if (overlap) {
+            fprintf (stderr, "MACPO :: Array references in loop at line %d do "
+                    "overlap.\n", line_number);
+        } else {
+            fprintf (stderr, "MACPO :: No overlap among array references in "
+                    "loop at line %d.\n", line_number);
         }
     }
 }
@@ -383,6 +414,53 @@ void indigo__write_idx_f_(const char* var_name, const int* length)
 	indigo__write_idx_c(var_name, *length);
 }
 
+long* new_histogram() {
+    long* histogram = (long*) malloc(sizeof(long) * CACHE_LINE_SIZE);
+    if (histogram) {
+        memset(histogram, 0, sizeof(long) * CACHE_LINE_SIZE);
+    }
+
+    return histogram;
+}
+
+bool& get_overlap_bin(int line_number) {
+    // Obtain lock.
+    lock();
+
+    std::map<int, bool>::iterator it = overlap_bin.find(line_number);
+    if (it == overlap_bin.end()) {
+        overlap_bin[line_number] = 0;
+    }
+
+    // Release lock.
+    unlock();
+
+    return overlap_bin[line_number];
+}
+
+/**
+    Helper function to allocate / get histograms for alignment checking.
+*/
+long* get_alignment_histogram(int line_number) {
+    // Obtain lock.
+    lock();
+
+    long* return_value = NULL;
+    std::map<int, long*>::iterator it = align_map.find(line_number);
+    if (it == align_map.end()) {
+        // Allocate a new histogram.
+        align_map[line_number] = new_histogram();
+        return_value = align_map[line_number];
+    } else {
+        return_value = it->second;
+    }
+
+    // Release lock.
+    unlock();
+
+    return return_value;
+}
+
 #define MAX_ADDR    128
 
 /**
@@ -396,11 +474,17 @@ void indigo__aligncheck_c(int line_number, int stream_count, ...) {
     void* end_list[MAX_ADDR] = {0};
 
     if (stream_count >= MAX_ADDR) {
+#if 0
         fprintf (stderr, "MACPO :: Stream count too large, truncating to %d "
                 " for memory disambiguation.\n", MAX_ADDR);
+#endif
 
         stream_count = MAX_ADDR-1;
     }
+
+    long* histogram = get_alignment_histogram(line_number);
+    if (histogram == NULL)
+        return;
 
     int i, j;
     va_start(args, stream_count);
@@ -409,24 +493,32 @@ void indigo__aligncheck_c(int line_number, int stream_count, ...) {
         void* start = va_arg(args, void*);
         void* end = va_arg(args, void*);
 
+        int remainder = ((long) start) % 64;
+        histogram[remainder]++;
+
+#if 0
         if (((long) start) % 64) {
             fprintf (stderr, "MACPO :: Reference in loop at line %d is not "
                     "aligned at cache line boundary.\n", line_number);
         }
+#endif
 
         // Really simple and inefficient (n^2) algorightm to check duplicates.
-        short overlap = 0;
+        bool overlap = false;
         for (j=0; j<i && overlap == 0; j++) {
             if (!(start_list[j] > end_list[i] || end_list[j] < start_list[i])) {
-                overlap = 1;
+                overlap = true;
             }
         }
 
-        if (overlap == 1) {
+        get_overlap_bin(line_number) = overlap;
+
+#if 0
+        if (overlap) {
             fprintf (stderr, "MACPO :: Found overlap among references for loop "
                     "at line %d.\n", line_number);
         }
-
+#endif
         start_list[i] = start;
         end_list[i] = end;
     }
@@ -435,9 +527,9 @@ void indigo__aligncheck_c(int line_number, int stream_count, ...) {
 }
 
 /**
-    Helper function to allocate / get histograms for alignment checking.
+    Helper function to allocate / get histogramss for alignment checking.
 */
-long* get_alignment_histogram(int line_number) {
+long* get_sstore_alignment_histogram(int line_number) {
     // Obtain lock.
     lock();
 
@@ -445,13 +537,8 @@ long* get_alignment_histogram(int line_number) {
     std::map<int, long*>::iterator it = sstore_align_map.find(line_number);
     if (it == sstore_align_map.end()) {
         // Allocate a new histogram.
-        long* histogram = (long*) malloc(sizeof(long) * CACHE_LINE_SIZE);
-        sstore_align_map[line_number] = histogram;
-        return_value = histogram;
-
-        if (histogram != NULL) {
-            memset(histogram, 0, sizeof(long) * CACHE_LINE_SIZE);
-        }
+        sstore_align_map[line_number] = new_histogram();
+        return_value = sstore_align_map[line_number];
     } else {
         return_value = it->second;
     }
@@ -470,7 +557,7 @@ void indigo__sstore_aligncheck_c(int line_number, int stream_count, ...) {
     va_list args;
 
     int i, j;
-    long* histogram = get_alignment_histogram(line_number);
+    long* histogram = get_sstore_alignment_histogram(line_number);
     if (histogram == NULL)
         return;
 
