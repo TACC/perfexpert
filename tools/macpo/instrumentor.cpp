@@ -33,13 +33,21 @@ using namespace SageInterface;
 
 void instrumentor_t::atTraversalStart() {
     stream_list.clear();
-    inst_info_list.clear();
+    statement_list.clear();
 }
 
 void instrumentor_t::atTraversalEnd() {
-    for (std::vector<inst_info_t>::iterator it=inst_info_list.begin();
-            it!=inst_info_list.end(); it++)
-        ir_methods::insert_instrumentation_call(*it);
+    for (statement_list_t::iterator it=statement_list.begin();
+            it!=statement_list.end(); it++) {
+        const statement_info_t& statement_info = *it;
+        if (statement_info.before) {
+            insertStatementBefore(statement_info.reference_statement,
+                    statement_info.statement);
+        } else {
+            insertStatementAfter(statement_info.reference_statement,
+                    statement_info.statement);
+        }
+    }
 }
 
 name_list_t& instrumentor_t::get_stream_list() {
@@ -97,28 +105,31 @@ attrib instrumentor_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
         SgIntVal* param_idx = new SgIntVal(fileInfo, ref_idx);
         SgIntVal* param_read_write = new SgIntVal(fileInfo, ref_access_type);
 
-        inst_info_t inst_info;
-        inst_info.bb = containingBB;
-        inst_info.stmt = containingStmt;
-        inst_info.params.push_back(param_read_write);
-        inst_info.params.push_back(param_line_number);
-        inst_info.params.push_back(param_addr);
-        inst_info.params.push_back(param_idx);
+        std::string function_name = SageInterface::is_Fortran_language() ?
+                "indigo__record_f" : "indigo__record_c";
 
-        inst_info.function_name = SageInterface::is_Fortran_language() ? "indigo__record_f" : "indigo__record_c";
-        inst_info.before = true;
+        std::vector<SgExpression*> params;
+        params.push_back(param_read_write);
+        params.push_back(param_line_number);
+        params.push_back(param_addr);
+        params.push_back(param_idx);
 
-        inst_info_list.push_back(inst_info);
+        statement_info_t statement_info;
+        statement_info.statement = ir_methods::prepare_call_statement(
+                containingBB, function_name, params);
+        statement_info.reference_statement = containingStmt;
+        statement_info.before = true;
+        statement_list.push_back(statement_info);
     }
 
     attr.skip = true;
     return attr;
 }
 
-const inst_list_t::iterator instrumentor_t::inst_begin() {
-    return inst_info_list.begin();
+const statement_list_t::iterator instrumentor_t::stmt_begin() {
+    return statement_list.begin();
 }
 
-const inst_list_t::iterator instrumentor_t::inst_end() {
-    return inst_info_list.end();
+const statement_list_t::iterator instrumentor_t::stmt_end() {
+    return statement_list.end();
 }

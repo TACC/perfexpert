@@ -344,26 +344,19 @@ SgExpression* ir_methods::get_expr_value(SgNode*& node, std::string var_name) {
     return NULL;
 }
 
-SgExprStatement* ir_methods::insert_instrumentation_call(inst_info_t& inst_info) {
-    SgNode* parent = inst_info.bb->get_parent();
+SgExprStatement* ir_methods::prepare_call_statement(SgBasicBlock* bb,
+        const std::string& function_name, const std::vector<SgExpression*>&
+        params) {
+    SgNode* parent = bb->get_parent();
+
     if (isSgIfStmt(parent)) {
         SgIfStmt* if_node = static_cast<SgIfStmt*>(parent);
         if_node->set_use_then_keyword(true);
         if_node->set_has_end_statement(true);
     }
 
-    SgExprStatement* fCall = buildFunctionCallStmt(
-            SgName(inst_info.function_name),
-            buildVoidType(),
-            buildExprListExp(inst_info.params),
-            inst_info.bb
-            );
-
-    if (inst_info.before) {
-        insertStatementBefore(inst_info.stmt, fCall);
-    } else {
-        insertStatementAfter(inst_info.stmt, fCall);
-    }
+    SgExprStatement* fCall = buildFunctionCallStmt(SgName(function_name),
+            buildVoidType(), buildExprListExp(params), bb);
 
     return fCall;
 }

@@ -47,8 +47,9 @@ class MINST : public AstSimpleProcessing {
         Sg_File_Info* file_info;
         VariableRenaming* var_renaming;
         SgFunctionDeclaration *def_decl, *non_def_decl;
+        bool is_same_file(const std::string& file_1, const std::string& file_2);
 
-        inst_list_t inst_info_list;
+        statement_list_t statement_list;
         name_list_t stream_list;
 };
 

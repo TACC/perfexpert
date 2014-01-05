@@ -60,8 +60,10 @@ class ir_methods {
         static SgExpression* get_expr_value(SgNode*& node, std::string
                 var_name);
 
-        static SgExprStatement* insert_instrumentation_call(inst_info_t&
-                inst_info);
+        static SgExprStatement* prepare_call_statement(SgBasicBlock* bb,
+                const std::string& function_name,
+                const std::vector<SgExpression*>& params);
+
         static long get_reference_index(reference_list_t& reference_list,
                 std::string& stream_name);
 

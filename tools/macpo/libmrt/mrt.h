@@ -61,10 +61,12 @@ to 711 micro-seconds. And thus, we set AWAKE_USEC to 711.
 #define	AWAKE_USEC		711
 #endif
 
-#define ALIGN_ENTRIES   3
-#define CACHE_LINE_SIZE 64
+#define ALIGN_ENTRIES           3
+#define CACHE_LINE_SIZE         64
+#define MAX_HISTOGRAM_ENTRIES   1024
 
 typedef std::pair<long, short> val_idx_pair;
+typedef std::pair<int, short> line_threadid_pair;
 
 static size_t numCores = 0;
 static __thread int coreID=-1;
@@ -138,6 +140,14 @@ void indigo__aligncheck_c(int line_number, int stream_count, ...);
 extern "C" {
 #endif
 void indigo__sstore_aligncheck_c(int line_number, int stream_count, ...);
+#if defined (__cplusplus)
+}
+#endif
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
+void indigo__tripcount_check_c(int line_number, long trip_count);
 #if defined (__cplusplus)
 }
 #endif

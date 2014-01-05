@@ -19,26 +19,20 @@
  * $HEADER$
  */
 
-#ifndef	INSTRUMENTOR_H_
-#define	INSTRUMENTOR_H_
+#include <gmp.h>
 
-#include "generic_defs.h"
-#include "inst_defs.h"
+void factorial(mpf_t mi_result, unsigned long n, unsigned long stop);
 
-class instrumentor_t : public AstTopDownProcessing<attrib> {
-    public:
-        name_list_t& get_stream_list();
+void nCk(mpf_t result, unsigned long n, unsigned long k);
 
-        virtual attrib evaluateInheritedAttribute(SgNode* node, attrib attr);
-        virtual void atTraversalStart();
-        virtual void atTraversalEnd();
+double pHit(unsigned long i, unsigned long assoc, unsigned long distance,
+        double pHitSet);
 
-        const statement_list_t::iterator stmt_begin();
-        const statement_list_t::iterator stmt_end();
+void setDouble(mpf_t* n, double num);
 
-    private:
-        statement_list_t statement_list;
-        name_list_t stream_list;
-};
+void accumulateStride(mpf_t* current, double normalized);
 
-#endif	/* INSTRUMENTOR_H_ */
+double getDouble(mpf_t* n);
+
+double hit_probability(long distance, long size, short associativity,
+    int linesize);

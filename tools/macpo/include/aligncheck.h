@@ -33,26 +33,33 @@ class aligncheck_t {
         def_map_t;
 
     public:
-    typedef std::map<SgExpression*, loop_info_t*> expr_map_t;
-    typedef std::vector<SgPntrArrRefExp*> pntr_list_t;
-    typedef std::vector<SgExpression*> expr_list_t;
-    typedef std::vector<SgNode*> node_list_t;
-    typedef std::map<std::string, node_list_t> sstore_map_t;
+        typedef std::map<SgExpression*, loop_info_t*> expr_map_t;
+        typedef std::vector<SgPntrArrRefExp*> pntr_list_t;
+        typedef std::vector<SgExpression*> expr_list_t;
+        typedef std::vector<SgNode*> node_list_t;
+        typedef std::map<std::string, node_list_t> sstore_map_t;
 
-    aligncheck_t(VariableRenaming*& _var_renaming);
+        aligncheck_t(VariableRenaming*& _var_renaming);
 
-    void atTraversalEnd();
-    void atTraversalStart();
+        void atTraversalEnd();
+        void atTraversalStart();
 
-    void process_node(SgNode* node);
-    void process_loop(SgForStatement* for_stmt, loop_info_t& loop_info_t,
-            expr_map_t& loop_map, name_list_t& stream_list);
+        void process_node(SgNode* node);
+        void process_loop(SgForStatement* for_stmt, loop_info_t& loop_info_t,
+                expr_map_t& loop_map, name_list_t& stream_list);
 
-    bool contains_non_linear_reference(const reference_list_t& reference_list);
+        bool contains_non_linear_reference(const reference_list_t&
+                reference_list);
+
+        const statement_list_t::iterator stmt_begin();
+        const statement_list_t::iterator stmt_end();
 
     private:
-    VariableRenaming* var_renaming;
-    inst_list_t inst_info_list;
+        void instrument_loop_trip_count(Sg_File_Info* file_info,
+                loop_info_t& loop_info);
+
+        VariableRenaming* var_renaming;
+        statement_list_t statement_list;
 };
 
 #endif	/* ALIGNCHEK_H_ */

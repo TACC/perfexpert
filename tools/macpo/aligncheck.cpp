@@ -36,14 +36,11 @@ aligncheck_t::aligncheck_t(VariableRenaming*& _var_renaming) {
 }
 
 void aligncheck_t::atTraversalStart() {
-    inst_info_list.clear();
+    statement_list.clear();
 }
 
 void aligncheck_t::atTraversalEnd() {
-    for (inst_list_t::iterator it = inst_info_list.begin();
-            it != inst_info_list.end(); it++) {
-        ir_methods::insert_instrumentation_call(*it);
-    }
+    std::cout << "statement count: " << statement_list.size() << "\n";
 }
 
 bool aligncheck_t::contains_non_linear_reference(
@@ -64,6 +61,62 @@ bool aligncheck_t::contains_non_linear_reference(
     return false;
 }
 
+void aligncheck_t::instrument_loop_trip_count(Sg_File_Info* fileInfo,
+        loop_info_t& loop_info) {
+    SgForStatement* for_stmt = loop_info.for_stmt;
+    SgExpression* idxv = loop_info.idxv_expr;
+    SgExpression* init = loop_info.init_expr;
+    SgExpression* test = loop_info.test_expr;
+
+    if (SgBasicBlock* bb = getEnclosingNode<SgBasicBlock>(for_stmt)) {
+        int line_number = for_stmt->get_file_info()->get_raw_line();
+
+        // Create new integer variable calledi
+        // "indigo__trip_count_<line_number>". Funky, eh?
+        char var_name[32];
+        snprintf (var_name, 32, "indigo__trip_count_%d", line_number);
+        SgType* long_type = buildLongType();
+
+        SgVariableDeclaration* trip_count = new SgVariableDeclaration(fileInfo,
+                var_name, long_type, buildAssignInitializer(buildIntVal(0)));
+
+        SgVarRefExp* trip_count_expr = buildVarRefExp(var_name);
+        SgPlusPlusOp* incr_op = new SgPlusPlusOp(fileInfo,
+                trip_count_expr, long_type);
+
+        SgExprStatement* incr_statement = new SgExprStatement(fileInfo,
+                incr_op);
+
+        std::string function_name = SageInterface::is_Fortran_language()
+            ? "indigo__tripcount_check_f" : "indigo__tripcount_check_c";
+
+        std::vector<SgExpression*> params;
+        params.push_back(buildIntVal(line_number));
+        params.push_back(trip_count_expr);
+        SgExprStatement* expr_statement = NULL;
+        expr_statement = ir_methods::prepare_call_statement(bb, function_name,
+                params);
+
+        statement_info_t tripcount_call;
+        tripcount_call.statement = expr_statement;
+        tripcount_call.reference_statement = for_stmt;
+        tripcount_call.before = false;
+        statement_list.push_back(tripcount_call);
+
+        statement_info_t tripcount_decl;
+        tripcount_decl.statement = trip_count;
+        tripcount_decl.reference_statement = for_stmt;
+        tripcount_decl.before = true;
+        statement_list.push_back(tripcount_decl);
+
+        statement_info_t tripcount_incr;
+        tripcount_incr.statement = incr_statement;
+        tripcount_incr.reference_statement = getFirstStatement(for_stmt);
+        tripcount_incr.before = true;
+        statement_list.push_back(tripcount_incr);
+    }
+}
+
 void aligncheck_t::process_loop(SgForStatement* outer_for_stmt,
         loop_info_t& loop_info, expr_map_t& loop_map,
         name_list_t& stream_list) {
@@ -71,7 +124,6 @@ void aligncheck_t::process_loop(SgForStatement* outer_for_stmt,
     std::set<std::string> stream_set;
 
     SgForStatement* for_stmt = loop_info.for_stmt;
-
     SgExpression* idxv = loop_info.idxv_expr;
     SgExpression* init = loop_info.init_expr;
     SgExpression* test = loop_info.test_expr;
@@ -88,6 +140,8 @@ void aligncheck_t::process_loop(SgForStatement* outer_for_stmt,
         Sg_File_Info::generateFileInfoForTransformationNode(
                 ((SgLocatedNode*)
                  outer_for_stmt)->get_file_info()->get_filenameString());
+
+    instrument_loop_trip_count(fileInfo, loop_info);
 
     // Extract streaming stores from array references in the loop.
     sstore_map_t sstore_map;
@@ -173,17 +227,21 @@ void aligncheck_t::process_loop(SgForStatement* outer_for_stmt,
             std::string function_name = SageInterface::is_Fortran_language()
                 ? "indigo__sstore_aligncheck_f" : "indigo__sstore_aligncheck_c";
 
-            inst_info_t inst_info;
-            inst_info.stmt = for_stmt;
-            inst_info.bb = getEnclosingNode<SgBasicBlock>(for_stmt);
-            inst_info.params.push_back(param_line_number);
-            inst_info.params.push_back(param_count);
-            inst_info.params.insert(inst_info.params.end(), expr_list.begin(),
-                    expr_list.end());
-            inst_info.function_name = function_name;
-            inst_info.before = true;
+            SgBasicBlock* bb = getEnclosingNode<SgBasicBlock>(for_stmt);
+            std::vector<SgExpression*> params;
+            params.push_back(param_line_number);
+            params.push_back(param_count);
+            params.insert(params.end(), expr_list.begin(), expr_list.end());
 
-            inst_info_list.push_back(inst_info);
+            SgExprStatement* expr_stmt = NULL;
+            expr_stmt = ir_methods::prepare_call_statement(bb, function_name,
+                    params);
+
+            statement_info_t statement_info;
+            statement_info.statement = expr_stmt;
+            statement_info.reference_statement = for_stmt;
+            statement_info.before = true;
+            statement_list.push_back(statement_info);
         }
     }
 
@@ -309,65 +367,65 @@ void aligncheck_t::process_loop(SgForStatement* outer_for_stmt,
                 for (entry_iterator entry_it = entry_list.begin();
                         entry_it != entry_list.end(); entry_it++) {
                     SgNode* def_node = (*entry_it).second;
+
+                    SgBasicBlock* bb = NULL;
+                    SgStatement* reference_statement = NULL;
+                    statement_info_t statement_info;
+
                     if (isSgInitializedName(def_node)) {
                         // Instrument at start of loop.
-                        inst_info_t inst_info;
-                        inst_info.stmt = outer_for_stmt;
-                        inst_info.bb =
-                            getEnclosingNode<SgBasicBlock>(outer_for_stmt);
-                        inst_info.params.push_back(param_line_no);
-                        inst_info.params.push_back(param_count);
-                        inst_info.params.insert(inst_info.params.end(),
-                                param_list.begin(), param_list.end());
-                        inst_info.function_name = function_name;
-                        inst_info.before = true;
-
-                        inst_info_list.push_back(inst_info);
+                        statement_info.reference_statement = outer_for_stmt;
+                        bb = getEnclosingNode<SgBasicBlock>(outer_for_stmt);
                     } else {
-
-                        inst_info_t inst_info;
-                        inst_info.stmt = isSgStatement(def_node) ?
-                            isSgStatement(def_node) :
+                        statement_info.reference_statement =
+                            isSgStatement(def_node) ? isSgStatement(def_node) :
                             getEnclosingNode<SgStatement>(def_node);
-                        inst_info.bb = getEnclosingNode<SgBasicBlock>(def_node);
-                        inst_info.params.push_back(param_line_no);
-                        inst_info.params.push_back(param_count);
-                        inst_info.params.insert(inst_info.params.end(),
-                                param_list.begin(), param_list.end());
-                        inst_info.function_name = function_name;
-                        inst_info.before = false;
-
-                        inst_info_list.push_back(inst_info);
+                        bb = getEnclosingNode<SgBasicBlock>(def_node);
                     }
+
+                    std::vector<SgExpression*> params;
+                    params.push_back(param_line_no);
+                    params.push_back(param_count);
+                    params.insert(params.end(), param_list.begin(),
+                            param_list.end());
+
+                    statement_info.statement =
+                        ir_methods::prepare_call_statement(bb, function_name,
+                                params);
+                    statement_info.before = true;
+                    statement_list.push_back(statement_info);
                 }
             } else {
                 std::cout << "no definitions, placing before outermost for loop.\n";
                 // TODO: Place function call before the start of the outermost loop.
-                inst_info_t inst_info;
-                inst_info.stmt = outer_for_stmt;
-                inst_info.bb = getEnclosingNode<SgBasicBlock>(outer_for_stmt);
-                inst_info.params.push_back(param_line_no);
-                inst_info.params.push_back(param_count);
-                inst_info.params.insert(inst_info.params.end(),
-                        param_list.begin(), param_list.end());
-                inst_info.function_name = function_name;
-                inst_info.before = true;
+                std::vector<SgExpression*> params;
+                params.push_back(param_line_no);
+                params.push_back(param_count);
+                params.insert(params.end(), param_list.begin(),
+                        param_list.end());
 
-                inst_info_list.push_back(inst_info);
+                statement_info_t statement_info;
+                statement_info.statement = ir_methods::prepare_call_statement(
+                        getEnclosingNode<SgBasicBlock>(outer_for_stmt),
+                        function_name, params);
+                statement_info.reference_statement = outer_for_stmt;
+                statement_info.before = true;
+                statement_list.push_back(statement_info);
             }
         } else {
             // Instrument just before the loop under consideration.
-            inst_info_t inst_info;
-            inst_info.stmt = for_stmt;
-            inst_info.bb = getEnclosingNode<SgBasicBlock>(for_stmt);
-            inst_info.params.push_back(param_line_no);
-            inst_info.params.push_back(param_count);
-            inst_info.params.insert(inst_info.params.end(), param_list.begin(),
-                    param_list.end());
-            inst_info.function_name = function_name;
-            inst_info.before = true;
+            std::vector<SgExpression*> params;
+            params.push_back(param_line_no);
+            params.push_back(param_count);
+            params.insert(params.end(), param_list.begin(), param_list.end());
 
-            inst_info_list.push_back(inst_info);
+            statement_info_t statement_info;
+            statement_info.statement = ir_methods::prepare_call_statement(
+                    getEnclosingNode<SgBasicBlock>(for_stmt),
+                    function_name, params);
+            statement_info.reference_statement = for_stmt;
+            statement_info.before = true;
+            statement_list.push_back(statement_info);
         }
     }
 
@@ -402,4 +460,12 @@ void aligncheck_t::process_node(SgNode* node) {
 
     // Since this is not really a traversal, manually invoke atTraversalEnd();
     atTraversalEnd();
+}
+
+const statement_list_t::iterator aligncheck_t::stmt_begin() {
+    return statement_list.begin();
+}
+
+const statement_list_t::iterator aligncheck_t::stmt_end() {
+    return statement_list.end();
 }

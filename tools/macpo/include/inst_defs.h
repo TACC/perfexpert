@@ -27,16 +27,11 @@
 #include "macpo_record.h"
 
 typedef struct {
-    SgBasicBlock* bb;
-    SgStatement* stmt;
-    std::vector<SgExpression*> params;
-
-    // Other fields used while inserting the call.
+    SgStatement *statement, *reference_statement;
     bool before;
-    std::string function_name;
-} inst_info_t;
+} statement_info_t;
 
-typedef std::vector<inst_info_t> inst_list_t;
+typedef std::vector<statement_info_t> statement_list_t;
 
 typedef struct {
     std::string name;
