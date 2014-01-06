@@ -57,6 +57,11 @@ class aligncheck_t {
     private:
         void instrument_loop_trip_count(Sg_File_Info* file_info,
                 loop_info_t& loop_info);
+        void instrument_streaming_stores(Sg_File_Info* file_info,
+                loop_info_t& loop_info);
+        void instrument_alignment_checks(Sg_File_Info* file_info,
+                SgForStatement* outer_for_stmt, loop_info_t& loop_info,
+                name_list_t& stream_list, expr_map_t& loop_map);
 
         VariableRenaming* var_renaming;
         statement_list_t statement_list;

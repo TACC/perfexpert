@@ -116,34 +116,12 @@ void aligncheck_t::instrument_loop_trip_count(Sg_File_Info* fileInfo,
     }
 }
 
-void aligncheck_t::process_loop(SgForStatement* outer_for_stmt,
-        loop_info_t& loop_info, expr_map_t& loop_map,
-        name_list_t& stream_list) {
-    pntr_list_t pntr_list;
-    std::set<std::string> stream_set;
-
-    SgForStatement* for_stmt = loop_info.for_stmt;
-    SgExpression* idxv = loop_info.idxv_expr;
-    SgExpression* init = loop_info.init_expr;
-    SgExpression* test = loop_info.test_expr;
-
-    loop_map[idxv] = &loop_info;
-
-    reference_list_t& reference_list = loop_info.reference_list;
-    if (contains_non_linear_reference(reference_list)) {
-        std::cout << "Found non-linear reference(s) in loop.\n";
-        return;
-    }
-
-    Sg_File_Info *fileInfo =
-        Sg_File_Info::generateFileInfoForTransformationNode(
-                ((SgLocatedNode*)
-                 outer_for_stmt)->get_file_info()->get_filenameString());
-
-    instrument_loop_trip_count(fileInfo, loop_info);
-
+void aligncheck_t::instrument_streaming_stores(Sg_File_Info* fileInfo,
+        loop_info_t& loop_info) {
     // Extract streaming stores from array references in the loop.
     sstore_map_t sstore_map;
+    reference_list_t& reference_list = loop_info.reference_list;
+
     for (reference_list_t::iterator it2 = reference_list.begin();
             it2 != reference_list.end(); it2++) {
         reference_info_t& reference_info = *it2;
@@ -178,8 +156,9 @@ void aligncheck_t::process_loop(SgForStatement* outer_for_stmt,
             SgExpression* node = isSgExpression(*it2);
             if (node) {
                 SgBinaryOp* copy_node = isSgBinaryOp(copyExpression(node));
-                if (ir_methods::contains_expr(copy_node, idxv)) {
-                    ir_methods::replace_expr(copy_node, idxv, init);
+                if (ir_methods::contains_expr(copy_node, loop_info.idxv_expr)) {
+                    ir_methods::replace_expr(copy_node, loop_info.idxv_expr,
+                            loop_info.init_expr);
                 }
 
                 expr_list.push_back(copy_node);
@@ -219,14 +198,16 @@ void aligncheck_t::process_loop(SgForStatement* outer_for_stmt,
 
         // If we have any expressions, add the instrumentation call.
         if (expr_list.size()) {
-            int line_number = for_stmt->get_file_info()->get_raw_line();
+            int line_number = 0;
+            line_number = loop_info.for_stmt->get_file_info()->get_raw_line();
             SgIntVal* param_line_number = new SgIntVal(fileInfo, line_number);
             SgIntVal* param_count = new SgIntVal(fileInfo, expr_list.size());
 
             std::string function_name = SageInterface::is_Fortran_language()
                 ? "indigo__sstore_aligncheck_f" : "indigo__sstore_aligncheck_c";
 
-            SgBasicBlock* bb = getEnclosingNode<SgBasicBlock>(for_stmt);
+            SgBasicBlock* bb = NULL;
+            bb = getEnclosingNode<SgBasicBlock>(loop_info.for_stmt);
             std::vector<SgExpression*> params;
             params.push_back(param_line_number);
             params.push_back(param_count);
@@ -238,11 +219,19 @@ void aligncheck_t::process_loop(SgForStatement* outer_for_stmt,
 
             statement_info_t statement_info;
             statement_info.statement = expr_stmt;
-            statement_info.reference_statement = for_stmt;
+            statement_info.reference_statement = loop_info.for_stmt;
             statement_info.before = true;
             statement_list.push_back(statement_info);
         }
     }
+}
+
+void aligncheck_t::instrument_alignment_checks(Sg_File_Info* fileInfo,
+        SgForStatement* outer_for_stmt, loop_info_t& loop_info,
+        name_list_t& stream_list, expr_map_t& loop_map) {
+    pntr_list_t pntr_list;
+    std::set<std::string> stream_set;
+    reference_list_t& reference_list = loop_info.reference_list;
 
     for (reference_list_t::iterator it2 = reference_list.begin();
             it2 != reference_list.end(); it2++) {
@@ -273,7 +262,7 @@ void aligncheck_t::process_loop(SgForStatement* outer_for_stmt,
 
     std::string function_name = SageInterface::is_Fortran_language()
         ? "indigo__aligncheck_f" : "indigo__aligncheck_c";
-    SgBasicBlock* outer_bb = getEnclosingNode<SgBasicBlock>(for_stmt);
+    SgBasicBlock* outer_bb = getEnclosingNode<SgBasicBlock>(loop_info.for_stmt);
 
     std::set<std::string> expr_set;
     expr_list_t param_list;
@@ -356,7 +345,7 @@ void aligncheck_t::process_loop(SgForStatement* outer_for_stmt,
             std::string expr = *(expr_set.begin());
 
             VariableRenaming::NumNodeRenameTable rename_table =
-                var_renaming->getReachingDefsAtNode(for_stmt);
+                var_renaming->getReachingDefsAtNode(loop_info.for_stmt);
 
             // Expand the iterator list into a map for easier lookup.
             ir_methods::construct_def_map(rename_table, def_map);
@@ -420,12 +409,37 @@ void aligncheck_t::process_loop(SgForStatement* outer_for_stmt,
 
             statement_info_t statement_info;
             statement_info.statement = ir_methods::prepare_call_statement(
-                    getEnclosingNode<SgBasicBlock>(for_stmt),
+                    getEnclosingNode<SgBasicBlock>(loop_info.for_stmt),
                     function_name, params);
-            statement_info.reference_statement = for_stmt;
+            statement_info.reference_statement = loop_info.for_stmt;
             statement_info.before = true;
             statement_list.push_back(statement_info);
         }
+    }
+}
+
+void aligncheck_t::process_loop(SgForStatement* outer_for_stmt,
+        loop_info_t& loop_info, expr_map_t& loop_map,
+        name_list_t& stream_list) {
+    loop_map[loop_info.idxv_expr] = &loop_info;
+    if (contains_non_linear_reference(loop_info.reference_list)) {
+        std::cout << "Found non-linear reference(s) in loop.\n";
+        return;
+    }
+
+    // Instrument this loop only if
+    // the loop header components have been identified.
+    if (loop_info.idxv_expr && loop_info.test_expr && loop_info.init_expr &&
+            loop_info.test_expr) {
+        Sg_File_Info *fileInfo =
+            Sg_File_Info::generateFileInfoForTransformationNode(
+                    ((SgLocatedNode*)
+                     outer_for_stmt)->get_file_info()->get_filenameString());
+
+        instrument_loop_trip_count(fileInfo, loop_info);
+        instrument_streaming_stores(fileInfo, loop_info);
+        instrument_alignment_checks(fileInfo, outer_for_stmt, loop_info,
+                stream_list, loop_map);
     }
 
     for(std::vector<loop_info_list_t>::iterator it =
