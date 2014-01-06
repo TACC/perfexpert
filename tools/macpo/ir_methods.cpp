@@ -39,18 +39,13 @@ bool ir_methods::vectorizable(SgStatement*& stmt) {
             isSgComputedGotoStatement(stmt) ||
             isSgContinueStmt(stmt) ||
             isSgElseWhereStatement(stmt) ||
-            isSgForInitStatement(stmt) ||
             isSgGotoStatement(stmt) ||
             isSgReturnStmt(stmt) ||
             isSgClassDefinition(stmt) ||
-            isSgDoWhileStmt(stmt) ||
-            isSgForAllStatement(stmt) ||
-            isSgFortranDo(stmt) ||
             isSgFunctionDefinition(stmt) ||
             isSgIfStmt(stmt) ||
             isSgNamespaceDefinitionStatement(stmt) ||
             isSgSwitchStatement(stmt) ||
-            isSgWhileStmt(stmt) ||
             isSgWithStatement(stmt)) {
         return false;
     }
