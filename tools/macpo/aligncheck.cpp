@@ -40,7 +40,6 @@ void aligncheck_t::atTraversalStart() {
 }
 
 void aligncheck_t::atTraversalEnd() {
-    std::cout << "statement count: " << statement_list.size() << "\n";
 }
 
 bool aligncheck_t::contains_non_linear_reference(
