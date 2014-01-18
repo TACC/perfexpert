@@ -314,6 +314,8 @@ SgExprStatement* ir_methods::insert_instrumentation_call(inst_info_t& inst_info)
     } else {
         insertStatementAfter(inst_info.stmt, fCall);
     }
+
+    return fCall;
 }
 
 long ir_methods::get_reference_index(reference_list_t& reference_list,

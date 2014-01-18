@@ -104,8 +104,7 @@ void MINST::visit(SgNode* node)
     // Check if this is the function that we are told to instrument
     if (isSgFunctionDefinition(node)) {
         std::string function_name = ((SgFunctionDefinition*) node)->get_declaration()->get_name();
-        if (function_name == "main" && (action == ACTION_INSTRUMENT ||
-                    action == ACTION_ALIGNCHECK)) {
+        if (function_name == "main" && action == ACTION_INSTRUMENT) {
             // Found main, now insert calls to indigo__init() and indigo__create_map()
             SgBasicBlock* body = ((SgFunctionDefinition*) node)->get_body();
 
