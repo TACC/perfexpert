@@ -177,7 +177,7 @@ void MINST::visit(SgNode* node)
 
             std::vector<SgExpression*> params, empty_params;
             int create_file;
-            if (action == ACTION_INSTRUMENT) {
+            if (action == ACTION_INSTRUMENT || action == ACTION_GENTRACE) {
                 create_file = 1;
             } else {
                 create_file = 0;
@@ -193,7 +193,7 @@ void MINST::visit(SgNode* node)
             insertStatementBefore(statement, expr_stmt);
             ROSE_ASSERT(expr_stmt);
 
-            if (action == ACTION_INSTRUMENT) {
+            if (action == ACTION_INSTRUMENT || action == ACTION_GENTRACE) {
                 SgExprStatement* map_stmt = NULL;
                 map_stmt = ir_methods::prepare_call_statement(body,
                         indigo__create_map, empty_params, expr_stmt);
