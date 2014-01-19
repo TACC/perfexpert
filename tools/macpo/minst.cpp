@@ -210,8 +210,8 @@ void MINST::visit(SgNode* node)
                 return;
 
             if (action == ACTION_INSTRUMENT) {
-                std::cerr << "Instrumenting function " << function_name <<
-                    std::endl;
+                std::cerr << mprefix << "Instrumenting function " <<
+                    function_name << std::endl;
 
                 // We found the function that we wanted to instrument,
                 // now insert the indigo__create_map_() function in this file.
@@ -225,8 +225,8 @@ void MINST::visit(SgNode* node)
                 statement_list.insert(statement_list.end(),
                         inst.stmt_begin(), inst.stmt_end());
             } else if (action == ACTION_ALIGNCHECK) {
-                std::cerr << "Placing alignment-related checks around loop(s) "
-                    << "in function " << function_name << std::endl;
+                std::cerr << mprefix "Placing alignment-related checks around "
+                    "loop(s) in function " << function_name << std::endl;
 
                 // We found the function that we wanted to instrument,
                 // now insert the indigo__create_map_() function in this file.
@@ -268,8 +268,8 @@ void MINST::visit(SgNode* node)
                 return;
 
             if (action == ACTION_INSTRUMENT) {
-                std::cerr << "Instrumenting loop in function " << function_name
-                    << " at line " << _line_number << std::endl;
+                std::cerr << mprefix << "Instrumenting loop in function " <<
+                    function_name << " at line " << _line_number << std::endl;
 
                 // We found the loop that we wanted to instrument,
                 // now insert the indigo__create_map_() function in this file.
@@ -283,9 +283,9 @@ void MINST::visit(SgNode* node)
                 statement_list.insert(statement_list.end(),
                         inst.stmt_begin(), inst.stmt_end());
             } else if (action == ACTION_ALIGNCHECK) {
-                std::cerr << "Placing alignment checks around loop in function "
-                    << function_name << " at line " << _line_number <<
-                    std::endl;
+                std::cerr << mprefix << "Placing alignment checks around loop "
+                    "in function " << function_name << " at line " <<
+                    _line_number << std::endl;
 
                 // We found the function that we wanted to instrument,
                 // now insert the indigo__create_map_() function in this file.

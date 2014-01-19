@@ -36,22 +36,24 @@ bool argparse::copy_file(const char *source_file,
     struct stat stat_buf; 
 
     if (access(source_file, R_OK) < 0) {
-        std::cerr << "Cannot read file: " << source_file << "\n";
+        std::cerr << mprefix << "Cannot read file: " << source_file <<
+            std::endl;
         return false;
     }
 
     int src, dst;
     src = open(source_file, O_RDONLY);
     if (src < 0) {
-        std::cerr << "Cannot open file for reading: " << source_file << "\n";
+        std::cerr << mprefix << "Cannot open file for reading: " <<
+            source_file << std::endl;
         return false;
     }
 
     dst = open(destination_file, O_WRONLY | O_CREAT | O_TRUNC,
             stat_buf.st_mode & 0777);
     if (dst < 0) {
-        std::cerr << "Cannot open file for writing: " << destination_file <<
-            "\n";
+        std::cerr << mprefix << "Cannot open file for writing: " <<
+            destination_file << std::endl;
         close(src);
         return false;
     }

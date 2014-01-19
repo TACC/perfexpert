@@ -27,6 +27,25 @@
 using namespace SageBuilder;
 using namespace SageInterface;
 
+SgExprStatement* ir_methods::create_long_incr_statement(Sg_File_Info* fileInfo,
+        const std::string& name) {
+    SgType* long_type = buildLongType();
+    SgVarRefExp* expr = buildVarRefExp(name);
+    SgPlusPlusOp* incr_op = new SgPlusPlusOp(fileInfo, expr,long_type);
+    SgExprStatement* incr_statement = new SgExprStatement(fileInfo, incr_op);
+
+    return incr_statement;
+}
+
+SgVariableDeclaration* ir_methods::create_long_variable(Sg_File_Info* fileInfo,
+        const std::string& name, long init_value) {
+    SgType* long_type = buildLongType();
+    SgVariableDeclaration* var_decl = new SgVariableDeclaration(fileInfo,
+            name, long_type, buildAssignInitializer(buildIntVal(init_value)));
+
+    return var_decl;
+}
+
 bool ir_methods::vectorizable(SgStatement*& stmt) {
     if (!stmt)
         return true;
@@ -85,8 +104,8 @@ int ir_methods::get_loop_header_components(VariableRenaming*& var_renaming,
     SgStatement* stmt = first_stmt;
     while (stmt) {
         if (!vectorizable(stmt)) {
-            std::cout << "This loop cannot be vectorized because of the "
-                << "following statement: " << stmt->unparseToString() <<
+            std::cerr << mprefix << "This loop cannot be vectorized because of "
+                << "the following statement: " << stmt->unparseToString() <<
                 "\n";
             return INVALID_FLOW;
         }

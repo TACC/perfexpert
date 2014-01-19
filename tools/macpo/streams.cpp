@@ -111,7 +111,7 @@ attrib streams_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
             && parent
             && (!isSgPntrArrRefExp(parent)|| (isSgPntrArrRefExp(parent) && parent->getChildIndex(node) > 0))) { // Is this node representing the top-level dimension of an array or if this array expression is used to read from another array?
         if (!isSgLocatedNode(node))	{ // If no debug info present, can't do anything
-            std::cerr << "Debug info not present, cannot proceed!" << std::endl;
+            std::cerr << mprefix << "Debug info not present, cannot proceed!" << std::endl;
             return attr;
         }
 

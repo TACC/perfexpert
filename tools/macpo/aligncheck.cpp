@@ -76,13 +76,12 @@ void aligncheck_t::instrument_loop_trip_count(Sg_File_Info* fileInfo,
         snprintf (var_name, 32, "indigo__trip_count_%d", line_number);
         SgType* long_type = buildLongType();
 
-        SgVariableDeclaration* trip_count = new SgVariableDeclaration(fileInfo,
-                var_name, long_type, buildAssignInitializer(buildIntVal(0)));
+        SgVariableDeclaration* trip_count = NULL;
+        trip_count = ir_methods::create_long_variable(fileInfo, var_name, 0);
 
         SgVarRefExp* trip_count_expr = buildVarRefExp(var_name);
         SgPlusPlusOp* incr_op = new SgPlusPlusOp(fileInfo,
                 trip_count_expr, long_type);
-
         SgExprStatement* incr_statement = new SgExprStatement(fileInfo,
                 incr_op);
 
@@ -326,11 +325,7 @@ void aligncheck_t::instrument_alignment_checks(Sg_File_Info* fileInfo,
 
                 param_list.push_back(param_addr_initial);
                 param_list.push_back(param_addr_final);
-            } else {
-                std::cout << "Failed to create copy.\n";
             }
-        } else {
-            std::cout << "NULL init_ref\n";
         }
     }
 
@@ -384,7 +379,6 @@ void aligncheck_t::instrument_alignment_checks(Sg_File_Info* fileInfo,
                     statement_list.push_back(statement_info);
                 }
             } else {
-                std::cout << "no definitions, placing before outermost for loop.\n";
                 // TODO: Place function call before the start of the outermost loop.
                 std::vector<SgExpression*> params;
                 params.push_back(param_line_no);
@@ -423,7 +417,8 @@ void aligncheck_t::process_loop(SgForStatement* outer_for_stmt,
         name_list_t& stream_list) {
     loop_map[loop_info.idxv_expr] = &loop_info;
     if (contains_non_linear_reference(loop_info.reference_list)) {
-        std::cout << "Found non-linear reference(s) in loop.\n";
+        std::cerr << mprefix << "Found non-linear reference(s) in loop." <<
+            std::endl;
         return;
     }
 

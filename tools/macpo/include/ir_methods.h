@@ -46,6 +46,13 @@ class ir_methods {
         typedef std::map<std::string, VariableRenaming::NumNodeRenameEntry>
             def_map_t;
 
+        static SgExprStatement* create_long_incr_statement(
+                Sg_File_Info* fileInfo, const std::string& name);
+
+        static SgVariableDeclaration* create_long_variable(
+                Sg_File_Info* fileInfo, const std::string& name,
+                long init_value);
+
         static bool vectorizable(SgStatement*& stmt);
 
         static int get_loop_header_components(VariableRenaming*& var_renaming,

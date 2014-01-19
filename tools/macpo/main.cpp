@@ -47,8 +47,10 @@ int main (int argc, char *argv[]) {
     if (options.action != ACTION_NONE) {
         // Check if at least a function or a loop was specified on the command line
         if (options.function_name.size() == 0) {
-            std::cerr << "USAGE: " << argv[0] << " <options>\n";
-            std::cerr << "Did not find valid options on the command line\n";
+            std::cerr << mprefix << "USAGE: " << argv[0] << " <options>" <<
+                std::endl;
+            std::cerr << mprefix << "Did not find valid options on the command "
+                << "line" << std::endl;
             return -1;
         }
 
@@ -60,8 +62,9 @@ int main (int argc, char *argv[]) {
         if (options.backup_filename.size()) {
             // We need to save the input file to a backup file.
             if (files.size() != 1) {
-                std::cerr << "Backup option can be specified with only a single"
-                    << " file for compilation, terminating.\n";
+                std::cerr << mprefix << "Backup option can be specified with "
+                    << "only a single file for compilation, terminating." <<
+                    std::endl;
                 return -1;
             }
 
@@ -71,12 +74,12 @@ int main (int argc, char *argv[]) {
             // Copy the file over.
             if (argparse::copy_file(source.c_str(),
                         options.backup_filename.c_str()) < 0) {
-                std::cerr << "Error backing up file.\n";
+                std::cerr << mprefix << "Error backing up file." << std::endl;
                 return -1;
             }
 
-            std::cout << "Saved " << source << " into " <<
-                    options.backup_filename << ".\n";
+            std::cerr << mprefix << "Saved " << source << " into " <<
+                    options.backup_filename << "." << std::endl;
         }
 
         VariableRenaming var_renaming(project);
