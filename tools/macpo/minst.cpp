@@ -34,11 +34,10 @@ using namespace SageBuilder;
 using namespace SageInterface;
 
 MINST::MINST(short _action, int _line_number, std::string _inst_func,
-        bool _gen_trace, VariableRenaming* _var_renaming) {
+        VariableRenaming* _var_renaming) {
     action = _action;
     line_number = _line_number;
     inst_func = _inst_func;
-    gen_trace = _gen_trace;
     var_renaming = _var_renaming;
 }
 
@@ -218,23 +217,13 @@ void MINST::visit(SgNode* node)
                 // now insert the indigo__create_map_() function in this file.
                 insert_map_function(node);
 
-                if (gen_trace) {
-                    tracer_t tracer;
-                    tracer.traverse(node, attrib());
+                instrumentor_t inst;
+                inst.traverse(node, attrib());
 
-                    // Pull information from AST traversal.
-                    stream_list = tracer.get_stream_list();
-                    statement_list.insert(statement_list.end(),
-                            tracer.stmt_begin(), tracer.stmt_end());
-                } else {
-                    instrumentor_t inst;
-                    inst.traverse(node, attrib());
-
-                    // Pull information from AST traversal.
-                    stream_list = inst.get_stream_list();
-                    statement_list.insert(statement_list.end(),
-                            inst.stmt_begin(), inst.stmt_end());
-                }
+                // Pull information from AST traversal.
+                stream_list = inst.get_stream_list();
+                statement_list.insert(statement_list.end(),
+                        inst.stmt_begin(), inst.stmt_end());
             } else if (action == ACTION_ALIGNCHECK) {
                 std::cerr << "Placing alignment-related checks around loop(s) "
                     << "in function " << function_name << std::endl;
@@ -247,6 +236,21 @@ void MINST::visit(SgNode* node)
                 visitor.process_node(node);
                 statement_list.insert(statement_list.end(),
                         visitor.stmt_begin(), visitor.stmt_end());
+            } else if (action == ACTION_GENTRACE) {
+                std::cerr << "Generating trace for function " << function_name
+                    << std::endl;
+
+                // We found the function that we wanted to instrument,
+                // now insert the indigo__create_map_() function in this file.
+                insert_map_function(node);
+
+                tracer_t tracer;
+                tracer.traverse(node, attrib());
+
+                // Pull information from AST traversal.
+                stream_list = tracer.get_stream_list();
+                statement_list.insert(statement_list.end(),
+                        tracer.stmt_begin(), tracer.stmt_end());
             }
         }
     }
@@ -271,23 +275,13 @@ void MINST::visit(SgNode* node)
                 // now insert the indigo__create_map_() function in this file.
                 insert_map_function(node);
 
-                if (gen_trace) {
-                    tracer_t tracer;
-                    tracer.traverse(node, attrib());
+                instrumentor_t inst;
+                inst.traverse(node, attrib());
 
-                    // Pull information from AST traversal.
-                    stream_list = tracer.get_stream_list();
-                    statement_list.insert(statement_list.end(),
-                            tracer.stmt_begin(), tracer.stmt_end());
-                } else {
-                    instrumentor_t inst;
-                    inst.traverse(node, attrib());
-
-                    // Pull information from AST traversal.
-                    stream_list = inst.get_stream_list();
-                    statement_list.insert(statement_list.end(),
-                            inst.stmt_begin(), inst.stmt_end());
-                }
+                // Pull information from AST traversal.
+                stream_list = inst.get_stream_list();
+                statement_list.insert(statement_list.end(),
+                        inst.stmt_begin(), inst.stmt_end());
             } else if (action == ACTION_ALIGNCHECK) {
                 std::cerr << "Placing alignment checks around loop in function "
                     << function_name << " at line " << _line_number <<
@@ -301,6 +295,21 @@ void MINST::visit(SgNode* node)
                 visitor.process_node(node);
                 statement_list.insert(statement_list.end(),
                         visitor.stmt_begin(), visitor.stmt_end());
+            } else if (action == ACTION_GENTRACE) {
+                std::cerr << "Generating trace for loop in function " <<
+                    function_name << " at line " << _line_number << std::endl;
+
+                // We found the loop that we wanted to instrument,
+                // now insert the indigo__create_map_() function in this file.
+                insert_map_function(node);
+
+                tracer_t tracer;
+                tracer.traverse(node, attrib());
+
+                // Pull information from AST traversal.
+                stream_list = tracer.get_stream_list();
+                statement_list.insert(statement_list.end(),
+                        tracer.stmt_begin(), tracer.stmt_end());
             }
         }
     }

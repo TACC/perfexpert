@@ -27,7 +27,7 @@
 
 #define mprefix "[macpo] "
 
-enum { ACTION_NONE=0, ACTION_INSTRUMENT, ACTION_ALIGNCHECK };
+enum { ACTION_NONE=0, ACTION_INSTRUMENT, ACTION_ALIGNCHECK, ACTION_GENTRACE };
 
 const int FLAG_NONE = 0;
 const int FLAG_NOCOMPILE = 1 << 0;
@@ -35,7 +35,6 @@ const int FLAG_NOCOMPILE = 1 << 0;
 typedef struct {
     short action;
     int line_number;
-    bool gen_trace;
     bool no_compile;
     std::string function_name;
     std::string backup_filename;
