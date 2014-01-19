@@ -328,13 +328,15 @@ static void print_tripcount_histogram(int line_number, long* histogram) {
             pair_histogram[MAX_HISTOGRAM_ENTRIES-3].first
         };
 
-        fprintf (stderr, "count %d found %ld times, ", values[0], counts[0]);
+        fprintf (stderr, "count %d%s found %ld times, ", values[0],
+                values[0] == MAX_HISTOGRAM_ENTRIES-1 ? "+" : "", counts[0]);
         if (counts[1]) {
-            fprintf (stderr, "count %d found %ld times, ", values[1],
-                    counts[1]);
+            fprintf (stderr, "count %d%s found %ld times, ", values[1],
+                    values[1] == MAX_HISTOGRAM_ENTRIES-1 ? "+" : "", counts[1]);
 
             if (counts[2]) {
-                fprintf (stderr, "count %d found %ld times.", values[2],
+                fprintf (stderr, "count %d%s found %ld times, ", values[2],
+                        values[2] == MAX_HISTOGRAM_ENTRIES-1 ? "+" : "",
                         counts[2]);
             }
         }
@@ -364,13 +366,15 @@ static void print_alignment_histogram(int line_number, long* histogram) {
             pair_histogram[CACHE_LINE_SIZE-3].first
         };
 
-        fprintf (stderr, "count %d found %ld times, ", values[0], counts[0]);
+        fprintf (stderr, "count %d%s found %ld times, ", values[0],
+                values[0] == MAX_HISTOGRAM_ENTRIES-1 ? "+" : "", counts[0]);
         if (counts[1]) {
-            fprintf (stderr, "count %d found %ld times, ", values[1],
-                    counts[1]);
+            fprintf (stderr, "count %d%s found %ld times, ", values[1],
+                    values[1] == MAX_HISTOGRAM_ENTRIES-1 ? "+" : "", counts[1]);
 
             if (counts[2]) {
-                fprintf (stderr, "count %d found %ld times.", values[2],
+                fprintf (stderr, "count %d%s found %ld times, ", values[2],
+                        values[2] == MAX_HISTOGRAM_ENTRIES-1 ? "+" : "",
                         counts[2]);
             }
         }
@@ -745,8 +749,8 @@ void indigo__tripcount_check_c(int line_number, long trip_count) {
     if (trip_count < 0)
         trip_count = 0;
 
-    if (trip_count >= 1024)
-        trip_count = 1023;
+    if (trip_count >= MAX_HISTOGRAM_ENTRIES)
+        trip_count = MAX_HISTOGRAM_ENTRIES-1;
 
     histogram[trip_count]++;
 }
