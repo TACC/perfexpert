@@ -94,7 +94,7 @@ void aligncheck_t::instrument_loop_trip_count(Sg_File_Info* fileInfo,
         params.push_back(trip_count_expr);
         SgExprStatement* expr_statement = NULL;
         expr_statement = ir_methods::prepare_call_statement(bb, function_name,
-                params);
+                params, for_stmt);
 
         statement_info_t tripcount_call;
         tripcount_call.statement = expr_statement;
@@ -215,7 +215,7 @@ void aligncheck_t::instrument_streaming_stores(Sg_File_Info* fileInfo,
 
             SgExprStatement* expr_stmt = NULL;
             expr_stmt = ir_methods::prepare_call_statement(bb, function_name,
-                    params);
+                    params, loop_info.for_stmt);
 
             statement_info_t statement_info;
             statement_info.statement = expr_stmt;
@@ -379,7 +379,7 @@ void aligncheck_t::instrument_alignment_checks(Sg_File_Info* fileInfo,
 
                     statement_info.statement =
                         ir_methods::prepare_call_statement(bb, function_name,
-                                params);
+                                params, statement_info.reference_statement);
                     statement_info.before = true;
                     statement_list.push_back(statement_info);
                 }
@@ -395,7 +395,7 @@ void aligncheck_t::instrument_alignment_checks(Sg_File_Info* fileInfo,
                 statement_info_t statement_info;
                 statement_info.statement = ir_methods::prepare_call_statement(
                         getEnclosingNode<SgBasicBlock>(outer_for_stmt),
-                        function_name, params);
+                        function_name, params, outer_for_stmt);
                 statement_info.reference_statement = outer_for_stmt;
                 statement_info.before = true;
                 statement_list.push_back(statement_info);
@@ -410,7 +410,7 @@ void aligncheck_t::instrument_alignment_checks(Sg_File_Info* fileInfo,
             statement_info_t statement_info;
             statement_info.statement = ir_methods::prepare_call_statement(
                     getEnclosingNode<SgBasicBlock>(loop_info.for_stmt),
-                    function_name, params);
+                    function_name, params, loop_info.for_stmt);
             statement_info.reference_statement = loop_info.for_stmt;
             statement_info.before = true;
             statement_list.push_back(statement_info);

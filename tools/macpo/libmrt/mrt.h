@@ -65,9 +65,6 @@ to 711 micro-seconds. And thus, we set AWAKE_USEC to 711.
 #define CACHE_LINE_SIZE         64
 #define MAX_HISTOGRAM_ENTRIES   1024
 
-typedef std::pair<long, short> val_idx_pair;
-typedef std::pair<int, short> line_threadid_pair;
-
 static size_t numCores = 0;
 static __thread int coreID=-1;
 static char szFilename[256]={0};
@@ -78,7 +75,7 @@ static node_t terminal_node;
 #if	defined(__cplusplus)
 extern "C" {
 #endif
-void indigo__init_();
+void indigo__init_(short create_file);
 #if	defined(__cplusplus)
 }
 #endif
@@ -111,6 +108,22 @@ static inline int getCoreID();
 
 static inline void signalHandler(int sig);
 static inline void fill_struct(int read_write, int line_number, size_t p, int var_idx);
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
+void indigo__gen_trace_c(int read_write, int line_number, void* base, void* addr, int var_idx);
+#if defined (__cplusplus)
+}
+#endif
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
+void indigo__gen_trace_f(int* read_write, int* line_number, void* base, void* addr, int* var_idx);
+#if defined (__cplusplus)
+}
+#endif
 
 #if defined(__cplusplus)
 extern "C" {

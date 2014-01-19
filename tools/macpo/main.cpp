@@ -92,7 +92,8 @@ int main (int argc, char *argv[]) {
             std::string basename = filename.substr(filename.find_last_of("/"));
 
             // Start the traversal!
-            MINST traversal (options.action, options.line_number, options.function_name, &var_renaming);
+            MINST traversal (options.action, options.line_number,
+                    options.function_name, options.gen_trace, &var_renaming);
             traversal.traverseWithinFile (file, preorder);
         }
 

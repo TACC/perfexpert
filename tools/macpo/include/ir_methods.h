@@ -62,7 +62,8 @@ class ir_methods {
 
         static SgExprStatement* prepare_call_statement(SgBasicBlock* bb,
                 const std::string& function_name,
-                const std::vector<SgExpression*>& params);
+                const std::vector<SgExpression*>& params,
+                const SgNode* reference_statement);
 
         static long get_reference_index(reference_list_t& reference_list,
                 std::string& stream_name);

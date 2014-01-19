@@ -23,7 +23,7 @@
 #include <rose.h>
 
 #include "inst_defs.h"
-#include "instrumentor.h"
+#include "tracer.h"
 #include "ir_methods.h"
 #include "macpo_record.h"
 #include "streams.h"
@@ -31,19 +31,19 @@
 using namespace SageBuilder;
 using namespace SageInterface;
 
-void instrumentor_t::atTraversalStart() {
+void tracer_t::atTraversalStart() {
     stream_list.clear();
     statement_list.clear();
 }
 
-void instrumentor_t::atTraversalEnd() {
+void tracer_t::atTraversalEnd() {
 }
 
-name_list_t& instrumentor_t::get_stream_list() {
+name_list_t& tracer_t::get_stream_list() {
     return stream_list;
 }
 
-attrib instrumentor_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
+attrib tracer_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
     if (attr.skip)
         return attr;
 
@@ -51,19 +51,6 @@ attrib instrumentor_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
     streams.traverse(node, attrib());
 
     reference_list_t& reference_list = streams.get_reference_list();
-
-    size_t count = 0;
-    for(reference_list_t::iterator it = reference_list.begin();
-            it != reference_list.end(); it++) {
-        reference_info_t& reference_info = *it;
-        std::string stream = reference_info.name;
-
-        if (count == reference_info.idx) {
-            stream_list.push_back(stream);
-            count += 1;
-        }
-    }
-
     for(reference_list_t::iterator it = reference_list.begin();
             it != reference_list.end(); it++) {
         reference_info_t& reference_info = *it;
@@ -84,6 +71,11 @@ attrib instrumentor_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
         SgStatement *stmt = getEnclosingNode<SgStatement>(ref_node);
         if (stmt)	line_number = stmt->get_file_info()->get_raw_line();
 
+        SgPntrArrRefExp* pntr = isSgPntrArrRefExp(ref_node);
+        ROSE_ASSERT(pntr);
+
+        SgExpression *param_base = pntr->get_lhs_operand();
+
         // If not Fortran, cast the address to a void pointer
         SgExpression *param_addr = SageInterface::is_Fortran_language() ?
             (SgExpression*) ref_node : buildCastExp (
@@ -95,11 +87,12 @@ attrib instrumentor_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
         SgIntVal* param_read_write = new SgIntVal(fileInfo, ref_access_type);
 
         std::string function_name = SageInterface::is_Fortran_language() ?
-                "indigo__record_f" : "indigo__record_c";
+                "indigo__gen_trace_f" : "indigo__gen_trace_c";
 
         std::vector<SgExpression*> params;
         params.push_back(param_read_write);
         params.push_back(param_line_number);
+        params.push_back(param_base);
         params.push_back(param_addr);
         params.push_back(param_idx);
 
@@ -115,10 +108,10 @@ attrib instrumentor_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
     return attr;
 }
 
-const statement_list_t::iterator instrumentor_t::stmt_begin() {
+const statement_list_t::iterator tracer_t::stmt_begin() {
     return statement_list.begin();
 }
 
-const statement_list_t::iterator instrumentor_t::stmt_end() {
+const statement_list_t::iterator tracer_t::stmt_end() {
     return statement_list.end();
 }

@@ -19,28 +19,26 @@
  * $HEADER$
  */
 
-#ifndef	GENERIC_DEFS_H_
-#define	GENERIC_DEFS_H_
+#ifndef	TRACER_H_
+#define	TRACER_H_
 
-#include <string>
-#include <vector>
+#include "generic_defs.h"
+#include "inst_defs.h"
 
-#define mprefix "[macpo] "
+class tracer_t : public AstTopDownProcessing<attrib> {
+    public:
+        name_list_t& get_stream_list();
 
-enum { ACTION_NONE=0, ACTION_INSTRUMENT, ACTION_ALIGNCHECK };
+        virtual attrib evaluateInheritedAttribute(SgNode* node, attrib attr);
+        virtual void atTraversalStart();
+        virtual void atTraversalEnd();
 
-const int FLAG_NONE = 0;
-const int FLAG_NOCOMPILE = 1 << 0;
+        const statement_list_t::iterator stmt_begin();
+        const statement_list_t::iterator stmt_end();
 
-typedef struct {
-    short action;
-    int line_number;
-    bool gen_trace;
-    bool no_compile;
-    std::string function_name;
-    std::string backup_filename;
-} options_t;
+    private:
+        statement_list_t statement_list;
+        name_list_t stream_list;
+};
 
-typedef std::vector<std::string> name_list_t;
-
-#endif	/* GENERIC_DEFS_H_ */
+#endif	/* TRACER_H_ */

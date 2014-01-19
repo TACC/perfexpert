@@ -39,6 +39,9 @@
 #include "cpuid.h"
 #include "macpo_record.h"
 
+typedef std::pair<long, short> val_idx_pair;
+typedef std::pair<int, short> line_threadid_pair;
+
 static short proc = PROC_UNKNOWN;
 static std::map<line_threadid_pair, long*> sstore_align_map, align_map,
         tripcount_map;
@@ -150,115 +153,115 @@ static void signalHandler(int sig)
 	}
 }
 
-void indigo__init_()
-{
-	int i;
+static void set_thread_affinity() {
+    // Get which processor is this running on
+    int info[4];
+    if (!isCPUIDSupported())
+        fprintf (stderr, "MACPO :: CPUID not supported, cannot determine processor core information, resorting to defaults...\n");
+    else
+    {
+        char processorName[13];
+        getProcessorName(processorName);
 
-	// Get which processor is this running on
-	int info[4];
-	if (!isCPUIDSupported())
-		fprintf (stderr, "MACPO :: CPUID not supported, cannot determine processor core information, resorting to defaults...\n");
-	else
-	{
-		char processorName[13];
-		getProcessorName(processorName);
+        if (strncmp(processorName, "AuthenticAMD", 12) == 0)		proc = PROC_AMD;
+        else if (strncmp(processorName, "GenuineIntel", 12) == 0)	proc = PROC_INTEL;
+        else								proc = PROC_UNKNOWN;
 
-		if (strncmp(processorName, "AuthenticAMD", 12) == 0)		proc = PROC_AMD;
-		else if (strncmp(processorName, "GenuineIntel", 12) == 0)	proc = PROC_INTEL;
-		else								proc = PROC_UNKNOWN;
+        if (proc == PROC_UNKNOWN)
+            fprintf (stderr, "MACPO :: Cannot determine processor identification, resorting to defaults...\n");
+        else if (proc == PROC_INTEL)	// We need to do some special set up for Intel machines
+        {
+            numCores = sysconf(_SC_NPROCESSORS_CONF);
+            intel_apic_mapping = (int*) malloc (sizeof (int) * numCores);
 
-		if (proc == PROC_UNKNOWN)
-			fprintf (stderr, "MACPO :: Cannot determine processor identification, resorting to defaults...\n");
-		else if (proc == PROC_INTEL)	// We need to do some special set up for Intel machines
-		{
-			numCores = sysconf(_SC_NPROCESSORS_CONF);
-			intel_apic_mapping = (int*) malloc (sizeof (int) * numCores);
+            if (intel_apic_mapping)
+            {
+                // Get the original affinity mask
+                cpu_set_t old_mask;
+                CPU_ZERO(&old_mask);
+                sched_getaffinity(0, sizeof(cpu_set_t), &old_mask);
 
-			if (intel_apic_mapping)
-			{
-				// Get the original affinity mask
-				cpu_set_t old_mask;
-				CPU_ZERO(&old_mask);
-				sched_getaffinity(0, sizeof(cpu_set_t), &old_mask);
+                // Loop over all cores and find map their APIC IDs to core IDs
+                for (int i=0; i<numCores; i++)
+                {
+                    cpu_set_t mask;
+                    CPU_ZERO(&mask);
+                    CPU_SET(i, &mask);
 
-				// Loop over all cores and find map their APIC IDs to core IDs
-				for (i=0; i<numCores; i++)
-				{
-					cpu_set_t mask;
-					CPU_ZERO(&mask);
-					CPU_SET(i, &mask);
+                    if (sched_setaffinity(0, sizeof(cpu_set_t), &mask) != -1)
+                    {
+                        // Get the APIC ID
+                        __cpuid(info, 0xB, 0);
+                        if (info[EBX] != 0)	// x2APIC
+                        {
+                            __cpuid(info, 0xB, 2);
+                            intel_apic_mapping[i] = info[EDX];
+                        }
+                        else			// Traditonal APIC
+                        {
+                            __cpuid(info, 1, 0);
+                            intel_apic_mapping[i] = (info[EBX] & 0xff000000) >> 24;
+                        }
 
-					if (sched_setaffinity(0, sizeof(cpu_set_t), &mask) != -1)
-					{
-						// Get the APIC ID
-						__cpuid(info, 0xB, 0);
-						if (info[EBX] != 0)	// x2APIC
-						{
-							__cpuid(info, 0xB, 2);
-							intel_apic_mapping[i] = info[EDX];
-						}
-						else			// Traditonal APIC
-						{
-							__cpuid(info, 1, 0);
-							intel_apic_mapping[i] = (info[EBX] & 0xff000000) >> 24;
-						}
+#ifdef DEBUG_PRINT
+                        fprintf (stderr, "MACPO :: Registered mapping from core %d to APIC %d\n", i, intel_apic_mapping[i]);
+#endif
+                    }
+                }
 
-						#ifdef DEBUG_PRINT
-							fprintf (stderr, "MACPO :: Registered mapping from core %d to APIC %d\n", i, intel_apic_mapping[i]);
-						#endif
-					}
-				}
+                // Reset the original affinity mask
+                sched_setaffinity (0, sizeof(cpu_set_t), &old_mask);
+            }
+#ifdef DEBUG_PRINT
+            else
+            {
+                fprintf (stderr, "MACPO :: malloc() failed\n");
+            }
+#endif
+        }
+    }
+}
 
-				// Reset the original affinity mask
-				sched_setaffinity (0, sizeof(cpu_set_t), &old_mask);
-			}
-		#ifdef DEBUG_PRINT
-			else
-			{
-				fprintf (stderr, "MACPO :: malloc() failed\n");
-			}
-		#endif
-		}
-	}
+static void create_output_file() {
+    char szFilename[32];
+    sprintf (szFilename, "macpo.%d.out", (int) getpid());
+    fd = open(szFilename, O_CREAT | O_APPEND | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP);
+    if (fd < 0)
+    {
+        perror("MACPO :: Error opening log for writing");
+        exit(1);
+    }
 
-	terminal_node.type_message = MSG_TERMINAL;
+    if (access("macpo.out", F_OK) == 0)
+    {
+        // file exists, remove it
+        if (unlink("macpo.out") == -1)
+            perror ("MACPO :: Failed to remove macpo.out");
+    }
 
-	// Output file
-	char szFilename[32];
-	sprintf (szFilename, "macpo.%d.out", (int) getpid());
-	fd = open(szFilename, O_CREAT | O_APPEND | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP);
-	if (fd < 0)
-	{
-		perror("MACPO :: Error opening log for writing");
-		exit(1);
-	}
+    // Now create the symlink
+    if (symlink(szFilename, "macpo.out") == -1)
+        perror ("MACPO :: Failed to create symlink \"macpo.out\"");
 
-	if (access("macpo.out", F_OK) == 0)
-	{
-		// file exists, remove it
-		if (unlink("macpo.out") == -1)
-			perror ("MACPO :: Failed to remove macpo.out");
-	}
+    // Now that we are done handling the critical stuff, write the metadata log to the macpo.out file
+    node_t node;
+    node.type_message = MSG_METADATA;
+    size_t exe_path_len = readlink ("/proc/self/exe", node.metadata_info.binary_name, STRING_LENGTH-1);
+    if (exe_path_len == -1)
+        perror ("MACPO :: Failed to read name of the binary from /proc/self/exe");
+    else
+    {
+        // Write the terminating character
+        node.metadata_info.binary_name[exe_path_len]='\0';
+        time(&node.metadata_info.execution_timestamp);
 
-	// Now create the symlink
-	if (symlink(szFilename, "macpo.out") == -1)
-		perror ("MACPO :: Failed to create symlink \"macpo.out\"");
+        write(fd, &node, sizeof(node_t));
+    }
 
-	// Now that we are done handling the critical stuff, write the metadata log to the macpo.out file
-	node_t node;
-	node.type_message = MSG_METADATA;
-	size_t exe_path_len = readlink ("/proc/self/exe", node.metadata_info.binary_name, STRING_LENGTH-1);
-	if (exe_path_len == -1)
-		perror ("MACPO :: Failed to read name of the binary from /proc/self/exe");
-	else
-	{
-		// Write the terminating character
-		node.metadata_info.binary_name[exe_path_len]='\0';
-		time(&node.metadata_info.execution_timestamp);
+    terminal_node.type_message = MSG_TERMINAL;
+}
 
-		write(fd, &node, sizeof(node_t));
-	}
-
+static void set_timers() {
 	// Set up the signal handler
 	signal(SIGPROF, signalHandler);
 
@@ -282,6 +285,20 @@ void indigo__init_()
 		itimer_new.it_value.tv_usec = AWAKE_USEC;
 		setitimer(ITIMER_PROF, &itimer_new, &itimer_old);
 	}
+}
+
+void indigo__init_(short create_file)
+{
+    set_thread_affinity();
+
+    if (create_file) {
+        create_output_file();
+
+        // We could set the timers even if the file did not have to be create.
+        // But timers are used to write to the file only. Since there is no
+        // other use of timers, we disable setting up timers as well.
+        set_timers();
+    }
 
 	atexit(indigo__exit);
 }
@@ -370,63 +387,96 @@ static void indigo__exit()
 	if (fd >= 0)	close(fd);
 	if (intel_apic_mapping)	free(intel_apic_mapping);
 
-    fprintf (stderr, "MACPO :: Alignments for streaming stores:\n");
-    for (std::map<line_threadid_pair, long*>::iterator it =
+    if (sstore_align_map.size()) {
+        fprintf (stderr, "MACPO :: Alignments for streaming stores:\n");
+        for (std::map<line_threadid_pair, long*>::iterator it =
                 sstore_align_map.begin(); it != sstore_align_map.end(); it++) {
-        line_threadid_pair pair = it->first;
-        int line_number = pair.first;
-        long* histogram = it->second;
+            line_threadid_pair pair = it->first;
+            int line_number = pair.first;
+            long* histogram = it->second;
 
-        if (histogram) {
-            print_alignment_histogram(line_number, histogram);
-            free(histogram);
+            if (histogram) {
+                print_alignment_histogram(line_number, histogram);
+                free(histogram);
+            }
         }
     }
 
-    fprintf (stderr, "MACPO :: Alignments for loop references:\n");
-    for (std::map<line_threadid_pair, long*>::iterator it = align_map.begin();
-            it != align_map.end(); it++) {
-        line_threadid_pair pair = it->first;
-        int line_number = pair.first;
-        long* histogram = it->second;
+    if (align_map.size()) {
+        fprintf (stderr, "MACPO :: Alignments for loop references:\n");
+        for (std::map<line_threadid_pair, long*>::iterator it =
+                align_map.begin(); it != align_map.end(); it++) {
+            line_threadid_pair pair = it->first;
+            int line_number = pair.first;
+            long* histogram = it->second;
 
-        if (histogram) {
-            print_alignment_histogram(line_number, histogram);
-            free(histogram);
+            if (histogram) {
+                print_alignment_histogram(line_number, histogram);
+                free(histogram);
+            }
         }
     }
 
-    fprintf (stderr, "MACPO :: Overlap among loop references:\n");
-    for (std::map<line_threadid_pair, bool>::iterator it = overlap_bin.begin();
-            it != overlap_bin.end(); it++) {
-        line_threadid_pair pair = it->first;
-        int line_number = pair.first;
-        bool overlap = it->second;
+    if (overlap_bin.size()) {
+        fprintf (stderr, "MACPO :: Overlap among loop references:\n");
+        for (std::map<line_threadid_pair, bool>::iterator it =
+                overlap_bin.begin(); it != overlap_bin.end(); it++) {
+            line_threadid_pair pair = it->first;
+            int line_number = pair.first;
+            bool overlap = it->second;
 
-        if (overlap) {
-            fprintf (stderr, "MACPO :: Array references in loop at line %d do "
-                    "overlap.\n", line_number);
-        } else {
-            fprintf (stderr, "MACPO :: No overlap among array references in "
-                    "loop at line %d.\n", line_number);
+            if (overlap) {
+                fprintf (stderr, "MACPO :: Array references in loop at line %d "
+                        "do overlap.\n", line_number);
+            } else {
+                fprintf (stderr, "MACPO :: No overlap among array references "
+                        "in loop at line %d.\n", line_number);
+            }
         }
     }
 
-    fprintf (stderr, "MACPO :: Loop trip counts:\n");
-    for (std::map<line_threadid_pair, long*>::iterator it =
-            tripcount_map.begin(); it != tripcount_map.end(); it++) {
-        line_threadid_pair pair = it->first;
-        int line_number = pair.first;
-        long* histogram = it->second;
+    if (tripcount_map.size()) {
+        fprintf (stderr, "MACPO :: Loop trip counts:\n");
+        for (std::map<line_threadid_pair, long*>::iterator it =
+                tripcount_map.begin(); it != tripcount_map.end(); it++) {
+            line_threadid_pair pair = it->first;
+            int line_number = pair.first;
+            long* histogram = it->second;
 
-        if (histogram) {
-            print_tripcount_histogram(line_number, histogram);
-            free(histogram);
+            if (histogram) {
+                print_tripcount_histogram(line_number, histogram);
+                free(histogram);
+            }
         }
     }
 }
 
-static inline void fill_struct(int read_write, int line_number, size_t p, int var_idx)
+static inline void fill_trace_struct(int read_write, int line_number, size_t base, size_t p, int var_idx)
+{
+	// If this process was never supposed to record stats
+	// or if the file-open failed, then return
+	if (fd < 0)	return;
+
+	if (sleeping == 1 || access_count >= 131072)	// 131072 is 128*1024 (power of two)
+		return;
+
+	size_t address_base = (size_t) base >> 6;	// Shift six bits to right so that we can track cache line assuming cache line size is 64 bytes
+	size_t address = (size_t) p >> 6;
+
+	node_t node;
+	node.type_message = MSG_TRACE_INFO;
+
+	node.trace_info.coreID = getCoreID();
+	node.trace_info.read_write = read_write;
+	node.trace_info.base = address_base;
+	node.trace_info.address = address;
+	node.trace_info.var_idx = var_idx;
+	node.trace_info.line_number = line_number;
+
+	write(fd, &node, sizeof(node_t));
+}
+
+static inline void fill_mem_struct(int read_write, int line_number, size_t p, int var_idx)
 {
 	// If this process was never supposed to record stats
 	// or if the file-open failed, then return
@@ -449,14 +499,24 @@ static inline void fill_struct(int read_write, int line_number, size_t p, int va
 	write(fd, &node, sizeof(node_t));
 }
 
+void indigo__gen_trace_c(int read_write, int line_number, void* base, void* addr, int var_idx)
+{
+	if (fd >= 0)	fill_trace_struct(read_write, line_number, (size_t) base, (size_t) addr, var_idx);
+}
+
+void indigo__gen_trace_f(int *read_write, int *line_number, void* base, void* addr, int *var_idx)
+{
+	if (fd >= 0)	fill_trace_struct(*read_write, *line_number, (size_t) base, (size_t) addr, *var_idx);
+}
+
 void indigo__record_c(int read_write, int line_number, void* addr, int var_idx)
 {
-	if (fd >= 0)	fill_struct(read_write, line_number, (size_t) addr, var_idx);
+	if (fd >= 0)	fill_mem_struct(read_write, line_number, (size_t) addr, var_idx);
 }
 
 void indigo__record_f_(int *read_write, int *line_number, void* addr, int *var_idx)
 {
-	if (fd >= 0)	fill_struct(*read_write, *line_number, (size_t) addr, *var_idx);
+	if (fd >= 0)	fill_mem_struct(*read_write, *line_number, (size_t) addr, *var_idx);
 }
 
 void indigo__write_idx_c(const char* var_name, const int length)

@@ -130,6 +130,8 @@ int argparse::parse_arguments(char* arg, options_t& options) {
             return -1;
 
         options.backup_filename = value;
+    } else if (option == "gen-trace") {
+        options.gen_trace = true;
     } else if (option == "no-compile") {
         options.no_compile = true;
     } else
@@ -140,7 +142,9 @@ int argparse::parse_arguments(char* arg, options_t& options) {
 
 void argparse::init_options(options_t& options) {
     options.action = ACTION_NONE;
+    options.gen_trace = false;
     options.no_compile = false;
+    options.gen_trace = false;
     options.line_number = 0;
     options.function_name = "";
     options.backup_filename = "";

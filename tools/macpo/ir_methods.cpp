@@ -341,8 +341,11 @@ SgExpression* ir_methods::get_expr_value(SgNode*& node, std::string var_name) {
 
 SgExprStatement* ir_methods::prepare_call_statement(SgBasicBlock* bb,
         const std::string& function_name, const std::vector<SgExpression*>&
-        params) {
+        params, const SgNode* reference_statement) {
+    ROSE_ASSERT(reference_statement);
+
     SgNode* parent = bb->get_parent();
+    SgNode* ref_parent = reference_statement->get_parent();
 
     if (isSgIfStmt(parent)) {
         SgIfStmt* if_node = static_cast<SgIfStmt*>(parent);
@@ -353,6 +356,7 @@ SgExprStatement* ir_methods::prepare_call_statement(SgBasicBlock* bb,
     SgExprStatement* fCall = buildFunctionCallStmt(SgName(function_name),
             buildVoidType(), buildExprListExp(params), bb);
 
+    fCall->set_parent(ref_parent);
     return fCall;
 }
 

@@ -28,12 +28,18 @@
 #include "ir_methods.h"
 #include "loop_traversal.h"
 #include "minst.h"
+#include "tracer.h"
 
 using namespace SageBuilder;
 using namespace SageInterface;
 
-MINST::MINST(short _action, int _line_number, std::string _inst_func, VariableRenaming* _var_renaming) {
-    action=_action, line_number=_line_number, inst_func=_inst_func, var_renaming=_var_renaming;
+MINST::MINST(short _action, int _line_number, std::string _inst_func,
+        bool _gen_trace, VariableRenaming* _var_renaming) {
+    action = _action;
+    line_number = _line_number;
+    inst_func = _inst_func;
+    gen_trace = _gen_trace;
+    var_renaming = _var_renaming;
 }
 
 void MINST::insert_map_prototype(SgNode* node) {
@@ -95,6 +101,7 @@ void MINST::atTraversalEnd() {
     for (statement_list_t::iterator it = statement_list.begin();
             it != statement_list.end(); it++) {
         statement_info_t& statement_info = *it;
+
         if (statement_info.before) {
             insertStatementBefore(statement_info.reference_statement,
                     statement_info.statement);
@@ -115,12 +122,10 @@ bool MINST::is_same_file(const std::string& file_1, const std::string& file_2) {
             : "") + file_2;
 
     if (realpath(canonical_file_1.c_str(), path_1) == NULL) {
-        std::cout << "could not resolve " << canonical_file_1 << "\n";
         return false;
     }
 
     if (realpath(canonical_file_2.c_str(), path_2) == NULL) {
-        std::cout << "could not resolve " << canonical_file_2 << "\n";
         return false;
     }
 
@@ -135,7 +140,7 @@ void MINST::visit(SgNode* node)
         file_info = Sg_File_Info::generateFileInfoForTransformationNode(
                 ((SgLocatedNode*) node)->get_file_info()->get_filenameString());
 
-        if (!SageInterface::is_Fortran_language() && action == ACTION_INSTRUMENT)
+        if (!SageInterface::is_Fortran_language())
             insertHeader("mrt.h", PreprocessingInfo::after, false, global_node);
     }
 
@@ -151,8 +156,7 @@ void MINST::visit(SgNode* node)
     // Check if this is the function that we are told to instrument
     if (isSgFunctionDefinition(node)) {
         std::string function_name = ((SgFunctionDefinition*) node)->get_declaration()->get_name();
-        if (function_name == "main" && (action == ACTION_INSTRUMENT ||
-                    action == ACTION_ALIGNCHECK)) {
+        if (function_name == "main" && action != ACTION_NONE) {
             // Found main, now insert calls to indigo__init() and indigo__create_map()
             SgBasicBlock* body = ((SgFunctionDefinition*) node)->get_body();
 
@@ -172,19 +176,31 @@ void MINST::visit(SgNode* node)
             std::string indigo__init = SageInterface::is_Fortran_language() ? "indigo__init" : "indigo__init_";
             std::string indigo__create_map = "indigo__create_map";
 
-            std::vector<SgExpression*> empty_params;
+            std::vector<SgExpression*> params, empty_params;
+            int create_file;
+            if (action == ACTION_INSTRUMENT) {
+                create_file = 1;
+            } else {
+                create_file = 0;
+            }
+
+            SgIntVal* rose_create_file = new SgIntVal(file_info, create_file);
+            rose_create_file->set_endOfConstruct(file_info);
+            params.push_back(rose_create_file);
+
             SgExprStatement* expr_stmt = NULL;
             expr_stmt = ir_methods::prepare_call_statement(body, indigo__init,
-                    empty_params);
-
+                    params, statement);
             insertStatementBefore(statement, expr_stmt);
             ROSE_ASSERT(expr_stmt);
 
-            SgExprStatement* map_stmt = NULL;
-            map_stmt = ir_methods::prepare_call_statement(body,
-                    indigo__create_map, empty_params);
-            insertStatementAfter(expr_stmt, map_stmt);
-            ROSE_ASSERT(map_stmt);
+            if (action == ACTION_INSTRUMENT) {
+                SgExprStatement* map_stmt = NULL;
+                map_stmt = ir_methods::prepare_call_statement(body,
+                        indigo__create_map, empty_params, expr_stmt);
+                insertStatementAfter(expr_stmt, map_stmt);
+                ROSE_ASSERT(map_stmt);
+            }
 
             insert_map_prototype(node);
         }
@@ -202,13 +218,23 @@ void MINST::visit(SgNode* node)
                 // now insert the indigo__create_map_() function in this file.
                 insert_map_function(node);
 
-                instrumentor_t inst;
-                inst.traverse(node, attrib());
+                if (gen_trace) {
+                    tracer_t tracer;
+                    tracer.traverse(node, attrib());
 
-                // Pull information from AST traversal.
-                stream_list = inst.get_stream_list();
-                statement_list.insert(statement_list.end(), inst.stmt_begin(),
-                        inst.stmt_end());
+                    // Pull information from AST traversal.
+                    stream_list = tracer.get_stream_list();
+                    statement_list.insert(statement_list.end(),
+                            tracer.stmt_begin(), tracer.stmt_end());
+                } else {
+                    instrumentor_t inst;
+                    inst.traverse(node, attrib());
+
+                    // Pull information from AST traversal.
+                    stream_list = inst.get_stream_list();
+                    statement_list.insert(statement_list.end(),
+                            inst.stmt_begin(), inst.stmt_end());
+                }
             } else if (action == ACTION_ALIGNCHECK) {
                 std::cerr << "Placing alignment-related checks around loop(s) "
                     << "in function " << function_name << std::endl;
@@ -245,13 +271,23 @@ void MINST::visit(SgNode* node)
                 // now insert the indigo__create_map_() function in this file.
                 insert_map_function(node);
 
-                instrumentor_t inst;
-                inst.traverse(node, attrib());
+                if (gen_trace) {
+                    tracer_t tracer;
+                    tracer.traverse(node, attrib());
 
-                // Pull information from AST traversal.
-                stream_list = inst.get_stream_list();
-                statement_list.insert(statement_list.end(), inst.stmt_begin(),
-                        inst.stmt_end());
+                    // Pull information from AST traversal.
+                    stream_list = tracer.get_stream_list();
+                    statement_list.insert(statement_list.end(),
+                            tracer.stmt_begin(), tracer.stmt_end());
+                } else {
+                    instrumentor_t inst;
+                    inst.traverse(node, attrib());
+
+                    // Pull information from AST traversal.
+                    stream_list = inst.get_stream_list();
+                    statement_list.insert(statement_list.end(),
+                            inst.stmt_begin(), inst.stmt_end());
+                }
             } else if (action == ACTION_ALIGNCHECK) {
                 std::cerr << "Placing alignment checks around loop in function "
                     << function_name << " at line " << _line_number <<
