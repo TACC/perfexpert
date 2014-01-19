@@ -34,6 +34,8 @@ typedef gsl_histogram histogram_t;
 
 typedef std::vector<mem_info_list_t> mem_info_bucket_t;
 
+typedef std::vector<trace_info_list_t> trace_info_bucket_t;
+
 typedef std::vector<histogram_t*> histogram_list_t;
 typedef std::vector<histogram_list_t> histogram_matrix_t;
 
@@ -53,6 +55,7 @@ typedef struct {
     cache_data_t l1_data, l2_data, l3_data;
     name_list_t stream_list;
     mem_info_bucket_t mem_info_bucket;
+    trace_info_bucket_t trace_info_bucket;
 } global_data_t;
 
 typedef struct {

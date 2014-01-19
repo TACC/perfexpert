@@ -32,6 +32,7 @@
 #include "generic_defs.h"
 #include "macpo_record.h"
 
+int print_trace_records(const global_data_t& global_data);
 int read_file(const char* filename, global_data_t& global_data);
 
 #endif  /* RECORD_IO_H_ */

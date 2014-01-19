@@ -51,6 +51,19 @@ attrib tracer_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
     streams.traverse(node, attrib());
 
     reference_list_t& reference_list = streams.get_reference_list();
+
+    size_t count = 0;
+    for(reference_list_t::iterator it = reference_list.begin();
+            it != reference_list.end(); it++) {
+        reference_info_t& reference_info = *it;
+        std::string stream = reference_info.name;
+
+        if (count == reference_info.idx) {
+            stream_list.push_back(stream);
+            count += 1;
+        }
+    }
+
     for(reference_list_t::iterator it = reference_list.begin();
             it != reference_list.end(); it++) {
         reference_info_t& reference_info = *it;

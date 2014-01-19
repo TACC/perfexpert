@@ -25,5 +25,6 @@
 #include <deque>
 
 typedef std::deque<mem_info_t> mem_info_list_t;
+typedef std::deque<trace_info_t> trace_info_list_t;
 
 #endif  /* MACPO_RECORD_CXX_H_ */

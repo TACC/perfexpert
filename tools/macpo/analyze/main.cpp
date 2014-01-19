@@ -59,20 +59,28 @@ int main(int argc, char *argv[]) {
         return code;
     }
 
-    if ((code = filter_low_freq_records(global_data)) < 0) {
-        std::cerr << "Failed to filter low-frequency records, terminating." <<
-            std::endl;
+    if (global_data.mem_info_bucket.size()) {
+        if ((code = filter_low_freq_records(global_data)) < 0) {
+            std::cerr << "Failed to filter low-frequency records, terminating."
+                << std::endl;
 
-        return code;
-    }
+            return code;
+        }
 
-    int analysis_flags = ANALYSIS_ALL;
+        int analysis_flags = ANALYSIS_ALL;
 
-    // TODO: Set analysis_flags based on analyses selected via arguments.
+        // TODO: Set analysis_flags based on analyses selected via arguments.
 
-    if ((code = analyze_records(global_data, analysis_flags)) < 0) {
-        std::cerr << "Failed to analyze records, terminating." << std::endl;
-        return code;
+        if ((code = analyze_records(global_data, analysis_flags)) < 0) {
+            std::cerr << "Failed to analyze records, terminating." << std::endl;
+            return code;
+        }
+    } else if (global_data.trace_info_bucket.size()) {
+        if ((code = print_trace_records(global_data)) < 0) {
+            std::cerr << "Failed to print trace records, terminating." <<
+                std::endl;
+            return code;
+        }
     }
 
     return 0;
