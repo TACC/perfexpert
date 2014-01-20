@@ -46,6 +46,7 @@ static short proc = PROC_UNKNOWN;
 static std::map<line_threadid_pair, long*> sstore_align_map, align_map,
         tripcount_map;
 static std::map<line_threadid_pair, bool> overlap_bin;
+static std::map<line_threadid_pair, short> branch_bin;
 volatile static short lock_var;
 
 static inline void lock() {
@@ -453,6 +454,33 @@ static void indigo__exit()
             }
         }
     }
+
+    if (branch_bin.size()) {
+        fprintf (stderr, "MACPO :: Branch profiling results:\n");
+        for (std::map<line_threadid_pair, short>::iterator it =
+                branch_bin.begin(); it != branch_bin.end(); it++) {
+            line_threadid_pair pair = it->first;
+            int line_number = pair.first;
+            short branch_status = it->second;
+
+            switch(branch_status) {
+                case BRANCH_UNKNOWN:
+                    fprintf (stderr, "MACPO :: Branch at line %d is "
+                            "unpredictable.\n", line_number);
+                    break;
+
+                case BRANCH_SIMD:
+                    fprintf (stderr, "MACPO :: Branch at line %d can be "
+                            "grouped as a vector.\n", line_number);
+                    break;
+
+                case BRANCH_SINGLE:
+                    fprintf (stderr, "MACPO :: Branch at line %d is always "
+                            "evaluated in one direction.\n", line_number);
+                    break;
+            }
+        }
+    }
 }
 
 static inline void fill_trace_struct(int read_write, int line_number, size_t base, size_t p, int var_idx)
@@ -511,6 +539,46 @@ void indigo__gen_trace_c(int read_write, int line_number, void* base, void* addr
 void indigo__gen_trace_f(int *read_write, int *line_number, void* base, void* addr, int *var_idx)
 {
 	if (fd >= 0)	fill_trace_struct(*read_write, *line_number, (size_t) base, (size_t) addr, *var_idx);
+}
+
+short& get_branch_bin(int line_number) {
+    line_threadid_pair pair(line_number, getCoreID());
+
+    // Obtain lock.
+    lock();
+
+    std::map<line_threadid_pair, short>::iterator it = branch_bin.find(pair);
+    if (it == branch_bin.end()) {
+        branch_bin[pair] = BRANCH_SINGLE;
+    }
+
+    // Release lock.
+    unlock();
+
+    return branch_bin[pair];
+}
+
+void indigo__simd_branch_c(int line_number, int idxv, int branch_dir, int common_alignment, int* recorded_simd_branch_dir)
+{
+    int simd_index = idxv - common_alignment/4;
+	if (common_alignment >= 0 && simd_index >= 0) {
+        if (get_branch_bin(line_number) != BRANCH_UNKNOWN) {
+            if (*recorded_simd_branch_dir == -1)
+                *recorded_simd_branch_dir = branch_dir;
+
+            if (simd_index > 0) {
+                // Check if branch_dir is the same as previously recorded dirs.
+                if (*recorded_simd_branch_dir != branch_dir) {
+                    get_branch_bin(line_number) = BRANCH_UNKNOWN;
+                }
+            } else {
+                // Set the branch_dir value for subsequent iterations.
+                if (*recorded_simd_branch_dir != branch_dir)
+                    get_branch_bin(line_number) = BRANCH_SIMD;
+                *recorded_simd_branch_dir = branch_dir;
+            }
+        }
+    }
 }
 
 void indigo__record_c(int read_write, int line_number, void* addr, int var_idx)
@@ -632,8 +700,9 @@ long* get_tripcount_histogram(int line_number) {
 /**
     indigo__aligncheck_c()
     Checks for alignment to cache line boundary and memory overlap.
+    Returns common alignment, if any. Otherwise, returns -1.
 */
-void indigo__aligncheck_c(int line_number, int stream_count, ...) {
+int indigo__aligncheck_c(int line_number, int stream_count, ...) {
     va_list args;
 
     void* start_list[MAX_ADDR] = {0};
@@ -650,7 +719,9 @@ void indigo__aligncheck_c(int line_number, int stream_count, ...) {
 
     long* histogram = get_alignment_histogram(line_number);
     if (histogram == NULL)
-        return;
+        return -1;
+
+    int common_alignment = -1, last_remainder = 0;
 
     int i, j;
     va_start(args, stream_count);
@@ -662,6 +733,17 @@ void indigo__aligncheck_c(int line_number, int stream_count, ...) {
         int remainder = ((long) start) % 64;
         histogram[remainder]++;
 
+        // We already discovered an overlap, don't proceed further.
+        if (get_overlap_bin(line_number) == true)
+            break;
+
+        if (i == 0) {
+            common_alignment = remainder;
+        } else {
+            if (common_alignment != remainder)
+                common_alignment = -1;
+        }
+
 #if 0
         if (((long) start) % 64) {
             fprintf (stderr, "MACPO :: Reference in loop at line %d is not "
@@ -671,8 +753,12 @@ void indigo__aligncheck_c(int line_number, int stream_count, ...) {
 
         // Really simple and inefficient (n^2) algorightm to check duplicates.
         bool overlap = false;
-        for (j=0; j<i && overlap == 0; j++) {
-            if (!(start_list[j] > end_list[i] || end_list[j] < start_list[i])) {
+        for (j=0; j<i && overlap == false; j++) {
+#if 0
+            fprintf (stderr, "i: %p-%p, compared against: %p-%p = %d.\n",
+                    start_list[j], end_list[j], start, end, start_list[j] > end || end_list[j] < start);
+#endif
+            if (!(start_list[j] > end || end_list[j] < start)) {
                 overlap = true;
             }
         }
@@ -685,11 +771,13 @@ void indigo__aligncheck_c(int line_number, int stream_count, ...) {
                     "at line %d.\n", line_number);
         }
 #endif
+
         start_list[i] = start;
         end_list[i] = end;
     }
 
     va_end(args);
+    return common_alignment;
 }
 
 /**

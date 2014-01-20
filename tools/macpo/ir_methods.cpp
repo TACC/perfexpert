@@ -27,6 +27,16 @@
 using namespace SageBuilder;
 using namespace SageInterface;
 
+SgExprStatement* ir_methods::create_long_assign_statement(Sg_File_Info* fileInfo,
+        const std::string& name, SgIntVal* value) {
+    SgType* long_type = buildLongType();
+    SgVarRefExp* expr = buildVarRefExp(name);
+    SgAssignOp* assign_op = new SgAssignOp(fileInfo, expr, value, long_type);
+    SgExprStatement* assign_stmt = new SgExprStatement(fileInfo, assign_op);
+
+    return assign_stmt;
+}
+
 SgExprStatement* ir_methods::create_long_incr_statement(Sg_File_Info* fileInfo,
         const std::string& name) {
     SgType* long_type = buildLongType();
@@ -42,6 +52,16 @@ SgVariableDeclaration* ir_methods::create_long_variable(Sg_File_Info* fileInfo,
     SgType* long_type = buildLongType();
     SgVariableDeclaration* var_decl = new SgVariableDeclaration(fileInfo,
             name, long_type, buildAssignInitializer(buildIntVal(init_value)));
+
+    return var_decl;
+}
+
+SgVariableDeclaration* ir_methods::create_long_variable_with_init(
+        Sg_File_Info* fileInfo, const std::string& name,
+        SgExpression* initializer) {
+    SgType* long_type = buildLongType();
+    SgVariableDeclaration* var_decl = new SgVariableDeclaration(fileInfo,
+            name, long_type, buildAssignInitializer(initializer));
 
     return var_decl;
 }
@@ -62,7 +82,7 @@ bool ir_methods::vectorizable(SgStatement*& stmt) {
             isSgReturnStmt(stmt) ||
             isSgClassDefinition(stmt) ||
             isSgFunctionDefinition(stmt) ||
-            isSgIfStmt(stmt) ||
+            /* isSgIfStmt(stmt) || */   // Don't overlook branches completely.
             isSgNamespaceDefinitionStatement(stmt) ||
             isSgSwitchStatement(stmt) ||
             isSgWithStatement(stmt)) {
