@@ -558,24 +558,35 @@ short& get_branch_bin(int line_number) {
     return branch_bin[pair];
 }
 
-void indigo__simd_branch_c(int line_number, int idxv, int branch_dir, int common_alignment, int* recorded_simd_branch_dir)
+void indigo__record_branch_c(int line_number, int true_branch_count, int false_branch_count)
 {
-    int simd_index = idxv - common_alignment/4;
-	if (common_alignment >= 0 && simd_index >= 0) {
-        if (get_branch_bin(line_number) != BRANCH_UNKNOWN) {
-            if (*recorded_simd_branch_dir == -1)
-                *recorded_simd_branch_dir = branch_dir;
+#if 0
+    if (get_branch_bin(line_number) != BRANCH_UNKNOWN) {
+        if (true_branch_count == 0 && false_branch_count 
+    }
+#endif
+}
 
-            if (simd_index > 0) {
-                // Check if branch_dir is the same as previously recorded dirs.
-                if (*recorded_simd_branch_dir != branch_dir) {
-                    get_branch_bin(line_number) = BRANCH_UNKNOWN;
+void indigo__simd_branch_c(int line_number, int idxv, int type_size, int branch_dir, int common_alignment, int* recorded_simd_branch_dir)
+{
+	if (common_alignment >= 0 && type_size > 0) {
+        int simd_index = (idxv*type_size - common_alignment) % 64;
+        if (simd_index >= 0) {
+            if (get_branch_bin(line_number) != BRANCH_UNKNOWN) {
+                if (*recorded_simd_branch_dir == -1)
+                    *recorded_simd_branch_dir = branch_dir;
+
+                if (simd_index > 0) {
+                    // Check if branch_dir is the same as previously recorded dirs.
+                    if (*recorded_simd_branch_dir != branch_dir) {
+                        get_branch_bin(line_number) = BRANCH_UNKNOWN;
+                    }
+                } else {
+                    // Set the branch_dir value for subsequent iterations.
+                    if (*recorded_simd_branch_dir != branch_dir)
+                        get_branch_bin(line_number) = BRANCH_SIMD;
+                    *recorded_simd_branch_dir = branch_dir;
                 }
-            } else {
-                // Set the branch_dir value for subsequent iterations.
-                if (*recorded_simd_branch_dir != branch_dir)
-                    get_branch_bin(line_number) = BRANCH_SIMD;
-                *recorded_simd_branch_dir = branch_dir;
             }
         }
     }
@@ -702,7 +713,7 @@ long* get_tripcount_histogram(int line_number) {
     Checks for alignment to cache line boundary and memory overlap.
     Returns common alignment, if any. Otherwise, returns -1.
 */
-int indigo__aligncheck_c(int line_number, int stream_count, ...) {
+int indigo__aligncheck_c(int line_number, int* type_size, int stream_count, ...) {
     va_list args;
 
     void* start_list[MAX_ADDR] = {0};
@@ -729,6 +740,7 @@ int indigo__aligncheck_c(int line_number, int stream_count, ...) {
     for (i=0; i<stream_count; i++) {
         void* start = va_arg(args, void*);
         void* end = va_arg(args, void*);
+        size_t size = va_arg(args, size_t);
 
         int remainder = ((long) start) % 64;
         histogram[remainder]++;
@@ -739,9 +751,13 @@ int indigo__aligncheck_c(int line_number, int stream_count, ...) {
 
         if (i == 0) {
             common_alignment = remainder;
+            *type_size = size;
         } else {
             if (common_alignment != remainder)
                 common_alignment = -1;
+
+            if (*type_size != size)
+                *type_size = -1;
         }
 
 #if 0

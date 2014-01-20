@@ -320,11 +320,18 @@ SgExpression* aligncheck_t::instrument_alignment_checks(Sg_File_Info* fileInfo,
                             buildAddressOfOp((SgExpression*) bin_copy),
                             buildPointerType(buildVoidType()));
 
-                assert(param_addr_initial);
-                assert(param_addr_final);
+                if (SgExpression* bin_expr = isSgExpression(bin_op)) {
+                    SgSizeOfOp* sizeofop = new SgSizeOfOp(fileInfo,
+                            NULL, bin_expr->get_type(), bin_expr->get_type());
 
-                param_list.push_back(param_addr_initial);
-                param_list.push_back(param_addr_final);
+                    ROSE_ASSERT(param_addr_initial);
+                    ROSE_ASSERT(param_addr_final);
+                    ROSE_ASSERT(sizeofop);
+
+                    param_list.push_back(param_addr_initial);
+                    param_list.push_back(param_addr_final);
+                    param_list.push_back(sizeofop);
+                }
             }
         }
     }
@@ -334,9 +341,24 @@ SgExpression* aligncheck_t::instrument_alignment_checks(Sg_File_Info* fileInfo,
         statement_info.statement = NULL;
 
         int line_number = outer_for_stmt->get_file_info()->get_raw_line();
-
-        SgIntVal* param_count = new SgIntVal(fileInfo, param_list.size() / 2);
+        SgIntVal* param_count = new SgIntVal(fileInfo, param_list.size() / 3);
         SgIntVal* param_line_no = new SgIntVal(fileInfo, line_number);
+
+        char var_name[32];
+        snprintf (var_name, 32, "indigo__type_size_%d", line_number);
+
+        SgVariableDeclaration* type_size = NULL;
+        type_size = ir_methods::create_long_variable(fileInfo, var_name, 0);
+
+        SgExpression* type_size_addr = buildCastExp (
+                buildAddressOfOp((SgExpression*) buildVarRefExp(var_name)),
+                buildPointerType(buildIntType()));
+
+        statement_info_t type_size_decl;
+        type_size_decl.statement = type_size;
+        type_size_decl.reference_statement = outer_for_stmt;
+        type_size_decl.before = true;
+        statement_list.push_back(type_size_decl);
 
         if (expr_set.size() == 1) {
             def_map_t def_map;
@@ -370,6 +392,7 @@ SgExpression* aligncheck_t::instrument_alignment_checks(Sg_File_Info* fileInfo,
 
                     std::vector<SgExpression*> params;
                     params.push_back(param_line_no);
+                    params.push_back(type_size_addr);
                     params.push_back(param_count);
                     params.insert(params.end(), param_list.begin(),
                             param_list.end());
@@ -383,6 +406,7 @@ SgExpression* aligncheck_t::instrument_alignment_checks(Sg_File_Info* fileInfo,
                 // TODO: Place function call before the start of the outermost loop.
                 std::vector<SgExpression*> params;
                 params.push_back(param_line_no);
+                params.push_back(type_size_addr);
                 params.push_back(param_count);
                 params.insert(params.end(), param_list.begin(),
                         param_list.end());
@@ -397,6 +421,7 @@ SgExpression* aligncheck_t::instrument_alignment_checks(Sg_File_Info* fileInfo,
             // Instrument just before the loop under consideration.
             std::vector<SgExpression*> params;
             params.push_back(param_line_no);
+            params.push_back(type_size_addr);
             params.push_back(param_count);
             params.insert(params.end(), param_list.begin(), param_list.end());
 
@@ -437,23 +462,11 @@ void aligncheck_t::instrument_branches(Sg_File_Info* fileInfo,
     while (stmt) {
         if (SgIfStmt* if_stmt = isSgIfStmt(stmt)) {
             int line_number = if_stmt->get_file_info()->get_raw_line();
+            int for_line_number = for_stmt->get_file_info()->get_raw_line();
             SgStatement* true_body = if_stmt->get_true_body();
             SgStatement* false_body = if_stmt->get_false_body();
 
             ROSE_ASSERT(true_body);
-
-            char var_dir_name[32];
-            snprintf (var_dir_name, 32, "indigo__branch_dir_%d", line_number);
-
-            SgVariableDeclaration* branch_dir = NULL;
-            branch_dir = ir_methods::create_long_variable(fileInfo,
-                    var_dir_name, 0);
-
-            statement_info_t branch_dir_decl;
-            branch_dir_decl.statement = branch_dir;
-            branch_dir_decl.reference_statement = if_stmt;
-            branch_dir_decl.before = true;
-            statement_list.push_back(branch_dir_decl);
 
             // Create two variables for each branch.
             SgVariableDeclaration *var_true = NULL, *var_false = NULL;
@@ -508,6 +521,36 @@ void aligncheck_t::instrument_branches(Sg_File_Info* fileInfo,
                 statement_list.push_back(false_stmt);
             }
 
+            std::string function_name = SageInterface::is_Fortran_language()
+                ? "indigo__record_branch_f" : "indigo__record_branch_c";
+
+            std::vector<SgExpression*> params;
+            params.push_back(new SgIntVal(fileInfo, line_number));
+            params.push_back(buildVarRefExp(var_true_name));
+            params.push_back(buildVarRefExp(var_false_name));
+
+            statement_info_t branch_statement;
+            branch_statement.statement = ir_methods::prepare_call_statement(
+                    getEnclosingNode<SgBasicBlock>(for_stmt),
+                    function_name, params, for_stmt);
+            branch_statement.reference_statement = for_stmt;
+            branch_statement.before = false;
+            statement_list.push_back(branch_statement);
+
+    #if 1
+            char var_dir_name[32];
+            snprintf (var_dir_name, 32, "indigo__branch_dir_%d", line_number);
+
+            SgVariableDeclaration* branch_dir = NULL;
+            branch_dir = ir_methods::create_long_variable(fileInfo,
+                    var_dir_name, 0);
+
+            statement_info_t branch_dir_decl;
+            branch_dir_decl.statement = branch_dir;
+            branch_dir_decl.reference_statement = if_stmt;
+            branch_dir_decl.before = true;
+            statement_list.push_back(branch_dir_decl);
+
             statement_info_t assign_stmt;
             assign_stmt.statement = ir_methods::create_long_assign_statement(
                     fileInfo, var_dir_name, new SgIntVal(fileInfo, 1));
@@ -516,7 +559,7 @@ void aligncheck_t::instrument_branches(Sg_File_Info* fileInfo,
             statement_list.push_back(assign_stmt);
 
             statement_info_t dir_call_stmt;
-            std::string function_name = SageInterface::is_Fortran_language()
+            function_name = SageInterface::is_Fortran_language()
                 ? "indigo__simd_branch_f" : "indigo__simd_branch_c";
 
             char var_record_name[32];
@@ -538,9 +581,14 @@ void aligncheck_t::instrument_branches(Sg_File_Info* fileInfo,
                     buildAddressOfOp((SgExpression*) recorded_branch),
                     buildPointerType(buildIntType()));
 
-            std::vector<SgExpression*> params;
+            char var_type_size[32];
+            snprintf (var_type_size, 32, "indigo__type_size_%d",
+                    for_line_number);
+
+            params.clear();
             params.push_back(new SgIntVal(fileInfo, line_number));
             params.push_back(idxv_expr);
+            params.push_back(buildVarRefExp(var_type_size));
             params.push_back(buildVarRefExp(var_dir_name));
             params.push_back(common_alignment);
             params.push_back(recorded_addr);
@@ -551,6 +599,7 @@ void aligncheck_t::instrument_branches(Sg_File_Info* fileInfo,
             dir_call_stmt.reference_statement = if_stmt;
             dir_call_stmt.before = false;
             statement_list.push_back(dir_call_stmt);
+    #endif
         }
 
         stmt = getNextStatement(stmt);

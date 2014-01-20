@@ -146,7 +146,7 @@ void indigo__record_f_(int* read_write, int* line_number, void* addr, int* var_i
 #if defined(__cplusplus)
 extern "C" {
 #endif
-void indigo__simd_branch_c(int line_number, int idxv, int branch_dir, int common_alignment, int* recorded_simd_branch_dir);
+void indigo__record_branch_c(int line_number, int true_branch_count, int false_branch_count);
 #if defined (__cplusplus)
 }
 #endif
@@ -154,7 +154,15 @@ void indigo__simd_branch_c(int line_number, int idxv, int branch_dir, int common
 #if defined(__cplusplus)
 extern "C" {
 #endif
-int indigo__aligncheck_c(int line_number, int stream_count, ...);
+void indigo__simd_branch_c(int line_number, int idxv, int type_size, int branch_dir, int common_alignment, int* recorded_simd_branch_dir);
+#if defined (__cplusplus)
+}
+#endif
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
+int indigo__aligncheck_c(int line_number, int* type_size, int stream_count, ...);
 #if defined (__cplusplus)
 }
 #endif
