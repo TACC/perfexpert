@@ -93,7 +93,7 @@ bool ir_methods::vectorizable(SgStatement*& stmt) {
 }
 
 int ir_methods::get_loop_header_components(VariableRenaming*& var_renaming,
-        SgForStatement*& for_stmt, def_map_t& def_map, SgExpression*&
+        SgScopeStatement*& scope_stmt, def_map_t& def_map, SgExpression*&
         idxv_expr, SgExpression*& init_expr, SgExpression*& test_expr,
         SgExpression*& incr_expr, int& incr_op) {
 
@@ -106,21 +106,21 @@ int ir_methods::get_loop_header_components(VariableRenaming*& var_renaming,
     incr_expr = NULL;
     incr_op = INVALID_OP;
 
-    if (!for_stmt)
+    if (!scope_stmt)
         return INVALID_LOOP;
 
     // If we need to instrument at least one scalar variable,
     // can this instrumentation be relocated to an earlier point
     // in the program that is outside all loops?
     VariableRenaming::NumNodeRenameTable rename_table =
-        var_renaming->getReachingDefsAtNode(for_stmt);
+        var_renaming->getReachingDefsAtNode(scope_stmt);
 
     // Expand the iterator list into a map for easier lookup.
     ir_methods::construct_def_map(rename_table, def_map);
 
     // Sanity check to see if this loop contains statements that prevent
     // vectorization.
-    SgStatement* first_stmt = getFirstStatement(for_stmt);
+    SgStatement* first_stmt = getFirstStatement(scope_stmt);
     SgStatement* stmt = first_stmt;
     while (stmt) {
         if (!vectorizable(stmt)) {
@@ -133,6 +133,19 @@ int ir_methods::get_loop_header_components(VariableRenaming*& var_renaming,
         stmt = getNextStatement(stmt);
     }
 
+    if (SgForStatement* for_stmt = isSgForStatement(scope_stmt))
+        return get_for_loop_header_components(var_renaming, for_stmt, def_map,
+            idxv_expr, init_expr, test_expr, incr_expr, incr_op);
+
+    return INVALID_LOOP;
+}
+
+int ir_methods::get_for_loop_header_components(VariableRenaming*& var_renaming,
+        SgForStatement*& for_stmt, def_map_t& def_map, SgExpression*&
+        idxv_expr, SgExpression*& init_expr, SgExpression*& test_expr,
+        SgExpression*& incr_expr, int& incr_op) {
+
+    int return_value = 0;
     SgExpression* increment_var[2] = {0};
     SgBinaryOp* incr_binary_op = isSgBinaryOp(for_stmt->get_increment());
     SgUnaryOp* incr_unary_op = isSgUnaryOp(for_stmt->get_increment());
@@ -181,8 +194,9 @@ int ir_methods::get_loop_header_components(VariableRenaming*& var_renaming,
         increment_var[0] = incr_unary_op->get_operand();
     }
 
-    SgExprStatement* test_statement =
-        isSgExprStatement(for_stmt->get_test());
+    SgExprStatement* test_statement = NULL;
+    test_statement = isSgExprStatement(for_stmt->get_test());
+
     if (test_statement) {
         SgExpression* test_expression = test_statement->get_expression();
         if (test_expression) {
@@ -335,6 +349,213 @@ int ir_methods::get_loop_header_components(VariableRenaming*& var_renaming,
 
     // Return true if we were able to discover all three expressions.
     return return_value;
+}
+
+int ir_methods::get_while_loop_header_components(SgScopeStatement*& scope_stmt,
+        SgExpression*& idxv_expr, SgExpression*& test_expr,
+        SgExpression*& incr_expr) {
+    // Initialize
+    idxv_expr = NULL;
+    test_expr = NULL;
+    incr_expr = NULL;
+
+    bool vec_checked = false;
+    int return_value = 0;
+
+    SgStatement* loop_body = NULL;
+    SgExprStatement* test_statement = NULL;
+    if (SgWhileStmt* while_stmt = isSgWhileStmt(scope_stmt)) {
+        test_statement = isSgExprStatement(while_stmt->get_condition());
+        loop_body = while_stmt->get_body();
+    } else if (SgDoWhileStmt* do_while_stmt = isSgDoWhileStmt(scope_stmt)) {
+        test_statement = isSgExprStatement(do_while_stmt->get_condition());
+        loop_body = do_while_stmt->get_body();
+    } else {
+        ROSE_ASSERT(false && "Invalid loop type!");
+    }
+
+    if (test_statement) {
+        SgExpression* test_expression = test_statement->get_expression();
+        if (test_expression) {
+            SgBinaryOp* binaryOp = isSgBinaryOp(test_expression);
+            if (binaryOp) {
+                SgExpression* operand[2];
+                operand[0] = binaryOp->get_lhs_operand();
+                operand[1] = binaryOp->get_rhs_operand();
+
+                if (isSgUnaryOp(operand[0]) || isSgUnaryOp(operand[1])) {
+                    if (isSgUnaryOp(operand[0]) && isSgUnaryOp(operand[1])) {
+                        idxv_expr = NULL;
+                        test_expr = NULL;
+
+                        return_value |= INVALID_IDXV;
+                        return_value |= INVALID_TEST;
+                    } else {
+                        if (isSgUnaryOp(operand[0])) {
+                            idxv_expr = isSgUnaryOp(operand[0])->get_operand();
+                            test_expr = operand[1];
+                        } else {
+                            idxv_expr = isSgUnaryOp(operand[1])->get_operand();
+                            test_expr = operand[0];
+                        }
+
+                        // Check if the loop body references the index var again.
+                        SgBasicBlock* bb = dynamic_cast<SgBasicBlock*>(loop_body);
+                        SgStatement* stmt = dynamic_cast<SgStatement*>(loop_body);
+                        if (bb) {
+                            SgStatementPtrList& stmts = bb->get_statements();
+                            for (SgStatementPtrList::iterator it=stmts.begin(); it!=stmts.end(); it++) {
+                                if (in_write_set(*it, idxv_expr)) {
+                                    idxv_expr = NULL;
+                                    return_value |= INVALID_IDXV;
+                                }
+                            }
+                        } else if (stmt) {
+                            if (in_write_set(stmt, idxv_expr)) {
+                                idxv_expr = NULL;
+                                return_value |= INVALID_IDXV;
+                            }
+                        }
+
+                        return return_value;
+                    }
+                } else {
+                    SgExpression* other = NULL;
+                    if (isSgValueExp(operand[0]) ||
+                            isConstType(operand[0]->get_type())) {
+                        idxv_expr = operand[1];
+                        test_expr = operand[0];
+                    }
+                    else if (isSgValueExp(operand[1]) ||
+                            isConstType(operand[1]->get_type())) {
+                        idxv_expr = operand[0];
+                        test_expr = operand[1];
+                    } else {
+                        // Loop through the body to find which one of the two is modified in the loop body
+                        std::string o0 = operand[0]->unparseToString();
+                        std::string o1 = operand[1]->unparseToString();
+
+                        vec_checked = true;
+
+                        // XXX: Bug in Rose, get_body() returns a SgStatement* but is, actually, a SgBasicBlock*.
+                        SgBasicBlock* bb = dynamic_cast<SgBasicBlock*>(loop_body);
+                        SgStatement* stmt = dynamic_cast<SgStatement*>(loop_body);
+                        if (bb) {
+                            SgStatementPtrList& stmts = bb->get_statements();
+                            for (SgStatementPtrList::iterator it=stmts.begin(); it!=stmts.end(); it++) {
+                                SgStatement* stmt = *it;
+                                if (in_write_set(stmt, operand[0])) {
+                                    if (idxv_expr != NULL && idxv_expr->unparseToString() != o0) {
+                                        // Inconclusive.
+                                        idxv_expr = NULL;
+                                        test_expr = NULL;
+                                        incr_expr = NULL;
+                                        break;
+                                    } else {
+                                        idxv_expr = operand[0];
+                                        test_expr = operand[1];
+                                        incr_expr = rhs_expression(stmt);
+                                    }
+                                } else if (in_write_set(stmt, operand[1])) {
+                                    if (idxv_expr != NULL && idxv_expr->unparseToString() != o1) {
+                                        // Inconclusive.
+                                        idxv_expr = NULL;
+                                        test_expr = NULL;
+                                        incr_expr = NULL;
+                                        break;
+                                    } else {
+                                        idxv_expr = operand[1];
+                                        test_expr = operand[0];
+                                        incr_expr = rhs_expression(stmt);
+                                    }
+                                }
+                            }
+                        } else if (stmt) {
+                            if (in_write_set(stmt, operand[0])) {
+                                if (idxv_expr != NULL && idxv_expr->unparseToString() != o0) {
+                                    // Inconclusive.
+                                    idxv_expr = NULL;
+                                    test_expr = NULL;
+                                    incr_expr = NULL;
+                                } else {
+                                    idxv_expr = operand[0];
+                                    test_expr = operand[1];
+                                    incr_expr = rhs_expression(stmt);
+                                }
+                            } else if (in_write_set(stmt, operand[1])) {
+                                if (idxv_expr != NULL && idxv_expr->unparseToString() != o1) {
+                                    // Inconclusive.
+                                    idxv_expr = NULL;
+                                    test_expr = NULL;
+                                    incr_expr = NULL;
+                                } else {
+                                    idxv_expr = operand[1];
+                                    test_expr = operand[0];
+                                    incr_expr = rhs_expression(stmt);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if (!test_expr) return_value |= INVALID_TEST;
+    if (!idxv_expr) return_value |= INVALID_IDXV;
+    if (!incr_expr) return_value |= INVALID_INCR;
+
+    return return_value;
+}
+
+SgExpression* ir_methods::rhs_expression(SgStatement* statement) {
+    if (!statement)
+        return false;
+
+    SgExprStatement* expr_stmt = isSgExprStatement(statement);
+    if (expr_stmt) {
+        SgAssignOp* assign_op = isSgAssignOp(expr_stmt->get_expression());
+        SgBinaryOp* binary_op = isSgBinaryOp(expr_stmt->get_expression());
+        SgUnaryOp* unary_op = isSgUnaryOp(expr_stmt->get_expression());
+        if (assign_op) {
+            return assign_op->get_rhs_operand();
+        } else if (unary_op) {
+            return unary_op->get_operand();
+        } else if (binary_op) {
+            return binary_op->get_rhs_operand();
+        }
+    }
+
+    return NULL;
+}
+
+bool ir_methods::in_write_set(SgStatement* statement, SgExpression* expr) {
+    if (!statement || !expr)
+        return false;
+
+    std::string str_expr = expr->unparseToString();
+
+    SgExprStatement* expr_stmt = isSgExprStatement(statement);
+    if (expr_stmt) {
+        SgAssignOp* assign_op = isSgAssignOp(expr_stmt->get_expression());
+        SgBinaryOp* binary_op = isSgBinaryOp(expr_stmt->get_expression());
+        SgUnaryOp* unary_op = isSgUnaryOp(expr_stmt->get_expression());
+        if (assign_op) {
+            SgExpression* lhs = assign_op->get_lhs_operand();
+            if (lhs->unparseToString() == str_expr)
+                return true;
+        } else if (unary_op) {
+            SgExpression* operand = unary_op->get_operand();
+            if (operand->unparseToString() == str_expr)
+                return true;
+        } else if (binary_op) {
+            SgExpression* lhs = binary_op->get_lhs_operand();
+            if (lhs->unparseToString() == str_expr)
+                return true;
+        }
+    }
+
+    return false;
 }
 
 void ir_methods::construct_def_map(VariableRenaming::NumNodeRenameTable& rename_table,
@@ -519,6 +740,11 @@ void ir_methods::replace_expr(SgBinaryOp*& bin_op, SgExpression*& search_expr,
         if (rhs && (pntr = isSgBinaryOp(rhs)))
             ir_methods::replace_expr(pntr, search_expr, replace_expr);
     }
+}
+
+bool ir_methods::is_loop(SgNode* node) {
+    return isSgFortranDo(node) || isSgForStatement(node) || isSgWhileStmt(node)
+        || isSgDoWhileStmt(node);
 }
 
 SgExpression* ir_methods::get_final_value(Sg_File_Info* file_info,

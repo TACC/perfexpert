@@ -45,7 +45,7 @@ class aligncheck_t {
         void atTraversalStart();
 
         void process_node(SgNode* node);
-        void process_loop(SgForStatement* for_stmt, loop_info_t& loop_info_t,
+        void process_loop(SgScopeStatement* scope_stmt, loop_info_t& loop_info_t,
                 expr_map_t& loop_map, name_list_t& stream_list);
 
         bool contains_non_linear_reference(const reference_list_t&
@@ -60,10 +60,10 @@ class aligncheck_t {
         void instrument_streaming_stores(Sg_File_Info* file_info,
                 loop_info_t& loop_info);
         SgExpression* instrument_alignment_checks(Sg_File_Info* file_info,
-                SgForStatement* outer_for_stmt, loop_info_t& loop_info,
+                SgScopeStatement* outer_scope_stmt, loop_info_t& loop_info,
                 name_list_t& stream_list, expr_map_t& loop_map);
         void instrument_branches(Sg_File_Info* fileInfo,
-                SgForStatement* for_stmt, SgExpression* idxv_expr,
+                SgScopeStatement* scope_stmt, SgExpression* idxv_expr,
                 SgExpression* common_alignment);
 
         VariableRenaming* var_renaming;

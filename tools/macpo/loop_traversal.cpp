@@ -43,7 +43,10 @@ attrib loop_traversal_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
     if (attr.skip)
         return attr;
 
-    if (SgForStatement* for_stmt = isSgForStatement(node)) {
+    if (ir_methods::is_loop(node)) {
+        SgScopeStatement* scope_stmt = isSgScopeStatement(node);
+        ROSE_ASSERT(scope_stmt);
+
         ir_methods::def_map_t def_map;
         SgExpression* idxv = NULL;
         SgExpression* init = NULL;
@@ -57,19 +60,27 @@ attrib loop_traversal_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
         // Expand the iterator list into a map for easier lookup.
         ir_methods::construct_def_map(rename_table, def_map);
 
-        ir_methods::get_loop_header_components(var_renaming, for_stmt, def_map,
-                idxv, init, test, incr, incr_op);
+        ir_methods::get_loop_header_components(var_renaming, scope_stmt,
+                def_map, idxv, init, test, incr, incr_op);
 
         streams_t streams(false);
-        streams.traverse(for_stmt, attrib());
+        streams.traverse(node, attrib());
         reference_list_t& _ref_list = streams.get_reference_list();
 
+        SgStatement* loop_body = NULL;
+        if (SgForStatement* for_stmt = isSgForStatement(scope_stmt))
+            loop_body = for_stmt->get_loop_body();
+        else if (SgWhileStmt* while_stmt = isSgWhileStmt(scope_stmt))
+            loop_body = while_stmt->get_body();
+        else if (SgDoWhileStmt* do_while_stmt = isSgDoWhileStmt(scope_stmt))
+            loop_body = while_stmt->get_body();
+
         loop_traversal_t inner_traversal(var_renaming);
-        inner_traversal.traverse(for_stmt->get_loop_body(), attrib());
+        inner_traversal.traverse(loop_body, attrib());
         loop_info_list_t& child_list = inner_traversal.get_loop_info_list();
 
         loop_info_t loop_info;
-        loop_info.for_stmt = for_stmt;
+        loop_info.loop_stmt = scope_stmt;
 
         loop_info.idxv_expr = idxv;
         loop_info.init_expr = init;

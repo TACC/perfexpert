@@ -32,9 +32,10 @@ class ir_methods {
     public:
         static const int INVALID_LOOP = 1 << 0;
         static const int INVALID_FLOW = 1 << 1;
-        static const int INVALID_INIT = 1 << 2;
-        static const int INVALID_TEST = 1 << 3;
-        static const int INVALID_INCR = 1 << 4;
+        static const int INVALID_IDXV = 1 << 2;
+        static const int INVALID_INIT = 1 << 3;
+        static const int INVALID_TEST = 1 << 4;
+        static const int INVALID_INCR = 1 << 5;
 
         static const int INVALID_OP = 1 << 0;
         static const int OP_ADD     = 1 << 1;
@@ -63,10 +64,21 @@ class ir_methods {
 
         static bool vectorizable(SgStatement*& stmt);
 
+        static int get_while_loop_header_components(SgScopeStatement*& scope_stmt,
+                SgExpression*& idxv_expr, SgExpression*& test_expr,
+                SgExpression*& incr_expr);
+
+        static int get_for_loop_header_components(VariableRenaming*& var_renaming,
+                SgForStatement*& for_stmt, def_map_t& def_map,
+                SgExpression*& idxv_expr, SgExpression*& init_expr,
+                SgExpression*& test_expr, SgExpression*& incr_expr,
+                int& incr_op);
+
         static int get_loop_header_components(VariableRenaming*& var_renaming,
-                SgForStatement*& for_stmt, def_map_t& def_map, SgExpression*&
-                idxv_expr, SgExpression*& init_expr, SgExpression*& test_expr,
-                SgExpression*& incr_expr, int& incr_op);
+                SgScopeStatement*& scope_stmt, def_map_t& def_map,
+                SgExpression*& idxv_expr, SgExpression*& init_expr,
+                SgExpression*& test_expr, SgExpression*& incr_expr,
+                int& incr_op);
 
         static void construct_def_map(VariableRenaming::NumNodeRenameTable&
                 rename_table, std::map<std::string,
@@ -96,6 +108,11 @@ class ir_methods {
 
         static bool is_linear_reference(const SgBinaryOp* reference,
                 bool check_lhs_operand);
+
+        static bool is_loop(SgNode* node);
+
+        static bool in_write_set(SgStatement* statement, SgExpression* expr);
+        static SgExpression* rhs_expression(SgStatement* statement);
 
         static SgExpression* get_final_value(Sg_File_Info* file_info,
                 SgExpression* test_expr, SgExpression* incr_expr, int incr_op);

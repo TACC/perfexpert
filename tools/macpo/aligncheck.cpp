@@ -62,13 +62,13 @@ bool aligncheck_t::contains_non_linear_reference(
 
 void aligncheck_t::instrument_loop_trip_count(Sg_File_Info* fileInfo,
         loop_info_t& loop_info) {
-    SgForStatement* for_stmt = loop_info.for_stmt;
+    SgScopeStatement* scope_stmt = loop_info.loop_stmt;
     SgExpression* idxv = loop_info.idxv_expr;
     SgExpression* init = loop_info.init_expr;
     SgExpression* test = loop_info.test_expr;
 
-    if (SgBasicBlock* bb = getEnclosingNode<SgBasicBlock>(for_stmt)) {
-        int line_number = for_stmt->get_file_info()->get_raw_line();
+    if (SgBasicBlock* bb = getEnclosingNode<SgBasicBlock>(scope_stmt)) {
+        int line_number = scope_stmt->get_file_info()->get_raw_line();
 
         // Create new integer variable calledi
         // "indigo__trip_count_<line_number>". Funky, eh?
@@ -93,23 +93,23 @@ void aligncheck_t::instrument_loop_trip_count(Sg_File_Info* fileInfo,
         params.push_back(trip_count_expr);
         SgExprStatement* expr_statement = NULL;
         expr_statement = ir_methods::prepare_call_statement(bb, function_name,
-                params, for_stmt);
+                params, scope_stmt);
 
         statement_info_t tripcount_call;
         tripcount_call.statement = expr_statement;
-        tripcount_call.reference_statement = for_stmt;
+        tripcount_call.reference_statement = scope_stmt;
         tripcount_call.before = false;
         statement_list.push_back(tripcount_call);
 
         statement_info_t tripcount_decl;
         tripcount_decl.statement = trip_count;
-        tripcount_decl.reference_statement = for_stmt;
+        tripcount_decl.reference_statement = scope_stmt;
         tripcount_decl.before = true;
         statement_list.push_back(tripcount_decl);
 
         statement_info_t tripcount_incr;
         tripcount_incr.statement = incr_statement;
-        tripcount_incr.reference_statement = getFirstStatement(for_stmt);
+        tripcount_incr.reference_statement = getFirstStatement(scope_stmt);
         tripcount_incr.before = true;
         statement_list.push_back(tripcount_incr);
     }
@@ -198,7 +198,7 @@ void aligncheck_t::instrument_streaming_stores(Sg_File_Info* fileInfo,
         // If we have any expressions, add the instrumentation call.
         if (expr_list.size()) {
             int line_number = 0;
-            line_number = loop_info.for_stmt->get_file_info()->get_raw_line();
+            line_number = loop_info.loop_stmt->get_file_info()->get_raw_line();
             SgIntVal* param_line_number = new SgIntVal(fileInfo, line_number);
             SgIntVal* param_count = new SgIntVal(fileInfo, expr_list.size());
 
@@ -206,7 +206,7 @@ void aligncheck_t::instrument_streaming_stores(Sg_File_Info* fileInfo,
                 ? "indigo__sstore_aligncheck_f" : "indigo__sstore_aligncheck_c";
 
             SgBasicBlock* bb = NULL;
-            bb = getEnclosingNode<SgBasicBlock>(loop_info.for_stmt);
+            bb = getEnclosingNode<SgBasicBlock>(loop_info.loop_stmt);
             std::vector<SgExpression*> params;
             params.push_back(param_line_number);
             params.push_back(param_count);
@@ -214,11 +214,11 @@ void aligncheck_t::instrument_streaming_stores(Sg_File_Info* fileInfo,
 
             SgExprStatement* expr_stmt = NULL;
             expr_stmt = ir_methods::prepare_call_statement(bb, function_name,
-                    params, loop_info.for_stmt);
+                    params, loop_info.loop_stmt);
 
             statement_info_t statement_info;
             statement_info.statement = expr_stmt;
-            statement_info.reference_statement = loop_info.for_stmt;
+            statement_info.reference_statement = loop_info.loop_stmt;
             statement_info.before = true;
             statement_list.push_back(statement_info);
         }
@@ -226,7 +226,7 @@ void aligncheck_t::instrument_streaming_stores(Sg_File_Info* fileInfo,
 }
 
 SgExpression* aligncheck_t::instrument_alignment_checks(Sg_File_Info* fileInfo,
-        SgForStatement* outer_for_stmt, loop_info_t& loop_info,
+        SgScopeStatement* outer_scope_stmt, loop_info_t& loop_info,
         name_list_t& stream_list, expr_map_t& loop_map) {
     pntr_list_t pntr_list;
     std::set<std::string> stream_set;
@@ -261,7 +261,7 @@ SgExpression* aligncheck_t::instrument_alignment_checks(Sg_File_Info* fileInfo,
 
     std::string function_name = SageInterface::is_Fortran_language()
         ? "indigo__aligncheck_f" : "indigo__aligncheck_c";
-    SgBasicBlock* outer_bb = getEnclosingNode<SgBasicBlock>(loop_info.for_stmt);
+    SgBasicBlock* outer_bb = getEnclosingNode<SgBasicBlock>(loop_info.loop_stmt);
 
     std::set<std::string> expr_set;
     expr_list_t param_list;
@@ -340,7 +340,7 @@ SgExpression* aligncheck_t::instrument_alignment_checks(Sg_File_Info* fileInfo,
         statement_info_t statement_info;
         statement_info.statement = NULL;
 
-        int line_number = outer_for_stmt->get_file_info()->get_raw_line();
+        int line_number = outer_scope_stmt->get_file_info()->get_raw_line();
         SgIntVal* param_count = new SgIntVal(fileInfo, param_list.size() / 3);
         SgIntVal* param_line_no = new SgIntVal(fileInfo, line_number);
 
@@ -356,7 +356,7 @@ SgExpression* aligncheck_t::instrument_alignment_checks(Sg_File_Info* fileInfo,
 
         statement_info_t type_size_decl;
         type_size_decl.statement = type_size;
-        type_size_decl.reference_statement = outer_for_stmt;
+        type_size_decl.reference_statement = outer_scope_stmt;
         type_size_decl.before = true;
         statement_list.push_back(type_size_decl);
 
@@ -365,7 +365,7 @@ SgExpression* aligncheck_t::instrument_alignment_checks(Sg_File_Info* fileInfo,
             std::string expr = *(expr_set.begin());
 
             VariableRenaming::NumNodeRenameTable rename_table =
-                var_renaming->getReachingDefsAtNode(loop_info.for_stmt);
+                var_renaming->getReachingDefsAtNode(loop_info.loop_stmt);
 
             // Expand the iterator list into a map for easier lookup.
             ir_methods::construct_def_map(rename_table, def_map);
@@ -381,8 +381,8 @@ SgExpression* aligncheck_t::instrument_alignment_checks(Sg_File_Info* fileInfo,
 
                     if (isSgInitializedName(def_node)) {
                         // Instrument at start of loop.
-                        statement_info.reference_statement = outer_for_stmt;
-                        bb = getEnclosingNode<SgBasicBlock>(outer_for_stmt);
+                        statement_info.reference_statement = outer_scope_stmt;
+                        bb = getEnclosingNode<SgBasicBlock>(outer_scope_stmt);
                     } else {
                         statement_info.reference_statement =
                             isSgStatement(def_node) ? isSgStatement(def_node) :
@@ -412,9 +412,9 @@ SgExpression* aligncheck_t::instrument_alignment_checks(Sg_File_Info* fileInfo,
                         param_list.end());
 
                 statement_info.statement = ir_methods::prepare_call_statement(
-                        getEnclosingNode<SgBasicBlock>(outer_for_stmt),
-                        function_name, params, outer_for_stmt);
-                statement_info.reference_statement = outer_for_stmt;
+                        getEnclosingNode<SgBasicBlock>(outer_scope_stmt),
+                        function_name, params, outer_scope_stmt);
+                statement_info.reference_statement = outer_scope_stmt;
                 statement_info.before = true;
             }
         } else {
@@ -426,9 +426,9 @@ SgExpression* aligncheck_t::instrument_alignment_checks(Sg_File_Info* fileInfo,
             params.insert(params.end(), param_list.begin(), param_list.end());
 
             statement_info.statement = ir_methods::prepare_call_statement(
-                    getEnclosingNode<SgBasicBlock>(loop_info.for_stmt),
-                    function_name, params, loop_info.for_stmt);
-            statement_info.reference_statement = loop_info.for_stmt;
+                    getEnclosingNode<SgBasicBlock>(loop_info.loop_stmt),
+                    function_name, params, loop_info.loop_stmt);
+            statement_info.reference_statement = loop_info.loop_stmt;
             statement_info.before = true;
         }
 
@@ -455,14 +455,14 @@ SgExpression* aligncheck_t::instrument_alignment_checks(Sg_File_Info* fileInfo,
 }
 
 void aligncheck_t::instrument_branches(Sg_File_Info* fileInfo,
-        SgForStatement* for_stmt, SgExpression* idxv_expr,
+        SgScopeStatement* scope_stmt, SgExpression* idxv_expr,
         SgExpression* common_alignment) {
-    SgStatement* first_stmt = getFirstStatement(for_stmt);
+    SgStatement* first_stmt = getFirstStatement(scope_stmt);
     SgStatement* stmt = first_stmt;
     while (stmt) {
         if (SgIfStmt* if_stmt = isSgIfStmt(stmt)) {
             int line_number = if_stmt->get_file_info()->get_raw_line();
-            int for_line_number = for_stmt->get_file_info()->get_raw_line();
+            int for_line_number = scope_stmt->get_file_info()->get_raw_line();
             SgStatement* true_body = if_stmt->get_true_body();
             SgStatement* false_body = if_stmt->get_false_body();
 
@@ -484,13 +484,13 @@ void aligncheck_t::instrument_branches(Sg_File_Info* fileInfo,
             statement_info_t true_decl;
             true_decl.before = true;
             true_decl.statement = var_true;
-            true_decl.reference_statement = for_stmt;
+            true_decl.reference_statement = scope_stmt;
             statement_list.push_back(true_decl);
 
             statement_info_t false_decl;
             false_decl.before = true;
             false_decl.statement = var_false;
-            false_decl.reference_statement = for_stmt;
+            false_decl.reference_statement = scope_stmt;
             statement_list.push_back(false_decl);
 
             SgExprStatement *true_incr = NULL, *false_incr = NULL;
@@ -531,9 +531,9 @@ void aligncheck_t::instrument_branches(Sg_File_Info* fileInfo,
 
             statement_info_t branch_statement;
             branch_statement.statement = ir_methods::prepare_call_statement(
-                    getEnclosingNode<SgBasicBlock>(for_stmt),
-                    function_name, params, for_stmt);
-            branch_statement.reference_statement = for_stmt;
+                    getEnclosingNode<SgBasicBlock>(scope_stmt),
+                    function_name, params, scope_stmt);
+            branch_statement.reference_statement = scope_stmt;
             branch_statement.before = false;
             statement_list.push_back(branch_statement);
 
@@ -572,7 +572,7 @@ void aligncheck_t::instrument_branches(Sg_File_Info* fileInfo,
 
             statement_info_t record_stmt;
             record_stmt.statement = record_branch;
-            record_stmt.reference_statement = for_stmt;
+            record_stmt.reference_statement = scope_stmt;
             record_stmt.before = true;
             statement_list.push_back(record_stmt);
 
@@ -594,8 +594,8 @@ void aligncheck_t::instrument_branches(Sg_File_Info* fileInfo,
             params.push_back(recorded_addr);
 
             dir_call_stmt.statement = ir_methods::prepare_call_statement(
-                    getEnclosingNode<SgBasicBlock>(for_stmt),
-                    function_name, params, for_stmt);
+                    getEnclosingNode<SgBasicBlock>(scope_stmt),
+                    function_name, params, scope_stmt);
             dir_call_stmt.reference_statement = if_stmt;
             dir_call_stmt.before = false;
             statement_list.push_back(dir_call_stmt);
@@ -606,7 +606,7 @@ void aligncheck_t::instrument_branches(Sg_File_Info* fileInfo,
     }
 }
 
-void aligncheck_t::process_loop(SgForStatement* outer_for_stmt,
+void aligncheck_t::process_loop(SgScopeStatement* outer_scope_stmt,
         loop_info_t& loop_info, expr_map_t& loop_map,
         name_list_t& stream_list) {
     loop_map[loop_info.idxv_expr] = &loop_info;
@@ -623,13 +623,13 @@ void aligncheck_t::process_loop(SgForStatement* outer_for_stmt,
         Sg_File_Info *fileInfo =
             Sg_File_Info::generateFileInfoForTransformationNode(
                     ((SgLocatedNode*)
-                     outer_for_stmt)->get_file_info()->get_filenameString());
+                     outer_scope_stmt)->get_file_info()->get_filenameString());
 
         instrument_loop_trip_count(fileInfo, loop_info);
         instrument_streaming_stores(fileInfo, loop_info);
         SgExpression* common_alignment = instrument_alignment_checks(fileInfo,
-                outer_for_stmt, loop_info, stream_list, loop_map);
-        instrument_branches(fileInfo, loop_info.for_stmt, loop_info.idxv_expr,
+                outer_scope_stmt, loop_info, stream_list, loop_map);
+        instrument_branches(fileInfo, loop_info.loop_stmt, loop_info.idxv_expr,
                 common_alignment);
     }
 
@@ -640,7 +640,7 @@ void aligncheck_t::process_loop(SgForStatement* outer_for_stmt,
         for(loop_info_list_t::iterator it2 = loop_info_list.begin();
                 it2 != loop_info_list.end(); it2++) {
             loop_info_t& loop_info = *it2;
-            process_loop(outer_for_stmt, loop_info, loop_map, stream_list);
+            process_loop(outer_scope_stmt, loop_info, loop_map, stream_list);
         }
     }
 }
@@ -659,7 +659,7 @@ void aligncheck_t::process_node(SgNode* node) {
     for(loop_info_list_t::iterator it = loop_info_list.begin();
             it != loop_info_list.end(); it++) {
         loop_info_t& loop_info = *it;
-        process_loop(loop_info.for_stmt, loop_info, loop_map, stream_list);
+        process_loop(loop_info.loop_stmt, loop_info, loop_map, stream_list);
     }
 
     // Since this is not really a traversal, manually invoke atTraversalEnd();

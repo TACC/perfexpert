@@ -46,7 +46,7 @@ struct tag_loop_info_t;
 typedef std::vector<struct tag_loop_info_t> loop_info_list_t;
 
 typedef struct tag_loop_info_t {
-    SgForStatement* for_stmt;
+    SgScopeStatement* loop_stmt;
     SgExpression* idxv_expr;
     SgExpression* init_expr;
     SgExpression* test_expr;

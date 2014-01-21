@@ -256,9 +256,7 @@ void MINST::visit(SgNode* node)
     }
     else if (line_number != 0)	{
         // We have to instrument some loops
-        if (_line_number == line_number && (isSgFortranDo(node) ||
-                    isSgForStatement(node) || isSgWhileStmt(node) ||
-                    isSgDoWhileStmt(node))) {
+        if (_line_number == line_number && ir_methods::is_loop(node)) {
             SgFunctionDefinition* def =
                 getEnclosingNode<SgFunctionDefinition>(node);
             std::string function_name = def->get_declaration()->get_name();
