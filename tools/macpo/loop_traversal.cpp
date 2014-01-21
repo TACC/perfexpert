@@ -73,7 +73,7 @@ attrib loop_traversal_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
         else if (SgWhileStmt* while_stmt = isSgWhileStmt(scope_stmt))
             loop_body = while_stmt->get_body();
         else if (SgDoWhileStmt* do_while_stmt = isSgDoWhileStmt(scope_stmt))
-            loop_body = while_stmt->get_body();
+            loop_body = do_while_stmt->get_body();
 
         loop_traversal_t inner_traversal(var_renaming);
         inner_traversal.traverse(loop_body, attrib());
