@@ -155,7 +155,8 @@ void aligncheck_t::instrument_streaming_stores(Sg_File_Info* fileInfo,
             SgExpression* node = isSgExpression(*it2);
             if (node) {
                 SgBinaryOp* copy_node = isSgBinaryOp(copyExpression(node));
-                if (ir_methods::contains_expr(copy_node, loop_info.idxv_expr)) {
+                if (ir_methods::contains_expr(copy_node, loop_info.idxv_expr) &&
+                        loop_info.init_expr != NULL) {
                     ir_methods::replace_expr(copy_node, loop_info.idxv_expr,
                             loop_info.init_expr);
                 }
@@ -286,7 +287,7 @@ SgExpression* aligncheck_t::instrument_alignment_checks(Sg_File_Info* fileInfo,
                     SgExpression* incr = loop_info->incr_expr;
                     int incr_op = loop_info->incr_op;
 
-                    if (ir_methods::contains_expr(bin_op, idxv)) {
+                    if (ir_methods::contains_expr(bin_op, idxv) && init) {
                         if (!isSgValueExp(init))
                             expr_set.insert(init->unparseToString());
 
@@ -609,6 +610,8 @@ void aligncheck_t::instrument_branches(Sg_File_Info* fileInfo,
 void aligncheck_t::process_loop(SgScopeStatement* outer_scope_stmt,
         loop_info_t& loop_info, expr_map_t& loop_map,
         name_list_t& stream_list) {
+    int line_number = loop_info.loop_stmt->get_file_info()->get_raw_line();
+
     loop_map[loop_info.idxv_expr] = &loop_info;
     if (contains_non_linear_reference(loop_info.reference_list)) {
         std::cerr << mprefix << "Found non-linear reference(s) in loop." <<
@@ -618,8 +621,9 @@ void aligncheck_t::process_loop(SgScopeStatement* outer_scope_stmt,
 
     // Instrument this loop only if
     // the loop header components have been identified.
-    if (loop_info.idxv_expr && loop_info.test_expr && loop_info.init_expr &&
-            loop_info.test_expr) {
+    // Allow empty init expressions (which is always the case with while and
+    // do-while loops).
+    if (loop_info.idxv_expr && loop_info.test_expr && loop_info.test_expr) {
         Sg_File_Info *fileInfo =
             Sg_File_Info::generateFileInfoForTransformationNode(
                     ((SgLocatedNode*)

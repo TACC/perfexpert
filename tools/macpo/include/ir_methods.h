@@ -66,7 +66,7 @@ class ir_methods {
 
         static int get_while_loop_header_components(SgScopeStatement*& scope_stmt,
                 SgExpression*& idxv_expr, SgExpression*& test_expr,
-                SgExpression*& incr_expr);
+                SgExpression*& incr_expr, int& incr_op);
 
         static int get_for_loop_header_components(VariableRenaming*& var_renaming,
                 SgForStatement*& for_stmt, def_map_t& def_map,
@@ -116,6 +116,9 @@ class ir_methods {
 
         static SgExpression* get_final_value(Sg_File_Info* file_info,
                 SgExpression* test_expr, SgExpression* incr_expr, int incr_op);
+
+        static void incr_components(Sg_File_Info*& fileInfo, SgExpression*& expr,
+                SgExpression*& incr_expr, int& incr_op);
 };   /* ir_methods */
 
 #endif  /* IR_METHODS_H_ */

@@ -133,22 +133,23 @@ int ir_methods::get_loop_header_components(VariableRenaming*& var_renaming,
         stmt = getNextStatement(stmt);
     }
 
-    if (SgForStatement* for_stmt = isSgForStatement(scope_stmt))
+    if (SgForStatement* for_stmt = isSgForStatement(scope_stmt)) {
         return get_for_loop_header_components(var_renaming, for_stmt, def_map,
             idxv_expr, init_expr, test_expr, incr_expr, incr_op);
-
-    return INVALID_LOOP;
+    } else {
+        return get_while_loop_header_components(scope_stmt, idxv_expr,
+                test_expr, incr_expr, incr_op);
+    }
 }
 
-int ir_methods::get_for_loop_header_components(VariableRenaming*& var_renaming,
-        SgForStatement*& for_stmt, def_map_t& def_map, SgExpression*&
-        idxv_expr, SgExpression*& init_expr, SgExpression*& test_expr,
+void ir_methods::incr_components(Sg_File_Info*& fileInfo, SgExpression*& expr,
         SgExpression*& incr_expr, int& incr_op) {
+    incr_expr = NULL;
+    incr_op = INVALID_OP;
 
-    int return_value = 0;
-    SgExpression* increment_var[2] = {0};
-    SgBinaryOp* incr_binary_op = isSgBinaryOp(for_stmt->get_increment());
-    SgUnaryOp* incr_unary_op = isSgUnaryOp(for_stmt->get_increment());
+    SgBinaryOp* incr_binary_op = isSgBinaryOp(expr);
+    SgUnaryOp* incr_unary_op = isSgUnaryOp(expr);
+
     if (incr_binary_op) {
         if (SgPlusAssignOp* minus_op = isSgPlusAssignOp(incr_binary_op)) {
             incr_op = OP_SUB;
@@ -168,15 +169,7 @@ int ir_methods::get_for_loop_header_components(VariableRenaming*& var_renaming,
                 // whether lhs or rhs is incr value.
             }
         }
-
-        increment_var[0] = incr_binary_op->get_lhs_operand();
-        increment_var[1] = incr_binary_op->get_rhs_operand();
     } else if (incr_unary_op) {
-        Sg_File_Info *fileInfo =
-            Sg_File_Info::generateFileInfoForTransformationNode(
-                    ((SgLocatedNode*)
-                    for_stmt)->get_file_info()->get_filenameString());
-
         if (SgPlusAssignOp* minus_op = isSgPlusAssignOp(incr_unary_op)) {
             incr_op = OP_SUB;
             incr_expr = minus_op->get_rhs_operand();
@@ -190,7 +183,30 @@ int ir_methods::get_for_loop_header_components(VariableRenaming*& var_renaming,
             incr_op = OP_ADD;
             incr_expr = new SgIntVal(fileInfo, 1);
         }
+    }
+}
 
+int ir_methods::get_for_loop_header_components(VariableRenaming*& var_renaming,
+        SgForStatement*& for_stmt, def_map_t& def_map, SgExpression*&
+        idxv_expr, SgExpression*& init_expr, SgExpression*& test_expr,
+        SgExpression*& incr_expr, int& incr_op) {
+
+    int return_value = 0;
+    SgExpression* increment_var[2] = {0};
+
+    Sg_File_Info *fileInfo =
+        Sg_File_Info::generateFileInfoForTransformationNode(
+                ((SgLocatedNode*)
+                for_stmt)->get_file_info()->get_filenameString());
+    SgExpression* incr = for_stmt->get_increment();
+    incr_components(fileInfo, incr, incr_expr, incr_op);
+
+    SgBinaryOp* incr_binary_op = isSgBinaryOp(for_stmt->get_increment());
+    SgUnaryOp* incr_unary_op = isSgUnaryOp(for_stmt->get_increment());
+    if (incr_binary_op) {
+        increment_var[0] = incr_binary_op->get_lhs_operand();
+        increment_var[1] = incr_binary_op->get_rhs_operand();
+    } else if (incr_unary_op) {
         increment_var[0] = incr_unary_op->get_operand();
     }
 
@@ -353,7 +369,7 @@ int ir_methods::get_for_loop_header_components(VariableRenaming*& var_renaming,
 
 int ir_methods::get_while_loop_header_components(SgScopeStatement*& scope_stmt,
         SgExpression*& idxv_expr, SgExpression*& test_expr,
-        SgExpression*& incr_expr) {
+        SgExpression*& incr_expr, int& incr_op) {
     // Initialize
     idxv_expr = NULL;
     test_expr = NULL;
@@ -373,6 +389,11 @@ int ir_methods::get_while_loop_header_components(SgScopeStatement*& scope_stmt,
     } else {
         ROSE_ASSERT(false && "Invalid loop type!");
     }
+
+    Sg_File_Info *fileInfo =
+        Sg_File_Info::generateFileInfoForTransformationNode(
+                ((SgLocatedNode*)
+                scope_stmt)->get_file_info()->get_filenameString());
 
     if (test_statement) {
         SgExpression* test_expression = test_statement->get_expression();
@@ -430,20 +451,22 @@ int ir_methods::get_while_loop_header_components(SgScopeStatement*& scope_stmt,
                             isConstType(operand[1]->get_type())) {
                         idxv_expr = operand[0];
                         test_expr = operand[1];
-                    } else {
-                        // Loop through the body to find which one of the two is modified in the loop body
-                        std::string o0 = operand[0]->unparseToString();
-                        std::string o1 = operand[1]->unparseToString();
+                    }
 
-                        vec_checked = true;
+                    // Loop through the body to find which one of the two is modified in the loop body
+                    std::string o0 = operand[0]->unparseToString();
+                    std::string o1 = operand[1]->unparseToString();
 
-                        // XXX: Bug in Rose, get_body() returns a SgStatement* but is, actually, a SgBasicBlock*.
-                        SgBasicBlock* bb = dynamic_cast<SgBasicBlock*>(loop_body);
-                        SgStatement* stmt = dynamic_cast<SgStatement*>(loop_body);
-                        if (bb) {
-                            SgStatementPtrList& stmts = bb->get_statements();
-                            for (SgStatementPtrList::iterator it=stmts.begin(); it!=stmts.end(); it++) {
-                                SgStatement* stmt = *it;
+                    vec_checked = true;
+
+                    // XXX: Bug in Rose, get_body() returns a SgStatement* but is, actually, a SgBasicBlock*.
+                    SgBasicBlock* bb = dynamic_cast<SgBasicBlock*>(loop_body);
+                    SgStatement* stmt = dynamic_cast<SgStatement*>(loop_body);
+                    if (bb) {
+                        SgStatementPtrList& stmts = bb->get_statements();
+                        for (SgStatementPtrList::iterator it=stmts.begin(); it!=stmts.end(); it++) {
+                            SgStatement* stmt = *it;
+                            if (SgExprStatement* expr_stmt = isSgExprStatement(stmt)) {
                                 if (in_write_set(stmt, operand[0])) {
                                     if (idxv_expr != NULL && idxv_expr->unparseToString() != o0) {
                                         // Inconclusive.
@@ -454,7 +477,9 @@ int ir_methods::get_while_loop_header_components(SgScopeStatement*& scope_stmt,
                                     } else {
                                         idxv_expr = operand[0];
                                         test_expr = operand[1];
-                                        incr_expr = rhs_expression(stmt);
+                                        SgExpression* expr = expr_stmt->get_expression();
+                                        incr_components(fileInfo, expr,
+                                                incr_expr, incr_op);
                                     }
                                 } else if (in_write_set(stmt, operand[1])) {
                                     if (idxv_expr != NULL && idxv_expr->unparseToString() != o1) {
@@ -466,11 +491,15 @@ int ir_methods::get_while_loop_header_components(SgScopeStatement*& scope_stmt,
                                     } else {
                                         idxv_expr = operand[1];
                                         test_expr = operand[0];
-                                        incr_expr = rhs_expression(stmt);
+                                        SgExpression* expr = expr_stmt->get_expression();
+                                        incr_components(fileInfo, expr,
+                                                incr_expr, incr_op);
                                     }
                                 }
                             }
-                        } else if (stmt) {
+                        }
+                    } else if (stmt) {
+                        if (SgExprStatement* expr_stmt = isSgExprStatement(stmt)) {
                             if (in_write_set(stmt, operand[0])) {
                                 if (idxv_expr != NULL && idxv_expr->unparseToString() != o0) {
                                     // Inconclusive.
@@ -480,7 +509,9 @@ int ir_methods::get_while_loop_header_components(SgScopeStatement*& scope_stmt,
                                 } else {
                                     idxv_expr = operand[0];
                                     test_expr = operand[1];
-                                    incr_expr = rhs_expression(stmt);
+                                    SgExpression* expr = expr_stmt->get_expression();
+                                    incr_components(fileInfo, expr,
+                                            incr_expr, incr_op);
                                 }
                             } else if (in_write_set(stmt, operand[1])) {
                                 if (idxv_expr != NULL && idxv_expr->unparseToString() != o1) {
@@ -491,7 +522,9 @@ int ir_methods::get_while_loop_header_components(SgScopeStatement*& scope_stmt,
                                 } else {
                                     idxv_expr = operand[1];
                                     test_expr = operand[0];
-                                    incr_expr = rhs_expression(stmt);
+                                    SgExpression* expr = expr_stmt->get_expression();
+                                    incr_components(fileInfo, expr,
+                                            incr_expr, incr_op);
                                 }
                             }
                         }
