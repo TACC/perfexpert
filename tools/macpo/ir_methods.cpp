@@ -70,7 +70,25 @@ bool ir_methods::vectorizable(SgStatement*& stmt) {
     if (!stmt)
         return true;
 
-    if (isSgArithmeticIfStatement(stmt) ||
+    SgScopeStatement* scope_stmt = isSgScopeStatement(stmt);
+    if (SgIfStmt* if_statement = isSgIfStmt(stmt)) {
+        SgStatement* true_body = if_statement->get_true_body();
+        SgStatement* false_body = if_statement->get_false_body();
+
+        if (!vectorizable(true_body))
+            return false;
+
+        if (!vectorizable(false_body))
+            return false;
+    } else if (scope_stmt && !ir_methods::is_loop(stmt)) {
+        const SgStatementPtrList stmt_list = scope_stmt->generateStatementList();
+        for(int i=0; i<stmt_list.size(); i++) {
+            SgStatement* inner_stmt = stmt_list[i];
+            if (!vectorizable(inner_stmt)) {
+                return false;
+            }
+        }
+    } else if (isSgArithmeticIfStatement(stmt) ||
             isSgAssertStmt(stmt) ||
             isSgAssignedGotoStatement(stmt) ||
             isSgBreakStmt(stmt) ||
@@ -109,15 +127,6 @@ int ir_methods::get_loop_header_components(VariableRenaming*& var_renaming,
     if (!scope_stmt)
         return INVALID_LOOP;
 
-    // If we need to instrument at least one scalar variable,
-    // can this instrumentation be relocated to an earlier point
-    // in the program that is outside all loops?
-    VariableRenaming::NumNodeRenameTable rename_table =
-        var_renaming->getReachingDefsAtNode(scope_stmt);
-
-    // Expand the iterator list into a map for easier lookup.
-    ir_methods::construct_def_map(rename_table, def_map);
-
     // Sanity check to see if this loop contains statements that prevent
     // vectorization.
     SgStatement* first_stmt = getFirstStatement(scope_stmt);
@@ -132,6 +141,15 @@ int ir_methods::get_loop_header_components(VariableRenaming*& var_renaming,
 
         stmt = getNextStatement(stmt);
     }
+
+    // If we need to instrument at least one scalar variable,
+    // can this instrumentation be relocated to an earlier point
+    // in the program that is outside all loops?
+    VariableRenaming::NumNodeRenameTable rename_table =
+        var_renaming->getReachingDefsAtNode(scope_stmt);
+
+    // Expand the iterator list into a map for easier lookup.
+    ir_methods::construct_def_map(rename_table, def_map);
 
     if (SgForStatement* for_stmt = isSgForStatement(scope_stmt)) {
         return get_for_loop_header_components(var_renaming, for_stmt, def_map,

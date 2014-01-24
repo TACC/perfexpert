@@ -476,6 +476,16 @@ static void indigo__exit()
                     break;
 #endif
 
+                case BRANCH_MOSTLY_FALSE:
+                    fprintf (stderr, "MACPO :: Branch at line %d is mostly "
+                            "evaluated to false.\n", line_number);
+                    break;
+
+                case BRANCH_MOSTLY_TRUE:
+                    fprintf (stderr, "MACPO :: Branch at line %d is mostly "
+                            "evaluated to false.\n", line_number);
+                    break;
+
                 case BRANCH_FALSE:
                     fprintf (stderr, "MACPO :: Branch at line %d is always "
                             "evaluated to false.\n", line_number);
@@ -568,10 +578,15 @@ short& get_branch_bin(int line_number) {
 void indigo__record_branch_c(int line_number, int true_branch_count, int false_branch_count)
 {
     int status = BRANCH_UNKNOWN;
-    if (true_branch_count * 100.0f > false_branch_count * 80.0f) {
+    int branch_count = true_branch_count + false_branch_count;
+    if (true_branch_count != 0 && false_branch_count == 0) {
         status = BRANCH_TRUE;
-    } else if (false_branch_count * 100.0f > true_branch_count * 80.0f) {
+    } else if (true_branch_count * 100.0f > branch_count * 85.0f) {
+        status = BRANCH_MOSTLY_TRUE;
+    } else if (false_branch_count != 0 > true_branch_count == 0) {
         status = BRANCH_FALSE;
+    } else if (false_branch_count * 100.0f > branch_count * 85.0f) {
+        status = BRANCH_MOSTLY_FALSE;
     } else {
         status = BRANCH_UNKNOWN;
     }
