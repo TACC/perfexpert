@@ -147,7 +147,7 @@ void indigo__record_f_(int* read_write, int* line_number, void* addr, int* var_i
 #if defined(__cplusplus)
 extern "C" {
 #endif
-void indigo__record_branch_c(int line_number, int true_branch_count, int false_branch_count);
+void indigo__record_branch_c(int line_number, int loop_line_number, int true_branch_count, int false_branch_count);
 #if defined (__cplusplus)
 }
 #endif

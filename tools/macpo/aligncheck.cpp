@@ -545,6 +545,7 @@ void aligncheck_t::instrument_branches(Sg_File_Info* fileInfo,
 
             std::vector<SgExpression*> params;
             params.push_back(new SgIntVal(fileInfo, line_number));
+            params.push_back(new SgIntVal(fileInfo, for_line_number));
             params.push_back(buildVarRefExp(var_true_name));
             params.push_back(buildVarRefExp(var_false_name));
 

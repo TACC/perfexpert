@@ -47,6 +47,7 @@ static std::map<line_threadid_pair, long*> sstore_align_map, align_map,
         tripcount_map;
 static std::map<line_threadid_pair, bool> overlap_bin;
 static std::map<line_threadid_pair, short> branch_bin;
+static std::map<int, int> branch_loop_line_pair;
 volatile static short lock_var;
 
 static inline void lock() {
@@ -393,7 +394,7 @@ static void indigo__exit()
 	if (intel_apic_mapping)	free(intel_apic_mapping);
 
     if (sstore_align_map.size()) {
-        fprintf (stderr, "MACPO :: Alignments for streaming stores:\n");
+        fprintf (stderr, "\nMACPO :: Alignments for streaming stores:\n");
         for (std::map<line_threadid_pair, long*>::iterator it =
                 sstore_align_map.begin(); it != sstore_align_map.end(); it++) {
             line_threadid_pair pair = it->first;
@@ -408,7 +409,7 @@ static void indigo__exit()
     }
 
     if (align_map.size()) {
-        fprintf (stderr, "MACPO :: Alignments for loop references:\n");
+        fprintf (stderr, "\nMACPO :: Alignments for loop references:\n");
         for (std::map<line_threadid_pair, long*>::iterator it =
                 align_map.begin(); it != align_map.end(); it++) {
             line_threadid_pair pair = it->first;
@@ -423,7 +424,7 @@ static void indigo__exit()
     }
 
     if (overlap_bin.size()) {
-        fprintf (stderr, "MACPO :: Overlap among loop references:\n");
+        fprintf (stderr, "\nMACPO :: Overlap among loop references:\n");
         for (std::map<line_threadid_pair, bool>::iterator it =
                 overlap_bin.begin(); it != overlap_bin.end(); it++) {
             line_threadid_pair pair = it->first;
@@ -441,7 +442,7 @@ static void indigo__exit()
     }
 
     if (tripcount_map.size()) {
-        fprintf (stderr, "MACPO :: Loop trip counts:\n");
+        fprintf (stderr, "\nMACPO :: Loop trip counts:\n");
         for (std::map<line_threadid_pair, long*>::iterator it =
                 tripcount_map.begin(); it != tripcount_map.end(); it++) {
             line_threadid_pair pair = it->first;
@@ -456,44 +457,43 @@ static void indigo__exit()
     }
 
     if (branch_bin.size()) {
-        fprintf (stderr, "MACPO :: Branch profiling results:\n");
+        fprintf (stderr, "\nMACPO :: Branch profiling results:\n");
         for (std::map<line_threadid_pair, short>::iterator it =
                 branch_bin.begin(); it != branch_bin.end(); it++) {
             line_threadid_pair pair = it->first;
             int line_number = pair.first;
+            int loop_line_number = branch_loop_line_pair[line_number];
             short branch_status = it->second;
 
             switch(branch_status) {
                 case BRANCH_UNKNOWN:
-                    fprintf (stderr, "MACPO :: Branch at line %d is "
-                            "unpredictable.\n", line_number);
+                    fprintf (stderr, "MACPO :: Branch condition at line %d "
+                            "from loop at line %d is unpredictable.\n",
+                            line_number, loop_line_number);
                     break;
-
-#if 0
-                case BRANCH_SIMD:
-                    fprintf (stderr, "MACPO :: Branch at line %d can be "
-                            "grouped as a vector.\n", line_number);
-                    break;
-#endif
 
                 case BRANCH_MOSTLY_FALSE:
-                    fprintf (stderr, "MACPO :: Branch at line %d is mostly "
-                            "evaluated to false.\n", line_number);
+                    fprintf (stderr, "MACPO :: Branch condition at line %d "
+                            "from loop at line %d is mostly evaluates to "
+                            "false.\n", line_number, loop_line_number);
                     break;
 
                 case BRANCH_MOSTLY_TRUE:
-                    fprintf (stderr, "MACPO :: Branch at line %d is mostly "
-                            "evaluated to false.\n", line_number);
+                    fprintf (stderr, "MACPO :: Branch condition at line %d "
+                            "from loop at line %d is mostly evaluates to "
+                            "true.\n", line_number, loop_line_number);
                     break;
 
                 case BRANCH_FALSE:
-                    fprintf (stderr, "MACPO :: Branch at line %d is always "
-                            "evaluated to false.\n", line_number);
+                    fprintf (stderr, "MACPO :: Branch condition at line %d "
+                            "from loop at line %d is always evaluates to "
+                            "false.\n", line_number, loop_line_number);
                     break;
 
                 case BRANCH_TRUE:
-                    fprintf (stderr, "MACPO :: Branch at line %d is always "
-                            "evaluated to true.\n", line_number);
+                    fprintf (stderr, "MACPO :: Branch condition at line %d "
+                            "from loop at line %d is always evaluates to "
+                            "true.\n", line_number, loop_line_number);
                     break;
             }
         }
@@ -558,7 +558,9 @@ void indigo__gen_trace_f(int *read_write, int *line_number, void* base, void* ad
 	if (fd >= 0)	fill_trace_struct(*read_write, *line_number, (size_t) base, (size_t) addr, *var_idx);
 }
 
-short& get_branch_bin(int line_number) {
+short& get_branch_bin(int line_number, int loop_line_number) {
+    branch_loop_line_pair[line_number] = loop_line_number;
+
     line_threadid_pair pair(line_number, getCoreID());
 
     // Obtain lock.
@@ -575,7 +577,7 @@ short& get_branch_bin(int line_number) {
     return branch_bin[pair];
 }
 
-void indigo__record_branch_c(int line_number, int true_branch_count, int false_branch_count)
+void indigo__record_branch_c(int line_number, int loop_line_number, int true_branch_count, int false_branch_count)
 {
     int status = BRANCH_UNKNOWN;
     int branch_count = true_branch_count + false_branch_count;
@@ -591,8 +593,8 @@ void indigo__record_branch_c(int line_number, int true_branch_count, int false_b
         status = BRANCH_UNKNOWN;
     }
 
-    if (get_branch_bin(line_number) != BRANCH_UNKNOWN) {
-        get_branch_bin(line_number) = status;
+    if (get_branch_bin(line_number, loop_line_number) != BRANCH_UNKNOWN) {
+        get_branch_bin(line_number, loop_line_number) = status;
     }
 }
 
