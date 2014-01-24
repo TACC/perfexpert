@@ -469,14 +469,21 @@ static void indigo__exit()
                             "unpredictable.\n", line_number);
                     break;
 
+#if 0
                 case BRANCH_SIMD:
                     fprintf (stderr, "MACPO :: Branch at line %d can be "
                             "grouped as a vector.\n", line_number);
                     break;
+#endif
 
-                case BRANCH_SINGLE:
+                case BRANCH_FALSE:
                     fprintf (stderr, "MACPO :: Branch at line %d is always "
-                            "evaluated in one direction.\n", line_number);
+                            "evaluated to false.\n", line_number);
+                    break;
+
+                case BRANCH_TRUE:
+                    fprintf (stderr, "MACPO :: Branch at line %d is always "
+                            "evaluated to true.\n", line_number);
                     break;
             }
         }
@@ -549,7 +556,7 @@ short& get_branch_bin(int line_number) {
 
     std::map<line_threadid_pair, short>::iterator it = branch_bin.find(pair);
     if (it == branch_bin.end()) {
-        branch_bin[pair] = BRANCH_SINGLE;
+        branch_bin[pair] = BRANCH_NOINIT;
     }
 
     // Release lock.
@@ -560,13 +567,21 @@ short& get_branch_bin(int line_number) {
 
 void indigo__record_branch_c(int line_number, int true_branch_count, int false_branch_count)
 {
-#if 0
-    if (get_branch_bin(line_number) != BRANCH_UNKNOWN) {
-        if (true_branch_count == 0 && false_branch_count 
+    int status = BRANCH_UNKNOWN;
+    if (true_branch_count * 100.0f > false_branch_count * 80.0f) {
+        status = BRANCH_TRUE;
+    } else if (false_branch_count * 100.0f > true_branch_count * 80.0f) {
+        status = BRANCH_FALSE;
+    } else {
+        status = BRANCH_UNKNOWN;
     }
-#endif
+
+    if (get_branch_bin(line_number) != BRANCH_UNKNOWN) {
+        get_branch_bin(line_number) = status;
+    }
 }
 
+#if 0
 void indigo__simd_branch_c(int line_number, int idxv, int type_size, int branch_dir, int common_alignment, int* recorded_simd_branch_dir)
 {
 	if (common_alignment >= 0 && type_size > 0) {
@@ -591,6 +606,7 @@ void indigo__simd_branch_c(int line_number, int idxv, int type_size, int branch_
         }
     }
 }
+#endif
 
 void indigo__record_c(int read_write, int line_number, void* addr, int var_idx)
 {
@@ -713,7 +729,7 @@ long* get_tripcount_histogram(int line_number) {
     Checks for alignment to cache line boundary and memory overlap.
     Returns common alignment, if any. Otherwise, returns -1.
 */
-int indigo__aligncheck_c(int line_number, int* type_size, int stream_count, ...) {
+int indigo__aligncheck_c(int line_number, /* int* type_size, */ int stream_count, ...) {
     va_list args;
 
     void* start_list[MAX_ADDR] = {0};
@@ -751,13 +767,15 @@ int indigo__aligncheck_c(int line_number, int* type_size, int stream_count, ...)
 
         if (i == 0) {
             common_alignment = remainder;
-            *type_size = size;
+            // *type_size = size;
         } else {
             if (common_alignment != remainder)
                 common_alignment = -1;
 
+#if 0
             if (*type_size != size)
                 *type_size = -1;
+#endif
         }
 
 #if 0

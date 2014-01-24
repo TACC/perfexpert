@@ -199,9 +199,9 @@ void MINST::visit(SgNode* node)
                         indigo__create_map, empty_params, expr_stmt);
                 insertStatementAfter(expr_stmt, map_stmt);
                 ROSE_ASSERT(map_stmt);
-            }
 
-            insert_map_prototype(node);
+                insert_map_prototype(node);
+            }
         }
 
         if (line_number == 0) {
@@ -227,10 +227,6 @@ void MINST::visit(SgNode* node)
             } else if (action == ACTION_ALIGNCHECK) {
                 std::cerr << mprefix "Placing alignment-related checks around "
                     "loop(s) in function " << function_name << std::endl;
-
-                // We found the function that we wanted to instrument,
-                // now insert the indigo__create_map_() function in this file.
-                insert_map_function(node);
 
                 aligncheck_t visitor(var_renaming);
                 visitor.process_node(node);
@@ -284,10 +280,6 @@ void MINST::visit(SgNode* node)
                 std::cerr << mprefix << "Placing alignment checks around loop "
                     "in function " << function_name << " at line " <<
                     _line_number << std::endl;
-
-                // We found the function that we wanted to instrument,
-                // now insert the indigo__create_map_() function in this file.
-                insert_map_function(node);
 
                 aligncheck_t visitor(var_renaming);
                 visitor.process_node(node);

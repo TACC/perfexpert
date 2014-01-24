@@ -72,7 +72,7 @@ static volatile sig_atomic_t sleeping=0, access_count=0;
 static int fd=-1, sleep_sec=0, new_sleep_sec=1, *intel_apic_mapping=NULL;
 static node_t terminal_node;
 
-enum { BRANCH_SINGLE=0, BRANCH_SIMD, BRANCH_UNKNOWN };
+enum { BRANCH_NOINIT=0, BRANCH_TRUE, BRANCH_FALSE, BRANCH_UNKNOWN };
 
 #if	defined(__cplusplus)
 extern "C" {
@@ -151,6 +151,7 @@ void indigo__record_branch_c(int line_number, int true_branch_count, int false_b
 }
 #endif
 
+#if 0
 #if defined(__cplusplus)
 extern "C" {
 #endif
@@ -158,11 +159,12 @@ void indigo__simd_branch_c(int line_number, int idxv, int type_size, int branch_
 #if defined (__cplusplus)
 }
 #endif
+#endif
 
 #if defined(__cplusplus)
 extern "C" {
 #endif
-int indigo__aligncheck_c(int line_number, int* type_size, int stream_count, ...);
+int indigo__aligncheck_c(int line_number, /* int* type_size, */ int stream_count, ...);
 #if defined (__cplusplus)
 }
 #endif

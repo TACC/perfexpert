@@ -681,14 +681,16 @@ long ir_methods::get_reference_index(reference_list_t& reference_list,
 
 std::string ir_methods::strip_index_expr(const std::string& stream_name) {
     std::string return_string = stream_name;
-    while (return_string.at(return_string.length()-1) == ']') {
+    while (return_string.length() > 0 &&
+        return_string.at(return_string.length()-1) == ']') {
         // Strip off the last [.*]
         unsigned index = return_string.find_last_of('[');
         return_string = return_string.substr(0, index);
     }
 
     // For fortran array notation
-    while (return_string.at(return_string.length()-1) == ')') {
+    while (return_string.length() > 0 &&
+        return_string.at(return_string.length()-1) == ')') {
         // Strip off the last [.*]
         unsigned index = return_string.find_last_of('(');
         return_string = return_string.substr(0, index);

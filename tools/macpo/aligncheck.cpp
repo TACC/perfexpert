@@ -78,6 +78,7 @@ void aligncheck_t::instrument_loop_trip_count(Sg_File_Info* fileInfo,
 
         SgVariableDeclaration* trip_count = NULL;
         trip_count = ir_methods::create_long_variable(fileInfo, var_name, 0);
+        trip_count->set_parent(bb);
 
         SgVarRefExp* trip_count_expr = buildVarRefExp(var_name);
         SgPlusPlusOp* incr_op = new SgPlusPlusOp(fileInfo,
@@ -345,11 +346,14 @@ SgExpression* aligncheck_t::instrument_alignment_checks(Sg_File_Info* fileInfo,
         SgIntVal* param_count = new SgIntVal(fileInfo, param_list.size() / 3);
         SgIntVal* param_line_no = new SgIntVal(fileInfo, line_number);
 
+#if 0
         char var_name[32];
         snprintf (var_name, 32, "indigo__type_size_%d", line_number);
 
+        SgBasicBlock* outer_bb = getEnclosingNode<SgBasicBlock>(outer_scope_stmt);
         SgVariableDeclaration* type_size = NULL;
         type_size = ir_methods::create_long_variable(fileInfo, var_name, 0);
+        type_size->set_parent(outer_bb);
 
         SgExpression* type_size_addr = buildCastExp (
                 buildAddressOfOp((SgExpression*) buildVarRefExp(var_name)),
@@ -360,6 +364,7 @@ SgExpression* aligncheck_t::instrument_alignment_checks(Sg_File_Info* fileInfo,
         type_size_decl.reference_statement = outer_scope_stmt;
         type_size_decl.before = true;
         statement_list.push_back(type_size_decl);
+#endif
 
         if (expr_set.size() == 1) {
             def_map_t def_map;
@@ -393,7 +398,7 @@ SgExpression* aligncheck_t::instrument_alignment_checks(Sg_File_Info* fileInfo,
 
                     std::vector<SgExpression*> params;
                     params.push_back(param_line_no);
-                    params.push_back(type_size_addr);
+                    // params.push_back(type_size_addr);
                     params.push_back(param_count);
                     params.insert(params.end(), param_list.begin(),
                             param_list.end());
@@ -407,7 +412,7 @@ SgExpression* aligncheck_t::instrument_alignment_checks(Sg_File_Info* fileInfo,
                 // TODO: Place function call before the start of the outermost loop.
                 std::vector<SgExpression*> params;
                 params.push_back(param_line_no);
-                params.push_back(type_size_addr);
+                // params.push_back(type_size_addr);
                 params.push_back(param_count);
                 params.insert(params.end(), param_list.begin(),
                         param_list.end());
@@ -422,7 +427,7 @@ SgExpression* aligncheck_t::instrument_alignment_checks(Sg_File_Info* fileInfo,
             // Instrument just before the loop under consideration.
             std::vector<SgExpression*> params;
             params.push_back(param_line_no);
-            params.push_back(type_size_addr);
+            // params.push_back(type_size_addr);
             params.push_back(param_count);
             params.insert(params.end(), param_list.begin(), param_list.end());
 
@@ -434,6 +439,9 @@ SgExpression* aligncheck_t::instrument_alignment_checks(Sg_File_Info* fileInfo,
         }
 
         if (statement_info.statement) {
+            statement_list.push_back(statement_info);
+
+#if 0
             char var_name[32];
             snprintf (var_name, 32, "indigo__alignment_%d", line_number);
 
@@ -442,7 +450,10 @@ SgExpression* aligncheck_t::instrument_alignment_checks(Sg_File_Info* fileInfo,
                     statement_info.statement);
             ROSE_ASSERT(expr_stmt);
 
+            SgBasicBlock* outer_bb = getEnclosingNode<SgBasicBlock>(
+                    statement_info.reference_statement);
             alignment = ir_methods::create_long_variable_with_init(fileInfo, var_name, expr_stmt->get_expression());
+            alignment->set_parent(outer_bb);
 
             statement_info_t decl_info;
             decl_info.statement = alignment;
@@ -451,6 +462,9 @@ SgExpression* aligncheck_t::instrument_alignment_checks(Sg_File_Info* fileInfo,
             statement_list.push_back(decl_info);
 
             return buildVarRefExp(var_name);
+#else
+            return NULL;
+#endif
         }
     }
 }
@@ -477,10 +491,14 @@ void aligncheck_t::instrument_branches(Sg_File_Info* fileInfo,
             snprintf (var_false_name, 32, "indigo__branch_false_%d",
                     line_number);
 
+            SgBasicBlock* outer_bb = getEnclosingNode<SgBasicBlock>(
+                    scope_stmt);
             var_true = ir_methods::create_long_variable(fileInfo, var_true_name,
                     0);
+            var_true->set_parent(outer_bb);
             var_false = ir_methods::create_long_variable(fileInfo,
                     var_false_name, 0);
+            var_false->set_parent(outer_bb);
 
             statement_info_t true_decl;
             true_decl.before = true;
@@ -538,13 +556,15 @@ void aligncheck_t::instrument_branches(Sg_File_Info* fileInfo,
             branch_statement.before = false;
             statement_list.push_back(branch_statement);
 
-    #if 1
+    #if 0
             char var_dir_name[32];
             snprintf (var_dir_name, 32, "indigo__branch_dir_%d", line_number);
 
             SgVariableDeclaration* branch_dir = NULL;
+            SgBasicBlock* bb = getEnclosingNode<SgBasicBlock>(if_stmt);
             branch_dir = ir_methods::create_long_variable(fileInfo,
                     var_dir_name, 0);
+            branch_dir->set_parent(bb);
 
             statement_info_t branch_dir_decl;
             branch_dir_decl.statement = branch_dir;
@@ -555,6 +575,7 @@ void aligncheck_t::instrument_branches(Sg_File_Info* fileInfo,
             statement_info_t assign_stmt;
             assign_stmt.statement = ir_methods::create_long_assign_statement(
                     fileInfo, var_dir_name, new SgIntVal(fileInfo, 1));
+            assign_stmt.statement->set_parent(outer_bb);
             assign_stmt.reference_statement = false_incr;
             assign_stmt.before = false;
             statement_list.push_back(assign_stmt);
@@ -570,6 +591,7 @@ void aligncheck_t::instrument_branches(Sg_File_Info* fileInfo,
             SgVariableDeclaration* record_branch = NULL;
             record_branch = ir_methods::create_long_variable(fileInfo,
                     var_record_name, -1);
+            record_branch->set_parent(outer_bb);
 
             statement_info_t record_stmt;
             record_stmt.statement = record_branch;
