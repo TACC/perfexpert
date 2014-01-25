@@ -88,6 +88,10 @@ bool ir_methods::vectorizable(SgStatement*& stmt) {
                 return false;
             }
         }
+    } else if (SgExprStatement* expr_stmt = isSgExprStatement(stmt)) {
+        SgExpression* expr = expr_stmt->get_expression();
+        if (isSgFunctionCallExp(expr))
+            return false;
     } else if (isSgArithmeticIfStatement(stmt) ||
             isSgAssertStmt(stmt) ||
             isSgAssignedGotoStatement(stmt) ||
