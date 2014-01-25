@@ -334,8 +334,6 @@ static void print_tripcount_histogram(int line_number, long* histogram) {
     std::sort(pair_histogram, pair_histogram + MAX_HISTOGRAM_ENTRIES);
     if (pair_histogram[MAX_HISTOGRAM_ENTRIES-1].first > 0) {
         // At least one non-zero entry.
-        fprintf (stderr, "MACPO :: Loop at line %d: ", line_number);
-
         int values[3] = { pair_histogram[MAX_HISTOGRAM_ENTRIES-1].second,
             pair_histogram[MAX_HISTOGRAM_ENTRIES-2].second,
             pair_histogram[MAX_HISTOGRAM_ENTRIES-3].second
@@ -346,7 +344,7 @@ static void print_tripcount_histogram(int line_number, long* histogram) {
             pair_histogram[MAX_HISTOGRAM_ENTRIES-3].first
         };
 
-        fprintf (stderr, "count %d%s found %ld times, ", values[0],
+        fprintf (stderr, "  count %d%s found %ld times, ", values[0],
                 values[0] == MAX_HISTOGRAM_ENTRIES-1 ? "+" : "", counts[0]);
         if (counts[1]) {
             fprintf (stderr, "count %d%s found %ld times, ", values[1],
@@ -459,7 +457,7 @@ static void indigo__exit()
                 long* histogram = it->second;
 
                 if (histogram) {
-                    print_alignment_histogram(line_number, histogram);
+                    print_tripcount_histogram(line_number, histogram);
                     free(histogram);
                 }
             }
@@ -683,19 +681,10 @@ void indigo__write_idx_f_(const char* var_name, const int* length)
 	indigo__write_idx_c(var_name, *length);
 }
 
-long* new_tripcount_histogram() {
-    long* histogram = (long*) malloc(sizeof(long) * MAX_HISTOGRAM_ENTRIES);
+long* new_histogram(size_t histogram_entries) {
+    long* histogram = (long*) malloc(sizeof(long) * histogram_entries);
     if (histogram) {
-        memset(histogram, 0, sizeof(long) * MAX_HISTOGRAM_ENTRIES);
-    }
-
-    return histogram;
-}
-
-long* new_alignment_histogram() {
-    long* histogram = (long*) malloc(sizeof(long) * CACHE_LINE_SIZE);
-    if (histogram) {
-        memset(histogram, 0, sizeof(long) * CACHE_LINE_SIZE);
+        memset(histogram, 0, sizeof(long) * histogram_entries);
     }
 
     return histogram;
@@ -737,7 +726,8 @@ bool& get_overlap_bin(int line_number) {
     Helper function to allocate / get histogramss for alignment checking.
 */
 
-long* get_histogram(long_histogram_coll& collection, int line_number) {
+long* get_histogram(long_histogram_coll& collection, int line_number,
+        size_t histogram_entries) {
     short core_id = getCoreID();
 
     // Obtain lock.
@@ -750,7 +740,7 @@ long* get_histogram(long_histogram_coll& collection, int line_number) {
         long_histogram& histogram = collection[line_number];
         long_histogram::iterator it = histogram.find(core_id);
         if (it == histogram.end()) {
-            histogram[core_id] = new_alignment_histogram();
+            histogram[core_id] = new_histogram(histogram_entries);
             return_value = histogram[core_id];
         } else {
             return_value = it->second;
@@ -759,7 +749,7 @@ long* get_histogram(long_histogram_coll& collection, int line_number) {
         long_histogram& histogram = it->second;
         long_histogram::iterator it = histogram.find(core_id);
         if (it == histogram.end()) {
-            histogram[core_id] = new_alignment_histogram();
+            histogram[core_id] = new_histogram(histogram_entries);
             return_value = histogram[core_id];
         } else {
             return_value = it->second;
@@ -774,7 +764,7 @@ long* get_histogram(long_histogram_coll& collection, int line_number) {
 
 long* get_sstore_alignment_histogram(int line_number) {
     analyzed_loops.insert(line_number);
-    return get_histogram(sstore_align_map, line_number);
+    return get_histogram(sstore_align_map, line_number, CACHE_LINE_SIZE);
 }
 
 /**
@@ -782,12 +772,12 @@ long* get_sstore_alignment_histogram(int line_number) {
 */
 long* get_alignment_histogram(int line_number) {
     analyzed_loops.insert(line_number);
-    return get_histogram(align_map, line_number);
+    return get_histogram(align_map, line_number, CACHE_LINE_SIZE);
 }
 
 long* get_tripcount_histogram(int line_number) {
     analyzed_loops.insert(line_number);
-    return get_histogram(tripcount_map, line_number);
+    return get_histogram(tripcount_map, line_number, MAX_HISTOGRAM_ENTRIES);
 }
 
 /**
