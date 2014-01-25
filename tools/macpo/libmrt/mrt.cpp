@@ -28,6 +28,7 @@
 #include <ctime>
 
 #include <algorithm>
+#include <set>
 #include <map>
 
 #include <fcntl.h>
@@ -42,12 +43,27 @@
 typedef std::pair<long, short> val_idx_pair;
 typedef std::pair<int, short> line_threadid_pair;
 
+typedef short thread_id;
+typedef int line_number;
+
+typedef std::map<thread_id, bool> bool_map;
+typedef std::map<thread_id, short> short_map;
+typedef std::map<thread_id, long*> long_histogram;
+
+typedef std::map<long, bool_map> bool_map_coll;
+typedef std::map<long, short_map> short_map_coll;
+typedef std::map<long, long_histogram> long_histogram_coll;
+
+static std::set<int> analyzed_loops;
+
+static bool_map_coll overlap_bin;
+static short_map_coll branch_bin;
+static long_histogram_coll sstore_align_map, align_map, tripcount_map;
+
 static short proc = PROC_UNKNOWN;
-static std::map<line_threadid_pair, long*> sstore_align_map, align_map,
-        tripcount_map;
-static std::map<line_threadid_pair, bool> overlap_bin;
-static std::map<line_threadid_pair, short> branch_bin;
+
 static std::map<int, int> branch_loop_line_pair;
+static std::map<int, std::set<int> > loop_branch_line_pair;
 volatile static short lock_var;
 
 static inline void lock() {
@@ -356,8 +372,6 @@ static void print_alignment_histogram(int line_number, long* histogram) {
     std::sort(pair_histogram, pair_histogram + CACHE_LINE_SIZE);
     if (pair_histogram[CACHE_LINE_SIZE-1].first > 0) {
         // At least one non-zero entry.
-        fprintf (stderr, "MACPO :: Loop at line %d: ", line_number);
-
         int values[3] = { pair_histogram[CACHE_LINE_SIZE-1].second,
             pair_histogram[CACHE_LINE_SIZE-2].second,
             pair_histogram[CACHE_LINE_SIZE-3].second
@@ -368,7 +382,7 @@ static void print_alignment_histogram(int line_number, long* histogram) {
             pair_histogram[CACHE_LINE_SIZE-3].first
         };
 
-        fprintf (stderr, "count %d%s found %ld times, ", values[0],
+        fprintf (stderr, "  count %d%s found %ld times, ", values[0],
                 values[0] == MAX_HISTOGRAM_ENTRIES-1 ? "+" : "", counts[0]);
         if (counts[1]) {
             fprintf (stderr, "count %d%s found %ld times, ", values[1],
@@ -382,9 +396,6 @@ static void print_alignment_histogram(int line_number, long* histogram) {
         }
 
         fprintf (stderr, "\n");
-    } else {
-        fprintf (stderr, "MACPO :: All entries from alignment histogram in "
-                "loop at line %d have the desired alignment.\n", line_number);
     }
 }
 
@@ -393,108 +404,112 @@ static void indigo__exit()
 	if (fd >= 0)	close(fd);
 	if (intel_apic_mapping)	free(intel_apic_mapping);
 
-    if (sstore_align_map.size()) {
-        fprintf (stderr, "\nMACPO :: Alignments for streaming stores:\n");
-        for (std::map<line_threadid_pair, long*>::iterator it =
-                sstore_align_map.begin(); it != sstore_align_map.end(); it++) {
-            line_threadid_pair pair = it->first;
-            int line_number = pair.first;
-            long* histogram = it->second;
+    for (std::set<int>::iterator it = analyzed_loops.begin();
+            it != analyzed_loops.end(); it++) {
+        const int& line_number = *it;
 
-            if (histogram) {
-                print_alignment_histogram(line_number, histogram);
-                free(histogram);
+        fprintf (stderr, "\n==== Loop at line %d ====\n", line_number);
+
+        if (sstore_align_map.find(line_number) != sstore_align_map.end()) {
+            fprintf (stderr, "streaming store array alignment:\n");
+            long_histogram& histogram = sstore_align_map[line_number];
+            for (long_histogram::iterator it = histogram.begin();
+                    it != histogram.end(); it++) {
+                long* histogram = it->second;
+
+                if (histogram) {
+                    print_alignment_histogram(line_number, histogram);
+                    free(histogram);
+                }
             }
         }
-    }
 
-    if (align_map.size()) {
-        fprintf (stderr, "\nMACPO :: Alignments for loop references:\n");
-        for (std::map<line_threadid_pair, long*>::iterator it =
-                align_map.begin(); it != align_map.end(); it++) {
-            line_threadid_pair pair = it->first;
-            int line_number = pair.first;
-            long* histogram = it->second;
+        if (align_map.find(line_number) != align_map.end()) {
+            fprintf (stderr, "alignment of all arrays:\n");
+            long_histogram& histogram = align_map[line_number];
+            for (long_histogram::iterator it = histogram.begin();
+                    it != histogram.end(); it++) {
+                long* histogram = it->second;
 
-            if (histogram) {
-                print_alignment_histogram(line_number, histogram);
-                free(histogram);
+                if (histogram) {
+                    print_alignment_histogram(line_number, histogram);
+                    free(histogram);
+                }
             }
         }
-    }
 
-    if (overlap_bin.size()) {
-        fprintf (stderr, "\nMACPO :: Overlap among loop references:\n");
-        for (std::map<line_threadid_pair, bool>::iterator it =
-                overlap_bin.begin(); it != overlap_bin.end(); it++) {
-            line_threadid_pair pair = it->first;
-            int line_number = pair.first;
-            bool overlap = it->second;
+        if (overlap_bin.find(line_number) != overlap_bin.end()) {
+            bool_map& map = overlap_bin[line_number];
+            for (bool_map::iterator it = map.begin(); it != map.end(); it++) {
+                bool overlap = it->second;
 
-            if (overlap) {
-                fprintf (stderr, "MACPO :: Array references in loop at line %d "
-                        "do overlap.\n", line_number);
-            } else {
-                fprintf (stderr, "MACPO :: No overlap among array references "
-                        "in loop at line %d.\n", line_number);
+                if (overlap) {
+                    fprintf (stderr, "Array references overlap.\n");
+                } else {
+                    fprintf (stderr, "No overlap.\n");
+                }
             }
         }
-    }
 
-    if (tripcount_map.size()) {
-        fprintf (stderr, "\nMACPO :: Loop trip counts:\n");
-        for (std::map<line_threadid_pair, long*>::iterator it =
-                tripcount_map.begin(); it != tripcount_map.end(); it++) {
-            line_threadid_pair pair = it->first;
-            int line_number = pair.first;
-            long* histogram = it->second;
+        if (tripcount_map.find(line_number) != tripcount_map.end()) {
+            fprintf (stderr, "trip count: ");
+            long_histogram& histogram = tripcount_map[line_number];
+            for (long_histogram::iterator it = histogram.begin();
+                    it != histogram.end(); it++) {
+                long* histogram = it->second;
 
-            if (histogram) {
-                print_tripcount_histogram(line_number, histogram);
-                free(histogram);
+                if (histogram) {
+                    print_alignment_histogram(line_number, histogram);
+                    free(histogram);
+                }
             }
         }
-    }
 
-    if (branch_bin.size()) {
-        fprintf (stderr, "\nMACPO :: Branch profiling results:\n");
-        for (std::map<line_threadid_pair, short>::iterator it =
-                branch_bin.begin(); it != branch_bin.end(); it++) {
-            line_threadid_pair pair = it->first;
-            int line_number = pair.first;
-            int loop_line_number = branch_loop_line_pair[line_number];
-            short branch_status = it->second;
+        if (loop_branch_line_pair.find(line_number) !=
+                loop_branch_line_pair.end()) {
+            fprintf (stderr, "branch condition profiling:\n");
+            std::set<int>& branch_lines = loop_branch_line_pair[line_number];
+            for (std::set<int>::iterator it = branch_lines.begin();
+                    it != branch_lines.end(); it++) {
+                const int& branch_line_number = *it;
 
-            switch(branch_status) {
-                case BRANCH_UNKNOWN:
-                    fprintf (stderr, "MACPO :: Branch condition at line %d "
-                            "from loop at line %d is unpredictable.\n",
-                            line_number, loop_line_number);
-                    break;
+                if (branch_bin.find(branch_line_number) != branch_bin.end()) {
+                    short_map& map = branch_bin[branch_line_number];
+                    for (short_map::iterator it = map.begin(); it != map.end(); it++) {
+                        short branch_status = it->second;
 
-                case BRANCH_MOSTLY_FALSE:
-                    fprintf (stderr, "MACPO :: Branch condition at line %d "
-                            "from loop at line %d is mostly evaluates to "
-                            "false.\n", line_number, loop_line_number);
-                    break;
+                        switch(branch_status) {
+                            case BRANCH_UNKNOWN:
+                                fprintf (stderr, "branch at line %d is "
+                                        "unpredictable.\n", branch_line_number);
+                                break;
 
-                case BRANCH_MOSTLY_TRUE:
-                    fprintf (stderr, "MACPO :: Branch condition at line %d "
-                            "from loop at line %d is mostly evaluates to "
-                            "true.\n", line_number, loop_line_number);
-                    break;
+                            case BRANCH_MOSTLY_FALSE:
+                                fprintf (stderr, "branch at line %d mostly "
+                                        "evaluates to false.\n",
+                                        branch_line_number);
+                                break;
 
-                case BRANCH_FALSE:
-                    fprintf (stderr, "MACPO :: Branch condition at line %d "
-                            "from loop at line %d is always evaluates to "
-                            "false.\n", line_number, loop_line_number);
-                    break;
+                            case BRANCH_MOSTLY_TRUE:
+                                fprintf (stderr, "branch at line %d mostly "
+                                        "evaluates to true.\n",
+                                        branch_line_number);
+                                break;
 
-                case BRANCH_TRUE:
-                    fprintf (stderr, "MACPO :: Branch condition at line %d "
-                            "from loop at line %d is always evaluates to "
-                            "true.\n", line_number, loop_line_number);
-                    break;
+                            case BRANCH_FALSE:
+                                fprintf (stderr, "branch at line %d always "
+                                        "evaluates to false.\n",
+                                        branch_line_number);
+                                break;
+
+                            case BRANCH_TRUE:
+                                fprintf (stderr, "branch at line %d always "
+                                        "evaluates to true.\n",
+                                        branch_line_number);
+                                break;
+                        }
+                    }
+                }
             }
         }
     }
@@ -559,26 +574,40 @@ void indigo__gen_trace_f(int *read_write, int *line_number, void* base, void* ad
 }
 
 short& get_branch_bin(int line_number, int loop_line_number) {
-    branch_loop_line_pair[line_number] = loop_line_number;
-
-    line_threadid_pair pair(line_number, getCoreID());
+    analyzed_loops.insert(loop_line_number);
+    short core_id = getCoreID();
 
     // Obtain lock.
     lock();
 
-    std::map<line_threadid_pair, short>::iterator it = branch_bin.find(pair);
+    long* return_value = NULL;
+    // Check if we need to allocate a new histogram.
+    short_map_coll::iterator it = branch_bin.find(line_number);
     if (it == branch_bin.end()) {
-        branch_bin[pair] = BRANCH_NOINIT;
+        short_map& map = branch_bin[line_number];
+        short_map::iterator it = map.find(core_id);
+        if (it == map.end()) {
+            map[core_id] = BRANCH_NOINIT;
+        }
+    } else {
+        short_map& map = it->second;
+        short_map::iterator it = map.find(core_id);
+        if (it == map.end()) {
+            map[core_id] = BRANCH_NOINIT;
+        }
     }
 
     // Release lock.
     unlock();
 
-    return branch_bin[pair];
+    return branch_bin[line_number][core_id];
 }
 
 void indigo__record_branch_c(int line_number, int loop_line_number, int true_branch_count, int false_branch_count)
 {
+    branch_loop_line_pair[line_number] = loop_line_number;
+    loop_branch_line_pair[loop_line_number].insert(line_number);
+
     int status = BRANCH_UNKNOWN;
     int branch_count = true_branch_count + false_branch_count;
     if (true_branch_count != 0 && false_branch_count == 0) {
@@ -673,73 +702,93 @@ long* new_alignment_histogram() {
 }
 
 bool& get_overlap_bin(int line_number) {
-    line_threadid_pair pair(line_number, getCoreID());
+    analyzed_loops.insert(line_number);
+    short core_id = getCoreID();
 
     // Obtain lock.
     lock();
 
-    std::map<line_threadid_pair, bool>::iterator it =
-        overlap_bin.find(pair);
+    long* return_value = NULL;
+    // Check if we need to allocate a new histogram.
+    bool_map_coll::iterator it = overlap_bin.find(line_number);
     if (it == overlap_bin.end()) {
-        overlap_bin[pair] = 0;
+        bool_map& map = overlap_bin[line_number];
+        bool_map::iterator it = map.find(core_id);
+        if (it == map.end()) {
+            map[core_id] = 0;
+        }
+    } else {
+        bool_map& map = it->second;
+        bool_map::iterator it = map.find(core_id);
+        if (it == map.end()) {
+            map[core_id] = 0;
+        }
     }
 
     // Release lock.
     unlock();
 
-    return overlap_bin[pair];
+    return overlap_bin[line_number][core_id];
+}
+
+#define MAX_ADDR    128
+
+/**
+    Helper function to allocate / get histogramss for alignment checking.
+*/
+
+long* get_histogram(long_histogram_coll& collection, int line_number) {
+    short core_id = getCoreID();
+
+    // Obtain lock.
+    lock();
+
+    long* return_value = NULL;
+    // Check if we need to allocate a new histogram.
+    long_histogram_coll::iterator it = collection.find(line_number);
+    if (it == collection.end()) {
+        long_histogram& histogram = collection[line_number];
+        long_histogram::iterator it = histogram.find(core_id);
+        if (it == histogram.end()) {
+            histogram[core_id] = new_alignment_histogram();
+            return_value = histogram[core_id];
+        } else {
+            return_value = it->second;
+        }
+    } else {
+        long_histogram& histogram = it->second;
+        long_histogram::iterator it = histogram.find(core_id);
+        if (it == histogram.end()) {
+            histogram[core_id] = new_alignment_histogram();
+            return_value = histogram[core_id];
+        } else {
+            return_value = it->second;
+        }
+    }
+
+    // Release lock.
+    unlock();
+
+    return return_value;
+}
+
+long* get_sstore_alignment_histogram(int line_number) {
+    analyzed_loops.insert(line_number);
+    return get_histogram(sstore_align_map, line_number);
 }
 
 /**
     Helper function to allocate / get histograms for alignment checking.
 */
 long* get_alignment_histogram(int line_number) {
-    line_threadid_pair pair(line_number, getCoreID());
-
-    // Obtain lock.
-    lock();
-
-    long* return_value = NULL;
-    std::map<line_threadid_pair, long*>::iterator it =
-        align_map.find(pair);
-    if (it == align_map.end()) {
-        // Allocate a new histogram.
-        align_map[pair] = new_alignment_histogram();
-        return_value = align_map[pair];
-    } else {
-        return_value = it->second;
-    }
-
-    // Release lock.
-    unlock();
-
-    return return_value;
+    analyzed_loops.insert(line_number);
+    return get_histogram(align_map, line_number);
 }
 
 long* get_tripcount_histogram(int line_number) {
-    line_threadid_pair pair(line_number, getCoreID());
-
-    // Obtain lock.
-    lock();
-
-    long* return_value = NULL;
-    std::map<line_threadid_pair, long*>::iterator it =
-        tripcount_map.find(pair);
-    if (it == tripcount_map.end()) {
-        // Allocate a new histogram.
-        tripcount_map[pair] = new_tripcount_histogram();
-        return_value = tripcount_map[pair];
-    } else {
-        return_value = it->second;
-    }
-
-    // Release lock.
-    unlock();
-
-    return return_value;
+    analyzed_loops.insert(line_number);
+    return get_histogram(tripcount_map, line_number);
 }
-
-#define MAX_ADDR    128
 
 /**
     indigo__aligncheck_c()
@@ -829,32 +878,6 @@ int indigo__aligncheck_c(int line_number, /* int* type_size, */ int stream_count
 
     va_end(args);
     return common_alignment;
-}
-
-/**
-    Helper function to allocate / get histogramss for alignment checking.
-*/
-long* get_sstore_alignment_histogram(int line_number) {
-    line_threadid_pair pair(line_number, getCoreID());
-
-    // Obtain lock.
-    lock();
-
-    long* return_value = NULL;
-    std::map<line_threadid_pair, long*>::iterator it =
-        sstore_align_map.find(pair);
-    if (it == sstore_align_map.end()) {
-        // Allocate a new histogram.
-        sstore_align_map[pair] = new_alignment_histogram();
-        return_value = sstore_align_map[pair];
-    } else {
-        return_value = it->second;
-    }
-
-    // Release lock.
-    unlock();
-
-    return return_value;
 }
 
 /**
