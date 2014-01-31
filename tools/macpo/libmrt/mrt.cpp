@@ -305,17 +305,23 @@ static void set_timers() {
 	}
 }
 
-void indigo__init_(short create_file)
+void indigo__init_(short create_file, short enable_sampling)
 {
     set_thread_affinity();
 
     if (create_file) {
         create_output_file();
 
-        // We could set the timers even if the file did not have to be create.
-        // But timers are used to write to the file only. Since there is no
-        // other use of timers, we disable setting up timers as well.
-        set_timers();
+        if (enable_sampling) {
+            // We could set the timers even if the file did not have to be
+            // create.  But timers are used to write to the file only. Since
+            // there is no other use of timers, we disable setting up timers as
+            // well.
+            set_timers();
+        } else {
+            // Explicitly set awake mode to ON.
+            sleeping = 0;
+        }
     }
 
 	atexit(indigo__exit);
@@ -344,14 +350,14 @@ static void print_tripcount_histogram(int line_number, long* histogram) {
             pair_histogram[MAX_HISTOGRAM_ENTRIES-3].first
         };
 
-        fprintf (stderr, "  count %d%s found %ld times, ", values[0],
+        fprintf (stderr, "  count %d%s found %ld time(s), ", values[0],
                 values[0] == MAX_HISTOGRAM_ENTRIES-1 ? "+" : "", counts[0]);
         if (counts[1]) {
-            fprintf (stderr, "count %d%s found %ld times, ", values[1],
+            fprintf (stderr, "count %d%s found %ld time(s), ", values[1],
                     values[1] == MAX_HISTOGRAM_ENTRIES-1 ? "+" : "", counts[1]);
 
             if (counts[2]) {
-                fprintf (stderr, "count %d%s found %ld times, ", values[2],
+                fprintf (stderr, "count %d%s found %ld time(s), ", values[2],
                         values[2] == MAX_HISTOGRAM_ENTRIES-1 ? "+" : "",
                         counts[2]);
             }
@@ -359,6 +365,15 @@ static void print_tripcount_histogram(int line_number, long* histogram) {
 
         fprintf (stderr, "\n");
     }
+}
+
+static bool nonzero_alignment(int line_number, long* histogram) {
+    for (int i=1; i<CACHE_LINE_SIZE; i++) {
+        if (histogram[i] > 0)
+            return true;
+    }
+
+    return false;
 }
 
 static void print_alignment_histogram(int line_number, long* histogram) {
@@ -380,14 +395,14 @@ static void print_alignment_histogram(int line_number, long* histogram) {
             pair_histogram[CACHE_LINE_SIZE-3].first
         };
 
-        fprintf (stderr, "  count %d%s found %ld times, ", values[0],
+        fprintf (stderr, "  count %d%s found %ld time(s), ", values[0],
                 values[0] == MAX_HISTOGRAM_ENTRIES-1 ? "+" : "", counts[0]);
         if (counts[1]) {
-            fprintf (stderr, "count %d%s found %ld times, ", values[1],
+            fprintf (stderr, "count %d%s found %ld time(s), ", values[1],
                     values[1] == MAX_HISTOGRAM_ENTRIES-1 ? "+" : "", counts[1]);
 
             if (counts[2]) {
-                fprintf (stderr, "count %d%s found %ld times, ", values[2],
+                fprintf (stderr, "count %d%s found %ld time(s), ", values[2],
                         values[2] == MAX_HISTOGRAM_ENTRIES-1 ? "+" : "",
                         counts[2]);
             }
@@ -409,30 +424,50 @@ static void indigo__exit()
         fprintf (stderr, "\n==== Loop at line %d ====\n", line_number);
 
         if (sstore_align_map.find(line_number) != sstore_align_map.end()) {
-            fprintf (stderr, "streaming store array alignment:\n");
+            bool non_zero_sstore_alignment = false;
             long_histogram& histogram = sstore_align_map[line_number];
             for (long_histogram::iterator it = histogram.begin();
-                    it != histogram.end(); it++) {
+                    non_zero_sstore_alignment == false && it != histogram.end();
+                    it++) {
                 long* histogram = it->second;
 
                 if (histogram) {
-                    print_alignment_histogram(line_number, histogram);
+                    if (nonzero_alignment(line_number, histogram)) {
+                        non_zero_sstore_alignment = true;
+                    }
+
+                    // print_alignment_histogram(line_number, histogram);
                     free(histogram);
                 }
+            }
+
+            if (non_zero_sstore_alignment) {
+                fprintf (stderr, "align non-temporal stores, "
+                        "use #pragma vector nontemporal.\n");
             }
         }
 
         if (align_map.find(line_number) != align_map.end()) {
-            fprintf (stderr, "alignment of all arrays:\n");
+            bool non_zero_alignment = false;
             long_histogram& histogram = align_map[line_number];
             for (long_histogram::iterator it = histogram.begin();
-                    it != histogram.end(); it++) {
+                    non_zero_alignment == false && it != histogram.end();
+                    it++) {
                 long* histogram = it->second;
 
                 if (histogram) {
-                    print_alignment_histogram(line_number, histogram);
+                    if (nonzero_alignment(line_number, histogram)) {
+                        non_zero_alignment = true;
+                    }
+
+                    // print_alignment_histogram(line_number, histogram);
                     free(histogram);
                 }
+            }
+
+            if (non_zero_alignment) {
+                fprintf (stderr, "align arrays, "
+                        "use #pragma vector aligned.\n");
             }
         }
 
@@ -442,9 +477,7 @@ static void indigo__exit()
                 bool overlap = it->second;
 
                 if (overlap) {
-                    fprintf (stderr, "Array references overlap.\n");
-                } else {
-                    fprintf (stderr, "No overlap.\n");
+                    fprintf (stderr, "Use `restrict' keyword.\n");
                 }
             }
         }
@@ -465,7 +498,6 @@ static void indigo__exit()
 
         if (loop_branch_line_pair.find(line_number) !=
                 loop_branch_line_pair.end()) {
-            fprintf (stderr, "branch condition profiling:\n");
             std::set<int>& branch_lines = loop_branch_line_pair[line_number];
             for (std::set<int>::iterator it = branch_lines.begin();
                     it != branch_lines.end(); it++) {
@@ -522,8 +554,8 @@ static inline void fill_trace_struct(int read_write, int line_number, size_t bas
 	if (sleeping == 1 || access_count >= 131072)	// 131072 is 128*1024 (power of two)
 		return;
 
-	size_t address_base = (size_t) base >> 6;	// Shift six bits to right so that we can track cache line assuming cache line size is 64 bytes
-	size_t address = (size_t) p >> 6;
+	size_t address_base = (size_t) base;
+	size_t address = (size_t) p;
 
 	node_t node;
 	node.type_message = MSG_TRACE_INFO;

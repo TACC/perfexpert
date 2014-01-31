@@ -78,7 +78,7 @@ enum { BRANCH_NOINIT=0, BRANCH_MOSTLY_TRUE, BRANCH_TRUE, BRANCH_MOSTLY_FALSE,
 #if	defined(__cplusplus)
 extern "C" {
 #endif
-void indigo__init_(short create_file);
+void indigo__init_(short create_file, short enable_sampling);
 #if	defined(__cplusplus)
 }
 #endif

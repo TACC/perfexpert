@@ -396,17 +396,19 @@ SgExpression* aligncheck_t::instrument_alignment_checks(Sg_File_Info* fileInfo,
                         bb = getEnclosingNode<SgBasicBlock>(def_node);
                     }
 
-                    std::vector<SgExpression*> params;
-                    params.push_back(param_line_no);
-                    // params.push_back(type_size_addr);
-                    params.push_back(param_count);
-                    params.insert(params.end(), param_list.begin(),
-                            param_list.end());
+                    if (bb) {
+                        std::vector<SgExpression*> params;
+                        params.push_back(param_line_no);
+                        // params.push_back(type_size_addr);
+                        params.push_back(param_count);
+                        params.insert(params.end(), param_list.begin(),
+                                param_list.end());
 
-                    statement_info.statement =
-                        ir_methods::prepare_call_statement(bb, function_name,
-                                params, statement_info.reference_statement);
-                    statement_info.before = true;
+                        statement_info.statement =
+                            ir_methods::prepare_call_statement(bb, function_name,
+                                    params, statement_info.reference_statement);
+                        statement_info.before = true;
+                    }
                 }
             } else {
                 // TODO: Place function call before the start of the outermost loop.

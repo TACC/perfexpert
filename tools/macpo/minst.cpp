@@ -176,16 +176,27 @@ void MINST::visit(SgNode* node)
             std::string indigo__create_map = "indigo__create_map";
 
             std::vector<SgExpression*> params, empty_params;
-            int create_file;
+            int create_file, enable_sampling;
             if (action == ACTION_INSTRUMENT || action == ACTION_GENTRACE) {
                 create_file = 1;
             } else {
                 create_file = 0;
             }
 
+            if (action == ACTION_INSTRUMENT) {
+                enable_sampling = 1;
+            } else {
+                enable_sampling = 0;   // Disable sampling
+            }
+
             SgIntVal* rose_create_file = new SgIntVal(file_info, create_file);
             rose_create_file->set_endOfConstruct(file_info);
             params.push_back(rose_create_file);
+
+            SgIntVal* rose_enable_sampling = new SgIntVal(file_info,
+                    enable_sampling);
+            rose_enable_sampling->set_endOfConstruct(file_info);
+            params.push_back(rose_enable_sampling);
 
             SgExprStatement* expr_stmt = NULL;
             expr_stmt = ir_methods::prepare_call_statement(body, indigo__init,
