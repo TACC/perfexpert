@@ -223,7 +223,7 @@ int latency_analysis(const global_data_t& global_data,
 
                 const unsigned short core_id = mem_info.coreID;
                 const size_t var_idx = mem_info.var_idx;
-                const size_t address = mem_info.address;
+                const size_t address = mem_info.address >> 6;
                 const short read_write = mem_info.read_write;
 
                 // Quick validation check.

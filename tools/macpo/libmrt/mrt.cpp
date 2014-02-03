@@ -579,14 +579,12 @@ static inline void fill_mem_struct(int read_write, int line_number, size_t p, in
 	if (sleeping == 1 || access_count >= 131072)	// 131072 is 128*1024 (power of two)
 		return;
 
-	size_t address = (size_t) p >> 6;	// Shift six bits to right so that we can track cache line assuming cache line size is 64 bytes
-
 	node_t node;
 	node.type_message = MSG_MEM_INFO;
 
 	node.mem_info.coreID = getCoreID();
 	node.mem_info.read_write = read_write;
-	node.mem_info.address = address;
+	node.mem_info.address = p;
 	node.mem_info.var_idx = var_idx;
 	node.mem_info.line_number = line_number;
 	node.mem_info.type_size = type_size;
