@@ -131,7 +131,7 @@ void indigo__gen_trace_f(int* read_write, int* line_number, void* base, void* ad
 #if defined(__cplusplus)
 extern "C" {
 #endif
-void indigo__record_c(int read_write, int line_number, void* addr, int var_idx);
+void indigo__record_c(int read_write, int line_number, void* addr, int var_idx, int type_size);
 #if defined (__cplusplus)
 }
 #endif
@@ -139,7 +139,7 @@ void indigo__record_c(int read_write, int line_number, void* addr, int var_idx);
 #if defined(__cplusplus)
 extern "C" {
 #endif
-void indigo__record_f_(int* read_write, int* line_number, void* addr, int* var_idx);
+void indigo__record_f_(int* read_write, int* line_number, void* addr, int* var_idx, int* type_size);
 #if defined (__cplusplus)
 }
 #endif

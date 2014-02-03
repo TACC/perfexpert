@@ -97,11 +97,19 @@ attrib instrumentor_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
         std::string function_name = SageInterface::is_Fortran_language() ?
                 "indigo__record_f" : "indigo__record_c";
 
+        ROSE_ASSERT(isSgExpression(ref_node));
+        SgExpression* expr = isSgExpression(ref_node);
+        SgType* type = expr->get_type();
+        SgSizeOfOp* size_of_op = new SgSizeOfOp(fileInfo, NULL, type, type);
+
+        ROSE_ASSERT(size_of_op);
+
         std::vector<SgExpression*> params;
         params.push_back(param_read_write);
         params.push_back(param_line_number);
         params.push_back(param_addr);
         params.push_back(param_idx);
+        params.push_back(size_of_op);
 
         statement_info_t statement_info;
         statement_info.statement = ir_methods::prepare_call_statement(

@@ -570,7 +570,7 @@ static inline void fill_trace_struct(int read_write, int line_number, size_t bas
 	write(fd, &node, sizeof(node_t));
 }
 
-static inline void fill_mem_struct(int read_write, int line_number, size_t p, int var_idx)
+static inline void fill_mem_struct(int read_write, int line_number, size_t p, int var_idx, int type_size)
 {
 	// If this process was never supposed to record stats
 	// or if the file-open failed, then return
@@ -589,6 +589,7 @@ static inline void fill_mem_struct(int read_write, int line_number, size_t p, in
 	node.mem_info.address = address;
 	node.mem_info.var_idx = var_idx;
 	node.mem_info.line_number = line_number;
+	node.mem_info.type_size = type_size;
 
 	write(fd, &node, sizeof(node_t));
 }
@@ -684,14 +685,14 @@ void indigo__simd_branch_c(int line_number, int idxv, int type_size, int branch_
 }
 #endif
 
-void indigo__record_c(int read_write, int line_number, void* addr, int var_idx)
+void indigo__record_c(int read_write, int line_number, void* addr, int var_idx, int type_size)
 {
-	if (fd >= 0)	fill_mem_struct(read_write, line_number, (size_t) addr, var_idx);
+	if (fd >= 0)	fill_mem_struct(read_write, line_number, (size_t) addr, var_idx, type_size);
 }
 
-void indigo__record_f_(int *read_write, int *line_number, void* addr, int *var_idx)
+void indigo__record_f_(int *read_write, int *line_number, void* addr, int *var_idx, int* type_size)
 {
-	if (fd >= 0)	fill_mem_struct(*read_write, *line_number, (size_t) addr, *var_idx);
+	if (fd >= 0)	fill_mem_struct(*read_write, *line_number, (size_t) addr, *var_idx, *type_size);
 }
 
 void indigo__write_idx_c(const char* var_name, const int length)

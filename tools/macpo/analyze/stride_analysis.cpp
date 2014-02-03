@@ -45,6 +45,8 @@ int stride_analysis(const global_data_t& global_data,
             const size_t var_idx = mem_info.var_idx;
             const size_t address = mem_info.address;
             const short read_write = mem_info.read_write;
+            const int type_size = mem_info.type_size == 0 ? 1 :
+                    mem_info.type_size;
 
             // Quick validation check.
             if (core_id >= 0 && core_id < num_cores ||
@@ -52,7 +54,7 @@ int stride_analysis(const global_data_t& global_data,
                 // Check if this address was accessed in the past.
                 if (last_addr.find(var_idx) != last_addr.end()) {
                     size_t last_address = last_addr[var_idx];
-                    size_t stride = address - last_address;
+                    size_t stride = (address - last_address) / type_size;
 
                     if (create_histogram_if_null(local_stride_list[var_idx],
                                 MAX_STRIDE) == 0) {

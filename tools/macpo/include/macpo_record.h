@@ -46,6 +46,7 @@ typedef struct {
 	size_t address;
 	size_t var_idx;
 	size_t line_number;
+    int type_size;
 } mem_info_t;
 
 typedef struct {
