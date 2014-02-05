@@ -29,6 +29,7 @@
 #include "loop_traversal.h"
 #include "minst.h"
 #include "tracer.h"
+#include "vector_strides.h"
 
 using namespace SageBuilder;
 using namespace SageInterface;
@@ -177,16 +178,17 @@ void MINST::visit(SgNode* node)
 
             std::vector<SgExpression*> params, empty_params;
             int create_file, enable_sampling;
-            if (action == ACTION_INSTRUMENT || action == ACTION_GENTRACE) {
-                create_file = 1;
-            } else {
+
+            if (action == ACTION_ALIGNCHECK) {
                 create_file = 0;
+            } else {
+                create_file = 1;
             }
 
-            if (action == ACTION_INSTRUMENT) {
-                enable_sampling = 1;
-            } else {
+            if (action == ACTION_GENTRACE) {
                 enable_sampling = 0;   // Disable sampling
+            } else {
+                enable_sampling = 1;
             }
 
             SgIntVal* rose_create_file = new SgIntVal(file_info, create_file);
@@ -204,7 +206,7 @@ void MINST::visit(SgNode* node)
             insertStatementBefore(statement, expr_stmt);
             ROSE_ASSERT(expr_stmt);
 
-            if (action == ACTION_INSTRUMENT || action == ACTION_GENTRACE) {
+            if (action != ACTION_ALIGNCHECK) {
                 SgExprStatement* map_stmt = NULL;
                 map_stmt = ir_methods::prepare_call_statement(body,
                         indigo__create_map, empty_params, expr_stmt);
@@ -220,44 +222,65 @@ void MINST::visit(SgNode* node)
                     is_same_file(_file_name, inst_func) == false)
                 return;
 
-            if (action == ACTION_INSTRUMENT) {
-                std::cerr << mprefix << "Instrumenting function " <<
-                    function_name << std::endl;
+            std::cerr << mprefix << "Analyzing function " << function_name <<
+                " at line " << _line_number << std::endl;
 
-                // We found the function that we wanted to instrument,
-                // now insert the indigo__create_map_() function in this file.
-                insert_map_function(node);
+            switch(action) {
+                case ACTION_INSTRUMENT:
+                    {
+                        insert_map_function(node);
 
-                instrumentor_t inst;
-                inst.traverse(node, attrib());
+                        instrumentor_t inst;
+                        inst.traverse(node, attrib());
 
-                // Pull information from AST traversal.
-                stream_list = inst.get_stream_list();
-                statement_list.insert(statement_list.end(),
-                        inst.stmt_begin(), inst.stmt_end());
-            } else if (action == ACTION_ALIGNCHECK) {
-                std::cerr << mprefix "Placing alignment-related checks around "
-                    "loop(s) in function " << function_name << std::endl;
+                        // Pull information from AST traversal.
+                        stream_list = inst.get_stream_list();
+                        statement_list.insert(statement_list.end(),
+                                inst.stmt_begin(), inst.stmt_end());
+                    }
 
-                aligncheck_t visitor(var_renaming);
-                visitor.process_node(node);
-                statement_list.insert(statement_list.end(),
-                        visitor.stmt_begin(), visitor.stmt_end());
-            } else if (action == ACTION_GENTRACE) {
-                std::cerr << "Generating trace for function " << function_name
-                    << std::endl;
+                    break;
 
-                // We found the function that we wanted to instrument,
-                // now insert the indigo__create_map_() function in this file.
-                insert_map_function(node);
+                case ACTION_ALIGNCHECK:
+                    {
+                        aligncheck_t visitor(var_renaming);
+                        visitor.process_node(node);
 
-                tracer_t tracer;
-                tracer.traverse(node, attrib());
+                        stream_list = visitor.get_stream_list();
+                        statement_list.insert(statement_list.end(),
+                                visitor.stmt_begin(), visitor.stmt_end());
+                    }
 
-                // Pull information from AST traversal.
-                stream_list = tracer.get_stream_list();
-                statement_list.insert(statement_list.end(),
-                        tracer.stmt_begin(), tracer.stmt_end());
+                    break;
+
+                case ACTION_GENTRACE:
+                    {
+                        insert_map_function(node);
+
+                        tracer_t tracer;
+                        tracer.traverse(node, attrib());
+
+                        // Pull information from AST traversal.
+                        stream_list = tracer.get_stream_list();
+                        statement_list.insert(statement_list.end(),
+                                tracer.stmt_begin(), tracer.stmt_end());
+                    }
+
+                    break;
+
+                case ACTION_VECTORSTRIDES:
+                    {
+                        insert_map_function(node);
+
+                        vector_strides_t visitor(var_renaming);
+                        visitor.process_node(node);
+
+                        stream_list = visitor.get_stream_list();
+                        statement_list.insert(statement_list.end(),
+                                visitor.stmt_begin(), visitor.stmt_end());
+                    }
+
+                    break;
             }
         }
     }
@@ -272,45 +295,65 @@ void MINST::visit(SgNode* node)
                     is_same_file(_file_name, inst_func) == false)
                 return;
 
-            if (action == ACTION_INSTRUMENT) {
-                std::cerr << mprefix << "Instrumenting loop in function " <<
-                    function_name << " at line " << _line_number << std::endl;
+            std::cerr << mprefix << "Analyzing loop in function " <<
+                function_name << " at line " << _line_number << std::endl;
 
-                // We found the loop that we wanted to instrument,
-                // now insert the indigo__create_map_() function in this file.
-                insert_map_function(node);
+            switch(action) {
+                case ACTION_INSTRUMENT:
+                    {
+                        insert_map_function(node);
 
-                instrumentor_t inst;
-                inst.traverse(node, attrib());
+                        instrumentor_t inst;
+                        inst.traverse(node, attrib());
 
-                // Pull information from AST traversal.
-                stream_list = inst.get_stream_list();
-                statement_list.insert(statement_list.end(),
-                        inst.stmt_begin(), inst.stmt_end());
-            } else if (action == ACTION_ALIGNCHECK) {
-                std::cerr << mprefix << "Placing alignment checks around loop "
-                    "in function " << function_name << " at line " <<
-                    _line_number << std::endl;
+                        // Pull information from AST traversal.
+                        stream_list = inst.get_stream_list();
+                        statement_list.insert(statement_list.end(),
+                                inst.stmt_begin(), inst.stmt_end());
+                    }
 
-                aligncheck_t visitor(var_renaming);
-                visitor.process_node(node);
-                statement_list.insert(statement_list.end(),
-                        visitor.stmt_begin(), visitor.stmt_end());
-            } else if (action == ACTION_GENTRACE) {
-                std::cerr << "Generating trace for loop in function " <<
-                    function_name << " at line " << _line_number << std::endl;
+                    break;
 
-                // We found the loop that we wanted to instrument,
-                // now insert the indigo__create_map_() function in this file.
-                insert_map_function(node);
+                case ACTION_ALIGNCHECK:
+                    {
+                        aligncheck_t visitor(var_renaming);
+                        visitor.process_node(node);
 
-                tracer_t tracer;
-                tracer.traverse(node, attrib());
+                        stream_list = visitor.get_stream_list();
+                        statement_list.insert(statement_list.end(),
+                                visitor.stmt_begin(), visitor.stmt_end());
+                    }
 
-                // Pull information from AST traversal.
-                stream_list = tracer.get_stream_list();
-                statement_list.insert(statement_list.end(),
-                        tracer.stmt_begin(), tracer.stmt_end());
+                    break;
+
+                case ACTION_GENTRACE:
+                    {
+                        insert_map_function(node);
+
+                        tracer_t tracer;
+                        tracer.traverse(node, attrib());
+
+                        // Pull information from AST traversal.
+                        stream_list = tracer.get_stream_list();
+                        statement_list.insert(statement_list.end(),
+                                tracer.stmt_begin(), tracer.stmt_end());
+                    }
+
+                    break;
+
+                case ACTION_VECTORSTRIDES:
+                    {
+                        insert_map_function(node);
+
+                        vector_strides_t visitor(var_renaming);
+                        visitor.process_node(node);
+
+                        stream_list = visitor.get_stream_list();
+                        statement_list.insert(statement_list.end(),
+                                visitor.stmt_begin(), visitor.stmt_end());
+                    }
+
+                    break;
             }
         }
     }

@@ -87,6 +87,22 @@ static int handle_terminal_msg(global_data_t& global_data) {
     return 0;
 }
 
+static int handle_vector_stride_msg(const vector_stride_info_t& info,
+    global_data_t& global_data) {
+    vector_stride_info_bucket_t& bucket = global_data.vector_stride_info_bucket;
+    if (bucket.size() == 0) {
+        vector_stride_info_list_t info_list;
+        bucket.push_back(info_list);
+    }
+
+    // Get the last list from the bucket and
+    // insert the mem_info struct there.
+    vector_stride_info_list_t& last_list = bucket.at(bucket.size() - 1);
+    last_list.push_back(info);
+
+    return 0;
+}
+
 int print_trace_records(const global_data_t& global_data) {
     const trace_info_bucket_t& bucket = global_data.trace_info_bucket;
 
@@ -148,6 +164,12 @@ int read_file(const char* filename, global_data_t& global_data) {
 
             case MSG_TERMINAL:
                 if ((code = handle_terminal_msg(global_data)) < 0)
+                    return code;
+                break;
+
+            case MSG_VECTOR_STRIDE_INFO:
+                if ((code = handle_vector_stride_msg(data_node.vector_stride_info,
+                        global_data)) < 0)
                     return code;
                 break;
 

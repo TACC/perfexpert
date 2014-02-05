@@ -23,10 +23,10 @@
 #include <rose.h>
 
 #include "aligncheck.h"
+#include "generic_vars.h"
 #include "inst_defs.h"
 #include "ir_methods.h"
 #include "loop_traversal.h"
-#include "streams.h"
 
 using namespace SageBuilder;
 using namespace SageInterface;
@@ -35,7 +35,12 @@ aligncheck_t::aligncheck_t(VariableRenaming*& _var_renaming) {
     var_renaming = _var_renaming;
 }
 
+name_list_t& aligncheck_t::get_stream_list() {
+    return var_name_list;
+}
+
 void aligncheck_t::atTraversalStart() {
+    var_name_list.clear();
     statement_list.clear();
 }
 

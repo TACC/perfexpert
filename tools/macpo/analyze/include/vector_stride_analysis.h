@@ -19,13 +19,18 @@
  * $HEADER$
  */
 
-#ifndef MACPO_RECORD_CXX_H_
-#define MACPO_RECORD_CXX_H_
+#ifndef VECTOR_STRIDE_ANALYSIS_H_
+#define VECTOR_STRIDE_ANALYSIS_H_
 
-#include <deque>
+#include "histogram.h"
 
-typedef std::deque<mem_info_t> mem_info_list_t;
-typedef std::deque<trace_info_t> trace_info_list_t;
-typedef std::deque<vector_stride_info_t> vector_stride_info_list_t;
+#define MAX_STRIDE      128
+#define STRIDE_COUNT    3
 
-#endif  /* MACPO_RECORD_CXX_H_ */
+int vector_stride_analysis(const global_data_t& global_data,
+        histogram_list_t& stride_list);
+
+int print_vector_strides(const global_data_t& global_data,
+        histogram_list_t& stride_list);
+
+#endif  /* VECTOR_STRIDE_ANALYSIS_H_ */

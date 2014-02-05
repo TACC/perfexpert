@@ -59,7 +59,8 @@ int main(int argc, char *argv[]) {
         return code;
     }
 
-    if (global_data.mem_info_bucket.size()) {
+    if (global_data.mem_info_bucket.size() ||
+            global_data.vector_stride_info_bucket.size()) {
         if ((code = filter_low_freq_records(global_data)) < 0) {
             std::cerr << "Failed to filter low-frequency records, terminating."
                 << std::endl;

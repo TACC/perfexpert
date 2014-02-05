@@ -29,6 +29,7 @@
 
 #include "latency_analysis.h"
 #include "stride_analysis.h"
+#include "vector_stride_analysis.h"
 
 int filter_low_freq_records(global_data_t& global_data) {
     mem_info_bucket_t& bucket = global_data.mem_info_bucket;
@@ -129,6 +130,19 @@ int analyze_records(const global_data_t& global_data, int analysis_flags) {
         stride_list.resize(num_streams);
 
         if ((code = stride_analysis(global_data, stride_list)) < 0)
+            return code;
+
+        print_strides(global_data, stride_list);
+    }
+
+    if (analysis_flags & ANALYSIS_VECTOR_STRIDES) {
+        std::cout << mprefix << "Analyzing records for vector stride values." <<
+                std::endl;
+
+        histogram_list_t stride_list;
+        stride_list.resize(num_streams);
+
+        if ((code = vector_stride_analysis(global_data, stride_list)) < 0)
             return code;
 
         print_strides(global_data, stride_list);

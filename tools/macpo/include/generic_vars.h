@@ -19,13 +19,26 @@
  * $HEADER$
  */
 
-#ifndef MACPO_RECORD_CXX_H_
-#define MACPO_RECORD_CXX_H_
+#ifndef	GENERIC_VARS_H_
+#define	GENERIC_VARS_H_
 
-#include <deque>
+#include "generic_defs.h"
+#include "inst_defs.h"
 
-typedef std::deque<mem_info_t> mem_info_list_t;
-typedef std::deque<trace_info_t> trace_info_list_t;
-typedef std::deque<vector_stride_info_t> vector_stride_info_list_t;
+class generic_vars_t : public AstTopDownProcessing<attrib> {
+    public:
+        generic_vars_t(bool _deep_search = true);
 
-#endif  /* MACPO_RECORD_CXX_H_ */
+        reference_list_t& get_reference_list();
+
+        virtual attrib evaluateInheritedAttribute(SgNode* node, attrib attr);
+        virtual void atTraversalStart();
+        virtual void atTraversalEnd();
+
+    private:
+        bool deep_search;
+        SgForStatement* init_for_stmt;
+        reference_list_t reference_list;
+};
+
+#endif	/* GENERIC_VARS_H_ */

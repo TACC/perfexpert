@@ -683,6 +683,26 @@ void indigo__simd_branch_c(int line_number, int idxv, int type_size, int branch_
 }
 #endif
 
+void indigo__vector_stride_c(int loop_line_number, int var_idx, void* addr, int type_size) {
+	// If this process was never supposed to record stats
+	// or if the file-open failed, then return
+	if (fd < 0)	return;
+
+	if (sleeping == 1 || access_count >= 131072)	// 131072 is 128*1024 (power of two)
+		return;
+
+	node_t node;
+	node.type_message = MSG_VECTOR_STRIDE_INFO;
+
+	node.vector_stride_info.coreID = getCoreID();
+	node.vector_stride_info.address = (size_t) addr;
+	node.vector_stride_info.var_idx = var_idx;
+	node.vector_stride_info.loop_line_number = loop_line_number;
+	node.vector_stride_info.type_size = type_size;
+
+	write(fd, &node, sizeof(node_t));
+}
+
 void indigo__record_c(int read_write, int line_number, void* addr, int var_idx, int type_size)
 {
 	if (fd >= 0)	fill_mem_struct(read_write, line_number, (size_t) addr, var_idx, type_size);
