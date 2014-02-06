@@ -31,7 +31,7 @@ using namespace SageBuilder;
 using namespace SageInterface;
 
 streams_t::streams_t(bool _deep_search) {
-    init_for_stmt = NULL;
+    init_scope_stmt = NULL;
     deep_search = _deep_search;
 }
 
@@ -72,9 +72,12 @@ attrib streams_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
 
     if (deep_search == false) {
         // If this is an inner for loop, skip it.
-        if (SgForStatement* for_stmt = isSgForStatement(node)) {
-            if (init_for_stmt == NULL) {
-                init_for_stmt = for_stmt;
+        if (ir_methods::is_loop(node)) {
+            SgScopeStatement* scope_stmt = isSgScopeStatement(node);
+            ROSE_ASSERT(scope_stmt);
+
+            if (init_scope_stmt == NULL) {
+                init_scope_stmt = scope_stmt;
             } else {
                 // This for loop is inside an outer for loop.
                 attr.skip = true;

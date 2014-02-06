@@ -31,7 +31,7 @@ using namespace SageBuilder;
 using namespace SageInterface;
 
 generic_vars_t::generic_vars_t(bool _deep_search) {
-    init_for_stmt = NULL;
+    init_scope_stmt = NULL;
     deep_search = _deep_search;
 }
 
@@ -72,9 +72,9 @@ attrib generic_vars_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
 
     if (deep_search == false) {
         // If this is an inner for loop, skip it.
-        if (SgForStatement* for_stmt = isSgForStatement(node)) {
-            if (init_for_stmt == NULL) {
-                init_for_stmt = for_stmt;
+        if (SgScopeStatement* scope_stmt = isSgScopeStatement(node)) {
+            if (init_scope_stmt == NULL) {
+                init_scope_stmt = scope_stmt;
             } else {
                 // This for loop is inside an outer for loop.
                 attr.skip = true;

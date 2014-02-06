@@ -37,7 +37,7 @@ class streams_t : public AstTopDownProcessing<attrib> {
 
     private:
         bool deep_search;
-        SgForStatement* init_for_stmt;
+        SgScopeStatement* init_scope_stmt;
         reference_list_t reference_list;
 };
 
