@@ -196,6 +196,40 @@ const analysis_profile_t MINST::run_analysis(SgNode* node, short action) {
     ROSE_ASSERT(false && "Invalid action!");
 }
 
+void MINST::print_loop_processing_status(const loop_info_t& loop_info) {
+    SgNode* loop_node = loop_info.loop_stmt;
+    SgLocatedNode* located_node = isSgLocatedNode(loop_node);
+
+    ROSE_ASSERT(located_node && "Failed to fetch line number information for "
+            "loop.");
+
+    Sg_File_Info* file_info = NULL;
+    file_info = located_node->get_file_info();
+
+    const std::string& file_name = file_info->get_filenameString();
+    int line_number = file_info->get_line();
+
+    if (loop_info.processed) {
+        std::cerr << mprefix << "Processed loop at " << file_name << ":" <<
+            line_number << "." << std::endl;
+    } else {
+        std::cerr << mprefix << "Unsupported loop at " << file_name << ":" <<
+            line_number << "." << std::endl;
+    }
+
+    for(std::vector<loop_info_list_t>::const_iterator it =
+            loop_info.child_loop_info.begin();
+            it != loop_info.child_loop_info.end(); it++) {
+        const loop_info_list_t& loop_info_list = *it;
+        for(loop_info_list_t::const_iterator it2 = loop_info_list.begin();
+                it2 != loop_info_list.end(); it2++) {
+            const loop_info_t& loop_info = *it2;
+
+            print_loop_processing_status(loop_info);
+        }
+    }
+}
+
 void MINST::analyze_node(SgNode* node, short action) {
     size_t last_statement_count = statement_list.size();
 
@@ -206,33 +240,12 @@ void MINST::analyze_node(SgNode* node, short action) {
     const analysis_profile_t& profile = run_analysis(node, action);
 
     if (profile_analysis) {
-        const loop_info_list_t& loop_list = profile.get_loop_info_list();
+        const loop_info_list_t& loop_info_list = profile.get_loop_info_list();
 
-        if (loop_list.size()) {
-            for (loop_info_list_t::const_iterator it = loop_list.begin();
-                    it != loop_list.end(); it++) {
-                const loop_info_t& loop_info = *it;
-
-                SgNode* loop_node = loop_info.loop_stmt;
-                SgLocatedNode* located_node = isSgLocatedNode(loop_node);
-
-                ROSE_ASSERT(located_node && "Failed to fetch line number "
-                        "information for loop.");
-
-                Sg_File_Info* file_info = NULL;
-                file_info = located_node->get_file_info();
-
-                const std::string& file_name = file_info->get_filenameString();
-                int line_number = file_info->get_line();
-
-                if (loop_info.processed) {
-                    std::cerr << mprefix << "Processed loop at " << file_name
-                        << ":" << line_number << "." << std::endl;
-                } else {
-                    std::cerr << mprefix << "Unsupported loop at " << file_name
-                        << ":" << line_number << "." << std::endl;
-                }
-            }
+        for(loop_info_list_t::const_iterator it = loop_info_list.begin();
+                it != loop_info_list.end(); it++) {
+            const loop_info_t& loop_info = *it;
+            print_loop_processing_status(loop_info);
         }
 
         const double analysis_time =  profile.get_running_time();

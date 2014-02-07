@@ -40,9 +40,6 @@ class MINST : public AstSimpleProcessing {
         virtual void atTraversalStart();
         virtual void visit(SgNode* node);
 
-        void analyze_node(SgNode* node, short action);
-        const analysis_profile_t run_analysis(SgNode* node, short action);
-
     private:
         short action;
         int line_number;
@@ -54,6 +51,10 @@ class MINST : public AstSimpleProcessing {
         VariableRenaming* var_renaming;
         SgFunctionDeclaration *def_decl, *non_def_decl;
         bool is_same_file(const std::string& file_1, const std::string& file_2);
+
+        void analyze_node(SgNode* node, short action);
+        const analysis_profile_t run_analysis(SgNode* node, short action);
+        void print_loop_processing_status(const loop_info_t& loop_info);
 
         statement_list_t statement_list;
         name_list_t stream_list;

@@ -648,19 +648,14 @@ void aligncheck_t::process_loop(SgScopeStatement* outer_scope_stmt,
         loop_info_t& loop_info, expr_map_t& loop_map,
         name_list_t& stream_list) {
     int line_number = loop_info.loop_stmt->get_file_info()->get_raw_line();
-
     loop_map[loop_info.idxv_expr] = &loop_info;
-    if (contains_non_linear_reference(loop_info.reference_list)) {
-        std::cerr << mprefix << "Found non-linear reference(s) in loop." <<
-            std::endl;
-        return;
-    }
 
     // Instrument this loop only if
     // the loop header components have been identified.
     // Allow empty init expressions (which is always the case with while and
     // do-while loops).
-    if (loop_info.idxv_expr && loop_info.test_expr && loop_info.test_expr) {
+    if (loop_info.idxv_expr && loop_info.test_expr && loop_info.test_expr &&
+            !contains_non_linear_reference(loop_info.reference_list)) {
         loop_info.processed = true;
 
         Sg_File_Info *fileInfo =
