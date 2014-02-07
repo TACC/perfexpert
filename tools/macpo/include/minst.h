@@ -30,7 +30,7 @@
 class MINST : public AstSimpleProcessing {
     public:
         MINST(short _action, int _line_number, std::string _inst_func,
-                VariableRenaming* _var_renaming);
+                bool _profile_analysis, VariableRenaming* _var_renaming);
 
         void insert_map_function(SgNode* node);
         void insert_map_prototype(SgNode* node);
@@ -42,6 +42,7 @@ class MINST : public AstSimpleProcessing {
     private:
         short action;
         int line_number;
+        bool profile_analysis;
         std::string inst_func;
 
         SgGlobal* global_node;

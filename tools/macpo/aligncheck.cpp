@@ -23,6 +23,7 @@
 #include <rose.h>
 
 #include "aligncheck.h"
+#include "analysis_profile.h"
 #include "generic_vars.h"
 #include "inst_defs.h"
 #include "ir_methods.h"
@@ -654,6 +655,8 @@ void aligncheck_t::process_loop(SgScopeStatement* outer_scope_stmt,
     // Allow empty init expressions (which is always the case with while and
     // do-while loops).
     if (loop_info.idxv_expr && loop_info.test_expr && loop_info.test_expr) {
+        loop_info.processed = true;
+
         Sg_File_Info *fileInfo =
             Sg_File_Info::generateFileInfoForTransformationNode(
                     ((SgLocatedNode*)
@@ -680,6 +683,9 @@ void aligncheck_t::process_loop(SgScopeStatement* outer_scope_stmt,
 }
 
 void aligncheck_t::process_node(SgNode* node) {
+    // Begin processing.
+    analysis_profile.start_timer();
+
     // Since this is not really a traversal, manually invoke init function.
     atTraversalStart();
 
@@ -698,6 +704,13 @@ void aligncheck_t::process_node(SgNode* node) {
 
     // Since this is not really a traversal, manually invoke atTraversalEnd();
     atTraversalEnd();
+
+    analysis_profile.end_timer();
+    analysis_profile.set_loop_info_list(loop_info_list);
+}
+
+const analysis_profile_t& aligncheck_t::get_analysis_profile() {
+    return analysis_profile;
 }
 
 const statement_list_t::iterator aligncheck_t::stmt_begin() {

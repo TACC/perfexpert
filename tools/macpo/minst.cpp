@@ -23,6 +23,7 @@
 #include <rose.h>
 
 #include "aligncheck.h"
+#include "analysis_profile.h"
 #include "inst_defs.h"
 #include "instrumentor.h"
 #include "ir_methods.h"
@@ -35,10 +36,11 @@ using namespace SageBuilder;
 using namespace SageInterface;
 
 MINST::MINST(short _action, int _line_number, std::string _inst_func,
-        VariableRenaming* _var_renaming) {
+        bool _profile_analysis, VariableRenaming* _var_renaming) {
     action = _action;
     line_number = _line_number;
     inst_func = _inst_func;
+    profile_analysis = _profile_analysis;
     var_renaming = _var_renaming;
 }
 
@@ -222,8 +224,7 @@ void MINST::visit(SgNode* node)
                     is_same_file(_file_name, inst_func) == false)
                 return;
 
-            std::cerr << mprefix << "Analyzing function " << function_name <<
-                " at line " << _line_number << std::endl;
+            size_t last_statement_count = statement_list.size();
 
             switch(action) {
                 case ACTION_INSTRUMENT:
@@ -249,6 +250,51 @@ void MINST::visit(SgNode* node)
                         stream_list = visitor.get_stream_list();
                         statement_list.insert(statement_list.end(),
                                 visitor.stmt_begin(), visitor.stmt_end());
+
+                        if (profile_analysis) {
+                            const analysis_profile_t& profile =
+                                visitor.get_analysis_profile();
+
+                            const loop_info_list_t& loop_list =
+                                profile.get_loop_info_list();
+
+                            if (loop_list.size()) {
+                                for (loop_info_list_t::const_iterator it =
+                                        loop_list.begin();
+                                        it != loop_list.end(); it++) {
+                                    const loop_info_t& loop_info = *it;
+
+                                    SgLocatedNode* located_node =
+                                        isSgLocatedNode(loop_info.loop_stmt);
+
+                                    ROSE_ASSERT(located_node && "Failed to "
+                                            "fetch line number information for "
+                                            "loop.");
+
+                                    Sg_File_Info* file_info = NULL;
+                                    file_info = located_node->get_file_info();
+
+                                    const std::string& file_name =
+                                        file_info->get_filenameString();
+                                    int line_number = file_info->get_line();
+
+                                    if (loop_info.processed) {
+                                        std::cerr << mprefix << "Processed " <<
+                                            "loop at " << file_name << ":" <<
+                                            line_number << "." << std::endl;
+                                    } else {
+                                        std::cerr << mprefix << "Unsupported "
+                                            "loop at " << file_name << ":" <<
+                                            line_number << "." << std::endl;
+                                    }
+                                }
+                            }
+
+                            const double analysis_time = 
+                                profile.get_running_time();
+                            std::cerr << mprefix << "Analysis time: " <<
+                                analysis_time << " second(s)." << std::endl;
+                        }
                     }
 
                     break;
@@ -282,6 +328,17 @@ void MINST::visit(SgNode* node)
 
                     break;
             }
+
+            if (statement_list.size() != last_statement_count) {
+                std::cerr << mprefix << "Analyzed function " << function_name
+                    << " at line " << _line_number << "." << std::endl;
+            } else {
+                // No change in statement count.
+                std::cerr << mprefix << "Function " << function_name << " at "
+                    "line " << _line_number << " could not be analyzed "
+                    "because of unsupported loop structure(s)." << std::endl;
+            }
+
         }
     }
     else if (line_number != 0)	{
@@ -295,8 +352,7 @@ void MINST::visit(SgNode* node)
                     is_same_file(_file_name, inst_func) == false)
                 return;
 
-            std::cerr << mprefix << "Analyzing loop in function " <<
-                function_name << " at line " << _line_number << std::endl;
+            size_t last_statement_count = statement_list.size();
 
             switch(action) {
                 case ACTION_INSTRUMENT:
@@ -322,6 +378,51 @@ void MINST::visit(SgNode* node)
                         stream_list = visitor.get_stream_list();
                         statement_list.insert(statement_list.end(),
                                 visitor.stmt_begin(), visitor.stmt_end());
+
+                        if (profile_analysis) {
+                            const analysis_profile_t& profile =
+                                visitor.get_analysis_profile();
+
+                            const loop_info_list_t& loop_list =
+                                profile.get_loop_info_list();
+
+                            if (loop_list.size()) {
+                                for (loop_info_list_t::const_iterator it =
+                                        loop_list.begin();
+                                        it != loop_list.end(); it++) {
+                                    const loop_info_t& loop_info = *it;
+
+                                    SgLocatedNode* located_node =
+                                        isSgLocatedNode(loop_info.loop_stmt);
+
+                                    ROSE_ASSERT(located_node && "Failed to "
+                                            "fetch line number information for "
+                                            "loop.");
+
+                                    Sg_File_Info* file_info = NULL;
+                                    file_info = located_node->get_file_info();
+
+                                    const std::string& file_name =
+                                        file_info->get_filenameString();
+                                    int line_number = file_info->get_line();
+
+                                    if (loop_info.processed) {
+                                        std::cerr << mprefix << "Processed " <<
+                                            "loop at " << file_name << ":" <<
+                                            line_number << "." << std::endl;
+                                    } else {
+                                        std::cerr << mprefix << "Unsupported "
+                                            "loop at " << file_name << ":" <<
+                                            line_number << "." << std::endl;
+                                    }
+                                }
+                            }
+
+                            const double analysis_time = 
+                                profile.get_running_time();
+                            std::cerr << mprefix << "Analysis time: " <<
+                                analysis_time << " second(s)." << std::endl;
+                        }
                     }
 
                     break;
@@ -354,6 +455,17 @@ void MINST::visit(SgNode* node)
                     }
 
                     break;
+            }
+
+            if (statement_list.size() != last_statement_count) {
+                std::cerr << mprefix << "Analyzed loop in function " <<
+                    function_name << " at line " << _line_number << "." <<
+                    std::endl;
+            } else {
+                // No change in statement count.
+                std::cerr << mprefix << "Loop in function " << function_name <<
+                    " at line " << _line_number << " could not be analyzed "
+                    "because of unsupported loop structure(s)." << std::endl;
             }
         }
     }

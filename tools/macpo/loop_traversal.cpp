@@ -79,7 +79,7 @@ attrib loop_traversal_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
         inner_traversal.traverse(loop_body, attrib());
         loop_info_list_t& child_list = inner_traversal.get_loop_info_list();
 
-        loop_info_t loop_info;
+        loop_info_t loop_info = {0};
         loop_info.loop_stmt = scope_stmt;
 
         loop_info.idxv_expr = idxv;
@@ -87,6 +87,8 @@ attrib loop_traversal_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
         loop_info.test_expr = test;
         loop_info.incr_expr = incr;
         loop_info.incr_op = incr_op;
+
+        loop_info.processed = false;
 
         loop_info.reference_list = _ref_list;
         loop_info.child_loop_info.push_back(child_list);

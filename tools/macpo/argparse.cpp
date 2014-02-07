@@ -146,6 +146,8 @@ int argparse::parse_arguments(char* arg, options_t& options) {
         options.backup_filename = value;
     } else if (option == "no-compile") {
         options.no_compile = true;
+    } else if (option == "profile-analysis") {
+        options.profile_analysis = true;
     } else
         return -1;
 
@@ -155,6 +157,7 @@ int argparse::parse_arguments(char* arg, options_t& options) {
 void argparse::init_options(options_t& options) {
     options.action = ACTION_NONE;
     options.no_compile = false;
+    options.profile_analysis = false;
     options.line_number = 0;
     options.function_name = "";
     options.backup_filename = "";

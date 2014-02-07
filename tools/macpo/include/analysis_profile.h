@@ -19,26 +19,25 @@
  * $HEADER$
  */
 
-#ifndef	GENERIC_DEFS_H_
-#define	GENERIC_DEFS_H_
+#ifndef	ANALYSIS_PROFILE_H_
+#define	ANALYSIS_PROFILE_H_
 
-#include <string>
-#include <vector>
+#include "inst_defs.h"
 
-#define mprefix "[macpo] "
+class analysis_profile_t {
+    public:
+        analysis_profile_t();
 
-enum { ACTION_NONE=0, ACTION_INSTRUMENT, ACTION_ALIGNCHECK, ACTION_GENTRACE,
-        ACTION_VECTORSTRIDES };
+        void start_timer();
+        void end_timer();
+        const double get_running_time() const;
 
-typedef struct {
-    short action;
-    int line_number;
-    bool no_compile;
-    bool profile_analysis;
-    std::string function_name;
-    std::string backup_filename;
-} options_t;
+        void set_loop_info_list(loop_info_list_t& _loop_info_list);
+        const loop_info_list_t& get_loop_info_list() const;
 
-typedef std::vector<std::string> name_list_t;
+    private:
+        double start_time, end_time;
+        loop_info_list_t loop_info_list;
+};
 
-#endif	/* GENERIC_DEFS_H_ */
+#endif	/* ANALYSIS_PROFILE_H_ */
