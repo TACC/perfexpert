@@ -24,6 +24,7 @@
 
 #include <VariableRenaming.h>
 
+#include "analysis_profile.h"
 #include "generic_defs.h"
 #include "inst_defs.h"
 
@@ -49,6 +50,8 @@ class vector_strides_t {
         bool contains_non_linear_reference(const reference_list_t&
                 reference_list);
 
+        const analysis_profile_t& get_analysis_profile();
+
         const statement_list_t::iterator stmt_begin();
         const statement_list_t::iterator stmt_end();
 
@@ -59,6 +62,7 @@ class vector_strides_t {
         VariableRenaming* var_renaming;
         statement_list_t statement_list;
         name_list_t var_name_list;
+        analysis_profile_t analysis_profile;
 };
 
 #endif	/* VECTOR_STRIDES_H_ */

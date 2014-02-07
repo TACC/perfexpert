@@ -22,6 +22,7 @@
 #include <algorithm>
 #include <rose.h>
 
+#include "analysis_profile.h"
 #include "inst_defs.h"
 #include "instrumentor.h"
 #include "ir_methods.h"
@@ -32,11 +33,13 @@ using namespace SageBuilder;
 using namespace SageInterface;
 
 void instrumentor_t::atTraversalStart() {
+    analysis_profile.start_timer();
     stream_list.clear();
     statement_list.clear();
 }
 
 void instrumentor_t::atTraversalEnd() {
+    analysis_profile.end_timer();
 }
 
 name_list_t& instrumentor_t::get_stream_list() {
@@ -121,6 +124,10 @@ attrib instrumentor_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
 
     attr.skip = true;
     return attr;
+}
+
+const analysis_profile_t& instrumentor_t::get_analysis_profile() {
+    return analysis_profile;
 }
 
 const statement_list_t::iterator instrumentor_t::stmt_begin() {

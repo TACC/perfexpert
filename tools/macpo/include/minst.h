@@ -24,6 +24,7 @@
 
 #include <VariableRenaming.h>
 
+#include "analysis_profile.h"
 #include "generic_defs.h"
 #include "instrumentor.h"
 
@@ -40,6 +41,7 @@ class MINST : public AstSimpleProcessing {
         virtual void visit(SgNode* node);
 
         void analyze_node(SgNode* node, short action);
+        const analysis_profile_t run_analysis(SgNode* node, short action);
 
     private:
         short action;

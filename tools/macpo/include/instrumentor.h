@@ -22,6 +22,7 @@
 #ifndef	INSTRUMENTOR_H_
 #define	INSTRUMENTOR_H_
 
+#include "analysis_profile.h"
 #include "generic_defs.h"
 #include "inst_defs.h"
 
@@ -33,12 +34,15 @@ class instrumentor_t : public AstTopDownProcessing<attrib> {
         virtual void atTraversalStart();
         virtual void atTraversalEnd();
 
+        const analysis_profile_t& get_analysis_profile();
+
         const statement_list_t::iterator stmt_begin();
         const statement_list_t::iterator stmt_end();
 
     private:
         statement_list_t statement_list;
         name_list_t stream_list;
+        analysis_profile_t analysis_profile;
 };
 
 #endif	/* INSTRUMENTOR_H_ */

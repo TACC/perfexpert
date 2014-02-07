@@ -22,6 +22,7 @@
 #include <algorithm>
 #include <rose.h>
 
+#include "analysis_profile.h"
 #include "vector_strides.h"
 #include "generic_vars.h"
 #include "inst_defs.h"
@@ -40,11 +41,13 @@ name_list_t& vector_strides_t::get_stream_list() {
 }
 
 void vector_strides_t::atTraversalStart() {
+    analysis_profile.start_timer();
     var_name_list.clear();
     statement_list.clear();
 }
 
 void vector_strides_t::atTraversalEnd() {
+    analysis_profile.end_timer();
 }
 
 bool vector_strides_t::contains_non_linear_reference(
@@ -187,6 +190,10 @@ void vector_strides_t::process_node(SgNode* node) {
 
     // Since this is not really a traversal, manually invoke atTraversalEnd();
     atTraversalEnd();
+}
+
+const analysis_profile_t& vector_strides_t::get_analysis_profile() {
+    return analysis_profile;
 }
 
 const statement_list_t::iterator vector_strides_t::stmt_begin() {

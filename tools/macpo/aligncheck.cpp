@@ -34,6 +34,12 @@ using namespace SageInterface;
 
 aligncheck_t::aligncheck_t(VariableRenaming*& _var_renaming) {
     var_renaming = _var_renaming;
+    loop_traversal = new loop_traversal_t(var_renaming);
+}
+
+aligncheck_t::~aligncheck_t() {
+    delete loop_traversal;
+    loop_traversal = NULL;
 }
 
 name_list_t& aligncheck_t::get_stream_list() {
@@ -689,9 +695,8 @@ void aligncheck_t::process_node(SgNode* node) {
     // Since this is not really a traversal, manually invoke init function.
     atTraversalStart();
 
-    loop_traversal_t loop_traversal(var_renaming);
-    loop_traversal.traverse(node, attrib());
-    loop_info_list_t& loop_info_list = loop_traversal.get_loop_info_list();
+    loop_traversal->traverse(node, attrib());
+    loop_info_list_t& loop_info_list = loop_traversal->get_loop_info_list();
 
     expr_map_t loop_map;
     name_list_t stream_list;

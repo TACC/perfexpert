@@ -27,6 +27,7 @@
 #include "analysis_profile.h"
 #include "generic_defs.h"
 #include "inst_defs.h"
+#include "loop_traversal.h"
 
 class aligncheck_t {
     typedef VariableRenaming::NumNodeRenameEntry::iterator entry_iterator;
@@ -41,6 +42,7 @@ class aligncheck_t {
         typedef std::map<std::string, node_list_t> sstore_map_t;
 
         aligncheck_t(VariableRenaming*& _var_renaming);
+        ~aligncheck_t();
 
         name_list_t& get_stream_list();
 
@@ -77,6 +79,7 @@ class aligncheck_t {
         statement_list_t statement_list;
         name_list_t var_name_list;
         analysis_profile_t analysis_profile;
+        loop_traversal_t* loop_traversal;
 };
 
 #endif	/* ALIGNCHEK_H_ */

@@ -22,6 +22,7 @@
 #include <algorithm>
 #include <rose.h>
 
+#include "analysis_profile.h"
 #include "inst_defs.h"
 #include "tracer.h"
 #include "ir_methods.h"
@@ -32,11 +33,13 @@ using namespace SageBuilder;
 using namespace SageInterface;
 
 void tracer_t::atTraversalStart() {
+    analysis_profile.start_timer();
     stream_list.clear();
     statement_list.clear();
 }
 
 void tracer_t::atTraversalEnd() {
+    analysis_profile.end_timer();
 }
 
 name_list_t& tracer_t::get_stream_list() {
@@ -119,6 +122,10 @@ attrib tracer_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
 
     attr.skip = true;
     return attr;
+}
+
+const analysis_profile_t& tracer_t::get_analysis_profile() {
+    return analysis_profile;
 }
 
 const statement_list_t::iterator tracer_t::stmt_begin() {
