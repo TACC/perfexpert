@@ -39,6 +39,8 @@ class MINST : public AstSimpleProcessing {
         virtual void atTraversalStart();
         virtual void visit(SgNode* node);
 
+        void analyze_node(SgNode* node, short action);
+
     private:
         short action;
         int line_number;

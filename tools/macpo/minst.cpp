@@ -134,6 +134,127 @@ bool MINST::is_same_file(const std::string& file_1, const std::string& file_2) {
     return strcmp(path_1, path_2) == 0;
 }
 
+void MINST::analyze_node(SgNode* node, short action) {
+    size_t last_statement_count = statement_list.size();
+
+    Sg_File_Info* file_info = ((SgLocatedNode *) node)->get_file_info();
+    const std::string& file_name = file_info->get_filenameString();
+    int line_number = file_info->get_line();
+
+    switch(action) {
+        case ACTION_INSTRUMENT:
+            {
+                insert_map_function(node);
+
+                instrumentor_t inst;
+                inst.traverse(node, attrib());
+
+                // Pull information from AST traversal.
+                stream_list = inst.get_stream_list();
+                statement_list.insert(statement_list.end(),
+                        inst.stmt_begin(), inst.stmt_end());
+            }
+
+            break;
+
+        case ACTION_ALIGNCHECK:
+            {
+                aligncheck_t visitor(var_renaming);
+                visitor.process_node(node);
+
+                stream_list = visitor.get_stream_list();
+                statement_list.insert(statement_list.end(),
+                        visitor.stmt_begin(), visitor.stmt_end());
+
+                if (profile_analysis) {
+                    const analysis_profile_t& profile =
+                        visitor.get_analysis_profile();
+
+                    const loop_info_list_t& loop_list =
+                        profile.get_loop_info_list();
+
+                    if (loop_list.size()) {
+                        for (loop_info_list_t::const_iterator it =
+                                loop_list.begin();
+                                it != loop_list.end(); it++) {
+                            const loop_info_t& loop_info = *it;
+
+                            SgLocatedNode* located_node =
+                                isSgLocatedNode(loop_info.loop_stmt);
+
+                            ROSE_ASSERT(located_node && "Failed to "
+                                    "fetch line number information for "
+                                    "loop.");
+
+                            Sg_File_Info* file_info = NULL;
+                            file_info = located_node->get_file_info();
+
+                            const std::string& file_name =
+                                file_info->get_filenameString();
+                            int line_number = file_info->get_line();
+
+                            if (loop_info.processed) {
+                                std::cerr << mprefix << "Processed " <<
+                                    "loop at " << file_name << ":" <<
+                                    line_number << "." << std::endl;
+                            } else {
+                                std::cerr << mprefix << "Unsupported "
+                                    "loop at " << file_name << ":" <<
+                                    line_number << "." << std::endl;
+                            }
+                        }
+                    }
+
+                    const double analysis_time = 
+                        profile.get_running_time();
+                    std::cerr << mprefix << "Analysis time: " <<
+                        analysis_time << " second(s)." << std::endl;
+                }
+            }
+
+            break;
+
+        case ACTION_GENTRACE:
+            {
+                insert_map_function(node);
+
+                tracer_t tracer;
+                tracer.traverse(node, attrib());
+
+                // Pull information from AST traversal.
+                stream_list = tracer.get_stream_list();
+                statement_list.insert(statement_list.end(),
+                        tracer.stmt_begin(), tracer.stmt_end());
+            }
+
+            break;
+
+        case ACTION_VECTORSTRIDES:
+            {
+                insert_map_function(node);
+
+                vector_strides_t visitor(var_renaming);
+                visitor.process_node(node);
+
+                stream_list = visitor.get_stream_list();
+                statement_list.insert(statement_list.end(),
+                        visitor.stmt_begin(), visitor.stmt_end());
+            }
+
+            break;
+    }
+
+    if (statement_list.size() != last_statement_count) {
+        std::cerr << mprefix << "Analyzed code at " << file_name << ":" <<
+            line_number << "." << std::endl;
+    } else {
+        // No change in statement count.
+        std::cerr << mprefix << "Code at " << file_name << ":" << line_number <<
+            " could not be analyzed because of unsupported loop structure(s)."
+            << std::endl;
+    }
+}
+
 void MINST::visit(SgNode* node)
 {
     // Add header file for indigo's record function
@@ -224,121 +345,7 @@ void MINST::visit(SgNode* node)
                     is_same_file(_file_name, inst_func) == false)
                 return;
 
-            size_t last_statement_count = statement_list.size();
-
-            switch(action) {
-                case ACTION_INSTRUMENT:
-                    {
-                        insert_map_function(node);
-
-                        instrumentor_t inst;
-                        inst.traverse(node, attrib());
-
-                        // Pull information from AST traversal.
-                        stream_list = inst.get_stream_list();
-                        statement_list.insert(statement_list.end(),
-                                inst.stmt_begin(), inst.stmt_end());
-                    }
-
-                    break;
-
-                case ACTION_ALIGNCHECK:
-                    {
-                        aligncheck_t visitor(var_renaming);
-                        visitor.process_node(node);
-
-                        stream_list = visitor.get_stream_list();
-                        statement_list.insert(statement_list.end(),
-                                visitor.stmt_begin(), visitor.stmt_end());
-
-                        if (profile_analysis) {
-                            const analysis_profile_t& profile =
-                                visitor.get_analysis_profile();
-
-                            const loop_info_list_t& loop_list =
-                                profile.get_loop_info_list();
-
-                            if (loop_list.size()) {
-                                for (loop_info_list_t::const_iterator it =
-                                        loop_list.begin();
-                                        it != loop_list.end(); it++) {
-                                    const loop_info_t& loop_info = *it;
-
-                                    SgLocatedNode* located_node =
-                                        isSgLocatedNode(loop_info.loop_stmt);
-
-                                    ROSE_ASSERT(located_node && "Failed to "
-                                            "fetch line number information for "
-                                            "loop.");
-
-                                    Sg_File_Info* file_info = NULL;
-                                    file_info = located_node->get_file_info();
-
-                                    const std::string& file_name =
-                                        file_info->get_filenameString();
-                                    int line_number = file_info->get_line();
-
-                                    if (loop_info.processed) {
-                                        std::cerr << mprefix << "Processed " <<
-                                            "loop at " << file_name << ":" <<
-                                            line_number << "." << std::endl;
-                                    } else {
-                                        std::cerr << mprefix << "Unsupported "
-                                            "loop at " << file_name << ":" <<
-                                            line_number << "." << std::endl;
-                                    }
-                                }
-                            }
-
-                            const double analysis_time = 
-                                profile.get_running_time();
-                            std::cerr << mprefix << "Analysis time: " <<
-                                analysis_time << " second(s)." << std::endl;
-                        }
-                    }
-
-                    break;
-
-                case ACTION_GENTRACE:
-                    {
-                        insert_map_function(node);
-
-                        tracer_t tracer;
-                        tracer.traverse(node, attrib());
-
-                        // Pull information from AST traversal.
-                        stream_list = tracer.get_stream_list();
-                        statement_list.insert(statement_list.end(),
-                                tracer.stmt_begin(), tracer.stmt_end());
-                    }
-
-                    break;
-
-                case ACTION_VECTORSTRIDES:
-                    {
-                        insert_map_function(node);
-
-                        vector_strides_t visitor(var_renaming);
-                        visitor.process_node(node);
-
-                        stream_list = visitor.get_stream_list();
-                        statement_list.insert(statement_list.end(),
-                                visitor.stmt_begin(), visitor.stmt_end());
-                    }
-
-                    break;
-            }
-
-            if (statement_list.size() != last_statement_count) {
-                std::cerr << mprefix << "Analyzed function " << function_name
-                    << " at line " << _line_number << "." << std::endl;
-            } else {
-                // No change in statement count.
-                std::cerr << mprefix << "Function " << function_name << " at "
-                    "line " << _line_number << " could not be analyzed "
-                    "because of unsupported loop structure(s)." << std::endl;
-            }
-
+            analyze_node(node, action);
         }
     }
     else if (line_number != 0)	{
@@ -352,121 +359,7 @@ void MINST::visit(SgNode* node)
                     is_same_file(_file_name, inst_func) == false)
                 return;
 
-            size_t last_statement_count = statement_list.size();
-
-            switch(action) {
-                case ACTION_INSTRUMENT:
-                    {
-                        insert_map_function(node);
-
-                        instrumentor_t inst;
-                        inst.traverse(node, attrib());
-
-                        // Pull information from AST traversal.
-                        stream_list = inst.get_stream_list();
-                        statement_list.insert(statement_list.end(),
-                                inst.stmt_begin(), inst.stmt_end());
-                    }
-
-                    break;
-
-                case ACTION_ALIGNCHECK:
-                    {
-                        aligncheck_t visitor(var_renaming);
-                        visitor.process_node(node);
-
-                        stream_list = visitor.get_stream_list();
-                        statement_list.insert(statement_list.end(),
-                                visitor.stmt_begin(), visitor.stmt_end());
-
-                        if (profile_analysis) {
-                            const analysis_profile_t& profile =
-                                visitor.get_analysis_profile();
-
-                            const loop_info_list_t& loop_list =
-                                profile.get_loop_info_list();
-
-                            if (loop_list.size()) {
-                                for (loop_info_list_t::const_iterator it =
-                                        loop_list.begin();
-                                        it != loop_list.end(); it++) {
-                                    const loop_info_t& loop_info = *it;
-
-                                    SgLocatedNode* located_node =
-                                        isSgLocatedNode(loop_info.loop_stmt);
-
-                                    ROSE_ASSERT(located_node && "Failed to "
-                                            "fetch line number information for "
-                                            "loop.");
-
-                                    Sg_File_Info* file_info = NULL;
-                                    file_info = located_node->get_file_info();
-
-                                    const std::string& file_name =
-                                        file_info->get_filenameString();
-                                    int line_number = file_info->get_line();
-
-                                    if (loop_info.processed) {
-                                        std::cerr << mprefix << "Processed " <<
-                                            "loop at " << file_name << ":" <<
-                                            line_number << "." << std::endl;
-                                    } else {
-                                        std::cerr << mprefix << "Unsupported "
-                                            "loop at " << file_name << ":" <<
-                                            line_number << "." << std::endl;
-                                    }
-                                }
-                            }
-
-                            const double analysis_time = 
-                                profile.get_running_time();
-                            std::cerr << mprefix << "Analysis time: " <<
-                                analysis_time << " second(s)." << std::endl;
-                        }
-                    }
-
-                    break;
-
-                case ACTION_GENTRACE:
-                    {
-                        insert_map_function(node);
-
-                        tracer_t tracer;
-                        tracer.traverse(node, attrib());
-
-                        // Pull information from AST traversal.
-                        stream_list = tracer.get_stream_list();
-                        statement_list.insert(statement_list.end(),
-                                tracer.stmt_begin(), tracer.stmt_end());
-                    }
-
-                    break;
-
-                case ACTION_VECTORSTRIDES:
-                    {
-                        insert_map_function(node);
-
-                        vector_strides_t visitor(var_renaming);
-                        visitor.process_node(node);
-
-                        stream_list = visitor.get_stream_list();
-                        statement_list.insert(statement_list.end(),
-                                visitor.stmt_begin(), visitor.stmt_end());
-                    }
-
-                    break;
-            }
-
-            if (statement_list.size() != last_statement_count) {
-                std::cerr << mprefix << "Analyzed loop in function " <<
-                    function_name << " at line " << _line_number << "." <<
-                    std::endl;
-            } else {
-                // No change in statement count.
-                std::cerr << mprefix << "Loop in function " << function_name <<
-                    " at line " << _line_number << " could not be analyzed "
-                    "because of unsupported loop structure(s)." << std::endl;
-            }
+            analyze_node(node, action);
         }
     }
 }
