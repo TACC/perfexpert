@@ -350,7 +350,7 @@ void MINST::visit(SgNode* node)
         }
 
         if (line_number == 0) {
-            if (function_name != inst_func &&
+            if (inst_func != "<all>" && function_name != inst_func &&
                     is_same_file(_file_name, inst_func) == false)
                 return;
 
