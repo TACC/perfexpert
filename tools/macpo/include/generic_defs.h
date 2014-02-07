@@ -30,9 +30,6 @@
 enum { ACTION_NONE=0, ACTION_INSTRUMENT, ACTION_ALIGNCHECK, ACTION_GENTRACE,
         ACTION_VECTORSTRIDES };
 
-const int FLAG_NONE = 0;
-const int FLAG_NOCOMPILE = 1 << 0;
-
 typedef struct {
     short action;
     int line_number;
