@@ -350,6 +350,17 @@ int ir_methods::get_for_loop_header_components(VariableRenaming*& var_renaming,
                             break;
                         }
                     }
+                } else if (SgVariableDeclaration* var_decl = isSgVariableDeclaration(stmt)) {
+                    std::vector<SgInitializedName*> var_list = var_decl->get_variables();
+                    for (int i=0; i<var_list.size(); i++) {
+                        SgInitializedName* init_name = var_list.at(i);
+                        SgName name = init_name->get_qualified_name();
+                        if (name.getString() == idxv_string) {
+                            SgAssignInitializer* init_ptr = isSgAssignInitializer(init_name->get_initptr());
+                            init_expr = init_ptr;
+                            break;
+                        }
+                    }
                 }
             }
         } else {

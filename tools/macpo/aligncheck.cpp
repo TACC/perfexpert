@@ -300,6 +300,8 @@ SgExpression* aligncheck_t::instrument_alignment_checks(Sg_File_Info* fileInfo,
                     SgExpression* incr = loop_info->incr_expr;
                     int incr_op = loop_info->incr_op;
 
+                    ROSE_ASSERT(bin_op && "Failed to construct copy expression.");
+                    ROSE_ASSERT(init && "Empty init expression.");
                     if (ir_methods::contains_expr(bin_op, idxv) && init) {
                         if (!isSgValueExp(init))
                             expr_set.insert(init->unparseToString());
