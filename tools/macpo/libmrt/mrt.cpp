@@ -57,8 +57,8 @@ typedef std::map<long, long_histogram> long_histogram_coll;
 static std::set<int> analyzed_loops;
 
 static bool_map_coll overlap_bin;
-static short_map_coll branch_bin;
-static long_histogram_coll sstore_align_map, align_map, tripcount_map;
+static short_map_coll branch_bin, align_bin, sstore_align_bin;
+static long_histogram_coll tripcount_map;
 
 static short proc = PROC_UNKNOWN;
 
@@ -423,51 +423,59 @@ static void indigo__exit()
 
         fprintf (stderr, "\n==== Loop at line %d ====\n", line_number);
 
-        if (sstore_align_map.find(line_number) != sstore_align_map.end()) {
-            bool non_zero_sstore_alignment = false;
-            long_histogram& histogram = sstore_align_map[line_number];
-            for (long_histogram::iterator it = histogram.begin();
-                    non_zero_sstore_alignment == false && it != histogram.end();
+        if (sstore_align_bin.find(line_number) != sstore_align_bin.end()) {
+            short_map& map = sstore_align_bin[line_number];
+            for (short_map::iterator it = map.begin(); it != map.end();
                     it++) {
-                long* histogram = it->second;
+                short align_status = it->second;
+                switch(align_status) {
+                    case FULL_ALIGNED:
+                        fprintf (stderr, "all non-temporal arrays align, use "
+                            "__assume_aligned() or #pragma vector aligned to "
+                            "tell compiler about alignment.\n");
+                        break;
 
-                if (histogram) {
-                    if (nonzero_alignment(line_number, histogram)) {
-                        non_zero_sstore_alignment = true;
-                    }
+                    case MUTUAL_ALIGNED:
+                        fprintf (stderr, "all non-temporal arrays are mutually "
+                            "aligned but not aligned to cache-line boundary, "
+                            "use _mm_malloc/_mm_free to allocate/free aligned "
+                            "storage.\n");
+                        break;
 
-                    // print_alignment_histogram(line_number, histogram);
-                    free(histogram);
+                    case NOT_ALIGNED:
+                        fprintf (stderr, "non-temporal arrays are not aligned, "
+                            "try using _mm_malloc/_mm_free to allocate/free "
+                            "arrays that are aligned with cache-line bounary.");
+                        break;
                 }
-            }
-
-            if (non_zero_sstore_alignment) {
-                fprintf (stderr, "align non-temporal stores, "
-                        "use #pragma vector nontemporal.\n");
             }
         }
 
-        if (align_map.find(line_number) != align_map.end()) {
-            bool non_zero_alignment = false;
-            long_histogram& histogram = align_map[line_number];
-            for (long_histogram::iterator it = histogram.begin();
-                    non_zero_alignment == false && it != histogram.end();
+        if (align_bin.find(line_number) != align_bin.end()) {
+            short_map& map = align_bin[line_number];
+            for (short_map::iterator it = map.begin(); it != map.end();
                     it++) {
-                long* histogram = it->second;
+                short align_status = it->second;
+                switch(align_status) {
+                    case FULL_ALIGNED:
+                        fprintf (stderr, "all arrays align, use "
+                            "__assume_aligned() or #pragma vector aligned to "
+                            "tell compiler about alignment.\n");
+                        break;
 
-                if (histogram) {
-                    if (nonzero_alignment(line_number, histogram)) {
-                        non_zero_alignment = true;
-                    }
+                    case MUTUAL_ALIGNED:
+                        fprintf (stderr, "all arrays are mutually aligned but "
+                            "not aligned to cache-line boundary, use "
+                            "_mm_malloc/_mm_free to allocate/free aligned "
+                            "storage.\n");
+                        break;
 
-                    // print_alignment_histogram(line_number, histogram);
-                    free(histogram);
+                    case NOT_ALIGNED:
+                        fprintf (stderr, "arrays are not aligned, try using "
+                            "_mm_malloc/_mm_free to allocate/free arrays that "
+                            "are aligned with cache-line bounary.");
+                        break;
                 }
-            }
-
-            if (non_zero_alignment) {
-                fprintf (stderr, "align arrays, "
-                        "use #pragma vector aligned.\n");
             }
         }
 
@@ -813,17 +821,64 @@ long* get_histogram(long_histogram_coll& collection, int line_number,
     return return_value;
 }
 
-long* get_sstore_alignment_histogram(int line_number) {
+short& get_sstore_alignment_bin(int line_number) {
     analyzed_loops.insert(line_number);
-    return get_histogram(sstore_align_map, line_number, CACHE_LINE_SIZE);
+    short core_id = getCoreID();
+
+    // Obtain lock.
+    lock();
+
+    long* return_value = NULL;
+    // Check if we need to allocate a new histogram.
+    short_map_coll::iterator it = sstore_align_bin.find(line_number);
+    if (it == sstore_align_bin.end()) {
+        short_map& map = sstore_align_bin[line_number];
+        short_map::iterator it = map.find(core_id);
+        if (it == map.end()) {
+            map[core_id] = ALIGN_NOINIT;
+        }
+    } else {
+        short_map& map = it->second;
+        short_map::iterator it = map.find(core_id);
+        if (it == map.end()) {
+            map[core_id] = ALIGN_NOINIT;
+        }
+    }
+
+    // Release lock.
+    unlock();
+
+    return sstore_align_bin[line_number][core_id];
 }
 
-/**
-    Helper function to allocate / get histograms for alignment checking.
-*/
-long* get_alignment_histogram(int line_number) {
+short& get_alignment_bin(int line_number) {
     analyzed_loops.insert(line_number);
-    return get_histogram(align_map, line_number, CACHE_LINE_SIZE);
+    short core_id = getCoreID();
+
+    // Obtain lock.
+    lock();
+
+    long* return_value = NULL;
+    // Check if we need to allocate a new histogram.
+    short_map_coll::iterator it = align_bin.find(line_number);
+    if (it == align_bin.end()) {
+        short_map& map = align_bin[line_number];
+        short_map::iterator it = map.find(core_id);
+        if (it == map.end()) {
+            map[core_id] = ALIGN_NOINIT;
+        }
+    } else {
+        short_map& map = it->second;
+        short_map::iterator it = map.find(core_id);
+        if (it == map.end()) {
+            map[core_id] = ALIGN_NOINIT;
+        }
+    }
+
+    // Release lock.
+    unlock();
+
+    return align_bin[line_number][core_id];
 }
 
 long* get_tripcount_histogram(int line_number) {
@@ -851,10 +906,6 @@ int indigo__aligncheck_c(int line_number, /* int* type_size, */ int stream_count
         stream_count = MAX_ADDR-1;
     }
 
-    long* histogram = get_alignment_histogram(line_number);
-    if (histogram == NULL)
-        return -1;
-
     int common_alignment = -1, last_remainder = 0;
 
     int i, j;
@@ -866,11 +917,6 @@ int indigo__aligncheck_c(int line_number, /* int* type_size, */ int stream_count
         size_t size = va_arg(args, size_t);
 
         int remainder = ((long) start) % 64;
-        histogram[remainder]++;
-
-        // We already discovered an overlap, don't proceed further.
-        if (get_overlap_bin(line_number) == true)
-            break;
 
         if (i == 0) {
             common_alignment = remainder;
@@ -904,7 +950,9 @@ int indigo__aligncheck_c(int line_number, /* int* type_size, */ int stream_count
             }
         }
 
-        get_overlap_bin(line_number) = overlap;
+        if (get_overlap_bin(line_number) != true) {
+            get_overlap_bin(line_number) = overlap;
+        }
 
 #if 0
         if (overlap) {
@@ -918,6 +966,23 @@ int indigo__aligncheck_c(int line_number, /* int* type_size, */ int stream_count
     }
 
     va_end(args);
+
+    if (common_alignment == -1) {
+        get_alignment_bin(line_number) = NOT_ALIGNED;
+    } else if (common_alignment == 0) {
+        if (get_alignment_bin(line_number) == ALIGN_NOINIT) {
+            get_alignment_bin(line_number) = FULL_ALIGNED;
+        } else {
+            // Leave the existing measurement as it is.
+        }
+    } else {
+        if (get_alignment_bin(line_number) == ALIGN_NOINIT || get_alignment_bin(line_number) == FULL_ALIGNED) {
+            get_alignment_bin(line_number) = MUTUAL_ALIGNED;
+        } else {
+            // Leave the existing measurement as it is.
+        }
+    }
+
     return common_alignment;
 }
 
@@ -925,23 +990,44 @@ int indigo__aligncheck_c(int line_number, /* int* type_size, */ int stream_count
     indigo__sstore_aligncheck_c()
     Checks for alignment of streaming stores to cache line boundary.
 */
+
 void indigo__sstore_aligncheck_c(int line_number, int stream_count, ...) {
     va_list args;
 
-    int i, j;
-    long* histogram = get_sstore_alignment_histogram(line_number);
-    if (histogram == NULL)
-        return;
+    int common_alignment = -1, last_remainder = 0;
 
+    int i, j;
     va_start(args, stream_count);
 
     for (i=0; i<stream_count; i++) {
-        void* addr = va_arg(args, void*);
-        int remainder = ((long) addr) % 64;
-        histogram[remainder]++;
+        void* address = va_arg(args, void*);
+        int remainder = ((long) address) % 64;
+
+        if (i == 0) {
+            common_alignment = remainder;
+        } else {
+            if (common_alignment != remainder)
+                common_alignment = -1;
+        }
     }
 
     va_end(args);
+
+    if (common_alignment == -1) {
+        get_sstore_alignment_bin(line_number) = NOT_ALIGNED;
+    } else if (common_alignment == 0) {
+        if (get_sstore_alignment_bin(line_number) == ALIGN_NOINIT) {
+            get_sstore_alignment_bin(line_number) = FULL_ALIGNED;
+        } else {
+            // Leave the existing measurement as it is.
+        }
+    } else {
+        if (get_sstore_alignment_bin(line_number) == ALIGN_NOINIT || get_alignment_bin(line_number) == FULL_ALIGNED) {
+            get_sstore_alignment_bin(line_number) = MUTUAL_ALIGNED;
+        } else {
+            // Leave the existing measurement as it is.
+        }
+    }
 }
 
 void indigo__tripcount_check_c(int line_number, long trip_count) {

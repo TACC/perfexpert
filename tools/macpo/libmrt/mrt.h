@@ -72,6 +72,8 @@ static volatile sig_atomic_t sleeping=0, access_count=0;
 static int fd=-1, sleep_sec=0, new_sleep_sec=1, *intel_apic_mapping=NULL;
 static node_t terminal_node;
 
+enum { ALIGN_NOINIT=0, NOT_ALIGNED, MUTUAL_ALIGNED, FULL_ALIGNED };
+
 enum { BRANCH_NOINIT=0, BRANCH_MOSTLY_TRUE, BRANCH_TRUE, BRANCH_MOSTLY_FALSE,
         BRANCH_FALSE, BRANCH_UNKNOWN };
 
