@@ -89,24 +89,33 @@ int vector_stride_analysis(const global_data_t& global_data,
 
 int print_vector_strides(const global_data_t& global_data,
         histogram_list_t& stride_list) {
+    bool gather_scatter_ops = false;
     const int num_streams = global_data.stream_list.size();
     for (int i=0; i<num_streams; i++) {
         if(stride_list[i] != NULL) {
-            std::cout << "var: " << global_data.stream_list[i] << ":";
-
             pair_list_t pair_list;
             flatten_and_sort_histogram(stride_list[i], pair_list);
 
             size_t limit = std::min((size_t) STRIDE_COUNT, pair_list.size());
+            bool unit_stride = true;
             for (size_t j=0; j<limit; j++) {
                 size_t max_bin = pair_list[j].first;
                 size_t max_val = pair_list[j].second;
 
-                if (max_val > 0)
-                    std::cout << " " << max_bin << " (" << max_val << " times)";
+                // If non-unit stride was observed at least once,
+                // then display gather/scatter message.
+                if (max_bin > 1 && max_val > 0) {
+                    unit_stride = false;
+                    break;
+                }
             }
 
-            std::cout << "." << std::endl;
+            if (unit_stride == false) {
+                gather_scatter_ops = true;
+                std::cout << "gather/scatter operations required for: " <<
+                    global_data.stream_list[i] << ",\ttry converting " <<
+                    "array-of-structs to struct-of-arrays." << std::endl;
+            }
         }
     }
 

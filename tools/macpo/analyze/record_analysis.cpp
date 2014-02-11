@@ -145,7 +145,7 @@ int analyze_records(const global_data_t& global_data, int analysis_flags) {
         if ((code = vector_stride_analysis(global_data, stride_list)) < 0)
             return code;
 
-        print_strides(global_data, stride_list);
+        print_vector_strides(global_data, stride_list);
     }
 
     return 0;
