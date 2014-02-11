@@ -125,6 +125,7 @@ attrib generic_vars_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
         }
 #endif
 
+    if (isSgPntrArrRefExp(node) || isSgDotExp(node) || isSgVarRefExp(node)) {
         std::string stream_name = node->unparseToString();
 
         Sg_File_Info *fileInfo =
@@ -141,6 +142,7 @@ attrib generic_vars_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
 
         // Reset this attribute for any child expressions
         attr.skip = false;
+    }
 
 #if 0
     }
