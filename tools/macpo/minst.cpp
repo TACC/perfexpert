@@ -71,7 +71,7 @@ void MINST::insert_map_function(SgNode* node) {
 void MINST::atTraversalStart() {
     statement_list.clear();
     stream_list.clear();
-    global_node=NULL, non_def_decl=NULL, def_decl=NULL, file_info=NULL;
+    global_node=NULL, non_def_decl=NULL, def_decl=NULL;
 }
 
 void MINST::atTraversalEnd() {
@@ -80,6 +80,8 @@ void MINST::atTraversalEnd() {
 
     if (def_decl) {
         SgBasicBlock* bb = def_decl->get_definition()->get_body();
+        Sg_File_Info* file_info = ((SgLocatedNode *) bb)->get_file_info();
+
         if (bb && stream_list.size() > 0) {
             std::string indigo__write_idx = SageInterface::is_Fortran_language() ? "indigo__write_idx_f" : "indigo__write_idx_c";
             for (name_list_t::iterator it = stream_list.begin(); it != stream_list.end(); it++) {
@@ -94,6 +96,7 @@ void MINST::atTraversalEnd() {
                 expr_vector.push_back(param_length);
 
                 SgExprStatement* write_idx_call = buildFunctionCallStmt(SgName(indigo__write_idx), buildVoidType(), buildExprListExp(expr_vector), bb);
+                write_idx_call->set_parent(bb);
                 bb->append_statement(write_idx_call);
             }
         }
@@ -266,19 +269,13 @@ void MINST::analyze_node(SgNode* node, short action) {
 
 void MINST::visit(SgNode* node)
 {
-    // Add header file for indigo's record function
-    if (isSgGlobal(node)) {
-        global_node = static_cast<SgGlobal*>(node);
-        file_info = Sg_File_Info::generateFileInfoForTransformationNode(
-                ((SgLocatedNode*) node)->get_file_info()->get_filenameString());
-
-        if (!SageInterface::is_Fortran_language())
-            insertHeader("mrt.h", PreprocessingInfo::after, false, global_node);
-    }
-
     if (!isSgLocatedNode(node)) {
         // Cannot determine the line number corresponding to this node.
         return;
+    }
+
+    if (isSgGlobal(node)) {
+        global_node = static_cast<SgGlobal*>(node);
     }
 
     Sg_File_Info* file_info = ((SgLocatedNode *) node)->get_file_info();
@@ -289,6 +286,12 @@ void MINST::visit(SgNode* node)
     if (isSgFunctionDefinition(node)) {
         std::string function_name = ((SgFunctionDefinition*) node)->get_declaration()->get_name();
         if (function_name == "main") {
+            // Add header file for indigo's record function
+            if (isSgGlobal(node)) {
+                if (!SageInterface::is_Fortran_language())
+                    insertHeader("mrt.h", PreprocessingInfo::after, false, global_node);
+            }
+
             // Found main, now insert calls to indigo__init() and indigo__create_map()
             SgBasicBlock* body = ((SgFunctionDefinition*) node)->get_body();
 
@@ -354,6 +357,12 @@ void MINST::visit(SgNode* node)
                     is_same_file(_file_name, inst_func) == false)
                 return;
 
+            // Add header file for indigo's record function
+            if (isSgGlobal(node)) {
+                if (!SageInterface::is_Fortran_language())
+                    insertHeader("mrt.h", PreprocessingInfo::after, false, global_node);
+            }
+
             analyze_node(node, action);
         }
     }
@@ -367,6 +376,12 @@ void MINST::visit(SgNode* node)
             if (function_name != inst_func &&
                     is_same_file(_file_name, inst_func) == false)
                 return;
+
+            // Add header file for indigo's record function
+            if (isSgGlobal(node)) {
+                if (!SageInterface::is_Fortran_language())
+                    insertHeader("mrt.h", PreprocessingInfo::after, false, global_node);
+            }
 
             analyze_node(node, action);
         }
