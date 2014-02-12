@@ -117,6 +117,17 @@ static inline void perfexpert_list_append(perfexpert_list_t *list,
     list->length++;
 }
 
+/* perfexpert_list_prepend */
+static inline void perfexpert_list_prepend(perfexpert_list_t *list,
+    perfexpert_list_item_t *item) {
+    perfexpert_list_item_t *sentinel = &(list->sentinel);
+    item->next = sentinel->next;
+    item->prev = sentinel;
+    sentinel->next->prev = item;
+    sentinel->next = item;
+    list->length++;
+}
+
 /* perfexpert_list_for */
 #define perfexpert_list_for(item, list, type)  \
   for (item = (type *)  (list)->sentinel.next; \
