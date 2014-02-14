@@ -41,6 +41,8 @@ extern "C" {
 #include <stdlib.h>
 #endif
 
+#include "common/perfexpert_constants.h"
+
 /* Struct of list item and base type for items that are put in lists */
 typedef struct perfexpert_list_item perfexpert_list_item_t;
 struct perfexpert_list_item {
@@ -126,6 +128,36 @@ static inline void perfexpert_list_prepend(perfexpert_list_t *list,
     sentinel->next->prev = item;
     sentinel->next = item;
     list->length++;
+}
+
+/* perfexpert_list_insert */
+static inline int perfexpert_list_insert(perfexpert_list_t *list,
+    perfexpert_list_item_t *item, long long position) {
+    volatile perfexpert_list_item_t *ptr, *next;
+    int i = 0;
+
+    if (position >= (long long)list->length) {
+        return PERFEXPERT_ERROR;
+    }
+
+    if (0 == position) {
+        perfexpert_list_prepend(list, item);
+    } else {
+        ptr = list->sentinel.next;
+        for (i = 0; i < position - 1; i++) {
+            ptr = ptr->next;
+        }
+
+        next = ptr->next;
+        item->next = next;
+        item->prev = ptr;
+        next->prev = item;
+        ptr->next  = item;
+    }
+
+    list->length++;
+
+    return PERFEXPERT_SUCCESS;
 }
 
 /* perfexpert_list_for */
