@@ -621,7 +621,7 @@ AS_IF([test x"$ENABLE_MACPO" = xyes], [
         [AC_MSG_ERROR([not found: gsl/gsl_histogram.h])])
 
     AC_CHECK_LIB([gsl], [gsl_histogram_alloc, gsl_histogram_free], [],
-        [AC_MSG_ERROR([not found: libgsl.so])])
+        [AC_MSG_ERROR([not found: libgsl.a])], [-lgslcblas])
 
     ENABLE_MACPO=macpo
     ENABLED_TOOLS+="macpo "
