@@ -19,27 +19,13 @@
  * $HEADER$
  */
 
-#ifndef	GENERIC_DEFS_H_
-#define	GENERIC_DEFS_H_
+#ifndef MACPO_RECORD_CXX_H_
+#define MACPO_RECORD_CXX_H_
 
-#include <string>
-#include <vector>
+#include <deque>
 
-#define mprefix "[macpo] "
+typedef std::deque<mem_info_t> mem_info_list_t;
+typedef std::deque<trace_info_t> trace_info_list_t;
+typedef std::deque<vector_stride_info_t> vector_stride_info_list_t;
 
-enum { ACTION_NONE=0, ACTION_INSTRUMENT, ACTION_ALIGNCHECK, ACTION_GENTRACE,
-        ACTION_VECTORSTRIDES };
-
-typedef struct {
-    short action;
-    int line_number;
-    bool no_compile;
-    bool disable_sampling;
-    bool profile_analysis;
-    std::string function_name;
-    std::string backup_filename;
-} options_t;
-
-typedef std::vector<std::string> name_list_t;
-
-#endif	/* GENERIC_DEFS_H_ */
+#endif  /* MACPO_RECORD_CXX_H_ */

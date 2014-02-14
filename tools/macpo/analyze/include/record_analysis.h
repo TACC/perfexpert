@@ -19,27 +19,16 @@
  * $HEADER$
  */
 
-#ifndef	GENERIC_DEFS_H_
-#define	GENERIC_DEFS_H_
+#ifndef RECORD_ANALYSIS_H_
+#define RECORD_ANALYSIS_H_
 
-#include <string>
-#include <vector>
+#include "generic_defs.h"
+#include "macpo_record.h"
 
-#define mprefix "[macpo] "
+#define CUT             0.8f
+#define LINE_NUM_LIMIT  1000
 
-enum { ACTION_NONE=0, ACTION_INSTRUMENT, ACTION_ALIGNCHECK, ACTION_GENTRACE,
-        ACTION_VECTORSTRIDES };
+int analyze_records(const global_data_t& global_data, int analysis_flags);
+int filter_low_freq_records(global_data_t& global_data);
 
-typedef struct {
-    short action;
-    int line_number;
-    bool no_compile;
-    bool disable_sampling;
-    bool profile_analysis;
-    std::string function_name;
-    std::string backup_filename;
-} options_t;
-
-typedef std::vector<std::string> name_list_t;
-
-#endif	/* GENERIC_DEFS_H_ */
+#endif  /* RECORD_ANALYSIS_H_ */

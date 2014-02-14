@@ -24,7 +24,7 @@
 
 #include "analysis_profile.h"
 #include "inst_defs.h"
-#include "instrumentor.h"
+#include "tracer.h"
 #include "ir_methods.h"
 #include "macpo_record.h"
 #include "streams.h"
@@ -32,21 +32,21 @@
 using namespace SageBuilder;
 using namespace SageInterface;
 
-void instrumentor_t::atTraversalStart() {
+void tracer_t::atTraversalStart() {
     analysis_profile.start_timer();
     stream_list.clear();
     statement_list.clear();
 }
 
-void instrumentor_t::atTraversalEnd() {
+void tracer_t::atTraversalEnd() {
     analysis_profile.end_timer();
 }
 
-name_list_t& instrumentor_t::get_stream_list() {
+name_list_t& tracer_t::get_stream_list() {
     return stream_list;
 }
 
-attrib instrumentor_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
+attrib tracer_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
     if (attr.skip)
         return attr;
 
@@ -87,6 +87,11 @@ attrib instrumentor_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
         SgStatement *stmt = getEnclosingNode<SgStatement>(ref_node);
         if (stmt)	line_number = stmt->get_file_info()->get_raw_line();
 
+        SgPntrArrRefExp* pntr = isSgPntrArrRefExp(ref_node);
+        ROSE_ASSERT(pntr);
+
+        SgExpression *param_base = pntr->get_lhs_operand();
+
         // If not Fortran, cast the address to a void pointer
         SgExpression *param_addr = SageInterface::is_Fortran_language() ?
             (SgExpression*) ref_node : buildCastExp (
@@ -98,21 +103,14 @@ attrib instrumentor_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
         SgIntVal* param_read_write = new SgIntVal(fileInfo, ref_access_type);
 
         std::string function_name = SageInterface::is_Fortran_language() ?
-                "indigo__record_f" : "indigo__record_c";
-
-        ROSE_ASSERT(isSgExpression(ref_node));
-        SgExpression* expr = isSgExpression(ref_node);
-        SgType* type = expr->get_type();
-        SgSizeOfOp* size_of_op = new SgSizeOfOp(fileInfo, NULL, type, type);
-
-        ROSE_ASSERT(size_of_op);
+                "indigo__gen_trace_f" : "indigo__gen_trace_c";
 
         std::vector<SgExpression*> params;
         params.push_back(param_read_write);
         params.push_back(param_line_number);
+        params.push_back(param_base);
         params.push_back(param_addr);
         params.push_back(param_idx);
-        params.push_back(size_of_op);
 
         statement_info_t statement_info;
         statement_info.statement = ir_methods::prepare_call_statement(
@@ -126,14 +124,14 @@ attrib instrumentor_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
     return attr;
 }
 
-const analysis_profile_t& instrumentor_t::get_analysis_profile() {
+const analysis_profile_t& tracer_t::get_analysis_profile() {
     return analysis_profile;
 }
 
-const statement_list_t::iterator instrumentor_t::stmt_begin() {
+const statement_list_t::iterator tracer_t::stmt_begin() {
     return statement_list.begin();
 }
 
-const statement_list_t::iterator instrumentor_t::stmt_end() {
+const statement_list_t::iterator tracer_t::stmt_end() {
     return statement_list.end();
 }

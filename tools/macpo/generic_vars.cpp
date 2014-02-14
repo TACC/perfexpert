@@ -22,24 +22,24 @@
 #include <algorithm>
 #include <rose.h>
 
+#include "generic_vars.h"
 #include "inst_defs.h"
 #include "ir_methods.h"
 #include "macpo_record.h"
-#include "streams.h"
 
 using namespace SageBuilder;
 using namespace SageInterface;
 
-streams_t::streams_t(bool _deep_search) {
+generic_vars_t::generic_vars_t(bool _deep_search) {
     init_scope_stmt = NULL;
     deep_search = _deep_search;
 }
 
-void streams_t::atTraversalStart() {
+void generic_vars_t::atTraversalStart() {
     reference_list.clear();
 }
 
-void streams_t::atTraversalEnd() {
+void generic_vars_t::atTraversalEnd() {
     size_t count = 0;
     std::map<std::string, size_t> stream_idx_map;
 
@@ -58,11 +58,11 @@ void streams_t::atTraversalEnd() {
     }
 }
 
-reference_list_t& streams_t::get_reference_list() {
+reference_list_t& generic_vars_t::get_reference_list() {
     return reference_list;
 }
 
-attrib streams_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
+attrib generic_vars_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
     // If explicit instructions to skip this node, then just return
     if (attr.skip)
         return attr;
@@ -72,10 +72,7 @@ attrib streams_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
 
     if (deep_search == false) {
         // If this is an inner for loop, skip it.
-        if (ir_methods::is_loop(node)) {
-            SgScopeStatement* scope_stmt = isSgScopeStatement(node);
-            ROSE_ASSERT(scope_stmt);
-
+        if (SgScopeStatement* scope_stmt = isSgScopeStatement(node)) {
             if (init_scope_stmt == NULL) {
                 init_scope_stmt = scope_stmt;
             } else {
@@ -109,6 +106,15 @@ attrib streams_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
     if (parent && isSgPntrArrRefExp(parent) && parent->getChildIndex(node) > 0)
         attr.access_type = TYPE_READ;
 
+    if (attr.access_type == TYPE_UNKNOWN || parent == NULL ||
+            !isSgLocatedNode(node) || isSgValueExp(node))
+        return attr;
+
+    if (parent && isSgDotExp(parent)) {
+        return attr;
+    }
+
+#if 0
     if (attr.access_type != TYPE_UNKNOWN	// Are we sure whether this is a read or a write operation?
             && isSgPntrArrRefExp(node)	// Is this an array reference statement?
             && parent
@@ -117,9 +123,10 @@ attrib streams_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
             std::cerr << mprefix << "Debug info not present, cannot proceed!" << std::endl;
             return attr;
         }
+#endif
 
-        std::string stream_name = ir_methods::strip_index_expr(
-                node->unparseToString());
+    if (isSgPntrArrRefExp(node) || isSgDotExp(node) || isSgVarRefExp(node)) {
+        std::string stream_name = node->unparseToString();
 
         Sg_File_Info *fileInfo =
             Sg_File_Info::generateFileInfoForTransformationNode(
@@ -136,6 +143,10 @@ attrib streams_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
         // Reset this attribute for any child expressions
         attr.skip = false;
     }
+
+#if 0
+    }
+#endif
 
     return attr;
 }

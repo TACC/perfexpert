@@ -19,27 +19,24 @@
  * $HEADER$
  */
 
-#ifndef	GENERIC_DEFS_H_
-#define	GENERIC_DEFS_H_
+#ifndef	LOOP_TRAVERSAL_H_
+#define	LOOP_TRAVERSAL_H_
 
-#include <string>
-#include <vector>
+#include "generic_defs.h"
+#include "inst_defs.h"
 
-#define mprefix "[macpo] "
+class loop_traversal_t : public AstTopDownProcessing<attrib> {
+    public:
+        loop_traversal_t(VariableRenaming*& _var_renaming);
 
-enum { ACTION_NONE=0, ACTION_INSTRUMENT, ACTION_ALIGNCHECK, ACTION_GENTRACE,
-        ACTION_VECTORSTRIDES };
+        loop_info_list_t& get_loop_info_list();
+        virtual attrib evaluateInheritedAttribute(SgNode* node, attrib attr);
 
-typedef struct {
-    short action;
-    int line_number;
-    bool no_compile;
-    bool disable_sampling;
-    bool profile_analysis;
-    std::string function_name;
-    std::string backup_filename;
-} options_t;
+    private:
+        SgForStatement* for_stmt;
+        reference_list_t reference_list;
+        loop_info_list_t loop_info_list;
+        VariableRenaming* var_renaming;
+};
 
-typedef std::vector<std::string> name_list_t;
-
-#endif	/* GENERIC_DEFS_H_ */
+#endif	/* LOOP_TRAVERSAL_H_ */

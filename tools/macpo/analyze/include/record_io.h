@@ -19,27 +19,20 @@
  * $HEADER$
  */
 
-#ifndef	GENERIC_DEFS_H_
-#define	GENERIC_DEFS_H_
+#ifndef RECORD_IO_H_
+#define RECORD_IO_H_
 
-#include <string>
+#include <cstring>
+#include <ctime>
+#include <fcntl.h>
 #include <vector>
+#include <iostream>
 
-#define mprefix "[macpo] "
+#include "analysis_defs.h"
+#include "generic_defs.h"
+#include "macpo_record.h"
 
-enum { ACTION_NONE=0, ACTION_INSTRUMENT, ACTION_ALIGNCHECK, ACTION_GENTRACE,
-        ACTION_VECTORSTRIDES };
+int print_trace_records(const global_data_t& global_data);
+int read_file(const char* filename, global_data_t& global_data);
 
-typedef struct {
-    short action;
-    int line_number;
-    bool no_compile;
-    bool disable_sampling;
-    bool profile_analysis;
-    std::string function_name;
-    std::string backup_filename;
-} options_t;
-
-typedef std::vector<std::string> name_list_t;
-
-#endif	/* GENERIC_DEFS_H_ */
+#endif  /* RECORD_IO_H_ */

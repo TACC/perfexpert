@@ -66,11 +66,11 @@ fi
 mktemp=`which mktemp`
 if [ -n "$mktemp" ]
 then
-	tmp_macpo=`mktemp --tmpdir -t macpo.XXXXX`
-	tmp_gfort=`mktemp --tmpdir -t macpo.XXXXX`
+    tmp_macpo=`mktemp --tmpdir -t macpo.XXXXX`
+    tmp_gfort=`mktemp --tmpdir -t macpo.XXXXX`
 else
-	tmp_macpo=/tmp/macpo.inst
-	tmp_gfort=/tmp/macpo.gfort
+    tmp_macpo=/tmp/macpo.inst
+    tmp_gfort=/tmp/macpo.gfort
 fi
 
 # Check if we have a --help in the arguments
@@ -83,14 +83,17 @@ do
       echo "Usage: macpo.sh [OPTIONS] [source file | object file ]"
       echo "Wrapper script to compile code and instrument a specific function or loop."
       echo
-      echo "  --macpo:instrument [default]    Instruct MACPO to instrument code"
-      echo "  --macpo:loopsplit               Instruct MACPO to split a given loop"
-      echo "  --macpo:noinst                  Do not make any changes to the code, just invoke the compiler"
-      echo "  --macpo:function=\"foo\"          Instrument array accesses in function foo"
-      echo "  --macpo:loop=\"foo:23\"           Instrument / split loop at line 23 in function foo"
-      echo "  --help                          Give this help list"
+      echo "  --macpo:instrument=<location>         Instrument memory accesses in function"
+      echo "                                        or loop marked by <location>."
+      echo "  --macpo:check-alignment=<location>    Check alignment of data structures in"
+      echo "                                        function or loop marked by <location>."
+      echo "  --macpo:backup-filename=<filename>    Save source file into <filename> before"
+      echo "                                        instrumenting."
+      echo "  --macpo:no-compile                    Instrument code but don't compile it."
+      echo "  --help                                Give this help list."
       echo
-      echo "  In addition to these, all options accepted by GNU compilers can be passed to macpo.sh."
+      echo "  In addition to above options, all options accepted by GNU compilers can be"
+      echo "  passed to macpo.sh."
 
       exit 0
     fi
@@ -98,32 +101,43 @@ do
 done
 
 # Finally, invoke the macpo executable
-${MINST_PATH} -I${MRT_INCLUDE_DIR} -L${MRT_LIB_DIR} $* -lmrt &> "$tmp_macpo"
+${MINST_PATH} -I${MRT_INCLUDE_DIR} -L${MRT_LIB_DIR} $* -lmrt -lstdc++ &> \
+    "$tmp_macpo"
 
 if [ $? != 0 ]
 then
-	# try running with gfortran
-	if [ -z "${GNU_FORTRAN_COMPILER}" ]
-	then
-		GNU_FORTRAN_COMPILER=`which gfortran`
-	fi
+    # try running with gfortran
+    if [ -z "${GNU_FORTRAN_COMPILER}" ]
+    then
+        GNU_FORTRAN_COMPILER=`which gfortran`
+    fi
 
-	if [ -n "$GNU_FORTRAN_COMPILER" -a -f "$GNU_FORTRAN_COMPILER" ]
-	then
-		"$GNU_FORTRAN_COMPILER" -L${MRT_LIB_DIR} $* -lmrt &> "$tmp_gfort"
+    if [ -n "$GNU_FORTRAN_COMPILER" -a -f "$GNU_FORTRAN_COMPILER" ]
+    then
+        "$GNU_FORTRAN_COMPILER" -L${MRT_LIB_DIR} $* -lmrt -lstdc++ &> \
+            "$tmp_gfort"
 
-		# If this also resulted in an error, show the original macpo error
-		if [ $? != 0 ]
-		then
-			cat "$tmp_macpo"
-		else
-			cat "$tmp_gfort"
-		fi
-	else
-		cat "$tmp_macpo"
-	fi
+        # If this also resulted in an error, show the original macpo error
+        if [ $? != 0 ]
+        then
+            cat "$tmp_macpo"
+            echo
+            echo "Failed to run the following two commands:"
+            echo "${MINST_PATH} -I${MRT_INCLUDE_DIR} -L${MRT_LIB_DIR} $*" \
+                "-lmrt -lstdc++"
+            echo "$GNU_FORTRAN_COMPILER -L${MRT_LIB_DIR} $* -lmrt -lstdc++"
+        else
+            cat "$tmp_gfort"
+        fi
+    else
+        cat "$tmp_macpo"
+        echo
+        echo "Failed to run the following command:"
+        echo "${MINST_PATH} -I${MRT_INCLUDE_DIR} -L${MRT_LIB_DIR} $* -lmrt " \
+            "-lstdc++"
+    fi
 else
-	cat "$tmp_macpo"
+    cat "$tmp_macpo"
 fi
 
 # Clean up

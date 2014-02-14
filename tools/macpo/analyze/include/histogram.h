@@ -19,27 +19,18 @@
  * $HEADER$
  */
 
-#ifndef	GENERIC_DEFS_H_
-#define	GENERIC_DEFS_H_
+#ifndef HISTOGRAM_H_
+#define HISTOGRAM_H_
 
-#include <string>
-#include <vector>
+#include <algorithm>
+#include <gsl/gsl_histogram.h>
 
-#define mprefix "[macpo] "
+#include "analysis_defs.h"
 
-enum { ACTION_NONE=0, ACTION_INSTRUMENT, ACTION_ALIGNCHECK, ACTION_GENTRACE,
-        ACTION_VECTORSTRIDES };
+bool pair_sort(const pair_t& p1, const pair_t& p2);
 
-typedef struct {
-    short action;
-    int line_number;
-    bool no_compile;
-    bool disable_sampling;
-    bool profile_analysis;
-    std::string function_name;
-    std::string backup_filename;
-} options_t;
+int flatten_and_sort_histogram(gsl_histogram*& hist, pair_list_t& pair_list);
 
-typedef std::vector<std::string> name_list_t;
+int create_histogram_if_null(gsl_histogram*& hist, size_t bins);
 
-#endif	/* GENERIC_DEFS_H_ */
+#endif  /* HISTOGRAM_H_ */

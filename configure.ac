@@ -265,9 +265,12 @@ AC_ARG_WITH([gmp-include],
     [AS_HELP_STRING([--with-gmp-include], [set GMP include path])],
     [CPPFLAGS+=" -I$withval"])
 
-AC_ARG_WITH([sparsehash],
-    [AS_HELP_STRING([--with-sparsehash], [set Google SparseHash include path])],
-    [CPPFLAGS+=" -I$withval"], [])
+AC_ARG_WITH([gsl],
+    [AS_HELP_STRING([--with-gsl], [set location of the GNU Scientific library])],
+    [
+    CPPFLAGS+=" -I$withval/include"
+    LDFLAGS+=" -L$withval/lib -lgsl -lgslcblas"
+    ], [])
 
 #------------------------------------------------------------------------------
 # readelf module requirements
@@ -612,12 +615,13 @@ AS_IF([test x"$ENABLE_MACPO" = xyes], [
         [AC_MSG_ERROR([not found: libgmp.so])])
     AC_CHECK_HEADER([gmp.h], [], [AC_MSG_ERROR([not found: gmp.h])])
 
-    # Check for Google SparseHash (headers)
+    # Check for GNU Scientific library
     #
-    AC_LANG_PUSH([C++])
-    AC_CHECK_HEADER([google/sparse_hash_map], [],
-        [AC_MSG_ERROR([not found: google/sparse_hash_map])])
-    AC_LANG_POP
+    AC_CHECK_HEADER([gsl/gsl_histogram.h], [],
+        [AC_MSG_ERROR([not found: gsl/gsl_histogram.h])])
+
+    AC_CHECK_LIB([gsl], [gsl_histogram_alloc, gsl_histogram_free], [],
+        [AC_MSG_ERROR([not found: libgsl.a])], [-lgslcblas])
 
     ENABLE_MACPO=macpo
     ENABLED_TOOLS+="macpo "
@@ -671,6 +675,7 @@ AS_IF([test x"$ENABLE_CT" = xyes], [
     AC_CONFIG_FILES([tools/ct/recognizers/nested_c_loops/Makefile])
     AC_CONFIG_FILES([tools/ct/transformers/Makefile])
     AC_CONFIG_FILES([tools/ct/transformers/c_loop_interchange/Makefile])
+    AC_CONFIG_FILES([tools/ct/transformers/c_loop_tiling/Makefile])
 ], [
     AC_MSG_RESULT([no])
     ENABLE_CT=

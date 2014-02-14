@@ -19,27 +19,17 @@
  * $HEADER$
  */
 
-#ifndef	GENERIC_DEFS_H_
-#define	GENERIC_DEFS_H_
+#ifndef CACHE_INFO_H_
+#define CACHE_INFO_H_
 
-#include <string>
-#include <vector>
+#include "analysis_defs.h"
 
-#define mprefix "[macpo] "
+int load_cache_info(global_data_t& global_data);
 
-enum { ACTION_NONE=0, ACTION_INSTRUMENT, ACTION_ALIGNCHECK, ACTION_GENTRACE,
-        ACTION_VECTORSTRIDES };
+int update_cache_fields(cache_data_t& cache_data, size_t cache_level,
+        size_t cache_size, size_t line_size, size_t associativity);
 
-typedef struct {
-    short action;
-    int line_number;
-    bool no_compile;
-    bool disable_sampling;
-    bool profile_analysis;
-    std::string function_name;
-    std::string backup_filename;
-} options_t;
+int insert_cache_type(global_data_t& global_data, size_t cache_level,
+        size_t cache_size, size_t line_size, size_t associativity);
 
-typedef std::vector<std::string> name_list_t;
-
-#endif	/* GENERIC_DEFS_H_ */
+#endif  /* CACHE_INFO_H_ */

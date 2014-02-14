@@ -19,27 +19,26 @@
  * $HEADER$
  */
 
-#ifndef	GENERIC_DEFS_H_
-#define	GENERIC_DEFS_H_
+#ifndef	GENERIC_VARS_H_
+#define	GENERIC_VARS_H_
 
-#include <string>
-#include <vector>
+#include "generic_defs.h"
+#include "inst_defs.h"
 
-#define mprefix "[macpo] "
+class generic_vars_t : public AstTopDownProcessing<attrib> {
+    public:
+        generic_vars_t(bool _deep_search = true);
 
-enum { ACTION_NONE=0, ACTION_INSTRUMENT, ACTION_ALIGNCHECK, ACTION_GENTRACE,
-        ACTION_VECTORSTRIDES };
+        reference_list_t& get_reference_list();
 
-typedef struct {
-    short action;
-    int line_number;
-    bool no_compile;
-    bool disable_sampling;
-    bool profile_analysis;
-    std::string function_name;
-    std::string backup_filename;
-} options_t;
+        virtual attrib evaluateInheritedAttribute(SgNode* node, attrib attr);
+        virtual void atTraversalStart();
+        virtual void atTraversalEnd();
 
-typedef std::vector<std::string> name_list_t;
+    private:
+        bool deep_search;
+        SgScopeStatement* init_scope_stmt;
+        reference_list_t reference_list;
+};
 
-#endif	/* GENERIC_DEFS_H_ */
+#endif	/* GENERIC_VARS_H_ */

@@ -19,26 +19,30 @@
  * $HEADER$
  */
 
-#ifndef	STREAMS_H_
-#define	STREAMS_H_
+#ifndef	TRACER_H_
+#define	TRACER_H_
 
+#include "analysis_profile.h"
 #include "generic_defs.h"
 #include "inst_defs.h"
 
-class streams_t : public AstTopDownProcessing<attrib> {
+class tracer_t : public AstTopDownProcessing<attrib> {
     public:
-        streams_t(bool _deep_search = true);
-
-        reference_list_t& get_reference_list();
+        name_list_t& get_stream_list();
 
         virtual attrib evaluateInheritedAttribute(SgNode* node, attrib attr);
         virtual void atTraversalStart();
         virtual void atTraversalEnd();
 
+        const analysis_profile_t& get_analysis_profile();
+
+        const statement_list_t::iterator stmt_begin();
+        const statement_list_t::iterator stmt_end();
+
     private:
-        bool deep_search;
-        SgScopeStatement* init_scope_stmt;
-        reference_list_t reference_list;
+        statement_list_t statement_list;
+        name_list_t stream_list;
+        analysis_profile_t analysis_profile;
 };
 
-#endif	/* STREAMS_H_ */
+#endif	/* TRACER_H_ */

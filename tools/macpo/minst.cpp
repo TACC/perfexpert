@@ -19,18 +19,31 @@
  * $HEADER$
  */
 
+#include <cstdlib>
 #include <rose.h>
 
-#include "minst.h"
-#include "ir_methods.h"
 #include "aligncheck.h"
+#include "analysis_profile.h"
+#include "inst_defs.h"
 #include "instrumentor.h"
+#include "ir_methods.h"
+#include "loop_traversal.h"
+#include "minst.h"
+#include "tracer.h"
+#include "vector_strides.h"
 
 using namespace SageBuilder;
 using namespace SageInterface;
 
-MINST::MINST(short _action, int _line_number, std::string _inst_func, VariableRenaming* _var_renaming) {
-    action=_action, line_number=_line_number, inst_func=_inst_func, var_renaming=_var_renaming;
+MINST::MINST(short _action, int _line_number, std::string _inst_func,
+        bool _disable_sampling, bool _profile_analysis,
+        VariableRenaming* _var_renaming) {
+    action = _action;
+    line_number = _line_number;
+    inst_func = _inst_func;
+    disable_sampling = _disable_sampling;
+    profile_analysis = _profile_analysis;
+    var_renaming = _var_renaming;
 }
 
 void MINST::insert_map_prototype(SgNode* node) {
@@ -58,9 +71,9 @@ void MINST::insert_map_function(SgNode* node) {
 }
 
 void MINST::atTraversalStart() {
-    inst_info_list.clear();
+    statement_list.clear();
     stream_list.clear();
-    global_node=NULL, non_def_decl=NULL, def_decl=NULL, file_info=NULL;
+    global_node=NULL, non_def_decl=NULL, def_decl=NULL;
 }
 
 void MINST::atTraversalEnd() {
@@ -69,6 +82,8 @@ void MINST::atTraversalEnd() {
 
     if (def_decl) {
         SgBasicBlock* bb = def_decl->get_definition()->get_body();
+        Sg_File_Info* file_info = ((SgLocatedNode *) bb)->get_file_info();
+
         if (bb && stream_list.size() > 0) {
             std::string indigo__write_idx = SageInterface::is_Fortran_language() ? "indigo__write_idx_f" : "indigo__write_idx_c";
             for (name_list_t::iterator it = stream_list.begin(); it != stream_list.end(); it++) {
@@ -83,29 +98,202 @@ void MINST::atTraversalEnd() {
                 expr_vector.push_back(param_length);
 
                 SgExprStatement* write_idx_call = buildFunctionCallStmt(SgName(indigo__write_idx), buildVoidType(), buildExprListExp(expr_vector), bb);
+                write_idx_call->set_parent(bb);
                 bb->append_statement(write_idx_call);
             }
         }
+    }
+
+    // Add instrumentation statements as requested.
+    for (statement_list_t::iterator it = statement_list.begin();
+            it != statement_list.end(); it++) {
+        statement_info_t& statement_info = *it;
+
+        if (statement_info.before) {
+            insertStatementBefore(statement_info.reference_statement,
+                    statement_info.statement);
+        } else {
+            insertStatementAfter(statement_info.reference_statement,
+                    statement_info.statement);
+        }
+    }
+}
+
+bool MINST::is_same_file(const std::string& file_1, const std::string& file_2) {
+    char path_1[PATH_MAX+1], path_2[PATH_MAX+1];
+
+    std::string canonical_file_1 = (file_1[0] != '/' && file_1[0] != '.' ? "./"
+            : "") + file_1;
+
+    std::string canonical_file_2 = (file_2[0] != '/' && file_2[0] != '.' ? "./"
+            : "") + file_2;
+
+    if (realpath(canonical_file_1.c_str(), path_1) == NULL) {
+        return false;
+    }
+
+    if (realpath(canonical_file_2.c_str(), path_2) == NULL) {
+        return false;
+    }
+
+    return strcmp(path_1, path_2) == 0;
+}
+
+const analysis_profile_t MINST::run_analysis(SgNode* node, short action) {
+    switch(action) {
+        case ACTION_INSTRUMENT:
+            {
+                insert_map_function(node);
+
+                instrumentor_t inst;
+                inst.traverse(node, attrib());
+
+                // Pull information from AST traversal.
+                stream_list = inst.get_stream_list();
+                statement_list.insert(statement_list.end(),
+                        inst.stmt_begin(), inst.stmt_end());
+
+                return inst.get_analysis_profile();
+            }
+
+        case ACTION_ALIGNCHECK:
+            {
+                aligncheck_t visitor(var_renaming);
+                visitor.process_node(node);
+
+                stream_list = visitor.get_stream_list();
+                statement_list.insert(statement_list.end(),
+                        visitor.stmt_begin(), visitor.stmt_end());
+
+                return visitor.get_analysis_profile();
+            }
+
+        case ACTION_GENTRACE:
+            {
+                insert_map_function(node);
+
+                tracer_t tracer;
+                tracer.traverse(node, attrib());
+
+                // Pull information from AST traversal.
+                stream_list = tracer.get_stream_list();
+                statement_list.insert(statement_list.end(),
+                        tracer.stmt_begin(), tracer.stmt_end());
+
+                return tracer.get_analysis_profile();
+            }
+
+        case ACTION_VECTORSTRIDES:
+            {
+                insert_map_function(node);
+
+                vector_strides_t visitor(var_renaming);
+                visitor.process_node(node);
+
+                stream_list = visitor.get_stream_list();
+                statement_list.insert(statement_list.end(),
+                        visitor.stmt_begin(), visitor.stmt_end());
+
+                return visitor.get_analysis_profile();
+            }
+    }
+
+    ROSE_ASSERT(false && "Invalid action!");
+}
+
+void MINST::print_loop_processing_status(const loop_info_t& loop_info) {
+    SgNode* loop_node = loop_info.loop_stmt;
+    SgLocatedNode* located_node = isSgLocatedNode(loop_node);
+
+    ROSE_ASSERT(located_node && "Failed to fetch line number information for "
+            "loop.");
+
+    Sg_File_Info* file_info = NULL;
+    file_info = located_node->get_file_info();
+
+    const std::string& file_name = file_info->get_filenameString();
+    int line_number = file_info->get_line();
+
+    if (loop_info.processed) {
+        std::cerr << mprefix << "Processed loop at " << file_name << ":" <<
+            line_number << "." << std::endl;
+    } else {
+        std::cerr << mprefix << "Unsupported loop at " << file_name << ":" <<
+            line_number << "." << std::endl;
+    }
+
+    for(std::vector<loop_info_list_t>::const_iterator it =
+            loop_info.child_loop_info.begin();
+            it != loop_info.child_loop_info.end(); it++) {
+        const loop_info_list_t& loop_info_list = *it;
+        for(loop_info_list_t::const_iterator it2 = loop_info_list.begin();
+                it2 != loop_info_list.end(); it2++) {
+            const loop_info_t& loop_info = *it2;
+
+            print_loop_processing_status(loop_info);
+        }
+    }
+}
+
+void MINST::analyze_node(SgNode* node, short action) {
+    size_t last_statement_count = statement_list.size();
+
+    Sg_File_Info* file_info = ((SgLocatedNode *) node)->get_file_info();
+    const std::string& file_name = file_info->get_filenameString();
+    int line_number = file_info->get_line();
+
+    const analysis_profile_t& profile = run_analysis(node, action);
+
+    if (profile_analysis) {
+        const loop_info_list_t& loop_info_list = profile.get_loop_info_list();
+
+        for(loop_info_list_t::const_iterator it = loop_info_list.begin();
+                it != loop_info_list.end(); it++) {
+            const loop_info_t& loop_info = *it;
+            print_loop_processing_status(loop_info);
+        }
+
+        const double analysis_time =  profile.get_running_time();
+        std::cerr << mprefix << "Analysis time: " << analysis_time <<
+            " second(s)." << std::endl;
+    }
+
+    if (statement_list.size() != last_statement_count) {
+        std::cerr << mprefix << "Analyzed code at " << file_name << ":" <<
+            line_number << "." << std::endl;
+    } else {
+        // No change in statement count.
+        std::cerr << mprefix << "Code at " << file_name << ":" << line_number <<
+            " could not be analyzed because of unsupported loop structure(s)."
+            << std::endl;
     }
 }
 
 void MINST::visit(SgNode* node)
 {
-    // Add header file for indigo's record function
+    if (!isSgLocatedNode(node)) {
+        // Cannot determine the line number corresponding to this node.
+        return;
+    }
+
     if (isSgGlobal(node)) {
         global_node = static_cast<SgGlobal*>(node);
-        file_info = Sg_File_Info::generateFileInfoForTransformationNode(
-                ((SgLocatedNode*) node)->get_file_info()->get_filenameString());
-
-        if (!SageInterface::is_Fortran_language() && action == ACTION_INSTRUMENT)
-            insertHeader("mrt.h", PreprocessingInfo::after, false, global_node);
     }
+
+    Sg_File_Info* file_info = ((SgLocatedNode *) node)->get_file_info();
+    const std::string& _file_name = file_info->get_filenameString();
+    int _line_number = file_info->get_line();
 
     // Check if this is the function that we are told to instrument
     if (isSgFunctionDefinition(node)) {
         std::string function_name = ((SgFunctionDefinition*) node)->get_declaration()->get_name();
-        if (function_name == "main" && (action == ACTION_INSTRUMENT ||
-                    action == ACTION_ALIGNCHECK)) {
+        if (function_name == "main") {
+            // Add header file for indigo's record function
+            if (isSgGlobal(node)) {
+                if (!SageInterface::is_Fortran_language())
+                    insertHeader("mrt.h", PreprocessingInfo::after, false, global_node);
+            }
+
             // Found main, now insert calls to indigo__init() and indigo__create_map()
             SgBasicBlock* body = ((SgFunctionDefinition*) node)->get_body();
 
@@ -125,101 +313,76 @@ void MINST::visit(SgNode* node)
             std::string indigo__init = SageInterface::is_Fortran_language() ? "indigo__init" : "indigo__init_";
             std::string indigo__create_map = "indigo__create_map";
 
-            inst_info_t init_call;
-            init_call.bb = body;
-            init_call.stmt = statement;
-            init_call.function_name = indigo__init;
-            init_call.before = true;
-            SgExprStatement* expr_stmt = ir_methods::insert_instrumentation_call(init_call);
+            std::vector<SgExpression*> params, empty_params;
+            int create_file, enable_sampling;
 
-            inst_info_t map_call;
-            map_call.bb = body;
-            map_call.stmt = expr_stmt;
-            map_call.function_name = indigo__create_map;
-            map_call.before = false;
-            ir_methods::insert_instrumentation_call(map_call);
+            if (action == ACTION_ALIGNCHECK) {
+                create_file = 0;
+            } else {
+                create_file = 1;
+            }
 
-            insert_map_prototype(node);
+            // Use compiler argument.
+            enable_sampling = disable_sampling ? 0 : 1;
+
+            SgIntVal* rose_create_file = new SgIntVal(file_info, create_file);
+            rose_create_file->set_endOfConstruct(file_info);
+            params.push_back(rose_create_file);
+
+            SgIntVal* rose_enable_sampling = new SgIntVal(file_info,
+                    enable_sampling);
+            rose_enable_sampling->set_endOfConstruct(file_info);
+            params.push_back(rose_enable_sampling);
+
+            SgExprStatement* expr_stmt = NULL;
+            expr_stmt = ir_methods::prepare_call_statement(body, indigo__init,
+                    params, statement);
+            insertStatementBefore(statement, expr_stmt);
+            ROSE_ASSERT(expr_stmt);
+
+            if (action != ACTION_ALIGNCHECK) {
+                SgExprStatement* map_stmt = NULL;
+                map_stmt = ir_methods::prepare_call_statement(body,
+                        indigo__create_map, empty_params, expr_stmt);
+                insertStatementAfter(expr_stmt, map_stmt);
+                ROSE_ASSERT(map_stmt);
+
+                insert_map_prototype(node);
+            }
         }
 
         if (line_number == 0) {
-            if (function_name != inst_func)
+            if (inst_func != "<all>" && function_name != inst_func &&
+                    is_same_file(_file_name, inst_func) == false)
                 return;
 
-            if (action == ACTION_INSTRUMENT) {
-                std::cerr << "Instrumenting function " << function_name <<
-                    std::endl;
-
-                // We found the function that we wanted to instrument,
-                // now insert the indigo__create_map_() function in this file.
-                insert_map_function(node);
-
-                instrumentor_t inst;
-                inst.traverse(node, attrib());
-
-                // Pull information from AST traversal.
-                stream_list = inst.get_stream_list();
-                inst_info_list.insert(inst_info_list.end(), inst.inst_begin(),
-                        inst.inst_end());
-            } else if (action == ACTION_ALIGNCHECK) {
-                std::cerr << "Placing alignment-related checks around loop(s) "
-                    << "in function " << function_name << std::endl;
-
-                // We found the function that we wanted to instrument,
-                // now insert the indigo__create_map_() function in this file.
-                insert_map_function(node);
-
-                aligncheck_t visitor(var_renaming);
-                visitor.traverse(node, preorder);
-
-                // Pull information from AST traversal.
-                inst_info_list.insert(inst_info_list.end(),
-                        visitor.inst_begin(), visitor.inst_end());
+            // Add header file for indigo's record function
+            if (isSgGlobal(node)) {
+                if (!SageInterface::is_Fortran_language())
+                    insertHeader("mrt.h", PreprocessingInfo::after, false, global_node);
             }
+
+            analyze_node(node, action);
         }
     }
-    else if (line_number != 0 && isSgLocatedNode(node))	{
+    else if (line_number != 0)	{
         // We have to instrument some loops
-        int _line_number = ((SgLocatedNode *)
-                node)->get_file_info()->get_line();
-        if (_line_number == line_number && (isSgFortranDo(node) ||
-                    isSgForStatement(node) || isSgWhileStmt(node) ||
-                    isSgDoWhileStmt(node))) {
+        if (_line_number == line_number && ir_methods::is_loop(node)) {
             SgFunctionDefinition* def =
                 getEnclosingNode<SgFunctionDefinition>(node);
             std::string function_name = def->get_declaration()->get_name();
 
-            if (action == ACTION_INSTRUMENT) {
-                std::cerr << "Instrumenting loop in function " << function_name
-                    << " at line " << _line_number << std::endl;
+            if (function_name != inst_func &&
+                    is_same_file(_file_name, inst_func) == false)
+                return;
 
-                // We found the loop that we wanted to instrument,
-                // now insert the indigo__create_map_() function in this file.
-                insert_map_function(node);
-
-                instrumentor_t inst;
-                inst.traverse(node, attrib());
-
-                // Pull information from AST traversal.
-                stream_list = inst.get_stream_list();
-                inst_info_list.insert(inst_info_list.end(), inst.inst_begin(),
-                        inst.inst_end());
-            } else if (action == ACTION_ALIGNCHECK) {
-                std::cerr << "Placing alignment checks around loop in function "
-                    << function_name << " at line " << _line_number <<
-                    std::endl;
-
-                // We found the function that we wanted to instrument,
-                // now insert the indigo__create_map_() function in this file.
-                insert_map_function(node);
-
-                aligncheck_t visitor(var_renaming);
-                visitor.traverse(node, preorder);
-
-                // Pull information from AST traversal.
-                inst_info_list.insert(inst_info_list.end(),
-                        visitor.inst_begin(), visitor.inst_end());
+            // Add header file for indigo's record function
+            if (isSgGlobal(node)) {
+                if (!SageInterface::is_Fortran_language())
+                    insertHeader("mrt.h", PreprocessingInfo::after, false, global_node);
             }
+
+            analyze_node(node, action);
         }
     }
 }

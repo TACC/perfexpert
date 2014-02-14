@@ -19,27 +19,20 @@
  * $HEADER$
  */
 
-#ifndef	GENERIC_DEFS_H_
-#define	GENERIC_DEFS_H_
+#include <gmp.h>
 
-#include <string>
-#include <vector>
+void factorial(mpf_t mi_result, unsigned long n, unsigned long stop);
 
-#define mprefix "[macpo] "
+void nCk(mpf_t result, unsigned long n, unsigned long k);
 
-enum { ACTION_NONE=0, ACTION_INSTRUMENT, ACTION_ALIGNCHECK, ACTION_GENTRACE,
-        ACTION_VECTORSTRIDES };
+double pHit(unsigned long i, unsigned long assoc, unsigned long distance,
+        double pHitSet);
 
-typedef struct {
-    short action;
-    int line_number;
-    bool no_compile;
-    bool disable_sampling;
-    bool profile_analysis;
-    std::string function_name;
-    std::string backup_filename;
-} options_t;
+void setDouble(mpf_t* n, double num);
 
-typedef std::vector<std::string> name_list_t;
+void accumulateStride(mpf_t* current, double normalized);
 
-#endif	/* GENERIC_DEFS_H_ */
+double getDouble(mpf_t* n);
+
+double hit_probability(long distance, long size, short associativity,
+    int linesize);

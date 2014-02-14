@@ -19,30 +19,24 @@
  * $HEADER$
  */
 
-#ifndef	ALIGNCHEK_H_
-#define	ALIGNCHEK_H_
+#ifndef	VECTOR_STRIDES_H_
+#define	VECTOR_STRIDES_H_
 
 #include <VariableRenaming.h>
 
 #include "analysis_profile.h"
 #include "generic_defs.h"
 #include "inst_defs.h"
-#include "loop_traversal.h"
 
-class aligncheck_t {
+class vector_strides_t {
     typedef VariableRenaming::NumNodeRenameEntry::iterator entry_iterator;
     typedef std::map<std::string, VariableRenaming::NumNodeRenameEntry>
         def_map_t;
 
     public:
         typedef std::map<SgExpression*, loop_info_t*> expr_map_t;
-        typedef std::vector<SgPntrArrRefExp*> pntr_list_t;
-        typedef std::vector<SgExpression*> expr_list_t;
-        typedef std::vector<SgNode*> node_list_t;
-        typedef std::map<std::string, node_list_t> sstore_map_t;
 
-        aligncheck_t(VariableRenaming*& _var_renaming);
-        ~aligncheck_t();
+        vector_strides_t(VariableRenaming*& _var_renaming);
 
         name_list_t& get_stream_list();
 
@@ -62,16 +56,6 @@ class aligncheck_t {
         const statement_list_t::iterator stmt_end();
 
     private:
-        void instrument_loop_trip_count(Sg_File_Info* file_info,
-                loop_info_t& loop_info);
-        void instrument_streaming_stores(Sg_File_Info* file_info,
-                loop_info_t& loop_info);
-        SgExpression* instrument_alignment_checks(Sg_File_Info* file_info,
-                SgScopeStatement* outer_scope_stmt, loop_info_t& loop_info,
-                name_list_t& stream_list, expr_map_t& loop_map);
-        void instrument_branches(Sg_File_Info* fileInfo,
-                SgScopeStatement* scope_stmt, SgExpression* idxv_expr,
-                SgExpression* common_alignment);
         void instrument_vector_strides(Sg_File_Info* fileInfo,
                 SgScopeStatement* scope_stmt);
 
@@ -79,7 +63,6 @@ class aligncheck_t {
         statement_list_t statement_list;
         name_list_t var_name_list;
         analysis_profile_t analysis_profile;
-        loop_traversal_t* loop_traversal;
 };
 
-#endif	/* ALIGNCHEK_H_ */
+#endif	/* VECTOR_STRIDES_H_ */

@@ -29,21 +29,58 @@
 
 #define	AWAKE_SEC		0
 
+/***
+
+The following analysis takes the numbers from Stampede as reference. Using a
+different referene machine will influence the duration of the sampling window
+(AWAKE_USEC).
+
+Let's first set the 'infinite' reuse distance to something based on intuition.
+Consider that any reuse distance more than the twice the size of the L3 cache is
+'too high' to be of use while tracking. The L3 cache on Stampede (Sandy Bridge
+process) is 20MB. We can, thus, set the infinite reuse distance value to 40MB.
+Assuming each cache line is 64 bytes long, the reuse distance is equal to 640K
+cache lines.
+
+Experience from analysing programs using PerfExpert tells that most
+poorly-performing programs that are bottlenecked on memory typically take about
+3 cycles on each memory access. Assuming out-of-order instruction execution
+does not leave any bubbles among access to the memory subsystem, MACPO needs to
+keep the instrumentation window for 640K * 3 cycles = 1.92M cycles.
+
+Note that for most multi-threaded programs, a shorter time interval is okay as
+well. Multiple threads will access the memory simultaneously, thus filling up
+the 640K cache line 'buffer' faster than a single-threaded program.
+
+The Sandy Bridges on Stampede are clocked at 2.7GHz, so 1.92M cycles correspond
+to 711 micro-seconds. And thus, we set AWAKE_USEC to 711.
+
+*/
+
 #ifndef	AWAKE_USEC
-#define	AWAKE_USEC		12500
+#define	AWAKE_USEC		711
 #endif
 
-static long numCores = 0;
+#define ALIGN_ENTRIES           3
+#define CACHE_LINE_SIZE         64
+#define MAX_HISTOGRAM_ENTRIES   1024
+
+static size_t numCores = 0;
 static __thread int coreID=-1;
 static char szFilename[256]={0};
 static volatile sig_atomic_t sleeping=0, access_count=0;
 static int fd=-1, sleep_sec=0, new_sleep_sec=1, *intel_apic_mapping=NULL;
 static node_t terminal_node;
 
+enum { ALIGN_NOINIT=0, NOT_ALIGNED, MUTUAL_ALIGNED, FULL_ALIGNED };
+
+enum { BRANCH_NOINIT=0, BRANCH_MOSTLY_TRUE, BRANCH_TRUE, BRANCH_MOSTLY_FALSE,
+        BRANCH_FALSE, BRANCH_UNKNOWN };
+
 #if	defined(__cplusplus)
 extern "C" {
 #endif
-void indigo__init_();
+void indigo__init_(short create_file, short enable_sampling);
 #if	defined(__cplusplus)
 }
 #endif
@@ -80,7 +117,7 @@ static inline void fill_struct(int read_write, int line_number, size_t p, int va
 #if defined(__cplusplus)
 extern "C" {
 #endif
-void indigo__record_c(int read_write, int line_number, void* addr, int var_idx);
+void indigo__gen_trace_c(int read_write, int line_number, void* base, void* addr, int var_idx);
 #if defined (__cplusplus)
 }
 #endif
@@ -88,7 +125,73 @@ void indigo__record_c(int read_write, int line_number, void* addr, int var_idx);
 #if defined(__cplusplus)
 extern "C" {
 #endif
-void indigo__record_f_(int* read_write, int* line_number, void* addr, int* var_idx);
+void indigo__gen_trace_f(int* read_write, int* line_number, void* base, void* addr, int* var_idx);
+#if defined (__cplusplus)
+}
+#endif
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
+void indigo__vector_stride_c(int line_number, int var_idx, void* addr, int type_size);
+#if defined (__cplusplus)
+}
+#endif
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
+void indigo__record_c(int read_write, int line_number, void* addr, int var_idx, int type_size);
+#if defined (__cplusplus)
+}
+#endif
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
+void indigo__record_f_(int* read_write, int* line_number, void* addr, int* var_idx, int* type_size);
+#if defined (__cplusplus)
+}
+#endif
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
+void indigo__record_branch_c(int line_number, int loop_line_number, int true_branch_count, int false_branch_count);
+#if defined (__cplusplus)
+}
+#endif
+
+#if 0
+#if defined(__cplusplus)
+extern "C" {
+#endif
+void indigo__simd_branch_c(int line_number, int idxv, int type_size, int branch_dir, int common_alignment, int* recorded_simd_branch_dir);
+#if defined (__cplusplus)
+}
+#endif
+#endif
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
+int indigo__aligncheck_c(int line_number, /* int* type_size, */ int stream_count, ...);
+#if defined (__cplusplus)
+}
+#endif
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
+void indigo__sstore_aligncheck_c(int line_number, int stream_count, ...);
+#if defined (__cplusplus)
+}
+#endif
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
+void indigo__tripcount_check_c(int line_number, long trip_count);
 #if defined (__cplusplus)
 }
 #endif
