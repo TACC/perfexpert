@@ -34,6 +34,7 @@ typedef struct {
     short action;
     int line_number;
     bool no_compile;
+    bool disable_sampling;
     bool profile_analysis;
     std::string function_name;
     std::string backup_filename;

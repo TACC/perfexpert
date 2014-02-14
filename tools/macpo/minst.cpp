@@ -36,10 +36,12 @@ using namespace SageBuilder;
 using namespace SageInterface;
 
 MINST::MINST(short _action, int _line_number, std::string _inst_func,
-        bool _profile_analysis, VariableRenaming* _var_renaming) {
+        bool _disable_sampling, bool _profile_analysis,
+        VariableRenaming* _var_renaming) {
     action = _action;
     line_number = _line_number;
     inst_func = _inst_func;
+    disable_sampling = _disable_sampling;
     profile_analysis = _profile_analysis;
     var_renaming = _var_renaming;
 }
@@ -320,11 +322,8 @@ void MINST::visit(SgNode* node)
                 create_file = 1;
             }
 
-            if (action == ACTION_GENTRACE) {
-                enable_sampling = 0;   // Disable sampling
-            } else {
-                enable_sampling = 1;
-            }
+            // Use compiler argument.
+            enable_sampling = disable_sampling ? 0 : 1;
 
             SgIntVal* rose_create_file = new SgIntVal(file_info, create_file);
             rose_create_file->set_endOfConstruct(file_info);

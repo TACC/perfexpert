@@ -96,8 +96,8 @@ int main (int argc, char *argv[]) {
 
             // Start the traversal!
             MINST traversal (options.action, options.line_number,
-                    options.function_name, options.profile_analysis,
-                    &var_renaming);
+                    options.function_name, options.disable_sampling,
+                    options.profile_analysis, &var_renaming);
             traversal.traverseWithinFile (file, preorder);
         }
 
