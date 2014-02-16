@@ -289,10 +289,9 @@ void MINST::visit(SgNode* node)
         std::string function_name = ((SgFunctionDefinition*) node)->get_declaration()->get_name();
         if (function_name == "main") {
             // Add header file for indigo's record function
-            if (isSgGlobal(node)) {
-                if (!SageInterface::is_Fortran_language())
-                    insertHeader("mrt.h", PreprocessingInfo::after, false, global_node);
-            }
+            ROSE_ASSERT(global_node);
+            if (!SageInterface::is_Fortran_language())
+                insertHeader("mrt.h", PreprocessingInfo::after, false, global_node);
 
             // Found main, now insert calls to indigo__init() and indigo__create_map()
             SgBasicBlock* body = ((SgFunctionDefinition*) node)->get_body();
