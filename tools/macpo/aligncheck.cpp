@@ -301,7 +301,6 @@ SgExpression* aligncheck_t::instrument_alignment_checks(Sg_File_Info* fileInfo,
                     int incr_op = loop_info->incr_op;
 
                     ROSE_ASSERT(bin_op && "Failed to construct copy expression.");
-                    ROSE_ASSERT(init && "Empty init expression.");
                     if (ir_methods::contains_expr(bin_op, idxv) && init) {
                         if (!isSgValueExp(init))
                             expr_set.insert(init->unparseToString());
@@ -486,8 +485,7 @@ SgExpression* aligncheck_t::instrument_alignment_checks(Sg_File_Info* fileInfo,
 }
 
 void aligncheck_t::instrument_branches(Sg_File_Info* fileInfo,
-        SgScopeStatement* scope_stmt, SgExpression* idxv_expr,
-        SgExpression* common_alignment) {
+        SgScopeStatement* scope_stmt, SgExpression* idxv_expr) {
     SgStatement* first_stmt = getFirstStatement(scope_stmt);
     SgStatement* stmt = first_stmt;
     while (stmt) {
@@ -496,8 +494,6 @@ void aligncheck_t::instrument_branches(Sg_File_Info* fileInfo,
             int for_line_number = scope_stmt->get_file_info()->get_raw_line();
             SgStatement* true_body = if_stmt->get_true_body();
             SgStatement* false_body = if_stmt->get_false_body();
-
-            ROSE_ASSERT(true_body);
 
             // Create two variables for each branch.
             SgVariableDeclaration *var_true = NULL, *var_false = NULL;
@@ -572,74 +568,6 @@ void aligncheck_t::instrument_branches(Sg_File_Info* fileInfo,
             branch_statement.reference_statement = scope_stmt;
             branch_statement.before = false;
             statement_list.push_back(branch_statement);
-
-    #if 0
-            char var_dir_name[32];
-            snprintf (var_dir_name, 32, "indigo__branch_dir_%d", line_number);
-
-            SgVariableDeclaration* branch_dir = NULL;
-            SgBasicBlock* bb = getEnclosingNode<SgBasicBlock>(if_stmt);
-            branch_dir = ir_methods::create_long_variable(fileInfo,
-                    var_dir_name, 0);
-            branch_dir->set_parent(bb);
-
-            statement_info_t branch_dir_decl;
-            branch_dir_decl.statement = branch_dir;
-            branch_dir_decl.reference_statement = if_stmt;
-            branch_dir_decl.before = true;
-            statement_list.push_back(branch_dir_decl);
-
-            statement_info_t assign_stmt;
-            assign_stmt.statement = ir_methods::create_long_assign_statement(
-                    fileInfo, var_dir_name, new SgIntVal(fileInfo, 1));
-            assign_stmt.statement->set_parent(outer_bb);
-            assign_stmt.reference_statement = false_incr;
-            assign_stmt.before = false;
-            statement_list.push_back(assign_stmt);
-
-            statement_info_t dir_call_stmt;
-            function_name = SageInterface::is_Fortran_language()
-                ? "indigo__simd_branch_f" : "indigo__simd_branch_c";
-
-            char var_record_name[32];
-            snprintf (var_record_name, 32, "indigo__record_dir_%d",
-                    line_number);
-
-            SgVariableDeclaration* record_branch = NULL;
-            record_branch = ir_methods::create_long_variable(fileInfo,
-                    var_record_name, -1);
-            record_branch->set_parent(outer_bb);
-
-            statement_info_t record_stmt;
-            record_stmt.statement = record_branch;
-            record_stmt.reference_statement = scope_stmt;
-            record_stmt.before = true;
-            statement_list.push_back(record_stmt);
-
-            SgVarRefExp* recorded_branch = buildVarRefExp(var_record_name);
-            SgExpression* recorded_addr = buildCastExp (
-                    buildAddressOfOp((SgExpression*) recorded_branch),
-                    buildPointerType(buildIntType()));
-
-            char var_type_size[32];
-            snprintf (var_type_size, 32, "indigo__type_size_%d",
-                    for_line_number);
-
-            params.clear();
-            params.push_back(new SgIntVal(fileInfo, line_number));
-            params.push_back(idxv_expr);
-            params.push_back(buildVarRefExp(var_type_size));
-            params.push_back(buildVarRefExp(var_dir_name));
-            params.push_back(common_alignment);
-            params.push_back(recorded_addr);
-
-            dir_call_stmt.statement = ir_methods::prepare_call_statement(
-                    getEnclosingNode<SgBasicBlock>(scope_stmt),
-                    function_name, params, scope_stmt);
-            dir_call_stmt.reference_statement = if_stmt;
-            dir_call_stmt.before = false;
-            statement_list.push_back(dir_call_stmt);
-    #endif
         }
 
         stmt = getNextStatement(stmt);
@@ -667,10 +595,10 @@ void aligncheck_t::process_loop(SgScopeStatement* outer_scope_stmt,
 
         instrument_loop_trip_count(fileInfo, loop_info);
         instrument_streaming_stores(fileInfo, loop_info);
-        SgExpression* common_alignment = instrument_alignment_checks(fileInfo,
-                outer_scope_stmt, loop_info, stream_list, loop_map);
-        instrument_branches(fileInfo, loop_info.loop_stmt, loop_info.idxv_expr,
-                common_alignment);
+        instrument_alignment_checks(fileInfo, outer_scope_stmt, loop_info,
+                stream_list, loop_map);
+
+        instrument_branches(fileInfo, loop_info.loop_stmt, loop_info.idxv_expr);
     }
 
     for(std::vector<loop_info_list_t>::iterator it =

@@ -70,8 +70,7 @@ class aligncheck_t {
                 SgScopeStatement* outer_scope_stmt, loop_info_t& loop_info,
                 name_list_t& stream_list, expr_map_t& loop_map);
         void instrument_branches(Sg_File_Info* fileInfo,
-                SgScopeStatement* scope_stmt, SgExpression* idxv_expr,
-                SgExpression* common_alignment);
+                SgScopeStatement* scope_stmt, SgExpression* idxv_expr);
         void instrument_vector_strides(Sg_File_Info* fileInfo,
                 SgScopeStatement* scope_stmt);
 
