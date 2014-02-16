@@ -356,10 +356,9 @@ void MINST::visit(SgNode* node)
                 return;
 
             // Add header file for indigo's record function
-            if (isSgGlobal(node)) {
-                if (!SageInterface::is_Fortran_language())
-                    insertHeader("mrt.h", PreprocessingInfo::after, false, global_node);
-            }
+            ROSE_ASSERT(global_node);
+            if (!SageInterface::is_Fortran_language())
+                insertHeader("mrt.h", PreprocessingInfo::after, false, global_node);
 
             analyze_node(node, action);
         }
@@ -376,10 +375,9 @@ void MINST::visit(SgNode* node)
                 return;
 
             // Add header file for indigo's record function
-            if (isSgGlobal(node)) {
-                if (!SageInterface::is_Fortran_language())
-                    insertHeader("mrt.h", PreprocessingInfo::after, false, global_node);
-            }
+            ROSE_ASSERT(global_node);
+            if (!SageInterface::is_Fortran_language())
+                insertHeader("mrt.h", PreprocessingInfo::after, false, global_node);
 
             analyze_node(node, action);
         }
