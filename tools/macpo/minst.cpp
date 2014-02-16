@@ -285,16 +285,18 @@ void MINST::visit(SgNode* node)
     int _line_number = file_info->get_line();
 
     // Check if this is the function that we are told to instrument
-    if (isSgFunctionDefinition(node)) {
-        std::string function_name = ((SgFunctionDefinition*) node)->get_declaration()->get_name();
-        if (function_name == "main") {
+    if (SgFunctionDefinition* def_node = isSgFunctionDefinition(node)) {
+        SgFunctionDeclaration* decl_node = def_node->get_declaration();
+        std::string function_name = decl_node->get_name();
+        if (function_name == "main" &&
+                !isSgMemberFunctionDeclaration(decl_node)) {
             // Add header file for indigo's record function
             ROSE_ASSERT(global_node);
             if (!SageInterface::is_Fortran_language())
                 insertHeader("mrt.h", PreprocessingInfo::after, false, global_node);
 
             // Found main, now insert calls to indigo__init() and indigo__create_map()
-            SgBasicBlock* body = ((SgFunctionDefinition*) node)->get_body();
+            SgBasicBlock* body = def_node->get_body();
 
             // Skip over the initial variable declarations and `IMPLICIT' statements
             SgStatement *statement=NULL;
