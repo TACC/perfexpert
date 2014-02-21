@@ -108,17 +108,17 @@ void aligncheck_t::instrument_loop_trip_count(Sg_File_Info* fileInfo,
         expr_statement = ir_methods::prepare_call_statement(bb, function_name,
                 params, scope_stmt);
 
-        statement_info_t tripcount_call;
-        tripcount_call.statement = expr_statement;
-        tripcount_call.reference_statement = scope_stmt;
-        tripcount_call.before = false;
-        statement_list.push_back(tripcount_call);
-
         statement_info_t tripcount_decl;
         tripcount_decl.statement = trip_count;
         tripcount_decl.reference_statement = scope_stmt;
         tripcount_decl.before = true;
         statement_list.push_back(tripcount_decl);
+
+        statement_info_t tripcount_call;
+        tripcount_call.statement = expr_statement;
+        tripcount_call.reference_statement = scope_stmt;
+        tripcount_call.before = false;
+        statement_list.push_back(tripcount_call);
 
         statement_info_t tripcount_incr;
         tripcount_incr.statement = incr_statement;
@@ -584,8 +584,8 @@ void aligncheck_t::process_loop(SgScopeStatement* outer_scope_stmt,
     // the loop header components have been identified.
     // Allow empty init expressions (which is always the case with while and
     // do-while loops).
-    if (loop_info.idxv_expr && loop_info.test_expr && loop_info.test_expr &&
-            !contains_non_linear_reference(loop_info.reference_list)) {
+    if (loop_info.idxv_expr && loop_info.test_expr && loop_info.test_expr /* &&
+            !contains_non_linear_reference(loop_info.reference_list) */) {
         loop_info.processed = true;
 
         Sg_File_Info *fileInfo =

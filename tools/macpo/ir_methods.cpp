@@ -682,6 +682,7 @@ SgExprStatement* ir_methods::prepare_call_statement(SgBasicBlock* bb,
     SgExprStatement* fCall = buildFunctionCallStmt(SgName(function_name),
             buildVoidType(), buildExprListExp(params), bb);
 
+    ROSE_ASSERT(ref_parent);
     fCall->set_parent(ref_parent);
     return fCall;
 }

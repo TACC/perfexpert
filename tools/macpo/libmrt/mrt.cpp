@@ -32,6 +32,7 @@
 #include <map>
 
 #include <fcntl.h>
+#include <limits.h>
 #include <unistd.h>
 #include <sys/time.h>
 #include <sys/types.h>
@@ -350,20 +351,23 @@ static void print_tripcount_histogram(int line_number, long* histogram) {
             pair_histogram[MAX_HISTOGRAM_ENTRIES-3].first
         };
 
-        fprintf (stderr, "  count %d%s found %ld time(s), ", values[0],
-                values[0] == MAX_HISTOGRAM_ENTRIES-1 ? "+" : "", counts[0]);
-        if (counts[1]) {
-            fprintf (stderr, "count %d%s found %ld time(s), ", values[1],
-                    values[1] == MAX_HISTOGRAM_ENTRIES-1 ? "+" : "", counts[1]);
+        int low_tripcount = 0;
+        const int VALUE_THRESHOLD = 16;
+        const int COUNT_THRESHOLD = 16;
 
-            if (counts[2]) {
-                fprintf (stderr, "count %d%s found %ld time(s), ", values[2],
-                        values[2] == MAX_HISTOGRAM_ENTRIES-1 ? "+" : "",
-                        counts[2]);
-            }
+        if (counts[0] > COUNT_THRESHOLD && values[0] < VALUE_THRESHOLD) {
+            low_tripcount = values[0];
+        } else if (counts[1] > COUNT_THRESHOLD && values[1] < VALUE_THRESHOLD) {
+            low_tripcount = values[1];
+        } else if (counts[2] > COUNT_THRESHOLD && values[2] < VALUE_THRESHOLD) {
+            low_tripcount = values[2];
         }
 
-        fprintf (stderr, "\n");
+        if (low_tripcount > 0) {
+            fprintf (stderr, "Found low trip count (%d) for this loop, "
+                "insert the following pragma just before the loop body: "
+                "#pragma loop_count(%d)\n", low_tripcount, low_tripcount);
+        }
     }
 }
 
@@ -445,7 +449,7 @@ static void indigo__exit()
                     case NOT_ALIGNED:
                         fprintf (stderr, "non-temporal arrays are not aligned, "
                             "try using _mm_malloc/_mm_free to allocate/free "
-                            "arrays that are aligned with cache-line bounary.");
+                            "arrays that are aligned with cache-line bounary.\n");
                         break;
                 }
             }
@@ -473,7 +477,7 @@ static void indigo__exit()
                     case NOT_ALIGNED:
                         fprintf (stderr, "arrays are not aligned, try using "
                             "_mm_malloc/_mm_free to allocate/free arrays that "
-                            "are aligned with cache-line bounary.");
+                            "are aligned with cache-line bounary.\n");
                         break;
                 }
             }
@@ -484,14 +488,13 @@ static void indigo__exit()
             for (bool_map::iterator it = map.begin(); it != map.end(); it++) {
                 bool overlap = it->second;
 
-                if (overlap) {
+                if (overlap == false) {
                     fprintf (stderr, "Use `restrict' keyword.\n");
                 }
             }
         }
 
         if (tripcount_map.find(line_number) != tripcount_map.end()) {
-            fprintf (stderr, "trip count: ");
             long_histogram& histogram = tripcount_map[line_number];
             for (long_histogram::iterator it = histogram.begin();
                     it != histogram.end(); it++) {
@@ -642,6 +645,10 @@ short& get_branch_bin(int line_number, int loop_line_number) {
 
 void indigo__record_branch_c(int line_number, int loop_line_number, int true_branch_count, int false_branch_count)
 {
+    // Short circuit to prevent runtime overhead.
+    if (get_branch_bin(line_number, loop_line_number) == BRANCH_UNKNOWN)
+        return;
+
     branch_loop_line_pair[line_number] = loop_line_number;
     loop_branch_line_pair[loop_line_number].insert(line_number);
 
@@ -894,15 +901,14 @@ long* get_tripcount_histogram(int line_number) {
 int indigo__aligncheck_c(int line_number, /* int* type_size, */ int stream_count, ...) {
     va_list args;
 
+    // Short circuit to prevent runtime overhead.
+    if (get_overlap_bin(line_number) == true)
+        return -1;
+
     void* start_list[MAX_ADDR] = {0};
     void* end_list[MAX_ADDR] = {0};
 
     if (stream_count >= MAX_ADDR) {
-#if 0
-        fprintf (stderr, "MACPO :: Stream count too large, truncating to %d "
-                " for memory disambiguation.\n", MAX_ADDR);
-#endif
-
         stream_count = MAX_ADDR-1;
     }
 
@@ -924,28 +930,14 @@ int indigo__aligncheck_c(int line_number, /* int* type_size, */ int stream_count
         } else {
             if (common_alignment != remainder)
                 common_alignment = -1;
-
-#if 0
-            if (*type_size != size)
-                *type_size = -1;
-#endif
         }
-
-#if 0
-        if (((long) start) % 64) {
-            fprintf (stderr, "MACPO :: Reference in loop at line %d is not "
-                    "aligned at cache line boundary.\n", line_number);
-        }
-#endif
 
         // Really simple and inefficient (n^2) algorightm to check duplicates.
         bool overlap = false;
         for (j=0; j<i && overlap == false; j++) {
-#if 0
-            fprintf (stderr, "i: %p-%p, compared against: %p-%p = %d.\n",
-                    start_list[j], end_list[j], start, end, start_list[j] > end || end_list[j] < start);
-#endif
             if (!(start_list[j] > end || end_list[j] < start)) {
+                fprintf (stderr, "overlap found between %p-%p and %p-%p.\n",
+                    start, end, start_list[j], end_list[j]);
                 overlap = true;
             }
         }
@@ -953,13 +945,6 @@ int indigo__aligncheck_c(int line_number, /* int* type_size, */ int stream_count
         if (get_overlap_bin(line_number) != true) {
             get_overlap_bin(line_number) = overlap;
         }
-
-#if 0
-        if (overlap) {
-            fprintf (stderr, "MACPO :: Found overlap among references for loop "
-                    "at line %d.\n", line_number);
-        }
-#endif
 
         start_list[i] = start;
         end_list[i] = end;
@@ -993,6 +978,10 @@ int indigo__aligncheck_c(int line_number, /* int* type_size, */ int stream_count
 
 void indigo__sstore_aligncheck_c(int line_number, int stream_count, ...) {
     va_list args;
+
+    // Short circuit to prevent runtime overhead.
+    if (get_sstore_alignment_bin(line_number) == NOT_ALIGNED)
+        return;
 
     int common_alignment = -1, last_remainder = 0;
 
@@ -1041,5 +1030,6 @@ void indigo__tripcount_check_c(int line_number, long trip_count) {
     if (trip_count >= MAX_HISTOGRAM_ENTRIES)
         trip_count = MAX_HISTOGRAM_ENTRIES-1;
 
-    histogram[trip_count]++;
+    if (histogram[trip_count] < LONG_MAX)
+        histogram[trip_count]++;
 }
