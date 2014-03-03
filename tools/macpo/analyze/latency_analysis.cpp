@@ -71,18 +71,18 @@ static bool init_counters(histogram_matrix_t& hist_matrix,
 
 static bool conflict(histogram_matrix_t& hist_matrix,
         avl_tree_list_t& tree_list, int num_cores, int var_idx, int core_id,
-        size_t address, short read_or_write, const int DIST_INFINITY) {
+        size_t cache_line, short read_or_write, const int DIST_INFINITY) {
     int i;
     bool conflict = false;
 
     for (i=0; i<num_cores; i++) {
-        size_t dist = tree_list[i]->get_distance(address);
+        size_t dist = tree_list[i]->get_distance(cache_line);
         if ((read_or_write == TYPE_WRITE ||
                 read_or_write == TYPE_READ_AND_WRITE) && i != core_id &&
                 dist >= 0 && dist < DIST_INFINITY) {
             conflict = true;
 
-            tree_list[i]->set_distance(address, DIST_INFINITY-1);
+            tree_list[i]->set_distance(cache_line, DIST_INFINITY-1);
 
             if (create_histogram_if_null(hist_matrix[i][var_idx],
                         DIST_INFINITY) < 0) {
@@ -103,13 +103,13 @@ static bool conflict(histogram_matrix_t& hist_matrix,
 
 static size_t calculate_distance(histogram_matrix_t& hist_matrix,
         avl_tree_list_t& tree_list, int num_cores, int core_id, size_t var_idx,
-        size_t address, short read_or_write, const int DIST_INFINITY) {
-    assert(tree_list[core_id]->contains(address));
+        size_t cache_line, short read_or_write, const int DIST_INFINITY) {
+    assert(tree_list[core_id]->contains(cache_line));
     if (conflict(hist_matrix, tree_list, num_cores, var_idx, core_id,
-                address, read_or_write, DIST_INFINITY)) {
+                cache_line, read_or_write, DIST_INFINITY)) {
         return DIST_INFINITY;
     } else {
-        return tree_list[core_id]->get_distance(address);
+        return tree_list[core_id]->get_distance(cache_line);
     }
 }
 
@@ -223,7 +223,7 @@ int latency_analysis(const global_data_t& global_data,
 
                 const unsigned short core_id = mem_info.coreID;
                 const size_t var_idx = mem_info.var_idx;
-                const size_t address = mem_info.address >> 6;
+                const size_t cache_line = ADDR_TO_CACHE_LINE(mem_info.address);
                 const short read_write = mem_info.read_write;
 
                 // Quick validation check.
@@ -231,41 +231,45 @@ int latency_analysis(const global_data_t& global_data,
                         var_idx >= 0 && var_idx < num_streams) {
 
                     avl_tree* tree = tree_list[core_id];
-                    if (tree->contains(address)) {
-                        size_t distance = calculate_distance(histogram_matrix,
-                                tree_list, num_cores, core_id, var_idx, address,
-                                read_write, DIST_INFINITY);
+                    if (create_histogram_if_null(
+                                histogram_matrix[core_id][var_idx],
+                                DIST_INFINITY) < 0) {
+                        goto end_iteration;
+                    }
 
-                        if (create_histogram_if_null(
-                                    histogram_matrix[core_id][var_idx],
-                                    DIST_INFINITY) < 0) {
-                            goto end_iteration;
-                        }
+                    size_t distance = 0;
+                    histogram_t* hist = histogram_matrix[core_id][var_idx];
+
+                    if (tree->contains(cache_line)) {
+                        distance = calculate_distance(histogram_matrix,
+                                tree_list, num_cores, core_id, var_idx,
+                                cache_line, read_write, DIST_INFINITY);
 
                         // Occupy the last bin in case of overflow.
                         if (distance >= DIST_INFINITY)
                             distance = DIST_INFINITY - 1;
-
-                        histogram_t* hist = histogram_matrix[core_id][var_idx];
-                        gsl_histogram_increment(hist, distance);
+                    } else {
+                        // Record a reuse distance of infinity.
+                        distance = DIST_INFINITY - 1;
                     }
 
+                    gsl_histogram_increment(hist, distance);
                     tree->insert(&mem_info);
 
                     // Check if this cache line has been access earlier,
                     // and thus, if it has an owner.
-                    if (cache_line_owner.find(address) ==
+                    if (cache_line_owner.find(cache_line) ==
                             cache_line_owner.end()) {
                         if (read_write == TYPE_WRITE ||
                                 read_write == TYPE_READ_AND_WRITE) {
-                            cache_line_owner[address] = core_id;
+                            cache_line_owner[cache_line] = core_id;
                         }
                     } else {
                         // This cache line already has an owner.
                         if (read_write == TYPE_WRITE ||
                                 read_write == TYPE_READ_AND_WRITE) {
                             // Chances of a conflict between owner and core_id.
-                            short owner = cache_line_owner[address];
+                            short owner = cache_line_owner[cache_line];
                             if (owner == core_id) {
                                 local_hit_list[var_idx] += 1;
                             } else {

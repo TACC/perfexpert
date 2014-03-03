@@ -75,4 +75,6 @@ typedef struct {
 /* Number of reuse distance entries to display for each stream. */
 #define REUSE_DISTANCE_COUNT        3
 
+#define ADDR_TO_CACHE_LINE(x)   (x >> 6)
+
 #endif /* ANALYSIS_DEFS_H_ */

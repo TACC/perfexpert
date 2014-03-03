@@ -118,7 +118,6 @@ int analyze_records(const global_data_t& global_data, int analysis_flags) {
             return code;
 
         print_reuse_distances(global_data, rd_list, DIST_INFINITY);
-
         print_cache_conflicts(global_data, conflict_list);
     }
 
