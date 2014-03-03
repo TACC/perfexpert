@@ -517,7 +517,8 @@ static void indigo__exit()
 
                 if (branch_bin.find(branch_line_number) != branch_bin.end()) {
                     short_map& map = branch_bin[branch_line_number];
-                    for (short_map::iterator it = map.begin(); it != map.end(); it++) {
+                    for (short_map::iterator it = map.begin(); it != map.end();
+                            it++) {
                         short branch_status = it->second;
 
                         switch(branch_status) {
