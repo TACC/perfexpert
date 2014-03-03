@@ -489,7 +489,8 @@ static void indigo__exit()
                 bool overlap = it->second;
 
                 if (overlap == false) {
-                    fprintf (stderr, "Use `restrict' keyword.\n");
+                    fprintf (stderr, "Use `restrict' keyword to inform "
+                            "compiler that arrays do not overlap.\n");
                 }
             }
         }
@@ -539,13 +540,17 @@ static void indigo__exit()
 
                             case BRANCH_FALSE:
                                 fprintf (stderr, "branch at line %d always "
-                                        "evaluates to false.\n",
+                                        "evaluates to false, use "
+                                        "__builtin_expect() to inform compiler "
+                                        "about expected branch outcome.\n",
                                         branch_line_number);
                                 break;
 
                             case BRANCH_TRUE:
                                 fprintf (stderr, "branch at line %d always "
-                                        "evaluates to true.\n",
+                                        "evaluates to true, use "
+                                        "__builtin_expect() to inform compiler "
+                                        "about expected branch outcome.\n",
                                         branch_line_number);
                                 break;
                         }
@@ -1011,7 +1016,8 @@ void indigo__sstore_aligncheck_c(int line_number, int stream_count, ...) {
             // Leave the existing measurement as it is.
         }
     } else {
-        if (get_sstore_alignment_bin(line_number) == ALIGN_NOINIT || get_alignment_bin(line_number) == FULL_ALIGNED) {
+        if (get_sstore_alignment_bin(line_number) == ALIGN_NOINIT ||
+                get_alignment_bin(line_number) == FULL_ALIGNED) {
             get_sstore_alignment_bin(line_number) = MUTUAL_ALIGNED;
         } else {
             // Leave the existing measurement as it is.
