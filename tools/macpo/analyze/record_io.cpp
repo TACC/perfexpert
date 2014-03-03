@@ -66,12 +66,19 @@ static int handle_mem_msg(const mem_info_t& mem_info, global_data_t& global_data
     return 0;
 }
 
-static int handle_metadata_msg(const metadata_info_t& metadata_info) {
+static int handle_metadata_msg(const metadata_info_t& metadata_info, bool bot) {
     // We don't need this metadata after we've read it,
     // so use it and discard it instead of saving it for later.
-    std::cout << mprefix << "Analyzing logs created from the binary " <<
-        metadata_info.binary_name << " at " <<
-        ctime(&metadata_info.execution_timestamp) << std::endl;
+    if (bot == false) {
+        std::cout << mprefix << "Analyzing logs created from the binary " <<
+            metadata_info.binary_name << " at " <<
+            ctime(&metadata_info.execution_timestamp) << std::endl;
+    } else {
+        std::cout << MSG_METADATA_INFO << "." << MSG_BINARY_NAME << "=" <<
+            metadata_info.binary_name << std::endl;
+        std::cout << MSG_METADATA_INFO << "." << MSG_TIMESTAMP << "=" <<
+            ctime(&metadata_info.execution_timestamp) << std::endl;
+    }
 
     return 0;
 }
@@ -129,7 +136,7 @@ int print_trace_records(const global_data_t& global_data) {
     return 0;
 }
 
-int read_file(const char* filename, global_data_t& global_data) {
+int read_file(const char* filename, global_data_t& global_data, bool bot) {
     int code = 0;
 
     int fd;
@@ -158,7 +165,8 @@ int read_file(const char* filename, global_data_t& global_data) {
                 break;
 
             case MSG_METADATA:
-                if ((code = handle_metadata_msg(data_node.metadata_info)) < 0)
+                if ((code = handle_metadata_msg(data_node.metadata_info,
+                        bot)) < 0)
                     return code;
                 break;
 

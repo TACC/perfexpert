@@ -52,7 +52,7 @@ int main(int argc, char *argv[]) {
         return code;
     }
 
-    if ((code = read_file(info.location, global_data)) < 0) {
+    if ((code = read_file(info.location, global_data, info.bot)) < 0) {
         std::cerr << "Failed to read records from file, terminating." <<
             std::endl;
 
@@ -72,12 +72,12 @@ int main(int argc, char *argv[]) {
 
         // TODO: Set analysis_flags based on analyses selected via arguments.
 
-        if ((code = analyze_records(global_data, analysis_flags)) < 0) {
+        if ((code = analyze_records(global_data, analysis_flags, info)) < 0) {
             std::cerr << "Failed to analyze records, terminating." << std::endl;
             return code;
         }
     } else if (global_data.trace_info_bucket.size()) {
-        if ((code = print_trace_records(global_data)) < 0) {
+        if ((code = print_trace_records(global_data), info.bot) < 0) {
             std::cerr << "Failed to print trace records, terminating." <<
                 std::endl;
             return code;

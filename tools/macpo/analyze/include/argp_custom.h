@@ -24,11 +24,10 @@
 
 #include <argp.h>
 
-struct arg_info
-{
-	float threshold;
-	char *arg1, *arg2, *location;
-	bool bot, showDebug, stream_names;
+struct arg_info {
+    float threshold;
+    char *arg1, *arg2, *location;
+    bool bot, showDebug, stream_names;
 };
 
 extern struct argp argp;

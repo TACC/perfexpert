@@ -114,22 +114,42 @@ static size_t calculate_distance(histogram_matrix_t& hist_matrix,
 }
 
 int print_cache_conflicts(const global_data_t& global_data,
-        double_list_t& conflict_list) {
-    std::cout << std::endl << mprefix << "Cache conflicts:" << std::endl;
+        double_list_t& conflict_list, bool bot) {
+    std::cout << std::endl;
 
-    const int num_streams = global_data.stream_list.size();
-    for (int i=0; i<num_streams; i++) {
-        double conflict_percentage = 100.0 * conflict_list[i];
+    if (bot == false) {
+        std::cout << mprefix << "Cache conflicts:" << std::endl;
 
-        if (conflict_percentage < 0)
-            conflict_percentage = 0.0;
+        const int num_streams = global_data.stream_list.size();
+        for (int i=0; i<num_streams; i++) {
+            double conflict_percentage = 100.0 * conflict_list[i];
 
-        if (conflict_percentage > 100)
-            conflict_percentage = 100.0;
+            if (conflict_percentage < 0)
+                conflict_percentage = 0.0;
 
-        std::cout << "var: " << global_data.stream_list[i] <<
+            if (conflict_percentage > 100)
+                conflict_percentage = 100.0;
+
+            std::cout << "var: " << global_data.stream_list[i] <<
                 ", conflict ratio: " << (double) conflict_percentage << "%." <<
                 std::endl;
+        }
+    } else {
+        const int num_streams = global_data.stream_list.size();
+        for (int i=0; i<num_streams; i++) {
+            double conflict_percentage = 100.0 * conflict_list[i];
+
+            if (conflict_percentage < 0)
+                conflict_percentage = 0.0;
+
+            if (conflict_percentage > 100)
+                conflict_percentage = 100.0;
+
+            std::cout << MSG_CACHE_CONFLICTS << "." <<
+                global_data.stream_list[i] << "." <<
+                MSG_CONFLICT_PERCENTAGE << "=" <<
+                (double) conflict_percentage << std::endl;
+        }
     }
 
     std::cout << std::endl;
@@ -137,36 +157,81 @@ int print_cache_conflicts(const global_data_t& global_data,
 }
 
 int print_reuse_distances(const global_data_t& global_data,
-        histogram_list_t& rd_list, const int DIST_INFINITY) {
-    std::cout << std::endl << mprefix << "Reuse distances:" << std::endl;
+        histogram_list_t& rd_list, const int DIST_INFINITY, bool bot) {
+    std::cout << std::endl;
 
-    const int num_streams = global_data.stream_list.size();
-    for (int i=0; i<num_streams; i++) {
-        if(rd_list[i] != NULL) {
-            std::cout << "var: " << global_data.stream_list[i] << ":";
+    if (bot == false) {
+        std::cout << mprefix << "Reuse distances:" << std::endl;
 
-            pair_list_t pair_list;
-            flatten_and_sort_histogram(rd_list[i], pair_list);
+        const int num_streams = global_data.stream_list.size();
+        for (int i=0; i<num_streams; i++) {
+            if(rd_list[i] != NULL) {
+                std::cout << "var: " << global_data.stream_list[i] << ":";
 
-            size_t limit = std::min((size_t) REUSE_DISTANCE_COUNT,
-                    pair_list.size());
-            for (size_t j=0; j<limit; j++) {
-                size_t max_bin = pair_list[j].first;
-                size_t max_val = pair_list[j].second;
+                pair_list_t pair_list;
+                flatten_and_sort_histogram(rd_list[i], pair_list);
 
-                if (max_bin != DIST_INFINITY - 1) {
-                    if (max_val > 0) {
-                        std::cout << " " << max_bin << " (" << max_val <<
-                            " times)";
+                size_t limit = std::min((size_t) REUSE_DISTANCE_COUNT,
+                        pair_list.size());
+                for (size_t j=0; j<limit; j++) {
+                    size_t max_bin = pair_list[j].first;
+                    size_t max_val = pair_list[j].second;
+
+                    if (max_bin != DIST_INFINITY - 1) {
+                        if (max_val > 0) {
+                            std::cout << " " << max_bin << " (" << max_val <<
+                                " times)";
+                        }
+                    } else {
+                        if (max_val > 0) {
+                            std::cout << " inf. (" << max_val << " times)";
+                        }
                     }
-                } else {
-                    if (max_val > 0) {
-                        std::cout << " inf. (" << max_val << " times)";
+                }
+
+                std::cout << "." << std::endl;
+            }
+        }
+    } else {
+        const int num_streams = global_data.stream_list.size();
+        for (int i=0; i<num_streams; i++) {
+            if(rd_list[i] != NULL) {
+                pair_list_t pair_list;
+                flatten_and_sort_histogram(rd_list[i], pair_list);
+
+                size_t limit = std::min((size_t) REUSE_DISTANCE_COUNT,
+                        pair_list.size());
+                for (size_t j=0; j<limit; j++) {
+                    size_t max_bin = pair_list[j].first;
+                    size_t max_val = pair_list[j].second;
+
+                    if (max_bin != DIST_INFINITY - 1) {
+                        if (max_val > 0) {
+                            std::cout << MSG_REUSE_DISTANCE << "." <<
+                                global_data.stream_list[i] << "." <<
+                                MSG_DISTANCE_VALUE << "[" << j << "]" << "=" <<
+                                max_bin << std::endl;
+
+                            std::cout << MSG_REUSE_DISTANCE << "." <<
+                                global_data.stream_list[i] << "." <<
+                                MSG_DISTANCE_COUNT << "[" << j << "]" << "=" <<
+                                max_val << std::endl;
+                        }
+                    } else {
+                        if (max_val > 0) {
+                            std::cout << MSG_REUSE_DISTANCE << "." <<
+                                global_data.stream_list[i] << "." <<
+                                MSG_DISTANCE_VALUE << "[" << j << "]" << "=" <<
+                                "inf" << std::endl;
+
+                            std::cout << MSG_REUSE_DISTANCE << "." <<
+                                global_data.stream_list[i] << "." <<
+                                MSG_DISTANCE_COUNT << "[" << j << "]" << "=" <<
+                                max_val << std::endl;
+                        }
                     }
                 }
             }
-
-            std::cout << "." << std::endl;
         }
     }
 
