@@ -429,69 +429,82 @@ static void indigo__exit()
 
         if (sstore_align_bin.find(line_number) != sstore_align_bin.end()) {
             short_map& map = sstore_align_bin[line_number];
+            short align_status = ALIGN_NOINIT;
             for (short_map::iterator it = map.begin(); it != map.end();
                     it++) {
-                short align_status = it->second;
-                switch(align_status) {
-                    case FULL_ALIGNED:
-                        fprintf (stderr, "all non-temporal arrays align, use "
+                short _align_status = it->second;
+                if (_align_status < align_status)
+                    align_status = _align_status;
+            }
+
+            switch(align_status) {
+                case FULL_ALIGNED:
+                    fprintf (stderr, "all non-temporal arrays align, use "
                             "__assume_aligned() or #pragma vector aligned to "
                             "tell compiler about alignment.\n");
-                        break;
+                    break;
 
-                    case MUTUAL_ALIGNED:
-                        fprintf (stderr, "all non-temporal arrays are mutually "
+                case MUTUAL_ALIGNED:
+                    fprintf (stderr, "all non-temporal arrays are mutually "
                             "aligned but not aligned to cache-line boundary, "
                             "use _mm_malloc/_mm_free to allocate/free aligned "
                             "storage.\n");
-                        break;
+                    break;
 
-                    case NOT_ALIGNED:
-                        fprintf (stderr, "non-temporal arrays are not aligned, "
+                case NOT_ALIGNED:
+                    fprintf (stderr, "non-temporal arrays are not aligned, "
                             "try using _mm_malloc/_mm_free to allocate/free "
                             "arrays that are aligned with cache-line bounary.\n");
-                        break;
-                }
+                    break;
             }
         }
 
         if (align_bin.find(line_number) != align_bin.end()) {
             short_map& map = align_bin[line_number];
+            short align_status = ALIGN_NOINIT;
             for (short_map::iterator it = map.begin(); it != map.end();
                     it++) {
-                short align_status = it->second;
-                switch(align_status) {
-                    case FULL_ALIGNED:
-                        fprintf (stderr, "all arrays align, use "
-                            "__assume_aligned() or #pragma vector aligned to "
-                            "tell compiler about alignment.\n");
-                        break;
+                short _align_status = it->second;
+                if (_align_status < align_status)
+                    align_status = _align_status;
+            }
 
-                    case MUTUAL_ALIGNED:
-                        fprintf (stderr, "all arrays are mutually aligned but "
-                            "not aligned to cache-line boundary, use "
-                            "_mm_malloc/_mm_free to allocate/free aligned "
-                            "storage.\n");
-                        break;
+            switch(align_status) {
+                case FULL_ALIGNED:
+                    fprintf (stderr, "all arrays align, use "
+                        "__assume_aligned() or #pragma vector aligned to "
+                        "tell compiler about alignment.\n");
+                    break;
 
-                    case NOT_ALIGNED:
-                        fprintf (stderr, "arrays are not aligned, try using "
-                            "_mm_malloc/_mm_free to allocate/free arrays that "
-                            "are aligned with cache-line bounary.\n");
-                        break;
-                }
+                case MUTUAL_ALIGNED:
+                    fprintf (stderr, "all arrays are mutually aligned but "
+                        "not aligned to cache-line boundary, use "
+                        "_mm_malloc/_mm_free to allocate/free aligned "
+                        "storage.\n");
+                    break;
+
+                case NOT_ALIGNED:
+                    fprintf (stderr, "arrays are not aligned, try using "
+                        "_mm_malloc/_mm_free to allocate/free arrays that "
+                        "are aligned with cache-line bounary.\n");
+                    break;
             }
         }
 
         if (overlap_bin.find(line_number) != overlap_bin.end()) {
             bool_map& map = overlap_bin[line_number];
+            bool overlap = false;
             for (bool_map::iterator it = map.begin(); it != map.end(); it++) {
-                bool overlap = it->second;
-
-                if (overlap == false) {
-                    fprintf (stderr, "Use `restrict' keyword to inform "
-                            "compiler that arrays do not overlap.\n");
+                bool _overlap = it->second;
+                if (_overlap == true) {
+                    overlap = true;
+                    break;
                 }
+            }
+
+            if (overlap == false) {
+                fprintf (stderr, "Use `restrict' keyword to inform "
+                        "compiler that arrays do not overlap.\n");
             }
         }
 
@@ -517,44 +530,47 @@ static void indigo__exit()
 
                 if (branch_bin.find(branch_line_number) != branch_bin.end()) {
                     short_map& map = branch_bin[branch_line_number];
+                    short branch_status = BRANCH_NOINIT;
                     for (short_map::iterator it = map.begin(); it != map.end();
                             it++) {
-                        short branch_status = it->second;
+                        short _branch_status = it->second;
+                        if (_branch_status < branch_status)
+                            branch_status = _branch_status;
+                    }
 
-                        switch(branch_status) {
-                            case BRANCH_UNKNOWN:
-                                fprintf (stderr, "branch at line %d is "
-                                        "unpredictable.\n", branch_line_number);
-                                break;
+                    switch(branch_status) {
+                        case BRANCH_UNKNOWN:
+                            fprintf (stderr, "branch at line %d is "
+                                    "unpredictable.\n", branch_line_number);
+                            break;
 
-                            case BRANCH_MOSTLY_FALSE:
-                                fprintf (stderr, "branch at line %d mostly "
-                                        "evaluates to false.\n",
-                                        branch_line_number);
-                                break;
+                        case BRANCH_MOSTLY_FALSE:
+                            fprintf (stderr, "branch at line %d mostly "
+                                    "evaluates to false.\n",
+                                    branch_line_number);
+                            break;
 
-                            case BRANCH_MOSTLY_TRUE:
-                                fprintf (stderr, "branch at line %d mostly "
-                                        "evaluates to true.\n",
-                                        branch_line_number);
-                                break;
+                        case BRANCH_MOSTLY_TRUE:
+                            fprintf (stderr, "branch at line %d mostly "
+                                    "evaluates to true.\n",
+                                    branch_line_number);
+                            break;
 
-                            case BRANCH_FALSE:
-                                fprintf (stderr, "branch at line %d always "
-                                        "evaluates to false, use "
-                                        "__builtin_expect() to inform compiler "
-                                        "about expected branch outcome.\n",
-                                        branch_line_number);
-                                break;
+                        case BRANCH_FALSE:
+                            fprintf (stderr, "branch at line %d always "
+                                    "evaluates to false, use "
+                                    "__builtin_expect() to inform compiler "
+                                    "about expected branch outcome.\n",
+                                    branch_line_number);
+                            break;
 
-                            case BRANCH_TRUE:
-                                fprintf (stderr, "branch at line %d always "
-                                        "evaluates to true, use "
-                                        "__builtin_expect() to inform compiler "
-                                        "about expected branch outcome.\n",
-                                        branch_line_number);
-                                break;
-                        }
+                        case BRANCH_TRUE:
+                            fprintf (stderr, "branch at line %d always "
+                                    "evaluates to true, use "
+                                    "__builtin_expect() to inform compiler "
+                                    "about expected branch outcome.\n",
+                                    branch_line_number);
+                            break;
                     }
                 }
             }
@@ -901,129 +917,84 @@ long* get_tripcount_histogram(int line_number) {
 
 /**
     indigo__aligncheck_c()
-    Checks for alignment to cache line boundary and memory overlap.
+    Checks for alignment to cache line boundary and updates histogram.
     Returns common alignment, if any. Otherwise, returns -1.
 */
-int indigo__aligncheck_c(int line_number, /* int* type_size, */ int stream_count, ...) {
+int indigo__aligncheck_c(int line_number, int stream_count, ...) {
     va_list args;
+    int i, j;
 
-    // Short circuit to prevent runtime overhead.
-    if (get_overlap_bin(line_number) == true)
+    if (get_alignment_bin(line_number) == NOT_ALIGNED) {
         return -1;
-
-    void* start_list[MAX_ADDR] = {0};
-    void* end_list[MAX_ADDR] = {0};
-
-    if (stream_count >= MAX_ADDR) {
-        stream_count = MAX_ADDR-1;
     }
 
-    int common_alignment = -1, last_remainder = 0;
-
-    int i, j;
     va_start(args, stream_count);
 
+    long remainder = -1;
     for (i=0; i<stream_count; i++) {
-        void* start = va_arg(args, void*);
-        void* end = va_arg(args, void*);
-        size_t size = va_arg(args, size_t);
-
-        int remainder = ((long) start) % 64;
-
-        if (i == 0) {
-            common_alignment = remainder;
-            // *type_size = size;
-        } else {
-            if (common_alignment != remainder)
-                common_alignment = -1;
+        void* address = va_arg(args, void*);
+        long _remainder = ((long) address) % 64;
+        if (remainder != -1 && remainder != _remainder) {
+            va_end(args);
+            get_alignment_bin(line_number) = NOT_ALIGNED;
+            return -1;
         }
 
-        // Really simple and inefficient (n^2) algorightm to check duplicates.
-        bool overlap = false;
-        for (j=0; j<i && overlap == false; j++) {
-            if (!(start_list[j] > end || end_list[j] < start)) {
-                fprintf (stderr, "overlap found between %p-%p and %p-%p.\n",
-                    start, end, start_list[j], end_list[j]);
-                overlap = true;
-            }
-        }
-
-        if (get_overlap_bin(line_number) != true) {
-            get_overlap_bin(line_number) = overlap;
-        }
-
-        start_list[i] = start;
-        end_list[i] = end;
+        if (remainder == -1)
+            remainder = _remainder;
     }
 
     va_end(args);
 
-    if (common_alignment == -1) {
-        get_alignment_bin(line_number) = NOT_ALIGNED;
-    } else if (common_alignment == 0) {
-        if (get_alignment_bin(line_number) == ALIGN_NOINIT) {
-            get_alignment_bin(line_number) = FULL_ALIGNED;
-        } else {
-            // Leave the existing measurement as it is.
-        }
+    if (remainder == 0) {
+        get_alignment_bin(line_number) = FULL_ALIGNED;
     } else {
-        if (get_alignment_bin(line_number) == ALIGN_NOINIT || get_alignment_bin(line_number) == FULL_ALIGNED) {
-            get_alignment_bin(line_number) = MUTUAL_ALIGNED;
-        } else {
-            // Leave the existing measurement as it is.
-        }
+        get_alignment_bin(line_number) = MUTUAL_ALIGNED;
     }
 
-    return common_alignment;
+    return remainder;
 }
 
 /**
     indigo__sstore_aligncheck_c()
-    Checks for alignment of streaming stores to cache line boundary.
+    Checks for alignment of streaming stores to cache line boundary and
+    updates histogram.
+    Returns common alignment, if any. Otherwise, returns -1.
 */
 
-void indigo__sstore_aligncheck_c(int line_number, int stream_count, ...) {
+int indigo__sstore_aligncheck_c(int line_number, int stream_count, ...) {
     va_list args;
-
-    // Short circuit to prevent runtime overhead.
-    if (get_sstore_alignment_bin(line_number) == NOT_ALIGNED)
-        return;
-
-    int common_alignment = -1, last_remainder = 0;
-
     int i, j;
+
+    if (get_sstore_alignment_bin(line_number) == NOT_ALIGNED) {
+        return -1;
+    }
+
     va_start(args, stream_count);
 
+    long remainder = -1;
     for (i=0; i<stream_count; i++) {
         void* address = va_arg(args, void*);
-        int remainder = ((long) address) % 64;
-
-        if (i == 0) {
-            common_alignment = remainder;
-        } else {
-            if (common_alignment != remainder)
-                common_alignment = -1;
+        long _remainder = ((long) address) % 64;
+        if (remainder != -1 && remainder != _remainder) {
+            va_end(args);
+            get_sstore_alignment_bin(line_number) = NOT_ALIGNED;
+            return -1;
         }
+
+        if (remainder == -1)
+            remainder = _remainder;
     }
 
     va_end(args);
 
-    if (common_alignment == -1) {
-        get_sstore_alignment_bin(line_number) = NOT_ALIGNED;
-    } else if (common_alignment == 0) {
-        if (get_sstore_alignment_bin(line_number) == ALIGN_NOINIT) {
-            get_sstore_alignment_bin(line_number) = FULL_ALIGNED;
-        } else {
-            // Leave the existing measurement as it is.
-        }
+    if (remainder == 0) {
+        get_sstore_alignment_bin(line_number) = FULL_ALIGNED;
     } else {
-        if (get_sstore_alignment_bin(line_number) == ALIGN_NOINIT ||
-                get_alignment_bin(line_number) == FULL_ALIGNED) {
-            get_sstore_alignment_bin(line_number) = MUTUAL_ALIGNED;
-        } else {
-            // Leave the existing measurement as it is.
-        }
+        get_sstore_alignment_bin(line_number) = MUTUAL_ALIGNED;
     }
+
+    return remainder;
 }
 
 void indigo__tripcount_check_c(int line_number, long trip_count) {

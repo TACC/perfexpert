@@ -45,6 +45,8 @@ typedef std::vector<reference_info_t> reference_list_t;
 struct tag_loop_info_t;
 typedef std::vector<struct tag_loop_info_t> loop_info_list_t;
 
+typedef std::vector<SgExpression*> expr_list_t;
+
 typedef struct tag_loop_info_t {
     SgScopeStatement* loop_stmt;
     SgExpression* idxv_expr;

@@ -47,6 +47,15 @@ class ir_methods {
         typedef std::map<std::string, VariableRenaming::NumNodeRenameEntry>
             def_map_t;
 
+        static void place_alignment_checks(expr_list_t& expr_list,
+                Sg_File_Info* fileInfo, SgScopeStatement* loop_stmt,
+                statement_list_t& statement_list,
+                const std::string& prefix);
+
+        static void remove_duplicate_expressions(expr_list_t& expr_list);
+
+        static bool is_ancestor(SgNode* lower_node, SgNode* upper_node);
+
         static SgExprStatement* create_long_assign_statement(
                 Sg_File_Info* fileInfo, const std::string& name,
                 SgIntVal* value);

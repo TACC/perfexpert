@@ -72,10 +72,11 @@ static volatile sig_atomic_t sleeping=0, access_count=0;
 static int fd=-1, sleep_sec=0, new_sleep_sec=1, *intel_apic_mapping=NULL;
 static node_t terminal_node;
 
-enum { ALIGN_NOINIT=0, NOT_ALIGNED, MUTUAL_ALIGNED, FULL_ALIGNED };
-
-enum { BRANCH_NOINIT=0, BRANCH_MOSTLY_TRUE, BRANCH_TRUE, BRANCH_MOSTLY_FALSE,
-        BRANCH_FALSE, BRANCH_UNKNOWN };
+// XXX: Don't change the order of the elements of the enum!
+// XXX: The order is used in arithmetic comparison.
+enum { NOT_ALIGNED=0, MUTUAL_ALIGNED, FULL_ALIGNED, ALIGN_NOINIT };
+enum { BRANCH_MOSTLY_TRUE=0, BRANCH_TRUE, BRANCH_MOSTLY_FALSE, BRANCH_FALSE,
+    BRANCH_UNKNOWN, BRANCH_NOINIT };
 
 #if	defined(__cplusplus)
 extern "C" {
@@ -175,7 +176,7 @@ void indigo__simd_branch_c(int line_number, int idxv, int type_size, int branch_
 #if defined(__cplusplus)
 extern "C" {
 #endif
-int indigo__aligncheck_c(int line_number, /* int* type_size, */ int stream_count, ...);
+int indigo__aligncheck_c(int line_number, int stream_count, ...);
 #if defined (__cplusplus)
 }
 #endif
@@ -183,7 +184,7 @@ int indigo__aligncheck_c(int line_number, /* int* type_size, */ int stream_count
 #if defined(__cplusplus)
 extern "C" {
 #endif
-void indigo__sstore_aligncheck_c(int line_number, int stream_count, ...);
+int indigo__sstore_aligncheck_c(int line_number, int stream_count, ...);
 #if defined (__cplusplus)
 }
 #endif
