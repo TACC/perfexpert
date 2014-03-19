@@ -688,8 +688,12 @@ void indigo__record_branch_c(int line_number, int loop_line_number, int true_bra
         status = BRANCH_UNKNOWN;
     }
 
-    if (get_branch_bin(line_number, loop_line_number) != BRANCH_UNKNOWN) {
+    if (get_branch_bin(line_number, loop_line_number) == BRANCH_NOINIT) {
         get_branch_bin(line_number, loop_line_number) = status;
+    } else {
+        if (get_branch_bin(line_number, loop_line_number) != status) {
+            get_branch_bin(line_number, loop_line_number) = BRANCH_UNKNOWN;
+        }
     }
 }
 

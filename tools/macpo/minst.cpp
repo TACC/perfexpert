@@ -24,6 +24,7 @@
 
 #include "aligncheck.h"
 #include "analysis_profile.h"
+#include "branchpath.h"
 #include "inst_defs.h"
 #include "instrumentor.h"
 #include "ir_methods.h"
@@ -171,6 +172,17 @@ const analysis_profile_t MINST::run_analysis(SgNode* node, short action) {
         case ACTION_TRIPCOUNT:
             {
                 tripcount_t visitor(var_renaming);
+                visitor.process_node(node);
+
+                statement_list.insert(statement_list.end(),
+                        visitor.stmt_begin(), visitor.stmt_end());
+
+                return visitor.get_analysis_profile();
+            }
+
+        case ACTION_BRANCHPATH:
+            {
+                branchpath_t visitor(var_renaming);
                 visitor.process_node(node);
 
                 statement_list.insert(statement_list.end(),
@@ -331,6 +343,7 @@ void MINST::visit(SgNode* node)
             switch(action) {
                 case ACTION_ALIGNCHECK:
                 case ACTION_TRIPCOUNT:
+                case ACTION_BRANCHPATH:
                     create_file = 0;
                     break;
 
@@ -360,6 +373,7 @@ void MINST::visit(SgNode* node)
             switch(action) {
                 case ACTION_ALIGNCHECK:
                 case ACTION_TRIPCOUNT:
+                case ACTION_BRANCHPATH:
                     break;
 
                 default:
