@@ -19,26 +19,20 @@
  * $HEADER$
  */
 
-#include <sched.h>
-
-#include <csignal>
-#include <cstdarg>
-#include <cstdio>
-#include <cstdlib>
-#include <ctime>
-
 #include <algorithm>
-#include <set>
+#include <cstdarg>
+#include <limits.h>
 #include <map>
 
-#include <fcntl.h>
-#include <limits.h>
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+#include <sched.h>
+
+#include <set>
 #include <unistd.h>
-#include <sys/time.h>
-#include <sys/types.h>
 
 #include "mrt.h"
-#include "cpuid.h"
 #include "macpo_record.h"
 
 typedef std::pair<long, short> val_idx_pair;
@@ -61,10 +55,9 @@ static bool_map_coll overlap_bin;
 static short_map_coll branch_bin, align_bin, sstore_align_bin;
 static long_histogram_coll tripcount_map;
 
-static short proc = PROC_UNKNOWN;
-
 static std::map<int, int> branch_loop_line_pair;
 static std::map<int, std::set<int> > loop_branch_line_pair;
+
 volatile static short lock_var;
 
 static inline void lock() {
@@ -77,255 +70,6 @@ static inline void lock() {
 static inline void unlock() {
     lock_var = 0;
     asm volatile("sfence" ::: "memory");
-}
-
-static int getCoreID()
-{
-	if (coreID != -1)
-		return coreID;
-
-	int info[4];
-	if (!isCPUIDSupported())
-	{
-		coreID = 0;
-		return coreID;	// default
-	}
-
-	if (proc == PROC_AMD)
-	{
-		__cpuid(info, 1, 0);
-		coreID = (info[1] & 0xff000000) >> 24;
-		return coreID;
-	}
-	else if (proc == PROC_INTEL)
-	{
-		int apic_id = 0;
-		__cpuid(info, 0xB, 0);
-		if (info[EBX] != 0)	// x2APIC
-		{
-			__cpuid(info, 0xB, 2);
-			apic_id = info[EDX];
-
-			#ifdef DEBUG_PRINT
-				fprintf (stderr, "MACPO :: Request from core with x2APIC ID %d\n", apic_id);
-			#endif
-		}
-		else			// Traditonal APIC
-		{
-			__cpuid(info, 1, 0);
-			apic_id = (info[EBX] & 0xff000000) >> 24;
-
-			#ifdef DEBUG_PRINT
-				fprintf (stderr, "MACPO :: Request from core with legacy APIC ID %d\n", apic_id);
-			#endif
-		}
-
-		int i;
-		for (i=0; i<numCores; i++)
-			if (apic_id == intel_apic_mapping[i])
-				break;
-
-		coreID = i == numCores ? 0 : i;
-		return coreID;
-	}
-
-	coreID = 0;
-	return coreID;
-}
-
-static void signalHandler(int sig)
-{
-	// Reset the signal handler
-	signal(sig, signalHandler);
-
-	struct itimerval itimer_old, itimer_new;
-	itimer_new.it_interval.tv_sec = 0;
-	itimer_new.it_interval.tv_usec = 0;
-
-	if (sleeping == 1)
-	{
-		// Wake up for a brief period of time
-		fdatasync(fd);
-		write(fd, &terminal_node, sizeof(node_t));
-
-		// Don't reorder so that `sleeping = 0' remains after fwrite()
-		asm volatile("" ::: "memory");
-		sleeping = 0;
-
-		itimer_new.it_value.tv_sec = AWAKE_SEC;
-		itimer_new.it_value.tv_usec = AWAKE_USEC;
-		setitimer(ITIMER_PROF, &itimer_new, &itimer_old);
-	}
-	else
-	{
-		// Go to sleep now...
-		sleeping = 1;
-
-		int temp = sleep_sec + new_sleep_sec;
-		sleep_sec = new_sleep_sec;
-		new_sleep_sec = temp;
-
-		itimer_new.it_value.tv_sec = 3+sleep_sec*3;
-		itimer_new.it_value.tv_usec = 0;
-		setitimer(ITIMER_PROF, &itimer_new, &itimer_old);
-		access_count = 0;
-	}
-}
-
-static void set_thread_affinity() {
-    // Get which processor is this running on
-    int info[4];
-    if (!isCPUIDSupported())
-        fprintf (stderr, "MACPO :: CPUID not supported, cannot determine processor core information, resorting to defaults...\n");
-    else
-    {
-        char processorName[13];
-        getProcessorName(processorName);
-
-        if (strncmp(processorName, "AuthenticAMD", 12) == 0)		proc = PROC_AMD;
-        else if (strncmp(processorName, "GenuineIntel", 12) == 0)	proc = PROC_INTEL;
-        else								proc = PROC_UNKNOWN;
-
-        if (proc == PROC_UNKNOWN)
-            fprintf (stderr, "MACPO :: Cannot determine processor identification, resorting to defaults...\n");
-        else if (proc == PROC_INTEL)	// We need to do some special set up for Intel machines
-        {
-            numCores = sysconf(_SC_NPROCESSORS_CONF);
-            intel_apic_mapping = (int*) malloc (sizeof (int) * numCores);
-
-            if (intel_apic_mapping)
-            {
-                // Get the original affinity mask
-                cpu_set_t old_mask;
-                CPU_ZERO(&old_mask);
-                sched_getaffinity(0, sizeof(cpu_set_t), &old_mask);
-
-                // Loop over all cores and find map their APIC IDs to core IDs
-                for (int i=0; i<numCores; i++)
-                {
-                    cpu_set_t mask;
-                    CPU_ZERO(&mask);
-                    CPU_SET(i, &mask);
-
-                    if (sched_setaffinity(0, sizeof(cpu_set_t), &mask) != -1)
-                    {
-                        // Get the APIC ID
-                        __cpuid(info, 0xB, 0);
-                        if (info[EBX] != 0)	// x2APIC
-                        {
-                            __cpuid(info, 0xB, 2);
-                            intel_apic_mapping[i] = info[EDX];
-                        }
-                        else			// Traditonal APIC
-                        {
-                            __cpuid(info, 1, 0);
-                            intel_apic_mapping[i] = (info[EBX] & 0xff000000) >> 24;
-                        }
-
-#ifdef DEBUG_PRINT
-                        fprintf (stderr, "MACPO :: Registered mapping from core %d to APIC %d\n", i, intel_apic_mapping[i]);
-#endif
-                    }
-                }
-
-                // Reset the original affinity mask
-                sched_setaffinity (0, sizeof(cpu_set_t), &old_mask);
-            }
-#ifdef DEBUG_PRINT
-            else
-            {
-                fprintf (stderr, "MACPO :: malloc() failed\n");
-            }
-#endif
-        }
-    }
-}
-
-static void create_output_file() {
-    char szFilename[32];
-    sprintf (szFilename, "macpo.%d.out", (int) getpid());
-    fd = open(szFilename, O_CREAT | O_APPEND | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP);
-    if (fd < 0)
-    {
-        perror("MACPO :: Error opening log for writing");
-        exit(1);
-    }
-
-    if (access("macpo.out", F_OK) == 0)
-    {
-        // file exists, remove it
-        if (unlink("macpo.out") == -1)
-            perror ("MACPO :: Failed to remove macpo.out");
-    }
-
-    // Now create the symlink
-    if (symlink(szFilename, "macpo.out") == -1)
-        perror ("MACPO :: Failed to create symlink \"macpo.out\"");
-
-    // Now that we are done handling the critical stuff, write the metadata log to the macpo.out file
-    node_t node;
-    node.type_message = MSG_METADATA;
-    size_t exe_path_len = readlink ("/proc/self/exe", node.metadata_info.binary_name, STRING_LENGTH-1);
-    if (exe_path_len == -1)
-        perror ("MACPO :: Failed to read name of the binary from /proc/self/exe");
-    else
-    {
-        // Write the terminating character
-        node.metadata_info.binary_name[exe_path_len]='\0';
-        time(&node.metadata_info.execution_timestamp);
-
-        write(fd, &node, sizeof(node_t));
-    }
-
-    terminal_node.type_message = MSG_TERMINAL;
-}
-
-static void set_timers() {
-	// Set up the signal handler
-	signal(SIGPROF, signalHandler);
-
-	struct itimerval itimer_old, itimer_new;
-	itimer_new.it_interval.tv_sec = 0;
-	itimer_new.it_interval.tv_usec = 0;
-
-	if (sleep_sec != 0)
-	{
-		sleeping = 1;
-
-		itimer_new.it_value.tv_sec = 3+sleep_sec*4;
-		itimer_new.it_value.tv_usec = 0;
-		setitimer(ITIMER_PROF, &itimer_new, &itimer_old);
-	}
-	else
-	{
-		sleeping = 0;
-
-		itimer_new.it_value.tv_sec = AWAKE_SEC;
-		itimer_new.it_value.tv_usec = AWAKE_USEC;
-		setitimer(ITIMER_PROF, &itimer_new, &itimer_old);
-	}
-}
-
-void indigo__init_(short create_file, short enable_sampling)
-{
-    set_thread_affinity();
-
-    if (create_file) {
-        create_output_file();
-
-        if (enable_sampling) {
-            // We could set the timers even if the file did not have to be
-            // create.  But timers are used to write to the file only. Since
-            // there is no other use of timers, we disable setting up timers as
-            // well.
-            set_timers();
-        } else {
-            // Explicitly set awake mode to ON.
-            sleeping = 0;
-        }
-    }
-
-	atexit(indigo__exit);
 }
 
 static bool index_comparator(const val_idx_pair& v1, const val_idx_pair& v2) {
@@ -416,10 +160,12 @@ static void print_alignment_histogram(int line_number, long* histogram) {
     }
 }
 
-static void indigo__exit()
-{
-	if (fd >= 0)	close(fd);
-	if (intel_apic_mapping)	free(intel_apic_mapping);
+void indigo__exit() {
+    if (fd >= 0)   
+        close(fd);
+
+    if (intel_apic_mapping)
+        free(intel_apic_mapping);
 
     for (std::set<int>::iterator it = analyzed_loops.begin();
             it != analyzed_loops.end(); it++) {
@@ -454,7 +200,8 @@ static void indigo__exit()
                 case NOT_ALIGNED:
                     fprintf (stderr, "non-temporal arrays are not aligned, "
                             "try using _mm_malloc/_mm_free to allocate/free "
-                            "arrays that are aligned with cache-line bounary.\n");
+                            "arrays that are aligned with cache-line "
+                            "bounary.\n");
                     break;
             }
         }
@@ -472,21 +219,21 @@ static void indigo__exit()
             switch(align_status) {
                 case FULL_ALIGNED:
                     fprintf (stderr, "all arrays align, use "
-                        "__assume_aligned() or #pragma vector aligned to "
-                        "tell compiler about alignment.\n");
+                            "__assume_aligned() or #pragma vector aligned to "
+                            "tell compiler about alignment.\n");
                     break;
 
                 case MUTUAL_ALIGNED:
                     fprintf (stderr, "all arrays are mutually aligned but "
-                        "not aligned to cache-line boundary, use "
-                        "_mm_malloc/_mm_free to allocate/free aligned "
-                        "storage.\n");
+                            "not aligned to cache-line boundary, use "
+                            "_mm_malloc/_mm_free to allocate/free aligned "
+                            "storage.\n");
                     break;
 
                 case NOT_ALIGNED:
                     fprintf (stderr, "arrays are not aligned, try using "
-                        "_mm_malloc/_mm_free to allocate/free arrays that "
-                        "are aligned with cache-line bounary.\n");
+                            "_mm_malloc/_mm_free to allocate/free arrays that "
+                            "are aligned with cache-line bounary.\n");
                     break;
             }
         }
@@ -578,63 +325,6 @@ static void indigo__exit()
     }
 }
 
-static inline void fill_trace_struct(int read_write, int line_number, size_t base, size_t p, int var_idx)
-{
-	// If this process was never supposed to record stats
-	// or if the file-open failed, then return
-	if (fd < 0)	return;
-
-	if (sleeping == 1 || access_count >= 131072)	// 131072 is 128*1024 (power of two)
-		return;
-
-	size_t address_base = (size_t) base;
-	size_t address = (size_t) p;
-
-	node_t node;
-	node.type_message = MSG_TRACE_INFO;
-
-	node.trace_info.coreID = getCoreID();
-	node.trace_info.read_write = read_write;
-	node.trace_info.base = address_base;
-	node.trace_info.address = address;
-	node.trace_info.var_idx = var_idx;
-	node.trace_info.line_number = line_number;
-
-	write(fd, &node, sizeof(node_t));
-}
-
-static inline void fill_mem_struct(int read_write, int line_number, size_t p, int var_idx, int type_size)
-{
-	// If this process was never supposed to record stats
-	// or if the file-open failed, then return
-	if (fd < 0)	return;
-
-	if (sleeping == 1 || access_count >= 131072)	// 131072 is 128*1024 (power of two)
-		return;
-
-	node_t node;
-	node.type_message = MSG_MEM_INFO;
-
-	node.mem_info.coreID = getCoreID();
-	node.mem_info.read_write = read_write;
-	node.mem_info.address = p;
-	node.mem_info.var_idx = var_idx;
-	node.mem_info.line_number = line_number;
-	node.mem_info.type_size = type_size;
-
-	write(fd, &node, sizeof(node_t));
-}
-
-void indigo__gen_trace_c(int read_write, int line_number, void* base, void* addr, int var_idx)
-{
-	if (fd >= 0)	fill_trace_struct(read_write, line_number, (size_t) base, (size_t) addr, var_idx);
-}
-
-void indigo__gen_trace_f(int *read_write, int *line_number, void* base, void* addr, int *var_idx)
-{
-	if (fd >= 0)	fill_trace_struct(*read_write, *line_number, (size_t) base, (size_t) addr, *var_idx);
-}
-
 short& get_branch_bin(int line_number, int loop_line_number) {
     analyzed_loops.insert(loop_line_number);
     short core_id = getCoreID();
@@ -663,114 +353,6 @@ short& get_branch_bin(int line_number, int loop_line_number) {
     unlock();
 
     return branch_bin[line_number][core_id];
-}
-
-void indigo__record_branch_c(int line_number, int loop_line_number, int true_branch_count, int false_branch_count)
-{
-    // Short circuit to prevent runtime overhead.
-    if (get_branch_bin(line_number, loop_line_number) == BRANCH_UNKNOWN)
-        return;
-
-    branch_loop_line_pair[line_number] = loop_line_number;
-    loop_branch_line_pair[loop_line_number].insert(line_number);
-
-    int status = BRANCH_UNKNOWN;
-    int branch_count = true_branch_count + false_branch_count;
-    if (true_branch_count != 0 && false_branch_count == 0) {
-        status = BRANCH_TRUE;
-    } else if (true_branch_count * 100.0f > branch_count * 85.0f) {
-        status = BRANCH_MOSTLY_TRUE;
-    } else if (false_branch_count != 0 > true_branch_count == 0) {
-        status = BRANCH_FALSE;
-    } else if (false_branch_count * 100.0f > branch_count * 85.0f) {
-        status = BRANCH_MOSTLY_FALSE;
-    } else {
-        status = BRANCH_UNKNOWN;
-    }
-
-    if (get_branch_bin(line_number, loop_line_number) == BRANCH_NOINIT) {
-        get_branch_bin(line_number, loop_line_number) = status;
-    } else {
-        if (get_branch_bin(line_number, loop_line_number) != status) {
-            get_branch_bin(line_number, loop_line_number) = BRANCH_UNKNOWN;
-        }
-    }
-}
-
-#if 0
-void indigo__simd_branch_c(int line_number, int idxv, int type_size, int branch_dir, int common_alignment, int* recorded_simd_branch_dir)
-{
-	if (common_alignment >= 0 && type_size > 0) {
-        int simd_index = (idxv*type_size - common_alignment) % 64;
-        if (simd_index >= 0) {
-            if (get_branch_bin(line_number) != BRANCH_UNKNOWN) {
-                if (*recorded_simd_branch_dir == -1)
-                    *recorded_simd_branch_dir = branch_dir;
-
-                if (simd_index > 0) {
-                    // Check if branch_dir is the same as previously recorded dirs.
-                    if (*recorded_simd_branch_dir != branch_dir) {
-                        get_branch_bin(line_number) = BRANCH_UNKNOWN;
-                    }
-                } else {
-                    // Set the branch_dir value for subsequent iterations.
-                    if (*recorded_simd_branch_dir != branch_dir)
-                        get_branch_bin(line_number) = BRANCH_SIMD;
-                    *recorded_simd_branch_dir = branch_dir;
-                }
-            }
-        }
-    }
-}
-#endif
-
-void indigo__vector_stride_c(int loop_line_number, int var_idx, void* addr, int type_size) {
-	// If this process was never supposed to record stats
-	// or if the file-open failed, then return
-	if (fd < 0)	return;
-
-	if (sleeping == 1 || access_count >= 131072)	// 131072 is 128*1024 (power of two)
-		return;
-
-	node_t node;
-	node.type_message = MSG_VECTOR_STRIDE_INFO;
-
-	node.vector_stride_info.coreID = getCoreID();
-	node.vector_stride_info.address = (size_t) addr;
-	node.vector_stride_info.var_idx = var_idx;
-	node.vector_stride_info.loop_line_number = loop_line_number;
-	node.vector_stride_info.type_size = type_size;
-
-	write(fd, &node, sizeof(node_t));
-}
-
-void indigo__record_c(int read_write, int line_number, void* addr, int var_idx, int type_size)
-{
-	if (fd >= 0)	fill_mem_struct(read_write, line_number, (size_t) addr, var_idx, type_size);
-}
-
-void indigo__record_f_(int *read_write, int *line_number, void* addr, int *var_idx, int* type_size)
-{
-	if (fd >= 0)	fill_mem_struct(*read_write, *line_number, (size_t) addr, *var_idx, *type_size);
-}
-
-void indigo__write_idx_c(const char* var_name, const int length)
-{
-	node_t node;
-	node.type_message = MSG_STREAM_INFO;
-#define	indigo__MIN(a,b)	(a) < (b) ? (a) : (b)
-	int dst_len = indigo__MIN(STREAM_LENGTH-1, length);
-#undef indigo__MIN
-
-	strncpy(node.stream_info.stream_name, var_name, dst_len);
-	node.stream_info.stream_name[dst_len] = '\0';
-
-	write(fd, &node, sizeof(node_t));
-}
-
-void indigo__write_idx_f_(const char* var_name, const int* length)
-{
-	indigo__write_idx_c(var_name, *length);
 }
 
 long* new_histogram(size_t histogram_entries) {
@@ -919,6 +501,60 @@ long* get_tripcount_histogram(int line_number) {
     return get_histogram(tripcount_map, line_number, MAX_HISTOGRAM_ENTRIES);
 }
 
+void indigo__record_branch_c(int line_number, int loop_line_number,
+        int true_branch_count, int false_branch_count) {
+    // Short circuit to prevent runtime overhead.
+    if (get_branch_bin(line_number, loop_line_number) == BRANCH_UNKNOWN)
+        return;
+
+    branch_loop_line_pair[line_number] = loop_line_number;
+    loop_branch_line_pair[loop_line_number].insert(line_number);
+
+    int status = BRANCH_UNKNOWN;
+    int branch_count = true_branch_count + false_branch_count;
+    if (true_branch_count != 0 && false_branch_count == 0) {
+        status = BRANCH_TRUE;
+    } else if (true_branch_count * 100.0f > branch_count * 85.0f) {
+        status = BRANCH_MOSTLY_TRUE;
+    } else if (false_branch_count != 0 > true_branch_count == 0) {
+        status = BRANCH_FALSE;
+    } else if (false_branch_count * 100.0f > branch_count * 85.0f) {
+        status = BRANCH_MOSTLY_FALSE;
+    } else {
+        status = BRANCH_UNKNOWN;
+    }
+
+    if (get_branch_bin(line_number, loop_line_number) == BRANCH_NOINIT) {
+        get_branch_bin(line_number, loop_line_number) = status;
+    } else {
+        if (get_branch_bin(line_number, loop_line_number) != status) {
+            get_branch_bin(line_number, loop_line_number) = BRANCH_UNKNOWN;
+        }
+    }
+}
+
+void indigo__vector_stride_c(int loop_line_number, int var_idx, void* addr,
+        int type_size) {
+    // If this process was never supposed to record stats
+    // or if the file-open failed, then return
+    if (fd < 0)
+        return;
+
+    if (sleeping == 1 || access_count >= 131072)    // 131072 is 128*1024.
+        return;
+
+    node_t node;
+    node.type_message = MSG_VECTOR_STRIDE_INFO;
+
+    node.vector_stride_info.coreID = getCoreID();
+    node.vector_stride_info.address = (size_t) addr;
+    node.vector_stride_info.var_idx = var_idx;
+    node.vector_stride_info.loop_line_number = loop_line_number;
+    node.vector_stride_info.type_size = type_size;
+
+    write(fd, &node, sizeof(node_t));
+}
+
 /**
     indigo__aligncheck_c()
     Checks for alignment to cache line boundary and updates histogram.
@@ -1015,3 +651,56 @@ void indigo__tripcount_check_c(int line_number, long trip_count) {
     if (histogram[trip_count] < LONG_MAX)
         histogram[trip_count]++;
 }
+
+void set_thread_affinity() {
+    int info[4];
+    int proc = get_proc_kind();
+    if (proc == PROC_UNKNOWN) {
+        fprintf (stderr, "MACPO :: Cannot determine processor identification, "
+                "resorting to defaults...\n");
+    } else if (proc == PROC_INTEL) {
+        numCores = sysconf(_SC_NPROCESSORS_CONF);
+        intel_apic_mapping = (int*) malloc (sizeof (int) * numCores);
+
+        if (intel_apic_mapping) {
+            // Get the original affinity mask
+            cpu_set_t old_mask;
+            CPU_ZERO(&old_mask);
+            sched_getaffinity(0, sizeof(cpu_set_t), &old_mask);
+
+            // Loop over all cores and find map their APIC IDs to core IDs
+            int i;
+            for (i=0; i<numCores; i++) {
+                cpu_set_t mask;
+                CPU_ZERO(&mask);
+                CPU_SET(i, &mask);
+
+                if (sched_setaffinity(0, sizeof(cpu_set_t), &mask) != -1) {
+                    // Get the APIC ID
+                    __cpuid(info, 0xB, 0);
+                    if (info[EBX] != 0) { // x2APIC
+                        __cpuid(info, 0xB, 2);
+                        intel_apic_mapping[i] = info[EDX];
+                    } else {  // Traditonal APIC
+                        __cpuid(info, 1, 0);
+                        intel_apic_mapping[i] = (info[EBX] & 0xff000000) >> 24;
+                    }
+
+#ifdef DEBUG_PRINT
+                    fprintf (stderr, "MACPO :: Registered mapping from core %d "
+                            "to APIC %d\n", i, intel_apic_mapping[i]);
+#endif
+                }
+            }
+
+            // Reset the original affinity mask
+            sched_setaffinity (0, sizeof(cpu_set_t), &old_mask);
+        }
+#ifdef DEBUG_PRINT
+        else {
+            fprintf (stderr, "MACPO :: malloc() failed\n");
+        }
+#endif
+    }
+}
+
