@@ -161,7 +161,6 @@ const analysis_profile_t MINST::run_analysis(SgNode* node, short action) {
                 aligncheck_t visitor(var_renaming);
                 visitor.process_node(node);
 
-                stream_list = visitor.get_stream_list();
                 statement_list.insert(statement_list.end(),
                         visitor.stmt_begin(), visitor.stmt_end());
 

@@ -43,8 +43,6 @@ class aligncheck_t {
         aligncheck_t(VariableRenaming*& _var_renaming);
         ~aligncheck_t();
 
-        name_list_t& get_stream_list();
-
         void atTraversalEnd();
         void atTraversalStart();
 
@@ -75,7 +73,6 @@ class aligncheck_t {
 
         VariableRenaming* var_renaming;
         statement_list_t statement_list;
-        name_list_t var_name_list;
         analysis_profile_t analysis_profile;
         loop_traversal_t* loop_traversal;
 };

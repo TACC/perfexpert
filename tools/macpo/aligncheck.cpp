@@ -42,12 +42,7 @@ aligncheck_t::~aligncheck_t() {
     loop_traversal = NULL;
 }
 
-name_list_t& aligncheck_t::get_stream_list() {
-    return var_name_list;
-}
-
 void aligncheck_t::atTraversalStart() {
-    var_name_list.clear();
     statement_list.clear();
 }
 
