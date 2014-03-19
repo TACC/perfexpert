@@ -30,6 +30,7 @@
 #include "loop_traversal.h"
 #include "minst.h"
 #include "tracer.h"
+#include "tripcount.h"
 #include "vector_strides.h"
 
 using namespace SageBuilder;
@@ -159,6 +160,17 @@ const analysis_profile_t MINST::run_analysis(SgNode* node, short action) {
         case ACTION_ALIGNCHECK:
             {
                 aligncheck_t visitor(var_renaming);
+                visitor.process_node(node);
+
+                statement_list.insert(statement_list.end(),
+                        visitor.stmt_begin(), visitor.stmt_end());
+
+                return visitor.get_analysis_profile();
+            }
+
+        case ACTION_TRIPCOUNT:
+            {
+                tripcount_t visitor(var_renaming);
                 visitor.process_node(node);
 
                 statement_list.insert(statement_list.end(),
@@ -316,10 +328,15 @@ void MINST::visit(SgNode* node)
             std::vector<SgExpression*> params, empty_params;
             int create_file, enable_sampling;
 
-            if (action == ACTION_ALIGNCHECK) {
-                create_file = 0;
-            } else {
-                create_file = 1;
+            switch(action) {
+                case ACTION_ALIGNCHECK:
+                case ACTION_TRIPCOUNT:
+                    create_file = 0;
+                    break;
+
+                default:
+                    create_file = 1;
+                    break;
             }
 
             // Use compiler argument.
@@ -340,14 +357,19 @@ void MINST::visit(SgNode* node)
             insertStatementBefore(statement, expr_stmt);
             ROSE_ASSERT(expr_stmt);
 
-            if (action != ACTION_ALIGNCHECK) {
-                SgExprStatement* map_stmt = NULL;
-                map_stmt = ir_methods::prepare_call_statement(body,
-                        indigo__create_map, empty_params, expr_stmt);
-                insertStatementAfter(expr_stmt, map_stmt);
-                ROSE_ASSERT(map_stmt);
+            switch(action) {
+                case ACTION_ALIGNCHECK:
+                case ACTION_TRIPCOUNT:
+                    break;
 
-                insert_map_prototype(node);
+                default:
+                    SgExprStatement* map_stmt = NULL;
+                    map_stmt = ir_methods::prepare_call_statement(body,
+                            indigo__create_map, empty_params, expr_stmt);
+                    insertStatementAfter(expr_stmt, map_stmt);
+                    ROSE_ASSERT(map_stmt);
+
+                    insert_map_prototype(node);
             }
         }
 
