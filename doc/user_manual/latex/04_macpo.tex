@@ -27,8 +27,8 @@ void* thread_func (void* arg) {
 
 To compile the application using MACPO, indicating that we are interested in understanding the performance metrics associated with the \texttt{thread\_func} function, run the following commands:
 \begin{verbatim}
-$ macpo.sh --macpo:function=thread_func -c monte-carlo.cc
-$ macpo.sh --macpo:function=thread_func monte-carlo.o -o monte-carlo -lpthread -lrt
+$ macpo.sh --macpo:instrument=thread_func -c monte-carlo.cc
+$ macpo.sh --macpo:instrument=thread_func monte-carlo.o -o monte-carlo -lpthread -lrt
 \end{verbatim}
 
 Runtime logs (macpo.out) are produced when the application is run:
@@ -119,3 +119,29 @@ This section explains how to translate the MACPO metrics into source code change
 	\item[Reuse factors for L1, L2 and L3 data caches]\hfill \\
 	A low reuse factor indicates that a line is frequently evicted from the cache. The reuse factor can be improved by reducing the reuse distance of memory accesses.
 \end{description}
+
+\section{Command line options accepted by MACPO}
+
+The various analyses in MACPO and the corresponding options are shown below:
+
+\begin{tabular}[h]{|c|c|}\hline
+\textbf{Analysis} & \textbf{MACPO option} \\\hline
+Memory analysis & \texttt{--macpo:instrument} \\\hline
+Alignment checking & \texttt{--macpo:check-alignment} \\\hline
+Measure loop trip counts & \texttt{--macpo:record-tripcount} \\\hline
+Count branch outcomes & \texttt{--macpo:record-branchpath} \\\hline
+Measure gather/scatter accesses from vectorization & \textt{--macpo:vector-strides} \\\hline
+\end{tabular}
+
+Each of these options accepts a program location (i.e. either a function or a loop specification). Function names can be used as identifiers for instrumentation (e.g. \texttt{--macpo:check-alignment=foo}). To tell MACPO to instrument a loop, pass either the name of the function that contains the loop of interest or the name of the file that contains the loop and the line number at which the loop starts separated by the \texttt{\#} character. For instance, to instrument the loop in \texttt{bar.c} that starts at line \texttt{273} for measuring trip counts, use the option: \texttt{--macpo:record-tripcount=bar.c\#273}. You may also use the option \texttt{--macpo:record-tripcount=foo\#273} to achieve the same effect.
+
+MACPO also accepts other flags that influence it's operation. The following table shows the valid options.
+\begin{tabular}[h]{|c|c|}\hline
+\textbf{MACPO option} & \textbf{Purpose} \\\hline
+\texttt{--macpo:backup-filename} & File to backup original source code to, before transforming it.\\\hline
+\texttt{--macpo:no-compile} & Generate the transformed source code in \texttt{rose\_*} file(s) but don't compile it.\\\hline
+\texttt{--macpo:enable-sampling} & Enable sampling mode when collecting measurements from instrumentation.\\\hline
+\texttt{--macpo:disable-sampling} & Disable sampling mode when collecting measurements from instrumentation.\\\hline
+\texttt{--macpo:profile-analysis} & Collect and display basic profiling information for MACPO's static analyses.\\\hline
+\end{tabular}
+
