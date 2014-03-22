@@ -149,17 +149,8 @@ void aligncheck_t::instrument_alignment_checks(Sg_File_Info* fileInfo,
     for (reference_list_t::iterator it = reference_list.begin();
             it != reference_list.end(); it++) {
         reference_info_t& reference_info = *it;
-        if (SgExpression* expr = isSgExpression(reference_info.node)) {
-            SgExpression* stripped_expr = NULL;
-            SgExpression* copy = copyExpression(expr);
-
-            // Strip unary operators like ++ or -- from the expression.
-            stripped_expr = ir_methods::strip_unary_operators(copy);
-            ROSE_ASSERT(stripped_expr && "Bug in stripping unary operators "
-                    "from given expression!");
-
-            expr_list.push_back(stripped_expr);
-        }
+        if (SgExpression* expr = isSgExpression(reference_info.node))
+            expr_list.push_back(expr);
     }
 
     ir_methods::remove_duplicate_expressions(expr_list);

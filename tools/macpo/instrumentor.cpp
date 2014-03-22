@@ -87,10 +87,19 @@ attrib instrumentor_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
         SgStatement *stmt = getEnclosingNode<SgStatement>(ref_node);
         if (stmt)	line_number = stmt->get_file_info()->get_raw_line();
 
+        SgExpression* expr = isSgExpression(ref_node);
+        ROSE_ASSERT(expr);
+
+        // Strip unary operators like ++ or -- from the expression.
+        SgExpression* stripped_expr = NULL;
+        stripped_expr = ir_methods::strip_unary_operators(expr);
+        ROSE_ASSERT(stripped_expr && "Bug in stripping unary operators "
+                "from given expression!");
+
         // If not Fortran, cast the address to a void pointer
         SgExpression *param_addr = SageInterface::is_Fortran_language() ?
-            (SgExpression*) ref_node : buildCastExp (
-                    buildAddressOfOp((SgExpression*) ref_node),
+            stripped_expr : buildCastExp (
+                    buildAddressOfOp(stripped_expr),
                     buildPointerType(buildVoidType()));
 
         SgIntVal* param_line_number = new SgIntVal(fileInfo, line_number);
@@ -100,8 +109,6 @@ attrib instrumentor_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
         std::string function_name = SageInterface::is_Fortran_language() ?
                 "indigo__record_f" : "indigo__record_c";
 
-        ROSE_ASSERT(isSgExpression(ref_node));
-        SgExpression* expr = isSgExpression(ref_node);
         SgType* type = expr->get_type();
         SgSizeOfOp* size_of_op = new SgSizeOfOp(fileInfo, NULL, type, type);
 

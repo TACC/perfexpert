@@ -27,10 +27,7 @@
 using namespace SageBuilder;
 using namespace SageInterface;
 
-SgExpression* ir_methods::strip_unary_operators(SgExpression* expr) {
-    ROSE_ASSERT(expr && "Empty expression as input to "
-            "ir_methods::strip_unary_operators(SgExpression* expr)!");
-
+SgExpression* ir_methods::_strip_unary_operators(SgExpression* expr) {
     // If we found a unary operation, return it's pointer.
     if (SgUnaryOp* unary_op = isSgUnaryOp(expr)) {
         return unary_op->get_operand_i();
@@ -39,7 +36,7 @@ SgExpression* ir_methods::strip_unary_operators(SgExpression* expr) {
     // If it's a pointer, drill deeper.
     if (SgPntrArrRefExp* pntr = isSgPntrArrRefExp(expr)) {
         SgExpression* rhs_expr = pntr->get_rhs_operand_i();
-        SgExpression* revised_rhs = strip_unary_operators(rhs_expr);
+        SgExpression* revised_rhs = _strip_unary_operators(rhs_expr);
 
         pntr->set_rhs_operand_i(revised_rhs);
         return pntr;
@@ -47,6 +44,14 @@ SgExpression* ir_methods::strip_unary_operators(SgExpression* expr) {
 
     // Otherwise, return just the expression as it is.
     return expr;
+}
+
+SgExpression* ir_methods::strip_unary_operators(SgExpression* expr) {
+    ROSE_ASSERT(expr && "Empty expression as input to "
+            "ir_methods::strip_unary_operators(SgExpression* expr)!");
+
+    SgExpression* copy = copyExpression(expr);
+    return _strip_unary_operators(copy);
 }
 
 void ir_methods::place_alignment_checks(expr_list_t& expr_list,
@@ -58,6 +63,12 @@ void ir_methods::place_alignment_checks(expr_list_t& expr_list,
         SgExpression* expr = *it;
         if (SgPntrArrRefExp* pntr = isSgPntrArrRefExp(expr)) {
             SgExpression *param_addr = (SgExpression*) pntr;
+
+            // Strip unary operators like ++ or -- from the expression.
+            param_addr = ir_methods::strip_unary_operators(expr);
+            ROSE_ASSERT(param_addr && "Bug in stripping unary operators from "
+                    "given expression!");
+
             if (is_Fortran_language() == false) {
                 SgAddressOfOp* address_op = NULL;
                 SgType* void_pointer_type = NULL;

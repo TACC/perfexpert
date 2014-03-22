@@ -29,6 +29,9 @@
 #include "inst_defs.h"
 
 class ir_methods {
+    private:
+        static SgExpression* _strip_unary_operators(SgExpression* expr);
+
     public:
         static const int INVALID_LOOP = 1 << 0;
         static const int INVALID_FLOW = 1 << 1;
