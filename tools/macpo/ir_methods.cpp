@@ -27,6 +27,28 @@
 using namespace SageBuilder;
 using namespace SageInterface;
 
+SgExpression* ir_methods::strip_unary_operators(SgExpression* expr) {
+    ROSE_ASSERT(expr && "Empty expression as input to "
+            "ir_methods::strip_unary_operators(SgExpression* expr)!");
+
+    // If we found a unary operation, return it's pointer.
+    if (SgUnaryOp* unary_op = isSgUnaryOp(expr)) {
+        return unary_op->get_operand_i();
+    }
+
+    // If it's a pointer, drill deeper.
+    if (SgPntrArrRefExp* pntr = isSgPntrArrRefExp(expr)) {
+        SgExpression* rhs_expr = pntr->get_rhs_operand_i();
+        SgExpression* revised_rhs = strip_unary_operators(rhs_expr);
+
+        pntr->set_rhs_operand_i(revised_rhs);
+        return pntr;
+    }
+
+    // Otherwise, return just the expression as it is.
+    return expr;
+}
+
 void ir_methods::place_alignment_checks(expr_list_t& expr_list,
         Sg_File_Info* fileInfo, SgScopeStatement* loop_stmt,
         statement_list_t& statement_list, const std::string& prefix) {

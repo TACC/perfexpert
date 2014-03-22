@@ -47,6 +47,8 @@ class ir_methods {
         typedef std::map<std::string, VariableRenaming::NumNodeRenameEntry>
             def_map_t;
 
+        static SgExpression* strip_unary_operators(SgExpression* expr);
+
         static void place_alignment_checks(expr_list_t& expr_list,
                 Sg_File_Info* fileInfo, SgScopeStatement* loop_stmt,
                 statement_list_t& statement_list,
