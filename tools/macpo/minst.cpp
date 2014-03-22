@@ -37,15 +37,18 @@
 using namespace SageBuilder;
 using namespace SageInterface;
 
-MINST::MINST(short _action, int _line_number, std::string _inst_func,
-        bool _disable_sampling, bool _profile_analysis,
-        VariableRenaming* _var_renaming) {
-    action = _action;
-    line_number = _line_number;
-    inst_func = _inst_func;
-    disable_sampling = _disable_sampling;
-    profile_analysis = _profile_analysis;
-    var_renaming = _var_renaming;
+MINST::MINST(options_t& options, SgProject* project) {
+    action = options.action;
+    line_number = options.line_number;
+    inst_func = options.function_name;
+    disable_sampling = options.disable_sampling;
+    profile_analysis = options.profile_analysis;
+
+    var_renaming = new VariableRenaming(project);
+    if (options.action == ACTION_ALIGNCHECK) {
+        // If we are about to check alignment, run the VariableRenaming pass.
+        var_renaming->run();
+    }
 }
 
 void MINST::insert_map_prototype(SgNode* node) {

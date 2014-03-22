@@ -30,9 +30,7 @@
 
 class MINST : public AstSimpleProcessing {
     public:
-        MINST(short _action, int _line_number, std::string _inst_func,
-                bool _disable_sampling, bool _profile_analysis,
-                VariableRenaming* _var_renaming);
+        MINST(options_t& options, SgProject* project);
 
         void insert_map_function(SgNode* node);
         void insert_map_prototype(SgNode* node);
