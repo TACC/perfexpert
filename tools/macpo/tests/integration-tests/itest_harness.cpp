@@ -124,7 +124,8 @@ bool verify_output(std::string& filename, std::string& binary) {
             // Start from index 1, because no point in
             // comparing the test identifier [expected_prefix].
             for (int i=1; i<prog_fields; i++) {
-                if (prog_field_list[i] != file_field_list[i]) {
+                if (prog_field_list[i] != file_field_list[i] &&
+                        file_field_list[i] != "?") {
                     std::cout << "Field mismatch between program output and "
                         "expected output: " << prog_field_list[i] << " v/s " <<
                         file_field_list[i] << "!" << std::endl;
