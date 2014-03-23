@@ -19,4 +19,8 @@
 # $HEADER$
 #
 
-SUBDIRS = unit-tests integration-tests
+lib_LIBRARIES = libmrt.a
+libmrt_a_SOURCES = mrt.cpp
+libmrt_a_CXXFLAGS = -I$(srcdir) -I$(srcdir)/../../../include
+
+# EOF
