@@ -111,7 +111,7 @@ void indigo__write_idx_c(const char* var_name, const int length);
 #if defined(__cplusplus)
 extern "C" {
 #endif
-void indigo__create_map();
+void indigo__create_map() __attribute__((weak));
 #if defined (__cplusplus)
 }
 #endif
