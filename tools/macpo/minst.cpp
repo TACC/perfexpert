@@ -344,6 +344,7 @@ void MINST::visit(SgNode* node)
             int create_file, enable_sampling;
 
             switch(action) {
+                case ACTION_NONE:
                 case ACTION_ALIGNCHECK:
                 case ACTION_TRIPCOUNT:
                 case ACTION_BRANCHPATH:
