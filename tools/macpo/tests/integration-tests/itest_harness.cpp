@@ -137,11 +137,15 @@ bool verify_output(std::string& filename, std::string& binary) {
 
     // Are there any expected outputs that
     // we did not see in the output?
-    if (ctr == file_lines || (ctr < file_lines &&
+    if (ctr >= file_lines || (ctr < file_lines &&
             file_line_list[ctr].compare(0, expected_prefix.size(),
                 expected_prefix) != 0)) {
         return true;
     }
+
+    std::cout << "Remaining entries in expected output, starting with: " <<
+        file_line_list[ctr] << "!" << std::endl;
+    return false;
 }
 
 static void populate_args(string_list_t& args, std::string& input_file,
