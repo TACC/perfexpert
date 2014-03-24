@@ -32,7 +32,12 @@
 #include "generic_defs.h"
 #include "macpo_record.h"
 
+static const char* MSG_METADATA_INFO = "metadata_info";
+
+static const char* MSG_BINARY_NAME = "binary_name";
+static const char* MSG_TIMESTAMP = "timestamp";
+
 int print_trace_records(const global_data_t& global_data);
-int read_file(const char* filename, global_data_t& global_data);
+int read_file(const char* filename, global_data_t& global_data, bool bot);
 
 #endif  /* RECORD_IO_H_ */

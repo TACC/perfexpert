@@ -89,7 +89,6 @@ int vector_stride_analysis(const global_data_t& global_data,
 
 int print_vector_strides(const global_data_t& global_data,
         histogram_list_t& stride_list) {
-    bool gather_scatter_ops = false;
     const int num_streams = global_data.stream_list.size();
     for (int i=0; i<num_streams; i++) {
         if(stride_list[i] != NULL) {
@@ -98,6 +97,7 @@ int print_vector_strides(const global_data_t& global_data,
 
             size_t limit = std::min((size_t) STRIDE_COUNT, pair_list.size());
             bool unit_stride = true;
+            bool unroll = false;
             for (size_t j=0; j<limit; j++) {
                 size_t max_bin = pair_list[j].first;
                 size_t max_val = pair_list[j].second;
@@ -106,15 +106,26 @@ int print_vector_strides(const global_data_t& global_data,
                 // then display gather/scatter message.
                 if (max_bin > 1 && max_val > 0) {
                     unit_stride = false;
+
+                    // Should we recommend opt-gather-scatter-unroll?
+                    if (max_bin > 4) {
+                        unroll = true;
+                    }
+
                     break;
                 }
             }
 
             if (unit_stride == false) {
-                gather_scatter_ops = true;
                 std::cout << "gather/scatter operations required for: " <<
                     global_data.stream_list[i] << ",\ttry converting " <<
                     "array-of-structs to struct-of-arrays." << std::endl;
+
+                if (unroll == true) {
+                    std::cout << "try using -opt-gather-scatter-unroll=<N> " <<
+                        "and -mP2OPT_hlo_pref_indirect_refs=T if compiling " <<
+                        "code for the Intel MIC." << std::endl;
+                }
             }
         }
     }

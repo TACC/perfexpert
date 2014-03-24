@@ -101,7 +101,7 @@ do
 done
 
 # Finally, invoke the macpo executable
-${MINST_PATH} -I${MRT_INCLUDE_DIR} -L${MRT_LIB_DIR} $* -lmrt -lstdc++ &> \
+${MINST_PATH} -rose:openmp:ast_only -I${MRT_INCLUDE_DIR} -L${MRT_LIB_DIR} $* -lmrt -lstdc++ &> \
     "$tmp_macpo"
 
 if [ $? != 0 ]
@@ -123,7 +123,7 @@ then
             cat "$tmp_macpo"
             echo
             echo "Failed to run the following two commands:"
-            echo "${MINST_PATH} -I${MRT_INCLUDE_DIR} -L${MRT_LIB_DIR} $*" \
+            echo "${MINST_PATH} -rose:openmp:ast_only -I${MRT_INCLUDE_DIR} -L${MRT_LIB_DIR} $*" \
                 "-lmrt -lstdc++"
             echo "$GNU_FORTRAN_COMPILER -L${MRT_LIB_DIR} $* -lmrt -lstdc++"
         else
@@ -133,7 +133,7 @@ then
         cat "$tmp_macpo"
         echo
         echo "Failed to run the following command:"
-        echo "${MINST_PATH} -I${MRT_INCLUDE_DIR} -L${MRT_LIB_DIR} $* -lmrt " \
+        echo "${MINST_PATH} -rose:openmp:ast_only -I${MRT_INCLUDE_DIR} -L${MRT_LIB_DIR} $* -lmrt " \
             "-lstdc++"
     fi
 else

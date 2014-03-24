@@ -27,10 +27,15 @@
 #define MAX_STRIDE      128
 #define STRIDE_COUNT    3
 
+static const char* MSG_STRIDE_ANALYSIS = "stride_analysis";
+
+static const char* MSG_STRIDE_VALUE = "stride_value";
+static const char* MSG_STRIDE_COUNT = "stride_count";
+
 int stride_analysis(const global_data_t& global_data,
         histogram_list_t& stride_list);
 
 int print_strides(const global_data_t& global_data,
-        histogram_list_t& stride_list);
+        histogram_list_t& stride_list, bool bot);
 
 #endif  /* STRIDE_ANALYSIS_H_ */

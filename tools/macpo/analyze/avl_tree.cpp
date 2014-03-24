@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <iostream>
 
+#include "analysis_defs.h"
 #include "avl_tree.h"
 
 #define MAX(a,b)    ((a) > (b) ? (a) : (b))
@@ -26,27 +27,27 @@ void avl_tree::_destroy(avl_node_t* t) {
     }
 }
 
-bool avl_tree::contains(size_t address) {
-    std::map<size_t, avl_node_t*>::iterator it = addr_to_node.find(address);
+bool avl_tree::contains(size_t cache_line) {
+    std::map<size_t, avl_node_t*>::iterator it = addr_to_node.find(cache_line);
     return (it != addr_to_node.end());
 }
 
-void avl_tree::set_distance(size_t address, long long distance) {
-    std::map<size_t, avl_node_t*>::iterator it = addr_to_node.find(address);
+void avl_tree::set_distance(size_t cache_line, long long distance) {
+    std::map<size_t, avl_node_t*>::iterator it = addr_to_node.find(cache_line);
     if (it != addr_to_node.end()) {
-        avl_node_t* node = addr_to_node[address];
+        avl_node_t* node = addr_to_node[cache_line];
         if (node) {
             node->key = last_key - distance - 1;
         }
     }
 }
 
-long long avl_tree::get_distance(size_t address) {
-    std::map<size_t, avl_node_t*>::iterator it = addr_to_node.find(address);
+long long avl_tree::get_distance(size_t cache_line) {
+    std::map<size_t, avl_node_t*>::iterator it = addr_to_node.find(cache_line);
     if (it != addr_to_node.end()) {
-        avl_node_t* node = addr_to_node[address];
+        avl_node_t* node = addr_to_node[cache_line];
         if (node) {
-            assert(node->data.address == address);
+            assert(ADDR_TO_CACHE_LINE(node->data.address) == cache_line);
             return last_key - node->key - 1;
         }
     }
@@ -73,10 +74,14 @@ avl_tree::avl_node_t* avl_tree::single_rotate_with_left(avl_node_t* k2) {
     k2->height = MAX(height(k2->left), height(k2->right)) + 1;
     k1->height = MAX(height(k1->left), k2->height) + 1;
 
-    if (k1)         addr_to_node[k1->data.address] = k1;
-    if (k2)         addr_to_node[k2->data.address] = k2;
-    if (k1->right)  addr_to_node[k1->right->data.address] = k1->right;
-    if (k2->left)   addr_to_node[k2->left->data.address] = k2->left;
+    if (k1)         addr_to_node[ADDR_TO_CACHE_LINE(k1->data.address)] = k1;
+    if (k2)         addr_to_node[ADDR_TO_CACHE_LINE(k2->data.address)] = k2;
+
+    if (k1->right)
+        addr_to_node[ADDR_TO_CACHE_LINE(k1->right->data.address)] = k1->right;
+
+    if (k2->left)
+        addr_to_node[ADDR_TO_CACHE_LINE(k2->left->data.address)] = k2->left;
 
     return k1; /* new root */
 }
@@ -91,10 +96,14 @@ avl_tree::avl_node_t* avl_tree::single_rotate_with_right(avl_node_t* k1) {
     k1->height = MAX(height(k1->left), height(k1->right)) + 1;
     k2->height = MAX(height(k2->right), k1->height) + 1;
 
-    if (k1)         addr_to_node[k1->data.address] = k1;
-    if (k2)         addr_to_node[k2->data.address] = k2;
-    if (k1->right)  addr_to_node[k1->right->data.address] = k1->right;
-    if (k2->left)   addr_to_node[k2->left->data.address] = k2->left;
+    if (k1)         addr_to_node[ADDR_TO_CACHE_LINE(k1->data.address)] = k1;
+    if (k2)         addr_to_node[ADDR_TO_CACHE_LINE(k2->data.address)] = k2;
+
+    if (k1->right)
+        addr_to_node[ADDR_TO_CACHE_LINE(k1->right->data.address)] = k1->right;
+
+    if (k2->left)
+        addr_to_node[ADDR_TO_CACHE_LINE(k2->left->data.address)] = k2->left;
 
     return k2;  /* New root */
 }
@@ -130,7 +139,8 @@ bool avl_tree::insert(const mem_info_t *data_ptr, long long delta) {
 
             avl_node_t* node = _insert(&root, node_to_insert);
             if (node) {
-                addr_to_node[data_ptr->address] = node_to_insert;
+                addr_to_node[ADDR_TO_CACHE_LINE(data_ptr->address)] =
+                    node_to_insert;
                 last_key += 1;
                 return true;
             }

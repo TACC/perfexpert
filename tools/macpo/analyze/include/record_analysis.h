@@ -22,13 +22,15 @@
 #ifndef RECORD_ANALYSIS_H_
 #define RECORD_ANALYSIS_H_
 
+#include "argp_custom.h"
 #include "generic_defs.h"
 #include "macpo_record.h"
 
 #define CUT             0.8f
-#define LINE_NUM_LIMIT  1000
+#define LINE_NUM_LIMIT  10000
 
-int analyze_records(const global_data_t& global_data, int analysis_flags);
+int analyze_records(const global_data_t& global_data, int analysis_flags,
+        const struct arg_info& info);
 int filter_low_freq_records(global_data_t& global_data);
 
 #endif  /* RECORD_ANALYSIS_H_ */

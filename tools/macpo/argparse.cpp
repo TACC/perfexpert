@@ -127,6 +127,18 @@ int argparse::parse_arguments(char* arg, options_t& options) {
 
         options.action = ACTION_ALIGNCHECK;
         parse_location(value, options.function_name, options.line_number);
+    } else if (option == "record-tripcount") {
+        if (!value.size())
+            return -1;
+
+        options.action = ACTION_TRIPCOUNT;
+        parse_location(value, options.function_name, options.line_number);
+    } else if (option == "record-branchpath") {
+        if (!value.size())
+            return -1;
+
+        options.action = ACTION_BRANCHPATH;
+        parse_location(value, options.function_name, options.line_number);
     } else if (option == "gen-trace") {
         if (!value.size())
             return -1;

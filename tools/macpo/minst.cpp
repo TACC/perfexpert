@@ -24,26 +24,31 @@
 
 #include "aligncheck.h"
 #include "analysis_profile.h"
+#include "branchpath.h"
 #include "inst_defs.h"
 #include "instrumentor.h"
 #include "ir_methods.h"
 #include "loop_traversal.h"
 #include "minst.h"
 #include "tracer.h"
+#include "tripcount.h"
 #include "vector_strides.h"
 
 using namespace SageBuilder;
 using namespace SageInterface;
 
-MINST::MINST(short _action, int _line_number, std::string _inst_func,
-        bool _disable_sampling, bool _profile_analysis,
-        VariableRenaming* _var_renaming) {
-    action = _action;
-    line_number = _line_number;
-    inst_func = _inst_func;
-    disable_sampling = _disable_sampling;
-    profile_analysis = _profile_analysis;
-    var_renaming = _var_renaming;
+MINST::MINST(options_t& options, SgProject* project) {
+    action = options.action;
+    line_number = options.line_number;
+    inst_func = options.function_name;
+    disable_sampling = options.disable_sampling;
+    profile_analysis = options.profile_analysis;
+
+    var_renaming = new VariableRenaming(project);
+    if (options.action == ACTION_ALIGNCHECK) {
+        // If we are about to check alignment, run the VariableRenaming pass.
+        var_renaming->run();
+    }
 }
 
 void MINST::insert_map_prototype(SgNode* node) {
@@ -161,7 +166,28 @@ const analysis_profile_t MINST::run_analysis(SgNode* node, short action) {
                 aligncheck_t visitor(var_renaming);
                 visitor.process_node(node);
 
-                stream_list = visitor.get_stream_list();
+                statement_list.insert(statement_list.end(),
+                        visitor.stmt_begin(), visitor.stmt_end());
+
+                return visitor.get_analysis_profile();
+            }
+
+        case ACTION_TRIPCOUNT:
+            {
+                tripcount_t visitor(var_renaming);
+                visitor.process_node(node);
+
+                statement_list.insert(statement_list.end(),
+                        visitor.stmt_begin(), visitor.stmt_end());
+
+                return visitor.get_analysis_profile();
+            }
+
+        case ACTION_BRANCHPATH:
+            {
+                branchpath_t visitor(var_renaming);
+                visitor.process_node(node);
+
                 statement_list.insert(statement_list.end(),
                         visitor.stmt_begin(), visitor.stmt_end());
 
@@ -285,17 +311,18 @@ void MINST::visit(SgNode* node)
     int _line_number = file_info->get_line();
 
     // Check if this is the function that we are told to instrument
-    if (isSgFunctionDefinition(node)) {
-        std::string function_name = ((SgFunctionDefinition*) node)->get_declaration()->get_name();
-        if (function_name == "main") {
+    if (SgFunctionDefinition* def_node = isSgFunctionDefinition(node)) {
+        SgFunctionDeclaration* decl_node = def_node->get_declaration();
+        std::string function_name = decl_node->get_name();
+        if (function_name == "main" &&
+                !isSgMemberFunctionDeclaration(decl_node)) {
             // Add header file for indigo's record function
-            if (isSgGlobal(node)) {
-                if (!SageInterface::is_Fortran_language())
-                    insertHeader("mrt.h", PreprocessingInfo::after, false, global_node);
-            }
+            ROSE_ASSERT(global_node);
+            if (!SageInterface::is_Fortran_language())
+                insertHeader("mrt.h", PreprocessingInfo::after, false, global_node);
 
             // Found main, now insert calls to indigo__init() and indigo__create_map()
-            SgBasicBlock* body = ((SgFunctionDefinition*) node)->get_body();
+            SgBasicBlock* body = def_node->get_body();
 
             // Skip over the initial variable declarations and `IMPLICIT' statements
             SgStatement *statement=NULL;
@@ -316,10 +343,17 @@ void MINST::visit(SgNode* node)
             std::vector<SgExpression*> params, empty_params;
             int create_file, enable_sampling;
 
-            if (action == ACTION_ALIGNCHECK) {
-                create_file = 0;
-            } else {
-                create_file = 1;
+            switch(action) {
+                case ACTION_NONE:
+                case ACTION_ALIGNCHECK:
+                case ACTION_TRIPCOUNT:
+                case ACTION_BRANCHPATH:
+                    create_file = 0;
+                    break;
+
+                default:
+                    create_file = 1;
+                    break;
             }
 
             // Use compiler argument.
@@ -340,14 +374,20 @@ void MINST::visit(SgNode* node)
             insertStatementBefore(statement, expr_stmt);
             ROSE_ASSERT(expr_stmt);
 
-            if (action != ACTION_ALIGNCHECK) {
-                SgExprStatement* map_stmt = NULL;
-                map_stmt = ir_methods::prepare_call_statement(body,
-                        indigo__create_map, empty_params, expr_stmt);
-                insertStatementAfter(expr_stmt, map_stmt);
-                ROSE_ASSERT(map_stmt);
+            switch(action) {
+                case ACTION_ALIGNCHECK:
+                case ACTION_TRIPCOUNT:
+                case ACTION_BRANCHPATH:
+                    break;
 
-                insert_map_prototype(node);
+                default:
+                    SgExprStatement* map_stmt = NULL;
+                    map_stmt = ir_methods::prepare_call_statement(body,
+                            indigo__create_map, empty_params, expr_stmt);
+                    insertStatementAfter(expr_stmt, map_stmt);
+                    ROSE_ASSERT(map_stmt);
+
+                    insert_map_prototype(node);
             }
         }
 
@@ -357,10 +397,9 @@ void MINST::visit(SgNode* node)
                 return;
 
             // Add header file for indigo's record function
-            if (isSgGlobal(node)) {
-                if (!SageInterface::is_Fortran_language())
-                    insertHeader("mrt.h", PreprocessingInfo::after, false, global_node);
-            }
+            ROSE_ASSERT(global_node);
+            if (!SageInterface::is_Fortran_language())
+                insertHeader("mrt.h", PreprocessingInfo::after, false, global_node);
 
             analyze_node(node, action);
         }
@@ -377,10 +416,9 @@ void MINST::visit(SgNode* node)
                 return;
 
             // Add header file for indigo's record function
-            if (isSgGlobal(node)) {
-                if (!SageInterface::is_Fortran_language())
-                    insertHeader("mrt.h", PreprocessingInfo::after, false, global_node);
-            }
+            ROSE_ASSERT(global_node);
+            if (!SageInterface::is_Fortran_language())
+                insertHeader("mrt.h", PreprocessingInfo::after, false, global_node);
 
             analyze_node(node, action);
         }

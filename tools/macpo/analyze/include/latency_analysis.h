@@ -26,6 +26,13 @@
 #include "avl_tree.h"
 #include "histogram.h"
 
+static const char* MSG_CACHE_CONFLICTS = "cache_conflicts";
+static const char* MSG_REUSE_DISTANCE = "reuse_distance";
+
+static const char* MSG_CONFLICT_PERCENTAGE = "conflict_percentage";
+static const char* MSG_DISTANCE_VALUE = "distance_value";
+static const char* MSG_DISTANCE_COUNT = "distance_count";
+
 static void free_counters(histogram_matrix_t& hist_matrix,
         avl_tree_list_t& tree_list, int num_cores, int num_streams);
 
@@ -41,10 +48,10 @@ static size_t calculate_distance(histogram_matrix_t& hist_matrix,
         size_t address, short read_or_write, const int DIST_INFINITY);
 
 int print_cache_conflicts(const global_data_t& global_data,
-        double_list_t& conflict_list);
+        double_list_t& conflict_list, bool bot);
 
 int print_reuse_distances(const global_data_t& global_data,
-        histogram_list_t& rd_list, const int DIST_INFINITY);
+        histogram_list_t& rd_list, const int DIST_INFINITY, bool bot);
 
 int latency_analysis(const global_data_t& global_data,
         histogram_list_t& rd_list, double_list_t& conflict_list,
