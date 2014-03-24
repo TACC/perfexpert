@@ -1,0 +1,74 @@
+VEC#00000 , vectorization report for function - 
+VEC#00001NPNR , loop was vectorized (no peel/no remainder)
+VEC#00001NPWR , loop was vectorized (no peel/with remainder)
+VEC#00001WPNR , loop was vectorized (with peel/no remainder)
+VEC#00001WPWR , loop was vectorized (with peel/with remainder)
+VEC#00002 , loop was not vectorized -  
+VEC#00003V , peel loop was vectorized
+VEC#00003S , peel loop was not vectorized - 
+VEC#00004V , remainder loop was vectorized (unmasked)
+VEC#00004M , remainder loop was vectorized (masked)
+VEC#00004S , remainder loop was not vectorized - 
+VEC#00005 , entire loop may be executed in scalar remainder
+VEC#00050 , --- begin vector loop hierarchy summary ---
+VEC#00051 , vectorized loop at nesting level - 
+VEC#00052 , loop inside vectorized loop at nesting level - 
+VEC#00053 , --- end vector loop hierarchy summary ---
+VEC#00100 , --- begin vector loop memory reference summary ---
+VEC#00101UASL , unmasked aligned unit stride loads - 
+VEC#00101UASS , unmasked aligned unit stride stores - 
+VEC#00101UUSL , unmasked unaligned unit stride loads - 
+VEC#00101UUSS , unmasked unaligned unit stride stores - 
+VEC#00101USL , unmasked strided loads - 
+VEC#00101USS , unmasked strided stores - 
+VEC#00101MASL , masked aligned unit stride loads - 
+VEC#00101MASS , masked aligned unit stride stores - 
+VEC#00101MUSL , masked unaligned unit stride loads - 
+VEC#00101MUSS , masked unaligned unit stride stores - 
+VEC#00102MG , masked indexed (or gather) loads - 
+VEC#00102MS , masked indexed (or scatter) stores - 
+VEC#00101MSL , masked strided loads - 
+VEC#00101MSS , masked strided stores - 
+VEC#00102UG , unmasked indexed (or gather) loads - 
+VEC#00102UL , unmasked indexed (or scatter) stores - 
+VEC#00103UBL , unmasked broadcast loads - 
+VEC#00103MB , masked broadcast loads - 
+VEC#00104UANTL , unmasked aligned streaming loads - 
+VEC#00104UANTS , unmasked aligned streaming stores - 
+VEC#00104UUNTL , unmasked unaligned streaming loads - 
+VEC#00104UUNTS , unmasked unaligned streaming stores - 
+VEC#00104MASTL , masked aligned streaming loads - 
+VEC#00104MASTS , masked aligned streaming stores - 
+VEC#00104MUSTL , masked unaligned streaming loads - 
+VEC#00104MUSTS , masked unaligned streaming stores - 
+VEC#00105 , --- end vector loop memory reference summary ---
+VEC#00200 , --- begin vector loop cost summary ---
+VEC#00201 , scalar loop cost - 
+VEC#00202 , vector loop cost - 
+VEC#00203 , estimated potential speedup - 
+VEC#00204 , lightweight vector operations - 
+VEC#00205 , medium-overhead vector operations - 
+VEC#00206 , heavy-overhead vector operations - 
+VEC#00207 , vectorized math library calls - 
+VEC#00208 , non-vectorized math library calls - 
+VEC#00209 , vectorized user function calls - 
+VEC#00210 , non-vectorized user function calls - 
+VEC#00212 , divides - 
+VEC#00213 , type converts - 
+VEC#00299 , --- end vector loop cost summary ---
+VEC#00300 , --- begin vector function matching report ---
+VEC#00301 , function call site - 
+VEC#00302 , non-vectorized user function calls with mismatched vector functions - 
+VEC#00303 , --- end vector function matching report ---
+VEC#00400 , --- begin vector idiom recognition report ---
+VEC#00401 , minimum value and minimum value loop index - 
+VEC#00402 , maximum value and maximum value loop index - 
+VEC#00403 , vector compress - 
+VEC#00404 , vector expand - 
+VEC#00405 , histogram - 
+VEC#00405 , saturating downconvert - 
+VEC#00405 , saturating add/subtract - 
+VEC#00406 , byte permute - 
+VEC#00499 , --- end vector idiom recognition report ---
+VEC#01000 , --- last debug string ---
+VEC#99999 , end
