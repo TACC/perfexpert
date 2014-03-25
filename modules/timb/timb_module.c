@@ -48,10 +48,19 @@ int module_load(void) {
 
 /* module_init */
 int module_init(void) {
-
     /* Module pre-requisites */
-    perfexpert_module_requires("timb", "hpctoolkit", PERFEXPERT_MODULE_AFTER,
-        PERFEXPERT_MODULE_MEASUREMENTS);
+    if (PERFEXPERT_SUCCESS != perfexpert_module_requires("timb",
+        PERFEXPERT_PHASE_MEASURE, "hpctoolkit", PERFEXPERT_PHASE_MEASURE,
+        PERFEXPERT_MODULE_AFTER)) {
+        OUTPUT(("%s", _ERROR("pre-required module/phase not available")));
+        return PERFEXPERT_ERROR;
+    }
+    if (PERFEXPERT_SUCCESS != perfexpert_module_requires("timb",
+        PERFEXPERT_PHASE_ANALYZE, "hpctoolkit", PERFEXPERT_PHASE_MEASURE,
+        PERFEXPERT_MODULE_BEFORE)) {
+        OUTPUT(("%s", _ERROR("pre-required module/phase not available")));
+        return PERFEXPERT_ERROR;
+    }
 
     /* Initialize some variables */
     my_module_globals.maximum = DBL_MIN;
@@ -70,13 +79,12 @@ int module_fini(void) {
     return PERFEXPERT_SUCCESS;
 }
 
-/* module_measurements */
-int module_measurements(void) {
-
+/* module_measure */
+int module_measure(void) {
     OUTPUT(("%s", _YELLOW("Setting performance events")));
 
     my_module_globals.hpctoolkit = (perfexpert_module_hpctoolkit_t *)
-        perfexpert_module_available("hpctoolkit");
+        perfexpert_module_get("hpctoolkit");
 
     if (PERFEXPERT_SUCCESS != my_module_globals.hpctoolkit->set_event(
         "PAPI_TOT_CYC")) {
@@ -87,9 +95,8 @@ int module_measurements(void) {
     return PERFEXPERT_SUCCESS;
 }
 
-/* module_analysis */
-int module_analysis(void) {
-
+/* module_analyze */
+int module_analyze(void) {
     OUTPUT(("%s", _YELLOW("Analysing measurements")));
 
     if (PERFEXPERT_SUCCESS != output_analysis()) {

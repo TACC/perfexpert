@@ -29,7 +29,7 @@ extern "C" {
 /* Modules headers */
 #include "modules/perfexpert_module_base.h"
 
-/* LCPI module interface */
+/* Thread Imbalance module interface */
 typedef perfexpert_module_t perfexpert_module_timb_1_0_0_t;
 typedef perfexpert_module_timb_1_0_0_t perfexpert_module_timb_t;
 

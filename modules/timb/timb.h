@@ -52,8 +52,8 @@ extern my_module_globals_t my_module_globals;
 int module_load(void);
 int module_init(void);
 int module_fini(void);
-int module_measurements(void);
-int module_analysis(void);
+int module_measure(void);
+int module_analyze(void);
 
 /* Module functions */
 int parse_module_args(int argc, char *argv[]);
