@@ -26,67 +26,12 @@
 extern "C" {
 #endif
 
-#ifndef _STDIO_H
-#include <stdio.h>
-#endif
-
-#ifndef _STDLIB_H
-#include <stdlib.h>
-#endif
-
-#ifndef _STDARG_H
-#include <stdarg.h>
-#endif
-
-#ifndef _STRING_H
-#include <string.h>
-#endif
-
-#ifndef _UNISTD_H
-#include <unistd.h>
-#endif
-
-#ifndef _TIME_H
-#include <time.h>
-#endif
-
-#include "common/perfexpert_constants.h"
-
-/* see perfexpert_log function */
 #ifndef LOG
 #define LOG(a) perfexpert_log a
 #endif
 
-/* perfexpert_log */
-static void perfexpert_log(const char *format, ...) {
-    va_list arglist;
-    char *str = NULL, temp_str[MAX_LOG_ENTRY], logfile[MAX_BUFFER_SIZE],
-        *longdate = NULL;
-    FILE *logfile_FP;
-    time_t now_time;
-
-    time(&now_time);
-    longdate = asctime(localtime(&now_time));
-    longdate[strlen(longdate) - 1] = 0;
-
-    va_start(arglist, format);
-    vasprintf(&str, format, arglist);
-
-    bzero(temp_str, MAX_LOG_ENTRY);
-    sprintf(temp_str, "%d %s %s %ld --- %s\n", now_time, longdate,
-        PROGRAM_PREFIX, globals.pid, str);
-
-    bzero(logfile, MAX_BUFFER_SIZE);
-    sprintf(logfile, "%s/%s", getenv("HOME"), PERFEXPERT_LOGFILE);
-
-    logfile_FP = fopen(logfile, "a");
-    if (logfile_FP) {
-        fwrite(temp_str, 1, (int)strlen(temp_str), logfile_FP);
-    }
-    fclose(logfile_FP);
-    free(str);
-    va_end(arglist);
-}
+/* Function declarations */
+void perfexpert_log(const char *format, ...);
 
 #ifdef __cplusplus
 }

@@ -37,27 +37,28 @@
 extern "C" {
 #endif
 
-#ifndef _STDIO_H
+#ifndef _STDIO_H_
 #include <stdio.h>
 #endif
 
-#ifndef _STDLIB_H
+#ifndef _STDLIB_H_
 #include <stdlib.h>
 #endif
 
-#ifndef _STDARG_H
+#ifndef _STDARG_H_
 #include <stdarg.h>
 #endif
 
-#ifndef _STRING_H
+#ifndef _STRING_H_
 #include <string.h>
 #endif
 
-#ifndef _UNISTD_H
+#ifndef _UNISTD_H_
 #include <unistd.h>
 #endif
 
-#include "common/perfexpert_constants.h"
+#include "perfexpert_constants.h"
+#include "perfexpert_output.h"
 
 /* see perfexpert_output function */
 #ifndef OUTPUT
@@ -85,6 +86,28 @@ extern "C" {
 #define COLOR_MAGENTA 5
 #define COLOR_CYAN    6
 #define COLOR_WHITE   7
+
+/* Function declarations */
+static inline char* colorful(int attr, int fg, int bg, char *s);
+static inline char* colorful_err(int attr, int fg, int bg, const char *s,
+    const char *file, int line, const char *function);
+static inline void output(const char *format, ...);
+static inline void output_verbose(int level, const char *format, ...);
+
+/* Use all your artistic side to combine the color as you prefer */
+#define _ERROR(a) colorful_err(ATTR_BRIGHT, COLOR_RED, COLOR_BLACK, a, \
+    __FILE__, __LINE__, __func__)
+
+#define _RED(a)        colorful(ATTR_NONE,   COLOR_RED,     COLOR_BLACK, a)
+#define _GREEN(a)      colorful(ATTR_NONE,   COLOR_GREEN,   COLOR_BLACK, a)
+#define _YELLOW(a)     colorful(ATTR_NONE,   COLOR_YELLOW,  COLOR_BLACK, a)
+#define _BLUE(a)       colorful(ATTR_NONE,   COLOR_BLUE,    COLOR_BLACK, a)
+#define _MAGENTA(a)    colorful(ATTR_NONE,   COLOR_MAGENTA, COLOR_BLACK, a)
+#define _CYAN(a)       colorful(ATTR_NONE,   COLOR_CYAN,    COLOR_BLACK, a)
+#define _WHITE(a)      colorful(ATTR_BRIGHT, COLOR_WHITE,   COLOR_BLACK, a)
+#define _BOLDRED(a)    colorful(ATTR_BRIGHT, COLOR_RED,     COLOR_BLACK, a)
+#define _BOLDGREEN(a)  colorful(ATTR_BRIGHT, COLOR_GREEN,   COLOR_BLACK, a)
+#define _BOLDYELLOW(a) colorful(ATTR_BRIGHT, COLOR_YELLOW,  COLOR_BLACK, a)
 
 /* colorful (never call this function directly ) */
 static inline char* colorful(int attr, int fg, int bg, char *s) {
@@ -137,21 +160,6 @@ static inline char* colorful_err(int attr, int fg, int bg, const char *s,
         return err;
     }
 }
-
-/* Use all your artistic side to combine the color as you prefer */
-#define _ERROR(a) colorful_err(ATTR_BRIGHT, COLOR_RED, COLOR_BLACK, a, \
-    __FILE__, __LINE__, __func__)
-
-#define _RED(a)        colorful(ATTR_NONE,   COLOR_RED,     COLOR_BLACK, a)
-#define _GREEN(a)      colorful(ATTR_NONE,   COLOR_GREEN,   COLOR_BLACK, a)
-#define _YELLOW(a)     colorful(ATTR_NONE,   COLOR_YELLOW,  COLOR_BLACK, a)
-#define _BLUE(a)       colorful(ATTR_NONE,   COLOR_BLUE,    COLOR_BLACK, a)
-#define _MAGENTA(a)    colorful(ATTR_NONE,   COLOR_MAGENTA, COLOR_BLACK, a)
-#define _CYAN(a)       colorful(ATTR_NONE,   COLOR_CYAN,    COLOR_BLACK, a)
-#define _WHITE(a)      colorful(ATTR_BRIGHT, COLOR_WHITE,   COLOR_BLACK, a)
-#define _BOLDRED(a)    colorful(ATTR_BRIGHT, COLOR_RED,     COLOR_BLACK, a)
-#define _BOLDGREEN(a)  colorful(ATTR_BRIGHT, COLOR_GREEN,   COLOR_BLACK, a)
-#define _BOLDYELLOW(a) colorful(ATTR_BRIGHT, COLOR_YELLOW,  COLOR_BLACK, a)
 
 /* output (never call this functions directly) */
 static inline void output(const char *format, ...) {

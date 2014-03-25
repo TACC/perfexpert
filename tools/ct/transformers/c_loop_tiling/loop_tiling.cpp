@@ -50,6 +50,7 @@ globals_t  globals;
 #include "config.h"
 #include "common/perfexpert_constants.h"
 #include "common/perfexpert_database.h"
+#include "common/perfexpert_output.h"
 
 using namespace std;
 using namespace SageInterface;

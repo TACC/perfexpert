@@ -19,29 +19,28 @@
  * $HEADER$
  */
 
-#ifndef PERFEXPERT_FORK_H_
-#define PERFEXPERT_FORK_H_
+#ifndef PERFEXPERT_FAKE_GLOBALS_H_
+#define PERFEXPERT_FAKE_GLOBALS_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include "common/perfexpert_list.h"
+/* Fake globals, just to compile the library */
+typedef struct {
+    int verbose;
+    int colorful;
+    char *workdir;
+} globals_t;
 
-/** Ninja structure to hold a list of tests to perform */
-typedef struct test {
-    volatile perfexpert_list_item_t *next;
-    volatile perfexpert_list_item_t *prev;
-    char *info;   // just to make the output meaningful
-    char *input;  // send via STDIN
-    char *output; // collected via STDOUT
-} test_t;
+extern globals_t globals; /* This variable is defined in the tool/module */
 
-/* Function declarations */
-int perfexpert_fork_and_wait(test_t *test, char *argv[]);
+#ifndef PROGRAM_PREFIX
+#define PROGRAM_PREFIX "[perfexpert]"
+#endif
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* PERFEXPERT_FORK_H */
+#endif /* PERFEXPERT_FAKE_GLOBALS_H_ */

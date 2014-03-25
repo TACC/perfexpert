@@ -19,19 +19,17 @@
 # $HEADER$
 #
 
-bin_PROGRAMS = perfexpert_recommender
-
-perfexpert_recommender_CPPFLAGS = -I$(srcdir)/../..
-perfexpert_recommender_LDFLAGS = -lsqlite3 -lm
-perfexpert_recommender_LDADD = ../../common/libperfexpert_common.la
-perfexpert_recommender_SOURCES = recommender_main.c \
-	recommender_options.c \
-	recommender_logic.c
-
-# Install the recommendation database
-install-exec-local:
-	$(MKDIR_P) $(DESTDIR)$(sysconfdir)
-	$(INSTALL) -m 644 $(top_srcdir)/tools/recommender/recommender.sql \
-		$(DESTDIR)$(sysconfdir)/
+lib_LTLIBRARIES = libperfexpert_common.la
+libperfexpert_common_la_CPPFLAGS = -I$(srcdir)/..
+libperfexpert_common_la_LDFLAGS = -lltdl -version-info 1:0:0
+libperfexpert_common_la_SOURCES = perfexpert_base64.c \
+	perfexpert_database.c \
+	perfexpert_fork.c \
+	perfexpert_list.c \
+	perfexpert_md5.c \
+	perfexpert_log.c \
+	perfexpert_string.c \
+	perfexpert_time.c \
+	perfexpert_util.c
 
 # EOF
