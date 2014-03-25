@@ -4,5 +4,5 @@ module_load
 module_init
 module_fini
 module_compile
-module_measurements
-module_analysis
+module_measure
+module_analyze

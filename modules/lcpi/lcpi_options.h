@@ -39,9 +39,11 @@ static struct argp_option options[] = {
 
     { 0, 0, 0, 0, "General options:", 2, },
     { "threshold", 't', "VALUE", OPTION_DOC, "Threshold (relevance % of "
-      "runtime) to take " "hotspots into consideration (range: fration value "
+      "runtime) to take hotspots into consideration (range: fration value "
       "between 0 and 1)" },
     { "threshold", 't', "VALUE", OPTION_HIDDEN, 0 },
+    { "mic", 'm', 0, OPTION_DOC, "Generate MIC-compatible LCPI metrics" },
+    { "mic", 'm', 0, OPTION_HIDDEN, 0 },
     { "sort-order", 's', "relevance|performance|mixed", OPTION_DOC,
         "Order in which hotspots should be sorted (default: unsorted)" },
     { "sort-order", 's', "relevance|performance|mixed", OPTION_HIDDEN, 0 },

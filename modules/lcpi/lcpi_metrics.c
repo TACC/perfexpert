@@ -49,9 +49,11 @@ int metrics_generate(void) {
 
     OUTPUT_VERBOSE((4, "%s", _YELLOW("Generating LCPI metrics")));
 
-    if (PAPI_VER_CURRENT != PAPI_library_init(PAPI_VER_CURRENT)) {
-        OUTPUT(("%s", _ERROR("initializing PAPI")));
-        return PERFEXPERT_ERROR;
+    if (PAPI_NOT_INITED == PAPI_is_initialized()) {
+        if (PAPI_VER_CURRENT != PAPI_library_init(PAPI_VER_CURRENT)) {
+            OUTPUT(("%s", _ERROR("initializing PAPI")));
+            return PERFEXPERT_ERROR;
+        }
     }
 
     /* Generate LCPI metrics (be sure the events are ordered) */
