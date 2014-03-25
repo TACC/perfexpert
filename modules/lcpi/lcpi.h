@@ -54,6 +54,7 @@ typedef struct {
     double threshold;
     char *order;
     int help_only;
+    int mic;
 } my_module_globals_t;
 
 extern my_module_globals_t my_module_globals;
@@ -62,12 +63,13 @@ extern my_module_globals_t my_module_globals;
 int module_load(void);
 int module_init(void);
 int module_fini(void);
-int module_measurements(void);
-int module_analysis(void);
+int module_measure(void);
+int module_analyze(void);
 
 /* Function declarations */
 int parse_module_args(int argc, char *argv[]);
 int metrics_generate(void);
+int metrics_generate_mic(void);
 int metrics_attach_machine(void);
 int database_import(perfexpert_list_t *profiles, const char *table);
 int database_export(perfexpert_list_t *profiles);

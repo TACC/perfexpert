@@ -43,24 +43,32 @@ char module_version[] = "1.0.0";
 
 /* module_load */
 int module_load(void) {
-
     OUTPUT_VERBOSE((5, "%s", _MAGENTA("loaded")));
-
     return PERFEXPERT_SUCCESS;
 }
 
 /* module_init */
 int module_init(void) {
-
     /* Module pre-requisites */
-    perfexpert_module_requires("lcpi", "hpctoolkit", PERFEXPERT_MODULE_AFTER,
-        PERFEXPERT_MODULE_MEASUREMENTS);
+    if (PERFEXPERT_SUCCESS != perfexpert_module_requires("lcpi",
+        PERFEXPERT_PHASE_MEASURE, "hpctoolkit", PERFEXPERT_PHASE_MEASURE,
+        PERFEXPERT_MODULE_AFTER)) {
+        OUTPUT(("%s", _ERROR("pre-required module/phase not available")));
+        return PERFEXPERT_ERROR;
+    }
+    if (PERFEXPERT_SUCCESS != perfexpert_module_requires("lcpi",
+        PERFEXPERT_PHASE_ANALYZE, "hpctoolkit",
+        PERFEXPERT_PHASE_MEASURE, PERFEXPERT_MODULE_BEFORE)) {
+        OUTPUT(("%s", _ERROR("pre-required module not available")));
+        return PERFEXPERT_ERROR;
+    }
 
     /* Initialize list of events */
     perfexpert_list_construct(&(my_module_globals.profiles));
     my_module_globals.metrics_by_name = NULL;
     my_module_globals.threshold = 0.0;
     my_module_globals.help_only = PERFEXPERT_FALSE;
+    my_module_globals.mic = PERFEXPERT_FALSE;
 
     /* Parse module options */
     if (PERFEXPERT_SUCCESS != parse_module_args(myself_module.argc,
@@ -76,33 +84,40 @@ int module_init(void) {
 
 /* module_fini */
 int module_fini(void) {
-
     OUTPUT_VERBOSE((5, "%s", _MAGENTA("finalized")));
-
     return PERFEXPERT_SUCCESS;
 }
 
-/* module_measurements */
-int module_measurements(void) {
-
+/* module_measure */
+int module_measure(void) {
     OUTPUT(("%s", _YELLOW("Setting performance events")));
 
     my_module_globals.hpctoolkit = (perfexpert_module_hpctoolkit_t *)
-        perfexpert_module_available("hpctoolkit");
+        perfexpert_module_get("hpctoolkit");
 
-    if (PERFEXPERT_SUCCESS != metrics_generate()) {
-        OUTPUT(("%s", _ERROR("unable to generate LCPI metrics")));
-        return PERFEXPERT_ERROR;
+    /* Should we run this program on the MIC or on the host? */
+    if (PERFEXPERT_FALSE == my_module_globals.mic) {
+        if (PERFEXPERT_SUCCESS != metrics_generate()) {
+            OUTPUT(("%s", _ERROR("unable to generate LCPI metrics")));
+            return PERFEXPERT_ERROR;
+        }
+    } else {
+        if (PERFEXPERT_SUCCESS != metrics_generate_mic()) {
+            OUTPUT(("%s", _ERROR("unable to generate MIC LCPI metrics")));
+            return PERFEXPERT_ERROR;
+        }
     }
 
     return PERFEXPERT_SUCCESS;
 }
 
-/* module_analysis */
-int module_analysis(void) {
+/* module_analyze */
+int module_analyze(void) {
     lcpi_profile_t *p = NULL;
 
     OUTPUT(("%s", _YELLOW("Analyzing measurements")));
+
+    // Wrap all these functions in a SQL transaction
 
     if (PERFEXPERT_SUCCESS != database_import(&(my_module_globals.profiles),
         my_module_globals.hpctoolkit->name)) {

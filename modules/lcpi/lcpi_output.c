@@ -155,6 +155,7 @@ static int output_profile(lcpi_hotspot_t *h) {
         default:
             return PERFEXPERT_ERROR;
     }
+    PERFEXPERT_DEALLOC(shortname);
 
     /* Print an horizontal double-line */
     PRETTY_PRINT(81, "=");
@@ -163,7 +164,7 @@ static int output_profile(lcpi_hotspot_t *h) {
     perfexpert_hash_iter_str(h->metrics_by_name, l, t) {
         char *temp = NULL, *cat = NULL, *subcat = NULL, desc[24];
 
-        PERFEXPERT_ALLOC(char, temp, 25);
+        PERFEXPERT_ALLOC(char, temp, (strlen(l->name) + 1));
         strcpy(temp, l->name);
         perfexpert_string_replace_char(temp, '_', ' ');
 
