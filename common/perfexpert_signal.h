@@ -26,20 +26,24 @@
 extern "C" {
 #endif
 
-#ifndef _STDIO_H
+#ifndef _STDIO_H_
 #include <stdio.h>
 #endif
 
-#ifndef _STDLIB_H
+#ifndef _STDLIB_H_
 #include <stdlib.h>
 #endif
 
-#ifndef _EXECINFO_H
+#ifndef _UNISTD_H_
+#include <unistd.h>
+#endif
+
+#ifndef _EXECINFO_H_
 #include <execinfo.h>
 #endif
 
 /* perfexpert_sighandler */
-static void perfexpert_sighandler(int sig) {
+void perfexpert_sighandler(int sig) {
     void *buf[50];
     size_t size;
 
@@ -47,13 +51,11 @@ static void perfexpert_sighandler(int sig) {
 
     fprintf(stderr, "\nPerfExpert received an error signal (%d)\n\n", sig);
     fprintf(stderr, "Please, send a copy of this error and the compressed file "
-        "of the temporary\ndirectory %s\nto fialho@utexas.edu. Also, include "
-        "the command line you used to run PerfExpert.\n\nTo create a compressed"
-        " file just run:\n\ntar -czvf error.tar.gz %s\n\nThis will help us to "
+        "of the temporary\ndirectory to fialho@utexas.edu. Also, include the "
+        "command line you used to run\nPerfExpert.\n\nThis will help us to "
         "improve PerfExpert. You may also want join our mailing list\nto get "
-        "some help. To do that, send a blank message to:\n\n                   "
-        "perfexpert-subscribe@lists.tacc.utexas.edu\n\nBacktrace (%d):\n",
-        globals.workdir, globals.workdir, size);
+        "some help. To do that, send a blank message to:\n\nperfexpert-"
+        "subscribe@lists.tacc.utexas.edu\n\nBacktrace (%d):\n", size);
 
     backtrace_symbols_fd(buf, size, STDERR_FILENO);
 

@@ -22,28 +22,13 @@
 #ifndef PERFEXPERT_TIME_H_
 #define PERFEXPERT_TIME_H_
 
-#ifndef _TIME_H
-#include <time.h>
-#endif
-
-#include "common/perfexpert_constants.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /* perfexpert_time_diff */
-static inline struct timespec *perfexpert_time_diff(struct timespec *diff,
-    struct timespec *start, struct timespec *end) {
-    if (0 > (end->tv_nsec - start->tv_nsec)) {
-        diff->tv_sec  = end->tv_sec - start->tv_sec - 1;
-        diff->tv_nsec = 1000000000 + end->tv_nsec - start->tv_nsec;
-    } else {
-        diff->tv_sec  = end->tv_sec - start->tv_sec;
-        diff->tv_nsec = end->tv_nsec - start->tv_nsec;
-    }
-    return PERFEXPERT_SUCCESS;
-}
+struct timespec *perfexpert_time_diff(struct timespec *diff,
+    struct timespec *start, struct timespec *end);
 
 #ifdef __cplusplus
 }

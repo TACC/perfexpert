@@ -24,6 +24,7 @@ bin_PROGRAMS = perfexpert_ct
 perfexpert_ct_CPPFLAGS = -I$(srcdir)/../..
 perfexpert_ct_LDFLAGS = -lsqlite3 -lrose -ljvm
 perfexpert_ct_CFLAGS = -O3
+perfexpert_ct_LDADD = ../../common/libperfexpert_common.la
 perfexpert_ct_SOURCES = ct_real_main.c \
 	ct_database.c \
 	ct_input.c \

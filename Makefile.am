@@ -21,7 +21,7 @@
 
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS = modules tools
+SUBDIRS = common modules tools
 
 # .PHONY: check
 

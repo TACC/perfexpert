@@ -23,5 +23,6 @@ bin_PROGRAMS = loop_tiling
 loop_tiling_SOURCES = loop_tiling.cpp
 loop_tiling_CPPFLAGS = -I$(srcdir)/../../../..
 loop_tiling_LDFLAGS = -lrose -ljvm -lsqlite3
+loop_tiling_LDADD = ../../../../common/libperfexpert_common.la
 
 # EOF

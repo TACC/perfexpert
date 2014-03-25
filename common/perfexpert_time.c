@@ -19,29 +19,28 @@
  * $HEADER$
  */
 
-#ifndef PERFEXPERT_FORK_H_
-#define PERFEXPERT_FORK_H_
+#include <time.h>
+
+#include "common/perfexpert_constants.h"
+#include "common/perfexpert_time.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include "common/perfexpert_list.h"
-
-/** Ninja structure to hold a list of tests to perform */
-typedef struct test {
-    volatile perfexpert_list_item_t *next;
-    volatile perfexpert_list_item_t *prev;
-    char *info;   // just to make the output meaningful
-    char *input;  // send via STDIN
-    char *output; // collected via STDOUT
-} test_t;
-
-/* Function declarations */
-int perfexpert_fork_and_wait(test_t *test, char *argv[]);
+/* perfexpert_time_diff */
+struct timespec *perfexpert_time_diff(struct timespec *diff,
+    struct timespec *start, struct timespec *end) {
+    if (0 > (end->tv_nsec - start->tv_nsec)) {
+        diff->tv_sec  = end->tv_sec - start->tv_sec - 1;
+        diff->tv_nsec = 1000000000 + end->tv_nsec - start->tv_nsec;
+    } else {
+        diff->tv_sec  = end->tv_sec - start->tv_sec;
+        diff->tv_nsec = end->tv_nsec - start->tv_nsec;
+    }
+    return PERFEXPERT_SUCCESS;
+}
 
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* PERFEXPERT_FORK_H */

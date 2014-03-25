@@ -160,7 +160,7 @@ int output_function(SgNode *node, fragment_t *fragment) {
     PERFEXPERT_DEALLOC(function_file);
 
     /* LOG the function */
-    LOG((base64_encode(node->unparseToCompleteString().c_str(),
+    LOG((perfexpert_base64_encode(node->unparseToCompleteString().c_str(),
         strlen(node->unparseToCompleteString().c_str()))));
 
     return PERFEXPERT_SUCCESS;

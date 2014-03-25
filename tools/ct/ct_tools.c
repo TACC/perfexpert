@@ -27,6 +27,7 @@ extern "C" {
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <fcntl.h>
 
 /* PerfExpert tool headers */
 #include "ct.h"
@@ -268,6 +269,7 @@ static int test_transformation(fragment_t *f, transformation_t *t) {
 
     /* fork_and_wait_and_pray */
     rc = fork_and_wait(test, argv);
+    rc = perfexpert_fork_and_wait(test, argv);
 
     /* Replace the source code file */
     PERFEXPERT_ALLOC(char, new_file, (strlen(f->file) + 10));
@@ -358,7 +360,7 @@ static int test_pattern(fragment_t *f, pattern_t *p) {
     /* Run all the tests */
     while (0 < perfexpert_list_get_size(&tests)) {
         test = (test_t *)perfexpert_list_get_first(&tests);
-        switch (fork_and_wait(test, (char **)argv)) {
+        switch (perfexpert_fork_and_wait(test, (char **)argv)) {
             case PERFEXPERT_SUCCESS:
                 rc = PERFEXPERT_SUCCESS;
                 break;
