@@ -38,7 +38,7 @@ extern "C" {
 int module_load(void);
 int module_init(void);
 int module_fini(void);
-int module_measurements(void);
+int module_measure(void);
 
 /* Module functions */
 static int database_write(const char *compiler, int language);

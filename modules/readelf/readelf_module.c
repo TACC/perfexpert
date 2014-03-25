@@ -58,15 +58,14 @@ int module_fini(void) {
     return PERFEXPERT_SUCCESS;
 }
 
-/* module_measurements */
-int module_measurements(void) {
-
+/* module_measure */
+int module_measure(void) {
     OUTPUT(("%s", _YELLOW("Collecting measurements")));
 
-	if (PERFEXPERT_SUCCESS != get_compiler_info()) {
-		OUTPUT(("%s", _ERROR("reading compiler info")));
-		return PERFEXPERT_ERROR;
-	}
+    if (PERFEXPERT_SUCCESS != get_compiler_info()) {
+        OUTPUT(("%s", _ERROR("reading compiler info")));
+        return PERFEXPERT_ERROR;
+    }
 
     return PERFEXPERT_SUCCESS;
 }
