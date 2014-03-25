@@ -304,6 +304,108 @@ AC_ARG_WITH([sparsehash],
 #    ENABLE_RECOMMENDER=
 #])
 #AC_SUBST([ENABLE_RECOMMENDER])
+#------------------------------------------------------------------------------
+# make module requirements
+#
+AC_ARG_ENABLE([module-make],
+    [AS_HELP_STRING([--disable-module-make], [disable Make compile module])],
+    [ENABLE_MAKE=$enableval], [ENABLE_MAKE=yes])
+
+AC_MSG_CHECKING([whether to enable make compile module])
+AS_IF([test x"$ENABLE_MAKE" = xyes], [
+    AC_MSG_RESULT([yes])
+
+    ENABLE_MAKE=make
+    ENABLED_MODULES+="make "
+    AC_CONFIG_FILES([modules/make/Makefile])
+], [
+    AC_MSG_RESULT([no])
+    ENABLE_MAKE=
+])
+AC_SUBST([ENABLE_MAKE])
+
+#------------------------------------------------------------------------------
+# gcc module requirements
+#
+AC_ARG_ENABLE([module-gcc],
+    [AS_HELP_STRING([--disable-module-gcc], [disable GNU C compiler module])],
+    [ENABLE_GCC=$enableval], [ENABLE_GCC=yes])
+
+AC_MSG_CHECKING([whether to enable GNU C compiler module])
+AS_IF([test x"$ENABLE_GCC" = xyes], [
+    AC_MSG_RESULT([yes])
+
+    # Programs: gcc
+    #
+    AC_PATH_TOOL([GCC_PROGRAM], [gcc])
+    AS_IF([test x"$GCC_PROGRAM" = x], [
+        AC_MSG_ERROR([gcc not found. Do you have gcc in the PATH?])
+    ])
+
+    ENABLE_GCC=gcc
+    ENABLED_MODULES+="gcc "
+    AC_CONFIG_FILES([modules/gcc/Makefile])
+], [
+    AC_MSG_RESULT([no])
+    ENABLE_GCC=
+])
+AC_SUBST([ENABLE_GCC])
+
+#------------------------------------------------------------------------------
+# gpp module requirements
+#
+AC_ARG_ENABLE([module-gpp],
+    [AS_HELP_STRING([--disable-module-gpp], [disable GNU C++ compiler module])],
+    [ENABLE_GPP=$enableval], [ENABLE_GPP=yes])
+
+AC_MSG_CHECKING([whether to enable GNU C++ compiler module])
+AS_IF([test x"$ENABLE_GPP" = xyes], [
+    AC_MSG_RESULT([yes])
+
+    # Programs: g++
+    #
+    AC_PATH_TOOL([GPP_PROGRAM], [g++])
+    AS_IF([test x"$GPP_PROGRAM" = x], [
+        AC_MSG_ERROR([g++ not found. Do you have g++ in the PATH?])
+    ])
+
+    ENABLE_GPP=gpp
+    ENABLED_MODULES+="g++ "
+    AC_CONFIG_FILES([modules/gpp/Makefile])
+], [
+    AC_MSG_RESULT([no])
+    ENABLE_GPP=
+])
+AC_SUBST([ENABLE_GPP])
+
+#------------------------------------------------------------------------------
+# icc module requirements
+#
+AC_ARG_ENABLE([module-icc],
+    [AS_HELP_STRING([--disable-module-icc], [disable Intel C compiler module])],
+    [ENABLE_ICC=$enableval], [ENABLE_ICC=yes])
+
+AC_MSG_CHECKING([whether to enable Intel C compiler module])
+AS_IF([test x"$ENABLE_ICC" = xyes], [
+    AC_MSG_RESULT([yes])
+
+    # Programs: icc
+    #
+    AC_PATH_TOOL([ICC_PROGRAM], [icc])
+    AS_IF([test x"$ICC_PROGRAM" = x], [
+        AC_MSG_ERROR([icc not found. Do you have icc in the PATH?])
+    ])
+
+    ENABLE_ICC=icc
+    ENABLED_MODULES+="icc "
+    AC_CONFIG_FILES([modules/icc/Makefile])
+], [
+    AC_MSG_RESULT([no])
+    ENABLE_ICC=
+])
+AC_SUBST([ENABLE_ICC])
+
+#------------------------------------------------------------------------------
 # readelf module requirements
 #
 AC_ARG_ENABLE([module-readelf],

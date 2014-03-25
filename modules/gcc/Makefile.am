@@ -19,21 +19,10 @@
 # $HEADER$
 #
 
-SUBDIRS = $(ENABLE_HPCTOOLKIT)
-SUBDIRS += $(ENABLE_LCPI)
-SUBDIRS += $(ENABLE_READELF)
-SUBDIRS += $(ENABLE_MACPO)
-SUBDIRS += $(ENABLE_TIMB)
-SUBDIRS += $(ENABLE_MAKE)
-SUBDIRS += $(ENABLE_GCC)
-SUBDIRS += $(ENABLE_GPP)
-SUBDIRS += $(ENABLE_ICC)
-SUBDIRS += $(ENABLE_SQLRULES)
-
-lib_LTLIBRARIES = libperfexpert_module_base.la
-libperfexpert_module_base_la_SOURCES = perfexpert_module_base.c
-libperfexpert_module_base_la_CPPFLAGS = -I$(srcdir)/..
-libperfexpert_module_base_la_LDFLAGS = -lltdl -version-info 1:0:0 \
-	-export-symbols $(srcdir)/perfexpert_module_base.sym
+lib_LTLIBRARIES = libperfexpert_module_gcc.la
+libperfexpert_module_gcc_la_CPPFLAGS = -I$(srcdir)/../..
+libperfexpert_module_gcc_la_LDFLAGS = -module -version-info 1:0:0 \
+	-export-symbols $(srcdir)/gcc_module.sym
+libperfexpert_module_gcc_la_SOURCES = gcc_module.c gcc.c
 
 # EOF
