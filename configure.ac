@@ -810,6 +810,7 @@ AS_IF([test x"$ENABLE_CT" = xyes], [
     ENABLE_CT=
 ])
 AC_SUBST([ENABLE_CT])
+AC_SUBST([ENABLE_SQLRULES])
 
 #------------------------------------------------------------------------------
 AC_CONFIG_FILES([tests/run_tests.pl], [chmod +x tests/run_tests.pl])
