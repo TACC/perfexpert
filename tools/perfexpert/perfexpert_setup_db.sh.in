@@ -29,6 +29,12 @@ if [ -f ${HOME}/.perfexpert.db ]; then
     echo "Your database was moved to ${now}, a new database will be created"
 fi
 
+# Setup basic structure
+if [ -f ${prefix}/etc/perfexpert.sql ]; then
+    sqlite3 ${HOME}/.perfexpert.db < ${prefix}/etc/perfexpert.sql
+    echo "Basic structure set"
+fi
+
 # Setup Hound
 if [ -f ${prefix}/etc/hound.sql ]; then
     sqlite3 ${HOME}/.perfexpert.db < ${prefix}/etc/hound.sql
@@ -62,10 +68,10 @@ if [ -f ${prefix}/etc/lcpi_module.sql ]; then
     echo "LCPI module set"
 fi
 
-# Setup Recommender tool
-if [ -f ${prefix}/etc/recommender.sql ]; then
-    sqlite3 ${HOME}/.perfexpert.db < ${prefix}/etc/recommender.sql
-    echo "Recommender tool set"
+# Setup SQL Rule module
+if [ -f ${prefix}/etc/sqlrules_module.sql ]; then
+    sqlite3 ${HOME}/.perfexpert.db < ${prefix}/etc/sqlrules_module.sql
+    echo "SQL Rules module set"
 fi
 
 exit 0;
