@@ -168,6 +168,27 @@ AC_ARG_WITH([boost-include],
     [AS_HELP_STRING([--with-boost-include], [set Boost include path])],
     [CPPFLAGS+=" -I$withval"])
 
+AC_ARG_WITH([libdwarf],
+    [AS_HELP_STRING([--with-libdwarf], [set DWARF library and include path])],
+    [CPPFLAGS+=" -I$withval/include"
+    LDFLAGS+=" -L$withval/lib"])
+
+AC_ARG_WITH([libdwarf-lib],
+    [AS_HELP_STRING([--with-libdwarf-lib], [set DWARF library path])],
+    [LDFLAGS+=" -L$withval"])
+
+AC_ARG_WITH([libdwarf-include],
+    [AS_HELP_STRING([--with-libdwarf-include], [set DWARF include path])],
+    [LDFLAGS+=" -L$withval"])
+
+AC_ARG_WITH([libelf],
+    [AS_HELP_STRING([--with-libelf], [set ELF path])],
+    [LDFLAGS+=" -L$withval/lib"])
+
+AC_ARG_WITH([libelf-lib],
+    [AS_HELP_STRING([--with-libelf-lib], [set ELF library path])],
+    [LDFLAGS+=" -L$withval"])
+
 AC_ARG_WITH([libxml2],
     [AS_HELP_STRING([--with-libxml2], [set LibXML2 library and include path])],
     [CPPFLAGS+=" -I$withval/include"
