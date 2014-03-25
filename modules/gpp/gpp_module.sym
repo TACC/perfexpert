@@ -1,0 +1,12 @@
+myself_module
+module_version
+module_load
+module_init
+module_fini
+module_compile
+module_set_compiler
+module_set_source
+module_set_flag
+module_set_library
+module_get_flag
+module_get_library
