@@ -270,6 +270,40 @@ AC_ARG_WITH([sparsehash],
     [CPPFLAGS+=" -I$withval"], [])
 
 #------------------------------------------------------------------------------
+#------------------------------------------------------------------------------
+# 'recommender' requirements
+#
+#AC_ARG_ENABLE([recommender], [AS_HELP_STRING([--disable-recommender],
+#        [disable optimization recommender tool])],
+#    [ENABLE_RECOMMENDER=$enableval], [ENABLE_RECOMMENDER=yes])
+#
+#AC_MSG_CHECKING([whether to enable optimization recommender tool])
+#AS_IF([test x"$ENABLE_RECOMMENDER" = xyes], [
+#    AC_MSG_RESULT([yes])
+#
+#    # Math library
+#    #
+#    AC_CHECK_LIB([m], [isnormal, isnan, isinf], [],
+#        [AC_MSG_ERROR([libm.so not found])])
+#
+#    # SQLite support (headers, lib, and program)
+#    #
+#    AC_PATH_TOOL([SQLITE3_PROGRAM], [sqlite3])
+#    AS_IF([test x"$SQLITE3_PROGRAM" = x], [
+#        AC_MSG_ERROR([sqlite3 not found. Do you have SQLite3 installed?])
+#    ])
+#    AC_CHECK_LIB([sqlite3], [sqlite3_open, sqlite3_close, sqlite3_exec], [],
+#        [AC_MSG_ERROR([not found: libsqlite3.so])])
+#    AC_CHECK_HEADER([sqlite3.h], [], [AC_MSG_ERROR([not found: sqlite3.h])])
+#
+#    ENABLE_RECOMMENDER=recommender
+#    ENABLED_TOOLS+="recommender "
+#    AC_CONFIG_FILES([tools/recommender/Makefile])
+#], [
+#    AC_MSG_RESULT([no])
+#    ENABLE_RECOMMENDER=
+#])
+#AC_SUBST([ENABLE_RECOMMENDER])
 # readelf module requirements
 #
 AC_ARG_ENABLE([module-readelf],
@@ -546,15 +580,14 @@ AC_SUBST([ENABLE_MEMSNIFFER])
 #])
 #AC_SUBST([ENABLE_ANALYZER])
 
-#------------------------------------------------------------------------------
-# 'recommender' requirements
+# SQL Rules module requirements
 #
-AC_ARG_ENABLE([recommender], [AS_HELP_STRING([--disable-recommender],
-        [disable optimization recommender tool])],
-    [ENABLE_RECOMMENDER=$enableval], [ENABLE_RECOMMENDER=yes])
+AC_ARG_ENABLE([module-sqlrules], [AS_HELP_STRING([--disable-module-sqlrules],
+        [disable the SQL Rule-based recommendation module])],
+    [ENABLE_SQLRULES=$enableval], [ENABLE_SQLRULES=yes])
 
-AC_MSG_CHECKING([whether to enable the optimization recommender tool])
-AS_IF([test x"$ENABLE_RECOMMENDER" = xyes], [
+AC_MSG_CHECKING([whether to enable SQL Rules module])
+AS_IF([test x"$ENABLE_SQLRULES" = xyes], [
     AC_MSG_RESULT([yes])
 
     # Math library
@@ -572,15 +605,13 @@ AS_IF([test x"$ENABLE_RECOMMENDER" = xyes], [
         [AC_MSG_ERROR([not found: libsqlite3.so])])
     AC_CHECK_HEADER([sqlite3.h], [], [AC_MSG_ERROR([not found: sqlite3.h])])
 
-    ENABLE_RECOMMENDER=recommender
-    ENABLED_TOOLS+="recommender "
-    AC_CONFIG_FILES([tools/recommender/Makefile])
+    ENABLE_SQLRULES=sqlrules
+    ENABLED_TOOLS+="sqlrules "
+    AC_CONFIG_FILES([modules/sqlrules/Makefile])
 ], [
     AC_MSG_RESULT([no])
-    ENABLE_RECOMMENDER=
+    ENABLE_SQLRULES=
 ])
-AC_SUBST([ENABLE_RECOMMENDER])
-
 #------------------------------------------------------------------------------
 # 'macpo' requirements
 #

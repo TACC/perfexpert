@@ -19,17 +19,18 @@
 # $HEADER$
 #
 
-SUBDIRS = $(ENABLE_HPCTOOLKIT)
-SUBDIRS += $(ENABLE_LCPI)
-SUBDIRS += $(ENABLE_READELF)
-SUBDIRS += $(ENABLE_MACPO)
-SUBDIRS += $(ENABLE_TIMB)
-SUBDIRS += $(ENABLE_SQLRULES)
+lib_LTLIBRARIES = libperfexpert_module_sqlrules.la
+libperfexpert_module_sqlrules_la_CPPFLAGS = -I$(srcdir)/../..
+libperfexpert_module_sqlrules_la_LDFLAGS = -module -lsqlite3 -lm \
+	-version-info 1:0:0 -export-symbols $(srcdir)/sqlrules_module.sym
+libperfexpert_module_sqlrules_la_SOURCES = sqlrules_module.c \
+	sqlrules_logic.c \
+	sqlrules_options.c
 
-lib_LTLIBRARIES = libperfexpert_module_base.la
-libperfexpert_module_base_la_SOURCES = perfexpert_module_base.c
-libperfexpert_module_base_la_CPPFLAGS = -I$(srcdir)/..
-libperfexpert_module_base_la_LDFLAGS = -lltdl -version-info 1:0:0 \
-	-export-symbols $(srcdir)/perfexpert_module_base.sym
+# Install the recommendation database
+install-exec-local:
+	$(MKDIR_P) $(DESTDIR)$(sysconfdir)
+	$(INSTALL) -m 644 $(top_srcdir)/modules/sqlrules/sqlrules_module.sql \
+		$(DESTDIR)$(sysconfdir)/
 
 # EOF
