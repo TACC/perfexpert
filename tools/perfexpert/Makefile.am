@@ -23,19 +23,19 @@ bin_PROGRAMS = perfexpert
 
 perfexpert_CFLAGS = -O3
 perfexpert_LDFLAGS = -lsqlite3
-perfexpert_LDADD = ../../modules/libperfexpert_module_base.la
 perfexpert_LDADD = ../../common/libperfexpert_common.la \
 	../../modules/libperfexpert_module_base.la
 perfexpert_CPPFLAGS = -I$(srcdir)/../..
 perfexpert_SOURCES = perfexpert_main.c \
-	perfexpert_compile.c \
 	perfexpert_options.c \
-	perfexpert_recommendation.c \
 	perfexpert_transformation.c
 
 dist_bin_SCRIPTS = perfexpert_setup_db.sh
 
 install-exec-local:
 	$(INSTALL) -m 755 .libs/perfexpert $(DESTDIR)$(bindir)/perfexpert_run_exp
+	$(MKDIR_P) $(DESTDIR)$(sysconfdir)
+	$(INSTALL) -m 644 $(top_srcdir)/tools/perfexpert/perfexpert.sql \
+		$(DESTDIR)$(sysconfdir)/
 
 # EOF
