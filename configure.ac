@@ -291,6 +291,84 @@ AC_ARG_WITH([sparsehash],
     [CPPFLAGS+=" -I$withval"], [])
 
 #------------------------------------------------------------------------------
+# 'perfexpert' requirements
+#
+AC_ARG_ENABLE([perfexpert],
+    [AS_HELP_STRING([--disable-perfexpert],
+    [disable PerfExpert workflow tool])],
+    [ENABLE_PERFEXPERT=$enableval], [ENABLE_PERFEXPERT=yes])
+
+AC_MSG_CHECKING([whether to enable PerfExpert])
+AS_IF([test x"$ENABLE_PERFEXPERT" = xyes], [
+    AC_MSG_RESULT([yes])
+
+    # SQLite support (headers, lib, and program)
+    #
+    AC_PATH_TOOL([SQLITE3_PROGRAM], [sqlite3])
+    AS_IF([test x"$SQLITE3_PROGRAM" = x], [
+        AC_MSG_ERROR([sqlite3 not found. Do you have SQLite3 installed?])
+    ])
+    AC_CHECK_LIB([sqlite3], [sqlite3_open, sqlite3_close, sqlite3_exec], [],
+        [AC_MSG_ERROR([not found: libsqlite3.so])])
+    AC_CHECK_HEADER([sqlite3.h], [], [AC_MSG_ERROR([not found: sqlite3.h])])
+
+    ENABLE_PERFEXPERT=perfexpert
+    ENABLED_TOOLS+="perfexpert "
+    AC_CONFIG_FILES([tools/perfexpert/Makefile])
+    AC_CONFIG_FILES([tools/perfexpert/perfexpert_setup_db.sh],
+        [chmod +x tools/perfexpert/perfexpert_setup_db.sh])
+], [
+    AC_MSG_RESULT([no])
+    ENABLE_PERFEXPERT=
+])
+AC_SUBST([ENABLE_PERFEXPERT])
+
+#------------------------------------------------------------------------------
+# 'hound' requirements
+#
+AC_ARG_ENABLE([hound],
+    [AS_HELP_STRING([--disable-hound], [disable performance benchmarks])],
+    [ENABLE_HOUND=$enableval], [ENABLE_HOUND=yes])
+
+AC_MSG_CHECKING([whether to enable the performance benchmarks])
+AS_IF([test x"$ENABLE_HOUND" = xyes], [
+    AC_MSG_RESULT([yes])
+
+    ENABLE_HOUND=hound
+    ENABLED_TOOLS+="hound "
+    AC_CONFIG_FILES([tools/hound/Makefile])
+], [
+    AC_MSG_RESULT([no])
+    ENABLE_HOUND=
+])
+AC_SUBST([ENABLE_HOUND])
+
+#------------------------------------------------------------------------------
+# 'memsniffer' requirements
+#
+AC_ARG_ENABLE([memsniffer],
+    [AS_HELP_STRING([--disable-memsniffer], [disable memory sniffer])],
+    [ENABLE_MEMSNIFFER=$enableval], [ENABLE_MEMSNIFFER=yes])
+
+AC_MSG_CHECKING([whether to enable the memory sniffer])
+AS_IF([test x"$ENABLE_MEMSNIFFER" = xyes], [
+    AC_MSG_RESULT([yes])
+
+    # HWLOC support (headers and lib)
+    #
+    AC_CHECK_LIB([hwloc], [hwloc_topology_init, hwloc_topology_load], [],
+        [AC_MSG_ERROR([not found: libhwloc.so])])
+    AC_CHECK_HEADER([hwloc.h], [], [AC_MSG_ERROR([not found: hcloc.h])])
+
+    ENABLE_MEMSNIFFER=memsniffer
+    ENABLED_TOOLS+="memsniffer "
+    AC_CONFIG_FILES([tools/memsniffer/Makefile])
+], [
+    AC_MSG_RESULT([no])
+    ENABLE_MEMSNIFFER=
+])
+AC_SUBST([ENABLE_MEMSNIFFER])
+
 #------------------------------------------------------------------------------
 # 'recommender' requirements
 #
@@ -325,6 +403,104 @@ AC_ARG_WITH([sparsehash],
 #    ENABLE_RECOMMENDER=
 #])
 #AC_SUBST([ENABLE_RECOMMENDER])
+
+#------------------------------------------------------------------------------
+# 'perfexpert_ct' requirements
+#
+AC_ARG_ENABLE([ct], [AS_HELP_STRING([--disable-ct],
+        [disable automatic code transformer tool])],
+    [ENABLE_CT=$enableval], [ENABLE_CT=yes])
+
+AC_MSG_CHECKING([whether to enable code transformation])
+AS_IF([test x"$ENABLE_CT" = xyes], [
+    AC_MSG_RESULT([yes])
+
+    # JVM support
+    #
+    AC_CHECK_LIB([jvm], [JVM_Open, JVM_Close], [],
+        [AC_MSG_ERROR([not found: libjvm.so (Java Virtual Machine)])])
+
+    # ROSE Compiler support (headers and lib)
+    #
+    AC_LANG_PUSH([C++])
+    AC_CHECK_LIB([rose], [validate_operands_and_clobbers], [],
+        [AC_MSG_ERROR([not found: librose.so])])
+    AC_CHECK_HEADER([rose.h], [], [AC_MSG_ERROR([not found: rose.h])],
+        [#include "rose.h"])
+    AC_LANG_POP
+
+    # Check for Lex/Flex and Yacc/Bison
+    AC_PROG_YACC
+    AC_PROG_LEX
+
+    ENABLE_CT=ct
+    ENABLED_TOOLS+="perfexpert_ct "
+    AC_DEFINE([HAVE_CODE_TRANSFORMATION], [1], [Enable code transformation])
+    AC_CONFIG_FILES([tools/ct/Makefile])
+    AC_CONFIG_FILES([tools/ct/recognizers/Makefile])
+    AC_CONFIG_FILES([tools/ct/recognizers/nested_c_loops/Makefile])
+    AC_CONFIG_FILES([tools/ct/transformers/Makefile])
+    AC_CONFIG_FILES([tools/ct/transformers/c_loop_interchange/Makefile])
+    AC_CONFIG_FILES([tools/ct/transformers/c_loop_tiling/Makefile])
+], [
+    AC_MSG_RESULT([no])
+    ENABLE_CT=
+])
+AC_SUBST([ENABLE_CT])
+
+#------------------------------------------------------------------------------
+# 'macpo' requirements
+#
+AC_ARG_ENABLE([macpo], [AS_HELP_STRING([--disable-macpo], [disable MACPO tool
+and module (data-centric instrumentation, measurement, and analysis)])],
+    [ENABLE_MACPO=$enableval], [ENABLE_MACPO=yes])
+
+AC_MSG_CHECKING([whether to enable MACPO tool and MACPO module])
+AS_IF([test x"$ENABLE_MACPO" = xyes], [
+    AC_MSG_RESULT([yes])
+
+    # JVM support
+    #
+    AC_CHECK_LIB([jvm], [JVM_Open, JVM_Close], [],
+        [AC_MSG_ERROR([not found: libjvm.so (Java Virtual Machine)])])
+
+    # ROSE Compiler support (headers and lib)
+    #
+    AC_LANG_PUSH([C++])
+    AC_CHECK_LIB([rose], [validate_operands_and_clobbers], [],
+        [AC_MSG_ERROR([not found: librose.so])])
+    AC_CHECK_HEADER([rose.h], [], [AC_MSG_ERROR([not found: rose.h])],
+        [#include "rose.h"])
+    AC_LANG_POP
+
+    # GNU Multiple Precision Arithmetic Library support (headers and lib)
+    #
+    AC_CHECK_LIB([gmp], [__gmpf_init, __gmpf_clear], [],
+        [AC_MSG_ERROR([not found: libgmp.so])])
+    AC_CHECK_HEADER([gmp.h], [], [AC_MSG_ERROR([not found: gmp.h])])
+
+    # Check for Google SparseHash (headers)
+    #
+    AC_LANG_PUSH([C++])
+    AC_CHECK_HEADER([google/sparse_hash_map], [],
+        [AC_MSG_ERROR([not found: google/sparse_hash_map])])
+    AC_LANG_POP
+
+    ENABLE_MACPO=macpo
+    ENABLED_TOOLS+="macpo "
+    ENABLED_MODULES+="macpo "
+    AC_CONFIG_FILES([tools/macpo/Makefile])
+    AC_CONFIG_FILES([tools/macpo/macpo.sh], [chmod +x tools/macpo/macpo.sh])
+    AC_CONFIG_FILES([tools/macpo/libmrt/Makefile])
+    AC_CONFIG_FILES([tools/macpo/analyze/Makefile])
+    AC_CONFIG_FILES([tools/macpo/tests/Makefile])
+    AC_CONFIG_FILES([modules/macpo/Makefile])
+], [
+    AC_MSG_RESULT([no])
+    ENABLE_MACPO=
+])
+AC_SUBST([ENABLE_MACPO])
+
 #------------------------------------------------------------------------------
 # make module requirements
 #
@@ -597,112 +773,6 @@ AS_IF([test x"$ENABLE_LCPI" = xyes], [
 AC_SUBST([ENABLE_LCPI])
 
 #------------------------------------------------------------------------------
-# 'perfexpert' requirements
-#
-AC_ARG_ENABLE([perfexpert],
-    [AS_HELP_STRING([--disable-perfexpert], [disable PerfExpert tool])],
-    [ENABLE_PERFEXPERT=$enableval], [ENABLE_PERFEXPERT=yes])
-
-AC_MSG_CHECKING([whether to enable PerfExpert])
-AS_IF([test x"$ENABLE_PERFEXPERT" = xyes], [
-    AC_MSG_RESULT([yes])
-
-    AC_MSG_CHECKING([for enabled modules])
-    AS_IF([test x"$ENABLED_MODULES" = x], [
-        AC_MSG_RESULT([no])
-        AC_MSG_ERROR([PerfExpert requires at least one module enabled])
-    ], [
-        AC_MSG_RESULT($ENABLED_MODULES: OK!)
-    ])
-
-    # SQLite support (headers, lib, and program)
-    #
-    AC_PATH_TOOL([SQLITE3_PROGRAM], [sqlite3])
-    AS_IF([test x"$SQLITE3_PROGRAM" = x], [
-        AC_MSG_ERROR([sqlite3 not found. Do you have SQLite3 installed?])
-    ])
-    AC_CHECK_LIB([sqlite3], [sqlite3_open, sqlite3_close, sqlite3_exec], [],
-        [AC_MSG_ERROR([not found: libsqlite3.so])])
-    AC_CHECK_HEADER([sqlite3.h], [], [AC_MSG_ERROR([not found: sqlite3.h])])
-
-    ENABLE_PERFEXPERT=perfexpert
-    ENABLED_TOOLS+="perfexpert "
-    AC_CONFIG_FILES([tools/perfexpert/Makefile])
-    AC_CONFIG_FILES([tools/perfexpert/perfexpert_setup_db.sh],
-        [chmod +x tools/perfexpert/perfexpert_setup_db.sh])
-], [
-    AC_MSG_RESULT([no])
-    ENABLE_PERFEXPERT=
-])
-AC_SUBST([ENABLE_PERFEXPERT])
-
-#------------------------------------------------------------------------------
-# 'hound' requirements
-#
-AC_ARG_ENABLE([hound],
-    [AS_HELP_STRING([--disable-hound], [disable the performance benchmarks])],
-    [ENABLE_HOUND=$enableval], [ENABLE_HOUND=yes])
-
-AC_MSG_CHECKING([whether to enable the performance benchmarks])
-AS_IF([test x"$ENABLE_HOUND" = xyes], [
-    AC_MSG_RESULT([yes])
-
-    ENABLE_HOUND=hound
-    ENABLED_TOOLS+="hound "
-    AC_CONFIG_FILES([tools/hound/Makefile])
-], [
-    AC_MSG_RESULT([no])
-    ENABLE_HOUND=
-])
-AC_SUBST([ENABLE_HOUND])
-
-#------------------------------------------------------------------------------
-# 'memsniffer' requirements
-#
-AC_ARG_ENABLE([memsniffer],
-    [AS_HELP_STRING([--disable-memsniffer], [disable the memory sniffer])],
-    [ENABLE_MEMSNIFFER=$enableval], [ENABLE_MEMSNIFFER=yes])
-
-AC_MSG_CHECKING([whether to enable the memory sniffer])
-AS_IF([test x"$ENABLE_MEMSNIFFER" = xyes], [
-    AC_MSG_RESULT([yes])
-
-    # HWLOC support (headers and lib)
-    #
-    AC_CHECK_LIB([hwloc], [hwloc_topology_init, hwloc_topology_load], [],
-        [AC_MSG_ERROR([not found: libhwloc.so])])
-    AC_CHECK_HEADER([hwloc.h], [], [AC_MSG_ERROR([not found: hcloc.h])])
-
-    ENABLE_MEMSNIFFER=memsniffer
-    ENABLED_TOOLS+="memsniffer "
-    AC_CONFIG_FILES([tools/memsniffer/Makefile])
-], [
-    AC_MSG_RESULT([no])
-    ENABLE_MEMSNIFFER=
-])
-AC_SUBST([ENABLE_MEMSNIFFER])
-
-#------------------------------------------------------------------------------
-# 'perfexpert_analyzer' requirements
-#
-#AC_ARG_ENABLE([analyzer],
-#    [AS_HELP_STRING([--disable-analyzer],
-#    [disable the standalone performance analyzer tool])],
-#    [ENABLE_ANALYZER=$enableval], [ENABLE_ANALYZER=yes])
-#
-#AC_MSG_CHECKING([whether to enable the performance analyzer tool])
-#AS_IF([test x"$ENABLE_ANALYZER" = xyes], [
-#    AC_MSG_RESULT([yes])
-#
-#    ENABLE_ANALYZER=analyzer
-#    ENABLED_TOOLS+="analyzer "
-#    AC_CONFIG_FILES([tools/analyzer/Makefile])
-#], [
-#    AC_MSG_RESULT([no])
-#    ENABLE_ANALYZER=
-#])
-#AC_SUBST([ENABLE_ANALYZER])
-
 # SQL Rules module requirements
 #
 AC_ARG_ENABLE([module-sqlrules], [AS_HELP_STRING([--disable-module-sqlrules],
@@ -735,102 +805,6 @@ AS_IF([test x"$ENABLE_SQLRULES" = xyes], [
     AC_MSG_RESULT([no])
     ENABLE_SQLRULES=
 ])
-#------------------------------------------------------------------------------
-# 'macpo' requirements
-#
-AC_ARG_ENABLE([macpo], [AS_HELP_STRING([--disable-macpo], [disable MACPO tool
-and module (data-centric instrumentation, measurement, and analysis)])],
-    [ENABLE_MACPO=$enableval], [ENABLE_MACPO=yes])
-
-AC_MSG_CHECKING([whether to enable MACPO tool and MACPO module])
-AS_IF([test x"$ENABLE_MACPO" = xyes], [
-    AC_MSG_RESULT([yes])
-
-    # JVM support
-    #
-    AC_CHECK_LIB([jvm], [JVM_Open, JVM_Close], [],
-        [AC_MSG_ERROR([not found: libjvm.so (Java Virtual Machine)])])
-
-    # ROSE Compiler support (headers and lib)
-    #
-    AC_LANG_PUSH([C++])
-    AC_CHECK_LIB([rose], [validate_operands_and_clobbers], [],
-        [AC_MSG_ERROR([not found: librose.so])])
-    AC_CHECK_HEADER([rose.h], [], [AC_MSG_ERROR([not found: rose.h])],
-        [#include "rose.h"])
-    AC_LANG_POP
-
-    # GNU Multiple Precision Arithmetic Library support (headers and lib)
-    #
-    AC_CHECK_LIB([gmp], [__gmpf_init, __gmpf_clear], [],
-        [AC_MSG_ERROR([not found: libgmp.so])])
-    AC_CHECK_HEADER([gmp.h], [], [AC_MSG_ERROR([not found: gmp.h])])
-
-    # Check for Google SparseHash (headers)
-    #
-    AC_LANG_PUSH([C++])
-    AC_CHECK_HEADER([google/sparse_hash_map], [],
-        [AC_MSG_ERROR([not found: google/sparse_hash_map])])
-    AC_LANG_POP
-
-    ENABLE_MACPO=macpo
-    ENABLED_TOOLS+="macpo "
-    ENABLED_MODULES+="macpo "
-    AC_CONFIG_FILES([tools/macpo/Makefile])
-    AC_CONFIG_FILES([tools/macpo/macpo.sh], [chmod +x tools/macpo/macpo.sh])
-    AC_CONFIG_FILES([tools/macpo/libmrt/Makefile])
-    AC_CONFIG_FILES([tools/macpo/analyze/Makefile])
-    AC_CONFIG_FILES([tools/macpo/tests/Makefile])
-    AC_CONFIG_FILES([modules/macpo/Makefile])
-], [
-    AC_MSG_RESULT([no])
-    ENABLE_MACPO=
-])
-AC_SUBST([ENABLE_MACPO])
-
-#------------------------------------------------------------------------------
-# 'perfexpert_ct' requirements
-#
-AC_ARG_ENABLE([ct], [AS_HELP_STRING([--disable-ct],
-        [disable the automatic code transformer tool])],
-    [ENABLE_CT=$enableval], [ENABLE_CT=yes])
-
-AC_MSG_CHECKING([whether to enable code transformation])
-AS_IF([test x"$ENABLE_CT" = xyes], [
-    AC_MSG_RESULT([yes])
-
-    # JVM support
-    #
-    AC_CHECK_LIB([jvm], [JVM_Open, JVM_Close], [],
-        [AC_MSG_ERROR([not found: libjvm.so (Java Virtual Machine)])])
-
-    # ROSE Compiler support (headers and lib)
-    #
-    AC_LANG_PUSH([C++])
-    AC_CHECK_LIB([rose], [validate_operands_and_clobbers], [],
-        [AC_MSG_ERROR([not found: librose.so])])
-    AC_CHECK_HEADER([rose.h], [], [AC_MSG_ERROR([not found: rose.h])],
-        [#include "rose.h"])
-    AC_LANG_POP
-
-    # Check for Lex/Flex and Yacc/Bison
-    AC_PROG_YACC
-    AC_PROG_LEX
-
-    ENABLE_CT=ct
-    ENABLED_TOOLS+="perfexpert_ct "
-    AC_DEFINE([HAVE_CODE_TRANSFORMATION], [1], [Enable code transformation])
-    AC_CONFIG_FILES([tools/ct/Makefile])
-    AC_CONFIG_FILES([tools/ct/recognizers/Makefile])
-    AC_CONFIG_FILES([tools/ct/recognizers/nested_c_loops/Makefile])
-    AC_CONFIG_FILES([tools/ct/transformers/Makefile])
-    AC_CONFIG_FILES([tools/ct/transformers/c_loop_interchange/Makefile])
-    AC_CONFIG_FILES([tools/ct/transformers/c_loop_tiling/Makefile])
-], [
-    AC_MSG_RESULT([no])
-    ENABLE_CT=
-])
-AC_SUBST([ENABLE_CT])
 AC_SUBST([ENABLE_SQLRULES])
 
 #------------------------------------------------------------------------------
