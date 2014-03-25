@@ -26,14 +26,6 @@
 #include <sys/stat.h>
 #include <ltdl.h>
 
-/* Fake globals, just to compile the library */
-typedef struct {
-    int      verbose;
-    int      colorful;
-} globals_t;
-
-extern globals_t globals; /* This variable is defined in analyzer_main.c */
-
 #ifdef PROGRAM_PREFIX
 #undef PROGRAM_PREFIX
 #endif
@@ -41,6 +33,9 @@ extern globals_t globals; /* This variable is defined in analyzer_main.c */
 
 /* Modules headers */
 #include "perfexpert_module_base.h"
+
+/* Tool headers */
+#include "tools/perfexpert/perfexpert_types.h"
 
 /* PerfExpert common headers */
 #include "common/perfexpert_alloc.h"
@@ -54,152 +49,441 @@ module_globals_t module_globals;
 /* my_init (runs automatically in loading time) */
 void __attribute__ ((constructor)) my_init(void) {
     perfexpert_list_construct(&(module_globals.modules));
-    perfexpert_list_construct(&(module_globals.compile));
-    perfexpert_list_construct(&(module_globals.measurements));
-    perfexpert_list_construct(&(module_globals.analysis));
+    perfexpert_list_construct(&(module_globals.steps));
 }
 
+/* Public functions (should be mentioned in the sym file) */
 /* perfexpert_module_load*/
 int perfexpert_module_load(const char *name) {
-    perfexpert_ordered_module_t *ordered = NULL;
-    perfexpert_module_t *module = NULL;
-    lt_dlhandle modulehandle = NULL;
-    int is_in_list = PERFEXPERT_FALSE;
+    perfexpert_module_t *m = NULL;
+    lt_dlhandle handle = NULL;
 
     /* Sanity check: is this module already loaded? */
-    perfexpert_list_for(module, &(module_globals.modules), perfexpert_module_t) {
-        if (0 == strcmp(name, module->name)) {
+    perfexpert_list_for(m, &(module_globals.modules), perfexpert_module_t) {
+        if (0 == strcmp(name, m->name)) {
             OUTPUT_VERBOSE((8, "module already loaded"));
             return PERFEXPERT_SUCCESS;
         }
     }
 
     /* Load module */
-    if (NULL == (modulehandle = perfexpert_module_open(name))) {
+    if (NULL == (handle = perfexpert_module_open(name))) {
+        OUTPUT(("%s [%s]", _ERROR("error openning module"), name));
         return PERFEXPERT_ERROR;
     }
 
     /* Link the basic module interface symbol */
-    module = (perfexpert_module_t *)lt_dlsym(modulehandle, "myself_module");
-    if (NULL == module) {
+    m = (perfexpert_module_t *)lt_dlsym(handle, "myself_module");
+    if (NULL == m) {
         OUTPUT(("%s", _ERROR("'myself_module' symbol not found")));
-        goto MODULE_ERROR;
+        lt_dlclose(handle);
+        return PERFEXPERT_ERROR;
     }
 
-    /* Link/Set default values for the basic module interface */
-    perfexpert_list_item_construct((perfexpert_list_item_t *)module);
+    /* Setup the module list item */
+    perfexpert_list_item_construct((perfexpert_list_item_t *)m);
+    PERFEXPERT_ALLOC(char, m->name, (strlen(name) + 1));
+    strcpy(m->name, name);
 
-    PERFEXPERT_ALLOC(char, module->name, (strlen(name) + 1));
-    strcpy(module->name, name);
-
-    module->version = (char *)lt_dlsym(modulehandle, "module_version");
-    if (NULL == module->version) {
+    /* Link and set the minimun required interfaces */
+    m->version = (char *)lt_dlsym(handle, "module_version");
+    if (NULL == m->version) {
         OUTPUT(("%s", _ERROR("'module_version' symbol not found")));
         goto MODULE_ERROR;
     }
-
-    module->load = lt_dlsym(modulehandle, "module_load");
-    if (NULL == module->load) {
+    m->load = lt_dlsym(handle, "module_load");
+    if (NULL == m->load) {
         OUTPUT(("%s", _ERROR("'module_load()' not found")));
         goto MODULE_ERROR;
     }
-
-    module->init = lt_dlsym(modulehandle, "module_init");
-    if (NULL == module->init) {
+    m->init = lt_dlsym(handle, "module_init");
+    if (NULL == m->init) {
         OUTPUT(("%s", _ERROR("'module_init()' not found")));
         goto MODULE_ERROR;
     }
-
-    module->fini = lt_dlsym(modulehandle, "module_fini");
-    if (NULL == module->fini) {
+    m->fini = lt_dlsym(handle, "module_fini");
+    if (NULL == m->fini) {
         OUTPUT(("%s", _ERROR("'module_fini()' not found")));
         goto MODULE_ERROR;
     }
 
-    module->compile = lt_dlsym(modulehandle, "module_compile");
-    if (NULL == module->compile) {
-        module->compile = PERFEXPERT_MODULE_NOT_IMPLEMENTED;
-        OUTPUT_VERBOSE((8, "   %s does not implement module_compile", name));
+    /* Link the recommender interface */
+    if (NULL != (m->recommend = lt_dlsym(handle, "module_recommend"))) {
+        if (PERFEXPERT_SUCCESS != perfexpert_phase_add(m,
+            PERFEXPERT_PHASE_RECOMMEND)) {
+            OUTPUT(("%s [%s]", _ERROR("adding 'recommend' phase of module"),
+                m->name));
+            goto MODULE_ERROR;
+        }
+        OUTPUT(("Essa porra vale: %p", m->recommend));
+    } else {
+        OUTPUT_VERBOSE((8, "   %s does not implement 'recommend'", name));
     }
 
-    module->measurements = lt_dlsym(modulehandle, "module_measurements");
-    if (NULL == module->measurements) {
-        module->measurements = PERFEXPERT_MODULE_NOT_IMPLEMENTED;
-        OUTPUT_VERBOSE((8, "   %s does not implement module_measurements",
-            name));
+    /* Link the analysis interface */
+    if (NULL != (m->analyze = lt_dlsym(handle, "module_analyze"))) {
+        if (PERFEXPERT_SUCCESS != perfexpert_phase_add(m,
+            PERFEXPERT_PHASE_ANALYZE)) {
+            OUTPUT(("%s [%s]", _ERROR("adding 'analyze' phase of module"),
+                m->name));
+            goto MODULE_ERROR;
+        }
     } else {
-        is_in_list = PERFEXPERT_FALSE;
-        perfexpert_list_for(ordered, &(module_globals.measurements),
-            perfexpert_ordered_module_t) {
-            if (0 == strcmp(ordered->name, module->name)) {
-                is_in_list = PERFEXPERT_TRUE;
-            }
-        }
-        if (is_in_list == PERFEXPERT_FALSE) {
-            PERFEXPERT_ALLOC(perfexpert_ordered_module_t, ordered,
-                sizeof(perfexpert_ordered_module_t));
-            PERFEXPERT_ALLOC(char, ordered->name, (strlen(module->name) + 1));
-            strcpy(ordered->name, module->name);
-            ordered->module = module;
-            perfexpert_list_item_construct((perfexpert_list_item_t *)ordered);
-            perfexpert_list_append(&(module_globals.measurements),
-                (perfexpert_list_item_t *)ordered);
-        }
+        OUTPUT_VERBOSE((8, "   %s does not implement 'analyze'", name));
     }
 
-    module->analysis = lt_dlsym(modulehandle, "module_analysis");
-    if (NULL == module->analysis) {
-        module->analysis = PERFEXPERT_MODULE_NOT_IMPLEMENTED;
-        OUTPUT_VERBOSE((8, "   %s does not implement module_analysis", name));
+    /* Link the measurements interface */
+    if (NULL != (m->measure = lt_dlsym(handle, "module_measure"))) {
+        if (PERFEXPERT_SUCCESS != perfexpert_phase_add(m,
+            PERFEXPERT_PHASE_MEASURE)) {
+            OUTPUT(("%s [%s]", _ERROR("adding 'measure' phase of module"),
+                m->name));
+            goto MODULE_ERROR;
+        }
     } else {
-        is_in_list = PERFEXPERT_FALSE;
-        perfexpert_list_for(ordered, &(module_globals.analysis),
-            perfexpert_ordered_module_t) {
-            if (0 == strcmp(ordered->name, module->name)) {
-                is_in_list = PERFEXPERT_TRUE;
-            }
+        OUTPUT_VERBOSE((8, "   %s does not implement 'measure'", name));
+    }
+
+    /* Link the instrumentation interface */
+    if (NULL != (m->instrument = lt_dlsym(handle, "module_instrument"))) {
+        if (PERFEXPERT_SUCCESS != perfexpert_phase_add(m,
+            PERFEXPERT_PHASE_INSTRUMENT)) {
+            OUTPUT(("%s [%s]", _ERROR("adding 'instrument' phase of module"),
+                m->name));
+            goto MODULE_ERROR;
         }
-        if (is_in_list == PERFEXPERT_FALSE) {
-            PERFEXPERT_ALLOC(perfexpert_ordered_module_t, ordered,
-                sizeof(perfexpert_ordered_module_t));
-            PERFEXPERT_ALLOC(char, ordered->name, (strlen(module->name) + 1));
-            strcpy(ordered->name, module->name);
-            ordered->module = module;
-            perfexpert_list_item_construct((perfexpert_list_item_t *)ordered);
-            perfexpert_list_append(&(module_globals.analysis),
-                (perfexpert_list_item_t *)ordered);
+    } else {
+        OUTPUT_VERBOSE((8, "   %s does not implement 'instrument'", m->name));
+    }
+
+    /* Link the compilation interface */
+    if (NULL != (m->compile = lt_dlsym(handle, "module_compile"))) {
+        if (PERFEXPERT_SUCCESS != perfexpert_phase_add(m,
+            PERFEXPERT_PHASE_COMPILE)) {
+            OUTPUT(("%s [%s]", _ERROR("adding 'compile' phase of module"),
+                m->name));
+            goto MODULE_ERROR;
         }
+    } else {
+        OUTPUT_VERBOSE((8, "   %s does not implement 'compile'", m->name));
     }
 
     /* Call module's load function */
-    if (PERFEXPERT_SUCCESS != module->load()) {
+    if (PERFEXPERT_SUCCESS != m->load()) {
+        OUTPUT(("%s [%s]", _ERROR("error running module's load()"), m->name));
         goto MODULE_ERROR;
+    } else {
+        m->status = PERFEXPERT_MODULE_LOADED;
+        m->argv[0] = m->name;
+        m->argc = 1;
     }
 
-    /* Set module status */
-    module->status = PERFEXPERT_MODULE_LOADED;
-
-    /* Set module arguments */
-    module->argc = 0;
-
-    /* Add to the lists of modules */
+    /* Append to the lists of modules */
     perfexpert_list_append(&(module_globals.modules),
-        (perfexpert_list_item_t *)module);
+        (perfexpert_list_item_t *)m);
 
-    /* Set argv[0] */
-    module->argv[0] = module->name;
-    module->argc++;
-
-    OUTPUT_VERBOSE((5, "module %s loaded [version %s]", _CYAN(module->name),
-        module->version));
+    OUTPUT_VERBOSE((5, "module %s loaded [%s]", _CYAN(m->name), m->version));
 
     return PERFEXPERT_SUCCESS;
 
     MODULE_ERROR:
-    lt_dlclose(modulehandle);
+    PERFEXPERT_DEALLOC(m->name);
+    lt_dlclose(handle);
     return PERFEXPERT_ERROR;
 }
 
+/* perfexpert_module_set_option */
+int perfexpert_module_set_option(const char *module, const char *option) {
+    perfexpert_module_t *m = NULL;
+    char *fulloption = NULL;
+
+    PERFEXPERT_ALLOC(char, fulloption, (strlen(option) + 3));
+    sprintf(fulloption, "--%s", option);
+
+    if (PERFEXPERT_FALSE == perfexpert_module_available(module)) {
+        if (PERFEXPERT_FALSE == perfexpert_module_installed(module)) {
+            OUTPUT(("%s [%s]", _ERROR("module not installed"), module));
+            return PERFEXPERT_ERROR;
+        }
+        if (PERFEXPERT_SUCCESS != perfexpert_module_load(module)) {
+            OUTPUT(("%s [%s]", _ERROR("while adding module"), module));
+            return PERFEXPERT_ERROR;
+        }
+    }
+
+    if (NULL != (m = perfexpert_module_get(module))) {
+        OUTPUT_VERBOSE((1, "%s option set [%s]", module, option));
+
+        m->argv[m->argc] = fulloption;
+        m->argc++;
+
+        return PERFEXPERT_SUCCESS;
+    }
+
+    OUTPUT(("%s [%s]", _ERROR("unable to get module"), module));
+
+    return PERFEXPERT_ERROR;
+}
+
+/* perfexpert_module_init */
+int perfexpert_module_init(void) {
+    perfexpert_step_t *step = NULL;
+    perfexpert_module_t *m = NULL;
+
+    OUTPUT_VERBOSE((10, "%s", _BLUE("Initializing modules")));
+
+    /* Initialize each module */
+    perfexpert_list_for(m, &(module_globals.modules), perfexpert_module_t) {
+        /* Paranoia: skip modules already initialized (is it possible?) */
+        if (PERFEXPERT_MODULE_INITIALIZED == m->status) {
+            continue;
+        }
+        if (PERFEXPERT_MODULE_LOADED != m->status) {
+            OUTPUT(("%s [%s]", _ERROR("module status different from"
+                "PERFEXPERT_MODULE_LOADED"), m->name));
+            return PERFEXPERT_ERROR;
+        }
+
+        /* Call module's init() */
+        if (PERFEXPERT_SUCCESS != m->init()) {
+            OUTPUT(("%s [%s]", _ERROR("error initializing module"), m->name));
+            return PERFEXPERT_ERROR;
+        }
+
+        m->status = PERFEXPERT_MODULE_INITIALIZED;
+    }
+
+    /* Print summary */
+    if (7 <= globals.verbose) {
+        printf("%s %s", PROGRAM_PREFIX, _GREEN("Final list of modules:"));
+        perfexpert_list_for(m, &(module_globals.modules), perfexpert_module_t) {
+            printf(" [%s]", m->name);
+        }
+        printf("\n%s %s    ", PROGRAM_PREFIX, _GREEN("Final steps order:"));
+        perfexpert_list_for(step, &(module_globals.steps), perfexpert_step_t) {
+            printf(" [%s/%d]", step->name, step->phase);
+        }
+        printf("\n");
+        fflush(stdout);
+    }
+
+    return PERFEXPERT_SUCCESS;
+}
+
+/* perfexpert_module_fini */
+int perfexpert_module_fini(void) {
+    perfexpert_module_t *m = NULL;
+
+    /* For each module... */
+    perfexpert_list_for(m, &(module_globals.modules), perfexpert_module_t) {
+        if (PERFEXPERT_MODULE_FINALIZED == m->status) {
+            continue;
+        }
+
+        if (PERFEXPERT_SUCCESS != m->fini()) {
+            OUTPUT(("%s [%s]", _ERROR("while finalizing module"), m->name));
+            return PERFEXPERT_ERROR;
+        }
+
+        m->status = PERFEXPERT_MODULE_FINALIZED;
+    }
+    return PERFEXPERT_SUCCESS;
+}
+
+/* perfexpert_module_requires
+ *
+ * Explanation: this functions should be interpreted as "module A/phase A
+ *              REQUIRES module B/phase B ORDER". The module A/phase A will be
+ * moved around while the module B/phase B will stay in the same order. See the
+ * header file (perfexpert_module_base.h) to know the valid values for 'ap',
+ * 'bp', and 'order' variables (module_phase_t and module_order_t enumerations).
+ * There are some special cases or 'order' where 'b' and 'bp' are not taken into
+ * consideration: PERFEXPERT_MODULE_FIRST and PERFEXPERT_MODULE_LAST. Another
+ * special case is when 'b' is NULL. In this case it means "any module which
+ * matches the phase criteria" -- very useful to clone the compilation phase.
+ */
+int perfexpert_module_requires(const char *a, perfexpert_step_phase_t pa,
+    const char *b, perfexpert_step_phase_t pb, perfexpert_module_order_t o) {
+    /* step A, step B, temporary step, first step, last step */
+    perfexpert_step_t *sa = NULL, *sb = NULL, *t = NULL, *f = NULL, *l = NULL;
+    perfexpert_module_t *m = NULL;
+    int x = 0, xa = 0, xb = 0;
+
+    /* Is the 'b' module already loaded? */
+    if ((NULL == (m = perfexpert_module_get(b))) && (NULL != b)) {
+        OUTPUT_VERBOSE((1, "module [%s] is required by module [%s]", b, a));
+        if (PERFEXPERT_SUCCESS != perfexpert_module_load(b)) {
+            /* WARNING: we cannot trust the module will check for the return
+             *          code of this function (mainly because module can be
+             * developed by contributors). So we should abort the execution here
+             * if an error happens when trying to load the pre-requisite module.
+             * The problem is that we are not able to clean up all the temporary
+             * files and etc, leaving garbage behind. So let's print an error
+             * message and let the user decide what to do.
+             */
+            OUTPUT(("%s", _ERROR("The requested module is not available. "
+                "Hopefully, the module will abort the execution or handle this "
+                "error, but we cannot guarantee it will happen. PerfExpert will"
+                " not abort the execution rigth now, but be aware that "
+                "unexpected results may happen if the module does not handle "
+                "this error appropriately.")));
+            return PERFEXPERT_ERROR;
+        } else {
+            if (NULL != (m = perfexpert_module_get(b))) {
+                /* To avoid ordering problems the loaded module should be
+                 * initialized now */
+                if (PERFEXPERT_SUCCESS != m->init()) {
+                    OUTPUT(("%s [%s]", _ERROR("error initializing module"),
+                        m->name));
+                    return PERFEXPERT_ERROR;
+                }
+                m->status = PERFEXPERT_MODULE_INITIALIZED;
+            }
+        }
+    }
+
+    /* Find module/phase and their position on the list of steps */
+    perfexpert_list_for(t, &(module_globals.steps), perfexpert_step_t) {
+        /* find module A, phase PA */
+        if ((t->phase == pa) && (0 == strcmp(a, t->name))) {
+            sa = t;
+            xa = x;
+        }
+        /* find module B, phase PB */
+        if (NULL != b) {
+            if ((t->phase == pb) && (0 == strcmp(b, t->name))) {
+                sb = t;
+                xb = x;
+            }
+        }
+        /* find module B NULL, phase PB */
+        if ((NULL == b) && (t->phase == pb)) {
+            sb = t;
+            xb = x;
+        }
+        /* find position FIRST */
+        if (0 == x) {
+            f = t;
+        }
+        /* find position LAST */
+        l = t;
+        /* Move on */
+        x++;
+    }
+
+    /* Paranoia? Maybe! Anyway, it doens't hurt. Do both phases exist? */
+    if ((NULL == sa) || ((NULL == sb) && (NULL != b))) {
+        OUTPUT(("%s [A=%s/%d,B=%s/%d]", _ERROR("The requested module/phase "
+            "is not available. Hopefully, the module will abort the execution "
+            "or handle this error, but we cannot guarantee it will happen. "
+            "PerfExpert will not abort the execution rigth now, but be aware "
+            "that unexpected results may happen if the module does not handle "
+            "this error appropriately."), sa ? sa->name : "(null)", pa,
+            sb ? sb->name : "(null)", pb));
+        return PERFEXPERT_ERROR;
+    }
+
+    /* Should we reorder or clone some module/phase? */
+    if (NULL != b) {
+        /* Reorder */
+        if ((PERFEXPERT_MODULE_BEFORE == o) && (xb > xa)) {
+            OUTPUT_VERBOSE((1, "%s: %s/%d requires %s/%d first",
+                _RED("reordering steps"), sa->name, pa, sb->name, pb));
+            perfexpert_list_move_after((perfexpert_list_item_t *)sa,
+                (perfexpert_list_item_t *)sb);
+        } else if ((PERFEXPERT_MODULE_AFTER == o) && (xb < xa)) {
+            OUTPUT_VERBOSE((1, "%s: %s/%d requires %s/%d after",
+                _RED("reordering steps"), sa->name, pa, sb->name, pb));
+            perfexpert_list_move_before((perfexpert_list_item_t *)sa,
+                (perfexpert_list_item_t *)sb);
+        }
+    } else {
+        if (PERFEXPERT_MODULE_CLONE_BEFORE == o) {
+            t = perfexpert_step_clone(sb);
+            if (NULL != t) {
+                OUTPUT_VERBOSE((1, "%s: %s/%d requires %s/%d first",
+                    _RED("cloning step"), sa->name, pa, t->name, t->phase));
+                perfexpert_list_insert(&(module_globals.steps),
+                    (perfexpert_list_item_t *)t, xa);
+            }
+        } else if (PERFEXPERT_MODULE_CLONE_AFTER == o) {
+            t = perfexpert_step_clone(sb);
+            if (NULL != t) {
+                OUTPUT_VERBOSE((1, "%s: %s/%d requires %s/%d after",
+                    _RED("cloning step"), sa->name, pa, t->name, t->phase));
+                perfexpert_list_insert(&(module_globals.steps),
+                    (perfexpert_list_item_t *)t, xa + 1);
+            }
+        } else if ((PERFEXPERT_MODULE_FIRST == o) && (0 < xa)) {
+            OUTPUT_VERBOSE((1, "%s: %s/%d requires first", _RED("moving step"),
+                sa->name, pa));
+            perfexpert_list_move_before((perfexpert_list_item_t *)sa,
+                (perfexpert_list_item_t *)f);
+        } else if ((PERFEXPERT_MODULE_LAST == o) && (x - 1 > xa)) {
+            OUTPUT_VERBOSE((1, "%s: %s/%d requires last", _RED("moving step"),
+                sa->name, pa));
+            perfexpert_list_move_after((perfexpert_list_item_t *)sa,
+                (perfexpert_list_item_t *)l);
+        }
+    }
+
+    /* We are ready for now */
+    return PERFEXPERT_SUCCESS;
+}
+
+/* perfexpert_module_get */
+perfexpert_module_t *perfexpert_module_get(const char *name) {
+    perfexpert_module_t *m = NULL;
+
+    /* Basic check */
+    if (NULL == name) {
+        return NULL;
+    }
+
+    /* For each module... */
+    perfexpert_list_for(m, &(module_globals.modules), perfexpert_module_t) {
+        if (0 == strcmp(name, m->name)) {
+            return m;
+        }
+    }
+
+    /* Module not found */
+    return NULL;
+}
+
+/* perfexpert_module_available */
+int perfexpert_module_available(const char *name) {
+    perfexpert_module_t *m = NULL;
+
+    /* Basic check */
+    if (NULL == name) {
+        return PERFEXPERT_FALSE;
+    }
+
+    /* For each module... */
+    perfexpert_list_for(m, &(module_globals.modules), perfexpert_module_t) {
+        if (0 == strcmp(name, m->name)) {
+            return PERFEXPERT_TRUE;
+        }
+    }
+
+    /* Module not found */
+    return PERFEXPERT_FALSE;
+}
+
+/* perfexpert_module_installed */
+int perfexpert_module_installed(const char *name) {
+    lt_dlhandle handle;
+
+    if (NULL != (handle = perfexpert_module_open(name))) {
+        perfexpert_module_close(handle, name);
+        return PERFEXPERT_TRUE;
+    }
+
+    return PERFEXPERT_FALSE;
+}
+
+/* Private functions (should NOT be mentioned in the sym file) */
 /* perfexpert_module_open */
 static lt_dlhandle perfexpert_module_open(const char *name) {
     static const lt_dlinfo *moduleinfo = NULL;
@@ -223,17 +507,17 @@ static lt_dlhandle perfexpert_module_open(const char *name) {
     /* Load module file
      * WARNING: if this function returns "file not found" sometimes, the problem
      *          is not with the search path or so. This error could happens when
-     *          the module has unresolved symbols. To solve this, check if there
-     *          is any unresolved symbol in the module file.
+     * the module has unresolved symbols. To solve this, check if there is any
+     * unresolved symbol in the module file. Sorry, but Libtool debug sucks.
      */
     PERFEXPERT_ALLOC(char, filename, (strlen(name) + 25));
-    filename = (char *)malloc(strlen(name) + 25);
     sprintf(filename, "libperfexpert_module_%s.so", name);
     handle = lt_dlopenext(filename);
 
     if (NULL == handle) {
-        OUTPUT(("%s [%s] [%s] %s", _ERROR("cannot load module"), filename,
-            lt_dlerror(), PERFEXPERT_LIBDIR));
+        OUTPUT(("%s (%s) [%s] [%s] (Are all the symbols resolved?)",
+            _ERROR("cannot load module"), lt_dlerror(), PERFEXPERT_LIBDIR,
+            filename));
         goto MODULE_ERROR;
     }
     PERFEXPERT_DEALLOC(filename);
@@ -262,374 +546,104 @@ static lt_dlhandle perfexpert_module_open(const char *name) {
     return NULL;
 }
 
-/* perfexpert_module_set_option */
-int perfexpert_module_set_option(const char *module, const char *option) {
-    perfexpert_module_t *m = NULL;
-    char *fulloption = NULL;
+/* perfexpert_module_close */
+static int perfexpert_module_close(lt_dlhandle handle, const char *name) {
+    OUTPUT_VERBOSE((9, "unloading module [%s]", _CYAN((char *)name)));
 
-    PERFEXPERT_ALLOC(char, fulloption, (strlen(option) + 3));
-    sprintf(fulloption, "--%s", option);
+    lt_dlclose(handle);
 
-    /* For each module... */
-    SEARCH_MODULE:
-    perfexpert_list_for(m, &(module_globals.modules), perfexpert_module_t) {
-        if ((PERFEXPERT_MODULE_LOADED == m->status) &&
-            (0 == strcmp(m->name, module))) {
+    return PERFEXPERT_SUCCESS;
+}
 
-            m->argv[m->argc] = fulloption;
-            m->argc++;
+/* perfexpert_phase_add */
+static int perfexpert_phase_add(perfexpert_module_t *m,
+    perfexpert_step_phase_t p) {
+    int compiler_present = PERFEXPERT_FALSE;
+    int is_in_list = PERFEXPERT_FALSE;
+    perfexpert_step_t *s = NULL;
 
-            OUTPUT_VERBOSE((1, "%s option set [%s]", module, option));
-
-            return PERFEXPERT_SUCCESS;
+    /* Paranoia: search for module/phase on glogal list of steps */
+    perfexpert_list_for(s, &(module_globals.steps), perfexpert_step_t) {
+        if ((0 == strcmp(s->name, m->name)) && (p == s->phase)) {
+            is_in_list = PERFEXPERT_TRUE;
+        }
+        if (PERFEXPERT_PHASE_COMPILE == s->phase) {
+            compiler_present = PERFEXPERT_TRUE;
         }
     }
 
-    if (PERFEXPERT_SUCCESS != perfexpert_module_load(module)) {
-        OUTPUT(("%s [%s]", _ERROR("while adding module"), module));
+    /* Compilers are 'singleton': only one compile module should be present */
+    if ((PERFEXPERT_TRUE == compiler_present) &&
+        (PERFEXPERT_PHASE_COMPILE == p)) {
+        OUTPUT(("%s %s/%d", _ERROR("module/step cannot be added because there "
+            "is already another compiler module/phase loaded"), m->name, p));
         return PERFEXPERT_ERROR;
     }
-    goto SEARCH_MODULE;
-}
 
-/* perfexpert_module_init */
-int perfexpert_module_init(void) {
-    perfexpert_ordered_module_t *om = NULL, *prev = NULL;
-    perfexpert_module_t *m = NULL;
+    /* Add module/phase to global list of steps */
+    if (PERFEXPERT_FALSE == is_in_list) {
+        PERFEXPERT_ALLOC(perfexpert_step_t, s, sizeof(perfexpert_step_t));
+        PERFEXPERT_ALLOC(char, s->name, (strlen(m->name) + 1));
+        strcpy(s->name, m->name);
+        s->phase = p;
+        s->module = m;
+        s->status = PERFEXPERT_STEP_UNDEFINED;
+        perfexpert_list_item_construct((perfexpert_list_item_t *)s);
 
-    /* Load missing modules, set its pointer, and remove non-implemented ones */
-    perfexpert_list_for(om, &(module_globals.compile),
-        perfexpert_ordered_module_t) {
-        if (NULL == (m = perfexpert_module_available(om->name))) {
-            if (PERFEXPERT_SUCCESS != perfexpert_module_load(om->name)) {
-                OUTPUT(("%s [%s]", _ERROR("while adding module"), om->name));
-                return PERFEXPERT_ERROR;
+        switch (p) {
+            case PERFEXPERT_PHASE_COMPILE:
+                OUTPUT_VERBOSE((9, "   adding step: %s/compile", s->name));
+                s->function = m->compile;
+                break;
+            case PERFEXPERT_PHASE_INSTRUMENT:
+                OUTPUT_VERBOSE((9, "   adding step: %s/instrument", s->name));
+                s->function = m->instrument;
+                break;
+            case PERFEXPERT_PHASE_MEASURE:
+                OUTPUT_VERBOSE((9, "   adding step: %s/measure", s->name));
+                s->function = m->measure;
+                break;
+            case PERFEXPERT_PHASE_ANALYZE:
+                OUTPUT_VERBOSE((9, "   adding step: %s/analyze", s->name));
+                s->function = m->analyze;
+                break;
+            case PERFEXPERT_PHASE_RECOMMEND:
+                OUTPUT_VERBOSE((9, "   adding step: %s/recommend", s->name));
+                s->function = m->recommend;
+                break;
+        }
+
+        /* In which position on the list should this module/phase be? */
+        if (PERFEXPERT_TRUE == compiler_present) {
+            if (PERFEXPERT_SUCCESS != perfexpert_list_insert(
+                &(module_globals.steps), (perfexpert_list_item_t *)s, 1)) {
+                /* If the list is empty (or with only the compiler), append */
+                perfexpert_list_append(&(module_globals.steps),
+                    (perfexpert_list_item_t *)s);
             }
-            m = perfexpert_module_available(om->name);
+        } else {
+            perfexpert_list_prepend(&(module_globals.steps),
+                (perfexpert_list_item_t *)s);
         }
-        om->module = m;
-        if (PERFEXPERT_MODULE_NOT_IMPLEMENTED == m->compile) {
-            prev = (perfexpert_ordered_module_t *)om->prev;
-            OUTPUT(("%s [%s] it does not implement compile phase",
-                _RED("removing module"), om->name));
-            perfexpert_list_remove_item(&(module_globals.compile),
-                (perfexpert_list_item_t *)om);
-            PERFEXPERT_DEALLOC(om->name);
-            PERFEXPERT_DEALLOC(om);
-            om = prev;
-        }
-    }
-
-    perfexpert_list_for(om, &(module_globals.measurements),
-        perfexpert_ordered_module_t) {
-        if (NULL == (m = perfexpert_module_available(om->name))) {
-            if (PERFEXPERT_SUCCESS != perfexpert_module_load(om->name)) {
-                OUTPUT(("%s [%s]", _ERROR("while adding module"), om->name));
-                return PERFEXPERT_ERROR;
-            }
-            m = perfexpert_module_available(om->name);
-        }
-        om->module = m;
-        if (PERFEXPERT_MODULE_NOT_IMPLEMENTED == m->measurements) {
-            prev = (perfexpert_ordered_module_t *)om->prev;
-            OUTPUT(("%s [%s] it does not implement measurements phase",
-                _RED("removing module"), om->name));
-            perfexpert_list_remove_item(&(module_globals.measurements),
-                (perfexpert_list_item_t *)om);
-            PERFEXPERT_DEALLOC(om->name);
-            PERFEXPERT_DEALLOC(om);
-            om = prev;
-        }
-    }
-
-    perfexpert_list_for(om, &(module_globals.analysis),
-        perfexpert_ordered_module_t) {
-        if (NULL == (m = perfexpert_module_available(om->name))) {
-            if (PERFEXPERT_SUCCESS != perfexpert_module_load(om->name)) {
-                OUTPUT(("%s [%s]", _ERROR("while adding module"), om->name));
-                return PERFEXPERT_ERROR;
-            }
-            m = perfexpert_module_available(om->name);
-        }
-        om->module = m;
-        if (PERFEXPERT_MODULE_NOT_IMPLEMENTED == m->analysis) {
-            prev = (perfexpert_ordered_module_t *)om->prev;
-            OUTPUT(("%s [%s] it does not implement analysis phase",
-                _RED("removing module"), om->name));
-            perfexpert_list_remove_item(&(module_globals.analysis),
-                (perfexpert_list_item_t *)om);
-            PERFEXPERT_DEALLOC(om->name);
-            PERFEXPERT_DEALLOC(om);
-            om = prev;
-        }
-    }
-
-    /* Initialize each module */
-    perfexpert_list_for(m, &(module_globals.modules), perfexpert_module_t) {
-        if (PERFEXPERT_MODULE_INITIALIZED == m->status) {
-            continue;
-        }
-
-        if (PERFEXPERT_MODULE_LOADED != m->status) {
-            OUTPUT(("%s [%s]", _ERROR("module status different from"
-                "PERFEXPERT_MODULE_LOADED"), m->name));
-            return PERFEXPERT_ERROR;
-        }
-
-        if (PERFEXPERT_SUCCESS != m->init()) {
-            OUTPUT(("%s [%s]", _ERROR("while initializing module"), m->name));
-            return PERFEXPERT_ERROR;
-        }
-
-        m->status = PERFEXPERT_MODULE_INITIALIZED;
-    }
-
-    /* Print summary */
-    if (7 <= globals.verbose) {
-        printf("%s    %s            ", PROGRAM_PREFIX, _YELLOW("modules:"));
-        perfexpert_list_for(m, &(module_globals.modules), perfexpert_module_t) {
-            printf(" [%s]", m->name);
-        }
-        printf("\n%s    %s      ", PROGRAM_PREFIX, _YELLOW("compile order:"));
-        perfexpert_list_for(om, &(module_globals.compile),
-            perfexpert_ordered_module_t) {
-            printf(" >> %s", om->name);
-        }
-        printf("\n%s    %s ", PROGRAM_PREFIX, _YELLOW("measurements order:"));
-        perfexpert_list_for(om, &(module_globals.measurements),
-            perfexpert_ordered_module_t) {
-            printf(" >> %s", om->name);
-        }
-        printf("\n%s    %s     ", PROGRAM_PREFIX, _YELLOW("analysis order:"));
-        perfexpert_list_for(om, &(module_globals.analysis),
-            perfexpert_ordered_module_t) {
-            printf(" >> %s", om->name);
-        }
-        printf("\n");
-        fflush(stdout);
     }
 
     return PERFEXPERT_SUCCESS;
 }
 
-/* perfexpert_module_fini */
-int perfexpert_module_fini(void) {
-    perfexpert_module_t *m = NULL;
+/* perfexpert_step_clone */
+static perfexpert_step_t* perfexpert_step_clone(perfexpert_step_t *s) {
+    perfexpert_step_t *n = NULL;
 
-    /* For each module... */
-    perfexpert_list_for(m, &(module_globals.modules), perfexpert_module_t) {
-        if (PERFEXPERT_MODULE_FINALIZED == m->status) {
-            continue;
-        }
+    PERFEXPERT_ALLOC(perfexpert_step_t, n, sizeof(perfexpert_step_t));
+    PERFEXPERT_ALLOC(char, n->name, (strlen(s->name) + 1));
+    perfexpert_list_item_construct((perfexpert_list_item_t *)n);
+    strcpy(n->name, s->name);
+    n->function = s->function;
+    n->status = s->status;
+    n->module = s->module;
+    n->phase = s->phase;
 
-        if (PERFEXPERT_MODULE_INITIALIZED != m->status) {
-            OUTPUT(("%s [%s]", _ERROR("module status different from"
-                "PERFEXPERT_MODULE_INITIALIZED"), m->name));
-            return PERFEXPERT_ERROR;
-        }
-
-        if (PERFEXPERT_SUCCESS != m->fini()) {
-            OUTPUT(("%s [%s]", _ERROR("while finalizing module"), m->name));
-            return PERFEXPERT_ERROR;
-        }
-
-        m->status = PERFEXPERT_MODULE_FINALIZED;
-
-        // TODO: free argv!
-    }
-    return PERFEXPERT_SUCCESS;
-}
-
-/* perfexpert_module_compile */
-int perfexpert_module_compile(void) {
-    perfexpert_ordered_module_t *m = NULL;
-
-    /* For each module... */
-    perfexpert_list_for(m, &(module_globals.compile),
-        perfexpert_ordered_module_t) {
-        if (PERFEXPERT_MODULE_INITIALIZED != m->module->status) {
-            OUTPUT(("%s [%s]", _ERROR("module status different from "
-                "PERFEXPERT_MODULE_INITIALIZED"), m->module->name));
-            return PERFEXPERT_ERROR;
-        }
-
-        if (PERFEXPERT_SUCCESS != m->module->compile()) {
-            OUTPUT(("%s [%s]", _ERROR("compiling"), m->module->name));
-            return PERFEXPERT_ERROR;
-        }
-    }
-    return PERFEXPERT_SUCCESS;
-}
-
-/* perfexpert_module_measurements */
-int perfexpert_module_measurements(void) {
-    perfexpert_ordered_module_t *m = NULL;
-
-    /* For each module... */
-    perfexpert_list_for(m, &(module_globals.measurements),
-        perfexpert_ordered_module_t) {
-        if (PERFEXPERT_MODULE_INITIALIZED != m->module->status) {
-            OUTPUT(("%s [%s]", _ERROR("module status different from "
-                "PERFEXPERT_MODULE_INITIALIZED"), m->module->name));
-            return PERFEXPERT_ERROR;
-        }
-
-        if (PERFEXPERT_SUCCESS != m->module->measurements()) {
-            OUTPUT(("%s [%s]", _ERROR("collecting measurements"),
-                m->module->name));
-            return PERFEXPERT_ERROR;
-        }
-    }
-    return PERFEXPERT_SUCCESS;
-}
-
-/* perfexpert_module_analysis */
-int perfexpert_module_analysis(void) {
-    perfexpert_ordered_module_t *m = NULL;
-
-    /* For each module... */
-    perfexpert_list_for(m, &(module_globals.analysis),
-        perfexpert_ordered_module_t) {
-        if (PERFEXPERT_MODULE_INITIALIZED != m->module->status) {
-            OUTPUT(("%s [%s]", _ERROR("module status different from "
-                "PERFEXPERT_MODULE_INITIALIZED"), m->module->name));
-            return PERFEXPERT_ERROR;
-        }
-
-        if (PERFEXPERT_SUCCESS != m->module->analysis()) {
-            OUTPUT(("%s [%s]", _ERROR("analysing"), m->module->name));
-            return PERFEXPERT_ERROR;
-        }
-    }
-    return PERFEXPERT_SUCCESS;
-}
-
-/* perfexpert_module_requires (module A, requires B order in phase) */
-int perfexpert_module_requires(const char *a, const char *b,
-    module_order_t order, module_phase_t phase) {
-    perfexpert_ordered_module_t *oma = NULL, *omb = NULL, *t = NULL;
-    perfexpert_module_t *mb = NULL;
-    int x = 0, xa = 0, xb = 0;
-
-    if (NULL == (mb = perfexpert_module_available(b))) {
-        OUTPUT_VERBOSE((1, "%s [%s], it's required by module [%s]",
-            _RED("loading module"), b, a));
-        if (PERFEXPERT_SUCCESS != perfexpert_module_load(b)) {
-            return PERFEXPERT_ERROR;
-        }
-    }
-
-    if (PERFEXPERT_MODULE_COMPILE == phase) {
-        oma = NULL; omb = NULL; t = NULL; x = 0; xa = 0, xb = 0;
-
-        perfexpert_list_for(t, &(module_globals.compile),
-            perfexpert_ordered_module_t) {
-            if (0 == strcmp(a, t->name)) {
-                oma = t;
-                xa = x;
-            }
-            if (0 == strcmp(b, t->name)) {
-                omb = t;
-                xb = x;
-            }
-            x++;
-        }
-
-        if ((PERFEXPERT_MODULE_BEFORE == order) && (xb > xa)) {
-            OUTPUT_VERBOSE((1, "%s %s, it requires module %s first in compile "
-                "phase", _RED("reordering module"), oma->name, omb->name));
-            perfexpert_list_move_before((perfexpert_list_item_t *)omb,
-                (perfexpert_list_item_t *)oma);
-        } else if ((PERFEXPERT_MODULE_AFTER == order) && (xb < xa)) {
-            OUTPUT_VERBOSE((1, "%s %s, it requires module %s after in compile "
-                "phase", _RED("reordering module"), oma->name, omb->name));
-            perfexpert_list_move_after((perfexpert_list_item_t *)omb,
-                (perfexpert_list_item_t *)oma);
-        } else if (PERFEXPERT_MODULE_AVAILABLE == order) {
-            if (PERFEXPERT_MODULE_NOT_IMPLEMENTED == mb->compile) {
-                return PERFEXPERT_ERROR;
-            }
-        }
-    }
-
-    if (PERFEXPERT_MODULE_MEASUREMENTS == phase) {
-        oma = NULL; omb = NULL; t = NULL; x = 0; xa = 0, xb = 0;
-
-        perfexpert_list_for(t, &(module_globals.measurements),
-            perfexpert_ordered_module_t) {
-            if (0 == strcmp(a, t->name)) {
-                oma = t;
-                xa = x;
-            } else if (0 == strcmp(b, t->name)) {
-                omb = t;
-                xb = x;
-            }
-            x++;
-        }
-
-        if ((PERFEXPERT_MODULE_BEFORE == order) && (xb > xa)) {
-            OUTPUT_VERBOSE((1, "%s %s, it requires module %s first in measureme"
-                "nts phase", _RED("reordering module"), oma->name, omb->name));
-            perfexpert_list_move_before((perfexpert_list_item_t *)omb,
-                (perfexpert_list_item_t *)oma);
-        } else if ((PERFEXPERT_MODULE_AFTER == order) && (xb < xa)) {
-            OUTPUT_VERBOSE((1, "%s %s, it requires module %s after in measureme"
-                "nts phase", _RED("reordering module"), oma->name, omb->name));
-            perfexpert_list_move_after((perfexpert_list_item_t *)omb,
-                (perfexpert_list_item_t *)oma);
-        } else if (PERFEXPERT_MODULE_AVAILABLE == order) {
-            if (PERFEXPERT_MODULE_NOT_IMPLEMENTED == mb->compile) {
-                return PERFEXPERT_ERROR;
-            }
-        }
-    }
-
-    if (PERFEXPERT_MODULE_ANALYSIS == phase) {
-        oma = NULL; omb = NULL; t = NULL; x = 0; xa = 0, xb = 0;
-
-        perfexpert_list_for(t, &(module_globals.analysis),
-            perfexpert_ordered_module_t) {
-            if (0 == strcmp(a, t->name)) {
-                oma = t;
-                xa = x;
-            } else if (0 == strcmp(b, t->name)) {
-                omb = t;
-                xb = x;
-            }
-            x++;
-        }
-
-        if ((PERFEXPERT_MODULE_BEFORE == order) && (xb > xa)) {
-            OUTPUT_VERBOSE((1, "%s %s, it requires module %s first in analysis "
-                "phase", _RED("reordering module"), oma->name, omb->name));
-            perfexpert_list_move_before((perfexpert_list_item_t *)omb,
-                (perfexpert_list_item_t *)oma);
-        } else if ((PERFEXPERT_MODULE_AFTER == order) && (xb < xa)) {
-            OUTPUT_VERBOSE((1, "%s %s, it requires module %s after in analysis "
-                "phase", _RED("reordering module"), oma->name, omb->name));
-            perfexpert_list_move_after((perfexpert_list_item_t *)omb,
-                (perfexpert_list_item_t *)oma);
-        } else if (PERFEXPERT_MODULE_AVAILABLE == order) {
-            if (PERFEXPERT_MODULE_NOT_IMPLEMENTED == mb->analysis) {
-                return PERFEXPERT_ERROR;
-            }
-        }
-    }
-
-    return PERFEXPERT_ERROR;
-}
-
-/* perfexpert_module_available */
-perfexpert_module_t *perfexpert_module_available(const char *name) {
-    perfexpert_module_t *m = NULL;
-
-    /* For each module... */
-    perfexpert_list_for(m, &(module_globals.modules), perfexpert_module_t) {
-        if (0 == strcmp(name, m->name)) {
-            return m;
-        }
-    }
-    return NULL;
+    return n;
 }
 
 // EOF
