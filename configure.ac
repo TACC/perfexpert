@@ -35,8 +35,6 @@ AC_CONFIG_MACRO_DIR([m4])
 #------------------------------------------------------------------------------
 # Generate output files and global config.h and install_dirs.h files
 #
-AC_CONFIG_FILES([Makefile tools/Makefile modules/Makefile])
-AC_CONFIG_FILES([common/install_dirs.h])
 AC_CONFIG_FILES([Makefile common/Makefile common/install_dirs.h
     modules/Makefile tools/Makefile])
 AC_CONFIG_SRCDIR([common/config.h.in])
@@ -118,7 +116,6 @@ AM_CONDITIONAL([ENABLE_DEBUG], [test x"$ENABLE_DEBUG" = x"yes"])
 #------------------------------------------------------------------------------
 # Headers: generic
 #
-# perfexpert, analyzer, recommender, hound, and sniffer
 AC_CHECK_HEADER([argp.h],         [], [AC_MSG_ERROR([argp.h not found])])
 AC_CHECK_HEADER([dirent.h],       [], [AC_MSG_ERROR([dirent.h not found])])
 AC_CHECK_HEADER([errno.h],        [], [AC_MSG_ERROR([errno.h not found])])
