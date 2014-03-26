@@ -493,12 +493,16 @@ int ir_methods::get_for_loop_header_components(VariableRenaming*& var_renaming,
                                     var_string)) {
                             idxv_expr = other;
 
-                            // The other increment expression may need to
-                            // be instrumented, unless this is a unary op.
-                            if (increment_var[1-i]) {
-                                incr_expr = increment_var[1-i];
-                            } else {
-                                incr_expr = increment_var[i];
+                            // incr_expr may have already been set
+                            // if the increment was a unary operation.
+                            if (incr_expr == NULL) {
+                                // The other increment expression may need to
+                                // be instrumented, unless this is a unary op.
+                                if (increment_var[1-i]) {
+                                    incr_expr = increment_var[1-i];
+                                } else {
+                                    incr_expr = increment_var[i];
+                                }
                             }
                         }
                     }
