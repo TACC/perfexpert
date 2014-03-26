@@ -37,6 +37,8 @@ AC_CONFIG_MACRO_DIR([m4])
 #
 AC_CONFIG_FILES([Makefile tools/Makefile modules/Makefile])
 AC_CONFIG_FILES([common/install_dirs.h])
+AC_CONFIG_FILES([Makefile common/Makefile common/install_dirs.h
+    modules/Makefile tools/Makefile])
 AC_CONFIG_SRCDIR([common/config.h.in])
 AC_CONFIG_HEADERS([common/config.h])
 
@@ -641,6 +643,7 @@ AC_ARG_ENABLE([module-hpctoolkit],
 AC_MSG_CHECKING([whether to enable HPCToolkit measurement module])
 AS_IF([test x"$ENABLE_HPCTOOLKIT" = xyes], [
     AC_MSG_RESULT([yes])
+    AC_DEFINE([HAVE_HPCTOOLKIT], [1], [Enable HPCToolkit support])
 
     # Real Time library
     #
@@ -674,7 +677,7 @@ AS_IF([test x"$ENABLE_HPCTOOLKIT" = xyes], [
     # PAPI support (headers and lib)
     #
     AC_CHECK_LIB([papi], [PAPI_library_init, PAPI_add_event], [],
-        [AC_MSG_ERROR([papi.so not found])])
+        [AC_MSG_ERROR([libpapi.so not found])])
     AC_CHECK_HEADER([papi.h], [], [AC_MSG_ERROR([papi.h not found])])
 
     # SQLite support (headers, lib, and program)
@@ -799,7 +802,7 @@ AS_IF([test x"$ENABLE_SQLRULES" = xyes], [
     AC_CHECK_HEADER([sqlite3.h], [], [AC_MSG_ERROR([not found: sqlite3.h])])
 
     ENABLE_SQLRULES=sqlrules
-    ENABLED_TOOLS+="sqlrules "
+    ENABLED_MODULES+="sqlrules "
     AC_CONFIG_FILES([modules/sqlrules/Makefile])
 ], [
     AC_MSG_RESULT([no])
