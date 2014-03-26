@@ -23,9 +23,12 @@
 #define	STREAMS_H_
 
 #include "generic_defs.h"
+#include "inst_defs.h"
 
 class streams_t : public AstTopDownProcessing<attrib> {
     public:
+        streams_t(bool _deep_search = true);
+
         reference_list_t& get_reference_list();
 
         virtual attrib evaluateInheritedAttribute(SgNode* node, attrib attr);
@@ -33,6 +36,8 @@ class streams_t : public AstTopDownProcessing<attrib> {
         virtual void atTraversalEnd();
 
     private:
+        bool deep_search;
+        SgScopeStatement* init_scope_stmt;
         reference_list_t reference_list;
 };
 
