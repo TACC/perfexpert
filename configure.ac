@@ -690,11 +690,35 @@ AS_IF([test x"$ENABLE_HPCTOOLKIT" = xyes], [
     ENABLE_HPCTOOLKIT=hpctoolkit
     ENABLED_MODULES+="hpctoolkit "
     AC_CONFIG_FILES([modules/hpctoolkit/Makefile])
+    AC_CONFIG_FILES([modules/hpctoolkit/hpctoolkit_path.h])
 ], [
     AC_MSG_RESULT([no])
     ENABLE_HPCTOOLKIT=
 ])
 AC_SUBST([ENABLE_HPCTOOLKIT])
+
+AC_ARG_ENABLE([module-hpctoolkit-mic],
+    [AS_HELP_STRING([--disable-module-hpctoolkit-mic],
+        [disable HPCToolkit support for Intel(R) Xeon Phi chips])],
+    [HAVE_HPCTOOLKIT_MIC=$enableval], [HAVE_HPCTOOLKIT_MIC=yes])
+
+AC_MSG_CHECKING([whether to enable HPCToolkit MIC support])
+AS_IF([test x"$HAVE_HPCTOOLKIT_MIC" = xyes], [
+    AC_MSG_RESULT([yes])
+    AC_DEFINE([HAVE_HPCTOOLKIT_MIC], [1], [Enable HPCToolkit MIC support])
+
+    # Programs: MIC version of hpcstruct, hpcrun, hpcprof
+    #
+    AC_ARG_WITH([mic-hpctoolkit-bins],
+        [AS_HELP_STRING([--with-mic-hpctoolkit-bins],
+        [set path for MIC version of HPCToolkit binaries])],
+        [HPCTOOLKIT_MIC_BIN_PATH="$withval"], [
+            AC_MSG_ERROR([You should define a HPCToolkit MIC binaries path])
+        ])
+    AC_SUBST([HPCTOOLKIT_MIC_BIN_PATH])
+], [
+    AC_MSG_RESULT([no])
+])
 
 #------------------------------------------------------------------------------
 # timb module requirements
