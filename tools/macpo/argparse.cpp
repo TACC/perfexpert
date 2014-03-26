@@ -20,8 +20,11 @@
  * $HEADER$
  */
 
+#include <cstring>
+#include <cstdlib>
 #include <fcntl.h>
-#include <string.h>
+#include <iostream>
+#include <unistd.h>
 
 #include "argparse.h"
 
@@ -32,23 +35,25 @@ bool argparse::copy_file(const char *source_file,
 
     struct stat stat_buf; 
 
-    if (stat(source_file, &stat_buf) == -1) {
-        std::cerr << "Cannot read permissions of file: " << source_file << "\n";
+    if (access(source_file, R_OK) < 0) {
+        std::cerr << mprefix << "Cannot read file: " << source_file <<
+            std::endl;
         return false;
     }
 
     int src, dst;
     src = open(source_file, O_RDONLY);
     if (src < 0) {
-        std::cerr << "Cannot open file for reading: " << source_file << "\n";
+        std::cerr << mprefix << "Cannot open file for reading: " <<
+            source_file << std::endl;
         return false;
     }
 
     dst = open(destination_file, O_WRONLY | O_CREAT | O_TRUNC,
             stat_buf.st_mode & 0777);
     if (dst < 0) {
-        std::cerr << "Cannot open file for writing: " << destination_file <<
-            "\n";
+        std::cerr << mprefix << "Cannot open file for writing: " <<
+            destination_file << std::endl;
         close(src);
         return false;
     }
@@ -122,6 +127,30 @@ int argparse::parse_arguments(char* arg, options_t& options) {
 
         options.action = ACTION_ALIGNCHECK;
         parse_location(value, options.function_name, options.line_number);
+    } else if (option == "record-tripcount") {
+        if (!value.size())
+            return -1;
+
+        options.action = ACTION_TRIPCOUNT;
+        parse_location(value, options.function_name, options.line_number);
+    } else if (option == "record-branchpath") {
+        if (!value.size())
+            return -1;
+
+        options.action = ACTION_BRANCHPATH;
+        parse_location(value, options.function_name, options.line_number);
+    } else if (option == "gen-trace") {
+        if (!value.size())
+            return -1;
+
+        options.action = ACTION_GENTRACE;
+        parse_location(value, options.function_name, options.line_number);
+    } else if (option == "vector-strides") {
+        if (!value.size())
+            return -1;
+
+        options.action = ACTION_VECTORSTRIDES;
+        parse_location(value, options.function_name, options.line_number);
     } else if (option == "backup-filename") {
         if (!value.size())
             return -1;
@@ -129,6 +158,12 @@ int argparse::parse_arguments(char* arg, options_t& options) {
         options.backup_filename = value;
     } else if (option == "no-compile") {
         options.no_compile = true;
+    } else if (option == "enable-sampling") {
+        options.disable_sampling = false;
+    } else if (option == "disable-sampling") {
+        options.disable_sampling = true;
+    } else if (option == "profile-analysis") {
+        options.profile_analysis = true;
     } else
         return -1;
 
@@ -138,6 +173,8 @@ int argparse::parse_arguments(char* arg, options_t& options) {
 void argparse::init_options(options_t& options) {
     options.action = ACTION_NONE;
     options.no_compile = false;
+    options.disable_sampling = false;
+    options.profile_analysis = false;
     options.line_number = 0;
     options.function_name = "";
     options.backup_filename = "";

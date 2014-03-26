@@ -22,53 +22,24 @@
 #ifndef	GENERIC_DEFS_H_
 #define	GENERIC_DEFS_H_
 
-#include <rose.h>
-#include "macpo_record.h"
+#include <string>
+#include <vector>
 
-enum { ACTION_NONE=0, ACTION_INSTRUMENT, ACTION_ALIGNCHECK };
+#define mprefix "[macpo] "
 
-const int FLAG_NONE = 0;
-const int FLAG_NOCOMPILE = 1 << 0;
+enum { ACTION_NONE=0, ACTION_INSTRUMENT, ACTION_ALIGNCHECK, ACTION_GENTRACE,
+        ACTION_VECTORSTRIDES, ACTION_TRIPCOUNT, ACTION_BRANCHPATH };
 
 typedef struct {
     short action;
     int line_number;
     bool no_compile;
+    bool disable_sampling;
+    bool profile_analysis;
     std::string function_name;
     std::string backup_filename;
 } options_t;
 
-typedef struct {
-    SgBasicBlock* bb;
-    SgStatement* stmt;
-    std::vector<SgExpression*> params;
-
-    // Other fields used while inserting the call.
-    bool before;
-    std::string function_name;
-} inst_info_t;
-
-typedef std::vector<inst_info_t> inst_list_t;
-
 typedef std::vector<std::string> name_list_t;
-
-typedef struct {
-    std::string name;
-    short access_type;
-    long idx;
-    SgNode* node;
-} reference_info_t;
-
-typedef std::vector<reference_info_t> reference_list_t;
-
-class attrib {
-    public:
-        bool access_type, skip;
-
-        attrib() {
-            access_type = TYPE_UNKNOWN;
-            skip = false;
-        }
-};
 
 #endif	/* GENERIC_DEFS_H_ */

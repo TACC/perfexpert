@@ -19,24 +19,16 @@
  * $HEADER$
  */
 
-#ifndef	ARGP_H_
-#define	ARGP_H_
-
 #include <argp.h>
+#include "argp_custom.h"
 
 struct argp_option options[4] =
 {
-	{ "debug", 'd', NULL, 0, "Output debug information", 0 },
-	{ "iamabot", 'b', NULL, 0, "Print output in an easy-to-parse format", 0 },
-	{ "stream-names", 's', NULL, 0, "Print all streams in the output, even if there are more than 5 streams", 0 },
-	{ 0, 0, 0, 0, 0, 0 }
-};
-
-struct arg_info
-{
-	float threshold;
-	char *arg1, *arg2, *location;
-	bool bot, showDebug, stream_names;
+    { "debug", 'd', NULL, 0, "Output debug information", 0 },
+    { "iamabot", 'b', NULL, 0, "Print output in an easy-to-parse format", 0 },
+    { "stream-names", 's', NULL, 0, "Print all streams in the output, even if "
+        "there are more than 5 streams", 0 },
+    { 0, 0, 0, 0, 0, 0 }
 };
 
 static error_t parse_opt(int key, char* arg, struct argp_state *state)
@@ -69,6 +61,5 @@ static error_t parse_opt(int key, char* arg, struct argp_state *state)
 	return 0;
 }
 
-struct argp argp = { options, parse_opt, "[threshold] macpo.out", "Program to process reuse distances", 0, 0, 0 };
-
-#endif /* ARGP_H_ */
+struct argp argp = { options, parse_opt, "[threshold] macpo.out", "Program to "
+    "process reuse distances", 0, 0, 0 };
