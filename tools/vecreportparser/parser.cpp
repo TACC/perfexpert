@@ -8,22 +8,17 @@
 Perfexpert module for parsing intel vectorization reports (6 and 7) and embedding collated messages as comments to a copy of the original source code
 
 Approach
-a. Generate vec report 6 (with optimization level O3) for the given source file.
-b. Generate vec report 7 (with optimization level O3) for the given source file.
-c. Parse the reports from (a) and (b) and collate messages for every source line mentioned in both the reports. Note that for vec report 7, the messages will be translated to their 'English' forms.
-d. For every source line mentioned in both the reports, embed the collated message from (c) as a comment into a copy of the original source file.
-e. Print the consolidated report on stdout
+a. Parse the vectorization reports 6 and 7  and collate messages for every source line mentioned in both the reports. Note that for vec report 7, the messages will be translated to their 'English' forms.
+b. For every source line mentioned in both the reports, embed the collated message from (c) as a comment into a copy of the original source file.
+c. Print the consolidated report on stdout
 
 Invocation
-a. the current user should have read-write access to the current directory
-b. remove <source_file_name>_out.<source_file_extension> (if any) from the current directory
-c. remove fip1.txt (if any) from the current directory
-d. remove fip2.txt (if any) from the current directory
-c. run ./a.out <fully_qualified_source_file>
+a. Command-line arguments: -t
 
 Input (Remarks)
-name of the source file, for eg. main.c
-The default optimization level is O3. Possible input source file formats are .c and .cpp.
+a. -t indicates whether a temporary directory is to be created (within the current directory) for the annotated source file
+b. the current directory should have "vecreport6.txt" (vectorization report 6) and "vecreport7.txt" (vectorization report 7)
+c. the current directory should have "vec7messages.txt" (translation dictionary for compiler messages from vectorization report 7)
 
 Output (Remarks)
 a. printed on stdout in the following format:
@@ -31,11 +26,7 @@ a. printed on stdout in the following format:
 	where 
 		<Category> can be 'CONFLICT', 'VECTORIZED' or 'NOT VECTORIZED' 
 		<Reasons> will be a "; delimited" string of all messages for line <line_no> from vec reports 6 and 7 (combined)
-b. a new annotated source file, for eg. main_out.c created in the current directory
-
-Temporary files created (in the current directory)
-a. fip1.txt - vec report 6
-b. fip2.txt - vec report 7
+b. a new annotated source file, for eg. main_out.c created in the current directory or a temporary directory within the current directory (depends on whether -t flag is set)
 
 */
 
@@ -52,13 +43,12 @@ b. fip2.txt - vec report 7
 #include <cstddef>
 #include "stdlib.h"
 #include <unistd.h>
+#include <cerrno>
 
-#define vecReportLevel "-vec-report="
-#define optimizationLevel "-O3"
-#define flags " -c -O3 -g "
-#define ccompiler "icc "
-#define cpluspluscompiler "icpc "
 #define vec7messagesFileName "vec7messages.txt"
+#define vecreport6FileName "vecreport6.txt"
+#define vecreport7FileName "vecreport7.txt"
+#define MAXPATHLEN 1024
 
 using namespace std;
 
@@ -83,10 +73,14 @@ vector<string> splitStringByDelimiter(string str,char delim){
 	return vecTemp;	
 }
 
-void parseVecReport(string fileName,unordered_map<string,string>& htabVecMessages,unordered_map<string,set<string>>& htabLines,bool isVec6){
+bool isFileFound(string fileName,ifstream& infile){
+	infile.open(fileName);
+	return (infile.is_open()?true:false);
+}
+
+void parseVecReport(ifstream& infile,unordered_map<string,string>& htabVecMessages,unordered_map<string,set<string>>& htabLines,bool isVec6){
 	string line;
 	bool isMsg = false;
-	ifstream infile(fileName);
 	if(infile.is_open()){
 		while(getline(infile,line)){
 			if(line.find("error") != string::npos){
@@ -149,7 +143,7 @@ void parseVecReport(string fileName,unordered_map<string,string>& htabVecMessage
 			}	
 		}
 		infile.close();
-	}		
+	}	
 }
 
 string addCategory(set<string> reasons){
@@ -202,14 +196,37 @@ void display_on_console(set<string>& sourceFiles,unordered_map<string,set<string
         }
 }
 
-void embed_in_soource_code(set<string>& sourceFiles,unordered_map<string,set<string>>& htabLines,int returnValue){
+string get_working_path()
+{
+	char temp[MAXPATHLEN];
+	if(getcwd(temp,MAXPATHLEN) != NULL)
+		return string(temp);
+	else
+		return string("");
+
+}
+
+void embed_in_source_code(set<string>& sourceFiles,unordered_map<string,set<string>>& htabLines,int returnValue,string& finalOutputFileName,bool& isPwdFound,bool& isOutputTempDir){
+	string pwd = get_working_path();
+        isPwdFound = (!pwd.empty()?true:false);
+	if(isOutputTempDir){
+		char templ[] = ".vecreportparser-temp.XXXXXX";
+		char* dirPtr = mkdtemp(templ);
+		if(dirPtr)
+			pwd = isPwdFound ? pwd + "/" + string(dirPtr) + "/" : string(dirPtr) + "/";
+		else
+			pwd = isPwdFound ? pwd + "/" : "";
+	}
+	else{
+		pwd = isPwdFound ? pwd + "/" : "";
+	}
         for(set<string>::iterator it=sourceFiles.begin();it!=sourceFiles.end();it++){
                 ifstream infile(*it);
                 int intIndexOfDelimiter = (*it).find_first_of(".");
                 string rawFileName = (*it).substr(0,intIndexOfDelimiter);
                 string fileExtension = (*it).substr(intIndexOfDelimiter+1,(*it).size()-intIndexOfDelimiter-1);
-                string tempOutputFileName = rawFileName + "_temp." + fileExtension;
-                ofstream outfile(tempOutputFileName);
+                string tempOutputFileName = pwd + rawFileName + "_temp." + fileExtension;
+		ofstream outfile(tempOutputFileName);
                 int ct = 0;
                 string line;
                 if(infile.is_open()){
@@ -230,8 +247,10 @@ void embed_in_soource_code(set<string>& sourceFiles,unordered_map<string,set<str
                         infile.close();
                         outfile.close();
                 }
-                string finalOutputFileName = rawFileName + "_out." + fileExtension;
-                string cmdRemoveLineFeedCharacters = "sed -e 's/\r//g' " + tempOutputFileName + " > " + finalOutputFileName;
+
+                //string finalOutputFileName;
+                finalOutputFileName = pwd + rawFileName + "_out." + fileExtension;
+		string cmdRemoveLineFeedCharacters = "sed -e 's/\r//g' " + tempOutputFileName + " > " + finalOutputFileName;
                 returnValue = executeCommand(cmdRemoveLineFeedCharacters);
                 returnValue = executeCommand("rm " + tempOutputFileName);
         }
@@ -265,14 +284,23 @@ bool populateVec7Messages(unordered_map<string,string>& htabVecMessages){
 	return true;
 }
 
+string getOutputDirectory(string finalOutputFileName){
+        
+	size_t lastSlashIndex = finalOutputFileName.find_last_of("/");
+        if(lastSlashIndex != string::npos){
+        	return finalOutputFileName.substr(0,lastSlashIndex + 1);
+        }
+	return finalOutputFileName;
+
+}
+
 int main(int argc,char* argv[]){
 
-	//if the command line is not of the form ./a.out <fully_qualified_source_file>, return
-       if(argc < 2){
-                cout<<endl<<"Enter filename:"<<endl;
-                return 0;
-        }
-
+	vector<string> params(argv,argc+argv);
+	bool isOutputTempDir = false;
+	if(std::find(params.begin(),params.end(),"-t") != params.end())
+		isOutputTempDir = true;
+	
 	//initialize message dictionary
 	unordered_map<string,string> htabVecMessages;
 	bool isVecMessagesPopulated = populateVec7Messages(htabVecMessages);
@@ -285,40 +313,34 @@ int main(int argc,char* argv[]){
 	}
 
         //initialize variables
-	vector<string> params(argv,argc+argv);
 	string cmd = "";
 	int returnValue;	
        	string out;
 	unordered_map<string,set<string>> htabLines;
 
-	//check if the source file is a .c or .cpp file to invoke the corresponding compiler
-        transform(params[1].begin(),params[1].end(),back_inserter(out),::toupper);
-        bool blC = (out.find(".C") != string::npos) ? true : false;
-        bool blCPP = (out.find(".CPP") != string::npos) ? true : false;
- 	out = "";	
-	if(blC){
-		out = ccompiler;
+	ifstream infile;
+	if(isFileFound(vecreport6FileName,infile)){
+		//parse vec report 6 (if file "vecreport6.txt" can be found in the current directory)
+		parseVecReport(infile,htabVecMessages,htabLines,true);
 	}
-	else if(blCPP)
-		out = cpluspluscompiler;		
+	else{
+		//if this file is not found, an error message is printed to the console, but processing continues
+		cout<<endl<<"Unable to find vectorization report 6"<<endl;
+	}
 
-	//generate vec report 6 and write into fip1.txt
-	cmd = out + params[1] + flags + vecReportLevel + "6 2> fip1.txt";
-	returnValue = executeCommand(cmd);
-
-	//generate vec report 7 and write into fip2.txt
-	cmd = out + params[1] + flags + vecReportLevel + "7 2> fip2.txt";
-	returnValue = executeCommand(cmd);
-
-	//parse vec report 6
-	parseVecReport("fip1.txt",htabVecMessages,htabLines,true);
-	//parse vec report 7
-	parseVecReport("fip2.txt",htabVecMessages,htabLines,false);	
+	if(isFileFound(vecreport7FileName,infile)){
+		//parse vec report 7 (if file "vecreport7.txt" can be found in the same directory)
+		parseVecReport(infile,htabVecMessages,htabLines,false);
+	}
+	else{
+		//if this file is not found, an error message is printed to the console, but processing continues
+		cout<<endl<<"Unable to find vectorization report 7"<<endl;
+	}			
 	
-	//if the vec reports 6 and 7 could not be parsed, return
+	//if both vec reports 6 and 7 could not be found/parsed, return
 	if(htabLines.size() == 0){
 		cout<<endl<<"Unable to process vector reports"<<endl;
-		cout<<endl<<"Please check /fip1.txt and /fip2.txt"<<endl<<endl;
+		cout<<endl<<"Please check /vecreport6.txt and /vecreport7.txt"<<endl<<endl;
 		return 0;
 	}
 
@@ -327,8 +349,20 @@ int main(int argc,char* argv[]){
 	display_on_console(sourceFiles,htabLines);
 
 	//embed in source code
-	embed_in_soource_code(sourceFiles,htabLines,returnValue);
+	string finalOutputFileName;
+	bool isPwd = false;
+	embed_in_source_code(sourceFiles,htabLines,returnValue,finalOutputFileName,isPwd,isOutputTempDir);
 
+	//display the directory name to which the annotated source file(s) are written
+	if(isPwd){
+		//if the current directory name was succesfully fetched
+		cout<<endl<<"Output at: "<<getOutputDirectory(finalOutputFileName)<<endl;
+	}
+	else{
+		//Unable to get the current directory name - possible buffer overflow - try increasing MAXPATHLEN
+		cout<<endl<<"Output in the current directory at: "<<getOutputDirectory(finalOutputFileName)<<endl;
+	}
+		
 	cout<<endl;
 	return(0);
  }
