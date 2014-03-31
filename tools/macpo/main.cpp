@@ -82,22 +82,12 @@ int main (int argc, char *argv[]) {
                     options.backup_filename << "." << std::endl;
         }
 
-        VariableRenaming var_renaming(project);
-        if (options.action == ACTION_ALIGNCHECK) {
-            // If we are about to check alignment, run the VariableRenaming pass.
-            var_renaming.run();
-        }
-
         // Loop over each file
         for (SgFilePtrList::iterator it=files.begin(); it!=files.end(); it++) {
             SgSourceFile* file = isSgSourceFile(*it);
-            std::string filename = file->get_file_info()->get_filenameString();
-            std::string basename = filename.substr(filename.find_last_of("/"));
 
             // Start the traversal!
-            MINST traversal (options.action, options.line_number,
-                    options.function_name, options.disable_sampling,
-                    options.profile_analysis, &var_renaming);
+            MINST traversal (options, project);
             traversal.traverseWithinFile (file, preorder);
         }
 

@@ -64,7 +64,7 @@ reference_list_t& streams_t::get_reference_list() {
 
 attrib streams_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
     // If explicit instructions to skip this node, then just return
-    if (attr.skip)
+    if (attr.skip || isSgExpression(node) == false)
         return attr;
 
     attr.access_type = TYPE_UNKNOWN;
@@ -87,8 +87,13 @@ attrib streams_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
     }
 
     // Decide whether read / write depending on the operand of AssignOp
-    if (parent && isSgAssignOp(parent))
+    if (parent && isSgAssignOp(parent)) {
         attr.access_type = parent->getChildIndex(node) == 0 ? TYPE_WRITE : TYPE_READ;
+    }
+
+    if (parent && (isSgAssignInitializer(parent) || isSgExprListExp(parent))) {
+        attr.access_type = TYPE_READ;
+    }
 
     if (parent && isSgCompoundAssignOp(parent))
         attr.access_type = parent->getChildIndex(node) == 0 ? TYPE_READ_AND_WRITE : TYPE_READ;

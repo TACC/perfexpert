@@ -27,6 +27,188 @@
 using namespace SageBuilder;
 using namespace SageInterface;
 
+SgExpression* ir_methods::_strip_unary_operators(SgExpression* expr) {
+    // If we found a unary operation, return it's pointer.
+    if (SgUnaryOp* unary_op = isSgUnaryOp(expr)) {
+        return unary_op->get_operand_i();
+    }
+
+    // If it's a pointer, drill deeper.
+    if (SgPntrArrRefExp* pntr = isSgPntrArrRefExp(expr)) {
+        SgExpression* rhs_expr = pntr->get_rhs_operand_i();
+        SgExpression* revised_rhs = _strip_unary_operators(rhs_expr);
+
+        pntr->set_rhs_operand_i(revised_rhs);
+        return pntr;
+    }
+
+    // Otherwise, return just the expression as it is.
+    return expr;
+}
+
+SgExpression* ir_methods::strip_unary_operators(SgExpression* expr) {
+    ROSE_ASSERT(expr && "Empty expression as input to "
+            "ir_methods::strip_unary_operators(SgExpression* expr)!");
+
+    SgExpression* copy = copyExpression(expr);
+    return _strip_unary_operators(copy);
+}
+
+void ir_methods::place_alignment_checks(expr_list_t& expr_list,
+        Sg_File_Info* fileInfo, SgScopeStatement* loop_stmt,
+        statement_list_t& statement_list, const std::string& prefix) {
+    std::vector<SgExpression*> addresses;
+    for (expr_list_t::iterator it = expr_list.begin();
+            it != expr_list.end(); it++) {
+        SgExpression* expr = *it;
+        if (SgPntrArrRefExp* pntr = isSgPntrArrRefExp(expr)) {
+            SgExpression *param_addr = (SgExpression*) pntr;
+
+            // Strip unary operators like ++ or -- from the expression.
+            param_addr = ir_methods::strip_unary_operators(expr);
+            ROSE_ASSERT(param_addr && "Bug in stripping unary operators from "
+                    "given expression!");
+
+            if (is_Fortran_language() == false) {
+                SgAddressOfOp* address_op = NULL;
+                SgType* void_pointer_type = NULL;
+
+                address_op = buildAddressOfOp(param_addr);
+                void_pointer_type = buildPointerType(buildVoidType());
+                param_addr = buildCastExp (address_op, void_pointer_type);
+            }
+
+            addresses.push_back(param_addr);
+        }
+    }
+
+    if (addresses.size() > 0) {
+        std::vector<SgExpression*> params;
+
+        int line_number = loop_stmt->get_file_info()->get_raw_line();
+        params.push_back(new SgIntVal(fileInfo, line_number));
+
+        int address_count = addresses.size();
+        params.push_back(new SgIntVal(fileInfo, address_count));
+
+        // Now push all of the addresses.
+        params.insert(params.end(), addresses.begin(), addresses.end());
+
+        SgStatement* first_statement = loop_stmt->firstStatement();
+        SgBasicBlock* first_bb = getEnclosingNode<SgBasicBlock>(first_statement);
+
+        std::string function_name = prefix + (is_Fortran_language() ? "_f" :
+            "_c");
+        SgStatement* call_stmt = ir_methods::prepare_call_statement(first_bb,
+                function_name, params, first_statement);
+
+        SgBasicBlock* aligncheck_list = new SgBasicBlock(fileInfo);
+        aligncheck_list->append_statement(call_stmt);
+
+        // Create new integer variable called
+        // "indigo__aligncheck_init_<line_number>". Funky, eh?
+        char var_name[64];
+        snprintf (var_name, 64, "%s_%d", prefix.c_str(), line_number);
+        SgType* long_type = buildLongType();
+
+        SgVariableDeclaration* aligncheck_init = NULL;
+        aligncheck_init = ir_methods::create_long_variable(fileInfo, var_name,
+            0);
+        SgBasicBlock* parent_bb = getEnclosingNode<SgBasicBlock>(loop_stmt);
+        aligncheck_init->set_parent(parent_bb);
+
+        SgStatement* reference_stmt = NULL;
+        reference_stmt = getEnclosingNode<SgScopeStatement>(loop_stmt);
+
+        SgOmpBodyStatement* omp_body_stmt = NULL;
+        omp_body_stmt = getEnclosingNode<SgOmpBodyStatement>(loop_stmt);
+        if (omp_body_stmt && ir_methods::is_ancestor((SgNode*) reference_stmt,
+                    (SgNode*) omp_body_stmt) == false) {
+            reference_stmt = omp_body_stmt;
+        }
+
+        if (reference_stmt == NULL ||
+                (ir_methods::is_loop(reference_stmt) == false &&
+                isSgOmpBodyStatement(reference_stmt) == false)) {
+            reference_stmt = loop_stmt;
+        }
+
+        statement_info_t aligncheck_init_decl;
+        aligncheck_init_decl.reference_statement = reference_stmt;
+        aligncheck_init_decl.statement = aligncheck_init;
+        aligncheck_init_decl.before = true;
+        statement_list.push_back(aligncheck_init_decl);
+
+        // Create the expression statement.
+        SgExpression* guard_condition = NULL;
+        guard_condition = new SgEqualityOp(fileInfo, buildVarRefExp(var_name),
+            new SgLongIntVal(fileInfo, 0), long_type);
+
+        SgExprStatement* guard_condition_stmt = NULL;
+        guard_condition_stmt = new SgExprStatement(fileInfo, guard_condition);
+        guard_condition->set_parent(guard_condition_stmt);
+
+        // Create statement to reset guard value.
+        SgExprStatement* reset_guard_stmt = NULL;
+        reset_guard_stmt = ir_methods::create_long_assign_statement(fileInfo,
+             var_name, new SgIntVal(fileInfo, 1));
+        aligncheck_list->append_statement(reset_guard_stmt);
+        reset_guard_stmt->set_parent(aligncheck_list);
+
+        // Insert the guard condition.
+        if (SgIfStmt* init_guard = new SgIfStmt(fileInfo)) {
+            init_guard->set_conditional(guard_condition_stmt);
+            init_guard->set_true_body(aligncheck_list);
+
+            aligncheck_list->set_parent(init_guard);
+            guard_condition_stmt->set_parent(init_guard);
+
+            statement_info_t guard_info;
+            guard_info.statement = init_guard;
+            guard_info.reference_statement = first_statement;
+            guard_info.before = true;
+            statement_list.push_back(guard_info);
+        }
+    }
+}
+
+void ir_methods::remove_duplicate_expressions(expr_list_t& expr_list) {
+    std::map<std::string, SgExpression*> string_expr_map;
+    for (expr_list_t::iterator it2 = expr_list.begin();
+            it2 != expr_list.end(); it2++) {
+        SgExpression* expr = *it2;
+        std::string expr_string = expr->unparseToString();
+        if (string_expr_map.find(expr_string) == string_expr_map.end()) {
+            string_expr_map[expr_string] = expr;
+        } else {
+            // An expression with the same string representation has
+            // already been seen, so we skip this expression.
+        }
+    }
+
+    // Reuse the same expression list from earlier.
+    expr_list.clear();
+
+    // Finally, loop over the map to get the unique expressions.
+    for (std::map<std::string, SgExpression*>::iterator it2 =
+            string_expr_map.begin(); it2 != string_expr_map.end(); it2++) {
+        SgExpression* expr = it2->second;
+        expr_list.push_back(expr);
+    }
+}
+
+bool ir_methods::is_ancestor(SgNode* lower_node, SgNode* upper_node) {
+    SgNode* traversal_node = lower_node;
+    while (traversal_node) {
+        if (traversal_node == upper_node)
+            return true;
+
+        traversal_node = traversal_node->get_parent();
+    }
+
+    return false;
+}
+
 SgExprStatement* ir_methods::create_long_assign_statement(Sg_File_Info* fileInfo,
         const std::string& name, SgIntVal* value) {
     SgType* long_type = buildLongType();
@@ -311,12 +493,16 @@ int ir_methods::get_for_loop_header_components(VariableRenaming*& var_renaming,
                                     var_string)) {
                             idxv_expr = other;
 
-                            // The other increment expression may need to
-                            // be instrumented, unless this is a unary op.
-                            if (increment_var[1-i]) {
-                                incr_expr = increment_var[1-i];
-                            } else {
-                                incr_expr = increment_var[i];
+                            // incr_expr may have already been set
+                            // if the increment was a unary operation.
+                            if (incr_expr == NULL) {
+                                // The other increment expression may need to
+                                // be instrumented, unless this is a unary op.
+                                if (increment_var[1-i]) {
+                                    incr_expr = increment_var[1-i];
+                                } else {
+                                    incr_expr = increment_var[i];
+                                }
                             }
                         }
                     }
@@ -682,6 +868,7 @@ SgExprStatement* ir_methods::prepare_call_statement(SgBasicBlock* bb,
     SgExprStatement* fCall = buildFunctionCallStmt(SgName(function_name),
             buildVoidType(), buildExprListExp(params), bb);
 
+    ROSE_ASSERT(ref_parent);
     fCall->set_parent(ref_parent);
     return fCall;
 }

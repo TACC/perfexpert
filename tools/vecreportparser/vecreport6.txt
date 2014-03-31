@@ -1,0 +1,241 @@
+is.c(687): (col. 5) remark: LOOP WAS VECTORIZED.
+is.c(305): (col. 9) remark: loop was not vectorized: existence of vector dependence.
+is.c(308): (col. 11) remark: vector dependence: assumed ANTI dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed FLOW dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed FLOW dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed ANTI dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed ANTI dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed FLOW dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed FLOW dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed ANTI dependence between T23 line 308 and T23 line 308.
+is.c(305): (col. 9) remark: PARTIAL LOOP WAS VECTORIZED.
+is.c(310): (col. 9) remark: loop was not vectorized: existence of vector dependence.
+is.c(313): (col. 11) remark: vector dependence: assumed ANTI dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed FLOW dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed FLOW dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed ANTI dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed ANTI dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed FLOW dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed FLOW dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed ANTI dependence between T46 line 313 and T46 line 313.
+is.c(305): (col. 9) remark: loop was not vectorized: existence of vector dependence.
+is.c(308): (col. 11) remark: vector dependence: assumed ANTI dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed FLOW dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed FLOW dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed ANTI dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed ANTI dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed FLOW dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed FLOW dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed ANTI dependence between T23 line 308 and T23 line 308.
+is.c(310): (col. 9) remark: loop was not vectorized: existence of vector dependence.
+is.c(313): (col. 11) remark: vector dependence: assumed ANTI dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed FLOW dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed FLOW dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed ANTI dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed ANTI dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed FLOW dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed FLOW dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed ANTI dependence between T46 line 313 and T46 line 313.
+is.c(305): (col. 9) remark: loop was not vectorized: existence of vector dependence.
+is.c(308): (col. 11) remark: vector dependence: assumed ANTI dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed FLOW dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed FLOW dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed ANTI dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed ANTI dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed FLOW dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed FLOW dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed ANTI dependence between T23 line 308 and T23 line 308.
+is.c(310): (col. 9) remark: loop was not vectorized: existence of vector dependence.
+is.c(313): (col. 11) remark: vector dependence: assumed ANTI dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed FLOW dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed FLOW dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed ANTI dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed ANTI dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed FLOW dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed FLOW dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed ANTI dependence between T46 line 313 and T46 line 313.
+is.c(305): (col. 9) remark: loop was not vectorized: existence of vector dependence.
+is.c(308): (col. 11) remark: vector dependence: assumed ANTI dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed FLOW dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed FLOW dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed ANTI dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed ANTI dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed FLOW dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed FLOW dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed ANTI dependence between T23 line 308 and T23 line 308.
+is.c(310): (col. 9) remark: loop was not vectorized: existence of vector dependence.
+is.c(313): (col. 11) remark: vector dependence: assumed ANTI dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed FLOW dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed FLOW dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed ANTI dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed ANTI dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed FLOW dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed FLOW dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed ANTI dependence between T46 line 313 and T46 line 313.
+is.c(339): (col. 12) remark: loop was not vectorized: not inner loop.
+is.c(744): (col. 28) remark: vectorization support: call to function printf cannot be vectorized.
+is.c(745): (col. 9) remark: vectorization support: call to function rank cannot be vectorized.
+is.c(742): (col. 5) remark: loop was not vectorized: existence of vector dependence.
+is.c(394): (col. 9) remark: vectorization support: streaming store was generated for key_buff2.
+is.c(393): (col. 5) remark: LOOP WAS VECTORIZED.
+is.c(393): (col. 5) remark: loop was not vectorized: not inner loop.
+is.c(398): (col. 5) remark: loop was not vectorized: existence of vector dependence.
+is.c(399): (col. 9) remark: vector dependence: assumed FLOW dependence between key_array line 399 and key_buff_ptr_global line 399.
+is.c(399): (col. 21) remark: vector dependence: assumed ANTI dependence between key_buff_ptr_global line 399 and key_array line 399.
+is.c(399): (col. 21) remark: vector dependence: assumed FLOW dependence between key_buff_ptr_global line 399 and key_buff2 line 399.
+is.c(399): (col. 58) remark: vector dependence: assumed ANTI dependence between key_buff2 line 399 and key_buff_ptr_global line 399.
+is.c(399): (col. 21) remark: vector dependence: assumed FLOW dependence between key_buff_ptr_global line 399 and key_buff_ptr_global line 399.
+is.c(399): (col. 21) remark: vector dependence: assumed ANTI dependence between key_buff_ptr_global line 399 and key_buff_ptr_global line 399.
+is.c(399): (col. 21) remark: vector dependence: assumed FLOW dependence between key_buff_ptr_global line 399 and key_buff_ptr_global line 399.
+is.c(399): (col. 21) remark: vector dependence: assumed ANTI dependence between key_buff_ptr_global line 399 and key_buff_ptr_global line 399.
+is.c(399): (col. 21) remark: vector dependence: assumed FLOW dependence between key_buff_ptr_global line 399 and key_buff2 line 399.
+is.c(399): (col. 21) remark: vector dependence: assumed ANTI dependence between key_buff2 line 399 and key_buff_ptr_global line 399.
+is.c(399): (col. 21) remark: vector dependence: assumed FLOW dependence between key_buff_ptr_global line 399 and key_buff2 line 399.
+is.c(399): (col. 21) remark: vector dependence: assumed ANTI dependence between key_buff2 line 399 and key_buff_ptr_global line 399.
+is.c(399): (col. 21) remark: vector dependence: assumed OUTPUT dependence between key_buff_ptr_global line 399 and key_array line 399.
+is.c(399): (col. 9) remark: vector dependence: assumed OUTPUT dependence between key_array line 399 and key_buff_ptr_global line 399.
+is.c(399): (col. 21) remark: vector dependence: assumed ANTI dependence between key_buff_ptr_global line 399 and key_buff_ptr_global line 399.
+is.c(399): (col. 21) remark: vector dependence: assumed FLOW dependence between key_buff_ptr_global line 399 and key_buff_ptr_global line 399.
+is.c(399): (col. 21) remark: vector dependence: assumed ANTI dependence between key_buff_ptr_global line 399 and key_array line 399.
+is.c(399): (col. 9) remark: vector dependence: assumed FLOW dependence between key_array line 399 and key_buff_ptr_global line 399.
+is.c(399): (col. 21) remark: vector dependence: assumed ANTI dependence between key_buff2 line 399 and key_buff_ptr_global line 399.
+is.c(399): (col. 21) remark: vector dependence: assumed FLOW dependence between key_buff_ptr_global line 399 and key_buff2 line 399.
+is.c(399): (col. 21) remark: vector dependence: assumed ANTI dependence between key_buff_ptr_global line 399 and key_buff_ptr_global line 399.
+is.c(399): (col. 21) remark: vector dependence: assumed FLOW dependence between key_buff_ptr_global line 399 and key_buff_ptr_global line 399.
+is.c(399): (col. 58) remark: vector dependence: assumed ANTI dependence between key_buff2 line 399 and key_buff_ptr_global line 399.
+is.c(399): (col. 21) remark: vector dependence: assumed FLOW dependence between key_buff_ptr_global line 399 and key_buff2 line 399.
+is.c(405): (col. 5) remark: vectorization support: unroll factor set to 2.
+is.c(405): (col. 5) remark: LOOP WAS VECTORIZED.
+is.c(445): (col. 5) remark: loop was not vectorized: vectorization possible but seems inefficient.
+is.c(481): (col. 5) remark: loop was not vectorized: loop was transformed to memset or memcpy.
+is.c(493): (col. 5) remark: loop was not vectorized: existence of vector dependence.
+is.c(494): (col. 9) remark: vector dependence: assumed ANTI dependence between key_buff_ptr line 494 and key_buff_ptr line 494.
+is.c(494): (col. 9) remark: vector dependence: assumed FLOW dependence between key_buff_ptr line 494 and key_buff_ptr line 494.
+is.c(494): (col. 9) remark: vector dependence: assumed FLOW dependence between key_buff_ptr line 494 and key_buff_ptr line 494.
+is.c(494): (col. 9) remark: vector dependence: assumed ANTI dependence between key_buff_ptr line 494 and key_buff_ptr line 494.
+is.c(502): (col. 5) remark: loop was not vectorized: existence of vector dependence.
+is.c(503): (col. 9) remark: vector dependence: assumed FLOW dependence between key_buff_ptr line 503 and key_buff_ptr line 503.
+is.c(509): (col. 5) remark: loop was not vectorized: existence of vector dependence.
+is.c(305): (col. 9) remark: loop was not vectorized: existence of vector dependence.
+is.c(308): (col. 11) remark: vector dependence: assumed ANTI dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed FLOW dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed FLOW dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed ANTI dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed ANTI dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed FLOW dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed FLOW dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed ANTI dependence between T23 line 308 and T23 line 308.
+is.c(305): (col. 9) remark: PARTIAL LOOP WAS VECTORIZED.
+is.c(310): (col. 9) remark: loop was not vectorized: existence of vector dependence.
+is.c(313): (col. 11) remark: vector dependence: assumed ANTI dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed FLOW dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed FLOW dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed ANTI dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed ANTI dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed FLOW dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed FLOW dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed ANTI dependence between T46 line 313 and T46 line 313.
+is.c(305): (col. 9) remark: loop was not vectorized: existence of vector dependence.
+is.c(308): (col. 11) remark: vector dependence: assumed ANTI dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed FLOW dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed FLOW dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed ANTI dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed ANTI dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed FLOW dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed FLOW dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed ANTI dependence between T23 line 308 and T23 line 308.
+is.c(305): (col. 9) remark: PARTIAL LOOP WAS VECTORIZED.
+is.c(310): (col. 9) remark: loop was not vectorized: existence of vector dependence.
+is.c(313): (col. 11) remark: vector dependence: assumed ANTI dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed FLOW dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed FLOW dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed ANTI dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed ANTI dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed FLOW dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed FLOW dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed ANTI dependence between T46 line 313 and T46 line 313.
+is.c(305): (col. 9) remark: loop was not vectorized: existence of vector dependence.
+is.c(308): (col. 11) remark: vector dependence: assumed ANTI dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed FLOW dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed FLOW dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed ANTI dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed ANTI dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed FLOW dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed FLOW dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed ANTI dependence between T23 line 308 and T23 line 308.
+is.c(310): (col. 9) remark: loop was not vectorized: existence of vector dependence.
+is.c(313): (col. 11) remark: vector dependence: assumed ANTI dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed FLOW dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed FLOW dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed ANTI dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed ANTI dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed FLOW dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed FLOW dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed ANTI dependence between T46 line 313 and T46 line 313.
+is.c(305): (col. 9) remark: loop was not vectorized: existence of vector dependence.
+is.c(308): (col. 11) remark: vector dependence: assumed ANTI dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed FLOW dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed FLOW dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed ANTI dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed ANTI dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed FLOW dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed FLOW dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed ANTI dependence between T23 line 308 and T23 line 308.
+is.c(310): (col. 9) remark: loop was not vectorized: existence of vector dependence.
+is.c(313): (col. 11) remark: vector dependence: assumed ANTI dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed FLOW dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed FLOW dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed ANTI dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed ANTI dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed FLOW dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed FLOW dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed ANTI dependence between T46 line 313 and T46 line 313.
+is.c(305): (col. 9) remark: loop was not vectorized: existence of vector dependence.
+is.c(308): (col. 11) remark: vector dependence: assumed ANTI dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed FLOW dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed FLOW dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed ANTI dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed ANTI dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed FLOW dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed FLOW dependence between T23 line 308 and T23 line 308.
+is.c(308): (col. 11) remark: vector dependence: assumed ANTI dependence between T23 line 308 and T23 line 308.
+is.c(310): (col. 9) remark: loop was not vectorized: existence of vector dependence.
+is.c(313): (col. 11) remark: vector dependence: assumed ANTI dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed FLOW dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed FLOW dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed ANTI dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed ANTI dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed FLOW dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed FLOW dependence between T46 line 313 and T46 line 313.
+is.c(313): (col. 11) remark: vector dependence: assumed ANTI dependence between T46 line 313 and T46 line 313.
+is.c(339): (col. 12) remark: loop was not vectorized: not inner loop.
+is.c(394): (col. 9) remark: vectorization support: streaming store was generated for key_buff2.
+is.c(393): (col. 5) remark: LOOP WAS VECTORIZED.
+is.c(393): (col. 5) remark: loop was not vectorized: not inner loop.
+is.c(398): (col. 5) remark: loop was not vectorized: existence of vector dependence.
+is.c(399): (col. 9) remark: vector dependence: assumed FLOW dependence between key_array line 399 and key_buff_ptr_global line 399.
+is.c(399): (col. 21) remark: vector dependence: assumed ANTI dependence between key_buff_ptr_global line 399 and key_array line 399.
+is.c(399): (col. 21) remark: vector dependence: assumed FLOW dependence between key_buff_ptr_global line 399 and key_buff2 line 399.
+is.c(399): (col. 58) remark: vector dependence: assumed ANTI dependence between key_buff2 line 399 and key_buff_ptr_global line 399.
+is.c(399): (col. 21) remark: vector dependence: assumed FLOW dependence between key_buff_ptr_global line 399 and key_buff_ptr_global line 399.
+is.c(399): (col. 21) remark: vector dependence: assumed ANTI dependence between key_buff_ptr_global line 399 and key_buff_ptr_global line 399.
+is.c(399): (col. 21) remark: vector dependence: assumed FLOW dependence between key_buff_ptr_global line 399 and key_buff_ptr_global line 399.
+is.c(399): (col. 21) remark: vector dependence: assumed ANTI dependence between key_buff_ptr_global line 399 and key_buff_ptr_global line 399.
+is.c(399): (col. 21) remark: vector dependence: assumed FLOW dependence between key_buff_ptr_global line 399 and key_buff2 line 399.
+is.c(399): (col. 21) remark: vector dependence: assumed ANTI dependence between key_buff2 line 399 and key_buff_ptr_global line 399.
+is.c(399): (col. 21) remark: vector dependence: assumed FLOW dependence between key_buff_ptr_global line 399 and key_buff2 line 399.
+is.c(399): (col. 21) remark: vector dependence: assumed ANTI dependence between key_buff2 line 399 and key_buff_ptr_global line 399.
+is.c(399): (col. 21) remark: vector dependence: assumed OUTPUT dependence between key_buff_ptr_global line 399 and key_array line 399.
+is.c(399): (col. 9) remark: vector dependence: assumed OUTPUT dependence between key_array line 399 and key_buff_ptr_global line 399.
+is.c(399): (col. 21) remark: vector dependence: assumed ANTI dependence between key_buff_ptr_global line 399 and key_buff_ptr_global line 399.
+is.c(399): (col. 21) remark: vector dependence: assumed FLOW dependence between key_buff_ptr_global line 399 and key_buff_ptr_global line 399.
+is.c(399): (col. 21) remark: vector dependence: assumed ANTI dependence between key_buff_ptr_global line 399 and key_array line 399.
+is.c(399): (col. 9) remark: vector dependence: assumed FLOW dependence between key_array line 399 and key_buff_ptr_global line 399.
+is.c(399): (col. 21) remark: vector dependence: assumed ANTI dependence between key_buff2 line 399 and key_buff_ptr_global line 399.
+is.c(399): (col. 21) remark: vector dependence: assumed FLOW dependence between key_buff_ptr_global line 399 and key_buff2 line 399.
+is.c(399): (col. 21) remark: vector dependence: assumed ANTI dependence between key_buff_ptr_global line 399 and key_buff_ptr_global line 399.
+is.c(399): (col. 21) remark: vector dependence: assumed FLOW dependence between key_buff_ptr_global line 399 and key_buff_ptr_global line 399.
+is.c(399): (col. 58) remark: vector dependence: assumed ANTI dependence between key_buff2 line 399 and key_buff_ptr_global line 399.
+is.c(399): (col. 21) remark: vector dependence: assumed FLOW dependence between key_buff_ptr_global line 399 and key_buff2 line 399.
+is.c(405): (col. 5) remark: vectorization support: unroll factor set to 2.
+is.c(405): (col. 5) remark: LOOP WAS VECTORIZED.

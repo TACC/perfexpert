@@ -29,6 +29,9 @@
 #include "inst_defs.h"
 
 class ir_methods {
+    private:
+        static SgExpression* _strip_unary_operators(SgExpression* expr);
+
     public:
         static const int INVALID_LOOP = 1 << 0;
         static const int INVALID_FLOW = 1 << 1;
@@ -46,6 +49,17 @@ class ir_methods {
         typedef VariableRenaming::NumNodeRenameEntry::iterator entry_iterator;
         typedef std::map<std::string, VariableRenaming::NumNodeRenameEntry>
             def_map_t;
+
+        static SgExpression* strip_unary_operators(SgExpression* expr);
+
+        static void place_alignment_checks(expr_list_t& expr_list,
+                Sg_File_Info* fileInfo, SgScopeStatement* loop_stmt,
+                statement_list_t& statement_list,
+                const std::string& prefix);
+
+        static void remove_duplicate_expressions(expr_list_t& expr_list);
+
+        static bool is_ancestor(SgNode* lower_node, SgNode* upper_node);
 
         static SgExprStatement* create_long_assign_statement(
                 Sg_File_Info* fileInfo, const std::string& name,

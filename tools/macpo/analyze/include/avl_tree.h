@@ -13,9 +13,9 @@ class avl_tree {
         avl_tree();
         void print();
         void destroy();
-        bool contains(size_t address);
-        long long get_distance(size_t address);
-        void set_distance(size_t address, long long distance);
+        bool contains(size_t cache_line);
+        long long get_distance(size_t cache_line);
+        void set_distance(size_t cache_line, long long distance);
         bool insert(const mem_info_t *data_ptr, long long delta = 0);
 
     private:

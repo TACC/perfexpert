@@ -88,28 +88,57 @@ int stride_analysis(const global_data_t& global_data,
 }
 
 int print_strides(const global_data_t& global_data,
-        histogram_list_t& stride_list) {
-    const int num_streams = global_data.stream_list.size();
-    for (int i=0; i<num_streams; i++) {
-        if(stride_list[i] != NULL) {
-            std::cout << "var: " << global_data.stream_list[i] << ":";
+        histogram_list_t& stride_list, bool bot) {
+    if (bot == false) {
+        const int num_streams = global_data.stream_list.size();
+        for (int i=0; i<num_streams; i++) {
+            if(stride_list[i] != NULL) {
+                std::cout << "var: " << global_data.stream_list[i] << ":";
 
-            pair_list_t pair_list;
-            flatten_and_sort_histogram(stride_list[i], pair_list);
+                pair_list_t pair_list;
+                flatten_and_sort_histogram(stride_list[i], pair_list);
 
-            size_t limit = std::min((size_t) STRIDE_COUNT, pair_list.size());
-            for (size_t j=0; j<limit; j++) {
-                size_t max_bin = pair_list[j].first;
-                size_t max_val = pair_list[j].second;
+                size_t limit = std::min((size_t) STRIDE_COUNT, pair_list.size());
+                for (size_t j=0; j<limit; j++) {
+                    size_t max_bin = pair_list[j].first;
+                    size_t max_val = pair_list[j].second;
 
-                if (max_val > 0)
-                    std::cout << " " << max_bin << " (" << max_val << " times)";
+                    if (max_val > 0)
+                        std::cout << " " << max_bin << " (" << max_val << " times)";
+                }
+
+                std::cout << "." << std::endl;
             }
+        }
 
-            std::cout << "." << std::endl;
+        std::cout << std::endl;
+    } else {
+        const int num_streams = global_data.stream_list.size();
+        for (int i=0; i<num_streams; i++) {
+            if(stride_list[i] != NULL) {
+                pair_list_t pair_list;
+                flatten_and_sort_histogram(stride_list[i], pair_list);
+
+                size_t limit = std::min((size_t) STRIDE_COUNT, pair_list.size());
+                for (size_t j=0; j<limit; j++) {
+                    size_t max_bin = pair_list[j].first;
+                    size_t max_val = pair_list[j].second;
+
+                    if (max_val > 0) {
+                        std::cout << MSG_STRIDE_ANALYSIS << "." <<
+                            global_data.stream_list[i] << "." <<
+                            MSG_STRIDE_VALUE << "[" << j << "]" << "=" <<
+                            max_bin << std::endl;
+
+                        std::cout << MSG_STRIDE_ANALYSIS << "." <<
+                            global_data.stream_list[i] << "." <<
+                            MSG_STRIDE_COUNT << "[" << j << "]" << "=" <<
+                            max_val << std::endl;
+                    }
+                }
+            }
         }
     }
 
-    std::cout << std::endl;
     return 0;
 }

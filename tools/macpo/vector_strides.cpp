@@ -101,17 +101,24 @@ void vector_strides_t::instrument_vector_strides(Sg_File_Info* fileInfo,
         SgIntVal* param_line_number = new SgIntVal(fileInfo, line_number);
         SgIntVal* param_idx = new SgIntVal(fileInfo, reference_info.idx);
 
+        SgExpression* expr = isSgExpression(ref_node);
+        ROSE_ASSERT(expr);
+
+        // Strip unary operators like ++ or -- from the expression.
+        SgExpression* stripped_expr = NULL;
+        stripped_expr = ir_methods::strip_unary_operators(expr);
+        ROSE_ASSERT(stripped_expr && "Bug in stripping unary operators "
+                "from given expression!");
+
         // If not Fortran, cast the address to a void pointer
         SgExpression *param_addr = SageInterface::is_Fortran_language() ?
-            (SgExpression*) ref_node : buildCastExp (
-                    buildAddressOfOp((SgExpression*) ref_node),
+            stripped_expr : buildCastExp (
+                    buildAddressOfOp(stripped_expr),
                     buildPointerType(buildVoidType()));
 
         std::string function_name = SageInterface::is_Fortran_language() ?
                 "indigo__vector_stride_f" : "indigo__vector_stride_c";
 
-        ROSE_ASSERT(isSgExpression(ref_node));
-        SgExpression* expr = isSgExpression(ref_node);
         SgType* type = expr->get_type();
         SgSizeOfOp* size_of_op = new SgSizeOfOp(fileInfo, NULL, type, type);
 
