@@ -165,8 +165,6 @@ string addCategory(set<string> reasons){
 }
 
 int executeCommand(string cmd){
-	//const char *c = cmd.c_str();
-	//return system(c);
         
 	FILE *pip = popen(cmd.c_str(),"r");
         if(pip == NULL)
