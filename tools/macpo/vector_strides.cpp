@@ -19,8 +19,11 @@
  * $HEADER$
  */
 
-#include <algorithm>
 #include <rose.h>
+
+#include <algorithm>
+#include <string>
+#include <vector>
 
 #include "analysis_profile.h"
 #include "vector_strides.h"
@@ -75,7 +78,7 @@ void vector_strides_t::instrument_vector_strides(Sg_File_Info* fileInfo,
     reference_list_t& var_list = generic_vars.get_reference_list();
 
     size_t count = 0;
-    for(reference_list_t::iterator it = var_list.begin(); it != var_list.end();
+    for (reference_list_t::iterator it = var_list.begin(); it != var_list.end();
             it++) {
         reference_info_t& reference_info = *it;
         std::string stream = reference_info.name;
@@ -91,7 +94,9 @@ void vector_strides_t::instrument_vector_strides(Sg_File_Info* fileInfo,
 
         int line_number = 0;
         SgStatement *stmt = getEnclosingNode<SgStatement>(ref_node);
-        if (stmt)	line_number = stmt->get_file_info()->get_raw_line();
+        if (stmt) {
+            line_number = stmt->get_file_info()->get_raw_line();
+        }
 
         if (line_number == 0)
             continue;
@@ -112,7 +117,7 @@ void vector_strides_t::instrument_vector_strides(Sg_File_Info* fileInfo,
 
         // If not Fortran, cast the address to a void pointer
         SgExpression *param_addr = SageInterface::is_Fortran_language() ?
-            stripped_expr : buildCastExp (
+            stripped_expr : buildCastExp(
                     buildAddressOfOp(stripped_expr),
                     buildPointerType(buildVoidType()));
 
@@ -156,23 +161,25 @@ void vector_strides_t::process_loop(SgScopeStatement* outer_scope_stmt,
     // Allow empty init expressions (which is always the case with while and
     // do-while loops).
     if (loop_info.idxv_expr && loop_info.test_expr && loop_info.test_expr) {
+        SgLocatedNode* located_outer_scope =
+            reinterpret_cast<SgLocatedNode*>(outer_scope_stmt);
         Sg_File_Info *fileInfo =
             Sg_File_Info::generateFileInfoForTransformationNode(
-                    ((SgLocatedNode*)
-                     outer_scope_stmt)->get_file_info()->get_filenameString());
+                    located_outer_scope->get_file_info()->get_filenameString());
 
         instrument_vector_strides(fileInfo, loop_info.loop_stmt);
     } else {
         // Instrument inner loops only if
         // the outer loop could not be instrumented.
-        for(std::vector<loop_info_list_t>::iterator it =
+        for (std::vector<loop_info_list_t>::iterator it =
                 loop_info.child_loop_info.begin();
                 it != loop_info.child_loop_info.end(); it++) {
             loop_info_list_t& loop_info_list = *it;
-            for(loop_info_list_t::iterator it2 = loop_info_list.begin();
+            for (loop_info_list_t::iterator it2 = loop_info_list.begin();
                     it2 != loop_info_list.end(); it2++) {
                 loop_info_t& loop_info = *it2;
-                process_loop(outer_scope_stmt, loop_info, loop_map, stream_list);
+                process_loop(outer_scope_stmt, loop_info, loop_map,
+                        stream_list);
             }
         }
     }
@@ -189,7 +196,7 @@ void vector_strides_t::process_node(SgNode* node) {
     expr_map_t loop_map;
     name_list_t stream_list;
 
-    for(loop_info_list_t::iterator it = loop_info_list.begin();
+    for (loop_info_list_t::iterator it = loop_info_list.begin();
             it != loop_info_list.end(); it++) {
         loop_info_t& loop_info = *it;
         process_loop(loop_info.loop_stmt, loop_info, loop_map, stream_list);

@@ -19,24 +19,24 @@
  * $HEADER$
  */
 
-#ifndef	LOOP_TRAVERSAL_H_
-#define	LOOP_TRAVERSAL_H_
+#ifndef TOOLS_MACPO_INCLUDE_LOOP_TRAVERSAL_H_
+#define TOOLS_MACPO_INCLUDE_LOOP_TRAVERSAL_H_
 
 #include "generic_defs.h"
 #include "inst_defs.h"
 
 class loop_traversal_t : public AstTopDownProcessing<attrib> {
-    public:
-        loop_traversal_t(VariableRenaming*& _var_renaming);
+ public:
+    explicit loop_traversal_t(VariableRenaming*& _var_renaming);
 
-        loop_info_list_t& get_loop_info_list();
-        virtual attrib evaluateInheritedAttribute(SgNode* node, attrib attr);
+    loop_info_list_t& get_loop_info_list();
+    virtual attrib evaluateInheritedAttribute(SgNode* node, attrib attr);
 
-    private:
-        SgForStatement* for_stmt;
-        reference_list_t reference_list;
-        loop_info_list_t loop_info_list;
-        VariableRenaming* var_renaming;
+ private:
+    SgForStatement* for_stmt;
+    reference_list_t reference_list;
+    loop_info_list_t loop_info_list;
+    VariableRenaming* var_renaming;
 };
 
-#endif	/* LOOP_TRAVERSAL_H_ */
+#endif  // TOOLS_MACPO_INCLUDE_LOOP_TRAVERSAL_H_

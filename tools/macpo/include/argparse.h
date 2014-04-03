@@ -20,19 +20,21 @@
  * $HEADER$
  */
 
-#ifndef ARGPARSE_H_
-#define ARGPARSE_H_
+#ifndef TOOLS_MACPO_INCLUDE_ARGPARSE_H_
+#define TOOLS_MACPO_INCLUDE_ARGPARSE_H_
+
+#include <string>
 
 #include "generic_defs.h"
 
 class argparse {
-    public:
-        static bool copy_file(const char *source_file,
-                const char *destination_file);
-        static bool parse_location(std::string& argument,
-                std::string& function_name, int& line_number);
-        static int parse_arguments(char* arg, options_t& options);
-        static void init_options(options_t& options);
+ public:
+    static bool copy_file(const char *source_file,
+            const char *destination_file);
+    static bool parse_location(const std::string& argument,
+            std::string& function_name, int& line_number);
+    static int parse_arguments(char* arg, options_t& options);
+    static void init_options(options_t& options);
 };
 
-#endif  /* ARGPARSE_H_ */
+#endif  // TOOLS_MACPO_INCLUDE_ARGPARSE_H_

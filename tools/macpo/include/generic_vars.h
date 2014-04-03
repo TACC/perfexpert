@@ -19,26 +19,26 @@
  * $HEADER$
  */
 
-#ifndef	GENERIC_VARS_H_
-#define	GENERIC_VARS_H_
+#ifndef TOOLS_MACPO_INCLUDE_GENERIC_VARS_H_
+#define TOOLS_MACPO_INCLUDE_GENERIC_VARS_H_
 
 #include "generic_defs.h"
 #include "inst_defs.h"
 
 class generic_vars_t : public AstTopDownProcessing<attrib> {
-    public:
-        generic_vars_t(bool _deep_search = true);
+ public:
+    explicit generic_vars_t(bool _deep_search = true);
 
-        reference_list_t& get_reference_list();
+    reference_list_t& get_reference_list();
 
-        virtual attrib evaluateInheritedAttribute(SgNode* node, attrib attr);
-        virtual void atTraversalStart();
-        virtual void atTraversalEnd();
+    virtual attrib evaluateInheritedAttribute(SgNode* node, attrib attr);
+    virtual void atTraversalStart();
+    virtual void atTraversalEnd();
 
-    private:
-        bool deep_search;
-        SgScopeStatement* init_scope_stmt;
-        reference_list_t reference_list;
+ private:
+    bool deep_search;
+    SgScopeStatement* init_scope_stmt;
+    reference_list_t reference_list;
 };
 
-#endif	/* GENERIC_VARS_H_ */
+#endif  // TOOLS_MACPO_INCLUDE_GENERIC_VARS_H_

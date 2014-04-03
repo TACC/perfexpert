@@ -19,8 +19,11 @@
  * $HEADER$
  */
 
-#include <algorithm>
 #include <rose.h>
+
+#include <algorithm>
+#include <string>
+#include <vector>
 
 #include "tripcount.h"
 #include "analysis_profile.h"
@@ -62,7 +65,8 @@ void tripcount_t::instrument_loop_trip_count(Sg_File_Info* fileInfo,
         // Create new integer variable calledi
         // "indigo__trip_count_<line_number>". Funky, eh?
         char var_name[32];
-        snprintf (var_name, 32, "indigo__trip_count_%d", line_number);
+        snprintf(var_name, sizeof(var_name), "indigo__trip_count_%d",
+                line_number);
         SgType* long_type = buildLongType();
 
         SgVariableDeclaration* trip_count = NULL;
@@ -90,14 +94,17 @@ void tripcount_t::instrument_loop_trip_count(Sg_File_Info* fileInfo,
 
         SgOmpBodyStatement* omp_body_stmt = NULL;
         omp_body_stmt = getEnclosingNode<SgOmpBodyStatement>(scope_stmt);
-        if (omp_body_stmt && ir_methods::is_ancestor((SgNode*) reference_stmt,
-                    (SgNode*) omp_body_stmt) == false) {
+
+        SgNode* ref_node = reinterpret_cast<SgNode*>(reference_stmt);
+        SgNode* omp_node = reinterpret_cast<SgNode*>(omp_body_stmt);
+        if (omp_body_stmt && ir_methods::is_ancestor(ref_node, omp_node)
+                == false) {
             reference_stmt = omp_body_stmt;
         }
 
         if (reference_stmt == NULL ||
                 (ir_methods::is_loop(reference_stmt) == false &&
-                isSgOmpBodyStatement(reference_stmt) == false)) {
+                 isSgOmpBodyStatement(reference_stmt) == false)) {
             reference_stmt = scope_stmt;
         }
 
@@ -131,23 +138,24 @@ void tripcount_t::process_loop(SgScopeStatement* outer_scope_stmt,
     // the loop header components have been identified.
     // Allow empty init expressions (which is always the case with while and
     // do-while loops).
-    if (loop_info.idxv_expr && loop_info.test_expr && loop_info.test_expr /* &&
-            !contains_non_linear_reference(loop_info.reference_list) */) {
+    if (loop_info.idxv_expr && loop_info.test_expr && loop_info.test_expr
+            /* && !contains_non_linear_reference(loop_info.reference_list) */) {
         loop_info.processed = true;
 
+        SgLocatedNode* located_outer_scope =
+            reinterpret_cast<SgLocatedNode*>(outer_scope_stmt);
         Sg_File_Info *fileInfo =
             Sg_File_Info::generateFileInfoForTransformationNode(
-                    ((SgLocatedNode*)
-                     outer_scope_stmt)->get_file_info()->get_filenameString());
+                    located_outer_scope->get_file_info()->get_filenameString());
 
         instrument_loop_trip_count(fileInfo, loop_info);
     }
 
-    for(std::vector<loop_info_list_t>::iterator it =
+    for (std::vector<loop_info_list_t>::iterator it =
                 loop_info.child_loop_info.begin();
                 it != loop_info.child_loop_info.end(); it++) {
         loop_info_list_t& loop_info_list = *it;
-        for(loop_info_list_t::iterator it2 = loop_info_list.begin();
+        for (loop_info_list_t::iterator it2 = loop_info_list.begin();
                 it2 != loop_info_list.end(); it2++) {
             loop_info_t& loop_info = *it2;
             process_loop(outer_scope_stmt, loop_info, loop_map, stream_list);
@@ -168,7 +176,7 @@ void tripcount_t::process_node(SgNode* node) {
     expr_map_t loop_map;
     name_list_t stream_list;
 
-    for(loop_info_list_t::iterator it = loop_info_list.begin();
+    for (loop_info_list_t::iterator it = loop_info_list.begin();
             it != loop_info_list.end(); it++) {
         loop_info_t& loop_info = *it;
         process_loop(loop_info.loop_stmt, loop_info, loop_map, stream_list);
