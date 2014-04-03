@@ -8,7 +8,7 @@
 Perfexpert module for parsing intel vectorization reports (6 and 7) and embedding collated messages as comments to a copy of the original source code
 
 Approach
-a. Parse the vectorization reports 6 and 7  and collate messages for every source line mentioned in both the reports. Note that for vec report 7, the messages will be translated to their 'English' forms.
+a. Parse the vectorization reports 6 and 7 and collate messages for every source line mentioned in both the reports. Note that for vec report 7, the messages will be translated to their 'English' forms.
 b. For every source line mentioned in both the reports, embed the collated message from (c) as a comment into a copy of the original source file.
 c. Print the consolidated report on stdout
 
