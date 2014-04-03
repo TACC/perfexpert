@@ -43,11 +43,6 @@ b. a new annotated source file, for eg. main_out.c created in the current direct
 #include <unistd.h>
 #include <cerrno>
 
-/*
-#define vec7messagesFileName "vec7messages.txt"
-#define vecreport6FileName "vecreport6.txt"
-#define vecreport7FileName "vecreport7.txt"
-*/
 #define MAXPATHLEN 1024
 
 using namespace std;
