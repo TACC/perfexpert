@@ -271,7 +271,6 @@ void populateVec7Messages(ifstream& infile,unordered_map<string,string>& htabVec
 		}
 		infile.close();
 	}
-
 }
 
 string getOutputDirectory(string finalOutputFileName){
