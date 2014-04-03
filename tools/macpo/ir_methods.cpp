@@ -21,6 +21,10 @@
 
 #include <rose.h>
 
+#include <map>
+#include <string>
+#include <vector>
+
 #include "inst_defs.h"
 #include "ir_methods.h"
 
@@ -62,7 +66,7 @@ void ir_methods::place_alignment_checks(expr_list_t& expr_list,
             it != expr_list.end(); it++) {
         SgExpression* expr = *it;
         if (SgPntrArrRefExp* pntr = isSgPntrArrRefExp(expr)) {
-            SgExpression *param_addr = (SgExpression*) pntr;
+            SgExpression *param_addr = reinterpret_cast<SgExpression*>(pntr);
 
             // Strip unary operators like ++ or -- from the expression.
             param_addr = ir_methods::strip_unary_operators(expr);
@@ -75,7 +79,7 @@ void ir_methods::place_alignment_checks(expr_list_t& expr_list,
 
                 address_op = buildAddressOfOp(param_addr);
                 void_pointer_type = buildPointerType(buildVoidType());
-                param_addr = buildCastExp (address_op, void_pointer_type);
+                param_addr = buildCastExp(address_op, void_pointer_type);
             }
 
             addresses.push_back(param_addr);
@@ -95,10 +99,11 @@ void ir_methods::place_alignment_checks(expr_list_t& expr_list,
         params.insert(params.end(), addresses.begin(), addresses.end());
 
         SgStatement* first_statement = loop_stmt->firstStatement();
-        SgBasicBlock* first_bb = getEnclosingNode<SgBasicBlock>(first_statement);
+        SgBasicBlock* first_bb =
+            getEnclosingNode<SgBasicBlock>(first_statement);
 
         std::string function_name = prefix + (is_Fortran_language() ? "_f" :
-            "_c");
+                "_c");
         SgStatement* call_stmt = ir_methods::prepare_call_statement(first_bb,
                 function_name, params, first_statement);
 
@@ -108,12 +113,13 @@ void ir_methods::place_alignment_checks(expr_list_t& expr_list,
         // Create new integer variable called
         // "indigo__aligncheck_init_<line_number>". Funky, eh?
         char var_name[64];
-        snprintf (var_name, 64, "%s_%d", prefix.c_str(), line_number);
+        snprintf (var_name, sizeof(var_name), "%s_%d", prefix.c_str(),
+                line_number);
         SgType* long_type = buildLongType();
 
         SgVariableDeclaration* aligncheck_init = NULL;
         aligncheck_init = ir_methods::create_long_variable(fileInfo, var_name,
-            0);
+                0);
         SgBasicBlock* parent_bb = getEnclosingNode<SgBasicBlock>(loop_stmt);
         aligncheck_init->set_parent(parent_bb);
 
@@ -122,14 +128,16 @@ void ir_methods::place_alignment_checks(expr_list_t& expr_list,
 
         SgOmpBodyStatement* omp_body_stmt = NULL;
         omp_body_stmt = getEnclosingNode<SgOmpBodyStatement>(loop_stmt);
-        if (omp_body_stmt && ir_methods::is_ancestor((SgNode*) reference_stmt,
-                    (SgNode*) omp_body_stmt) == false) {
+        SgNode* ref_node = reinterpret_cast<SgNode*>(reference_stmt);
+        SgNode* omp_node = reinterpret_cast<SgNode*>(omp_body_stmt);
+        if (omp_body_stmt && ir_methods::is_ancestor(ref_node, omp_node)
+                == false) {
             reference_stmt = omp_body_stmt;
         }
 
         if (reference_stmt == NULL ||
                 (ir_methods::is_loop(reference_stmt) == false &&
-                isSgOmpBodyStatement(reference_stmt) == false)) {
+                 isSgOmpBodyStatement(reference_stmt) == false)) {
             reference_stmt = loop_stmt;
         }
 
@@ -142,7 +150,7 @@ void ir_methods::place_alignment_checks(expr_list_t& expr_list,
         // Create the expression statement.
         SgExpression* guard_condition = NULL;
         guard_condition = new SgEqualityOp(fileInfo, buildVarRefExp(var_name),
-            new SgLongIntVal(fileInfo, 0), long_type);
+                new SgLongIntVal(fileInfo, 0), long_type);
 
         SgExprStatement* guard_condition_stmt = NULL;
         guard_condition_stmt = new SgExprStatement(fileInfo, guard_condition);
@@ -151,7 +159,7 @@ void ir_methods::place_alignment_checks(expr_list_t& expr_list,
         // Create statement to reset guard value.
         SgExprStatement* reset_guard_stmt = NULL;
         reset_guard_stmt = ir_methods::create_long_assign_statement(fileInfo,
-             var_name, new SgIntVal(fileInfo, 1));
+                var_name, new SgIntVal(fileInfo, 1));
         aligncheck_list->append_statement(reset_guard_stmt);
         reset_guard_stmt->set_parent(aligncheck_list);
 
@@ -209,8 +217,8 @@ bool ir_methods::is_ancestor(SgNode* lower_node, SgNode* upper_node) {
     return false;
 }
 
-SgExprStatement* ir_methods::create_long_assign_statement(Sg_File_Info* fileInfo,
-        const std::string& name, SgIntVal* value) {
+SgExprStatement* ir_methods::create_long_assign_statement(Sg_File_Info*
+        fileInfo, const std::string& name, SgIntVal* value) {
     SgType* long_type = buildLongType();
     SgVarRefExp* expr = buildVarRefExp(name);
     SgAssignOp* assign_op = new SgAssignOp(fileInfo, expr, value, long_type);
@@ -223,14 +231,14 @@ SgExprStatement* ir_methods::create_long_incr_statement(Sg_File_Info* fileInfo,
         const std::string& name) {
     SgType* long_type = buildLongType();
     SgVarRefExp* expr = buildVarRefExp(name);
-    SgPlusPlusOp* incr_op = new SgPlusPlusOp(fileInfo, expr,long_type);
+    SgPlusPlusOp* incr_op = new SgPlusPlusOp(fileInfo, expr, long_type);
     SgExprStatement* incr_statement = new SgExprStatement(fileInfo, incr_op);
 
     return incr_statement;
 }
 
 SgVariableDeclaration* ir_methods::create_long_variable(Sg_File_Info* fileInfo,
-        const std::string& name, long init_value) {
+        const std::string& name, int64_t init_value) {
     SgType* long_type = buildLongType();
     SgVariableDeclaration* var_decl = new SgVariableDeclaration(fileInfo,
             name, long_type, buildAssignInitializer(buildIntVal(init_value)));
@@ -263,8 +271,9 @@ bool ir_methods::vectorizable(SgStatement*& stmt) {
         if (!vectorizable(false_body))
             return false;
     } else if (scope_stmt && !ir_methods::is_loop(stmt)) {
-        const SgStatementPtrList stmt_list = scope_stmt->generateStatementList();
-        for(int i=0; i<stmt_list.size(); i++) {
+        const SgStatementPtrList stmt_list =
+            scope_stmt->generateStatementList();
+        for (int i = 0; i < stmt_list.size(); i++) {
             SgStatement* inner_stmt = stmt_list[i];
             if (!vectorizable(inner_stmt)) {
                 return false;
@@ -300,7 +309,6 @@ int ir_methods::get_loop_header_components(VariableRenaming*& var_renaming,
         SgScopeStatement*& scope_stmt, def_map_t& def_map, SgExpression*&
         idxv_expr, SgExpression*& init_expr, SgExpression*& test_expr,
         SgExpression*& incr_expr, int& incr_op) {
-
     int return_value = 0;
 
     // Initialization
@@ -394,14 +402,13 @@ int ir_methods::get_for_loop_header_components(VariableRenaming*& var_renaming,
         SgForStatement*& for_stmt, def_map_t& def_map, SgExpression*&
         idxv_expr, SgExpression*& init_expr, SgExpression*& test_expr,
         SgExpression*& incr_expr, int& incr_op) {
-
     int return_value = 0;
     SgExpression* increment_var[2] = {0};
 
+    SgLocatedNode* located_for = reinterpret_cast<SgLocatedNode*>(for_stmt);
     Sg_File_Info *fileInfo =
         Sg_File_Info::generateFileInfoForTransformationNode(
-                ((SgLocatedNode*)
-                for_stmt)->get_file_info()->get_filenameString());
+                located_for->get_file_info()->get_filenameString());
     SgExpression* incr = for_stmt->get_increment();
     incr_components(fileInfo, incr, incr_expr, incr_op);
 
@@ -448,12 +455,12 @@ int ir_methods::get_for_loop_header_components(VariableRenaming*& var_renaming,
                     operand_str[1] = operand[1]->unparseToString();
 
                     bool terminate = false;
-                    for (int i=0; i<2 && !terminate; i++) {
+                    for (int i = 0; i < 2 && !terminate; i++) {
                         if (increment_var[i]) {
                             std::string increment_str =
                                 increment_var[i]->unparseToString();
 
-                            for (int j=0; j<2 && !terminate; j++) {
+                            for (int j = 0; j < 2 && !terminate; j++) {
                                 if (increment_str == operand_str[j]) {
                                     // The variable that's common between
                                     // test and increment is the index
@@ -487,7 +494,7 @@ int ir_methods::get_for_loop_header_components(VariableRenaming*& var_renaming,
                     // Check if this is the same variable being used in the
                     // increment expression
                     std::string var_string = other->unparseToString();
-                    for (int i=0; i<2; i++) {
+                    for (int i = 0; i < 2; i++) {
                         if ((increment_var[i] &&
                                     increment_var[i]->unparseToString() ==
                                     var_string)) {
@@ -536,13 +543,16 @@ int ir_methods::get_for_loop_header_components(VariableRenaming*& var_renaming,
                             break;
                         }
                     }
-                } else if (SgVariableDeclaration* var_decl = isSgVariableDeclaration(stmt)) {
-                    std::vector<SgInitializedName*> var_list = var_decl->get_variables();
-                    for (int i=0; i<var_list.size(); i++) {
+                } else if (SgVariableDeclaration* var_decl =
+                        isSgVariableDeclaration(stmt)) {
+                    std::vector<SgInitializedName*> var_list =
+                        var_decl->get_variables();
+                    for (int i = 0; i < var_list.size(); i++) {
                         SgInitializedName* init_name = var_list.at(i);
                         SgName name = init_name->get_qualified_name();
                         if (name.getString() == idxv_string) {
-                            SgAssignInitializer* init_ptr = isSgAssignInitializer(init_name->get_initptr());
+                            SgAssignInitializer* init_ptr =
+                                isSgAssignInitializer(init_name->get_initptr());
                             init_expr = init_ptr;
                             break;
                         }
@@ -609,10 +619,10 @@ int ir_methods::get_while_loop_header_components(SgScopeStatement*& scope_stmt,
         ROSE_ASSERT(false && "Invalid loop type!");
     }
 
+    SgLocatedNode* located_scope = reinterpret_cast<SgLocatedNode*>(scope_stmt);
     Sg_File_Info *fileInfo =
         Sg_File_Info::generateFileInfoForTransformationNode(
-                ((SgLocatedNode*)
-                scope_stmt)->get_file_info()->get_filenameString());
+                located_scope->get_file_info()->get_filenameString());
 
     if (test_statement) {
         SgExpression* test_expression = test_statement->get_expression();
@@ -639,12 +649,16 @@ int ir_methods::get_while_loop_header_components(SgScopeStatement*& scope_stmt,
                             test_expr = operand[0];
                         }
 
-                        // Check if the loop body references the index var again.
-                        SgBasicBlock* bb = dynamic_cast<SgBasicBlock*>(loop_body);
-                        SgStatement* stmt = dynamic_cast<SgStatement*>(loop_body);
+                        // Check if the loop body references
+                        // the index variable again.
+                        SgBasicBlock* bb =
+                            dynamic_cast<SgBasicBlock*>(loop_body);
+                        SgStatement* stmt =
+                            dynamic_cast<SgStatement*>(loop_body);
                         if (bb) {
                             SgStatementPtrList& stmts = bb->get_statements();
-                            for (SgStatementPtrList::iterator it=stmts.begin(); it!=stmts.end(); it++) {
+                            for (SgStatementPtrList::iterator it =
+                                    stmts.begin(); it != stmts.end(); it++) {
                                 if (in_write_set(*it, idxv_expr)) {
                                     idxv_expr = NULL;
                                     return_value |= INVALID_IDXV;
@@ -665,29 +679,34 @@ int ir_methods::get_while_loop_header_components(SgScopeStatement*& scope_stmt,
                             isConstType(operand[0]->get_type())) {
                         idxv_expr = operand[1];
                         test_expr = operand[0];
-                    }
-                    else if (isSgValueExp(operand[1]) ||
+                    } else if (isSgValueExp(operand[1]) ||
                             isConstType(operand[1]->get_type())) {
                         idxv_expr = operand[0];
                         test_expr = operand[1];
                     }
 
-                    // Loop through the body to find which one of the two is modified in the loop body
+                    // Loop through the body to find which one of the two
+                    // is modified in the loop body
                     std::string o0 = operand[0]->unparseToString();
                     std::string o1 = operand[1]->unparseToString();
 
                     vec_checked = true;
 
-                    // XXX: Bug in Rose, get_body() returns a SgStatement* but is, actually, a SgBasicBlock*.
+                    // XXX: Bug in Rose, get_body() returns a SgStatement* but
+                    // is, actually, a SgBasicBlock*.
                     SgBasicBlock* bb = dynamic_cast<SgBasicBlock*>(loop_body);
                     SgStatement* stmt = dynamic_cast<SgStatement*>(loop_body);
                     if (bb) {
                         SgStatementPtrList& stmts = bb->get_statements();
-                        for (SgStatementPtrList::iterator it=stmts.begin(); it!=stmts.end(); it++) {
+                        for (SgStatementPtrList::iterator it = stmts.begin();
+                                it != stmts.end(); it++) {
                             SgStatement* stmt = *it;
-                            if (SgExprStatement* expr_stmt = isSgExprStatement(stmt)) {
+                            if (SgExprStatement* expr_stmt =
+                                    isSgExprStatement(stmt)) {
                                 if (in_write_set(stmt, operand[0])) {
-                                    if (idxv_expr != NULL && idxv_expr->unparseToString() != o0) {
+                                    if (idxv_expr != NULL &&
+                                            idxv_expr->unparseToString()
+                                            != o0) {
                                         // Inconclusive.
                                         idxv_expr = NULL;
                                         test_expr = NULL;
@@ -696,12 +715,15 @@ int ir_methods::get_while_loop_header_components(SgScopeStatement*& scope_stmt,
                                     } else {
                                         idxv_expr = operand[0];
                                         test_expr = operand[1];
-                                        SgExpression* expr = expr_stmt->get_expression();
+                                        SgExpression* expr =
+                                            expr_stmt->get_expression();
                                         incr_components(fileInfo, expr,
                                                 incr_expr, incr_op);
                                     }
                                 } else if (in_write_set(stmt, operand[1])) {
-                                    if (idxv_expr != NULL && idxv_expr->unparseToString() != o1) {
+                                    if (idxv_expr != NULL &&
+                                            idxv_expr->unparseToString()
+                                            != o1) {
                                         // Inconclusive.
                                         idxv_expr = NULL;
                                         test_expr = NULL;
@@ -710,7 +732,8 @@ int ir_methods::get_while_loop_header_components(SgScopeStatement*& scope_stmt,
                                     } else {
                                         idxv_expr = operand[1];
                                         test_expr = operand[0];
-                                        SgExpression* expr = expr_stmt->get_expression();
+                                        SgExpression* expr =
+                                            expr_stmt->get_expression();
                                         incr_components(fileInfo, expr,
                                                 incr_expr, incr_op);
                                     }
@@ -718,9 +741,11 @@ int ir_methods::get_while_loop_header_components(SgScopeStatement*& scope_stmt,
                             }
                         }
                     } else if (stmt) {
-                        if (SgExprStatement* expr_stmt = isSgExprStatement(stmt)) {
+                        if (SgExprStatement* expr_stmt =
+                                isSgExprStatement(stmt)) {
                             if (in_write_set(stmt, operand[0])) {
-                                if (idxv_expr != NULL && idxv_expr->unparseToString() != o0) {
+                                if (idxv_expr != NULL &&
+                                        idxv_expr->unparseToString() != o0) {
                                     // Inconclusive.
                                     idxv_expr = NULL;
                                     test_expr = NULL;
@@ -728,12 +753,14 @@ int ir_methods::get_while_loop_header_components(SgScopeStatement*& scope_stmt,
                                 } else {
                                     idxv_expr = operand[0];
                                     test_expr = operand[1];
-                                    SgExpression* expr = expr_stmt->get_expression();
+                                    SgExpression* expr =
+                                        expr_stmt->get_expression();
                                     incr_components(fileInfo, expr,
                                             incr_expr, incr_op);
                                 }
                             } else if (in_write_set(stmt, operand[1])) {
-                                if (idxv_expr != NULL && idxv_expr->unparseToString() != o1) {
+                                if (idxv_expr != NULL &&
+                                        idxv_expr->unparseToString() != o1) {
                                     // Inconclusive.
                                     idxv_expr = NULL;
                                     test_expr = NULL;
@@ -741,7 +768,8 @@ int ir_methods::get_while_loop_header_components(SgScopeStatement*& scope_stmt,
                                 } else {
                                     idxv_expr = operand[1];
                                     test_expr = operand[0];
-                                    SgExpression* expr = expr_stmt->get_expression();
+                                    SgExpression* expr =
+                                        expr_stmt->get_expression();
                                     incr_components(fileInfo, expr,
                                             incr_expr, incr_op);
                                 }
@@ -810,16 +838,14 @@ bool ir_methods::in_write_set(SgStatement* statement, SgExpression* expr) {
     return false;
 }
 
-void ir_methods::construct_def_map(VariableRenaming::NumNodeRenameTable& rename_table,
-        def_map_t& def_map) {
-
+void ir_methods::construct_def_map(VariableRenaming::NumNodeRenameTable&
+        rename_table, def_map_t& def_map) {
     typedef VariableRenaming::NumNodeRenameTable::iterator table_iterator;
 
     def_map.clear();
 
     for (table_iterator table_it = rename_table.begin();
             table_it != rename_table.end(); table_it++) {
-
         VariableRenaming::VarName name_list = table_it->first;
         VariableRenaming::NumNodeRenameEntry entry_list = table_it->second;
 
@@ -834,7 +860,6 @@ void ir_methods::construct_def_map(VariableRenaming::NumNodeRenameTable& rename_
 
 SgExpression* ir_methods::get_expr_value(SgNode*& node, std::string var_name) {
     SgInitializedName* init_name = isSgInitializedName(node);
-
     if (init_name && init_name->get_initializer()) {
         // We don't need to instrument this access.
         return init_name->get_initializer();
@@ -873,7 +898,7 @@ SgExprStatement* ir_methods::prepare_call_statement(SgBasicBlock* bb,
     return fCall;
 }
 
-long ir_methods::get_reference_index(reference_list_t& reference_list,
+int64_t ir_methods::get_reference_index(reference_list_t& reference_list,
         std::string& stream_name) {
     if (stream_name.size() == 0)
         return -1;
@@ -1007,7 +1032,7 @@ SgExpression* ir_methods::get_final_value(Sg_File_Info* file_info,
     if (test_expr && incr_expr) {
         SgType* type = test_expr->get_type();
 
-        switch(incr_op) {
+        switch (incr_op) {
             case OP_ADD:
                 return new SgSubtractOp(file_info, test_expr, incr_expr, type);
 

@@ -19,19 +19,21 @@
  * $HEADER$
  */
 
-#ifndef	GENERIC_DEFS_H_
-#define	GENERIC_DEFS_H_
+#ifndef TOOLS_MACPO_INCLUDE_GENERIC_DEFS_H_
+#define TOOLS_MACPO_INCLUDE_GENERIC_DEFS_H_
+
+#include <stdint.h>
 
 #include <string>
 #include <vector>
 
 #define mprefix "[macpo] "
 
-enum { ACTION_NONE=0, ACTION_INSTRUMENT, ACTION_ALIGNCHECK, ACTION_GENTRACE,
+enum { ACTION_NONE = 0, ACTION_INSTRUMENT, ACTION_ALIGNCHECK, ACTION_GENTRACE,
         ACTION_VECTORSTRIDES, ACTION_TRIPCOUNT, ACTION_BRANCHPATH };
 
 typedef struct {
-    short action;
+    int16_t action;
     int line_number;
     bool no_compile;
     bool disable_sampling;
@@ -42,4 +44,4 @@ typedef struct {
 
 typedef std::vector<std::string> name_list_t;
 
-#endif	/* GENERIC_DEFS_H_ */
+#endif  // TOOLS_MACPO_INCLUDE_GENERIC_DEFS_H_

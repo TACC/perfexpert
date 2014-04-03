@@ -104,7 +104,9 @@ done
 ${MINST_PATH} -rose:openmp:ast_only -I${MRT_INCLUDE_DIR} -L${MRT_LIB_DIR} $* -lmrt -lstdc++ &> \
     "$tmp_macpo"
 
-if [ $? != 0 ]
+ret_code=$?
+
+if [ ${ret_code} != 0 ]
 then
     # try running with gfortran
     if [ -z "${GNU_FORTRAN_COMPILER}" ]
@@ -127,6 +129,8 @@ then
                 "-lmrt -lstdc++"
             echo "$GNU_FORTRAN_COMPILER -L${MRT_LIB_DIR} $* -lmrt -lstdc++"
         else
+            # There was no error, hence reset the return code.
+            ret_code=0
             cat "$tmp_gfort"
         fi
     else
@@ -142,3 +146,6 @@ fi
 
 # Clean up
 rm -f "$tmp_macpo" "$tmp_gfort" 2>/dev/null
+
+# Exit with the appropriate return code.
+exit ${ret_code}

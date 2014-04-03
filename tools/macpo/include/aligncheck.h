@@ -19,10 +19,14 @@
  * $HEADER$
  */
 
-#ifndef	ALIGNCHEK_H_
-#define	ALIGNCHEK_H_
+#ifndef TOOLS_MACPO_INCLUDE_ALIGNCHECK_H_
+#define TOOLS_MACPO_INCLUDE_ALIGNCHECK_H_
 
 #include <VariableRenaming.h>
+
+#include <map>
+#include <string>
+#include <vector>
 
 #include "analysis_profile.h"
 #include "generic_defs.h"
@@ -34,43 +38,44 @@ class aligncheck_t {
     typedef std::map<std::string, VariableRenaming::NumNodeRenameEntry>
         def_map_t;
 
-    public:
-        typedef std::map<SgExpression*, loop_info_t*> expr_map_t;
-        typedef std::vector<SgPntrArrRefExp*> pntr_list_t;
-        typedef std::vector<SgNode*> node_list_t;
-        typedef std::map<std::string, node_list_t> sstore_map_t;
+ public:
+    typedef std::map<SgExpression*, loop_info_t*> expr_map_t;
+    typedef std::vector<SgPntrArrRefExp*> pntr_list_t;
+    typedef std::vector<SgNode*> node_list_t;
+    typedef std::map<std::string, node_list_t> sstore_map_t;
 
-        aligncheck_t(VariableRenaming*& _var_renaming);
-        ~aligncheck_t();
+    explicit aligncheck_t(VariableRenaming*& _var_renaming);
+    ~aligncheck_t();
 
-        void atTraversalEnd();
-        void atTraversalStart();
+    void atTraversalEnd();
+    void atTraversalStart();
 
-        void process_node(SgNode* node);
-        void process_loop(SgScopeStatement* scope_stmt, loop_info_t& loop_info_t,
-                expr_map_t& loop_map, name_list_t& stream_list);
+    void process_node(SgNode* node);
+    void process_loop(SgScopeStatement* scope_stmt,
+            loop_info_t& loop_info_t, expr_map_t& loop_map,
+            name_list_t& stream_list);
 
-        bool contains_non_linear_reference(const reference_list_t&
-                reference_list);
+    bool contains_non_linear_reference(const reference_list_t&
+            reference_list);
 
-        const analysis_profile_t& get_analysis_profile();
+    const analysis_profile_t& get_analysis_profile();
 
-        const statement_list_t::iterator stmt_begin();
-        const statement_list_t::iterator stmt_end();
+    const statement_list_t::iterator stmt_begin();
+    const statement_list_t::iterator stmt_end();
 
-    private:
-        void instrument_streaming_stores(Sg_File_Info* file_info,
-                loop_info_t& loop_info);
-        void instrument_alignment_checks(Sg_File_Info* file_info,
-                SgScopeStatement* outer_scope_stmt, loop_info_t& loop_info,
-                name_list_t& stream_list, expr_map_t& loop_map);
-        void instrument_vector_strides(Sg_File_Info* fileInfo,
-                SgScopeStatement* scope_stmt);
+ private:
+    void instrument_streaming_stores(Sg_File_Info* file_info,
+            loop_info_t& loop_info);
+    void instrument_alignment_checks(Sg_File_Info* file_info,
+            SgScopeStatement* outer_scope_stmt, loop_info_t& loop_info,
+            name_list_t& stream_list, expr_map_t& loop_map);
+    void instrument_vector_strides(Sg_File_Info* fileInfo,
+            SgScopeStatement* scope_stmt);
 
-        VariableRenaming* var_renaming;
-        statement_list_t statement_list;
-        analysis_profile_t analysis_profile;
-        loop_traversal_t* loop_traversal;
+    VariableRenaming* var_renaming;
+    statement_list_t statement_list;
+    analysis_profile_t analysis_profile;
+    loop_traversal_t* loop_traversal;
 };
 
-#endif	/* ALIGNCHEK_H_ */
+#endif  // TOOLS_MACPO_INCLUDE_ALIGNCHECK_H_
