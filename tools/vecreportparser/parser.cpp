@@ -198,8 +198,9 @@ void embed_in_source_code(set<string>& sourceFiles,unordered_map<string,set<stri
                 //string finalOutputFileName;
                 finalOutputFileName = pwd + rawFileName + "_out." + fileExtension;
 		string cmdRemoveLineFeedCharacters = "sed -e 's/\r//g' " + tempOutputFileName + " > " + finalOutputFileName;
-                returnValue = executeCommand(cmdRemoveLineFeedCharacters);
-                returnValue = executeCommand("rm " + tempOutputFileName);
+                string consoleOutput = "";
+		returnValue = executeCommand(cmdRemoveLineFeedCharacters,consoleOutput,false);
+                returnValue = executeCommand("rm " + tempOutputFileName,consoleOutput,false);
         }
 }
 

@@ -10,14 +10,24 @@ bool isFileFound(string fileName,ifstream& infile){
         return (infile.is_open()?true:false);
 }
 
-int executeCommand(string cmd){
-
-        FILE *pip = popen(cmd.c_str(),"r");
+int executeCommand(string cmd,string& result,bool isGetConsoleOutput){
+        
+	int ret;
+	FILE *pip = popen(cmd.c_str(),"r");
         if(pip == NULL)
                 return -1;
-        pclose(pip);
+	if(isGetConsoleOutput){
+        	while(!feof(pip)){
+                	char buffer[1024];
+                	while(fgets(buffer,sizeof(buffer),pip) != NULL){
+                        	//buffer[sizeof(buffer)-1] = '\0';
+                        	result += buffer;
+                        }
+               }
+	}
+        ret = pclose(pip);
         pip = NULL;
-        return 0;
+        return ret;
 }
 
 string get_working_path()
