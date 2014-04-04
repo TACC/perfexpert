@@ -42,36 +42,10 @@ b. a new annotated source file, for eg. main_out.c created in the current direct
 #include "stdlib.h"
 #include <unistd.h>
 #include <cerrno>
-
-#define MAXPATHLEN 1024
+#include "stringops.h"
+#include "systemops.h"
 
 using namespace std;
-
-string trimWhiteSpaces(string str){
-	string whitespaces(" \t\f\v\n\r");
-	std::size_t found = str.find_first_not_of(whitespaces);
-	if(found != string::npos)
-		str = str.erase(0,found);
-	found = str.find_last_not_of(whitespaces);
-        if(found != string::npos)
-                str = str.erase(found+1);	
-	return str;
-}
-
-vector<string> splitStringByDelimiter(string str,char delim){
-	vector<string> vecTemp;
-        istringstream partialString(str);
-        string tempPartialLine;
-        while(getline(partialString,tempPartialLine,delim)){
-        	vecTemp.push_back(tempPartialLine);
-        }
-	return vecTemp;	
-}
-
-bool isFileFound(string fileName,ifstream& infile){
-	infile.open(fileName);
-	return (infile.is_open()?true:false);
-}
 
 void parseVecReport(ifstream& infile,unordered_map<string,string>& htabVecMessages,unordered_map<string,set<string>>& htabLines,bool isVec6){
 	string line;
@@ -164,16 +138,6 @@ string addCategory(set<string> reasons){
         return strReason;	
 }
 
-int executeCommand(string cmd){
-        
-	FILE *pip = popen(cmd.c_str(),"r");
-        if(pip == NULL)
-                return -1;
-        pclose(pip);
-        pip = NULL;	
-	return 0;
-}
-
 void display_on_console(set<string>& sourceFiles,unordered_map<string,set<string>>& htabLines){
 	for(unordered_map<string,set<string>>::iterator it=htabLines.begin();it!=htabLines.end();it++){
                 set<string> reasons = htabLines.at(it->first);
@@ -187,16 +151,6 @@ void display_on_console(set<string>& sourceFiles,unordered_map<string,set<string
                 cout<<"File "<<strFileName<<":Line "<<strLineNb<<":"<<strReason;
                 cout<<endl;
         }
-}
-
-string get_working_path()
-{
-	char temp[MAXPATHLEN];
-	if(getcwd(temp,MAXPATHLEN) != NULL)
-		return string(temp);
-	else
-		return string("");
-
 }
 
 void embed_in_source_code(set<string>& sourceFiles,unordered_map<string,set<string>>& htabLines,int returnValue,string& finalOutputFileName,bool& isPwdFound,bool isOutputTempDir){
