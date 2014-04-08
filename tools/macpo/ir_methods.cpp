@@ -664,6 +664,24 @@ int ir_methods::get_for_loop_header_components(VariableRenaming*& var_renaming,
         }
     }
 
+    // Check if the index variable is being
+    // modified (again) in the loop body.
+    if (idxv_expr && incr_expr) {
+        SgStatement* loop_body = for_stmt->get_loop_body();
+        if (SgBasicBlock* loop_bb = isSgBasicBlock(loop_body)) {
+            SgStatementPtrList& stmts = loop_bb->get_statements();
+            for (SgStatementPtrList::iterator it = stmts.begin();
+                    it != stmts.end(); it++) {
+                if (in_write_set(*it, idxv_expr)) {
+                    idxv_expr = NULL;
+                    incr_expr = NULL;
+                    incr_op = ir_methods::INVALID_OP;
+                    break;
+                }
+            }
+        }
+    }
+
     if (!init_expr) return_value |= INVALID_INIT;
     if (!test_expr) return_value |= INVALID_TEST;
     if (!incr_expr) return_value |= INVALID_INCR;

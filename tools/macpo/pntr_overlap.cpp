@@ -175,7 +175,7 @@ void pntr_overlap_t::process_loop(SgScopeStatement* outer_scope_stmt,
     // the loop header components have been identified.
     // Allow empty init expressions (which is always the case with while and
     // do-while loops).
-    if (loop_info.idxv_expr && loop_info.test_expr && loop_info.test_expr
+    if (loop_info.idxv_expr && loop_info.test_expr && loop_info.incr_expr
             /* && !contains_non_linear_reference(loop_info.reference_list) */) {
         loop_info.processed = true;
 
