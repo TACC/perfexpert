@@ -122,19 +122,6 @@ void aligncheck_t::instrument_streaming_stores(Sg_File_Info* fileInfo,
     }
 }
 
-#if 0
-void aligncheck_t::instrument_pointer_overlap_checks(Sg_File_Info* fileInfo,
-        SgScopeStatement* outer_scope_stmt, loop_info_t& loop_info,
-        name_list_t& stream_list, expr_map_t& loop_map) {
-    SgScopeStatement* loop_stmt = loop_info.loop_stmt;
-    reference_list_t& reference_list = loop_info.reference_list;
-
-    // Is there anything to instrument?
-    if (reference_list.size() == 0)
-        return;
-}
-#endif
-
 void aligncheck_t::instrument_alignment_checks(Sg_File_Info* fileInfo,
         SgScopeStatement* outer_scope_stmt, loop_info_t& loop_info,
         name_list_t& stream_list, expr_map_t& loop_map) {
