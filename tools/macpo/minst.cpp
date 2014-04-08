@@ -33,6 +33,7 @@
 #include "ir_methods.h"
 #include "loop_traversal.h"
 #include "minst.h"
+#include "pntr_overlap.h"
 #include "tracer.h"
 #include "tripcount.h"
 #include "vector_strides.h"
@@ -246,6 +247,19 @@ const analysis_profile_t MINST::run_analysis(SgNode* node, int16_t action) {
 
                 return visitor.get_analysis_profile();
             }
+
+        case ACTION_OVERLAPCHECK:
+            {
+                insert_map_function(node);
+
+                pntr_overlap_t visitor(var_renaming);
+                visitor.process_node(node);
+
+                statement_list.insert(statement_list.end(),
+                        visitor.stmt_begin(), visitor.stmt_end());
+
+                return visitor.get_analysis_profile();
+            }
     }
 
     ROSE_ASSERT(false && "Invalid action!");
@@ -383,6 +397,7 @@ void MINST::visit(SgNode* node) {
                 case ACTION_ALIGNCHECK:
                 case ACTION_TRIPCOUNT:
                 case ACTION_BRANCHPATH:
+                case ACTION_OVERLAPCHECK:
                     create_file = 0;
                     break;
 

@@ -31,6 +31,82 @@
 using namespace SageBuilder;
 using namespace SageInterface;
 
+bool ir_methods::create_spans(SgExpression* expr_init, SgExpression* expr_term,
+        loop_info_t& loop_info) {
+    SgExpression* idxv_expr = loop_info.idxv_expr;
+    SgExpression* init_expr = loop_info.init_expr;
+    SgExpression* incr_expr = loop_info.incr_expr;
+    int incr_op = loop_info.incr_op;
+
+    SgExpression* final_expr = ir_methods::get_terminal_expr(idxv_expr,
+            incr_expr, incr_op);
+
+    if (ir_methods::contains_expr(expr_init, idxv_expr) && init_expr) {
+        // Simple case: replace index variable with initial value.
+        ir_methods::replace_expr(expr_init, idxv_expr, init_expr);
+
+        // The more complicated case: replace index variable with
+        // the value just before exiting the loop.
+        // Not precise, but get's us by most of the time.
+        final_expr->set_parent(expr_term);
+        SgLocatedNode* t = isSgLocatedNode(final_expr);
+        SgLocatedNode* c = isSgLocatedNode(expr_term);
+
+        if (t && c)
+            t->set_endOfConstruct(c->get_endOfConstruct());
+
+        ir_methods::replace_expr(expr_term, idxv_expr, final_expr);
+        return true;
+    }
+
+    return false;
+}
+
+std::vector<SgVariableDeclaration*> ir_methods::get_var_decls(SgForStatement*
+        for_stmt) {
+    std::vector<SgVariableDeclaration*> var_decls;
+    SgForInitStatement* for_init_stmt = for_stmt->get_for_init_stmt();
+    SgStatementPtrList init_list = for_init_stmt->get_init_stmt();
+    if (init_list.size()) {
+        for (SgStatementPtrList::iterator it = init_list.begin();
+                it != init_list.end(); it++) {
+            SgStatement* stmt = *it;
+            SgVariableDeclaration* var_decl = NULL;
+            if (var_decl = isSgVariableDeclaration(stmt)) {
+                var_decls.push_back(var_decl);
+            }
+        }
+    }
+
+    return var_decls;
+}
+
+SgExpression* ir_methods::get_terminal_expr(SgExpression* idxv,
+        SgExpression* incr, int incr_op) {
+    SgType* type = idxv->get_type();
+    Sg_File_Info* file_info = idxv->get_file_info();
+
+    // For each known operation, invert the operation
+    // using the same index and increment expressions.
+    switch (incr_op) {
+        case OP_ADD:
+            return new SgSubtractOp(file_info, idxv, incr, type);
+
+        case OP_SUB:
+            return new SgAddOp(file_info, idxv, incr, type);
+
+        case OP_MUL:
+            return new SgDivideOp(file_info, idxv, incr, type);
+
+        case OP_DIV:
+            return new SgMultiplyOp(file_info, idxv, incr, type);
+    }
+
+    // If we don't know the operation,
+    // just return without any modifications.
+    return idxv;
+}
+
 SgExpression* ir_methods::_strip_unary_operators(SgExpression* expr) {
     // If we found a unary operation, return it's pointer.
     if (SgUnaryOp* unary_op = isSgUnaryOp(expr)) {
@@ -363,7 +439,7 @@ void ir_methods::incr_components(Sg_File_Info*& fileInfo, SgExpression*& expr,
     SgUnaryOp* incr_unary_op = isSgUnaryOp(expr);
 
     if (incr_binary_op) {
-        if (SgPlusAssignOp* minus_op = isSgPlusAssignOp(incr_binary_op)) {
+        if (SgMinusAssignOp* minus_op = isSgMinusAssignOp(incr_binary_op)) {
             incr_op = OP_SUB;
             incr_expr = minus_op->get_rhs_operand();
         } else if (SgPlusAssignOp* plus_op = isSgPlusAssignOp(incr_binary_op)) {
@@ -972,8 +1048,10 @@ bool ir_methods::is_linear_reference(const SgBinaryOp* reference,
     return true;
 }
 
-bool ir_methods::contains_expr(SgBinaryOp*& bin_op,
+bool ir_methods::contains_expr(SgExpression*& expr,
         SgExpression*& search_expr) {
+    SgBinaryOp* bin_op = isSgBinaryOp(expr);
+
     if (bin_op && search_expr) {
         SgExpression* lhs = bin_op->get_lhs_operand();
         SgExpression* rhs = bin_op->get_rhs_operand();
@@ -986,21 +1064,20 @@ bool ir_methods::contains_expr(SgBinaryOp*& bin_op,
             return true;
 
         // Check if we need to call recursively.
-        SgBinaryOp* pntr = NULL;
-        if (lhs && (pntr = isSgBinaryOp(lhs)))
-            if (ir_methods::contains_expr(pntr, search_expr))
-                return true;
+        if (lhs && ir_methods::contains_expr(lhs, search_expr))
+            return true;
 
-        if (rhs && (pntr = isSgBinaryOp(rhs)))
-            if (ir_methods::contains_expr(pntr, search_expr))
-                return true;
+        if (rhs && ir_methods::contains_expr(rhs, search_expr))
+            return true;
     }
 
     return false;
 }
 
-void ir_methods::replace_expr(SgBinaryOp*& bin_op, SgExpression*& search_expr,
+void ir_methods::replace_expr(SgExpression*& expr, SgExpression*& search_expr,
         SgExpression*& replace_expr) {
+    SgBinaryOp* bin_op = isSgBinaryOp(expr);
+
     if (bin_op && search_expr && replace_expr) {
         SgExpression* lhs = bin_op->get_lhs_operand();
         SgExpression* rhs = bin_op->get_rhs_operand();
@@ -1013,12 +1090,11 @@ void ir_methods::replace_expr(SgBinaryOp*& bin_op, SgExpression*& search_expr,
             bin_op->set_rhs_operand(replace_expr);
 
         // Check if we need to call recursively.
-        SgBinaryOp* pntr = NULL;
-        if (lhs && (pntr = isSgBinaryOp(lhs)))
-            ir_methods::replace_expr(pntr, search_expr, replace_expr);
+        if (lhs)
+            ir_methods::replace_expr(lhs, search_expr, replace_expr);
 
-        if (rhs && (pntr = isSgBinaryOp(rhs)))
-            ir_methods::replace_expr(pntr, search_expr, replace_expr);
+        if (rhs)
+            ir_methods::replace_expr(rhs, search_expr, replace_expr);
     }
 }
 

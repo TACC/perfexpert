@@ -19,10 +19,12 @@
  * $HEADER$
  */
 
-#define test_prefix "\n[macpo-integration-test]:"
+#ifndef TOOLS_MACPO_TESTS_INTEGRATION_TESTS_LIBMRT_MRT_H_
+#define TOOLS_MACPO_TESTS_INTEGRATION_TESTS_LIBMRT_MRT_H_
 
-#ifndef LIBMRT_H_
-#define LIBMRT_H_
+#include <stdint.h>
+
+#define test_prefix "\n[macpo-integration-test]:"
 
 #if defined(__cplusplus)
 extern "C" {
@@ -69,7 +71,7 @@ int indigo__sstore_aligncheck_c(int line_number, int stream_count, ...);
 #if defined(__cplusplus)
 extern "C" {
 #endif
-void indigo__tripcount_check_c(int line_number, long trip_count);
+void indigo__tripcount_check_c(int line_number, int64_t trip_count);
 #if defined (__cplusplus)
 }
 #endif
@@ -77,7 +79,7 @@ void indigo__tripcount_check_c(int line_number, long trip_count);
 #if defined(__cplusplus)
 extern "C" {
 #endif
-void indigo__init_(short create_file, short enable_sampling);
+void indigo__init_(int16_t create_file, int16_t enable_sampling);
 #if defined (__cplusplus)
 }
 #endif
@@ -116,4 +118,12 @@ void indigo__create_map() __attribute__((weak));
 }
 #endif
 
-#endif  /* LIBMRT_H_ */
+#if defined(__cplusplus)
+extern "C" {
+#endif
+void indigo__overlap_check_c(int line_number, int stream_count, ...);
+#if defined (__cplusplus)
+}
+#endif
+
+#endif  // TOOLS_MACPO_TESTS_INTEGRATION_TESTS_LIBMRT_MRT_H_

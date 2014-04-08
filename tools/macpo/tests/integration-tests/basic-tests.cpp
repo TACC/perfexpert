@@ -1,6 +1,8 @@
 
 #include <rose.h>
 
+#include <string>
+
 #include "gtest/gtest.h"
 #include "itest_harness.h"
 
@@ -36,6 +38,20 @@ TEST(BasicTests, SmallMatmult) {
     options.function_name = "compute";
     std::string tests_dir = get_tests_directory();
     std::string input_file = tests_dir + "/file_003.c";
+
+    std::string binary_file = instrument_and_link(input_file, NULL, options);
+    ASSERT_TRUE(file_exists(binary_file));
+    ASSERT_TRUE(verify_output(input_file, binary_file));
+
+    remove(binary_file.c_str());
+}
+
+TEST(BasicTests, OverlapCheck) {
+    options_t options = {0};
+    options.action = ACTION_OVERLAPCHECK;
+    options.function_name = "compute";
+    std::string tests_dir = get_tests_directory();
+    std::string input_file = tests_dir + "/file_004.c";
 
     std::string binary_file = instrument_and_link(input_file, NULL, options);
     ASSERT_TRUE(file_exists(binary_file));

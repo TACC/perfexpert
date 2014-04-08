@@ -54,7 +54,16 @@ class ir_methods {
     typedef std::map<std::string, VariableRenaming::NumNodeRenameEntry>
         def_map_t;
 
+    static bool create_spans(SgExpression* expr_init, SgExpression* expr_term,
+            loop_info_t& loop_info);
+
     static SgExpression* strip_unary_operators(SgExpression* expr);
+
+    static std::vector<SgVariableDeclaration*> get_var_decls(SgForStatement*
+            for_stmt);
+
+    static SgExpression* get_terminal_expr(SgExpression* idxv,
+            SgExpression* incr, int incr_op);
 
     static void place_alignment_checks(expr_list_t& expr_list,
             Sg_File_Info* fileInfo, SgScopeStatement* loop_stmt,
@@ -117,11 +126,10 @@ class ir_methods {
 
     static bool is_known(const SgExpression* expr);
 
-    static bool contains_expr(SgBinaryOp*& bin_op,
+    static bool contains_expr(SgExpression*& bin_op,
             SgExpression*& search_expr);
 
-    static void replace_expr(SgBinaryOp*& bin_op,
-            SgExpression*& search_expr,
+    static void replace_expr(SgExpression*& expr, SgExpression*& search_expr,
             SgExpression*& replace_expr);
 
     static bool is_linear_reference(const SgBinaryOp* reference,

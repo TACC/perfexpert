@@ -69,6 +69,8 @@ class pntr_overlap_t {
             name_list_t& stream_list, expr_map_t& loop_map);
     void instrument_vector_strides(Sg_File_Info* fileInfo,
             SgScopeStatement* scope_stmt);
+    void create_spans_for_child_loops(SgExpression* expr_init, SgExpression*
+            expr_term, loop_info_t& loop_info);
 
     VariableRenaming* var_renaming;
     statement_list_t statement_list;

@@ -36,6 +36,6 @@ check_PROGRAMS = test_0001
 TESTS = $(check_PROGRAMS)
 
 MINST_BASE = $(srcdir)/../..
-MINST_SOURCE_FILES = $(MINST_BASE)/argparse.cpp $(MINST_BASE)/minst.cpp $(MINST_BASE)/instrumentor.cpp $(MINST_BASE)/streams.cpp $(MINST_BASE)/aligncheck.cpp $(MINST_BASE)/ir_methods.cpp $(MINST_BASE)/loop_traversal.cpp $(MINST_BASE)/tracer.cpp $(MINST_BASE)/generic_vars.cpp $(MINST_BASE)/vector_strides.cpp $(MINST_BASE)/analysis_profile.cpp $(MINST_BASE)/tripcount.cpp $(MINST_BASE)/branchpath.cpp
+MINST_SOURCE_FILES = $(MINST_BASE)/argparse.cpp $(MINST_BASE)/minst.cpp $(MINST_BASE)/instrumentor.cpp $(MINST_BASE)/streams.cpp $(MINST_BASE)/aligncheck.cpp $(MINST_BASE)/ir_methods.cpp $(MINST_BASE)/loop_traversal.cpp $(MINST_BASE)/tracer.cpp $(MINST_BASE)/generic_vars.cpp $(MINST_BASE)/vector_strides.cpp $(MINST_BASE)/analysis_profile.cpp $(MINST_BASE)/tripcount.cpp $(MINST_BASE)/branchpath.cpp $(MINST_BASE)/pntr_overlap.cpp
 
 test_0001_SOURCES = $(srcdir)/basic-tests.cpp $(srcdir)/itest_harness.cpp $(MINST_SOURCE_FILES)

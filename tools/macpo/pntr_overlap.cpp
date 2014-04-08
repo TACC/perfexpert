@@ -52,6 +52,21 @@ void pntr_overlap_t::atTraversalStart() {
 void pntr_overlap_t::atTraversalEnd() {
 }
 
+void pntr_overlap_t::create_spans_for_child_loops(SgExpression* expr_init,
+        SgExpression* expr_term, loop_info_t& loop_info) {
+    ir_methods::create_spans(expr_init, expr_term, loop_info);
+    for (std::vector<loop_info_list_t>::iterator it =
+            loop_info.child_loop_info.begin();
+            it != loop_info.child_loop_info.end(); it++) {
+        loop_info_list_t& loop_info_list = *it;
+        for (loop_info_list_t::iterator it = loop_info_list.begin();
+                it != loop_info_list.end(); it++) {
+            loop_info_t& loop_info = *it;
+            create_spans_for_child_loops(expr_init, expr_term, loop_info);
+        }
+    }
+}
+
 void pntr_overlap_t::instrument_overlap_checks(Sg_File_Info* fileInfo,
         SgScopeStatement* outer_scope_stmt, loop_info_t& loop_info,
         name_list_t& stream_list, expr_map_t& loop_map) {
@@ -91,36 +106,18 @@ void pntr_overlap_t::instrument_overlap_checks(Sg_File_Info* fileInfo,
     for (expr_list_t::iterator it = expr_list.begin(); it != expr_list.end();
             it++) {
         SgExpression* expr = *it;
-        if (SgBinaryOp* bin_op = isSgBinaryOp(expr)) {
-            SgBinaryOp* copy = isSgBinaryOp(copyExpression(expr));
+
+        if (expr) {
+            SgExpression* copy = copyExpression(expr);
             ROSE_ASSERT(copy);
-
-            if (ir_methods::contains_expr(bin_op, idxv) && init) {
-                // Simple case: replace index variable with initial value.
-                ir_methods::replace_expr(bin_op, idxv, init);
-
-                // The more complicated case: replace index variable with
-                // the value just before exiting the loop.
-                // Not precise, but get's us by most of the time.
-                SgExpression* terminal_expr = NULL;
-                terminal_expr = ir_methods::get_terminal_expr(idxv, incr,
-                        incr_op);
-                terminal_expr->set_parent(copy);
-                SgLocatedNode* t = isSgLocatedNode(terminal_expr);
-                SgLocatedNode* c = isSgLocatedNode(copy);
-
-                if (t && c)
-                    t->set_endOfConstruct(c->get_endOfConstruct());
-
-                ir_methods::replace_expr(copy, idxv, terminal_expr);
-            }
+            create_spans_for_child_loops(expr, copy, loop_info);
 
             if (is_Fortran_language()) {
-                params.push_back(bin_op);
+                params.push_back(expr);
                 params.push_back(copy);
             } else {
                 SgCastExp* cast_expr_01 = NULL;
-                cast_expr_01 = buildCastExp(buildAddressOfOp(bin_op),
+                cast_expr_01 = buildCastExp(buildAddressOfOp(expr),
                         buildPointerType(buildVoidType()));
 
                 SgCastExp* cast_expr_02 = NULL;

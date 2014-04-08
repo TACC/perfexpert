@@ -19,8 +19,8 @@
  * $HEADER$
  */
 
-#ifndef LIBMRT_H_
-#define LIBMRT_H_
+#ifndef TOOLS_MACPO_LIBMRT_MRT_H_
+#define TOOLS_MACPO_LIBMRT_MRT_H_
 
 #include <fcntl.h>
 
@@ -29,6 +29,7 @@
 #include <cstdlib>
 #include <csignal>
 #include <cstring>
+#include <string>
 #else
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,6 +37,7 @@
 #include <string.h>
 #endif
 
+#include <stdint.h>
 #include <sys/time.h>
 
 #include "macpo_record.h"
@@ -78,67 +80,28 @@ to 711 micro-seconds. And thus, we set AWAKE_USEC to 711.
 #define CACHE_LINE_SIZE         64
 #define MAX_HISTOGRAM_ENTRIES   1024
 
-enum { EAX=0, EBX, ECX, EDX };
-enum { PROC_UNKNOWN=-1, PROC_INTEL=0, PROC_AMD };
+enum { EAX = 0, EBX, ECX, EDX };
+enum { PROC_UNKNOWN = -1, PROC_INTEL = 0, PROC_AMD };
 
 #ifdef __GNUC__
-static void mycpuid( int * p, unsigned int param, unsigned int ecx )
-{
+static void mycpuid(int *p, unsigned int param, unsigned int ecx) {
 #ifndef __x86_64
-   __asm__ __volatile__
-   (
-      "pushl    %%ebx\n\t"
-      "cpuid\n\t"
-      "movl %%ebx, %1\n\t"
-      "popl %%ebx"
-      : "=a" (p[0]), "=r" (p[1]), "=c" (p[2]), "=d" (p[3])
-      : "a" (param), "c" (ecx)
-      : "cc"
-   );
+    __asm__ __volatile__(
+         "pushl    %%ebx\n\t"
+         "cpuid\n\t"
+         "movl %%ebx, %1\n\t"
+         "popl %%ebx"
+         : "=a" (p[0]), "=r" (p[1]), "=c" (p[2]), "=d" (p[3])
+         : "a" (param), "c" (ecx)
+         : "cc");
 #else
-   __asm__ __volatile__
-   (
-      "cpuid\n\t"
-      : "=a" (p[0]), "=b" (p[1]), "=c" (p[2]), "=d" (p[3])
-      : "a" (param), "c" (ecx)
-      : "cc"
-   );
+    __asm__ __volatile__(
+         "cpuid\n\t"
+         : "=a" (p[0]), "=b" (p[1]), "=c" (p[2]), "=d" (p[3])
+         : "a" (param), "c" (ecx)
+         : "cc");
 #endif
 }
-#else /* not __GNUC__ */
-#if 0
-static void mycpuid( int * p, unsigned int param )
-{
-#ifndef __x86_64
-   __asm__ __volatile__
-   (
-      "mov    %0, %%edi\n\t"
-      "cpuid;\n\t"
-      "mov    %%eax, 0(%%edi)\n\t"
-      "mov    %%ebx, 4(%%edi)\n\t"
-      "mov    %%ecx, 8(%%edi)\n\t"
-      "mov    %%edx, 12(%%edi)\n\t"
-      :
-      :"m" (p),"a" (param)
-      :"ebx","ecx","edx","edi"
-   );
-#else
-   __asm__ __volatile__
-   (
-      "movq    %0, %%rdi\n\t"
-      "cpuid;\n\t"
-      "mov    %%eax, 0(%%rdi)\n\t"
-      "mov    %%ebx, 4(%%rdi)\n\t"
-      "mov    %%ecx, 8(%%rdi)\n\t"
-      "mov    %%edx, 12(%%rdi)\n\t"
-      :
-      :"m" (p),"a" (param)
-      :"ebx","ecx","edx","rdi"
-   );
-#endif /* __x86_64 */
-}
-#endif
-
 #endif /* __GNUC__ */
 
 #define __cpuid mycpuid
@@ -190,7 +153,7 @@ static int isCPUIDSupported() {
 static void getProcessorName(char* string) {
     int info[4];
     __cpuid(info, 0, 0);
-    char processorName [13] = {0};
+    char processorName[13] = {0};
 
     int charCounter = 0;
 
@@ -212,14 +175,15 @@ static void getProcessorName(char* string) {
 
     // 13th character in processorName is already a NULL character,
     // so do not inserting it explicitly.
-    strcpy (string, processorName);
+    snprintf(string, sizeof(processorName), "%s", processorName);
 }
 
 static size_t numCores = 0;
 static __thread int coreID=-1;
 static char szFilename[256]={0};
-static volatile sig_atomic_t sleeping=0, access_count=0;
-static int fd=-1, sleep_sec=0, new_sleep_sec=1, *intel_apic_mapping=NULL;
+static volatile sig_atomic_t sleeping = 0, access_count = 0;
+static int fd = -1, sleep_sec = 0, new_sleep_sec = 1;
+static int *intel_apic_mapping = NULL;
 static node_t terminal_node;
 
 #if defined(__cplusplus)
@@ -275,22 +239,30 @@ int indigo__sstore_aligncheck_c(int line_number, int stream_count, ...);
 #if defined(__cplusplus)
 extern "C" {
 #endif
-void indigo__tripcount_check_c(int line_number, long trip_count);
+void indigo__overlap_check_c(int line_number, int stream_count, ...);
+#if defined (__cplusplus)
+}
+#endif
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
+void indigo__tripcount_check_c(int line_number, int64_t trip_count);
 #if defined (__cplusplus)
 }
 #endif
 
 // XXX: Don't change the order of the elements of the enum!
 // XXX: The order is used in arithmetic comparison.
-enum { NOT_ALIGNED=0, MUTUAL_ALIGNED, FULL_ALIGNED, ALIGN_NOINIT };
-enum { BRANCH_MOSTLY_TRUE=0, BRANCH_TRUE, BRANCH_MOSTLY_FALSE, BRANCH_FALSE,
+enum { NOT_ALIGNED = 0, MUTUAL_ALIGNED, FULL_ALIGNED, ALIGN_NOINIT };
+enum { BRANCH_MOSTLY_TRUE = 0, BRANCH_TRUE, BRANCH_MOSTLY_FALSE, BRANCH_FALSE,
     BRANCH_UNKNOWN, BRANCH_NOINIT };
 
 static int get_proc_kind() {
     // Get which processor is this running on
     int proc, info[4];
     if (!isCPUIDSupported()) {
-        fprintf (stderr, "MACPO :: CPUID not supported, cannot determine "
+        fprintf(stderr, "MACPO :: CPUID not supported, cannot determine "
                 "processor core information, resorting to defaults...\n");
         proc = PROC_UNKNOWN;
     } else {
@@ -331,7 +303,7 @@ static int getCoreID() {
             apic_id = info[EDX];
 
 #ifdef DEBUG_PRINT
-            fprintf (stderr, "MACPO :: Request from core with x2APIC ID "
+            fprintf(stderr, "MACPO :: Request from core with x2APIC ID "
                 "%d\n", apic_id);
 #endif
         } else {    // Traditonal APIC
@@ -339,13 +311,13 @@ static int getCoreID() {
             apic_id = (info[EBX] & 0xff000000) >> 24;
 
 #ifdef DEBUG_PRINT
-            fprintf (stderr, "MACPO :: Request from core with legacy APIC ID "
+            fprintf(stderr, "MACPO :: Request from core with legacy APIC ID "
                     "%d\n", apic_id);
 #endif
         }
 
         int i;
-        for (i=0; i<numCores; i++) {
+        for (i = 0; i < numCores; i++) {
             if (apic_id == intel_apic_mapping[i])
                 break;
         }
@@ -395,7 +367,8 @@ static void signalHandler(int sig) {
 
 static void create_output_file() {
     char szFilename[32];
-    sprintf (szFilename, "macpo.%d.out", (int) getpid());
+    snprintf(szFilename, sizeof(szFilename), "macpo.%d.out", getpid());
+
     fd = open(szFilename, O_CREAT | O_APPEND | O_WRONLY | O_TRUNC, S_IRUSR |
             S_IWUSR | S_IRGRP);
     if (fd < 0) {
@@ -406,26 +379,25 @@ static void create_output_file() {
     if (access("macpo.out", F_OK) == 0) {
         // file exists, remove it
         if (unlink("macpo.out") == -1)
-            perror ("MACPO :: Failed to remove macpo.out");
+            perror("MACPO :: Failed to remove macpo.out");
     }
 
     // Now create the symlink
     if (symlink(szFilename, "macpo.out") == -1)
-        perror ("MACPO :: Failed to create symlink \"macpo.out\"");
+        perror("MACPO :: Failed to create symlink \"macpo.out\"");
 
     // Now that we are done handling the critical stuff,
     // write the metadata log to the macpo.out file.
     node_t node;
     node.type_message = MSG_METADATA;
-    size_t exe_path_len = readlink ("/proc/self/exe",
+    size_t exe_path_len = readlink("/proc/self/exe",
             node.metadata_info.binary_name, STRING_LENGTH-1);
     if (exe_path_len == -1) {
-        perror ("MACPO :: Failed to read binary name from /proc/self/exe");
+        perror("MACPO :: Failed to read binary name from /proc/self/exe");
     } else {
         // Write the terminating character
-        node.metadata_info.binary_name[exe_path_len]='\0';
+        node.metadata_info.binary_name[exe_path_len] = '\0';
         time(&node.metadata_info.execution_timestamp);
-
         write(fd, &node, sizeof(node_t));
     }
 
@@ -455,7 +427,7 @@ static void set_timers() {
     }
 }
 
-static inline void indigo__init_(short create_file, short enable_sampling) {
+static inline void indigo__init_(int16_t create_file, int16_t enable_sampling) {
     set_thread_affinity();
 
     if (create_file) {
@@ -556,7 +528,7 @@ static void indigo__record_f_(int *read_write, int *line_number, void* addr,
 static void indigo__write_idx_c(const char* var_name, const int length) {
     node_t node;
     node.type_message = MSG_STREAM_INFO;
-#define indigo__MIN(a,b)    (a) < (b) ? (a) : (b)
+#define indigo__MIN(a, b)   (a) < (b) ? (a) : (b)
     int dst_len = indigo__MIN(STREAM_LENGTH-1, length);
 #undef indigo__MIN
 
@@ -570,4 +542,4 @@ static void indigo__write_idx_f_(const char* var_name, const int* length) {
     indigo__write_idx_c(var_name, *length);
 }
 
-#endif  /* LIBMRT_H_ */
+#endif  // TOOLS_MACPO_LIBMRT_MRT_H_

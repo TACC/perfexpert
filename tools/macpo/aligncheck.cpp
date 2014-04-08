@@ -147,7 +147,6 @@ void aligncheck_t::instrument_alignment_checks(Sg_File_Info* fileInfo,
 
     SgStatement* first_statement = loop_stmt->firstStatement();
     SgBasicBlock* first_bb = getEnclosingNode<SgBasicBlock>(first_statement);
-    SgBasicBlock* aligncheck_list = new SgBasicBlock(fileInfo);
 
     expr_list_t expr_list;
     for (reference_list_t::iterator it = reference_list.begin();
