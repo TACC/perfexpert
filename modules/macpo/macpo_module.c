@@ -40,15 +40,38 @@ char module_version[] = "1.0.0";
 /* module_load */
 int module_load(void) {
     OUTPUT_VERBOSE((5, "%s", _MAGENTA("loaded")));
-
     return PERFEXPERT_SUCCESS;
 }
 
 /* module_init */
 int module_init(void) {
-    OUTPUT_VERBOSE((5, "%s", _MAGENTA("initialized")));
+    /* Module pre-requisites */
+    if (PERFEXPERT_SUCCESS != perfexpert_module_requires("macpo",
+        PERFEXPERT_PHASE_INSTRUMENT, "lcpi", PERFEXPERT_PHASE_ANALYZE,
+        PERFEXPERT_MODULE_BEFORE)) {
+        OUTPUT(("%s", _ERROR("pre-required module/phase not available")));
+        return PERFEXPERT_ERROR;
+    }
+    if (PERFEXPERT_SUCCESS != perfexpert_module_requires("macpo",
+        PERFEXPERT_PHASE_INSTRUMENT, NULL, PERFEXPERT_PHASE_COMPILE,
+        PERFEXPERT_MODULE_CLONE_AFTER)) {
+        OUTPUT(("%s", _ERROR("pre-required module/phase not available")));
+        return PERFEXPERT_ERROR;
+    }
+    if (PERFEXPERT_SUCCESS != perfexpert_module_requires("macpo",
+        PERFEXPERT_PHASE_MEASURE, "macpo", PERFEXPERT_PHASE_INSTRUMENT,
+        PERFEXPERT_MODULE_BEFORE)) {
+        OUTPUT(("%s", _ERROR("pre-required module/phase not available")));
+        return PERFEXPERT_ERROR;
+    }
+    if (PERFEXPERT_SUCCESS != perfexpert_module_requires("macpo",
+        PERFEXPERT_PHASE_ANALYZE, "macpo", PERFEXPERT_PHASE_MEASURE,
+        PERFEXPERT_MODULE_BEFORE)) {
+        OUTPUT(("%s", _ERROR("pre-required module/phase not available")));
+        return PERFEXPERT_ERROR;
+    }
 
-    // TODO: create stepdir/macpo path
+    OUTPUT_VERBOSE((5, "%s", _MAGENTA("initialized")));
 
     return PERFEXPERT_SUCCESS;
 }
@@ -56,26 +79,30 @@ int module_init(void) {
 /* module_fini */
 int module_fini(void) {
     OUTPUT_VERBOSE((5, "%s", _MAGENTA("finalized")));
+    return PERFEXPERT_SUCCESS;
+}
+
+/* module_instrument */
+int module_instrument(void) {
+    OUTPUT(("%s", _YELLOW("Instrumenting the code")));
+
+    // if (PERFEXPERT_SUCCESS != macpo_inst_all()) {
+    //     OUTPUT(("%s", _ERROR("instrumenting files")));
+    //     return PERFEXPERT_ERROR;
+    // }
 
     return PERFEXPERT_SUCCESS;
 }
 
-/* module_measurements */
-int module_measurements(void) {
-
+/* module_measure */
+int module_measure(void) {
     OUTPUT(("%s", _YELLOW("Collecting measurements")));
 
-    if (PERFEXPERT_SUCCESS != macpo_inst_all()) {
-        OUTPUT(("%s", _ERROR("instrumenting files")));
-        return PERFEXPERT_ERROR;
-    }
-
     return PERFEXPERT_SUCCESS;
 }
 
-/* module_analysis */
-int module_analysis(void) {
-
+/* module_analyze */
+int module_analyze(void) {
     OUTPUT(("%s", _YELLOW("Analysing measurements")));
 
     return PERFEXPERT_SUCCESS;
