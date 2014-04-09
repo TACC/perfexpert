@@ -159,6 +159,12 @@ int argparse::parse_arguments(char* arg, options_t& options) {
 
         options.action = ACTION_OVERLAPCHECK;
         parse_location(value, options.function_name, options.line_number);
+    } else if (option == "stride-check") {
+        if (!value.size())
+            return -1;
+
+        options.action = ACTION_STRIDECHECK;
+        parse_location(value, options.function_name, options.line_number);
     } else if (option == "backup-filename") {
         if (!value.size())
             return -1;

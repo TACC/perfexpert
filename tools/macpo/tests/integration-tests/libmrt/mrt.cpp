@@ -122,3 +122,13 @@ void indigo__overlap_check_c(int line_number, int stream_count, ...) {
     va_end(args);
     std::cerr << std::endl;
 }
+
+void indigo__unknown_stride_check_c(int line_number) {
+    std::cerr << test_prefix << "unknown_stride_check:" << line_number << ":" <<
+        std::endl;
+}
+
+void indigo__stride_check_c(int line_number, int stride) {
+    std::cerr << test_prefix << "stride_check:" << line_number << ":" <<
+        stride << ":" << std::endl;
+}

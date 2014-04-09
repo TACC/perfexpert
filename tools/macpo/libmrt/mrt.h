@@ -252,11 +252,28 @@ void indigo__tripcount_check_c(int line_number, int64_t trip_count);
 }
 #endif
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+void indigo__unknown_stride_check_c(int line_number);
+#if defined (__cplusplus)
+}
+#endif
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
+void indigo__stride_check_c(int line_number, int stride);
+#if defined (__cplusplus)
+}
+#endif
+
 // XXX: Don't change the order of the elements of the enum!
 // XXX: The order is used in arithmetic comparison.
 enum { NOT_ALIGNED = 0, MUTUAL_ALIGNED, FULL_ALIGNED, ALIGN_NOINIT };
 enum { BRANCH_MOSTLY_TRUE = 0, BRANCH_TRUE, BRANCH_MOSTLY_FALSE, BRANCH_FALSE,
     BRANCH_UNKNOWN, BRANCH_NOINIT };
+enum { STRIDE_UNKNOWN = 0, STRIDE_FIXED, STRIDE_UNIT, STRIDE_NOINIT };
 
 static int get_proc_kind() {
     // Get which processor is this running on

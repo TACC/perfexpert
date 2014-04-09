@@ -126,4 +126,19 @@ void indigo__overlap_check_c(int line_number, int stream_count, ...);
 }
 #endif
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+void indigo__unknown_stride_check_c(int line_number);
+#if defined (__cplusplus)
+}
+#endif
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
+void indigo__stride_check_c(int line_number, int stride);
+#if defined (__cplusplus)
+}
+#endif
 #endif  // TOOLS_MACPO_TESTS_INTEGRATION_TESTS_LIBMRT_MRT_H_

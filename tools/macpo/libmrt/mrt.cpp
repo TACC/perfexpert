@@ -53,7 +53,7 @@ typedef std::map<int64_t, long_histogram> long_histogram_coll;
 static std::set<int> analyzed_loops;
 
 static bool_map_coll overlap_bin;
-static short_map_coll branch_bin, align_bin, sstore_align_bin;
+static short_map_coll branch_bin, align_bin, sstore_align_bin, stride_bin;
 static long_histogram_coll tripcount_map;
 
 static std::map<int, int> branch_loop_line_pair;
@@ -323,6 +323,33 @@ void indigo__exit() {
                 }
             }
         }
+
+        if (stride_bin.find(line_number) != stride_bin.end()) {
+            short_map& map = stride_bin[line_number];
+            int16_t stride_status = STRIDE_NOINIT;
+            for (short_map::iterator it = map.begin(); it != map.end();
+                    it++) {
+                int16_t _stride_status = it->second;
+                if (_stride_status < stride_status)
+                    stride_status = _stride_status;
+            }
+
+            switch (stride_status) {
+                case STRIDE_UNKNOWN:
+                    fprintf(stderr, "Could not determine stride value.\n");
+                    break;
+
+                case STRIDE_FIXED:
+                    fprintf(stderr, "Each array reference has a fixed "
+                            "(but non-unit) stride.\n");
+                    break;
+
+                case STRIDE_UNIT:
+                    fprintf(stderr, "Each array reference has a unit "
+                            "stride.\n ");
+                    break;
+            }
+        }
     }
 }
 
@@ -496,6 +523,35 @@ int16_t& get_alignment_bin(int line_number) {
     unlock();
 
     return align_bin[line_number][core_id];
+}
+
+int16_t& get_stride_bin(int line_number) {
+    analyzed_loops.insert(line_number);
+    int16_t core_id = getCoreID();
+
+    // Obtain lock.
+    lock();
+
+    // Check if we need to allocate a new histogram.
+    short_map_coll::iterator it = stride_bin.find(line_number);
+    if (it == stride_bin.end()) {
+        short_map& map = stride_bin[line_number];
+        short_map::iterator it = map.find(core_id);
+        if (it == map.end()) {
+            map[core_id] = STRIDE_NOINIT;
+        }
+    } else {
+        short_map& map = it->second;
+        short_map::iterator it = map.find(core_id);
+        if (it == map.end()) {
+            map[core_id] = STRIDE_NOINIT;
+        }
+    }
+
+    // Release lock.
+    unlock();
+
+    return stride_bin[line_number][core_id];
 }
 
 int64_t* get_tripcount_histogram(int line_number) {
@@ -706,6 +762,37 @@ void indigo__tripcount_check_c(int line_number, int64_t trip_count) {
 
     if (histogram[trip_count] < LONG_MAX)
         histogram[trip_count]++;
+}
+
+void indigo__unknown_stride_check_c(int line_number) {
+    get_stride_bin(line_number) = STRIDE_UNKNOWN;
+}
+
+void indigo__stride_check_c(int line_number, int stride) {
+    // Short circuit to prevent runtime overhead.
+    if (get_stride_bin(line_number) == STRIDE_UNKNOWN)
+        return;
+
+    int16_t status = STRIDE_NOINIT;
+    switch (abs(stride)) {
+        // Don't modify stride status on stride value of zero.
+        // This is meant to account for references to two dimensional arrays
+        // as the last index value may not always correspond to the loop index
+        // variable. For an example, look at the matrix multiplication code.
+        case 0:
+            break;
+
+        default:
+            status = STRIDE_FIXED;
+            break;
+
+        case 1:
+            status = STRIDE_UNIT;
+            break;
+    }
+
+    if (get_stride_bin(line_number) > status)
+        get_stride_bin(line_number) = status;
 }
 
 void set_thread_affinity() {

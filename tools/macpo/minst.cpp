@@ -34,6 +34,7 @@
 #include "loop_traversal.h"
 #include "minst.h"
 #include "pntr_overlap.h"
+#include "stride_check.h"
 #include "tracer.h"
 #include "tripcount.h"
 #include "vector_strides.h"
@@ -250,11 +251,21 @@ const analysis_profile_t MINST::run_analysis(SgNode* node, int16_t action) {
 
         case ACTION_OVERLAPCHECK:
             {
-                insert_map_function(node);
-
                 pntr_overlap_t visitor(var_renaming);
                 visitor.process_node(node);
 
+                statement_list.insert(statement_list.end(),
+                        visitor.stmt_begin(), visitor.stmt_end());
+
+                return visitor.get_analysis_profile();
+            }
+
+        case ACTION_STRIDECHECK:
+            {
+                stride_check_t visitor(var_renaming);
+                visitor.process_node(node);
+
+                stream_list = visitor.get_stream_list();
                 statement_list.insert(statement_list.end(),
                         visitor.stmt_begin(), visitor.stmt_end());
 
@@ -398,6 +409,7 @@ void MINST::visit(SgNode* node) {
                 case ACTION_TRIPCOUNT:
                 case ACTION_BRANCHPATH:
                 case ACTION_OVERLAPCHECK:
+                case ACTION_STRIDECHECK:
                     create_file = 0;
                     break;
 
@@ -428,6 +440,8 @@ void MINST::visit(SgNode* node) {
                 case ACTION_ALIGNCHECK:
                 case ACTION_TRIPCOUNT:
                 case ACTION_BRANCHPATH:
+                case ACTION_OVERLAPCHECK:
+                case ACTION_STRIDECHECK:
                     break;
 
                 default:

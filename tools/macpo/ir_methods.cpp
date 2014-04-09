@@ -1094,25 +1094,34 @@ bool ir_methods::contains_expr(SgExpression*& expr,
 
 void ir_methods::replace_expr(SgExpression*& expr, SgExpression*& search_expr,
         SgExpression*& replace_expr) {
-    SgBinaryOp* bin_op = isSgBinaryOp(expr);
+    if (search_expr == NULL || replace_expr == NULL)
+        return;
 
-    if (bin_op && search_expr && replace_expr) {
+    if (SgBinaryOp* bin_op = isSgBinaryOp(expr)) {
         SgExpression* lhs = bin_op->get_lhs_operand();
         SgExpression* rhs = bin_op->get_rhs_operand();
 
         // If either operand matches, replace it!
-        if (lhs && lhs->unparseToString() == search_expr->unparseToString())
+        if (lhs && lhs->unparseToString() == search_expr->unparseToString()) {
             bin_op->set_lhs_operand(replace_expr);
-
-        if (rhs && rhs->unparseToString() == search_expr->unparseToString())
-            bin_op->set_rhs_operand(replace_expr);
-
-        // Check if we need to call recursively.
-        if (lhs)
+        } else if (lhs) {
             ir_methods::replace_expr(lhs, search_expr, replace_expr);
+        }
 
-        if (rhs)
+        if (rhs && rhs->unparseToString() == search_expr->unparseToString()) {
+            bin_op->set_rhs_operand(replace_expr);
+        } else if (rhs) {
             ir_methods::replace_expr(rhs, search_expr, replace_expr);
+        }
+    } else if (SgUnaryOp* unary_op = isSgUnaryOp(expr)) {
+        SgExpression* op = unary_op->get_operand();
+        if (op && op->unparseToString() == search_expr->unparseToString()) {
+            unary_op->set_operand(replace_expr);
+        } else if (op) {
+            ir_methods::replace_expr(op, search_expr, replace_expr);
+        }
+    } else if (expr->unparseToString() == search_expr->unparseToString()) {
+        expr = replace_expr;
     }
 }
 

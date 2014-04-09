@@ -19,9 +19,10 @@
  * $HEADER$
  */
 
-#ifndef TOOLS_MACPO_INCLUDE_PNTR_OVERLAP_H_
-#define TOOLS_MACPO_INCLUDE_PNTR_OVERLAP_H_
+#ifndef TOOLS_MACPO_INCLUDE_STRIDE_CHECK_H_
+#define TOOLS_MACPO_INCLUDE_STRIDE_CHECK_H_
 
+#include <rose.h>
 #include <VariableRenaming.h>
 
 #include <map>
@@ -29,23 +30,20 @@
 #include <vector>
 
 #include "analysis_profile.h"
-#include "generic_defs.h"
-#include "inst_defs.h"
+#include "ir_methods.h"
 #include "loop_traversal.h"
 
-class pntr_overlap_t {
-    typedef VariableRenaming::NumNodeRenameEntry::iterator entry_iterator;
-    typedef std::map<std::string, VariableRenaming::NumNodeRenameEntry>
-        def_map_t;
-
+class stride_check_t {
  public:
     typedef std::map<SgExpression*, loop_info_t*> expr_map_t;
     typedef std::vector<SgPntrArrRefExp*> pntr_list_t;
     typedef std::vector<SgNode*> node_list_t;
     typedef std::map<std::string, node_list_t> sstore_map_t;
 
-    explicit pntr_overlap_t(VariableRenaming*& _var_renaming);
-    ~pntr_overlap_t();
+    explicit stride_check_t(VariableRenaming*& _var_renaming);
+    ~stride_check_t();
+
+    name_list_t& get_stream_list();
 
     void atTraversalEnd();
     void atTraversalStart();
@@ -64,16 +62,19 @@ class pntr_overlap_t {
     const statement_list_t::iterator stmt_end();
 
  private:
-    void instrument_overlap_checks(Sg_File_Info* file_info,
-            SgScopeStatement* outer_scope_stmt, loop_info_t& loop_info,
-            name_list_t& stream_list, expr_map_t& loop_map);
-    void create_spans_for_child_loops(SgExpression* expr_init, SgExpression*
-            expr_term, loop_info_t& loop_info);
+    void instrument_stride_checks(Sg_File_Info* file_info,
+        SgScopeStatement* outer_scope_stmt, loop_info_t& loop_info,
+        name_list_t& stream_list, expr_map_t& loop_map);
+
+    void record_unknown_stride(SgScopeStatement* loop_stmt, SgExpression* expr);
+    void record_stride_value(SgScopeStatement* loop_stmt, SgExpression* expr,
+        SgExpression* stride);
 
     VariableRenaming* var_renaming;
     statement_list_t statement_list;
+    name_list_t stream_list;
     analysis_profile_t analysis_profile;
     loop_traversal_t* loop_traversal;
 };
 
-#endif  // TOOLS_MACPO_INCLUDE_PNTR_OVERLAP_H_
+#endif  // TOOLS_MACPO_INCLUDE_STRIDE_CHECK_H_
