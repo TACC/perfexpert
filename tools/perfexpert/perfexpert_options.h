@@ -42,25 +42,15 @@ const char *argp_program_bug_address = PACKAGE_BUGREPORT;
 
 /* Structure to handle command line arguments */
 static struct argp_option options[] = {
-    #if HAVE_CODE_TRANSFORMATION
-    { 0, 0, 0, 0, "Automatic optimization options:", 1 },
-    { "target", 'm', "TARGET", 0, "Use GNU standard 'make' command to compile"
+    { 0, 0, 0, 0, "Source code compilation options:", 1 },
+    { "target", 'm', "TARGET", 0, "Shortcut for --module-option=make,target="
+        "TARGET. See Make module help for details."
+        " Use GNU standard 'make' command to compile"
         " the code (it will run in the current directory)" },
     { "source", 's', "FILE", 0, "Set the source code file (does not work with"
         " multiple files, choose -m option instead)" },
     {0, 0, 0, 0,
         "Use CC, CFLAGS, CPPFLAGS and LDFLAGS to set compiler/linker options" },
-    #endif
-
-    { 0, 0, 0, 0, "Target program execution options:", 2 },
-    { "inputfile", 'i', "FILE", 0, "Shortcut for --module-option=hpctoolkit,"
-        "inputfile=FILE. See HPCToolkit module help for details" },
-    { "after", 'a', "COMMAND", 0, "Shortcut for --module-option=hpctoolkit,"
-        "after=COMMAND. See HPCToolkit module help for details" },
-    { "before", 'b', "COMMAND", 0, "Shortcut for --module-option=hpctoolkit,"
-        "before=COMMAND. See HPCToolkit module help for details" },
-    { "prefix", 'p', "PREFIX", 0, "Shortcut for --module-option=hpctoolkit,"
-        "prefix=PREFIX. See HPCToolkit module help for details" },
 
     { 0, 0, 0, 0, "Module handling options:", 4 },
     { "module-option", 'O', "MODULE,OPTION=VALUE", 0, "Set an option to a "
@@ -71,16 +61,7 @@ static struct argp_option options[] = {
     { "modules", 'M', "MODULE,MODULE,..", 0, "Set modules that should be used "
         "(default: lcpi,hpctoolkit). Use a comma-separated list to specify "
         "multiple modules (e.g., -M hpctoolkit,macpo or --modules=hpctoolkit,"
-        "macpo). This argument can also be defined multiple times. NOTICE: "
-        "module order matters! See --measurement-order and --analysis-order" },
-    { "compile-order", -1, "MODULE,MODULE,...", OPTION_HIDDEN, "Set the order "
-      "in which compile modules should be called (1st defined, 1st called)" },
-    { "measurement-order", -2, "MODULE,MODULE,...", 0, "Set the order in which "
-      "measurement modules should be called (1st defined, 1st called). This "
-      "option automatically sets the modules (i.e., -M is not required)" },
-    { "analysis-order", -3, "MODULE,MODULE,...", 0, "Set the order in which "
-      "analysis modules should be called (1st defined, 1st called). This "
-      "option automatically sets the modules (i.e., -M is not required)" },
+        "macpo). This argument can also be defined multiple times." },
     { "module-help", -4, "MODULE|all", 0, "Show module options. Use 'all' to "
       "see options for all available module" },
 
@@ -95,12 +76,31 @@ static struct argp_option options[] = {
     { 0, 0, 0, 0, "Other options:", 6 },
     { "database", 'd', "FILE", 0, "Select a recommendation database file "
         "different from the default (I hope you know what you are doing)" },
-    { "leave-garbage", 'g', 0, 0,
-        "Do not remove temporary directory when finalize" },
-    { "do-not-run", 'n', 0, 0, "Do not run PerfExpert, just parse the command "
-        "line arguments and finalize (for debugging)" },
-    { "only-experiments", 'e', 0, 0, "Tell PerfExpert to do not perform any "
-        "analysis just take measurements and finalize (for manual analysis)" },
+    { "remove-garbage", 'g', 0, 0, "Remove temporary directory when finalize" },
+
+    #if HAVE_HPCTOOLKIT
+    { 0, 0, 0, 0, "Target program execution options (HPCToolkit only):", 2 },
+    { "inputfile", 'i', "FILE", 0, "Shortcut for --module-option=hpctoolkit,"
+        "inputfile=FILE. See HPCToolkit module help for details" },
+    { "after", 'a', "COMMAND", 0, "Shortcut for --module-option=hpctoolkit,"
+        "after=COMMAND. See HPCToolkit module help for details" },
+    { "before", 'b', "COMMAND", 0, "Shortcut for --module-option=hpctoolkit,"
+        "before=COMMAND. See HPCToolkit module help for details" },
+    { "prefix", 'p', "PREFIX", 0, "Shortcut for --module-option=hpctoolkit,"
+        "prefix=PREFIX. See HPCToolkit module help for details" },
+    #if HAVE_HPCTOOLKIT_MIC
+    { 0, 0, 0, 0, "Target program execution on Intel(R) Phi (MIC) options"
+        "(HPCToolkit only):", 3},
+    { "mic-card", 'C', "CARD", 0,  "Shortcut for --module-option=hpctoolkit,"
+        "mic-card=CARD. See HPCToolkit module help for details" },
+    { "mic-after", 'A', "COMMAND", 0,  "Shortcut for --module-option=hpctoolkit"
+        ",mic-after=COMMAND. See HPCToolkit module help for details" },
+    { "mic-before", 'B', "COMMAND", 0,  "Shortcut for --module-option=hpctoolki"
+        "t,mic-before=COMMAND. See HPCToolkit module help for details" },
+    { "mic-prefix", 'P', "PREFIX", 0,  "Shortcut for --module-option=hpctoolkit"
+        ",mic-prefix=PREFIX. See HPCToolkit module help for details" },
+    #endif
+    #endif
 
     { 0, 'h', 0, OPTION_HIDDEN, "Give a very short usage message" },
     { 0 }
@@ -123,16 +123,15 @@ typedef struct arg_options {
     char *program;
     char **program_argv;
     char *program_argv_temp[MAX_ARGUMENTS_COUNT];
-    int  do_not_run;
 } arg_options_t;
 
 /* Function declarations */
 static int parse_env_vars(void);
 static int load_module(char *module);
 static int set_module_option(char *option);
-static int set_module_order(char *option, module_phase_t order);
 static error_t parse_options(int key, char *arg, struct argp_state *state);
 static void module_help(const char *module);
+static perfexpert_module_t* guess_compile_module(void);
 
 #ifdef __cplusplus
 }

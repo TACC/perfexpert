@@ -37,27 +37,21 @@ extern "C" {
 /* Structure to hold global variables */
 typedef struct {
     int  verbose;
-    int  colorful; // These should be the first variables in the structure
+    int  colorful;
+    char *workdir; // These should be the first variables in the structure
     char *dbfile;
-    int  rec_count;
-    int  leave_garbage;
-    char *target;
-    char *sourcefile;
+    int  remove_garbage;
     char *program;
     char *program_path;
     char *program_full;
     char *program_argv[MAX_ARGUMENTS_COUNT];
     int  step;
-    char *workdir;
-    char *stepdir;
-    int  only_exp;
-    int  compat_mode;
-    long int pid;
+    char *moduledir;
     long long int unique_id;
     sqlite3 *db;
 } globals_t;
 
-extern globals_t globals; /* This variable is declared in perfexpert_main.c */
+extern globals_t globals; /* This variable is defined in perfexpert_main.c */
 
 #ifdef __cplusplus
 }

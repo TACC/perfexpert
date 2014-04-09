@@ -63,19 +63,19 @@ int transformation(void) {
         goto ERROR;
     }
     bzero(temp_str[4], MAX_BUFFER_SIZE);
-    sprintf(temp_str[4], "%s/%s", globals.stepdir, RECOMMENDER_METRICS);
+    sprintf(temp_str[4], "%s/%s", globals.moduledir, RECOMMENDER_METRICS);
     if (0 != setenv("PERFEXPERT_CT_INPUT_FILE", temp_str[4], 1)) {
         goto ERROR;
     }
     bzero(temp_str[5], MAX_BUFFER_SIZE);
-    sprintf(temp_str[5], "%s/%s", globals.stepdir, CT_REPORT);
+    sprintf(temp_str[5], "%s/%s", globals.moduledir, CT_REPORT);
     if (0 != setenv("PERFEXPERT_CT_OUTPUT_FILE", temp_str[5], 1)) {
         goto ERROR;
     }
     if (0 != setenv("PERFEXPERT_CT_DATABASE_FILE", globals.dbfile, 0)) {
         goto ERROR;
     }
-    if (0 != setenv("PERFEXPERT_CT_WORKDIR", globals.stepdir, 1)) {
+    if (0 != setenv("PERFEXPERT_CT_WORKDIR", globals.moduledir, 1)) {
         goto ERROR;
     }
 
@@ -85,13 +85,13 @@ int transformation(void) {
 
     /* The super-ninja test sctructure */
     bzero(temp_str[0], MAX_BUFFER_SIZE);
-    sprintf(temp_str[0], "%s/%s", globals.stepdir, CT_OUTPUT);
+    sprintf(temp_str[0], "%s/%s", globals.moduledir, CT_OUTPUT);
     test.output = temp_str[0];
     test.input = NULL;
     test.info = temp_str[4];
 
     /* run_and_fork_and_pray */
-    return fork_and_wait(&test, argv);
+    return perfexpert_fork_and_wait(&test, argv);
 
     /* Error handling */
     ERROR:
