@@ -19,10 +19,9 @@
 # $HEADER$
 #
 
-lib_LTLIBRARIES = libmrt.la
-libmrt_la_SOURCES = mrt.cpp
-libmrt_la_CXXFLAGS = -I$(srcdir) -I$(srcdir)/../include
-libmrt_la_LDFLAGS = -static
+lib_LIBRARIES = libmrt.a
+libmrt_a_SOURCES = mrt.cpp
+libmrt_a_CXXFLAGS = -I$(srcdir) -I$(srcdir)/../include
 
 include_HEADERS = mrt.h ../include/macpo_record.h
 

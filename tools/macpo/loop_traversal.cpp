@@ -19,8 +19,9 @@
  * $HEADER$
  */
 
-#include <algorithm>
 #include <rose.h>
+
+#include <algorithm>
 
 #include "inst_defs.h"
 #include "ir_methods.h"

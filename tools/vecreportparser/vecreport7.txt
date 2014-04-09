@@ -1,0 +1,139 @@
+is.c(687): (col. 5) remark: LOOP WAS VECTORIZED.
+is.c(687): (col. 5) remark: VEC#00001NPWR 1.
+is.c(687): (col. 5) remark: VEC#00052 1.
+is.c(687): (col. 5) remark: VEC#00101UASL 4.
+is.c(687): (col. 5) remark: VEC#00101UASS 4.
+is.c(687): (col. 5) remark: VEC#00201 6.
+is.c(687): (col. 5) remark: VEC#00202 1.500000.
+is.c(687): (col. 5) remark: VEC#00203 2.500000.
+is.c(687): (col. 5) remark: VEC#00204 12.
+is.c(305): (col. 9) remark: VEC#00002 1.
+is.c(305): (col. 9) remark: VEC#00052 2.
+is.c(305): (col. 9) remark: PARTIAL LOOP WAS VECTORIZED.
+is.c(305): (col. 9) remark: VEC#00001NPWR 1.
+is.c(305): (col. 9) remark: VEC#00052 2.
+is.c(305): (col. 9) remark: VEC#00201 6.
+is.c(305): (col. 9) remark: VEC#00202 3.000000.
+is.c(305): (col. 9) remark: VEC#00203 1.480000.
+is.c(305): (col. 9) remark: VEC#00204 2.
+is.c(305): (col. 9) remark: VEC#00205 6.
+is.c(310): (col. 9) remark: VEC#00002 1.
+is.c(310): (col. 9) remark: VEC#00052 2.
+is.c(305): (col. 9) remark: VEC#00002 1.
+is.c(305): (col. 9) remark: VEC#00052 2.
+is.c(310): (col. 9) remark: VEC#00002 1.
+is.c(310): (col. 9) remark: VEC#00052 2.
+is.c(305): (col. 9) remark: VEC#00002 1.
+is.c(305): (col. 9) remark: VEC#00052 2.
+is.c(310): (col. 9) remark: VEC#00002 1.
+is.c(310): (col. 9) remark: VEC#00052 2.
+is.c(305): (col. 9) remark: VEC#00002 1.
+is.c(305): (col. 9) remark: VEC#00052 2.
+is.c(310): (col. 9) remark: VEC#00002 1.
+is.c(310): (col. 9) remark: VEC#00052 2.
+is.c(744): (col. 28) remark: vectorization support: call to function printf cannot be vectorized.
+is.c(745): (col. 9) remark: vectorization support: call to function rank cannot be vectorized.
+is.c(742): (col. 5) remark: VEC#00002 1.
+is.c(742): (col. 5) remark: VEC#00052 1.
+is.c(394): (col. 9) remark: vectorization support: streaming store was generated for key_buff2.
+is.c(393): (col. 5) remark: LOOP WAS VECTORIZED.
+is.c(393): (col. 5) remark: VEC#00001NPNR 1.
+is.c(393): (col. 5) remark: VEC#00052 2.
+is.c(393): (col. 5) remark: VEC#00101UASL 2.
+is.c(393): (col. 5) remark: VEC#00101UASS 2.
+is.c(393): (col. 5) remark: VEC#00104UANTS 1.
+is.c(393): (col. 5) remark: VEC#00201 3.
+is.c(393): (col. 5) remark: VEC#00202 0.750000.
+is.c(393): (col. 5) remark: VEC#00203 4.000000.
+is.c(393): (col. 5) remark: VEC#00204 6.
+is.c(398): (col. 5) remark: VEC#00002 1.
+is.c(398): (col. 5) remark: VEC#00052 1.
+is.c(405): (col. 5) remark: vectorization support: unroll factor set to 2.
+is.c(405): (col. 5) remark: LOOP WAS VECTORIZED.
+is.c(405): (col. 5) remark: VEC#00001NPWR 1.
+is.c(405): (col. 5) remark: VEC#00052 1.
+is.c(405): (col. 5) remark: VEC#00101UASL 2.
+is.c(405): (col. 5) remark: VEC#00101UUSL 2.
+is.c(405): (col. 5) remark: VEC#00201 14.
+is.c(405): (col. 5) remark: VEC#00202 8.500000.
+is.c(405): (col. 5) remark: VEC#00203 3.290000.
+is.c(405): (col. 5) remark: VEC#00204 26.
+is.c(405): (col. 5) remark: VEC#00205 2.
+is.c(445): (col. 5) remark: VEC#00002 1.
+is.c(445): (col. 5) remark: VEC#00052 1.
+is.c(445): (col. 5) remark: VEC#00101UASL 2.
+is.c(445): (col. 5) remark: VEC#00101UASS 2.
+is.c(445): (col. 5) remark: VEC#00102MG 2.
+is.c(445): (col. 5) remark: VEC#00201 4.
+is.c(445): (col. 5) remark: VEC#00202 11.000000.
+is.c(445): (col. 5) remark: VEC#00203 0.410000.
+is.c(445): (col. 5) remark: VEC#00204 6.
+is.c(445): (col. 5) remark: VEC#00206 2.
+is.c(481): (col. 5) remark: VEC#00002 1.
+is.c(481): (col. 5) remark: VEC#00052 1.
+is.c(493): (col. 5) remark: VEC#00002 1.
+is.c(493): (col. 5) remark: VEC#00052 1.
+is.c(502): (col. 5) remark: VEC#00002 1.
+is.c(502): (col. 5) remark: VEC#00052 1.
+is.c(509): (col. 5) remark: VEC#00002 1.
+is.c(509): (col. 5) remark: VEC#00052 1.
+is.c(305): (col. 9) remark: VEC#00002 1.
+is.c(305): (col. 9) remark: VEC#00052 1.
+is.c(305): (col. 9) remark: PARTIAL LOOP WAS VECTORIZED.
+is.c(305): (col. 9) remark: VEC#00001NPWR 1.
+is.c(305): (col. 9) remark: VEC#00052 1.
+is.c(305): (col. 9) remark: VEC#00201 6.
+is.c(305): (col. 9) remark: VEC#00202 3.000000.
+is.c(305): (col. 9) remark: VEC#00203 1.480000.
+is.c(305): (col. 9) remark: VEC#00204 2.
+is.c(305): (col. 9) remark: VEC#00205 6.
+is.c(310): (col. 9) remark: VEC#00002 1.
+is.c(310): (col. 9) remark: VEC#00052 1.
+is.c(305): (col. 9) remark: VEC#00002 1.
+is.c(305): (col. 9) remark: VEC#00052 2.
+is.c(305): (col. 9) remark: PARTIAL LOOP WAS VECTORIZED.
+is.c(305): (col. 9) remark: VEC#00001NPWR 1.
+is.c(305): (col. 9) remark: VEC#00052 2.
+is.c(305): (col. 9) remark: VEC#00201 6.
+is.c(305): (col. 9) remark: VEC#00202 3.000000.
+is.c(305): (col. 9) remark: VEC#00203 1.480000.
+is.c(305): (col. 9) remark: VEC#00204 2.
+is.c(305): (col. 9) remark: VEC#00205 6.
+is.c(310): (col. 9) remark: VEC#00002 1.
+is.c(310): (col. 9) remark: VEC#00052 2.
+is.c(305): (col. 9) remark: VEC#00002 1.
+is.c(305): (col. 9) remark: VEC#00052 2.
+is.c(310): (col. 9) remark: VEC#00002 1.
+is.c(310): (col. 9) remark: VEC#00052 2.
+is.c(305): (col. 9) remark: VEC#00002 1.
+is.c(305): (col. 9) remark: VEC#00052 2.
+is.c(310): (col. 9) remark: VEC#00002 1.
+is.c(310): (col. 9) remark: VEC#00052 2.
+is.c(305): (col. 9) remark: VEC#00002 1.
+is.c(305): (col. 9) remark: VEC#00052 2.
+is.c(310): (col. 9) remark: VEC#00002 1.
+is.c(310): (col. 9) remark: VEC#00052 2.
+is.c(394): (col. 9) remark: vectorization support: streaming store was generated for key_buff2.
+is.c(393): (col. 5) remark: LOOP WAS VECTORIZED.
+is.c(393): (col. 5) remark: VEC#00001NPNR 1.
+is.c(393): (col. 5) remark: VEC#00052 2.
+is.c(393): (col. 5) remark: VEC#00101UASL 2.
+is.c(393): (col. 5) remark: VEC#00101UASS 2.
+is.c(393): (col. 5) remark: VEC#00104UANTS 1.
+is.c(393): (col. 5) remark: VEC#00201 3.
+is.c(393): (col. 5) remark: VEC#00202 0.750000.
+is.c(393): (col. 5) remark: VEC#00203 4.000000.
+is.c(393): (col. 5) remark: VEC#00204 6.
+is.c(398): (col. 5) remark: VEC#00002 1.
+is.c(398): (col. 5) remark: VEC#00052 1.
+is.c(405): (col. 5) remark: vectorization support: unroll factor set to 2.
+is.c(405): (col. 5) remark: LOOP WAS VECTORIZED.
+is.c(405): (col. 5) remark: VEC#00001NPWR 1.
+is.c(405): (col. 5) remark: VEC#00052 1.
+is.c(405): (col. 5) remark: VEC#00101UASL 2.
+is.c(405): (col. 5) remark: VEC#00101UUSL 2.
+is.c(405): (col. 5) remark: VEC#00201 14.
+is.c(405): (col. 5) remark: VEC#00202 8.500000.
+is.c(405): (col. 5) remark: VEC#00203 3.290000.
+is.c(405): (col. 5) remark: VEC#00204 26.
+is.c(405): (col. 5) remark: VEC#00205 2.

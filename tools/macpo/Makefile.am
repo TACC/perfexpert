@@ -27,7 +27,7 @@ dist_bin_SCRIPTS = macpo.sh
 macpo_SOURCES = argparse.cpp minst.cpp instrumentor.cpp main.cpp streams.cpp \
                 aligncheck.cpp ir_methods.cpp loop_traversal.cpp tracer.cpp \
                 generic_vars.cpp vector_strides.cpp analysis_profile.cpp \
-                tripcount.cpp branchpath.cpp
+                tripcount.cpp branchpath.cpp pntr_overlap.cpp stride_check.cpp
 macpo_CXXFLAGS = -Wno-deprecated -I$(srcdir)/include
 macpo_LDFLAGS = -lrose -ljvm
 
