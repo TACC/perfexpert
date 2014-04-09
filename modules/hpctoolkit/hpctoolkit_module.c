@@ -49,9 +49,10 @@ char module_version[] = "1.0.0";
 
 /* module_load */
 int module_load(void) {
-
     /* Extended interface */
     myself_module.set_event = NULL;
+
+    // TODO: check for HPCToolkit binaries availability here
 
     OUTPUT_VERBOSE((5, "%s", _MAGENTA("loaded")));
 
@@ -60,14 +61,13 @@ int module_load(void) {
 
 /* module_init */
 int module_init(void) {
-
     /* Extended interface */
     myself_module.set_event = &module_set_event;
 
     /* Initialize list of events */
     my_module_globals.events_by_name = NULL;
     perfexpert_list_construct(&(myself_module.profiles));
-    my_module_globals.knc = NULL;
+    my_module_globals.mic = NULL;
     my_module_globals.inputfile = NULL;
 
     /* Parse module options */
@@ -102,9 +102,9 @@ int module_fini(void) {
     return PERFEXPERT_SUCCESS;
 }
 
-/* module_measurements */
-int module_measurements(void) {
-    char *workdir = NULL, *file = NULL;
+/* module_measure */
+int module_measure(void) {
+    char *str = NULL;
 
     OUTPUT(("%s (%d events)", _YELLOW("Collecting measurements"),
         perfexpert_hash_count_str(my_module_globals.events_by_name)));
@@ -115,12 +115,6 @@ int module_measurements(void) {
         return PERFEXPERT_ERROR;
     }
 
-    /* Create working directory */
-    PERFEXPERT_ALLOC(char, workdir, (strlen(globals.stepdir) + 12));
-    sprintf(workdir, "%s/hpctoolkit", globals.stepdir);
-    perfexpert_util_make_path(workdir);
-    PERFEXPERT_DEALLOC(workdir);
-
     /* Create the program structure file */
     if (PERFEXPERT_SUCCESS != run_hpcstruct()) {
         OUTPUT(("%s", _ERROR("unable to run hpcstruct")));
@@ -128,7 +122,7 @@ int module_measurements(void) {
     }
 
     /* Collect measurements */
-    if (NULL == my_module_globals.knc) {
+    if (NULL == my_module_globals.mic) {
         if (PERFEXPERT_SUCCESS != run_hpcrun()) {
             OUTPUT(("%s", _ERROR("unable to run hpcrun")));
             return PERFEXPERT_ERROR;
@@ -142,14 +136,14 @@ int module_measurements(void) {
     }
 
     /* Sumarize results */
-    if (PERFEXPERT_SUCCESS != run_hpcprof(&file)) {
+    if (PERFEXPERT_SUCCESS != run_hpcprof(&str)) {
         OUTPUT(("%s", _ERROR("unable to run hpcprof")));
         return PERFEXPERT_ERROR;
     }
 
     /* Parse results */
-    if (PERFEXPERT_SUCCESS != parse_file(file)) {
-        OUTPUT(("%s [%s]", _ERROR("unable to parse file"), file));
+    if (PERFEXPERT_SUCCESS != parse_file(str)) {
+        OUTPUT(("%s [%s]", _ERROR("unable to parse file"), str));
         return PERFEXPERT_ERROR;
     }
 
@@ -174,7 +168,7 @@ int module_measurements(void) {
     return PERFEXPERT_SUCCESS;
 }
 
-/* set_event */
+/* module_set_event */
 int module_set_event(const char *name) {
     hpctoolkit_event_t *event = NULL;
     int event_code;
@@ -189,9 +183,11 @@ int module_set_event(const char *name) {
     }
 
     /* Check if event exists */
-    if (PAPI_VER_CURRENT != PAPI_library_init(PAPI_VER_CURRENT)) {
-        OUTPUT(("%s", _ERROR("while initializing PAPI")));
-        return PERFEXPERT_ERROR;
+    if (PAPI_NOT_INITED == PAPI_is_initialized()) {
+        if (PAPI_VER_CURRENT != PAPI_library_init(PAPI_VER_CURRENT)) {
+            OUTPUT(("%s", _ERROR("initializing PAPI")));
+            return PERFEXPERT_ERROR;
+        }
     }
     if (PAPI_OK != PAPI_event_name_to_code((char *)name, &event_code)) {
         OUTPUT(("%s [%s]", _ERROR("event not available (name->code)"), name));
