@@ -38,12 +38,13 @@ extern "C" {
 int module_load(void);
 int module_init(void);
 int module_fini(void);
-int module_measurements(void);
-int module_analysis(void);
+int module_instrument(void);
+int module_measure(void);
+int module_analyze(void);
 
 /* Module functions */
-int macpo_inst_all(void);
-static int macpo_inst(void *n, int c, char **val, char **names);
+int macpo_instrument_all(void);
+static int macpo_instrument(void *n, int c, char **val, char **names);
 
 #ifdef __cplusplus
 }

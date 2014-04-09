@@ -37,8 +37,8 @@ extern "C" {
 #include "common/perfexpert_alloc.h"
 #include "common/perfexpert_output.h"
 
-/* macpo_inst_all */
-int macpo_inst_all(void) {
+/* macpo_instrument_all */
+int macpo_instrument_all(void) {
     char *error = NULL, sql[MAX_BUFFER_SIZE];
 
     OUTPUT_VERBOSE((2, "%s", _BLUE("Adding MACPO instrumentation")));
@@ -48,7 +48,8 @@ int macpo_inst_all(void) {
     sprintf(sql, "SELECT name, file, line FROM hotspot WHERE perfexpert_id = "
         "%llu", globals.unique_id);
 
-    if (SQLITE_OK != sqlite3_exec(globals.db, sql, macpo_inst, NULL, &error)) {
+    if (SQLITE_OK != sqlite3_exec(globals.db, sql, macpo_instrument, NULL,
+        &error)) {
         OUTPUT(("%s %s", _ERROR("SQL error"), error));
         sqlite3_free(error);
         return PERFEXPERT_ERROR;
@@ -57,8 +58,8 @@ int macpo_inst_all(void) {
     return PERFEXPERT_SUCCESS;
 }
 
-/* macpo_inst */
-static int macpo_inst(void *n, int c, char **val, char **names) {
+/* macpo_instrument */
+static int macpo_instrument(void *n, int c, char **val, char **names) {
     char *t = NULL, *argv[4], *name = val[0], *file = val[1], *line = val[2];
 
     OUTPUT_VERBOSE((4, "   instrumenting %s@%s:%s", name, file, line));
@@ -73,8 +74,8 @@ static int macpo_inst(void *n, int c, char **val, char **names) {
     argv[1] = "--nocompile";
 
     PERFEXPERT_ALLOC(char, argv[2],
-        (strlen(globals.stepdir) + strlen(file) + 17));
-    sprintf(argv[2], "--backup=%s/macpo/%s", globals.stepdir, file);
+        (strlen(globals.moduledir) + strlen(file) + 17));
+    sprintf(argv[2], "--backup=%s/%s", globals.moduledir, file);
 
     PERFEXPERT_ALLOC(char, argv[3], (strlen(name) + 20));
     if (0 == line) {
