@@ -481,6 +481,14 @@ AS_IF([test x"$ENABLE_MACPO" = xyes], [
         [AC_MSG_ERROR([not found: libgmp.so])])
     AC_CHECK_HEADER([gmp.h], [], [AC_MSG_ERROR([not found: gmp.h])])
 
+    # Check for GNU Scientific library
+    #
+    AC_CHECK_HEADER([gsl/gsl_histogram.h], [],
+        [AC_MSG_ERROR([not found: gsl/gsl_histogram.h])])
+
+    AC_CHECK_LIB([gsl], [gsl_histogram_alloc, gsl_histogram_free], [],
+        [AC_MSG_ERROR([not found: libgsl.a])], [-lgslcblas])
+
     ENABLE_MACPO=macpo
     ENABLED_TOOLS+="macpo "
     ENABLED_MODULES+="macpo "
@@ -489,6 +497,9 @@ AS_IF([test x"$ENABLE_MACPO" = xyes], [
     AC_CONFIG_FILES([tools/macpo/libmrt/Makefile])
     AC_CONFIG_FILES([tools/macpo/analyze/Makefile])
     AC_CONFIG_FILES([tools/macpo/tests/Makefile])
+    AC_CONFIG_FILES([tools/macpo/tests/unit-tests/Makefile])
+    AC_CONFIG_FILES([tools/macpo/tests/integration-tests/Makefile])
+    AC_CONFIG_FILES([tools/macpo/tests/integration-tests/libmrt/Makefile])
     AC_CONFIG_FILES([modules/macpo/Makefile])
 ], [
     AC_MSG_RESULT([no])
