@@ -19,43 +19,45 @@
  * $HEADER$
  */
 
-#ifndef	MINST_H_
-#define	MINST_H_
+#ifndef TOOLS_MACPO_INCLUDE_MINST_H_
+#define TOOLS_MACPO_INCLUDE_MINST_H_
 
 #include <VariableRenaming.h>
+
+#include <string>
 
 #include "analysis_profile.h"
 #include "generic_defs.h"
 #include "instrumentor.h"
 
 class MINST : public AstSimpleProcessing {
-    public:
-        MINST(options_t& options, SgProject* project);
+ public:
+    MINST(const options_t& options, SgProject* project);
 
-        void insert_map_function(SgNode* node);
-        void insert_map_prototype(SgNode* node);
+    void insert_map_function(SgNode* node);
+    void insert_map_prototype(SgNode* node);
 
-        virtual void atTraversalEnd();
-        virtual void atTraversalStart();
-        virtual void visit(SgNode* node);
+    virtual void atTraversalEnd();
+    virtual void atTraversalStart();
+    virtual void visit(SgNode* node);
 
-    private:
-        short action;
-        int line_number;
-        bool disable_sampling, profile_analysis;
-        std::string inst_func;
+ private:
+    int16_t action;
+    int line_number;
+    bool disable_sampling, profile_analysis;
+    std::string inst_func;
 
-        SgGlobal* global_node;
-        VariableRenaming* var_renaming;
-        SgFunctionDeclaration *def_decl, *non_def_decl;
-        bool is_same_file(const std::string& file_1, const std::string& file_2);
+    SgGlobal* global_node;
+    VariableRenaming* var_renaming;
+    SgFunctionDeclaration *def_decl, *non_def_decl;
+    bool is_same_file(const std::string& file_1, const std::string& file_2);
 
-        void analyze_node(SgNode* node, short action);
-        const analysis_profile_t run_analysis(SgNode* node, short action);
-        void print_loop_processing_status(const loop_info_t& loop_info);
+    void analyze_node(SgNode* node, int16_t action);
+    const analysis_profile_t run_analysis(SgNode* node, int16_t action);
+    void print_loop_processing_status(const loop_info_t& loop_info);
 
-        statement_list_t statement_list;
-        name_list_t stream_list;
+    statement_list_t statement_list;
+    name_list_t stream_list;
 };
 
-#endif	/* MINST_H_ */
+#endif  // TOOLS_MACPO_INCLUDE_MINST_H_

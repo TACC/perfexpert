@@ -20,20 +20,22 @@
  * $HEADER$
  */
 
-#include <cstring>
-#include <cstdlib>
+#include "argparse.h"
+
 #include <fcntl.h>
-#include <iostream>
 #include <unistd.h>
 
-#include "argparse.h"
+#include <cstring>
+#include <cstdlib>
+#include <iostream>
+#include <string>
 
 bool argparse::copy_file(const char *source_file,
         const char *destination_file) {
     if (!source_file || !destination_file)
         return false;
 
-    struct stat stat_buf; 
+    struct stat stat_buf;
 
     if (access(source_file, R_OK) < 0) {
         std::cerr << mprefix << "Cannot read file: " << source_file <<
@@ -69,9 +71,9 @@ bool argparse::copy_file(const char *source_file,
     return true;
 }
 
-bool argparse::parse_location(std::string& argument, std::string& function_name,
-        int& line_number) {
-    std::string str_argument = argument;
+bool argparse::parse_location(const std::string& argument,
+        std::string& function_name, int& line_number) {
+    const std::string str_argument = argument;
 
     // Initialize
     function_name = "";
@@ -151,6 +153,18 @@ int argparse::parse_arguments(char* arg, options_t& options) {
 
         options.action = ACTION_VECTORSTRIDES;
         parse_location(value, options.function_name, options.line_number);
+    } else if (option == "overlap-check") {
+        if (!value.size())
+            return -1;
+
+        options.action = ACTION_OVERLAPCHECK;
+        parse_location(value, options.function_name, options.line_number);
+    } else if (option == "stride-check") {
+        if (!value.size())
+            return -1;
+
+        options.action = ACTION_STRIDECHECK;
+        parse_location(value, options.function_name, options.line_number);
     } else if (option == "backup-filename") {
         if (!value.size())
             return -1;
@@ -164,8 +178,9 @@ int argparse::parse_arguments(char* arg, options_t& options) {
         options.disable_sampling = true;
     } else if (option == "profile-analysis") {
         options.profile_analysis = true;
-    } else
+    } else {
         return -1;
+    }
 
     return 0;
 }

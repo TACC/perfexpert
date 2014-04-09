@@ -19,25 +19,25 @@
  * $HEADER$
  */
 
-#ifndef	ANALYSIS_PROFILE_H_
-#define	ANALYSIS_PROFILE_H_
+#ifndef TOOLS_MACPO_INCLUDE_ANALYSIS_PROFILE_H_
+#define TOOLS_MACPO_INCLUDE_ANALYSIS_PROFILE_H_
 
 #include "inst_defs.h"
 
 class analysis_profile_t {
-    public:
-        analysis_profile_t();
+ public:
+    analysis_profile_t();
 
-        void start_timer();
-        void end_timer();
-        const double get_running_time() const;
+    void start_timer();
+    void end_timer();
+    const double get_running_time() const;
 
-        void set_loop_info_list(loop_info_list_t& _loop_info_list);
-        const loop_info_list_t& get_loop_info_list() const;
+    void set_loop_info_list(loop_info_list_t& _loop_info_list);
+    const loop_info_list_t& get_loop_info_list() const;
 
-    private:
-        double start_time, end_time;
-        loop_info_list_t loop_info_list;
+ private:
+    double start_time, end_time;
+    loop_info_list_t loop_info_list;
 };
 
-#endif	/* ANALYSIS_PROFILE_H_ */
+#endif  // TOOLS_MACPO_INCLUDE_ANALYSIS_PROFILE_H_

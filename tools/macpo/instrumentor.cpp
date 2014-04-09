@@ -19,8 +19,11 @@
  * $HEADER$
  */
 
-#include <algorithm>
 #include <rose.h>
+
+#include <algorithm>
+#include <string>
+#include <vector>
 
 #include "analysis_profile.h"
 #include "inst_defs.h"
@@ -56,7 +59,7 @@ attrib instrumentor_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
     reference_list_t& reference_list = streams.get_reference_list();
 
     size_t count = 0;
-    for(reference_list_t::iterator it = reference_list.begin();
+    for (reference_list_t::iterator it = reference_list.begin();
             it != reference_list.end(); it++) {
         reference_info_t& reference_info = *it;
         std::string stream = reference_info.name;
@@ -67,25 +70,27 @@ attrib instrumentor_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
         }
     }
 
-    for(reference_list_t::iterator it = reference_list.begin();
+    for (reference_list_t::iterator it = reference_list.begin();
             it != reference_list.end(); it++) {
         reference_info_t& reference_info = *it;
         SgNode* ref_node = reference_info.node;
         std::string stream = reference_info.name;
-        short ref_access_type = reference_info.access_type;
+        int16_t ref_access_type = reference_info.access_type;
         size_t ref_idx = reference_info.idx;
 
         SgBasicBlock* containingBB = getEnclosingNode<SgBasicBlock>(ref_node);
         SgStatement* containingStmt = getEnclosingNode<SgStatement>(ref_node);
 
+        SgLocatedNode* located_ref = reinterpret_cast<SgLocatedNode*>(ref_node);
         Sg_File_Info *fileInfo =
             Sg_File_Info::generateFileInfoForTransformationNode(
-                    ((SgLocatedNode*)
-                     ref_node)->get_file_info()->get_filenameString());
+                    located_ref->get_file_info()->get_filenameString());
 
         int line_number = 0;
         SgStatement *stmt = getEnclosingNode<SgStatement>(ref_node);
-        if (stmt)	line_number = stmt->get_file_info()->get_raw_line();
+        if (stmt) {
+            line_number = stmt->get_file_info()->get_raw_line();
+        }
 
         SgExpression* expr = isSgExpression(ref_node);
         ROSE_ASSERT(expr);
@@ -98,7 +103,7 @@ attrib instrumentor_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
 
         // If not Fortran, cast the address to a void pointer
         SgExpression *param_addr = SageInterface::is_Fortran_language() ?
-            stripped_expr : buildCastExp (
+            stripped_expr : buildCastExp(
                     buildAddressOfOp(stripped_expr),
                     buildPointerType(buildVoidType()));
 
@@ -107,7 +112,7 @@ attrib instrumentor_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
         SgIntVal* param_read_write = new SgIntVal(fileInfo, ref_access_type);
 
         std::string function_name = SageInterface::is_Fortran_language() ?
-                "indigo__record_f" : "indigo__record_c";
+            "indigo__record_f" : "indigo__record_c";
 
         SgType* type = expr->get_type();
         SgSizeOfOp* size_of_op = new SgSizeOfOp(fileInfo, NULL, type, type);

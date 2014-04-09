@@ -19,10 +19,13 @@
  * $HEADER$
  */
 
-#ifndef INST_DEFS_H_
-#define INST_DEFS_H_
+#ifndef TOOLS_MACPO_INCLUDE_INST_DEFS_H_
+#define TOOLS_MACPO_INCLUDE_INST_DEFS_H_
 
 #include <rose.h>
+
+#include <string>
+#include <vector>
 
 #include "macpo_record.h"
 
@@ -35,8 +38,8 @@ typedef std::vector<statement_info_t> statement_list_t;
 
 typedef struct {
     std::string name;
-    short access_type;
-    long idx;
+    int16_t access_type;
+    int64_t idx;
     SgNode* node;
 } reference_info_t;
 
@@ -60,14 +63,14 @@ typedef struct tag_loop_info_t {
 } loop_info_t;
 
 class attrib {
-    public:
-        bool skip;
-        short access_type;
+ public:
+    bool skip;
+    int16_t access_type;
 
-        attrib() {
-            access_type = TYPE_UNKNOWN;
-            skip = false;
-        }
+    attrib() {
+        access_type = TYPE_UNKNOWN;
+        skip = false;
+    }
 };
 
-#endif  /* INST_DEFS_H_ */
+#endif  // TOOLS_MACPO_INCLUDE_INST_DEFS_H_

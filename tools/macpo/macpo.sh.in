@@ -87,9 +87,28 @@ do
       echo "                                        or loop marked by <location>."
       echo "  --macpo:check-alignment=<location>    Check alignment of data structures in"
       echo "                                        function or loop marked by <location>."
+      echo "  --macpo:record-tripcount=<location>   Check if the trip count of the loop"
+      echo "                                        identified by <location> is too low."
+      echo "  --macpo:record-branchpath=<location>  Check if the branches in loop identified"
+      echo "                                        by <location> always (or mostly) "
+      echo "                                        evaluate to true or false or are"
+      echo "                                        unpredictable."
+      echo "  --macpo:vector-strides=<location>     Check if vectorizing the loop identified"
+      echo "                                        by <location> will require "
+      echo "                                        gather/scatter operation(s) for array"
+      echo "                                        references."
+      echo "  --macpo:overlap-check=<location>      Check if array references in loop at"
+      echo "                                        <location> overlap with one another."
+      echo "  --macpo:stride-check=<location>       Check if array references in loop at"
+      echo "                                        <location> have unit or fixed strides."
       echo "  --macpo:backup-filename=<filename>    Save source file into <filename> before"
       echo "                                        instrumenting."
       echo "  --macpo:no-compile                    Instrument code but don't compile it."
+      echo "  --macpo:enable-sampling               Enable sampling mode [default]."
+      echo "  --macpo:disable-sampling              Disable sampling mode."
+      echo "  --macpo:profile-analysis              Collect basic profiling information"
+      echo "                                        about the requested analysis or "
+      echo "                                        instrumentation."
       echo "  --help                                Give this help list."
       echo
       echo "  In addition to above options, all options accepted by GNU compilers can be"
@@ -104,7 +123,9 @@ done
 ${MINST_PATH} -rose:openmp:ast_only -I${MRT_INCLUDE_DIR} -L${MRT_LIB_DIR} $* -lmrt -lstdc++ &> \
     "$tmp_macpo"
 
-if [ $? != 0 ]
+ret_code=$?
+
+if [ ${ret_code} != 0 ]
 then
     # try running with gfortran
     if [ -z "${GNU_FORTRAN_COMPILER}" ]
@@ -127,6 +148,8 @@ then
                 "-lmrt -lstdc++"
             echo "$GNU_FORTRAN_COMPILER -L${MRT_LIB_DIR} $* -lmrt -lstdc++"
         else
+            # There was no error, hence reset the return code.
+            ret_code=0
             cat "$tmp_gfort"
         fi
     else
@@ -142,3 +165,6 @@ fi
 
 # Clean up
 rm -f "$tmp_macpo" "$tmp_gfort" 2>/dev/null
+
+# Exit with the appropriate return code.
+exit ${ret_code}
