@@ -52,23 +52,16 @@ static arg_options_t arg_options = { 0 };
 
 /* parse_cli_params */
 int parse_cli_params(int argc, char *argv[]) {
-    int i = 0, k = 0;
-
-    /* perfexpert_run_exp compatibility */
-    if (0 == strcmp("perfexpert_run_exp", argv[0])) {
-        OUTPUT(("%s running PerfExpert in compatibility mode",
-            _BOLDRED("WARNING:")));
-        OUTPUT((""));
-        globals.compat_mode = PERFEXPERT_TRUE;
-    }
+    int i = 0, k = 0, have_compiler_phase = PERFEXPERT_FALSE;
+    perfexpert_module_t *m = NULL;
+    perfexpert_step_t *s = NULL;
 
     /* Set default values for globals */
     arg_options = (arg_options_t) {
         .modules           = NULL,
         .program           = NULL,
         .program_argv      = NULL,
-        .program_argv_temp = { 0 },
-        .do_not_run        = PERFEXPERT_FALSE
+        .program_argv_temp = { 0 }
     };
 
     /* If some environment variable is defined, use it! */
@@ -79,24 +72,6 @@ int parse_cli_params(int argc, char *argv[]) {
 
     /* Parse arguments */
     argp_parse(&argp, argc, argv, 0, 0, NULL);
-
-    /* If the list of modules is empty, load the default modules */
-    if ((0 == perfexpert_list_get_size(&(module_globals.modules))) &&
-        (0 == perfexpert_list_get_size(&(module_globals.compile))) &&
-        (0 == perfexpert_list_get_size(&(module_globals.measurements))) &&
-        (0 == perfexpert_list_get_size(&(module_globals.analysis)))) {
-        OUTPUT_VERBOSE((5, "no modules set, loading default modules"));
-        if (PERFEXPERT_SUCCESS != perfexpert_module_load("lcpi")) {
-            OUTPUT(("%s", _ERROR("unable to load default modules")));
-            OUTPUT(("Is %s in your LD_LIBRARY_PATH?", PERFEXPERT_LIBDIR));
-            return PERFEXPERT_ERROR;
-        }
-        if (PERFEXPERT_SUCCESS != perfexpert_module_load("hpctoolkit")) {
-            OUTPUT(("%s", _ERROR("unable to load default modules")));
-            OUTPUT(("Is %s in your LD_LIBRARY_PATH?", PERFEXPERT_LIBDIR));
-            return PERFEXPERT_ERROR;
-        }
-    }
 
     /* Expand program arguments */
     while (NULL != arg_options.program_argv[i]) {
@@ -140,7 +115,13 @@ int parse_cli_params(int argc, char *argv[]) {
             globals.program);
         OUTPUT_VERBOSE((1, "   program full path=[%s]", globals.program_full));
 
-        if ((NULL == globals.sourcefile) && (NULL == globals.target) &&
+        /* If there is no compile module, the binary should already exist */
+        perfexpert_list_for(s, &(module_globals.steps), perfexpert_step_t) {
+            if (PERFEXPERT_PHASE_COMPILE == s->phase) {
+                have_compiler_phase = PERFEXPERT_TRUE;
+            }
+        }
+        if ((PERFEXPERT_PHASE_COMPILE == PERFEXPERT_FALSE) &&
             (PERFEXPERT_SUCCESS != perfexpert_util_file_is_exec(
                 globals.program_full))) {
             OUTPUT(("%s (%s)", _ERROR("unable to find program"),
@@ -152,89 +133,40 @@ int parse_cli_params(int argc, char *argv[]) {
         return PERFEXPERT_ERROR;
     }
 
-    /* Sanity check: target and sourcefile at the same time */
-    if ((NULL != globals.target) && (NULL != globals.sourcefile)) {
-        OUTPUT(("%s", _ERROR("target and sourcefile are both defined")));
-        return PERFEXPERT_ERROR;
-    }
+    OUTPUT(("%s", _BLUE("Summary of options")));
+    OUTPUT_VERBOSE((7, "   verbose level:      %d", globals.verbose));
+    OUTPUT_VERBOSE((7, "   colorful verbose?   %s", globals.colorful ?
+        "yes" : "no"));
+    OUTPUT_VERBOSE((7, "   leave garbage?      %s", globals.remove_garbage ?
+        "yes" : "no"));
+    OUTPUT_VERBOSE((7, "   database file:      %s", globals.dbfile));
+    OUTPUT(("   %s %s", _YELLOW("program executable:"), globals.program));
+    OUTPUT(("   %s       %s", _YELLOW("program path:"), globals.program_path));
+    OUTPUT(("   %s  %s", _YELLOW("program full path:"), globals.program_full));
 
-    OUTPUT_VERBOSE((7, "%s", _BLUE("Summary of options")));
-    OUTPUT_VERBOSE((7, "   Verbose level:       %d", globals.verbose));
-    OUTPUT_VERBOSE((7, "   Colorful verbose?    %s", globals.colorful ?
-        "yes" : "no"));
-    OUTPUT_VERBOSE((7, "   Leave garbage?       %s", globals.leave_garbage ?
-        "yes" : "no"));
-    OUTPUT_VERBOSE((7, "   Only experiments?    %s", globals.only_exp ?
-        "yes" : "no"));
-    OUTPUT_VERBOSE((7, "   Database file:       %s", globals.dbfile));
-    OUTPUT_VERBOSE((7, "   Recommendations      %d", globals.rec_count));
-    OUTPUT_VERBOSE((7, "   Make target:         %s", globals.target));
-    OUTPUT_VERBOSE((7, "   Program source file: %s", globals.sourcefile));
-    OUTPUT_VERBOSE((7, "   Program executable:  %s", globals.program));
-    OUTPUT_VERBOSE((7, "   Program path:        %s", globals.program_path));
-    OUTPUT_VERBOSE((7, "   Program full path:   %s", globals.program_full));
+    printf("%s    %s ", PROGRAM_PREFIX, _YELLOW("program arguments:"));
+    if (NULL == globals.program_argv[0]) {
+        printf(" (null)");
+    } else {
+        i = 0;
+        while (NULL != globals.program_argv[i]) {
+            printf(" [%s]",
+                globals.program_argv[i] ? globals.program_argv[i] : "(null)");
+            i++;
+        }
+    }
+    printf("\n");
 
     if (7 <= globals.verbose) {
-        perfexpert_module_t *module = NULL;
-        perfexpert_ordered_module_t *ordered_module = NULL;
-
-        printf("%s    Program arguments:  ", PROGRAM_PREFIX);
-        if (NULL == globals.program_argv[0]) {
-            printf(" (null)");
-        } else {
-            i = 0;
-            while (NULL != globals.program_argv[i]) {
-                printf(" [%s]", globals.program_argv[i] ?
-                    globals.program_argv[i] : "(null)");
-                i++;
-            }
+        printf("%s    Modules:           ", PROGRAM_PREFIX);
+        perfexpert_list_for(m, &(module_globals.modules), perfexpert_module_t) {
+            printf(" [%s]", m->name);
         }
-        printf("\n%s    Modules:            ", PROGRAM_PREFIX);
-        module = (perfexpert_module_t *)perfexpert_list_get_first(
-            &(module_globals.modules));
-        while ((perfexpert_list_item_t *)module !=
-            &(module_globals.modules.sentinel)) {
-            printf(" [%s]", module->name);
-            module = (perfexpert_module_t *)perfexpert_list_get_next(module);
-        }
-        printf("\n%s    Compile order:      ", PROGRAM_PREFIX);
-        ordered_module = (perfexpert_ordered_module_t *)
-            perfexpert_list_get_first(&(module_globals.compile));
-        while ((perfexpert_list_item_t *)ordered_module !=
-            &(module_globals.compile.sentinel)) {
-            printf(" [%s]", ordered_module->name);
-            ordered_module = (perfexpert_ordered_module_t *)
-                perfexpert_list_get_next(ordered_module);
-        }
-        if (0 == perfexpert_list_get_size(&(module_globals.compile))) {
-            printf(" undefined order");
-        }
-        printf("\n%s    Measurements order: ", PROGRAM_PREFIX);
-        ordered_module = (perfexpert_ordered_module_t *)
-            perfexpert_list_get_first(&(module_globals.measurements));
-        while ((perfexpert_list_item_t *)ordered_module !=
-            &(module_globals.measurements.sentinel)) {
-            printf(" [%s]", ordered_module->name);
-            ordered_module = (perfexpert_ordered_module_t *)
-                perfexpert_list_get_next(ordered_module);
-        }
-        if (0 == perfexpert_list_get_size(&(module_globals.measurements))) {
-            printf(" undefined order");
-        }
-        printf("\n%s    Analysis order:     ", PROGRAM_PREFIX);
-        ordered_module = (perfexpert_ordered_module_t *)
-            perfexpert_list_get_first(&(module_globals.analysis));
-        while ((perfexpert_list_item_t *)ordered_module !=
-            &(module_globals.analysis.sentinel)) {
-            printf(" [%s]", ordered_module->name);
-            ordered_module = (perfexpert_ordered_module_t *)
-                perfexpert_list_get_next(ordered_module);
-        }
-        if (0 == perfexpert_list_get_size(&(module_globals.analysis))) {
-            printf(" undefined order");
+        printf("\n%s    Steps order:       ", PROGRAM_PREFIX);
+        perfexpert_list_for(s, &(module_globals.steps), perfexpert_step_t) {
+            printf(" [%s/%d]", s->name, s->phase);
         }
         printf("\n");
-        fflush(stdout);
     }
 
     /* Not using OUTPUT_VERBOSE because I want only one line */
@@ -245,77 +177,18 @@ int parse_cli_params(int argc, char *argv[]) {
             printf(" [%s]", argv[i] ? argv[i] : "(null)");
         }
         printf("\n");
-        fflush(stdout);
     }
+    fflush(stdout);
 
-    if (PERFEXPERT_TRUE == arg_options.do_not_run) {
-        exit(0);
-    }
     return PERFEXPERT_SUCCESS;
 }
 
 /* parse_options */
 static error_t parse_options(int key, char *arg, struct argp_state *state) {
+    perfexpert_module_t *m = NULL;
     char str[MAX_BUFFER_SIZE];
 
     switch (key) {
-        /* Shortcuts for HPCToolkit module (a, A, b, B, C, i, p, P)*/
-        case 'a':
-            bzero(str, MAX_BUFFER_SIZE);
-            sprintf(str, "hpctoolkit,after=%s", arg ? arg : "(null)");
-            if (PERFEXPERT_SUCCESS != set_module_option(str)) {
-                return PERFEXPERT_ERROR;
-            }
-
-        case 'A':
-            bzero(str, MAX_BUFFER_SIZE);
-            sprintf(str, "hpctoolkit,mic-after=%s", arg ? arg : "(null)");
-            if (PERFEXPERT_SUCCESS != set_module_option(str)) {
-                return PERFEXPERT_ERROR;
-            }
-
-        case 'b':
-            bzero(str, MAX_BUFFER_SIZE);
-            sprintf(str, "hpctoolkit,before=%s", arg ? arg : "(null)");
-            if (PERFEXPERT_SUCCESS != set_module_option(str)) {
-                return PERFEXPERT_ERROR;
-            }
-
-        case 'B':
-            bzero(str, MAX_BUFFER_SIZE);
-            sprintf(str, "hpctoolkit,mic-before=%s", arg ? arg : "(null)");
-            if (PERFEXPERT_SUCCESS != set_module_option(str)) {
-                return PERFEXPERT_ERROR;
-            }
-
-        case 'C':
-            bzero(str, MAX_BUFFER_SIZE);
-            sprintf(str, "hpctoolkit,mic-card=%s", arg ? arg : "(null)");
-            if (PERFEXPERT_SUCCESS != set_module_option(str)) {
-                return PERFEXPERT_ERROR;
-            }
-
-        case 'i':
-            bzero(str, MAX_BUFFER_SIZE);
-            sprintf(str, "hpctoolkit,inputfile=%s", arg ? arg : "(null)");
-            if (PERFEXPERT_SUCCESS != set_module_option(str)) {
-                return PERFEXPERT_ERROR;
-            }
-
-        case 'p':
-            bzero(str, MAX_BUFFER_SIZE);
-            sprintf(str, "hpctoolkit,prefix=%s", arg ? arg : "(null)");
-            if (PERFEXPERT_SUCCESS != set_module_option(str)) {
-                return PERFEXPERT_ERROR;
-            }
-
-        case 'P':
-            bzero(str, MAX_BUFFER_SIZE);
-            sprintf(str, "hpctoolkit,mic-prefix=%s", arg ? arg : "(null)");
-            if (PERFEXPERT_SUCCESS != set_module_option(str)) {
-                return PERFEXPERT_ERROR;
-            }
-
         /* Activate colorful mode */
         case 'c':
             globals.colorful = PERFEXPERT_TRUE;
@@ -329,15 +202,9 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
                 globals.dbfile : "(null)"));
             break;
 
-        /* Only experiments */
-        case 'e':
-            globals.only_exp = PERFEXPERT_TRUE;
-            OUTPUT_VERBOSE((1, "option 'e' set"));
-            break;
-
         /* Leave the garbage there? */
         case 'g':
-            globals.leave_garbage = PERFEXPERT_TRUE;
+            globals.remove_garbage = PERFEXPERT_TRUE;
             OUTPUT_VERBOSE((1, "option 'g' set"));
             break;
 
@@ -347,16 +214,18 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
             argp_state_help(state, stdout, ARGP_HELP_STD_HELP);
             break;
 
+        case 'i':
+            bzero(str, MAX_BUFFER_SIZE);
+            sprintf(str, "hpctoolkit,inputfile=%s", arg ? arg : "(null)");
+            if (PERFEXPERT_SUCCESS != set_module_option(str)) {
+                return PERFEXPERT_ERROR;
+            }
+            break;
+
         /* Verbose level (has an alias: v) */
         case 'l':
             globals.verbose = arg ? atoi(arg) : 5;
             OUTPUT_VERBOSE((1, "option 'l' set [%d]", globals.verbose));
-            break;
-
-        /* Use Makefile? */
-        case 'm':
-            OUTPUT_VERBOSE((1, "option 'm' set [%s]", arg ? arg : "(null)"));
-            globals.target = arg;
             break;
 
         /* List of modules */
@@ -367,12 +236,6 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
             }
             break;
 
-        /* Do not run */
-        case 'n':
-            OUTPUT_VERBOSE((1, "option 'n' set"));
-            arg_options.do_not_run = PERFEXPERT_TRUE;
-            break;
-
         /* Set module option */
         case 'O':
             OUTPUT_VERBOSE((1, "option 'O' set [%s]", arg ? arg : "(null)"));
@@ -381,43 +244,10 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
             }
             break;
 
-        /* Number of recommendation to output */
-        case 'r':
-            OUTPUT_VERBOSE((1, "option 'r' set [%d]", arg ? arg : "(null)"));
-            globals.rec_count = atoi(arg);
-            break;
-
-        /* What is the source code filename? */
-        case 's':
-            OUTPUT_VERBOSE((1, "option 's' set [%s]", arg ? arg : "(null)"));
-            globals.sourcefile = arg;
-            break;
-
         /* Verbose level (has an alias: l) */
         case 'v':
             globals.verbose = arg ? atoi(arg) : 5;
             OUTPUT_VERBOSE((1, "option 'v' set [%d]", globals.verbose));
-            break;
-
-        /* Compile modules order */
-        case -1:
-            OUTPUT_VERBOSE((1, "option 'compile-order' set [%s]",
-                arg ? arg : "(null)"));
-            set_module_order(arg, PERFEXPERT_MODULE_COMPILE);
-            break;
-
-        /* Measurements modules order */
-        case -2:
-            OUTPUT_VERBOSE((1, "option 'measurements-order' set [%s]",
-                arg ? arg : "(null)"));
-            set_module_order(arg, PERFEXPERT_MODULE_MEASUREMENTS);
-            break;
-
-        /* Analysis modules order */
-        case -3:
-            OUTPUT_VERBOSE((1, "option 'analysis-order' set [%s]",
-                arg ? arg : "(null)"));
-            set_module_order(arg, PERFEXPERT_MODULE_ANALYSIS);
             break;
 
         /* Show modules help */
@@ -427,48 +257,112 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
             module_help(arg);
             break;
 
+        /* Shortcuts for compile modules (m) */
+        case 'r':
+            bzero(str, MAX_BUFFER_SIZE);
+            sprintf(str, "sqlrules,recommendations=%s", arg ? arg : "");
+            if (PERFEXPERT_SUCCESS != set_module_option(str)) {
+                return PERFEXPERT_ERROR;
+            }
+            break;
+
+        case 'm':
+            bzero(str, MAX_BUFFER_SIZE);
+            sprintf(str, "make,target=%s", arg ? arg : "");
+            if (PERFEXPERT_SUCCESS != set_module_option(str)) {
+                return PERFEXPERT_ERROR;
+            }
+            break;
+
+        case 's':
+            if (NULL == (m = guess_compile_module())) {
+                OUTPUT(("%s", _ERROR("unable to guess compiler, set CC")));
+                return PERFEXPERT_ERROR;
+            } else {
+
+            }
+            bzero(str, MAX_BUFFER_SIZE);
+            sprintf(str, "%s,source=%s", m->name, arg ? arg : "");
+            if (PERFEXPERT_SUCCESS != set_module_option(str)) {
+                return PERFEXPERT_ERROR;
+            }
+            break;
+
+        /* Shortcuts for HPCToolkit module (a, A, b, B, C, i, p, P) */
+        case 'a':
+            bzero(str, MAX_BUFFER_SIZE);
+            sprintf(str, "hpctoolkit,after=%s", arg ? arg : "");
+            if (PERFEXPERT_SUCCESS != set_module_option(str)) {
+                return PERFEXPERT_ERROR;
+            }
+            break;
+
+        case 'A':
+            bzero(str, MAX_BUFFER_SIZE);
+            sprintf(str, "hpctoolkit,mic-after=%s", arg ? arg : "(null)");
+            if (PERFEXPERT_SUCCESS != set_module_option(str)) {
+                return PERFEXPERT_ERROR;
+            }
+            break;
+
+        case 'b':
+            bzero(str, MAX_BUFFER_SIZE);
+            sprintf(str, "hpctoolkit,before=%s", arg ? arg : "");
+            if (PERFEXPERT_SUCCESS != set_module_option(str)) {
+                return PERFEXPERT_ERROR;
+            }
+            break;
+
+        case 'B':
+            bzero(str, MAX_BUFFER_SIZE);
+            sprintf(str, "hpctoolkit,mic-before=%s", arg ? arg : "");
+            if (PERFEXPERT_SUCCESS != set_module_option(str)) {
+                return PERFEXPERT_ERROR;
+            }
+            break;
+
+        case 'C':
+            bzero(str, MAX_BUFFER_SIZE);
+            sprintf(str, "hpctoolkit,mic-card=%s", arg ? arg : "");
+            if (PERFEXPERT_SUCCESS != set_module_option(str)) {
+                return PERFEXPERT_ERROR;
+            }
+            break;
+
+        case 'p':
+            bzero(str, MAX_BUFFER_SIZE);
+            sprintf(str, "hpctoolkit,prefix=%s", arg ? arg : "");
+            if (PERFEXPERT_SUCCESS != set_module_option(str)) {
+                return PERFEXPERT_ERROR;
+            }
+            break;
+
+        case 'P':
+            bzero(str, MAX_BUFFER_SIZE);
+            sprintf(str, "hpctoolkit,mic-prefix=%s", arg ? arg : "");
+            if (PERFEXPERT_SUCCESS != set_module_option(str)) {
+                return PERFEXPERT_ERROR;
+            }
+            break;
+
         /* Arguments: threshold and target program and it's arguments */
         case ARGP_KEY_ARG:
-            if (PERFEXPERT_TRUE == globals.compat_mode) {
-
-                globals.only_exp = PERFEXPERT_TRUE;
-                OUTPUT_VERBOSE((1, "option 'e' set"));
-
-                globals.leave_garbage = PERFEXPERT_TRUE;
-                OUTPUT_VERBOSE((1, "option 'g' set"));
-
-                arg_options.program = arg ? arg : NULL;
-                OUTPUT_VERBOSE((1, "option 'target_program' set [%s]",
-                    arg_options.program));
-
-                OUTPUT_VERBOSE((1, "option 'threshold' set [0.0]"));
-                if (PERFEXPERT_SUCCESS != set_module_option(
-                    "lcpi,threshold=0")) {
+            if ((('0' == arg[0]) || ('1' == arg[0])) && (0 == state->arg_num)) {
+                bzero(str, MAX_BUFFER_SIZE);
+                sprintf(str, "lcpi,threshold=%s", arg ? arg : "(null)");
+                OUTPUT_VERBOSE((1, "option 'threshold' set [%s]",
+                    arg ? arg : "(null)"));
+                if (PERFEXPERT_SUCCESS != set_module_option(str)) {
                     return PERFEXPERT_ERROR;
                 }
-
-                arg_options.program_argv = &state->argv[state->next];
-                OUTPUT_VERBOSE((1, "option 'program_arguments' set"));
-                state->next = state->argc;
-            } else {
-                if ((('0' == arg[0]) || ('1' == arg[0])) &&
-                    (0 == state->arg_num)) {
-                    bzero(str, MAX_BUFFER_SIZE);
-                    sprintf(str, "lcpi,threshold=%s", arg ? arg : "(null)");
-                    OUTPUT_VERBOSE((1, "option 'threshold' set [%s]",
-                        arg ? arg : "(null)"));
-                    if (PERFEXPERT_SUCCESS != set_module_option(str)) {
-                        return PERFEXPERT_ERROR;
-                    }
-                    break;
-                }
-                arg_options.program = arg ? arg : NULL;
-                OUTPUT_VERBOSE((1, "option 'target_program' set [%s]",
-                    arg_options.program));
-                arg_options.program_argv = &state->argv[state->next];
-                OUTPUT_VERBOSE((1, "option 'program_arguments' set"));
-                state->next = state->argc;
+                break;
             }
+            arg_options.program = arg ? arg : NULL;
+            OUTPUT_VERBOSE((1, "option 'target_program' set [%s]",
+                arg_options.program));
+            arg_options.program_argv = &state->argv[state->next];
+            OUTPUT_VERBOSE((1, "option 'program_arguments' set"));
+            state->next = state->argc;
             break;
 
         /* If the arguments are missing */
@@ -498,26 +392,10 @@ static int parse_env_vars(void) {
         OUTPUT_VERBOSE((1, "ENV: dbfile=%s", globals.dbfile));
     }
 
-    if ((NULL != getenv("PERFEXPERT_REC_COUNT")) &&
-        (0 <= atoi(getenv("PERFEXPERT_REC_COUNT")))) {
-        globals.rec_count = atoi(getenv("PERFEXPERT_REC_COUNT"));
-        OUTPUT_VERBOSE((1, "ENV: rec_count=%d", globals.rec_count));
-    }
-
     if ((NULL != getenv("PERFEXPERT_COLORFUL")) &&
         (1 == atoi(getenv("PERFEXPERT_COLORFUL")))) {
         globals.colorful = PERFEXPERT_FALSE;
         OUTPUT_VERBOSE((1, "ENV: colorful=YES"));
-    }
-
-    if (NULL != getenv("PERFEXPERT_MAKE_TARGET")) {
-        globals.target = getenv("PERFEXPERT_MAKE_TARGET");
-        OUTPUT_VERBOSE((1, "ENV: target=%s", globals.target));
-    }
-
-    if (NULL != getenv("PERFEXPERT_SOURCE_FILE")) {
-        globals.sourcefile = ("PERFEXPERT_SOURCE_FILE");
-        OUTPUT_VERBOSE((1, "ENV: sourcefile=%s", globals.sourcefile));
     }
 
     if (NULL != getenv("PERFEXPERT_MODULES")) {
@@ -536,9 +414,11 @@ static int load_module(char *module) {
     /* Expand list of modules */
     perfexpert_string_split(module, names, ',');
     while (NULL != names[i]) {
-        if (PERFEXPERT_SUCCESS != perfexpert_module_load(names[i])) {
-            OUTPUT(("%s [%s]", _ERROR("while adding module"), names[i]));
-            return PERFEXPERT_ERROR;
+        if (PERFEXPERT_FALSE == perfexpert_module_available(names[i])) {
+            if (PERFEXPERT_SUCCESS != perfexpert_module_load(names[i])) {
+                OUTPUT(("%s [%s]", _ERROR("while adding module"), names[i]));
+                return PERFEXPERT_ERROR;
+            }
         }
         PERFEXPERT_DEALLOC(names[i]);
         i++;
@@ -569,38 +449,84 @@ static int set_module_option(char *option) {
     return PERFEXPERT_SUCCESS;
 }
 
-/* set_module_order */
-static int set_module_order(char *option, module_phase_t order) {
-    perfexpert_ordered_module_t *module = NULL;
-    char *modules[MAX_ARGUMENTS_COUNT];
-    int i = 0;
+/* guess_compile_module */
+static perfexpert_module_t* guess_compile_module(void) {
+    perfexpert_module_t *m = NULL;
+    char str[MAX_BUFFER_SIZE], name[MAX_BUFFER_SIZE], *cc;
+    FILE *fp;
 
-    /* TODO: the list should be emptied first! */
-
-    /* Expand list of modules options */
-    perfexpert_string_split(option, modules, ',');
-    while (NULL != modules[i]) {
-
-        PERFEXPERT_ALLOC(perfexpert_ordered_module_t, module,
-            sizeof(perfexpert_ordered_module_t));
-        PERFEXPERT_ALLOC(char, module->name, (strlen(modules[i]) + 1));
-        strcpy(module->name, modules[i]);
-
-        if (PERFEXPERT_MODULE_COMPILE == order) {
-            perfexpert_list_append(&(module_globals.compile),
-                (perfexpert_list_item_t *)module);
-        } else if (PERFEXPERT_MODULE_MEASUREMENTS == order) {
-            perfexpert_list_append(&(module_globals.measurements),
-                (perfexpert_list_item_t *)module);
-        } else if (PERFEXPERT_MODULE_ANALYSIS == order) {
-            perfexpert_list_append(&(module_globals.analysis),
-                (perfexpert_list_item_t *)module);
-        }
-
-        PERFEXPERT_DEALLOC(modules[i]);
-        i++;
+    /* Read the environment variable */
+    bzero(cc, MAX_BUFFER_SIZE);
+    if (NULL == (cc = getenv("CC"))) {
+        return NULL;
     }
-    return PERFEXPERT_SUCCESS;
+
+    /* Identify the compiler from the --version output */
+    bzero(str, MAX_BUFFER_SIZE);
+    sprintf(str, "%s --version 2>&1", cc);
+    fp = popen(str, "r");
+
+    if (NULL == fp) {
+        OUTPUT(("%s", _ERROR("error running 'CC --version'")));
+        return NULL;
+    }
+
+    bzero(str, MAX_BUFFER_SIZE);
+    bzero(name, MAX_BUFFER_SIZE);
+    if (NULL != fgets(str, sizeof(str), fp)) {
+        if (NULL != strstr(str, "gcc (GCC)")) {
+            strcpy(name, "gcc");
+        }
+        if (NULL != strstr(str, "g++ (GCC)")) {
+            strcpy(name, "gpp");
+        }
+        if (NULL != strstr(str, "GNU Fortran (GCC)")) {
+            strcpy(name, "gcc");
+        }
+        if (NULL != strstr(str, "icc (ICC)")) {
+            strcpy(name, "icc");
+        }
+        if (NULL != strstr(str, "icpc (ICC)")) {
+            strcpy(name, "icpc");
+        }
+        if (NULL != strstr(str, "ifort (IFORT)")) {
+            strcpy(name, "ifort");
+        }
+    }
+
+    pclose(fp);
+
+    if (0 == strlen(name)) {
+        OUTPUT(("%s", _ERROR("unknown or unsupported compiler")));
+        return NULL;
+    }
+
+    /* Check if module is installed */
+    if (PERFEXPERT_FALSE == perfexpert_module_installed(name)) {
+        OUTPUT(("%s [%s]", _ERROR("module not installed"), name));
+        return NULL;
+    }
+
+    /* Load module */
+    if (PERFEXPERT_SUCCESS != perfexpert_module_load(name)) {
+        OUTPUT(("%s [%s]", _ERROR("error loading compile module"), name));
+        return NULL;
+    }
+
+    /* Get module pointer */
+    if (NULL == (m = perfexpert_module_get(name))) {
+        OUTPUT(("%s [%s]", _ERROR("compile module not available"), name));
+        return NULL;
+    }
+
+    /* Set compiler program */
+    bzero(str, MAX_BUFFER_SIZE);
+    sprintf(str, "%s,program=%s", m->name, cc);
+    if (PERFEXPERT_SUCCESS != set_module_option(str)) {
+        return NULL;
+    }
+
+    return m;
 }
 
 /* module_help */

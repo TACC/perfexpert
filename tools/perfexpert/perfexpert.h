@@ -37,7 +37,6 @@ extern "C" {
 /* Function declarations */
 void show_help(void);
 int parse_cli_params(int argc, char *argv[]);
-int compile_program(void);
 int recommendation(void);
 int transformation(void);
 
