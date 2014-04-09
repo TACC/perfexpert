@@ -19,29 +19,27 @@
  * $HEADER$
  */
 
-#ifndef ANALYZER_SORT_H_
-#define ANALYZER_SORT_H_
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* Basic sorting function type */
-typedef int (*sort_fn_t)(profile_t *profile);
+/* System standard headers */
 
-/* Structure to hold sorting orders */
-typedef struct sort {
-    const char *name;
-    sort_fn_t function;
-} sort_t;
+/* PerfExpert headers */
+#include "analyzer.h" 
+#include "perfexpert_list.h"
+#include "perfexpert_constants.h"
 
-/* Function definitions */
-static int sort_by_relevance(profile_t *profile);
-static int sort_by_performance(profile_t *profile);
-static int sort_by_mixed(profile_t *profile);
+/* vtune_parse_file */
+int vtune_parse_file(const char *file, perfexpert_list_t *profiles) {
+    return PERFEXPERT_SUCCESS;
+
+    OUTPUT_VERBOSE((2, "   %s [VTune Amplifier XE experiment DB version ??]",
+        _BLUE("Loading profiles")));
+}
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* ANALYZER_SORT_H_ */
+// EOF
