@@ -489,6 +489,9 @@ AS_IF([test x"$ENABLE_MACPO" = xyes], [
     AC_CONFIG_FILES([tools/macpo/libmrt/Makefile])
     AC_CONFIG_FILES([tools/macpo/analyze/Makefile])
     AC_CONFIG_FILES([tools/macpo/tests/Makefile])
+    AC_CONFIG_FILES([tools/macpo/tests/unit-tests/Makefile])
+    AC_CONFIG_FILES([tools/macpo/tests/integration-tests/Makefile])
+    AC_CONFIG_FILES([tools/macpo/tests/integration-tests/libmrt/Makefile])
     AC_CONFIG_FILES([modules/macpo/Makefile])
 ], [
     AC_MSG_RESULT([no])
