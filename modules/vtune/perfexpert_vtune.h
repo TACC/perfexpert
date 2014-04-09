@@ -19,25 +19,25 @@
  * $HEADER$
  */
 
-#ifndef ANALYZER_PROFILE_H_
-#define ANALYZER_PROFILE_H_
+#ifndef PERFEXPERT_VTUNE_H_
+#define PERFEXPERT_VTUNE_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#ifndef _STDLIB_H
-#include <stdlib.h>
-#endif
+#define VTUNE_EXPERIMENT_FILE     "experiment_vtune.conf"
+#define VTUNE_MIC_EXPERIMENT_FILE "experiment_vtune_mic.conf"
+#define VTUNE_PROFILE_FILE        "database/experiment.xml"
 
-/* Functions declarations */
-static int profile_aggregate_hotspots(profile_t *profile);
-static int profile_aggregate_metrics(profile_t *profile, procedure_t *hotspot);
-static int profile_flatten_hotspots(profile_t *profile);
-static int profile_check_callpath(perfexpert_list_t *calls, int root);
+/* HPCToolkit stuff (binaries should be in the path) */
+#define VTUNE_AMPLIFIER "amplxe-cl"
+
+/* Function declarations */
+int measurements_vtune(void);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* ANALYZER_PROFILE_H_ */
+#endif /* PERFEXPERT_VTUNE_H_ */
