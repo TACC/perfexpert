@@ -54,9 +54,9 @@ int parse_module_args(int argc, char *argv[]) {
         .prefix            = NULL,
         .before            = NULL,
         .after             = NULL,
-        .knc_prefix        = NULL,
-        .knc_before        = NULL,
-        .knc_after         = NULL
+        .mic_prefix        = NULL,
+        .mic_before        = NULL,
+        .mic_after         = NULL
     };
 
     /* If some environment variable is defined, use it! */
@@ -81,36 +81,36 @@ int parse_module_args(int argc, char *argv[]) {
         perfexpert_string_split(perfexpert_string_remove_spaces(
             arg_options.prefix), my_module_globals.prefix, ' ');
     }
-    if (NULL != arg_options.knc_after) {
+    if (NULL != arg_options.mic_after) {
         perfexpert_string_split(perfexpert_string_remove_spaces(
-            arg_options.knc_after), my_module_globals.knc_after, ' ');
+            arg_options.mic_after), my_module_globals.mic_after, ' ');
     }
-    if (NULL != arg_options.knc_before) {
+    if (NULL != arg_options.mic_before) {
         perfexpert_string_split(perfexpert_string_remove_spaces(
-            arg_options.knc_before), my_module_globals.knc_before, ' ');
+            arg_options.mic_before), my_module_globals.mic_before, ' ');
     }
-    if (NULL != arg_options.knc_prefix) {
+    if (NULL != arg_options.mic_prefix) {
         perfexpert_string_split(perfexpert_string_remove_spaces(
-            arg_options.knc_prefix), my_module_globals.knc_prefix, ' ');
+            arg_options.mic_prefix), my_module_globals.mic_prefix, ' ');
     }
 
     /* Sanity check: MIC options without MIC */
-    if ((NULL != my_module_globals.knc_prefix[0]) &&
-        (NULL == my_module_globals.knc)) {
+    if ((NULL != my_module_globals.mic_prefix[0]) &&
+        (NULL == my_module_globals.mic)) {
         OUTPUT(("%s option -P selected but no MIC card was specified, ignoring",
             _BOLDRED("WARNING:")));
     }
 
     /* Sanity check: MIC options without MIC */
-    if ((NULL != my_module_globals.knc_before[0]) &&
-        (NULL == my_module_globals.knc)) {
+    if ((NULL != my_module_globals.mic_before[0]) &&
+        (NULL == my_module_globals.mic)) {
         OUTPUT(("%s option -B selected but no MIC card was specified, ignoring",
             _BOLDRED("WARNING:")));
     }
 
     /* Sanity check: MIC options without MIC */
-    if ((NULL != my_module_globals.knc_after[0]) &&
-        (NULL == my_module_globals.knc)) {
+    if ((NULL != my_module_globals.mic_after[0]) &&
+        (NULL == my_module_globals.mic)) {
         OUTPUT(("%s option -A selected but no MIC card was specified, ignoring",
             _BOLDRED("WARNING:")));
     }
@@ -156,46 +156,44 @@ int parse_module_args(int argc, char *argv[]) {
         fflush(stdout);
     }
 
-    #if HAVE_KNC_SUPPORT
-    OUTPUT_VERBOSE((7, "   MIC card:            %s", my_module_globals.knc));
+    OUTPUT_VERBOSE((7, "   MIC card:            %s", my_module_globals.mic));
 
     if (7 <= globals.verbose) {
         printf("%s    MIC prefix:         ", PROGRAM_PREFIX);
-        if (NULL == my_module_globals.knc_prefix[0]) {
+        if (NULL == my_module_globals.mic_prefix[0]) {
             printf(" (null)");
         } else {
             i = 0;
-            while (NULL != my_module_globals.knc_prefix[i]) {
-                printf(" [%s]", (char *)my_module_globals.knc_prefix[i]);
+            while (NULL != my_module_globals.mic_prefix[i]) {
+                printf(" [%s]", (char *)my_module_globals.mic_prefix[i]);
                 i++;
             }
         }
 
         printf("\n%s    MIC before each run:", PROGRAM_PREFIX);
-        if (NULL == my_module_globals.knc_before[0]) {
+        if (NULL == my_module_globals.mic_before[0]) {
             printf(" (null)");
         } else {
             i = 0;
-            while (NULL != my_module_globals.knc_before[i]) {
-                printf(" [%s]", (char *)my_module_globals.knc_before[i]);
+            while (NULL != my_module_globals.mic_before[i]) {
+                printf(" [%s]", (char *)my_module_globals.mic_before[i]);
                 i++;
             }
         }
 
         printf("\n%s    MIC after each run: ", PROGRAM_PREFIX);
-        if (NULL == my_module_globals.knc_after[0]) {
+        if (NULL == my_module_globals.mic_after[0]) {
             printf(" (null)");
         } else {
             i = 0;
-            while (NULL != my_module_globals.knc_after[i]) {
-                printf(" [%s]", (char *)my_module_globals.knc_after[i]);
+            while (NULL != my_module_globals.mic_after[i]) {
+                printf(" [%s]", (char *)my_module_globals.mic_after[i]);
                 i++;
             }
         }
         printf("\n");
         fflush(stdout);
     }
-    #endif
 
     /* Not using OUTPUT_VERBOSE because I want only one line */
     if (8 <= globals.verbose) {
@@ -220,10 +218,10 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
             OUTPUT_VERBOSE((1, "option 'a' set [%s]", arg_options.after));
             break;
 
-        /* Should I run on the KNC some program after each execution? */
+        /* Should I run on the MIC some program after each execution? */
         case 'A':
-            arg_options.knc_after = arg;
-            OUTPUT_VERBOSE((1, "option 'A' set [%s]", arg_options.knc_after));
+            arg_options.mic_after = arg;
+            OUTPUT_VERBOSE((1, "option 'A' set [%s]", arg_options.mic_after));
             break;
 
         /* Should I run some program before each execution? */
@@ -232,16 +230,16 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
             OUTPUT_VERBOSE((1, "option 'b' set [%s]", arg_options.before));
             break;
 
-        /* Should I run on the KNC some program before each execution? */
+        /* Should I run on the MIC some program before each execution? */
         case 'B':
-            arg_options.knc_before = arg;
-            OUTPUT_VERBOSE((1, "option 'B' set [%s]", arg_options.knc_before));
+            arg_options.mic_before = arg;
+            OUTPUT_VERBOSE((1, "option 'B' set [%s]", arg_options.mic_before));
             break;
 
         /* MIC card */
         case 'C':
-            my_module_globals.knc = arg;
-            OUTPUT_VERBOSE((1, "option 'C' set [%s]", my_module_globals.knc));
+            my_module_globals.mic = arg;
+            OUTPUT_VERBOSE((1, "option 'C' set [%s]", my_module_globals.mic));
             break;
 
         /* Help */
@@ -263,10 +261,10 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
             OUTPUT_VERBOSE((1, "option 'p' set [%s]", arg_options.prefix));
             break;
 
-        /* Should I add a program prefix to the KNC command line? */
+        /* Should I add a program prefix to the MIC command line? */
         case 'P':
-            arg_options.knc_prefix = arg;
-            OUTPUT_VERBOSE((1, "option 'P' set [%s]", arg_options.knc_prefix));
+            arg_options.mic_prefix = arg;
+            OUTPUT_VERBOSE((1, "option 'P' set [%s]", arg_options.mic_prefix));
             break;
 
         /* no arguments... */
@@ -299,24 +297,24 @@ static int parse_env_vars(void) {
         OUTPUT_VERBOSE((1, "ENV: after=%s", arg_options.after));
     }
 
-    if (NULL != getenv("PERFEXPERT_HPCTOOLKIT_KNC_CARD")) {
-        my_module_globals.knc = ("PERFEXPERT_HPCTOOLKIT_KNC_CARD");
-        OUTPUT_VERBOSE((1, "ENV: knc=%s", my_module_globals.knc));
+    if (NULL != getenv("PERFEXPERT_HPCTOOLKIT_MIC_CARD")) {
+        my_module_globals.mic = ("PERFEXPERT_HPCTOOLKIT_MIC_CARD");
+        OUTPUT_VERBOSE((1, "ENV: mic=%s", my_module_globals.mic));
     }
 
-    if (NULL != getenv("PERFEXPERT_HPCTOOLKIT_KNC_PREFIX")) {
-        arg_options.knc_prefix = ("PERFEXPERT_HPCTOOLKIT_KNC_PREFIX");
-        OUTPUT_VERBOSE((1, "ENV: knc_prefix=%s", arg_options.knc_prefix));
+    if (NULL != getenv("PERFEXPERT_HPCTOOLKIT_MIC_PREFIX")) {
+        arg_options.mic_prefix = ("PERFEXPERT_HPCTOOLKIT_MIC_PREFIX");
+        OUTPUT_VERBOSE((1, "ENV: mic_prefix=%s", arg_options.mic_prefix));
     }
 
-    if (NULL != getenv("PERFEXPERT_HPCTOOLKIT_KNC_BEFORE")) {
-        arg_options.knc_before = ("PERFEXPERT_HPCTOOLKIT_KNC_BEFORE");
-        OUTPUT_VERBOSE((1, "ENV: knc_before=%s", arg_options.knc_before));
+    if (NULL != getenv("PERFEXPERT_HPCTOOLKIT_MIC_BEFORE")) {
+        arg_options.mic_before = ("PERFEXPERT_HPCTOOLKIT_MIC_BEFORE");
+        OUTPUT_VERBOSE((1, "ENV: mic_before=%s", arg_options.mic_before));
     }
 
-    if (NULL != getenv("PERFEXPERT_HPCTOOLKIT_KNC_AFTER")) {
-        arg_options.knc_after = ("PERFEXPERT_HPCTOOLKIT_KNC_AFTER");
-        OUTPUT_VERBOSE((1, "ENV: knc)after=%s", arg_options.knc_after));
+    if (NULL != getenv("PERFEXPERT_HPCTOOLKIT_MIC_AFTER")) {
+        arg_options.mic_after = ("PERFEXPERT_HPCTOOLKIT_MIC_AFTER");
+        OUTPUT_VERBOSE((1, "ENV: mic)after=%s", arg_options.mic_after));
     }
 
     return PERFEXPERT_SUCCESS;

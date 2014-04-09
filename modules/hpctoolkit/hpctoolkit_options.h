@@ -54,8 +54,7 @@ static struct argp_option options[] = {
       " 2\")" },
     { "prefix", 'p', "PREFIX", OPTION_HIDDEN, 0 },
 
-    #define HAVE_KNC_SUPPORT 1
-    #if HAVE_KNC_SUPPORT
+    #if HAVE_HPCTOOLKIT_MIC
     { 0, 0, 0, 0, "Target program execution on Intel Phi (MIC) options:", 3 },
     { "mic-card", 'C', "NAME", OPTION_DOC,
       "MIC Card where experiments should run on (e.g., mic0)" },
@@ -80,9 +79,9 @@ typedef struct arg_options {
     char *prefix;
     char *before;
     char *after;
-    char *knc_prefix;
-    char *knc_before;
-    char *knc_after;
+    char *mic_prefix;
+    char *mic_before;
+    char *mic_after;
 } arg_options_t;
 
 /* Function declarations */

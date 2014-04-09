@@ -19,27 +19,26 @@
  * $HEADER$
  */
 
-#ifndef PERFEXPERT_MODULE_HPCTOOLKIT_TOOLS_H_
-#define PERFEXPERT_MODULE_HPCTOOLKIT_TOOLS_H_
+#ifndef PERFEXPERT_MODULE_HPCTOOLKIT_PAPI_H_
+#define PERFEXPERT_MODULE_HPCTOOLKIT_PAPI_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* PerfExpert common headers */
-#include "common/perfexpert_fork.h"
+typedef struct {
+    int end;
+    int last;
+    char events[MAX_BUFFER_SIZE];
+} sample_t;
 
-/* Private module types */
-typedef struct experiment {
-    volatile perfexpert_list_item_t *next;
-    volatile perfexpert_list_item_t *prev;
-    test_t test;
-    char *argv[MAX_ARGUMENTS_COUNT];
-    int  argc;
-} experiment_t;
+/* Function declarations */
+int papi_max_events(void);
+int papi_get_sampling_rate(const char *name);
+static int get_prime(int start, int end);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* PERFEXPERT_MODULE_HPCTOOLKIT_TOOLS_H_ */
+#endif /* PERFEXPERT_MODULE_HPCTOOLKIT_PAPI_H_ */

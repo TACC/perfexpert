@@ -46,13 +46,15 @@ typedef struct {
     char *version;
     int  argc;
     char *argv[MAX_ARGUMENTS_COUNT];
-    module_status_t status;
+    perfexpert_module_status_t status;
     perfexpert_module_load_fn_t load;
     perfexpert_module_init_fn_t init;
     perfexpert_module_fini_fn_t fini;
     perfexpert_module_compile_fn_t compile;
-    perfexpert_module_measurements_fn_t measurements;
-    perfexpert_module_analysis_fn_t analysis;
+    perfexpert_module_instrument_fn_t instrument;
+    perfexpert_module_measure_fn_t measure;
+    perfexpert_module_analyze_fn_t analyze;
+    perfexpert_module_recommend_fn_t recommend;
     /* Extended module interface */
     perfexpert_module_hpctoolkit_set_event_fn_t set_event;
     perfexpert_list_t profiles;

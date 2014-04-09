@@ -35,31 +35,25 @@ extern "C" {
 #include <libxml/parser.h>
 #endif
 
-/* Tools headers */
-#include "tools/perfexpert/perfexpert_types.h"
-
 /* Modules headers */
 #include "hpctoolkit_module.h"
 #include "hpctoolkit_types.h"
 
+/* Tools headers */
+#include "tools/perfexpert/perfexpert_types.h"
+
 /* PerfExpert common headers */
 #include "common/perfexpert_list.h"
-
-/* HPCToolkit stuff */
-#define HPCTOOLKIT_PROFILE_FILE "database/experiment.xml"
-#define HPCSTRUCT               "hpcstruct"
-#define HPCRUN                  "hpcrun"
-#define HPCPROF                 "hpcprof"
 
 /* Private module types */
 typedef struct {
     char *prefix[MAX_ARGUMENTS_COUNT];
     char *before[MAX_ARGUMENTS_COUNT];
     char *after[MAX_ARGUMENTS_COUNT];
-    char *knc;
-    char *knc_prefix[MAX_ARGUMENTS_COUNT];
-    char *knc_before[MAX_ARGUMENTS_COUNT];
-    char *knc_after[MAX_ARGUMENTS_COUNT];
+    char *mic;
+    char *mic_prefix[MAX_ARGUMENTS_COUNT];
+    char *mic_before[MAX_ARGUMENTS_COUNT];
+    char *mic_after[MAX_ARGUMENTS_COUNT];
     char *inputfile;
     hpctoolkit_event_t *events_by_name;
 } my_module_globals_t;
@@ -71,7 +65,7 @@ extern perfexpert_module_hpctoolkit_t myself_module;
 int module_load(void);
 int module_init(void);
 int module_fini(void);
-int module_measurements(void);
+int module_measure(void);
 
 /* Extended module interface */
 int module_set_event(const char *name);
@@ -80,8 +74,9 @@ int module_set_event(const char *name);
 int parse_file(const char *file);
 int run_hpcstruct(void);
 int run_hpcrun(void);
-int run_hpcrun_knc(void);
 int run_hpcprof(char **file);
+int mic_run_hpcrun(void);
+int mic_run_hpcprof(char **file);
 int profile_check_all(perfexpert_list_t *profiles);
 int profile_flatten_all(perfexpert_list_t *profiles);
 int database_profiles(perfexpert_list_t *profiles);
