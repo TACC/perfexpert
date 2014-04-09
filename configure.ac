@@ -286,11 +286,9 @@ AC_ARG_WITH([gmp-include],
     [CPPFLAGS+=" -I$withval"])
 
 AC_ARG_WITH([gsl],
-    [AS_HELP_STRING([--with-gsl],
-        [set location of the GNU Scientific library])], [
-        CPPFLAGS+=" -I$withval/include"
-        LDFLAGS+=" -L$withval/lib -lgsl -lgslcblas"
-    ], [])
+    [AS_HELP_STRING([--with-gsl], [set GNU Scientific library path])], [
+    CPPFLAGS+=" -I$withval/include"
+    LDFLAGS+=" -L$withval/lib"])
 
 #------------------------------------------------------------------------------
 # 'perfexpert' requirements
@@ -486,8 +484,11 @@ AS_IF([test x"$ENABLE_MACPO" = xyes], [
     AC_CHECK_HEADER([gsl/gsl_histogram.h], [],
         [AC_MSG_ERROR([not found: gsl/gsl_histogram.h])])
 
+    AC_CHECK_LIB([gslcblas], [cblas_caxpy], [],
+        [AC_MSG_ERROR([not found: libgslcblas.so])])
+
     AC_CHECK_LIB([gsl], [gsl_histogram_alloc, gsl_histogram_free], [],
-        [AC_MSG_ERROR([not found: libgsl.a])], [-lgslcblas])
+        [AC_MSG_ERROR([not found: libgsl.so])], [-lgslcblas])
 
     ENABLE_MACPO=macpo
     ENABLED_TOOLS+="macpo "
