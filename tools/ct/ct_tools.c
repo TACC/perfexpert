@@ -268,7 +268,6 @@ static int test_transformation(fragment_t *f, transformation_t *t) {
     }
 
     /* fork_and_wait_and_pray */
-    rc = fork_and_wait(test, argv);
     rc = perfexpert_fork_and_wait(test, argv);
 
     /* Replace the source code file */
