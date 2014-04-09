@@ -29,9 +29,20 @@
 
 #define mprefix "[macpo] "
 
-enum { ACTION_NONE = 0, ACTION_INSTRUMENT, ACTION_ALIGNCHECK, ACTION_GENTRACE,
-        ACTION_VECTORSTRIDES, ACTION_TRIPCOUNT, ACTION_BRANCHPATH,
-        ACTION_OVERLAPCHECK, ACTION_STRIDECHECK };
+// Bitmap for ACTION values.
+// XXX: ACTION_NONE and ACTION_LAST are special actions!
+// Define all other actions after ACTION_NONE and before ACTION_LAST!
+
+const int16_t ACTION_NONE           = 0;
+const int16_t ACTION_INSTRUMENT     = 1 <<  0;
+const int16_t ACTION_ALIGNCHECK     = 1 <<  1;
+const int16_t ACTION_GENTRACE       = 1 <<  2;
+const int16_t ACTION_VECTORSTRIDES  = 1 <<  3;
+const int16_t ACTION_TRIPCOUNT      = 1 <<  4;
+const int16_t ACTION_BRANCHPATH     = 1 <<  5;
+const int16_t ACTION_OVERLAPCHECK   = 1 <<  6;
+const int16_t ACTION_STRIDECHECK    = 1 <<  7;
+const int16_t ACTION_LAST           = 1 <<  8;
 
 typedef struct {
     int16_t action;
@@ -44,5 +55,30 @@ typedef struct {
 } options_t;
 
 typedef std::vector<std::string> name_list_t;
+
+// Supporting routines for ACTION bitmap.
+inline void set_action(int16_t& bitmap, const int16_t _action) {
+    // Quick sanity checks on _action.
+    if (__builtin_popcount(_action) != 1)
+        return;
+
+    if (_action <= ACTION_NONE || _action >= ACTION_LAST)
+        return;
+
+    // Finally, set the bitmap.
+    bitmap |= _action;
+}
+
+inline bool is_action(int16_t bitmap, const int16_t _action) {
+    // Quick sanity checks on _action.
+    if (__builtin_popcount(_action) != 1)
+        return false;
+
+    if (_action <= ACTION_NONE || _action >= ACTION_LAST)
+        return false;
+
+    if (bitmap & _action)
+        return true;
+}
 
 #endif  // TOOLS_MACPO_INCLUDE_GENERIC_DEFS_H_

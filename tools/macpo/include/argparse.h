@@ -35,6 +35,7 @@ class argparse {
             std::string& function_name, int& line_number);
     static int parse_arguments(char* arg, options_t& options);
     static void init_options(options_t& options);
+    static bool validate_options(const options_t& options);
 };
 
 #endif  // TOOLS_MACPO_INCLUDE_ARGPARSE_H_

@@ -53,7 +53,7 @@ class MINST : public AstSimpleProcessing {
     bool is_same_file(const std::string& file_1, const std::string& file_2);
 
     void analyze_node(SgNode* node, int16_t action);
-    const analysis_profile_t run_analysis(SgNode* node, int16_t action);
+    const analysis_profile_list run_analysis(SgNode* node, int16_t action);
     void print_loop_processing_status(const loop_info_t& loop_info);
 
     statement_list_t statement_list;

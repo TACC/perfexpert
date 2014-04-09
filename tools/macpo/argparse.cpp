@@ -121,49 +121,49 @@ int argparse::parse_arguments(char* arg, options_t& options) {
         if (!value.size())
             return -1;
 
-        options.action = ACTION_INSTRUMENT;
+        set_action(options.action, ACTION_INSTRUMENT);
         parse_location(value, options.function_name, options.line_number);
     } else if (option == "check-alignment") {
         if (!value.size())
             return -1;
 
-        options.action = ACTION_ALIGNCHECK;
+        set_action(options.action, ACTION_ALIGNCHECK);
         parse_location(value, options.function_name, options.line_number);
     } else if (option == "record-tripcount") {
         if (!value.size())
             return -1;
 
-        options.action = ACTION_TRIPCOUNT;
+        set_action(options.action, ACTION_TRIPCOUNT);
         parse_location(value, options.function_name, options.line_number);
     } else if (option == "record-branchpath") {
         if (!value.size())
             return -1;
 
-        options.action = ACTION_BRANCHPATH;
+        set_action(options.action, ACTION_BRANCHPATH);
         parse_location(value, options.function_name, options.line_number);
     } else if (option == "gen-trace") {
         if (!value.size())
             return -1;
 
-        options.action = ACTION_GENTRACE;
+        set_action(options.action, ACTION_GENTRACE);
         parse_location(value, options.function_name, options.line_number);
     } else if (option == "vector-strides") {
         if (!value.size())
             return -1;
 
-        options.action = ACTION_VECTORSTRIDES;
+        set_action(options.action, ACTION_VECTORSTRIDES);
         parse_location(value, options.function_name, options.line_number);
     } else if (option == "overlap-check") {
         if (!value.size())
             return -1;
 
-        options.action = ACTION_OVERLAPCHECK;
+        set_action(options.action, ACTION_OVERLAPCHECK);
         parse_location(value, options.function_name, options.line_number);
     } else if (option == "stride-check") {
         if (!value.size())
             return -1;
 
-        options.action = ACTION_STRIDECHECK;
+        set_action(options.action, ACTION_STRIDECHECK);
         parse_location(value, options.function_name, options.line_number);
     } else if (option == "backup-filename") {
         if (!value.size())
@@ -193,4 +193,31 @@ void argparse::init_options(options_t& options) {
     options.line_number = 0;
     options.function_name = "";
     options.backup_filename = "";
+}
+
+bool argparse::validate_options(const options_t& options) {
+    // All valid actions require a non-empty function name.
+    if (options.action != ACTION_NONE && options.function_name == "") {
+        return false;
+    }
+
+    // Validate actions.
+    if (options.action <= ACTION_NONE || options.action >= ACTION_LAST) {
+        return false;
+    }
+
+    // ACTION_INSTRUMENT is an exclusive option.
+    if (is_action(options.action, ACTION_INSTRUMENT) &&
+            __builtin_popcount(options.action) != 1) {
+        return false;
+    }
+
+    // ACTION_GENTRACE is an exclusive option.
+    if (is_action(options.action, ACTION_GENTRACE) &&
+            __builtin_popcount(options.action) != 1) {
+        return false;
+    }
+
+    // Everything checked out well.
+    return true;
 }

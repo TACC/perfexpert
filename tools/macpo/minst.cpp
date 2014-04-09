@@ -50,7 +50,7 @@ MINST::MINST(const options_t& options, SgProject* project) {
     profile_analysis = options.profile_analysis;
 
     var_renaming = new VariableRenaming(project);
-    if (options.action == ACTION_ALIGNCHECK) {
+    if (is_action(options.action, ACTION_ALIGNCHECK)) {
         // If we are about to check alignment, run the VariableRenaming pass.
         var_renaming->run();
     }
@@ -170,110 +170,101 @@ bool MINST::is_same_file(const std::string& file_1, const std::string& file_2) {
     return strcmp(path_1, path_2) == 0;
 }
 
-const analysis_profile_t MINST::run_analysis(SgNode* node, int16_t action) {
-    switch (action) {
-        case ACTION_INSTRUMENT:
-            {
-                insert_map_function(node);
+const analysis_profile_list MINST::run_analysis(SgNode* node, int16_t action) {
+    std::vector<analysis_profile_t> profile_list;
+    if (is_action(action, ACTION_INSTRUMENT)) {
+        insert_map_function(node);
 
-                instrumentor_t inst;
-                inst.traverse(node, attrib());
+        instrumentor_t inst;
+        inst.traverse(node, attrib());
 
-                // Pull information from AST traversal.
-                stream_list = inst.get_stream_list();
-                statement_list.insert(statement_list.end(),
-                        inst.stmt_begin(), inst.stmt_end());
+        // Pull information from AST traversal.
+        stream_list = inst.get_stream_list();
+        statement_list.insert(statement_list.end(), inst.stmt_begin(),
+                inst.stmt_end());
 
-                return inst.get_analysis_profile();
-            }
-
-        case ACTION_ALIGNCHECK:
-            {
-                aligncheck_t visitor(var_renaming);
-                visitor.process_node(node);
-
-                statement_list.insert(statement_list.end(),
-                        visitor.stmt_begin(), visitor.stmt_end());
-
-                return visitor.get_analysis_profile();
-            }
-
-        case ACTION_TRIPCOUNT:
-            {
-                tripcount_t visitor(var_renaming);
-                visitor.process_node(node);
-
-                statement_list.insert(statement_list.end(),
-                        visitor.stmt_begin(), visitor.stmt_end());
-
-                return visitor.get_analysis_profile();
-            }
-
-        case ACTION_BRANCHPATH:
-            {
-                branchpath_t visitor(var_renaming);
-                visitor.process_node(node);
-
-                statement_list.insert(statement_list.end(),
-                        visitor.stmt_begin(), visitor.stmt_end());
-
-                return visitor.get_analysis_profile();
-            }
-
-        case ACTION_GENTRACE:
-            {
-                insert_map_function(node);
-
-                tracer_t tracer;
-                tracer.traverse(node, attrib());
-
-                // Pull information from AST traversal.
-                stream_list = tracer.get_stream_list();
-                statement_list.insert(statement_list.end(),
-                        tracer.stmt_begin(), tracer.stmt_end());
-
-                return tracer.get_analysis_profile();
-            }
-
-        case ACTION_VECTORSTRIDES:
-            {
-                insert_map_function(node);
-
-                vector_strides_t visitor(var_renaming);
-                visitor.process_node(node);
-
-                stream_list = visitor.get_stream_list();
-                statement_list.insert(statement_list.end(),
-                        visitor.stmt_begin(), visitor.stmt_end());
-
-                return visitor.get_analysis_profile();
-            }
-
-        case ACTION_OVERLAPCHECK:
-            {
-                pntr_overlap_t visitor(var_renaming);
-                visitor.process_node(node);
-
-                statement_list.insert(statement_list.end(),
-                        visitor.stmt_begin(), visitor.stmt_end());
-
-                return visitor.get_analysis_profile();
-            }
-
-        case ACTION_STRIDECHECK:
-            {
-                stride_check_t visitor(var_renaming);
-                visitor.process_node(node);
-
-                stream_list = visitor.get_stream_list();
-                statement_list.insert(statement_list.end(),
-                        visitor.stmt_begin(), visitor.stmt_end());
-
-                return visitor.get_analysis_profile();
-            }
+        profile_list.push_back(inst.get_analysis_profile());
     }
 
-    ROSE_ASSERT(false && "Invalid action!");
+    if (is_action(action, ACTION_ALIGNCHECK)) {
+        aligncheck_t visitor(var_renaming);
+        visitor.process_node(node);
+
+        statement_list.insert(statement_list.end(), visitor.stmt_begin(),
+                visitor.stmt_end());
+
+        profile_list.push_back(visitor.get_analysis_profile());
+    }
+
+    if (is_action(action, ACTION_TRIPCOUNT)) {
+        tripcount_t visitor(var_renaming);
+        visitor.process_node(node);
+
+        statement_list.insert(statement_list.end(), visitor.stmt_begin(),
+                visitor.stmt_end());
+
+        profile_list.push_back(visitor.get_analysis_profile());
+    }
+
+    if (is_action(action, ACTION_BRANCHPATH)) {
+        branchpath_t visitor(var_renaming);
+        visitor.process_node(node);
+
+        statement_list.insert(statement_list.end(), visitor.stmt_begin(),
+                visitor.stmt_end());
+
+        profile_list.push_back(visitor.get_analysis_profile());
+    }
+
+    if (is_action(action, ACTION_GENTRACE)) {
+        insert_map_function(node);
+
+        tracer_t tracer;
+        tracer.traverse(node, attrib());
+
+        // Pull information from AST traversal.
+        stream_list = tracer.get_stream_list();
+        statement_list.insert(statement_list.end(), tracer.stmt_begin(),
+                tracer.stmt_end());
+
+        profile_list.push_back(tracer.get_analysis_profile());
+    }
+
+    if (is_action(action, ACTION_VECTORSTRIDES)) {
+        insert_map_function(node);
+
+        vector_strides_t visitor(var_renaming);
+        visitor.process_node(node);
+
+        stream_list = visitor.get_stream_list();
+        statement_list.insert(statement_list.end(), visitor.stmt_begin(),
+                visitor.stmt_end());
+
+        profile_list.push_back(visitor.get_analysis_profile());
+    }
+
+    if (is_action(action, ACTION_OVERLAPCHECK)) {
+        pntr_overlap_t visitor(var_renaming);
+        visitor.process_node(node);
+
+        statement_list.insert(statement_list.end(), visitor.stmt_begin(),
+                visitor.stmt_end());
+
+        profile_list.push_back(visitor.get_analysis_profile());
+    }
+
+    if (is_action(action, ACTION_STRIDECHECK)) {
+        stride_check_t visitor(var_renaming);
+        visitor.process_node(node);
+
+        stream_list = visitor.get_stream_list();
+        statement_list.insert(statement_list.end(), visitor.stmt_begin(),
+                visitor.stmt_end());
+
+        profile_list.push_back(visitor.get_analysis_profile());
+    }
+
+    return profile_list;
 }
 
 void MINST::print_loop_processing_status(const loop_info_t& loop_info) {
@@ -318,18 +309,25 @@ void MINST::analyze_node(SgNode* node, int16_t action) {
     const std::string& file_name = file_info->get_filenameString();
     int line_number = file_info->get_line();
 
-    const analysis_profile_t& profile = run_analysis(node, action);
+    const analysis_profile_list& profile_list = run_analysis(node, action);
 
     if (profile_analysis) {
-        const loop_info_list_t& loop_info_list = profile.get_loop_info_list();
+        double analysis_time = 0;
+        for (analysis_profile_list::const_iterator it = profile_list.begin();
+                it != profile_list.end(); it++) {
+            const analysis_profile_t& profile = *it;
+            const loop_info_list_t& loop_info_list =
+                profile.get_loop_info_list();
 
-        for (loop_info_list_t::const_iterator it = loop_info_list.begin();
-                it != loop_info_list.end(); it++) {
-            const loop_info_t& loop_info = *it;
-            print_loop_processing_status(loop_info);
+            for (loop_info_list_t::const_iterator it = loop_info_list.begin();
+                    it != loop_info_list.end(); it++) {
+                const loop_info_t& loop_info = *it;
+                print_loop_processing_status(loop_info);
+            }
+
+            analysis_time += profile.get_running_time();
         }
 
-        const double analysis_time =  profile.get_running_time();
         std::cerr << mprefix << "Analysis time: " << analysis_time <<
             " second(s)." << std::endl;
     }
@@ -403,19 +401,15 @@ void MINST::visit(SgNode* node) {
             std::vector<SgExpression*> params, empty_params;
             int create_file, enable_sampling;
 
-            switch (action) {
-                case ACTION_NONE:
-                case ACTION_ALIGNCHECK:
-                case ACTION_TRIPCOUNT:
-                case ACTION_BRANCHPATH:
-                case ACTION_OVERLAPCHECK:
-                case ACTION_STRIDECHECK:
-                    create_file = 0;
-                    break;
-
-                default:
-                    create_file = 1;
-                    break;
+            if (action == ACTION_NONE ||
+                is_action(action, ACTION_ALIGNCHECK) ||
+                is_action(action, ACTION_TRIPCOUNT) ||
+                is_action(action, ACTION_BRANCHPATH) ||
+                is_action(action, ACTION_OVERLAPCHECK) ||
+                is_action(action, ACTION_STRIDECHECK)) {
+                create_file = 0;
+            } else {
+                create_file = 1;
             }
 
             // Use compiler argument.
@@ -436,22 +430,20 @@ void MINST::visit(SgNode* node) {
             insertStatementBefore(statement, expr_stmt);
             ROSE_ASSERT(expr_stmt);
 
-            switch (action) {
-                case ACTION_ALIGNCHECK:
-                case ACTION_TRIPCOUNT:
-                case ACTION_BRANCHPATH:
-                case ACTION_OVERLAPCHECK:
-                case ACTION_STRIDECHECK:
-                    break;
+            if (action == ACTION_NONE ||
+                is_action(action, ACTION_ALIGNCHECK) ||
+                is_action(action, ACTION_TRIPCOUNT) ||
+                is_action(action, ACTION_BRANCHPATH) ||
+                is_action(action, ACTION_OVERLAPCHECK) ||
+                is_action(action, ACTION_STRIDECHECK)) {
+            } else {
+                SgExprStatement* map_stmt = NULL;
+                map_stmt = ir_methods::prepare_call_statement(body,
+                        indigo__create_map, empty_params, expr_stmt);
+                insertStatementAfter(expr_stmt, map_stmt);
+                ROSE_ASSERT(map_stmt);
 
-                default:
-                    SgExprStatement* map_stmt = NULL;
-                    map_stmt = ir_methods::prepare_call_statement(body,
-                            indigo__create_map, empty_params, expr_stmt);
-                    insertStatementAfter(expr_stmt, map_stmt);
-                    ROSE_ASSERT(map_stmt);
-
-                    insert_map_prototype(node);
+                insert_map_prototype(node);
             }
         }
 

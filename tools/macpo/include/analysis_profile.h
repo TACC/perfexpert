@@ -22,6 +22,9 @@
 #ifndef TOOLS_MACPO_INCLUDE_ANALYSIS_PROFILE_H_
 #define TOOLS_MACPO_INCLUDE_ANALYSIS_PROFILE_H_
 
+#include <string>
+#include <vector>
+
 #include "inst_defs.h"
 
 class analysis_profile_t {
@@ -39,5 +42,7 @@ class analysis_profile_t {
     double start_time, end_time;
     loop_info_list_t loop_info_list;
 };
+
+typedef std::vector<analysis_profile_t> analysis_profile_list;
 
 #endif  // TOOLS_MACPO_INCLUDE_ANALYSIS_PROFILE_H_
