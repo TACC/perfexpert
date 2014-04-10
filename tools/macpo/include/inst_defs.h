@@ -49,6 +49,7 @@ struct tag_loop_info_t;
 typedef std::vector<struct tag_loop_info_t> loop_info_list_t;
 
 typedef std::vector<SgExpression*> expr_list_t;
+typedef std::vector<SgNode*> node_list_t;
 
 typedef struct tag_loop_info_t {
     SgScopeStatement* loop_stmt;

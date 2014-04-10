@@ -31,6 +31,16 @@
 using namespace SageBuilder;
 using namespace SageInterface;
 
+void ir_methods::match_end_of_constructs(SgNode* ref_node, SgNode* node) {
+    SgLocatedNode* located_stmt = isSgLocatedNode(node);
+    SgLocatedNode* located_ref = isSgLocatedNode(ref_node);
+
+    if (located_ref && located_stmt) {
+        Sg_File_Info* file_info = located_ref->get_endOfConstruct();
+        located_stmt->set_endOfConstruct(file_info);
+    }
+}
+
 bool ir_methods::create_spans(SgExpression* expr_init, SgExpression* expr_term,
         loop_info_t& loop_info) {
     SgExpression* idxv_expr = loop_info.idxv_expr;

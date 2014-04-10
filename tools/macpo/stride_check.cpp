@@ -19,47 +19,17 @@
  * $HEADER$
  */
 
-#include <rose.h>
-
 #include <string>
-#include <vector>
 
-#include "analysis_profile.h"
 #include "ir_methods.h"
-#include "loop_traversal.h"
 #include "stride_check.h"
 
 using namespace SageBuilder;
 using namespace SageInterface;
 
-stride_check_t::stride_check_t(VariableRenaming*& _var_renaming) {
-    var_renaming = _var_renaming;
-    loop_traversal = new loop_traversal_t(var_renaming);
-}
-
-stride_check_t::~stride_check_t() {
-    delete loop_traversal;
-    loop_traversal = NULL;
-}
-
-void stride_check_t::atTraversalStart() {
-    analysis_profile.start_timer();
-    stream_list.clear();
-    statement_list.clear();
-}
-
-void stride_check_t::atTraversalEnd() {
-    analysis_profile.end_timer();
-}
-
-name_list_t& stride_check_t::get_stream_list() {
-    return stream_list;
-}
-
-void stride_check_t::instrument_stride_checks(Sg_File_Info* fileInfo,
-        SgScopeStatement* outer_scope_stmt, loop_info_t& loop_info,
-        name_list_t& stream_list, expr_map_t& loop_map) {
+void stride_check_t::instrument_loop(loop_info_t& loop_info) {
     SgScopeStatement* loop_stmt = loop_info.loop_stmt;
+    Sg_File_Info* fileInfo = loop_stmt->get_file_info();
     reference_list_t& reference_list = loop_info.reference_list;
 
     // Is there anything to instrument?
@@ -90,8 +60,8 @@ void stride_check_t::instrument_stride_checks(Sg_File_Info* fileInfo,
     ir_methods::def_map_t def_map;
 
     // Check if this variable reference has just one definition.
-    VariableRenaming::NumNodeRenameTable rename_table =
-        var_renaming->getReachingDefsAtNode(loop_stmt);
+    VariableRenaming::NumNodeRenameTable rename_table = get_defs_at_node(
+            loop_stmt);
 
     // Expand the iterator list into a map for easier lookup.
     ir_methods::construct_def_map(rename_table, def_map);
@@ -122,6 +92,7 @@ void stride_check_t::instrument_stride_checks(Sg_File_Info* fileInfo,
 
                 SgSubtractOp* sub_op = new SgSubtractOp(fileInfo, copy_02,
                         copy_01, copy_01->get_type());
+                ir_methods::match_end_of_constructs(loop_stmt, sub_op);
                 record_stride_value(loop_stmt, expr, sub_op);
             }
         }
@@ -148,7 +119,7 @@ void stride_check_t::record_unknown_stride(SgScopeStatement* loop_stmt,
     stride_check_call.reference_statement = loop_stmt;
     stride_check_call.statement = call_stmt;
     stride_check_call.before = false;
-    statement_list.push_back(stride_check_call);
+    add_stmt(stride_check_call);
 }
 
 void stride_check_t::record_stride_value(SgScopeStatement* loop_stmt,
@@ -172,79 +143,5 @@ void stride_check_t::record_stride_value(SgScopeStatement* loop_stmt,
     stride_check_call.reference_statement = loop_stmt;
     stride_check_call.statement = call_stmt;
     stride_check_call.before = false;
-    statement_list.push_back(stride_check_call);
-}
-
-void stride_check_t::process_loop(SgScopeStatement* outer_scope_stmt,
-        loop_info_t& loop_info, expr_map_t& loop_map,
-        name_list_t& stream_list) {
-    int line_number = loop_info.loop_stmt->get_file_info()->get_raw_line();
-    loop_map[loop_info.idxv_expr] = &loop_info;
-
-    // Instrument this loop only if
-    // the loop header components have been identified.
-    // Allow empty init expressions (which is always the case with while and
-    // do-while loops).
-    if (loop_info.idxv_expr && loop_info.test_expr && loop_info.incr_expr
-            /* && !contains_non_linear_reference(loop_info.reference_list) */) {
-        loop_info.processed = true;
-
-        SgLocatedNode* located_outer_scope =
-            reinterpret_cast<SgLocatedNode*>(outer_scope_stmt);
-        Sg_File_Info *fileInfo =
-            Sg_File_Info::generateFileInfoForTransformationNode(
-                    located_outer_scope->get_file_info()->get_filenameString());
-
-        instrument_stride_checks(fileInfo, outer_scope_stmt, loop_info,
-                stream_list, loop_map);
-    }
-
-    for (std::vector<loop_info_list_t>::iterator it =
-                loop_info.child_loop_info.begin();
-                it != loop_info.child_loop_info.end(); it++) {
-        loop_info_list_t& loop_info_list = *it;
-        for (loop_info_list_t::iterator it2 = loop_info_list.begin();
-                it2 != loop_info_list.end(); it2++) {
-            loop_info_t& loop_info = *it2;
-            process_loop(outer_scope_stmt, loop_info, loop_map, stream_list);
-        }
-    }
-}
-
-void stride_check_t::process_node(SgNode* node) {
-    // Begin processing.
-    analysis_profile.start_timer();
-
-    // Since this is not really a traversal, manually invoke init function.
-    atTraversalStart();
-
-    loop_traversal->traverse(node, attrib());
-    loop_info_list_t& loop_info_list = loop_traversal->get_loop_info_list();
-
-    expr_map_t loop_map;
-    name_list_t stream_list;
-
-    for (loop_info_list_t::iterator it = loop_info_list.begin();
-            it != loop_info_list.end(); it++) {
-        loop_info_t& loop_info = *it;
-        process_loop(loop_info.loop_stmt, loop_info, loop_map, stream_list);
-    }
-
-    // Since this is not really a traversal, manually invoke atTraversalEnd();
-    atTraversalEnd();
-
-    analysis_profile.end_timer();
-    analysis_profile.set_loop_info_list(loop_info_list);
-}
-
-const analysis_profile_t& stride_check_t::get_analysis_profile() {
-    return analysis_profile;
-}
-
-const statement_list_t::iterator stride_check_t::stmt_begin() {
-    return statement_list.begin();
-}
-
-const statement_list_t::iterator stride_check_t::stmt_end() {
-    return statement_list.end();
+    add_stmt(stride_check_call);
 }

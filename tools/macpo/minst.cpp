@@ -140,6 +140,8 @@ void MINST::atTraversalEnd() {
             it != statement_list.end(); it++) {
         statement_info_t& statement_info = *it;
 
+        ir_methods::match_end_of_constructs(statement_info.reference_statement,
+                statement_info.statement);
         if (statement_info.before) {
             insertStatementBefore(statement_info.reference_statement,
                     statement_info.statement);

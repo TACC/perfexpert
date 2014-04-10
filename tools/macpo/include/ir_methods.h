@@ -54,6 +54,8 @@ class ir_methods {
     typedef std::map<std::string, VariableRenaming::NumNodeRenameEntry>
         def_map_t;
 
+    static void match_end_of_constructs(SgNode* ref_node, SgNode* stmt);
+
     static bool create_spans(SgExpression* expr_init, SgExpression* expr_term,
             loop_info_t& loop_info);
 

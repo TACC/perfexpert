@@ -22,6 +22,9 @@
 #ifndef TOOLS_MACPO_INCLUDE_LOOP_TRAVERSAL_H_
 #define TOOLS_MACPO_INCLUDE_LOOP_TRAVERSAL_H_
 
+#include <rose.h>
+#include <VariableRenaming.h>
+
 #include "generic_defs.h"
 #include "inst_defs.h"
 

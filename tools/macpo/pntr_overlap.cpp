@@ -19,38 +19,14 @@
  * $HEADER$
  */
 
-#include <rose.h>
-
-#include <algorithm>
 #include <string>
 #include <vector>
 
 #include "pntr_overlap.h"
-#include "analysis_profile.h"
-#include "generic_vars.h"
-#include "inst_defs.h"
 #include "ir_methods.h"
-#include "loop_traversal.h"
 
 using namespace SageBuilder;
 using namespace SageInterface;
-
-pntr_overlap_t::pntr_overlap_t(VariableRenaming*& _var_renaming) {
-    var_renaming = _var_renaming;
-    loop_traversal = new loop_traversal_t(var_renaming);
-}
-
-pntr_overlap_t::~pntr_overlap_t() {
-    delete loop_traversal;
-    loop_traversal = NULL;
-}
-
-void pntr_overlap_t::atTraversalStart() {
-    statement_list.clear();
-}
-
-void pntr_overlap_t::atTraversalEnd() {
-}
 
 void pntr_overlap_t::create_spans_for_child_loops(SgExpression* expr_init,
         SgExpression* expr_term, loop_info_t& loop_info) {
@@ -67,12 +43,12 @@ void pntr_overlap_t::create_spans_for_child_loops(SgExpression* expr_init,
     }
 }
 
-void pntr_overlap_t::instrument_overlap_checks(Sg_File_Info* fileInfo,
-        SgScopeStatement* outer_scope_stmt, loop_info_t& loop_info,
-        name_list_t& stream_list, expr_map_t& loop_map) {
+void pntr_overlap_t::instrument_loop(loop_info_t& loop_info) {
     SgScopeStatement* loop_stmt = loop_info.loop_stmt;
+    Sg_File_Info* fileInfo = loop_stmt->get_file_info();
+    int line_number = fileInfo->get_raw_line();
+
     reference_list_t& reference_list = loop_info.reference_list;
-    int line_number = loop_stmt->get_file_info()->get_raw_line();
 
     // Is there anything to instrument?
     if (reference_list.size() == 0)
@@ -131,8 +107,13 @@ void pntr_overlap_t::instrument_overlap_checks(Sg_File_Info* fileInfo,
     }
 
     expr_list.clear();
-    expr_list.push_back(new SgIntVal(fileInfo, line_number));
-    expr_list.push_back(new SgIntVal(fileInfo, params.size() / 2));
+    SgIntVal* val_line_number = new SgIntVal(fileInfo, line_number);
+    SgIntVal* val_params = new SgIntVal(fileInfo, params.size() / 2);
+    val_line_number->set_endOfConstruct(fileInfo);
+    val_params->set_endOfConstruct(fileInfo);
+
+    expr_list.push_back(val_line_number);
+    expr_list.push_back(val_params);
     expr_list.insert(expr_list.end(), params.begin(), params.end());
 
     params.clear();
@@ -149,6 +130,7 @@ void pntr_overlap_t::instrument_overlap_checks(Sg_File_Info* fileInfo,
             SgVariableDeclaration* decl = *it;
             removeStatement(decl);
             insertStatementBefore(loop_stmt, decl);
+            ir_methods::match_end_of_constructs(loop_stmt, decl);
         }
     }
 
@@ -162,79 +144,5 @@ void pntr_overlap_t::instrument_overlap_checks(Sg_File_Info* fileInfo,
     overlap_check_call.reference_statement = loop_stmt;
     overlap_check_call.statement = call_stmt;
     overlap_check_call.before = false;
-    statement_list.push_back(overlap_check_call);
-}
-
-void pntr_overlap_t::process_loop(SgScopeStatement* outer_scope_stmt,
-        loop_info_t& loop_info, expr_map_t& loop_map,
-        name_list_t& stream_list) {
-    int line_number = loop_info.loop_stmt->get_file_info()->get_raw_line();
-    loop_map[loop_info.idxv_expr] = &loop_info;
-
-    // Instrument this loop only if
-    // the loop header components have been identified.
-    // Allow empty init expressions (which is always the case with while and
-    // do-while loops).
-    if (loop_info.idxv_expr && loop_info.test_expr && loop_info.incr_expr
-            /* && !contains_non_linear_reference(loop_info.reference_list) */) {
-        loop_info.processed = true;
-
-        SgLocatedNode* located_outer_scope =
-            reinterpret_cast<SgLocatedNode*>(outer_scope_stmt);
-        Sg_File_Info *fileInfo =
-            Sg_File_Info::generateFileInfoForTransformationNode(
-                    located_outer_scope->get_file_info()->get_filenameString());
-
-        instrument_overlap_checks(fileInfo, outer_scope_stmt, loop_info,
-                stream_list, loop_map);
-    }
-
-    for (std::vector<loop_info_list_t>::iterator it =
-                loop_info.child_loop_info.begin();
-                it != loop_info.child_loop_info.end(); it++) {
-        loop_info_list_t& loop_info_list = *it;
-        for (loop_info_list_t::iterator it2 = loop_info_list.begin();
-                it2 != loop_info_list.end(); it2++) {
-            loop_info_t& loop_info = *it2;
-            process_loop(outer_scope_stmt, loop_info, loop_map, stream_list);
-        }
-    }
-}
-
-void pntr_overlap_t::process_node(SgNode* node) {
-    // Begin processing.
-    analysis_profile.start_timer();
-
-    // Since this is not really a traversal, manually invoke init function.
-    atTraversalStart();
-
-    loop_traversal->traverse(node, attrib());
-    loop_info_list_t& loop_info_list = loop_traversal->get_loop_info_list();
-
-    expr_map_t loop_map;
-    name_list_t stream_list;
-
-    for (loop_info_list_t::iterator it = loop_info_list.begin();
-            it != loop_info_list.end(); it++) {
-        loop_info_t& loop_info = *it;
-        process_loop(loop_info.loop_stmt, loop_info, loop_map, stream_list);
-    }
-
-    // Since this is not really a traversal, manually invoke atTraversalEnd();
-    atTraversalEnd();
-
-    analysis_profile.end_timer();
-    analysis_profile.set_loop_info_list(loop_info_list);
-}
-
-const analysis_profile_t& pntr_overlap_t::get_analysis_profile() {
-    return analysis_profile;
-}
-
-const statement_list_t::iterator pntr_overlap_t::stmt_begin() {
-    return statement_list.begin();
-}
-
-const statement_list_t::iterator pntr_overlap_t::stmt_end() {
-    return statement_list.end();
+    add_stmt(overlap_check_call);
 }

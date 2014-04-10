@@ -41,7 +41,7 @@ loop_info_list_t& loop_traversal_t::get_loop_info_list() {
 }
 
 attrib loop_traversal_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
-    if (attr.skip)
+    if (var_renaming == NULL || attr.skip)
         return attr;
 
     if (ir_methods::is_loop(node)) {

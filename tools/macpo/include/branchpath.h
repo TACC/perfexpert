@@ -22,48 +22,19 @@
 #ifndef TOOLS_MACPO_INCLUDE_BRANCHPATH_H_
 #define TOOLS_MACPO_INCLUDE_BRANCHPATH_H_
 
+#include <rose.h>
 #include <VariableRenaming.h>
 
-#include <map>
-#include <string>
-#include <vector>
-
-#include "analysis_profile.h"
-#include "generic_defs.h"
 #include "inst_defs.h"
-#include "loop_traversal.h"
+#include "traversal.h"
 
-class branchpath_t {
+class branchpath_t : public traversal_t {
  public:
-    typedef std::map<SgExpression*, loop_info_t*> expr_map_t;
-    typedef std::vector<SgPntrArrRefExp*> pntr_list_t;
-    typedef std::vector<SgNode*> node_list_t;
-    typedef std::map<std::string, node_list_t> sstore_map_t;
-
-    explicit branchpath_t(VariableRenaming*& _var_renaming);
-    ~branchpath_t();
-
-    void atTraversalEnd();
-    void atTraversalStart();
-
-    void process_node(SgNode* node);
-    void process_loop(SgScopeStatement* scope_stmt,
-            loop_info_t& loop_info_t, expr_map_t& loop_map,
-            name_list_t& stream_list);
-
-    const analysis_profile_t& get_analysis_profile();
-
-    const statement_list_t::iterator stmt_begin();
-    const statement_list_t::iterator stmt_end();
+    explicit branchpath_t(VariableRenaming*& _var_renaming) :
+        traversal_t(_var_renaming) {}
 
  private:
-    void instrument_branches(Sg_File_Info* fileInfo,
-            SgScopeStatement* scope_stmt, SgExpression* idxv_expr);
-
-    VariableRenaming* var_renaming;
-    statement_list_t statement_list;
-    analysis_profile_t analysis_profile;
-    loop_traversal_t* loop_traversal;
+    void instrument_loop(loop_info_t& loop_info);
 };
 
 #endif  // TOOLS_MACPO_INCLUDE_BRANCHPATH_H_
