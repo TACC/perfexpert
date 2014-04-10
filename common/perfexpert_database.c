@@ -124,6 +124,11 @@ int perfexpert_database_disconnect(sqlite3 *db) {
     sqlite3_backup *pBackup;
     sqlite3 *disk_db;
 
+    /* Sanity check: only disconnect from a DB which is connected */
+    if (NULL == db) {
+        return PERFEXPERT_SUCCESS;
+    }
+
     /* Open the DB on disk */
     PERFEXPERT_ALLOC(char, my_file,
         (strlen(PERFEXPERT_DB) + strlen(globals.workdir) + 2));
