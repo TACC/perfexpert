@@ -114,7 +114,11 @@ typedef enum {
     PERFEXPERT_PHASE_ANALYZE,
     PERFEXPERT_PHASE_RECOMMEND,
     PERFEXPERT_PHASE_UNDEFINED,
+    PERFEXPERT_PHASE_MAXIMUM,
 } perfexpert_step_phase_t;
+
+/* Step phase name */
+extern char *perfexpert_phase_name[PERFEXPERT_PHASE_MAXIMUM];
 
 /* Workflow step structure */
 typedef struct {

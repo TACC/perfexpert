@@ -46,6 +46,11 @@
 /* Module global variables */
 module_globals_t module_globals;
 
+/* PerfExpert phase name */
+char *perfexpert_phase_name[] = {
+    "compile", "instrument", "measure", "analyze", "recommend", NULL
+};
+
 /* my_init (runs automatically in loading time) */
 void __attribute__ ((constructor)) my_init(void) {
     perfexpert_list_construct(&(module_globals.modules));
