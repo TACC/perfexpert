@@ -58,9 +58,9 @@ globals_t globals; // Variable to hold global options, this one is OK
 /* main, life starts here */
 int main(int argc, char** argv) {
     char *str = NULL, *cwd = NULL, template[33] = { 0 };
+    int rc = PERFEXPERT_ERROR, i = 0;
     perfexpert_module_t *m = NULL;
     perfexpert_step_t *s = NULL;
-    int rc = PERFEXPERT_ERROR;
     struct tm *lt;
     time_t t;
 
@@ -270,21 +270,35 @@ int main(int argc, char** argv) {
     }
 
     /* Remove the garbage */
-    if (PERFEXPERT_TRUE == globals.remove_garbage) {
-        OUTPUT_VERBOSE((1, "%s", _BLUE("Removing temporary directory")));
-        if (PERFEXPERT_SUCCESS != perfexpert_util_remove_dir(globals.workdir)) {
-            OUTPUT(("unable to remove work directory (%s)", globals.workdir));
+    if (NULL != globals.workdir) {
+        if (PERFEXPERT_TRUE == globals.remove_garbage) {
+            OUTPUT_VERBOSE((1, "%s", _BLUE("Removing temporary directory")));
+            if (PERFEXPERT_SUCCESS !=
+                perfexpert_util_remove_dir(globals.workdir)) {
+                OUTPUT(("unable to remove work directory (%s)",
+                    globals.workdir));
+            }
+        } else {
+            OUTPUT(("%s [%s]", _CYAN("Temporary files are available in"),
+                globals.workdir));
         }
-    } else {
-        OUTPUT(("%s [%s]", _CYAN("Temporary files are available in"),
-            globals.workdir));
     }
 
     OUTPUT(("%s %llu", _YELLOW("The unique ID of this PerfExpert run is:"),
         globals.unique_id));
 
     /* Free memory */
+    i = 0;
+    while (NULL != globals.program_argv[i]) {
+        PERFEXPERT_DEALLOC(globals.program_argv[i]);
+        i++;
+    }
+    PERFEXPERT_DEALLOC(globals.dbfile);
     PERFEXPERT_DEALLOC(globals.workdir);
+    PERFEXPERT_DEALLOC(globals.moduledir);
+    PERFEXPERT_DEALLOC(globals.program);
+    PERFEXPERT_DEALLOC(globals.program_path);
+    PERFEXPERT_DEALLOC(globals.program_full);
 
     return rc;
 }
