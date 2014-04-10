@@ -371,7 +371,7 @@ int perfexpert_module_requires(const char *a, perfexpert_step_phase_t pa,
         x++;
     }
 
-    /* Paranoia? Maybe! Anyway, it doens't hurt. Do both phases exist? */
+    /* Paranoia? Maybe! Anyway, it doesn't hurt. Do both phases exist? */
     if ((NULL == sa) || ((NULL == sb) && (NULL != b))) {
         OUTPUT(("%s [A=%s/%d,B=%s/%d]", _ERROR("The requested module/phase "
             "is not available. Hopefully, the module will abort the execution "
@@ -407,7 +407,10 @@ int perfexpert_module_requires(const char *a, perfexpert_step_phase_t pa,
                     (perfexpert_list_item_t *)t, xa);
             }
         } else if (PERFEXPERT_MODULE_CLONE_AFTER == o) {
-            t = perfexpert_step_clone(sb);
+            if (NULL == (t = perfexpert_step_clone(sb))) {
+                OUTPUT(("%s", _ERROR("no compile module/phase found")));
+                return PERFEXPERT_ERROR;
+            }
             if (NULL != t) {
                 OUTPUT_VERBOSE((1, "%s: %s/%d requires %s/%d after",
                     _RED("cloning step"), sa->name, pa, t->name, t->phase));
@@ -634,6 +637,13 @@ static int perfexpert_phase_add(perfexpert_module_t *m,
 static perfexpert_step_t* perfexpert_step_clone(perfexpert_step_t *s) {
     perfexpert_step_t *n = NULL;
 
+    /* Sanity check: I can only clone steps which already exists! */
+    if (NULL == s) {
+        OUTPUT(("%s", _ERROR("attempted to clone unexistent step")));
+        return NULL;
+    }
+
+    /* Clone the step */
     PERFEXPERT_ALLOC(perfexpert_step_t, n, sizeof(perfexpert_step_t));
     PERFEXPERT_ALLOC(char, n->name, (strlen(s->name) + 1));
     perfexpert_list_item_construct((perfexpert_list_item_t *)n);
