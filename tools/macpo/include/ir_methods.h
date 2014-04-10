@@ -142,9 +142,6 @@ class ir_methods {
     static bool in_write_set(SgStatement* statement, SgExpression* expr);
     static SgExpression* rhs_expression(SgStatement* statement);
 
-    static SgExpression* get_final_value(Sg_File_Info* file_info,
-            SgExpression* test_expr, SgExpression* incr_expr, int incr_op);
-
     static void incr_components(Sg_File_Info*& fileInfo,
             SgExpression*& expr, SgExpression*& incr_expr, int& incr_op);
 };   /* ir_methods */

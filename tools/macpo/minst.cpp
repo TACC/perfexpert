@@ -120,10 +120,12 @@ void MINST::atTraversalEnd() {
                 std::vector<SgExpression*> expr_vector;
                 SgStringVal* param_stream_name = new SgStringVal(file_info,
                         stream_name);
+                param_stream_name->set_endOfConstruct(file_info);
                 expr_vector.push_back(param_stream_name);
 
                 SgIntVal* param_length = new SgIntVal(file_info,
                         stream_name.size());
+                param_length->set_endOfConstruct(file_info);
                 expr_vector.push_back(param_length);
 
                 SgExprStatement* write_idx_call =

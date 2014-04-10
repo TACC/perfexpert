@@ -81,7 +81,9 @@ bool stride_check_t::instrument_loop(loop_info_t& loop_info) {
             if (ir_methods::is_linear_reference(pntr, false) == false) {
                 record_unknown_stride(loop_stmt, expr);
             } else if (isConstType(index_expr->get_type()) == true) {
-                record_stride_value(loop_stmt, expr, new SgIntVal(fileInfo, 0));
+                SgIntVal* val_zero = new SgIntVal(fileInfo, 0);
+                val_zero->set_endOfConstruct(fileInfo);
+                record_stride_value(loop_stmt, expr, val_zero);
             } else {
                 SgExpression* copy_01 = copyExpression(index_expr);
                 SgExpression* copy_02 = copyExpression(index_expr);
@@ -95,6 +97,7 @@ bool stride_check_t::instrument_loop(loop_info_t& loop_info) {
 
                 SgSubtractOp* sub_op = new SgSubtractOp(fileInfo, copy_02,
                         copy_01, copy_01->get_type());
+                sub_op->set_endOfConstruct(fileInfo);
                 ir_methods::match_end_of_constructs(loop_stmt, sub_op);
                 record_stride_value(loop_stmt, expr, sub_op);
             }

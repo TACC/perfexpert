@@ -52,6 +52,9 @@ bool tripcount_t::instrument_loop(loop_info_t& loop_info) {
         SgExprStatement* incr_statement = new SgExprStatement(fileInfo,
                 incr_op);
 
+        incr_op->set_endOfConstruct(fileInfo);
+        incr_statement->set_endOfConstruct(fileInfo);
+
         std::string function_name = SageInterface::is_Fortran_language()
             ? "indigo__tripcount_check_f" : "indigo__tripcount_check_c";
 

@@ -39,6 +39,8 @@
 
 #include <stdint.h>
 #include <sys/time.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include "macpo_record.h"
 
@@ -180,7 +182,6 @@ static void getProcessorName(char* string) {
 
 static size_t numCores = 0;
 static __thread int coreID=-1;
-static char szFilename[256]={0};
 static volatile sig_atomic_t sleeping = 0, access_count = 0;
 static int fd = -1, sleep_sec = 0, new_sleep_sec = 1;
 static int *intel_apic_mapping = NULL;

@@ -88,6 +88,8 @@ bool vector_strides_t::instrument_loop(loop_info_t& loop_info) {
 
         SgIntVal* param_line_number = new SgIntVal(fileInfo, line_number);
         SgIntVal* param_idx = new SgIntVal(fileInfo, reference_info.idx);
+        param_line_number->set_endOfConstruct(fileInfo);
+        param_idx->set_endOfConstruct(fileInfo);
 
         SgExpression* expr = isSgExpression(ref_node);
         ROSE_ASSERT(expr);
@@ -109,6 +111,7 @@ bool vector_strides_t::instrument_loop(loop_info_t& loop_info) {
 
         SgType* type = expr->get_type();
         SgSizeOfOp* size_of_op = new SgSizeOfOp(fileInfo, NULL, type, type);
+        size_of_op->set_endOfConstruct(fileInfo);
 
         ROSE_ASSERT(size_of_op);
 

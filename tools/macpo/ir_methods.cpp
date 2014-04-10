@@ -93,6 +93,8 @@ std::vector<SgVariableDeclaration*> ir_methods::get_var_decls(SgForStatement*
 
 SgExpression* ir_methods::get_terminal_expr(SgExpression* idxv,
         SgExpression* incr, int incr_op) {
+    SgBinaryOp* op = NULL;
+
     SgType* type = idxv->get_type();
     Sg_File_Info* file_info = idxv->get_file_info();
 
@@ -100,16 +102,25 @@ SgExpression* ir_methods::get_terminal_expr(SgExpression* idxv,
     // using the same index and increment expressions.
     switch (incr_op) {
         case OP_ADD:
-            return new SgSubtractOp(file_info, idxv, incr, type);
+            op = new SgSubtractOp(file_info, idxv, incr, type);
+            break;
 
         case OP_SUB:
-            return new SgAddOp(file_info, idxv, incr, type);
+            op = new SgAddOp(file_info, idxv, incr, type);
+            break;
 
         case OP_MUL:
-            return new SgDivideOp(file_info, idxv, incr, type);
+            op = new SgDivideOp(file_info, idxv, incr, type);
+            break;
 
         case OP_DIV:
-            return new SgMultiplyOp(file_info, idxv, incr, type);
+            op = new SgMultiplyOp(file_info, idxv, incr, type);
+            break;
+    }
+
+    if (op != NULL) {
+        op->set_endOfConstruct(file_info);
+        return op;
     }
 
     // If we don't know the operation,
@@ -176,10 +187,14 @@ void ir_methods::place_alignment_checks(expr_list_t& expr_list,
         std::vector<SgExpression*> params;
 
         int line_number = loop_stmt->get_file_info()->get_raw_line();
-        params.push_back(new SgIntVal(fileInfo, line_number));
+        SgIntVal* val_line_number = new SgIntVal(fileInfo, line_number);
+        val_line_number->set_endOfConstruct(fileInfo);
+        params.push_back(val_line_number);
 
         int address_count = addresses.size();
-        params.push_back(new SgIntVal(fileInfo, address_count));
+        SgIntVal* val_address_count = new SgIntVal(fileInfo, address_count);
+        val_address_count->set_endOfConstruct(fileInfo);
+        params.push_back(val_address_count);
 
         // Now push all of the addresses.
         params.insert(params.end(), addresses.begin(), addresses.end());
@@ -194,6 +209,7 @@ void ir_methods::place_alignment_checks(expr_list_t& expr_list,
                 function_name, params, first_statement);
 
         SgBasicBlock* aligncheck_list = new SgBasicBlock(fileInfo);
+        aligncheck_list->set_endOfConstruct(fileInfo);
         aligncheck_list->append_statement(call_stmt);
 
         // Create new integer variable called
@@ -235,17 +251,23 @@ void ir_methods::place_alignment_checks(expr_list_t& expr_list,
 
         // Create the expression statement.
         SgExpression* guard_condition = NULL;
+        SgLongIntVal* val_zero = new SgLongIntVal(fileInfo, 0);
+        val_zero->set_endOfConstruct(fileInfo);
         guard_condition = new SgEqualityOp(fileInfo, buildVarRefExp(var_name),
-                new SgLongIntVal(fileInfo, 0), long_type);
+                val_zero, long_type);
+        guard_condition->set_endOfConstruct(fileInfo);
 
         SgExprStatement* guard_condition_stmt = NULL;
         guard_condition_stmt = new SgExprStatement(fileInfo, guard_condition);
+        guard_condition->set_endOfConstruct(fileInfo);
         guard_condition->set_parent(guard_condition_stmt);
 
         // Create statement to reset guard value.
         SgExprStatement* reset_guard_stmt = NULL;
+        SgIntVal* val_one = new SgIntVal(fileInfo, 1);
+        val_one->set_endOfConstruct(fileInfo);
         reset_guard_stmt = ir_methods::create_long_assign_statement(fileInfo,
-                var_name, new SgIntVal(fileInfo, 1));
+                var_name, val_one);
         aligncheck_list->append_statement(reset_guard_stmt);
         reset_guard_stmt->set_parent(aligncheck_list);
 
@@ -253,6 +275,7 @@ void ir_methods::place_alignment_checks(expr_list_t& expr_list,
         if (SgIfStmt* init_guard = new SgIfStmt(fileInfo)) {
             init_guard->set_conditional(guard_condition_stmt);
             init_guard->set_true_body(aligncheck_list);
+            init_guard->set_endOfConstruct(fileInfo);
 
             aligncheck_list->set_parent(init_guard);
             guard_condition_stmt->set_parent(init_guard);
@@ -310,6 +333,9 @@ SgExprStatement* ir_methods::create_long_assign_statement(Sg_File_Info*
     SgAssignOp* assign_op = new SgAssignOp(fileInfo, expr, value, long_type);
     SgExprStatement* assign_stmt = new SgExprStatement(fileInfo, assign_op);
 
+    assign_op->set_endOfConstruct(fileInfo);
+    assign_stmt->set_endOfConstruct(fileInfo);
+
     return assign_stmt;
 }
 
@@ -320,6 +346,9 @@ SgExprStatement* ir_methods::create_long_incr_statement(Sg_File_Info* fileInfo,
     SgPlusPlusOp* incr_op = new SgPlusPlusOp(fileInfo, expr, long_type);
     SgExprStatement* incr_statement = new SgExprStatement(fileInfo, incr_op);
 
+    incr_op->set_endOfConstruct(fileInfo);
+    incr_statement->set_endOfConstruct(fileInfo);
+
     return incr_statement;
 }
 
@@ -329,6 +358,7 @@ SgVariableDeclaration* ir_methods::create_long_variable(Sg_File_Info* fileInfo,
     SgVariableDeclaration* var_decl = new SgVariableDeclaration(fileInfo,
             name, long_type, buildAssignInitializer(buildIntVal(init_value)));
 
+    var_decl->set_endOfConstruct(fileInfo);
     return var_decl;
 }
 
@@ -339,6 +369,7 @@ SgVariableDeclaration* ir_methods::create_long_variable_with_init(
     SgVariableDeclaration* var_decl = new SgVariableDeclaration(fileInfo,
             name, long_type, buildAssignInitializer(initializer));
 
+    var_decl->set_endOfConstruct(fileInfo);
     return var_decl;
 }
 
@@ -477,9 +508,11 @@ void ir_methods::incr_components(Sg_File_Info*& fileInfo, SgExpression*& expr,
         } else if (SgMinusMinusOp* minus_op = isSgMinusMinusOp(incr_unary_op)) {
             incr_op = OP_SUB;
             incr_expr = new SgIntVal(fileInfo, 1);
+            incr_expr->set_endOfConstruct(fileInfo);
         } else if (SgPlusPlusOp* plus_op = isSgPlusPlusOp(incr_unary_op)) {
             incr_op = OP_ADD;
             incr_expr = new SgIntVal(fileInfo, 1);
+            incr_expr->set_endOfConstruct(fileInfo);
         }
     }
 }
@@ -1138,27 +1171,4 @@ void ir_methods::replace_expr(SgExpression*& expr, SgExpression*& search_expr,
 bool ir_methods::is_loop(SgNode* node) {
     return isSgFortranDo(node) || isSgForStatement(node) || isSgWhileStmt(node)
         || isSgDoWhileStmt(node);
-}
-
-SgExpression* ir_methods::get_final_value(Sg_File_Info* file_info,
-        SgExpression* test_expr, SgExpression* incr_expr, int incr_op) {
-    if (test_expr && incr_expr) {
-        SgType* type = test_expr->get_type();
-
-        switch (incr_op) {
-            case OP_ADD:
-                return new SgSubtractOp(file_info, test_expr, incr_expr, type);
-
-            case OP_SUB:
-                return new SgAddOp(file_info, test_expr, incr_expr, type);
-
-            case OP_MUL:
-                return new SgDivideOp(file_info, test_expr, incr_expr, type);
-
-            case OP_DIV:
-                return new SgMultiplyOp(file_info, test_expr, incr_expr, type);
-        }
-    }
-
-    return NULL;
 }

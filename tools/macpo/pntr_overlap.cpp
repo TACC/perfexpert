@@ -57,6 +57,7 @@ bool pntr_overlap_t::instrument_loop(loop_info_t& loop_info) {
     SgStatement* loop_body = loop_stmt->firstStatement();
     SgBasicBlock* loop_bb = getEnclosingNode<SgBasicBlock>(loop_body);
     SgBasicBlock* aligncheck_list = new SgBasicBlock(fileInfo);
+    aligncheck_list->set_endOfConstruct(fileInfo);
 
     // Save expressions after stripping unary operands.
     expr_list_t expr_list;

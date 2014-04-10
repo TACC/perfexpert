@@ -115,6 +115,9 @@ attrib tracer_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
         SgIntVal* param_line_number = new SgIntVal(fileInfo, line_number);
         SgIntVal* param_idx = new SgIntVal(fileInfo, ref_idx);
         SgIntVal* param_read_write = new SgIntVal(fileInfo, ref_access_type);
+        param_line_number->set_endOfConstruct(fileInfo);
+        param_idx->set_endOfConstruct(fileInfo);
+        param_read_write->set_endOfConstruct(fileInfo);
 
         std::string function_name = SageInterface::is_Fortran_language() ?
             "indigo__gen_trace_f" : "indigo__gen_trace_c";
