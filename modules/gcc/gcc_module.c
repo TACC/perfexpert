@@ -98,8 +98,6 @@ int module_fini(void) {
 
 /* module_compile */
 int module_compile(void) {
-    OUTPUT(("%s [%s]", _YELLOW("Compiling"), globals.program));
-
     if (PERFEXPERT_SUCCESS != run_gcc()) {
         OUTPUT(("%s", _ERROR("error running 'make'")));
         return PERFEXPERT_ERROR;
