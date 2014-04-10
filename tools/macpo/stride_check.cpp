@@ -114,6 +114,13 @@ void stride_check_t::record_unknown_stride(SgScopeStatement* loop_stmt,
             line_number);
     line_number_val->set_endOfConstruct(loop_stmt->get_endOfConstruct());
 
+    SgStatement* ref_stmt = loop_stmt;
+    SgOmpBodyStatement* omp_body_stmt = NULL;
+    omp_body_stmt = getEnclosingNode<SgOmpBodyStatement>(ref_stmt);
+    if (omp_body_stmt) {
+        ref_stmt = omp_body_stmt;
+    }
+
     expr_list_t expr_list;
     expr_list.push_back(line_number_val);
 
@@ -124,7 +131,7 @@ void stride_check_t::record_unknown_stride(SgScopeStatement* loop_stmt,
             function_name, expr_list, loop_stmt);
 
     statement_info_t stride_check_call;
-    stride_check_call.reference_statement = loop_stmt;
+    stride_check_call.reference_statement = ref_stmt;
     stride_check_call.statement = call_stmt;
     stride_check_call.before = false;
     add_stmt(stride_check_call);
@@ -137,6 +144,13 @@ void stride_check_t::record_stride_value(SgScopeStatement* loop_stmt,
             line_number);
     line_number_val->set_endOfConstruct(loop_stmt->get_endOfConstruct());
 
+    SgStatement* ref_stmt = loop_stmt;
+    SgOmpBodyStatement* omp_body_stmt = NULL;
+    omp_body_stmt = getEnclosingNode<SgOmpBodyStatement>(ref_stmt);
+    if (omp_body_stmt) {
+        ref_stmt = omp_body_stmt;
+    }
+
     expr_list_t expr_list;
     expr_list.push_back(line_number_val);
     expr_list.push_back(stride);
@@ -148,7 +162,7 @@ void stride_check_t::record_stride_value(SgScopeStatement* loop_stmt,
             function_name, expr_list, loop_stmt);
 
     statement_info_t stride_check_call;
-    stride_check_call.reference_statement = loop_stmt;
+    stride_check_call.reference_statement = ref_stmt;
     stride_check_call.statement = call_stmt;
     stride_check_call.before = false;
     add_stmt(stride_check_call);

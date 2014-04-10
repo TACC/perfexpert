@@ -56,6 +56,14 @@ bool vector_strides_t::instrument_loop(loop_info_t& loop_info) {
         return false;
     }
 
+    SgStatement* loop_body = NULL;
+    if (SgForStatement* for_stmt = isSgForStatement(loop_stmt))
+        loop_body = for_stmt->get_loop_body();
+    else if (SgWhileStmt* while_stmt = isSgWhileStmt(loop_stmt))
+        loop_body = while_stmt->get_body();
+    else if (SgDoWhileStmt* do_while_stmt = isSgDoWhileStmt(loop_stmt))
+        loop_body = do_while_stmt->get_body();
+
     generic_vars_t generic_vars(true);
     generic_vars.traverse(loop_stmt, attrib());
     reference_list_t& var_list = generic_vars.get_reference_list();
@@ -66,6 +74,11 @@ bool vector_strides_t::instrument_loop(loop_info_t& loop_info) {
         reference_info_t& reference_info = *it;
         std::string stream = reference_info.name;
         SgNode* ref_node = reference_info.node;
+
+        // Skip references that are not a part of the loop body.
+        if (ir_methods::is_ancestor(ref_node, loop_body) == false) {
+            continue;
+        }
 
         if (count == reference_info.idx) {
             add_stream(stream);
@@ -107,7 +120,7 @@ bool vector_strides_t::instrument_loop(loop_info_t& loop_info) {
                     buildPointerType(buildVoidType()));
 
         std::string function_name = SageInterface::is_Fortran_language() ?
-                "indigo__vector_stride_f" : "indigo__vector_stride_c";
+            "indigo__vector_stride_f" : "indigo__vector_stride_c";
 
         SgType* type = expr->get_type();
         SgSizeOfOp* size_of_op = new SgSizeOfOp(fileInfo, NULL, type, type);

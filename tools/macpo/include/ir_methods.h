@@ -61,8 +61,7 @@ class ir_methods {
 
     static SgExpression* strip_unary_operators(SgExpression* expr);
 
-    static std::vector<SgVariableDeclaration*> get_var_decls(SgForStatement*
-            for_stmt);
+    static std::vector<SgStatement*> get_var_decls(SgForStatement* for_stmt);
 
     static SgExpression* get_terminal_expr(SgExpression* idxv,
             SgExpression* incr, int incr_op);

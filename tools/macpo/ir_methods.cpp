@@ -72,9 +72,8 @@ bool ir_methods::create_spans(SgExpression* expr_init, SgExpression* expr_term,
     return false;
 }
 
-std::vector<SgVariableDeclaration*> ir_methods::get_var_decls(SgForStatement*
-        for_stmt) {
-    std::vector<SgVariableDeclaration*> var_decls;
+std::vector<SgStatement*> ir_methods::get_var_decls(SgForStatement* for_stmt) {
+    std::vector<SgStatement*> var_decls;
     SgForInitStatement* for_init_stmt = for_stmt->get_for_init_stmt();
     SgStatementPtrList init_list = for_init_stmt->get_init_stmt();
     if (init_list.size()) {
@@ -84,6 +83,11 @@ std::vector<SgVariableDeclaration*> ir_methods::get_var_decls(SgForStatement*
             SgVariableDeclaration* var_decl = NULL;
             if (var_decl = isSgVariableDeclaration(stmt)) {
                 var_decls.push_back(var_decl);
+            } else if (SgExprStatement* expr_stmt = isSgExprStatement(stmt)) {
+                SgExpression* expr = expr_stmt->get_expression();
+                if (isSgAssignOp(expr)) {
+                    var_decls.push_back(expr_stmt);
+                }
             }
         }
     }
@@ -276,6 +280,7 @@ void ir_methods::place_alignment_checks(expr_list_t& expr_list,
             init_guard->set_conditional(guard_condition_stmt);
             init_guard->set_true_body(aligncheck_list);
             init_guard->set_endOfConstruct(fileInfo);
+            init_guard->set_parent(loop_stmt);
 
             aligncheck_list->set_parent(init_guard);
             guard_condition_stmt->set_parent(init_guard);

@@ -114,19 +114,27 @@ bool pntr_overlap_t::instrument_loop(loop_info_t& loop_info) {
 
     params.clear();
 
+    SgStatement* ref_stmt = loop_stmt;
+    SgOmpBodyStatement* omp_body_stmt = NULL;
+    omp_body_stmt = getEnclosingNode<SgOmpBodyStatement>(ref_stmt);
+    if (omp_body_stmt) {
+        ref_stmt = omp_body_stmt;
+    }
+
     // One last thing before adding the instrumentation call.
     // If there are any variable declarations in
     // the for-initialization, then hoist them outside the for loop.
     if (SgForStatement* for_stmt = isSgForStatement(loop_stmt)) {
-        std::vector<SgVariableDeclaration*> decl_list =
+        std::vector<SgStatement*> decl_list =
             ir_methods::get_var_decls(for_stmt);
 
-        for (std::vector<SgVariableDeclaration*>::iterator it =
-                decl_list.begin(); it != decl_list.end(); it++) {
-            SgVariableDeclaration* decl = *it;
-            removeStatement(decl);
-            insertStatementBefore(loop_stmt, decl);
-            ir_methods::match_end_of_constructs(loop_stmt, decl);
+        for (std::vector<SgStatement*>::iterator it = decl_list.begin();
+                it != decl_list.end(); it++) {
+            SgStatement* decl = *it;
+            // Don't *move*, instead *copy*.
+            SgStatement* copy_stmt = copyStatement(decl);
+            insertStatementBefore(ref_stmt, copy_stmt);
+            ir_methods::match_end_of_constructs(ref_stmt, copy_stmt);
         }
     }
 
@@ -137,7 +145,7 @@ bool pntr_overlap_t::instrument_loop(loop_info_t& loop_info) {
 
     expr_list_t param_list;
     statement_info_t overlap_check_call;
-    overlap_check_call.reference_statement = loop_stmt;
+    overlap_check_call.reference_statement = ref_stmt;
     overlap_check_call.statement = call_stmt;
     overlap_check_call.before = false;
     add_stmt(overlap_check_call);

@@ -142,14 +142,14 @@ void MINST::atTraversalEnd() {
             it != statement_list.end(); it++) {
         statement_info_t& statement_info = *it;
 
-        ir_methods::match_end_of_constructs(statement_info.reference_statement,
-                statement_info.statement);
+        SgStatement* ref_stmt = statement_info.reference_statement;
+        SgStatement* stmt = statement_info.statement;
+
+        ir_methods::match_end_of_constructs(ref_stmt, stmt);
         if (statement_info.before) {
-            insertStatementBefore(statement_info.reference_statement,
-                    statement_info.statement);
+            insertStatementBefore(ref_stmt, stmt);
         } else {
-            insertStatementAfter(statement_info.reference_statement,
-                    statement_info.statement);
+            insertStatementAfter(ref_stmt, stmt);
         }
     }
 }
