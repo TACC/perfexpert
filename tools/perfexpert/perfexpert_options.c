@@ -218,7 +218,7 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
             bzero(str, MAX_BUFFER_SIZE);
             sprintf(str, "hpctoolkit,inputfile=%s", arg ? arg : "(null)");
             if (PERFEXPERT_SUCCESS != set_module_option(str)) {
-                return PERFEXPERT_ERROR;
+                argp_error(state, "error setting module option");
             }
             break;
 
@@ -232,7 +232,7 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
         case 'M':
             OUTPUT_VERBOSE((1, "option 'M' set [%s]", arg ? arg : "(null)"));
             if (PERFEXPERT_SUCCESS != load_module(arg)) {
-                exit(1);
+                argp_error(state, "error loading module");
             }
             break;
 
@@ -240,7 +240,7 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
         case 'O':
             OUTPUT_VERBOSE((1, "option 'O' set [%s]", arg ? arg : "(null)"));
             if (PERFEXPERT_SUCCESS != set_module_option(arg)) {
-                exit(1);
+                argp_error(state, "error setting module option");
             }
             break;
 
@@ -262,7 +262,7 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
             bzero(str, MAX_BUFFER_SIZE);
             sprintf(str, "sqlrules,recommendations=%s", arg ? arg : "");
             if (PERFEXPERT_SUCCESS != set_module_option(str)) {
-                return PERFEXPERT_ERROR;
+                argp_error(state, "error setting module option");
             }
             break;
 
@@ -270,21 +270,18 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
             bzero(str, MAX_BUFFER_SIZE);
             sprintf(str, "make,target=%s", arg ? arg : "");
             if (PERFEXPERT_SUCCESS != set_module_option(str)) {
-                return PERFEXPERT_ERROR;
+                argp_error(state, "error setting module option");
             }
             break;
 
         case 's':
             if (NULL == (m = guess_compile_module())) {
-                OUTPUT(("%s", _ERROR("unable to guess compiler, set CC")));
-                return PERFEXPERT_ERROR;
-            } else {
-
+                argp_error(state, "unable to guess compiler, set CC");
             }
             bzero(str, MAX_BUFFER_SIZE);
             sprintf(str, "%s,source=%s", m->name, arg ? arg : "");
             if (PERFEXPERT_SUCCESS != set_module_option(str)) {
-                return PERFEXPERT_ERROR;
+                argp_error(state, "error setting module option");
             }
             break;
 
@@ -293,7 +290,7 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
             bzero(str, MAX_BUFFER_SIZE);
             sprintf(str, "hpctoolkit,after=%s", arg ? arg : "");
             if (PERFEXPERT_SUCCESS != set_module_option(str)) {
-                return PERFEXPERT_ERROR;
+                argp_error(state, "error setting module option");
             }
             break;
 
@@ -301,7 +298,7 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
             bzero(str, MAX_BUFFER_SIZE);
             sprintf(str, "hpctoolkit,mic-after=%s", arg ? arg : "(null)");
             if (PERFEXPERT_SUCCESS != set_module_option(str)) {
-                return PERFEXPERT_ERROR;
+                argp_error(state, "error setting module option");
             }
             break;
 
@@ -309,7 +306,7 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
             bzero(str, MAX_BUFFER_SIZE);
             sprintf(str, "hpctoolkit,before=%s", arg ? arg : "");
             if (PERFEXPERT_SUCCESS != set_module_option(str)) {
-                return PERFEXPERT_ERROR;
+                argp_error(state, "error setting module option");
             }
             break;
 
@@ -317,7 +314,7 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
             bzero(str, MAX_BUFFER_SIZE);
             sprintf(str, "hpctoolkit,mic-before=%s", arg ? arg : "");
             if (PERFEXPERT_SUCCESS != set_module_option(str)) {
-                return PERFEXPERT_ERROR;
+                argp_error(state, "error setting module option");
             }
             break;
 
@@ -325,7 +322,7 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
             bzero(str, MAX_BUFFER_SIZE);
             sprintf(str, "hpctoolkit,mic-card=%s", arg ? arg : "");
             if (PERFEXPERT_SUCCESS != set_module_option(str)) {
-                return PERFEXPERT_ERROR;
+                argp_error(state, "error setting module option");
             }
             break;
 
@@ -333,7 +330,7 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
             bzero(str, MAX_BUFFER_SIZE);
             sprintf(str, "hpctoolkit,prefix=%s", arg ? arg : "");
             if (PERFEXPERT_SUCCESS != set_module_option(str)) {
-                return PERFEXPERT_ERROR;
+                argp_error(state, "error setting module option");
             }
             break;
 
@@ -341,7 +338,7 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
             bzero(str, MAX_BUFFER_SIZE);
             sprintf(str, "hpctoolkit,mic-prefix=%s", arg ? arg : "");
             if (PERFEXPERT_SUCCESS != set_module_option(str)) {
-                return PERFEXPERT_ERROR;
+                argp_error(state, "error setting module option");
             }
             break;
 
@@ -456,7 +453,6 @@ static perfexpert_module_t* guess_compile_module(void) {
     FILE *fp;
 
     /* Read the environment variable */
-    bzero(cc, MAX_BUFFER_SIZE);
     if (NULL == (cc = getenv("CC"))) {
         return NULL;
     }
