@@ -7,4 +7,5 @@ perfexpert_module_fini
 perfexpert_module_requires
 perfexpert_module_get
 perfexpert_module_available
+perfexpert_phase_available
 perfexpert_module_installed

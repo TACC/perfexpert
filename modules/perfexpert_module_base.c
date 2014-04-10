@@ -656,4 +656,18 @@ static perfexpert_step_t* perfexpert_step_clone(perfexpert_step_t *s) {
     return n;
 }
 
+int perfexpert_phase_available(perfexpert_step_phase_t phase) {
+    perfexpert_step_t *s = NULL;
+
+    /* Find module/phase and their position on the list of steps */
+    perfexpert_list_for(s, &(module_globals.steps), perfexpert_step_t) {
+        if (PERFEXPERT_PHASE_COMPILE == s->phase) {
+            return PERFEXPERT_SUCCESS;
+        }
+    }
+
+    return PERFEXPERT_ERROR;
+}
+
+
 // EOF

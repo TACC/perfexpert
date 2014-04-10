@@ -38,8 +38,6 @@ extern "C" {
 #include "common/perfexpert_constants.h"
 #include "common/perfexpert_list.h"
 
-/* Module constants */
-
 /* Module globals */
 typedef struct {
     perfexpert_list_t modules;
@@ -140,6 +138,7 @@ int perfexpert_module_requires(const char *a, perfexpert_step_phase_t ap,
     perfexpert_module_order_t order);
 perfexpert_module_t *perfexpert_module_get(const char *name);
 int perfexpert_module_available(const char *name);
+int perfexpert_phase_available(perfexpert_step_phase_t phase);
 int perfexpert_module_installed(const char *name);
 
 static lt_dlhandle perfexpert_module_open(const char *name);
