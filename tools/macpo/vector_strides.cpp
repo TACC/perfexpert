@@ -46,14 +46,14 @@ bool vector_strides_t::contains_non_linear_reference(const reference_list_t&
     return false;
 }
 
-void vector_strides_t::instrument_loop(loop_info_t& loop_info) {
+bool vector_strides_t::instrument_loop(loop_info_t& loop_info) {
     SgScopeStatement* loop_stmt = loop_info.loop_stmt;
     Sg_File_Info* fileInfo = loop_stmt->get_file_info();
 
     if (contains_non_linear_reference(loop_info.reference_list)) {
         std::cerr << mprefix << "Found non-linear reference(s) in loop." <<
             std::endl;
-        return;
+        return false;
     }
 
     generic_vars_t generic_vars(true);
@@ -125,4 +125,6 @@ void vector_strides_t::instrument_loop(loop_info_t& loop_info) {
         statement_info.before = true;
         add_stmt(statement_info);
     }
+
+    return true;
 }

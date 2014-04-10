@@ -39,7 +39,7 @@ class traversal_t {
     virtual const analysis_profile_t& get_analysis_profile();
     virtual const statement_list_t::iterator stmt_begin();
     virtual const statement_list_t::iterator stmt_end();
-    virtual void instrument_loop(loop_info_t& loop_info) = 0;
+    virtual bool instrument_loop(loop_info_t& loop_info) = 0;
 
     void process_node(SgNode* node);
     void process_loop(loop_info_t& loop_info);

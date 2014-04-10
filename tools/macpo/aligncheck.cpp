@@ -27,7 +27,7 @@
 using namespace SageBuilder;
 using namespace SageInterface;
 
-void aligncheck_t::instrument_streaming_stores(loop_info_t& loop_info) {
+bool aligncheck_t::instrument_streaming_stores(loop_info_t& loop_info) {
     SgScopeStatement* loop_stmt = loop_info.loop_stmt;
     Sg_File_Info* fileInfo = loop_info.loop_stmt->get_file_info();
 
@@ -84,9 +84,11 @@ void aligncheck_t::instrument_streaming_stores(loop_info_t& loop_info) {
             }
         }
     }
+
+    return true;
 }
 
-void aligncheck_t::instrument_alignment_checks(loop_info_t& loop_info) {
+bool aligncheck_t::instrument_alignment_checks(loop_info_t& loop_info) {
     SgScopeStatement* loop_stmt = loop_info.loop_stmt;
     Sg_File_Info* fileInfo = loop_info.loop_stmt->get_file_info();
 
@@ -94,7 +96,7 @@ void aligncheck_t::instrument_alignment_checks(loop_info_t& loop_info) {
 
     // Is there anything to instrument?
     if (reference_list.size() == 0)
-        return;
+        return true;
 
     SgStatement* first_statement = loop_stmt->firstStatement();
     SgBasicBlock* first_bb = getEnclosingNode<SgBasicBlock>(first_statement);
@@ -117,9 +119,11 @@ void aligncheck_t::instrument_alignment_checks(loop_info_t& loop_info) {
         statement_info_t& stmt = *it;
         add_stmt(stmt);
     }
+
+    return true;
 }
 
-void aligncheck_t::instrument_loop(loop_info_t& loop_info) {
-    instrument_alignment_checks(loop_info);
-    instrument_streaming_stores(loop_info);
+bool aligncheck_t::instrument_loop(loop_info_t& loop_info) {
+    return instrument_alignment_checks(loop_info) &&
+        instrument_streaming_stores(loop_info);
 }

@@ -34,7 +34,7 @@ class pntr_overlap_t : public traversal_t {
         traversal_t(_var_renaming) {}
 
  private:
-    void instrument_loop(loop_info_t& loop_info);
+    bool instrument_loop(loop_info_t& loop_info);
     void create_spans_for_child_loops(SgExpression* expr_init, SgExpression*
             expr_term, loop_info_t& loop_info);
 };

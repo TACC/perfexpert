@@ -34,7 +34,7 @@ class vector_strides_t : public traversal_t {
         traversal_t(_var_renaming) {}
 
  private:
-    void instrument_loop(loop_info_t& loop_info);
+    bool instrument_loop(loop_info_t& loop_info);
     bool contains_non_linear_reference(const reference_list_t& reference_list);
 };
 

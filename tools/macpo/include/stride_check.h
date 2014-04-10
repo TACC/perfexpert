@@ -34,7 +34,7 @@ class stride_check_t : public traversal_t {
         traversal_t(_var_renaming) {}
 
  private:
-    void instrument_loop(loop_info_t& loop_info);
+    bool instrument_loop(loop_info_t& loop_info);
 
     void record_unknown_stride(SgScopeStatement* loop_stmt, SgExpression* expr);
     void record_stride_value(SgScopeStatement* loop_stmt, SgExpression* expr,

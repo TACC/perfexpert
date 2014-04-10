@@ -35,7 +35,7 @@
 using namespace SageBuilder;
 using namespace SageInterface;
 
-void branchpath_t::instrument_loop(loop_info_t& loop_info) {
+bool branchpath_t::instrument_loop(loop_info_t& loop_info) {
     SgScopeStatement* loop_stmt = loop_info.loop_stmt;
     Sg_File_Info* fileInfo = loop_stmt->get_file_info();
 
@@ -143,4 +143,6 @@ void branchpath_t::instrument_loop(loop_info_t& loop_info) {
 
         stmt = getNextStatement(stmt);
     }
+
+    return true;
 }

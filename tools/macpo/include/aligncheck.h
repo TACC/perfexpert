@@ -38,9 +38,9 @@ class aligncheck_t : public traversal_t {
 
  private:
     typedef std::map<std::string, node_list_t> sstore_map_t;
-    void instrument_loop(loop_info_t& loop_info);
-    void instrument_streaming_stores(loop_info_t& loop_info);
-    void instrument_alignment_checks(loop_info_t& loop_info);
+    bool instrument_loop(loop_info_t& loop_info);
+    bool instrument_streaming_stores(loop_info_t& loop_info);
+    bool instrument_alignment_checks(loop_info_t& loop_info);
 };
 
 #endif  // TOOLS_MACPO_INCLUDE_ALIGNCHECK_H_

@@ -43,7 +43,7 @@ void pntr_overlap_t::create_spans_for_child_loops(SgExpression* expr_init,
     }
 }
 
-void pntr_overlap_t::instrument_loop(loop_info_t& loop_info) {
+bool pntr_overlap_t::instrument_loop(loop_info_t& loop_info) {
     SgScopeStatement* loop_stmt = loop_info.loop_stmt;
     Sg_File_Info* fileInfo = loop_stmt->get_file_info();
     int line_number = fileInfo->get_raw_line();
@@ -52,16 +52,11 @@ void pntr_overlap_t::instrument_loop(loop_info_t& loop_info) {
 
     // Is there anything to instrument?
     if (reference_list.size() == 0)
-        return;
+        return true;
 
     SgStatement* loop_body = loop_stmt->firstStatement();
     SgBasicBlock* loop_bb = getEnclosingNode<SgBasicBlock>(loop_body);
     SgBasicBlock* aligncheck_list = new SgBasicBlock(fileInfo);
-
-    SgExpression* idxv = loop_info.idxv_expr;
-    SgExpression* init = loop_info.init_expr;
-    SgExpression* incr = loop_info.incr_expr;
-    int incr_op = loop_info.incr_op;
 
     // Save expressions after stripping unary operands.
     expr_list_t expr_list;
@@ -145,4 +140,6 @@ void pntr_overlap_t::instrument_loop(loop_info_t& loop_info) {
     overlap_check_call.statement = call_stmt;
     overlap_check_call.before = false;
     add_stmt(overlap_check_call);
+
+    return true;
 }

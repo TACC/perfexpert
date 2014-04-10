@@ -34,7 +34,7 @@ class tripcount_t : public traversal_t {
         traversal_t(_var_renaming) {}
 
  private:
-    void instrument_loop(loop_info_t& loop_info);
+    bool instrument_loop(loop_info_t& loop_info);
 };
 
 #endif  // TOOLS_MACPO_INCLUDE_TRIPCOUNT_H_

@@ -27,20 +27,23 @@
 using namespace SageBuilder;
 using namespace SageInterface;
 
-void stride_check_t::instrument_loop(loop_info_t& loop_info) {
+bool stride_check_t::instrument_loop(loop_info_t& loop_info) {
     SgScopeStatement* loop_stmt = loop_info.loop_stmt;
     Sg_File_Info* fileInfo = loop_stmt->get_file_info();
     reference_list_t& reference_list = loop_info.reference_list;
 
     // Is there anything to instrument?
     if (reference_list.size() == 0)
-        return;
+        return true;
 
     SgStatement* loop_body = loop_stmt->firstStatement();
     SgExpression* idxv = loop_info.idxv_expr;
     SgExpression* init = loop_info.init_expr;
     SgExpression* incr = loop_info.incr_expr;
     int incr_op = loop_info.incr_op;
+
+    if (idxv == NULL || incr == NULL || incr_op == ir_methods::INVALID_OP)
+        return false;
 
     // Save expressions after stripping unary operands.
     expr_list_t expr_list;
@@ -97,6 +100,8 @@ void stride_check_t::instrument_loop(loop_info_t& loop_info) {
             }
         }
     }
+
+    return true;
 }
 
 void stride_check_t::record_unknown_stride(SgScopeStatement* loop_stmt,

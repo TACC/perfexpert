@@ -28,13 +28,9 @@
 using namespace SageBuilder;
 using namespace SageInterface;
 
-void tripcount_t::instrument_loop(loop_info_t& loop_info) {
+bool tripcount_t::instrument_loop(loop_info_t& loop_info) {
     SgScopeStatement* loop_stmt = loop_info.loop_stmt;
     Sg_File_Info* fileInfo = loop_stmt->get_file_info();
-
-    SgExpression* idxv = loop_info.idxv_expr;
-    SgExpression* init = loop_info.init_expr;
-    SgExpression* test = loop_info.test_expr;
 
     if (SgBasicBlock* bb = getEnclosingNode<SgBasicBlock>(loop_stmt)) {
         int line_number = loop_stmt->get_file_info()->get_raw_line();
@@ -103,4 +99,6 @@ void tripcount_t::instrument_loop(loop_info_t& loop_info) {
         tripcount_incr.before = true;
         add_stmt(tripcount_incr);
     }
+
+    return true;
 }

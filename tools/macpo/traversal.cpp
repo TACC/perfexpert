@@ -45,8 +45,9 @@ void traversal_t::process_loop(loop_info_t& loop_info) {
     // Allow empty init expressions (which is always the case with while and
     // do-while loops).
     if (loop_info.idxv_expr && loop_info.test_expr && loop_info.test_expr) {
-        loop_info.processed = true;
-        instrument_loop(loop_info);
+        // instrument_loop() returns true or false depending on whether
+        // the loop could be instrumented (rather, analyzed) successfully.
+        loop_info.processed = instrument_loop(loop_info);
     }
 
     std::vector<loop_info_list_t>& child_loop_info = loop_info.child_loop_info;
