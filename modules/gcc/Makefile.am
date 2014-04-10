@@ -23,6 +23,6 @@ lib_LTLIBRARIES = libperfexpert_module_gcc.la
 libperfexpert_module_gcc_la_CPPFLAGS = -I$(srcdir)/../..
 libperfexpert_module_gcc_la_LDFLAGS = -module -version-info 1:0:0 \
 	-export-symbols $(srcdir)/gcc_module.sym
-libperfexpert_module_gcc_la_SOURCES = gcc_module.c gcc.c
+libperfexpert_module_gcc_la_SOURCES = gcc_module.c gcc_options.c gcc.c
 
 # EOF

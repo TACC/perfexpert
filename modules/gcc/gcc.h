@@ -35,8 +35,13 @@ extern "C" {
 #include "tools/perfexpert/perfexpert_types.h"
 
 /* Private module types */
-// typedef struct {
-// } my_module_globals_t;
+typedef struct {
+	int help_only;
+	char *compiler;
+	char *source;
+} my_module_globals_t;
+
+extern my_module_globals_t my_module_globals;
 
 /* Module interface */
 int module_load(void);

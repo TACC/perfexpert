@@ -27,9 +27,6 @@ extern "C" {
 #include "icc.h"
 #include "icc_module.h"
 
-/* Tool headers */
-#include "tools/perfexpert/perfexpert_types.h"
-
 /* PerfExpert common headers */
 #include "common/perfexpert_output.h"
 #include "common/perfexpert_alloc.h"
@@ -37,7 +34,7 @@ extern "C" {
 
 /* Global variable to define the module itself */
 perfexpert_module_icc_t myself_module;
-// my_module_globals_t my_module_globals;
+my_module_globals_t my_module_globals;
 char module_version[] = "1.0.0";
 
 /* module_load */
@@ -57,7 +54,17 @@ int module_load(void) {
 
 /* module_init */
 int module_init(void) {
-    int i = 0;
+    /* Initialize variables */
+    my_module_globals.compiler  = NULL;
+    my_module_globals.source    = NULL;
+    my_module_globals.help_only = PERFEXPERT_FALSE;
+
+    /* Parse module options */
+    if (PERFEXPERT_SUCCESS != parse_module_args(myself_module.argc,
+        myself_module.argv)) {
+        OUTPUT(("%s", _ERROR("parsing module arguments")));
+        return PERFEXPERT_ERROR;
+    }
 
     /* Enable extended interface */
     myself_module.set_compiler = &module_set_compiler;

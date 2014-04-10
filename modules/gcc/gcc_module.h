@@ -69,4 +69,4 @@ typedef perfexpert_module_gcc_1_0_0_t perfexpert_module_gcc_t;
 }
 #endif
 
-#endif /* PREFEXPERT_MODULE_MAKE_GCC_H_ */
+#endif /* PREFEXPERT_MODULE_GCC_MODULE_H_ */

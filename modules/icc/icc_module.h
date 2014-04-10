@@ -69,4 +69,4 @@ typedef perfexpert_module_icc_1_0_0_t perfexpert_module_icc_t;
 }
 #endif
 
-#endif /* PREFEXPERT_MODULE_ICC__MODULE_H_ */
+#endif /* PREFEXPERT_MODULE_ICC_MODULE_H_ */

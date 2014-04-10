@@ -23,6 +23,6 @@ lib_LTLIBRARIES = libperfexpert_module_icc.la
 libperfexpert_module_icc_la_CPPFLAGS = -I$(srcdir)/../..
 libperfexpert_module_icc_la_LDFLAGS = -module -version-info 1:0:0 \
 	-export-symbols $(srcdir)/icc_module.sym
-libperfexpert_module_icc_la_SOURCES = icc_module.c icc.c
+libperfexpert_module_icc_la_SOURCES = icc_module.c icc_options.c icc.c
 
 # EOF

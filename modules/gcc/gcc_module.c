@@ -23,11 +23,9 @@
 extern "C" {
 #endif
 
-/* System standard headers */
-
 /* Module headers */
-#include "gcc_module.h"
 #include "gcc.h"
+#include "gcc_module.h"
 
 /* PerfExpert common headers */
 #include "common/perfexpert_output.h"
@@ -36,7 +34,7 @@ extern "C" {
 
 /* Global variable to define the module itself */
 perfexpert_module_gcc_t myself_module;
-// my_module_globals_t my_module_globals;
+my_module_globals_t my_module_globals;
 char module_version[] = "1.0.0";
 
 /* module_load */
@@ -56,7 +54,17 @@ int module_load(void) {
 
 /* module_init */
 int module_init(void) {
-    int i = 0;
+    /* Initialize variables */
+    my_module_globals.compiler  = NULL;
+    my_module_globals.source    = NULL;
+    my_module_globals.help_only = PERFEXPERT_FALSE;
+
+    /* Parse module options */
+    if (PERFEXPERT_SUCCESS != parse_module_args(myself_module.argc,
+        myself_module.argv)) {
+        OUTPUT(("%s", _ERROR("parsing module arguments")));
+        return PERFEXPERT_ERROR;
+    }
 
     /* Enable extended interface */
     myself_module.set_compiler = &module_set_compiler;

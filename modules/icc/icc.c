@@ -51,7 +51,7 @@ int run_icc(void) {
     argv[0] = "icc";
     argv[1] = "-o";
     argv[2] = globals.program;
-    // argv[3] = globals.sourcefile;
+    argv[3] = my_module_globals.source;
 
     /* What are the default and user defined compiler flags? */
     bzero(flags, MAX_BUFFER_SIZE);
@@ -90,7 +90,7 @@ int run_icc(void) {
     test.output = temp_str;
 
     /* fork_and_wait_and_pray */
-    return fork_and_wait(&test, argv);
+    return perfexpert_fork_and_wait(&test, argv);
 }
 
 #ifdef __cplusplus
