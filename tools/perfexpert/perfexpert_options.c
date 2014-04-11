@@ -517,7 +517,7 @@ static perfexpert_module_t* guess_compile_module(void) {
 
     /* Set compiler program */
     bzero(str, MAX_BUFFER_SIZE);
-    sprintf(str, "%s,program=%s", m->name, cc);
+    sprintf(str, "%s,fullpath=%s", m->name, cc);
     if (PERFEXPERT_SUCCESS != set_module_option(str)) {
         return NULL;
     }
