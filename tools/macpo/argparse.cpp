@@ -27,6 +27,7 @@
 
 #include <cstring>
 #include <cstdlib>
+#include <cctype>
 #include <iostream>
 #include <string>
 
@@ -76,21 +77,32 @@ bool argparse::parse_location(const std::string& argument,
     const std::string str_argument = argument;
 
     // Initialize
+    size_t pos = 0;
     function_name = "";
     line_number = 0;
 
-    size_t pos;
-    if ((pos = str_argument.find_first_of("#")) != std::string::npos) {
-        if (pos > 0 && pos < str_argument.size()-1) {
+    do {
+        // Find the separating ':' character.
+        pos = str_argument.find(":", pos);
+
+        // We couldn't find a line number component.
+        if (pos == std::string::npos) {
+            function_name = str_argument;
+            break;
+        }
+
+        // We did find a line number component.
+        // Make sure that this ':' isn't a part of the '::',
+        // which is the separator between the class name and the method name.
+        if (pos < str_argument.length() - 1 && isdigit(str_argument[pos+1])) {
             function_name = str_argument.substr(0, pos);
             line_number = atoi(str_argument.substr(pos+1).c_str());
+            break;
         } else {
-            return false;
+            // Push pos by one character so that we keep making progress.
+            pos += 1;
         }
-    } else {
-        function_name = str_argument;
-        line_number = 0;
-    }
+    } while (true);
 
     return true;
 }
