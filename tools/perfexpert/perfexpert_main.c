@@ -150,14 +150,15 @@ int main(int argc, char** argv) {
     perfexpert_list_for(m, &(module_globals.modules), perfexpert_module_t) {
         printf(" [%s]", m->name);
     }
-    printf("\n%s    %s", PROGRAM_PREFIX, _YELLOW("Workflow:"));
+    printf("\n%s    %s", PROGRAM_PREFIX, _YELLOW("Workflow: "));
     perfexpert_list_for(s, &(module_globals.steps), perfexpert_step_t) {
-        printf(" [%s/%d]", s->name, s->phase);
+        printf("[%s/%d] ", s->name, perfexpert_phase_name[s->phase]);
     }
     printf("\n");
     fflush(stdout);
 
     /* Step 5: Iterate through steps  */
+    i = 0;
     OUTPUT_VERBOSE((4, "%s", _BLUE("Starting optimization workflow")));
     while (1) {
         /* Initialize modules */
@@ -168,14 +169,16 @@ int main(int argc, char** argv) {
 
         /* Workflow progress */
         perfexpert_list_for(s, &(module_globals.steps), perfexpert_step_t) {
-            OUTPUT_VERBOSE((4, "%s [%s/%d]", _GREEN("Workflow step:"),
-                s->module->name, s->phase));
+            OUTPUT_VERBOSE((4, "%s [%s/%s]", _GREEN("Workflow step:"),
+                s->module->name, perfexpert_phase_name[s->phase]));
 
-            /* Create module work directory */
-            PERFEXPERT_ALLOC(char, globals.moduledir, (strlen(globals.workdir) +
-                strlen(s->module->name) + 10));
-            sprintf(globals.moduledir, "%s/%d/%d_%s", globals.workdir,
-                globals.step, s->phase, s->module->name);
+            /* Create module working directory */
+            PERFEXPERT_ALLOC(char, globals.moduledir,
+                (strlen(globals.workdir) + strlen(s->module->name) +
+                strlen(perfexpert_phase_name[s->phase]) + 10));
+            sprintf(globals.moduledir, "%s/%d/%d_%s_%s",
+                globals.workdir, globals.step, i, s->module->name,
+                perfexpert_phase_name[s->phase]);
             if (NULL == globals.moduledir) {
                 OUTPUT(("%s", _ERROR("null moduledir")));
                 goto CLEANUP;
@@ -206,6 +209,7 @@ int main(int argc, char** argv) {
                     break;
             }
 
+            i++;
             PERFEXPERT_DEALLOC(globals.moduledir);
         }
 
