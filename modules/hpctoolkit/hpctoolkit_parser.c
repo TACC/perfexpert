@@ -105,6 +105,7 @@ static int parse_profile(xmlDocPtr document, xmlNodePtr node,
     int f, i, l, lm, n;
     xmlChar *xmlchar;
     float v;
+    char *temp = NULL;
 
     hpctoolkit_file_t *file = NULL;
     hpctoolkit_metric_t *metric = NULL;
@@ -283,8 +284,15 @@ static int parse_profile(xmlDocPtr document, xmlNodePtr node,
                 sizeof(hpctoolkit_file_t));
             file->id = i;
 
-            PERFEXPERT_ALLOC(char, file->name, (strlen(xmlchar) + 1));
-            strcpy(file->name, xmlchar);
+            /* Strip off the prefix HPCTollkit adds to some files (dangerous) */
+            if (0 == strncmp("./src", xmlchar, 5)) {
+                temp = xmlchar + 5;
+            } else {
+                temp = xmlchar;
+            }
+
+            PERFEXPERT_ALLOC(char, file->name, (strlen(temp) + 1));
+            strcpy(file->name, temp);
             xmlFree(xmlchar);
 
             if (PERFEXPERT_SUCCESS != perfexpert_util_filename_only(
