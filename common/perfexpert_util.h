@@ -32,6 +32,8 @@ int perfexpert_util_dir_exists(const char *dir);
 int perfexpert_util_remove_dir(const char *dir);
 int perfexpert_util_file_exists(const char *file);
 int perfexpert_util_file_is_exec(const char *file);
+int perfexpert_util_file_is_readable(const char *file);
+int perfexpert_util_file_is_writable(const char *file);
 int perfexpert_util_filename_only(const char *file, char **only);
 int perfexpert_util_path_only(const char *file, char **path);
 int perfexpert_util_file_copy(const char *to, const char *from);

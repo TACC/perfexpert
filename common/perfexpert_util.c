@@ -170,13 +170,43 @@ int perfexpert_util_file_exists(const char *file) {
 /* perfexpert_util_file_is_exec */
 int perfexpert_util_file_is_exec(const char *file) {
     if (NULL == file) {
-        OUTPUT(("%s", _ERROR((char *)"file is NULL")));
+        OUTPUT(("%s", _ERROR((char *)"filename not specified")));
         return PERFEXPERT_ERROR;
     }
 
     if (0 != access(file, X_OK)) {
         OUTPUT_VERBOSE((10, "%s (%s)",
             _RED((char *)"file is not executable or does not exist"), file));
+        return PERFEXPERT_ERROR;
+    }
+    return PERFEXPERT_SUCCESS;
+}
+
+/* perfexpert_util_file_is_readable */
+int perfexpert_util_file_is_readable(const char *file) {
+    if (NULL == file) {
+        OUTPUT(("%s", _ERROR((char *)"filename not specified")));
+        return PERFEXPERT_ERROR;
+    }
+
+    if (0 != access(file, R_OK)) {
+        OUTPUT_VERBOSE((10, "%s (%s)",
+            _RED((char *)"file is not readable or does not exist"), file));
+        return PERFEXPERT_ERROR;
+    }
+    return PERFEXPERT_SUCCESS;
+}
+
+/* perfexpert_util_file_is_writable */
+int perfexpert_util_file_is_writable(const char *file) {
+    if (NULL == file) {
+        OUTPUT(("%s", _ERROR((char *)"filename not specified")));
+        return PERFEXPERT_ERROR;
+    }
+
+    if (0 != access(file, W_OK)) {
+        OUTPUT_VERBOSE((10, "%s (%s)",
+            _RED((char *)"file is not writable or does not exist"), file));
         return PERFEXPERT_ERROR;
     }
     return PERFEXPERT_SUCCESS;
