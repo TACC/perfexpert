@@ -142,11 +142,14 @@ then
         if [ $? != 0 ]
         then
             cat "$tmp_macpo"
-            echo
-            echo "Failed to run the following two commands:"
-            echo "${MINST_PATH} -rose:openmp:ast_only -I${MRT_INCLUDE_DIR} -L${MRT_LIB_DIR} $*" \
-                "-lmrt -lstdc++"
-            echo "$GNU_FORTRAN_COMPILER -L${MRT_LIB_DIR} $* -lmrt -lstdc++"
+            if [ -n "$MACPO_DEBUG" ]
+            then
+                echo
+                echo "Failed to run the following two commands:"
+                echo "${MINST_PATH} -rose:openmp:ast_only -I${MRT_INCLUDE_DIR} -L${MRT_LIB_DIR} $*" \
+                    "-lmrt -lstdc++"
+                echo "$GNU_FORTRAN_COMPILER -L${MRT_LIB_DIR} $* -lmrt -lstdc++"
+            fi
         else
             # There was no error, hence reset the return code.
             ret_code=0
@@ -154,10 +157,13 @@ then
         fi
     else
         cat "$tmp_macpo"
-        echo
-        echo "Failed to run the following command:"
-        echo "${MINST_PATH} -rose:openmp:ast_only -I${MRT_INCLUDE_DIR} -L${MRT_LIB_DIR} $* -lmrt " \
-            "-lstdc++"
+        if [ -n "$MACPO_DEBUG" ]
+        then
+            echo
+            echo "Failed to run the following command:"
+            echo "${MINST_PATH} -rose:openmp:ast_only -I${MRT_INCLUDE_DIR} -L${MRT_LIB_DIR} $* -lmrt " \
+                "-lstdc++"
+        fi
     fi
 else
     cat "$tmp_macpo"
