@@ -36,7 +36,8 @@ CREATE TABLE IF NOT EXISTS hpctoolkit_hotspot (
     module        VARCHAR NOT NULL,
     file          VARCHAR NOT NULL,
     line          INTEGER NOT NULL,
-    depth         INTEGER NOT NULL
+    depth         INTEGER NOT NULL,
+    relevance     INTEGER
 );
 
 CREATE TABLE IF NOT EXISTS hpctoolkit_event (

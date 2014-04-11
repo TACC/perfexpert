@@ -55,7 +55,8 @@ int database_profiles(perfexpert_list_t *profiles) {
             module        VARCHAR NOT NULL,             \
             file          VARCHAR NOT NULL,             \
             line          INTEGER NOT NULL,             \
-            depth         INTEGER NOT NULL);            \
+            depth         INTEGER NOT NULL,             \
+            relevance     INTEGER);                     \
         CREATE TABLE IF NOT EXISTS hpctoolkit_event (   \
             id            INTEGER PRIMARY KEY,          \
             name          VARCHAR NOT NULL,             \
