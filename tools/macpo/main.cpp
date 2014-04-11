@@ -48,25 +48,14 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    // Check if we have explicit instructions not to change anything.
-    if (options.action == ACTION_NONE) {
-        SgProject *project = frontend(arguments);
-        if (!options.no_compile) {
-            return backend(project) == 0 ? 0 : 1;
-        }
-
-        project->unparse();
-        return 0;
-    }
-
     if (argparse::validate_options(options) == false) {
-        std::cerr << "Invalid actions specified on the command line." <<
-            std::endl;
+        std::cerr << mprefix<< "Invalid actions specified on the command line."
+            << std::endl;
         return -1;
     }
 
     // Check if at least a function or a loop was specified on the command line.
-    if (options.function_name.size() == 0) {
+    if (options.action != ACTION_NONE && options.function_name.size() == 0) {
         std::cerr << mprefix << "USAGE: " << argv[0] << " <options>" <<
             std::endl;
         std::cerr << mprefix << "Did not find valid options on the command "
@@ -75,10 +64,18 @@ int main(int argc, char *argv[]) {
     }
 
     SgProject *project = frontend(arguments);
-    ROSE_ASSERT(project != NULL);
+
+    // Check if we have explicit instructions not to change anything.
+    if (options.action == ACTION_NONE) {
+        if (!options.no_compile) {
+            return backend(project) == 0 ? 0 : 1;
+        }
+
+        project->unparse();
+        return 0;
+    }
 
     SgFilePtrList files = project->get_fileList();
-
     if (options.backup_filename.size()) {
         // We need to save the input file to a backup file.
         if (files.size() != 1) {

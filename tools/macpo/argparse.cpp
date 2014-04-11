@@ -202,7 +202,7 @@ bool argparse::validate_options(const options_t& options) {
     }
 
     // Validate actions.
-    if (options.action <= ACTION_NONE || options.action >= ACTION_LAST) {
+    if (options.action < ACTION_NONE || options.action >= ACTION_LAST) {
         return false;
     }
 

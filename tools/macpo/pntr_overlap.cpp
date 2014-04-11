@@ -121,6 +121,9 @@ bool pntr_overlap_t::instrument_loop(loop_info_t& loop_info) {
         ref_stmt = omp_body_stmt;
     }
 
+#if 1
+    SgBasicBlock* bb = getEnclosingNode<SgBasicBlock>(ref_stmt);
+
     // One last thing before adding the instrumentation call.
     // If there are any variable declarations in
     // the for-initialization, then hoist them outside the for loop.
@@ -135,8 +138,19 @@ bool pntr_overlap_t::instrument_loop(loop_info_t& loop_info) {
             SgStatement* copy_stmt = copyStatement(decl);
             insertStatementBefore(ref_stmt, copy_stmt);
             ir_methods::match_end_of_constructs(ref_stmt, copy_stmt);
+
+            if (SgVariableDeclaration* decl =
+                    isSgVariableDeclaration(copy_stmt)) {
+                SgInitializedName* init_name = *(decl->get_variables().begin());
+                init_name->set_scope(bb);
+                decl->set_firstNondefiningDeclaration(decl);
+                decl->set_parent(ref_stmt);
+                SgVariableSymbol* symbol = new SgVariableSymbol(init_name);
+                bb->insert_symbol(init_name->get_name(), symbol);
+            }
         }
     }
+#endif
 
     std::string function_name = SageInterface::is_Fortran_language()
         ? "indigo__overlap_check_f" : "indigo__overlap_check_c";
