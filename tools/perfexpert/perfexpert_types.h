@@ -31,6 +31,7 @@ extern "C" {
 #endif
 
 /* PerfExpert common headers */
+#include "common/perfexpert_backup.h"
 #include "common/perfexpert_constants.h"
 #include "common/perfexpert_list.h"
 
@@ -45,10 +46,11 @@ typedef struct {
     char *program_path;
     char *program_full;
     char *program_argv[MAX_ARGUMENTS_COUNT];
-    int  step;
+    int  cycle;
     char *moduledir;
     long long int unique_id;
     sqlite3 *db;
+    perfexpert_backup_t backup;
 } globals_t;
 
 extern globals_t globals; /* This variable is defined in perfexpert_main.c */

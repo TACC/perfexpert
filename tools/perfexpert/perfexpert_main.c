@@ -77,10 +77,11 @@ int main(int argc, char** argv) {
         .program_path   = NULL,             // *char
         .program_full   = NULL,             // *char
         .program_argv   = { 0 },            // *char[]
-        .step           = 1,                // int
+        .cycle          = 1,                // int
         .workdir        = NULL,             // *char
         .moduledir      = NULL,             // *char
-        .unique_id      = 0                 // long long int
+        .unique_id      = 0,                // long long int
+        .backup         = NULL              // perfexpert_backup_t
     };
 
     /* Parse command-line parameters */
@@ -120,15 +121,15 @@ int main(int argc, char** argv) {
     /* Step 3: Check if the database file exists and is updated, then connect */
     if ((NULL != globals.dbfile) &&
         (PERFEXPERT_SUCCESS != perfexpert_util_file_exists(globals.dbfile))) {
-        OUTPUT(("%s", _ERROR((char *)"database file not found")));
+        OUTPUT(("%s", _ERROR("database file not found")));
         goto CLEANUP;
     }
     if (PERFEXPERT_SUCCESS != perfexpert_database_update(&(globals.dbfile))) {
-        OUTPUT(("%s", _ERROR((char *)"unable to update database")));
+        OUTPUT(("%s", _ERROR("unable to update database")));
         goto CLEANUP;
     }
     if (NULL == (globals.dbfile)) {
-        OUTPUT(("%s", _ERROR((char *)"NULL dbfile, something weird happened")));
+        OUTPUT(("%s", _ERROR("NULL dbfile, something weird happened")));
         goto CLEANUP;
     } else {
         OUTPUT_VERBOSE((5, "   %s %s", _YELLOW("database:"), globals.dbfile));
@@ -145,7 +146,6 @@ int main(int argc, char** argv) {
         goto CLEANUP;
     }
 
-    /* Print summary */
     printf("%s    %s", PROGRAM_PREFIX, _YELLOW("Modules: "));
     perfexpert_list_for(m, &(module_globals.modules), perfexpert_module_t) {
         printf(" [%s]", m->name);
@@ -157,7 +157,13 @@ int main(int argc, char** argv) {
     printf("\n");
     fflush(stdout);
 
-    /* Step 5: Iterate through steps  */
+    /* Step 5: Initialize the file backup */
+    if (PERFEXPERT_SUCCESS != perfexpert_backup_create(&globals.backup)) {
+        OUTPUT(("%s", _ERROR("unable to initialize backup")));
+        goto CLEANUP;
+    }
+
+    /* Step 6: Iterate through steps  */
     i = 0;
     OUTPUT_VERBOSE((4, "%s", _BLUE("Starting optimization workflow")));
     while (1) {
@@ -177,7 +183,7 @@ int main(int argc, char** argv) {
                 (strlen(globals.workdir) + strlen(s->module->name) +
                 strlen(perfexpert_phase_name[s->phase]) + 10));
             sprintf(globals.moduledir, "%s/%d/%d_%s_%s",
-                globals.workdir, globals.step, i, s->module->name,
+                globals.workdir, globals.cycle, i, s->module->name,
                 perfexpert_phase_name[s->phase]);
             if (NULL == globals.moduledir) {
                 OUTPUT(("%s", _ERROR("null moduledir")));
@@ -261,19 +267,19 @@ int main(int argc, char** argv) {
         }
 
         goto CLEANUP;
-        globals.step++;
+        globals.cycle++;
     }
 
     CLEANUP:
     OUTPUT_VERBOSE((4, "%s", _BLUE("Tool finalization")));
 
-    /* Disconnect from DB */
+    /* Step 7: Disconnect from DB */
     if (PERFEXPERT_SUCCESS != perfexpert_database_disconnect(globals.db)) {
         OUTPUT(("%s", _ERROR("disconnecting from database")));
         goto CLEANUP;
     }
 
-    /* Remove the garbage */
+    /* Step 8: Remove the garbage */
     if (NULL != globals.workdir) {
         if (PERFEXPERT_TRUE == globals.remove_garbage) {
             OUTPUT_VERBOSE((1, "%s", _BLUE("Removing temporary directory")));
@@ -291,7 +297,7 @@ int main(int argc, char** argv) {
     OUTPUT(("%s %llu", _YELLOW("The unique ID of this PerfExpert run is:"),
         globals.unique_id));
 
-    /* Free memory */
+    /* Step 9: Free memory */
     i = 0;
     while (NULL != globals.program_argv[i]) {
         PERFEXPERT_DEALLOC(globals.program_argv[i]);
