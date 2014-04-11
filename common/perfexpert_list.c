@@ -67,6 +67,12 @@ perfexpert_list_item_t* perfexpert_list_get_first(perfexpert_list_t* list) {
     return item;
 }
 
+/* perfexpert_list_get_last */
+perfexpert_list_item_t* perfexpert_list_get_last(perfexpert_list_t* list) {
+    perfexpert_list_item_t* item = (perfexpert_list_item_t*)list->sentinel.prev;
+    return item;
+}
+
 /* perfexpert_list_get_size */
 size_t perfexpert_list_get_size(perfexpert_list_t* list) {
     return list->length;

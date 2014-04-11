@@ -61,6 +61,7 @@ void perfexpert_list_item_construct(perfexpert_list_item_t *item);
 void perfexpert_list_item_destruct(perfexpert_list_item_t *item);
 size_t perfexpert_list_get_size(perfexpert_list_t* list);
 perfexpert_list_item_t* perfexpert_list_get_first(perfexpert_list_t* list);
+perfexpert_list_item_t* perfexpert_list_get_last(perfexpert_list_t* list);
 perfexpert_list_item_t *perfexpert_list_remove_item(
     perfexpert_list_t *list, perfexpert_list_item_t *item);
 void perfexpert_list_append(perfexpert_list_t *list,
