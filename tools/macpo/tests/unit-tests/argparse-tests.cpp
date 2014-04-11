@@ -55,7 +55,7 @@ TEST(ArgParse, ValidInstrumentLoop) {
     options_t options;
     argparse::init_options(options);
 
-    snprintf(argument, 128, "--macpo:instrument=foo#13");
+    snprintf(argument, 128, "--macpo:instrument=foo:13");
     EXPECT_EQ(argparse::parse_arguments(argument, options), 0);
     EXPECT_EQ(options.no_compile, false);
     EXPECT_EQ(options.action, ACTION_INSTRUMENT);
@@ -83,7 +83,7 @@ TEST(ArgParse, ValidAlignCheckLoop) {
     options_t options;
     argparse::init_options(options);
 
-    snprintf(argument, 128, "--macpo:check-alignment=foo#15");
+    snprintf(argument, 128, "--macpo:check-alignment=foo:15");
     EXPECT_EQ(argparse::parse_arguments(argument, options), 0);
     EXPECT_EQ(options.no_compile, false);
     EXPECT_EQ(options.action, ACTION_ALIGNCHECK);
