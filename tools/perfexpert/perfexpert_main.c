@@ -152,7 +152,7 @@ int main(int argc, char** argv) {
     }
     printf("\n%s    %s", PROGRAM_PREFIX, _YELLOW("Workflow: "));
     perfexpert_list_for(s, &(module_globals.steps), perfexpert_step_t) {
-        printf("[%s/%d] ", s->name, perfexpert_phase_name[s->phase]);
+        printf("[%s/%s] ", s->name, perfexpert_phase_name[s->phase]);
     }
     printf("\n");
     fflush(stdout);
