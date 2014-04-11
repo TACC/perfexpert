@@ -83,13 +83,12 @@ int database_export(perfexpert_list_t *profiles) {
         return PERFEXPERT_ERROR;
     }
 
-    /* Insert metrics */
+    /* Write to the database... */
     perfexpert_list_for(p, profiles, lcpi_profile_t) {
         OUTPUT_VERBOSE((8, "  %s", _GREEN(p->name)));
         perfexpert_list_for(h, &(p->hotspots), lcpi_hotspot_t) {
-            OUTPUT_VERBOSE((8, "    %s", _MAGENTA(h->name)));
+            /* ...the metrics */
             perfexpert_hash_iter_str(h->metrics_by_name, m, t) {
-
                 bzero(sql, MAX_BUFFER_SIZE);
                 sprintf(sql, "INSERT INTO lcpi_metric (name, value, hotspot_id)"
                     " VALUES ('%s', %f, %llu);", m->name,
@@ -404,6 +403,17 @@ static int calculate_metadata(lcpi_profile_t *profile, const char *table) {
         OUTPUT_VERBOSE((5, "  [ins=%.2g] [var=%.2g] [cyc=%.2g] [imp=%.2f%%] %s",
             h->instructions, h->variance, h->cycles, h->importance * 100,
             _CYAN(h->name)));
+
+        /* Write the importance back to the database */
+        bzero(sql, MAX_BUFFER_SIZE);
+        sprintf(sql, "UPDATE hpctoolkit_hotspot SET relevance = %f WHERE "
+            "id = %llu;", h->importance, h->id);
+
+        if (SQLITE_OK != sqlite3_exec(globals.db, sql, NULL, NULL, &error)) {
+            OUTPUT(("%s %s", _ERROR("SQL error"), error));
+            sqlite3_free(error);
+            return PERFEXPERT_ERROR;
+        }
     }
 
     /* Calculate importance for modules */
