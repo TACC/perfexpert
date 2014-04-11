@@ -48,12 +48,7 @@ MINST::MINST(const options_t& options, SgProject* project) {
     inst_func = options.function_name;
     disable_sampling = options.disable_sampling;
     profile_analysis = options.profile_analysis;
-
     var_renaming = new VariableRenaming(project);
-    if (is_action(options.action, ACTION_ALIGNCHECK)) {
-        // If we are about to check alignment, run the VariableRenaming pass.
-        var_renaming->run();
-    }
 }
 
 void MINST::insert_map_prototype(SgNode* node) {
