@@ -22,7 +22,8 @@
 lib_LTLIBRARIES = libperfexpert_common.la
 libperfexpert_common_la_CPPFLAGS = -I$(srcdir)/..
 libperfexpert_common_la_LDFLAGS = -lltdl -version-info 1:0:0
-libperfexpert_common_la_SOURCES = perfexpert_base64.c \
+libperfexpert_common_la_SOURCES = perfexpert_backup.c \
+	perfexpert_base64.c \
 	perfexpert_database.c \
 	perfexpert_fork.c \
 	perfexpert_list.c \
