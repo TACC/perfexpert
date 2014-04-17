@@ -56,6 +56,7 @@ typedef struct {
     char *mic_after[MAX_ARGUMENTS_COUNT];
     char *inputfile;
     hpctoolkit_event_t *events_by_name;
+    int ignore_return_code;
 } my_module_globals_t;
 
 extern my_module_globals_t my_module_globals;
