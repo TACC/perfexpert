@@ -54,8 +54,7 @@ int parse_module_args(int argc, char *argv[]) {
 
     /* Sanity check: threshold is mandatory, check limits */
     if (((0 >= my_module_globals.threshold) ||
-        (1 < my_module_globals.threshold)) &&
-        (PERFEXPERT_FALSE == my_module_globals.help_only)) {
+        (1 < my_module_globals.threshold))) {
         OUTPUT(("%s", _ERROR("invalid threshold")));
         return PERFEXPERT_ERROR;
     }
@@ -81,13 +80,6 @@ int parse_module_args(int argc, char *argv[]) {
 /* parse_options */
 static error_t parse_options(int key, char *arg, struct argp_state *state) {
     switch (key) {
-        /* Help */
-        case 'h':
-            OUTPUT_VERBOSE((1, "option 'h' set"));
-            argp_help(&argp, stdout, ARGP_HELP_LONG, NULL);
-            my_module_globals.help_only = PERFEXPERT_TRUE;
-            break;
-
         /* Sorting order */
         case 's':
             my_module_globals.order = arg;
@@ -128,6 +120,11 @@ static int parse_env_vars(void) {
     }
 
     return PERFEXPERT_SUCCESS;
+}
+
+/* module_help */
+void module_help(void) {
+    argp_help(&argp, stdout, ARGP_HELP_LONG, NULL);
 }
 
 #ifdef __cplusplus

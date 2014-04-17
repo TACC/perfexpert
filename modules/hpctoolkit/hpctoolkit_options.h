@@ -37,41 +37,40 @@ extern "C" {
 static struct argp_option options[] = {
     { 0, 0, 0, 0, "\n[HPCToolkit module options]", 1 },
 
-    { 0, 0, 0, 0, "Target program execution options:", 2 },
-    { "inputfile", 'i', "FILE", OPTION_DOC, "Input file to the target program. "
-      "Use this option instead of input pipe redirect ('<'). Output pipe ('>') "
-      "is not available because PerfExpert already has its standard output file"
-    },
-    { "inputfile", 'i', "FILE", OPTION_HIDDEN, 0 },
-    { "after", 'a', "COMMAND", OPTION_DOC,
+    { "inputfile=FILE", 0, 0, OPTION_DOC, "Input file to the target program. Us"
+      "e this option instead of input pipe redirect ('<'). Output pipe ('>') is"
+      " not available because PerfExpert already has its standard output file"},
+    { "after=COMMAND", 0, 0, OPTION_DOC,
       "Command to execute after each run of the target program" },
-    { "after", 'a', "COMMAND", OPTION_HIDDEN, 0 },
-    { "before", 'b', "COMMAND", OPTION_DOC,
+    { "before=COMMAND", 0, 0, OPTION_DOC,
       "Command to execute before each run of the target program" },
-    { "before", 'b', "COMMAND", OPTION_HIDDEN, 0 },
-    { "prefix", 'p', "PREFIX", OPTION_DOC, "Add a prefix to the command line, "
+    { "prefix=PREFIX", 0, 0, OPTION_DOC, "Add a prefix to the command line, "
       "use double quotes to set arguments with spaces within (e.g., \"mpirun -n"
       " 2\")" },
+    #if HAVE_HPCTOOLKIT_MIC
+    { "mic-card=NAME", 0, 0, OPTION_DOC,
+      "MIC Card where experiments should run on (e.g., mic0)" },
+    { "mic-after=COMMAND", 0, 0, OPTION_DOC,
+      "Command to execute after each run (on the MIC) of the target program" },
+    { "mic-before=COMMAND", 0, 0, OPTION_DOC,
+      "Command to execute before each run (on the MIC) of the target program" },
+    { "mic-prefix=PREFIX", 0, 0, OPTION_DOC, "Add a prefix to the command "
+      "line which will run on the MIC, use double quotes to set arguments with "
+      "spaces within (e.g., \"mpirun -n 2\")" },
+    #endif
+
+    { "inputfile", 'i', "FILE", OPTION_HIDDEN, 0 },
+    { "after", 'a', "COMMAND", OPTION_HIDDEN, 0 },
+    { "before", 'b', "COMMAND", OPTION_HIDDEN, 0 },
     { "prefix", 'p', "PREFIX", OPTION_HIDDEN, 0 },
 
     #if HAVE_HPCTOOLKIT_MIC
-    { 0, 0, 0, 0, "Target program execution on Intel Phi (MIC) options:", 3 },
-    { "mic-card", 'C', "NAME", OPTION_DOC,
-      "MIC Card where experiments should run on (e.g., mic0)" },
     { "mic-card", 'C', "NAME", OPTION_HIDDEN, 0 },
-    { "mic-after", 'A', "COMMAND", OPTION_DOC,
-      "Command to execute after each run (on the MIC) of the target program" },
     { "mic-after", 'A', "COMMAND", OPTION_HIDDEN, 0 },
-    { "mic-before", 'B', "COMMAND", OPTION_DOC,
-      "Command to execute before each run (on the MIC) of the target program" },
     { "mic-before", 'B', "COMMAND", OPTION_HIDDEN, 0 },
-    { "mic-prefix", 'P', "PREFIX", OPTION_DOC, "Add a prefix to the command "
-      "line which will run on the MIC, use double quotes to set arguments with "
-      "spaces within (e.g., \"mpirun -n 2\")" },
     { "mic-prefix", 'P', "PREFIX", OPTION_HIDDEN, 0 },
     #endif
 
-    { "help", 'h', 0, OPTION_HIDDEN, "Show help message" },
     { 0 }
 };
 

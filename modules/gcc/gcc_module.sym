@@ -3,6 +3,7 @@ module_version
 module_load
 module_init
 module_fini
+module_help
 module_compile
 module_set_compiler
 module_set_source

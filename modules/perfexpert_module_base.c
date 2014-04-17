@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <sys/stat.h>
 #include <ltdl.h>
+#include <dirent.h>
 
 #ifdef PROGRAM_PREFIX
 #undef PROGRAM_PREFIX
@@ -91,23 +92,19 @@ int perfexpert_module_load(const char *name) {
     strcpy(m->name, name);
 
     /* Link and set the minimun required interfaces */
-    m->version = (char *)lt_dlsym(handle, "module_version");
-    if (NULL == m->version) {
+    if (NULL == (m->version = (char *)lt_dlsym(handle, "module_version"))) {
         OUTPUT(("%s", _ERROR("'module_version' symbol not found")));
         goto MODULE_ERROR;
     }
-    m->load = lt_dlsym(handle, "module_load");
-    if (NULL == m->load) {
+    if (NULL == (m->load = lt_dlsym(handle, "module_load"))) {
         OUTPUT(("%s", _ERROR("'module_load()' not found")));
         goto MODULE_ERROR;
     }
-    m->init = lt_dlsym(handle, "module_init");
-    if (NULL == m->init) {
+    if (NULL == (m->init = lt_dlsym(handle, "module_init"))) {
         OUTPUT(("%s", _ERROR("'module_init()' not found")));
         goto MODULE_ERROR;
     }
-    m->fini = lt_dlsym(handle, "module_fini");
-    if (NULL == m->fini) {
+    if (NULL == (m->fini = lt_dlsym(handle, "module_fini"))) {
         OUTPUT(("%s", _ERROR("'module_fini()' not found")));
         goto MODULE_ERROR;
     }
@@ -120,7 +117,6 @@ int perfexpert_module_load(const char *name) {
                 m->name));
             goto MODULE_ERROR;
         }
-        OUTPUT(("Essa porra vale: %p", m->recommend));
     } else {
         OUTPUT_VERBOSE((8, "   %s does not implement 'recommend'", name));
     }
@@ -193,8 +189,38 @@ int perfexpert_module_load(const char *name) {
 
     MODULE_ERROR:
     PERFEXPERT_DEALLOC(m->name);
-    lt_dlclose(handle);
+    perfexpert_module_close(handle, name);
     return PERFEXPERT_ERROR;
+}
+
+/* perfexpert_module_unload*/
+int perfexpert_module_unload(const char *name) {
+    perfexpert_module_t *m = NULL;
+    lt_dlhandle handle = NULL;
+
+    OUTPUT_VERBOSE((9, "unloading module [%s]", _CYAN((char *)name)));
+
+    /* Sanity check: is this module loaded? */
+    perfexpert_list_for(m, &(module_globals.modules), perfexpert_module_t) {
+        if (0 == strcmp(name, m->name)) {
+            break;
+        }
+    }
+    if (NULL == m) {
+        OUTPUT(("%s [%s]", _ERROR("module not loaded"), name));
+        return PERFEXPERT_ERROR;
+    }
+
+    /* Retrieve module handle */
+    if (NULL == (handle = perfexpert_module_open(name))) {
+        OUTPUT(("%s [%s]", _ERROR("error finding module module"), name));
+        return PERFEXPERT_ERROR;
+    }
+
+    /* Close module */
+    perfexpert_module_close(handle, name);
+
+    return PERFEXPERT_SUCCESS;
 }
 
 /* perfexpert_module_set_option */
@@ -491,6 +517,89 @@ int perfexpert_module_installed(const char *name) {
     return PERFEXPERT_FALSE;
 }
 
+void perfexpert_module_help(const char *name) {
+    perfexpert_module_help_fn_t help = NULL;
+    lt_dlhandle handle = NULL;
+    struct dirent *entry = NULL;
+    DIR *directory = NULL;
+    int x = 0, y = 0;
+    char *m = NULL;
+
+    /* Doesn't hurt, right? */
+    if (NULL == name) {
+        OUTPUT(("%s", _ERROR("module name is null")));
+        return;
+    }
+
+    /* Should I display help for all modules? Holy crap... let's go? */
+    if (0 == strncmp(name, "all", 3)) {
+        if (NULL == (directory = opendir(PERFEXPERT_LIBDIR))) {
+            OUTPUT(("%s [%s]", _ERROR("unable to open modules directory"),
+                PERFEXPERT_LIBDIR));
+            return;
+        }
+        while (NULL != (entry = readdir(directory))) {
+            if ((0 == strncmp(entry->d_name, "libperfexpert_module_", 21)) &&
+                ('.' == entry->d_name[strlen(entry->d_name) - 3]) &&
+                ('s' == entry->d_name[strlen(entry->d_name) - 2]) &&
+                ('o' == entry->d_name[strlen(entry->d_name) - 1]) &&
+                (0 != strcmp(entry->d_name, "libperfexpert_module_base.so"))) {
+
+                PERFEXPERT_ALLOC(char, m, (strlen(entry->d_name) - 23));
+                for (x = 21, y = 0; x < (strlen(entry->d_name) - 3); x++, y++) {
+                    m[y] = entry->d_name[x];
+                }
+
+                if (NULL == (handle = perfexpert_module_open(m))) {
+                    OUTPUT(("%s [%s]", _ERROR("unable to open module"), m));
+                    OUTPUT(("Is %s in your LD_LIBRARY_PATH?",
+                        PERFEXPERT_LIBDIR));
+                    PERFEXPERT_DEALLOC(m);
+                    continue;
+                }
+                if (NULL != (help = lt_dlsym(handle, "module_help"))) {
+                    printf("\n To set one of the following options use --module"
+                        "-option=%s,OPTION=VALUE\n", m);
+                    help();
+                } else {
+                    OUTPUT_VERBOSE((8, "module_help() not defined"));
+                }
+                perfexpert_module_close(handle, m);
+                PERFEXPERT_DEALLOC(m);
+            }
+        }
+        if (0 != closedir(directory)) {
+            OUTPUT(("%s [%s]", _ERROR("unable to close libdir")));
+        }
+    } else {
+    /* Show module's help messages */
+        if (handle != perfexpert_module_open(name)) {
+            OUTPUT(("%s [%s]", _ERROR("unable to open module"), name));
+            return;
+        }
+        if (NULL != (help = lt_dlsym(handle, "module_help"))) {
+            printf("\n To set one of the following options use --module-option="
+                "%s,OPTION=VALUE\n", name);
+            help();
+        }
+        perfexpert_module_close(handle, m);
+    }
+}
+
+/* perfexpert_phase_available */
+int perfexpert_phase_available(perfexpert_step_phase_t phase) {
+    perfexpert_step_t *s = NULL;
+
+    /* Find module/phase and their position on the list of steps */
+    perfexpert_list_for(s, &(module_globals.steps), perfexpert_step_t) {
+        if (PERFEXPERT_PHASE_COMPILE == s->phase) {
+            return PERFEXPERT_SUCCESS;
+        }
+    }
+
+    return PERFEXPERT_ERROR;
+}
+
 /* Private functions (should NOT be mentioned in the sym file) */
 /* perfexpert_module_open */
 static lt_dlhandle perfexpert_module_open(const char *name) {
@@ -541,12 +650,6 @@ static lt_dlhandle perfexpert_module_open(const char *name) {
     OUTPUT_VERBOSE((10, "   filename: %s", _YELLOW(moduleinfo->filename)));
     OUTPUT_VERBOSE((10, "   reference count: %i", moduleinfo->ref_count));
 
-    /* Sanity check: avoid to load the same module twice */
-    if (1 < moduleinfo->ref_count) {
-        OUTPUT(("%s [%s]", _RED("module already loaded"), moduleinfo->name));
-        goto MODULE_ERROR;
-    }
-
     return handle;
 
     MODULE_ERROR:
@@ -556,7 +659,7 @@ static lt_dlhandle perfexpert_module_open(const char *name) {
 
 /* perfexpert_module_close */
 static int perfexpert_module_close(lt_dlhandle handle, const char *name) {
-    OUTPUT_VERBOSE((9, "unloading module [%s]", _CYAN((char *)name)));
+    OUTPUT_VERBOSE((9, "closing module [%s]", _CYAN((char *)name)));
 
     lt_dlclose(handle);
 
@@ -660,19 +763,5 @@ static perfexpert_step_t* perfexpert_step_clone(perfexpert_step_t *s) {
 
     return n;
 }
-
-int perfexpert_phase_available(perfexpert_step_phase_t phase) {
-    perfexpert_step_t *s = NULL;
-
-    /* Find module/phase and their position on the list of steps */
-    perfexpert_list_for(s, &(module_globals.steps), perfexpert_step_t) {
-        if (PERFEXPERT_PHASE_COMPILE == s->phase) {
-            return PERFEXPERT_SUCCESS;
-        }
-    }
-
-    return PERFEXPERT_ERROR;
-}
-
 
 // EOF

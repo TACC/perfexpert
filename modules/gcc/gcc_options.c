@@ -80,13 +80,6 @@ int parse_module_args(int argc, char *argv[]) {
 /* parse_options */
 static error_t parse_options(int key, char *arg, struct argp_state *state) {
     switch (key) {
-        /* Help */
-        case 'h':
-            OUTPUT_VERBOSE((1, "option 'h' set"));
-            argp_help(&argp, stdout, ARGP_HELP_LONG, NULL);
-            my_module_globals.help_only = PERFEXPERT_TRUE;
-            break;
-
         /* Compiler full path */
         case 'p':
             my_module_globals.compiler = arg;
@@ -127,6 +120,11 @@ static int parse_env_vars(void) {
     }
 
     return PERFEXPERT_SUCCESS;
+}
+
+/* module_help */
+void module_help(void) {
+    argp_help(&argp, stdout, ARGP_HELP_LONG, NULL);
 }
 
 #ifdef __cplusplus

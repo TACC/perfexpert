@@ -242,12 +242,6 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
             OUTPUT_VERBOSE((1, "option 'C' set [%s]", my_module_globals.mic));
             break;
 
-        /* Help */
-        case 'h':
-            OUTPUT_VERBOSE((1, "option 'h' set"));
-            argp_help(&argp, stdout, ARGP_HELP_LONG, NULL);
-            break;
-
         /* Which input file? */
         case 'i':
             my_module_globals.inputfile = arg;
@@ -318,6 +312,11 @@ static int parse_env_vars(void) {
     }
 
     return PERFEXPERT_SUCCESS;
+}
+
+/* module_help */
+void module_help(void) {
+    argp_help(&argp, stdout, ARGP_HELP_LONG, NULL);
 }
 
 #ifdef __cplusplus

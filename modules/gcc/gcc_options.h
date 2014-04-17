@@ -37,13 +37,12 @@ extern "C" {
 static struct argp_option options[] = {
     { 0, 0, 0, 0, "\n[GCC module options]", 1 },
 
-    { 0, 0, 0, 0, "General options:", 2, },
-    { "source", 's', "VALUE", OPTION_DOC, "Source file (single files only" },
+    { "source=VALUE", 0, 0, OPTION_DOC, "Source file (single file only)" },
+    { "fullpath=VALUE", 0, 0, OPTION_DOC, "Compiler full path" },
+
     { "source", 's', "VALUE", OPTION_HIDDEN, 0 },
-    { "fullpath", 'p', "VALUE", OPTION_DOC, "Compiler full path" },
     { "fullpath", 'p', "VALUE", OPTION_HIDDEN, 0 },
 
-    { "help", 'h', 0, OPTION_HIDDEN, "Show help message" },
     { 0 }
 };
 

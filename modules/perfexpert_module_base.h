@@ -68,6 +68,7 @@ typedef enum {
 typedef int (*perfexpert_module_load_fn_t)(void);
 typedef int (*perfexpert_module_init_fn_t)(void);
 typedef int (*perfexpert_module_fini_fn_t)(void);
+typedef int (*perfexpert_module_help_fn_t)(void);
 typedef int (*perfexpert_module_compile_fn_t)(void);
 typedef int (*perfexpert_module_instrument_fn_t)(void);
 typedef int (*perfexpert_module_measure_fn_t)(void);
@@ -134,6 +135,7 @@ typedef struct {
 /* Function declaration */
 void __attribute__ ((constructor)) my_init(void);
 int perfexpert_module_load(const char *name);
+int perfexpert_module_unload(const char *name);
 int perfexpert_module_set_option(const char *module, const char *option);
 int perfexpert_module_init(void);
 int perfexpert_module_fini(void);

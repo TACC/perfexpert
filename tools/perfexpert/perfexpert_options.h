@@ -52,32 +52,6 @@ static struct argp_option options[] = {
     {0, 0, 0, 0,
         "Use CC, CFLAGS, CPPFLAGS and LDFLAGS to set compiler/linker options" },
 
-    { 0, 0, 0, 0, "Module handling options:", 4 },
-    { "module-option", 'O', "MODULE,OPTION=VALUE", 0, "Set an option to a "
-        "specific module (e.g., -O MODULE,OPTION=VALUE or --module-option="
-        "MODULE,OPTION=VALUE). This argument can also be defined multiple "
-        "times. This option automatically sets the module (i.e., -M is not "
-        "required) if it is not already set" },
-    { "modules", 'M', "MODULE,MODULE,..", 0, "Set modules that should be used "
-        "(default: lcpi,hpctoolkit). Use a comma-separated list to specify "
-        "multiple modules (e.g., -M hpctoolkit,macpo or --modules=hpctoolkit,"
-        "macpo). This argument can also be defined multiple times." },
-    { "module-help", -4, "MODULE|all", 0, "Show module options. Use 'all' to "
-      "see options for all available module" },
-
-    { 0, 0, 0, 0, "Output formating options:", 5 },
-    { "colorful", 'c', 0, 0, "Enable ANSI colors" },
-    { "verbose", 'v', "LEVEL", 0, "Enable verbose mode (range: 0-10)" },
-    { "verbose-level", 'l', "LEVEL", OPTION_ALIAS,
-        "Enable verbose mode (default: 5, range: 0-10)" },
-    { "recommendations", 'r', "COUNT", 0,
-        "Number of recommendations PerfExpert should provide (default: 3)" },
-
-    { 0, 0, 0, 0, "Other options:", 6 },
-    { "database", 'd', "FILE", 0, "Select a recommendation database file "
-        "different from the default (I hope you know what you are doing)" },
-    { "remove-garbage", 'g', 0, 0, "Remove temporary directory when finalize" },
-
     #if HAVE_HPCTOOLKIT
     { 0, 0, 0, 0, "Target program execution options (HPCToolkit only):", 2 },
     { "inputfile", 'i', "FILE", 0, "Shortcut for --module-option=hpctoolkit,"
@@ -101,6 +75,31 @@ static struct argp_option options[] = {
         ",mic-prefix=PREFIX. See HPCToolkit module help for details" },
     #endif
     #endif
+
+    { 0, 0, 0, 0, "Module handling options:", 4 },
+    { "module-option", 'O', "MODULE,OPTION=VALUE", 0, "Set an option to a "
+        "specific module (e.g., -O MODULE,OPTION=VALUE or --module-option="
+        "MODULE,OPTION=VALUE). This argument can also be defined multiple "
+        "times. This option automatically sets the module (i.e., -M is not "
+        "required) if it is not already set" },
+    { "modules", 'M', "MODULE,MODULE,..", 0, "Set modules that should be used "
+        "(default: lcpi,hpctoolkit). Use a comma-separated list to specify "
+        "multiple modules (e.g., -M hpctoolkit,macpo or --modules=hpctoolkit,"
+        "macpo). This argument can also be defined multiple times." },
+    { "module-help", 'H', "MODULE", 0, "Show module options." },
+
+    { 0, 0, 0, 0, "Output formating options:", 5 },
+    { "colorful", 'c', 0, 0, "Enable ANSI colors" },
+    { "verbose", 'v', "LEVEL", 0, "Enable verbose mode (range: 0-10)" },
+    { "verbose-level", 'l', "LEVEL", OPTION_ALIAS,
+        "Enable verbose mode (default: 5, range: 0-10)" },
+    { "recommendations", 'r', "COUNT", 0,
+        "Number of recommendations PerfExpert should provide (default: 3)" },
+
+    { 0, 0, 0, 0, "Other options:", 6 },
+    { "database", 'd', "FILE", 0, "Select a recommendation database file "
+        "different from the default (I hope you know what you are doing)" },
+    { "remove-garbage", 'g', 0, 0, "Remove temporary directory when finalize" },
 
     { 0, 'h', 0, OPTION_HIDDEN, "Give a very short usage message" },
     { 0 }

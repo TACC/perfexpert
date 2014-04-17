@@ -49,6 +49,13 @@ int module_load(void) {
 
 /* module_init */
 int module_init(void) {
+    /* Parse module options */
+    if (PERFEXPERT_SUCCESS != parse_module_args(myself_module.argc,
+        myself_module.argv)) {
+        OUTPUT(("%s", _ERROR("parsing module arguments")));
+        return PERFEXPERT_ERROR;
+    }
+
     /* Module pre-requisites */
     if (PERFEXPERT_SUCCESS != perfexpert_module_requires("lcpi",
         PERFEXPERT_PHASE_MEASURE, "hpctoolkit", PERFEXPERT_PHASE_MEASURE,
@@ -69,13 +76,6 @@ int module_init(void) {
     my_module_globals.threshold = 0.0;
     my_module_globals.help_only = PERFEXPERT_FALSE;
     my_module_globals.mic = PERFEXPERT_FALSE;
-
-    /* Parse module options */
-    if (PERFEXPERT_SUCCESS != parse_module_args(myself_module.argc,
-        myself_module.argv)) {
-        OUTPUT(("%s", _ERROR("parsing module arguments")));
-        return PERFEXPERT_ERROR;
-    }
 
     OUTPUT_VERBOSE((5, "%s", _MAGENTA("initialized")));
 

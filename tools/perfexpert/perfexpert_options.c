@@ -28,7 +28,6 @@ extern "C" {
 #include <stdlib.h>
 #include <string.h>
 #include <argp.h>
-#include <dirent.h>
 
 /* Tools headers */
 #include "perfexpert.h"
@@ -214,6 +213,13 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
             argp_state_help(state, stdout, ARGP_HELP_STD_HELP);
             break;
 
+        /* Show modules help */
+        case 'H':
+            OUTPUT_VERBOSE((1, "option 'module-help' set [%s]",
+                arg ? arg : "(null)"));
+            module_help(arg);
+            break;
+
         case 'i':
             bzero(str, MAX_BUFFER_SIZE);
             sprintf(str, "hpctoolkit,inputfile=%s", arg ? arg : "(null)");
@@ -248,13 +254,6 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
         case 'v':
             globals.verbose = arg ? atoi(arg) : 5;
             OUTPUT_VERBOSE((1, "option 'v' set [%d]", globals.verbose));
-            break;
-
-        /* Show modules help */
-        case -4:
-            OUTPUT_VERBOSE((1, "option 'module-help' set [%s]",
-                arg ? arg : "(null)"));
-            module_help(arg);
             break;
 
         /* Shortcuts for compile modules (m) */
@@ -527,75 +526,14 @@ static perfexpert_module_t* guess_compile_module(void) {
 
 /* module_help */
 static void module_help(const char *name) {
-    struct dirent *entry = NULL;
-    DIR *directory = NULL;
-    int x = 0, y = 0;
-    char *m = NULL;
-
-    /* Show my help message */
-    argp_help(&argp, stdout, ARGP_HELP_STD_HELP, "perfexpert");
-
-    /* Show module's help messages */
-    if (0 == strcmp("all", name)) {
-        if (NULL == (directory = opendir(PERFEXPERT_LIBDIR))) {
-            OUTPUT(("%s [%s]", _ERROR("unable to open libdir"),
-                PERFEXPERT_LIBDIR));
-            exit(0);
-        }
-        while (NULL != (entry = readdir(directory))) {
-            if ((0 == strncmp(entry->d_name, "libperfexpert_module_", 21)) &&
-                ('.' == entry->d_name[strlen(entry->d_name) - 3]) &&
-                ('s' == entry->d_name[strlen(entry->d_name) - 2]) &&
-                ('o' == entry->d_name[strlen(entry->d_name) - 1]) &&
-                (0 != strcmp(entry->d_name, "libperfexpert_module_base.so"))) {
-
-                PERFEXPERT_ALLOC(char, m, (strlen(entry->d_name) - 23));
-
-                for (x = 21, y = 0; x < (strlen(entry->d_name) - 3); x++, y++) {
-                    m[y] = entry->d_name[x];
-                }
-
-                if (PERFEXPERT_SUCCESS != perfexpert_module_load(m)) {
-                    OUTPUT(("%s [%s]", _ERROR("unable to load module"), m));
-                    OUTPUT(("Is %s in your LD_LIBRARY_PATH?",
-                        PERFEXPERT_LIBDIR));
-                    exit(0);
-                }
-
-                if (PERFEXPERT_SUCCESS != perfexpert_module_set_option(m,
-                    "help")) {
-                    OUTPUT(("%s", _ERROR("setting module help")));
-                    exit(0);
-                }
-
-                PERFEXPERT_DEALLOC(m);
-            }
-        }
-        if (0 != closedir(directory)) {
-            OUTPUT(("%s [%s]", _ERROR("unable to close libdir")));
-            exit(0);
-        }
-    } else {
-        if (PERFEXPERT_SUCCESS != perfexpert_module_load(name)) {
-            OUTPUT(("%s [%s]", _ERROR("unable to load module"), name));
-            OUTPUT(("Is %s in your LD_LIBRARY_PATH?", PERFEXPERT_LIBDIR));
-            exit(0);
-        }
-        if (PERFEXPERT_SUCCESS != perfexpert_module_set_option(name, "help")) {
-            OUTPUT(("%s", _ERROR("setting module help"), name));
-            exit(0);
-        }
-    }
-
-    printf("\n Modules options: to set these options use "
-        "--module-option=MODULE,OPTION=VALUE\n ================================"
-        "=============================================\n");
-    if (PERFEXPERT_SUCCESS != perfexpert_module_init()) {
-        OUTPUT(("%s", _ERROR("initializing modules")));
+    /* Doesn't hurt, right? */
+    if (NULL == name) {
+        OUTPUT(("%s", _ERROR("module name is null")));
         exit(0);
     }
-    printf(" =================================================================="
-        "===========\n\n");
+
+    argp_help(&argp, stdout, ARGP_HELP_STD_HELP, "perfexpert");
+    perfexpert_module_help(name);
 
     exit(0);
 }
