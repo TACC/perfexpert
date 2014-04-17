@@ -71,7 +71,7 @@ perfexpert_backup_file_version_t *perfexpert_backup_file(
         return NULL;
     }
 
-    /* Check if a backup of this file aready exists, if so add a version only */
+    /* Check if a backup of this file exists, if doesn't, create it */
     if (NULL == (versionhandle =
         perfexpert_backup_get_last_version(backup, file))) {
         /* Allocate some memory... and initialize the structure */
@@ -86,12 +86,15 @@ perfexpert_backup_file_version_t *perfexpert_backup_file(
             (perfexpert_list_item_t*)filehandle);
     }
 
+    /* Add a version to this file */
     if (NULL == (versionhandle = perfexpert_backup_add_version(backup,
         filehandle, file))) {
         OUTPUT(("%s", _ERROR((char *)"adding backup file version")));
     }
 
     /* Now we are done */
+    versionhandle->version_count++;
+
     return versionhandle;
 }
 
