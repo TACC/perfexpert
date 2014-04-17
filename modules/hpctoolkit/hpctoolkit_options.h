@@ -37,6 +37,7 @@ extern "C" {
 static struct argp_option options[] = {
     { 0, 0, 0, 0, "\n[HPCToolkit module options]", 1 },
 
+    { "return-code", 0, 0, OPTION_DOC, "Ignore the target return code" },
     { "inputfile=FILE", 0, 0, OPTION_DOC, "Input file to the target program. Us"
       "e this option instead of input pipe redirect ('<'). Output pipe ('>') is"
       " not available because PerfExpert already has its standard output file"},
@@ -59,6 +60,7 @@ static struct argp_option options[] = {
       "spaces within (e.g., \"mpirun -n 2\")" },
     #endif
 
+    { "return-code", 'r', 0, OPTION_HIDDEN, 0 },
     { "inputfile", 'i', "FILE", OPTION_HIDDEN, 0 },
     { "after", 'a', "COMMAND", OPTION_HIDDEN, 0 },
     { "before", 'b', "COMMAND", OPTION_HIDDEN, 0 },

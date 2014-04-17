@@ -116,6 +116,8 @@ int parse_module_args(int argc, char *argv[]) {
     }
 
     OUTPUT_VERBOSE((7, "%s", _BLUE("Summary of options")));
+    OUTPUT_VERBOSE((7, "   Ignore return code:  %s",
+        my_module_globals.ignore_return_code ? "yes" : "no"));
     OUTPUT_VERBOSE((7, "   Program input file:  %s",
         my_module_globals.inputfile));
 
@@ -259,6 +261,12 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
         case 'P':
             arg_options.mic_prefix = arg;
             OUTPUT_VERBOSE((1, "option 'P' set [%s]", arg_options.mic_prefix));
+            break;
+
+        /* Should I ignore the target return code? */
+        case 'r':
+            my_module_globals.ignore_return_code = PERFEXPERT_TRUE;
+            OUTPUT_VERBOSE((1, "option 'r' set"));
             break;
 
         /* no arguments... */

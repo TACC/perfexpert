@@ -69,6 +69,7 @@ int module_init(void) {
     perfexpert_list_construct(&(myself_module.profiles));
     my_module_globals.mic = NULL;
     my_module_globals.inputfile = NULL;
+    my_module_globals.ignore_return_code = PERFEXPERT_FALSE;
 
     /* Parse module options */
     if (PERFEXPERT_SUCCESS != parse_module_args(myself_module.argc,
@@ -96,6 +97,7 @@ int module_fini(void) {
         PERFEXPERT_DEALLOC(event);
     }
     my_module_globals.events_by_name = NULL;
+    my_module_globals.ignore_return_code = PERFEXPERT_FALSE;
 
     OUTPUT_VERBOSE((5, "%s", _MAGENTA("finalized")));
 

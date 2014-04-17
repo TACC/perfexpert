@@ -90,8 +90,7 @@ int run_hpcstruct(void) {
 
 /* run_hpcrun */
 int run_hpcrun(void) {
-    int experiment_count = 0, rc = PERFEXPERT_SUCCESS, i = 0, event_count = 0,
-        experiment_total = 0;
+    int experiment_count = 0, experiment_total = 0, event_count = 0, i = 0, rc;
     struct timespec time_start, time_end, time_diff;
     hpctoolkit_event_t *event = NULL, *t = NULL;
     perfexpert_list_t experiments;
@@ -214,31 +213,41 @@ int run_hpcrun(void) {
             printf("\n");
         }
 
-        /* (HPC)run program and test return code (should I really test it?) */
+        /* fork_and_wait_and_pray */
+        rc = perfexpert_fork_and_wait(&(e->test), (char **)e->argv);
         clock_gettime(CLOCK_MONOTONIC, &time_start);
 
-        switch (perfexpert_fork_and_wait(&(e->test), (char **)e->argv)) {
-            case PERFEXPERT_ERROR:
-                OUTPUT_VERBOSE((7, "[%s]", _BOLDYELLOW("ERROR")));
-                return PERFEXPERT_ERROR;
+        /* Evaluate results if required to */
+        if (PERFEXPERT_FALSE == my_module_globals.ignore_return_code) {
+            switch (rc) {
+                case PERFEXPERT_FAILURE:
+                case PERFEXPERT_ERROR:
+                    OUTPUT(("%s (return code: %d) Usually, this means that an "
+                        "error happened during the program execution. To see "
+                        "the program's output, check the content of this file: "
+                        "[%s]. If you want to PerfExpert ignore the return code"
+                        " next time you run this program, set the 'return-code'"
+                        " option for the HPCToolkit module (see 'perfepxert -H "
+                        "hpctoolkit' for details.",
+                        _ERROR("the target program returned non-zero"), rc,
+                        e->test.output));
+                    return PERFEXPERT_ERROR;
 
-            case PERFEXPERT_FAILURE:
-                OUTPUT_VERBOSE((7, "[%s ]", _BOLDRED("FAIL")));
-                return PERFEXPERT_ERROR;
+                case PERFEXPERT_SUCCESS:
+                    OUTPUT_VERBOSE((7, "[ %s  ]", _BOLDGREEN("OK")));
+                    break;
 
-            case PERFEXPERT_SUCCESS:
-                OUTPUT_VERBOSE((7, "[ %s  ]", _BOLDGREEN("OK")));
-                break;
-
-            default:
-                break;
+                default:
+                    break;
+            }
         }
 
+        /* Calculate and display runtime */
         clock_gettime(CLOCK_MONOTONIC, &time_end);
         perfexpert_time_diff(&time_diff, &time_start, &time_end);
         OUTPUT(("   [%d/%d] %lld.%.9ld seconds (includes measurement overhead)",
-            experiment_count, experiment_total,
-            (long long)time_diff.tv_sec, time_diff.tv_nsec));
+            experiment_count, experiment_total, (long long)time_diff.tv_sec,
+            time_diff.tv_nsec));
 
         /* Run the AFTER program */
         if (NULL != my_module_globals.after[0]) {
