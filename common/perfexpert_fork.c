@@ -147,20 +147,9 @@ int perfexpert_fork_and_wait(test_t *test, char *argv[]) {
         OUTPUT_VERBOSE((10, "   %s  %d", _CYAN((char *)"result"), rc >> 8));
     }
 
-    /* Evaluating the result */
-    if (0 > (rc >> 8)) {
-        OUTPUT_VERBOSE((7, "   [%s] [%s] >> [%s] (rc=%d)",
-            _BOLDYELLOW((char *)"ERROR"), argv[0], test->info ? test->info : "",
-            rc >> 8));
-    } else if (0 < (rc >> 8)) {
-        OUTPUT_VERBOSE((7, "   [%s ] [%s] >> [%s] (rc=%d)",
-            _BOLDRED((char *)"FAIL"), argv[0], test->info ? test->info : "",
-            rc >> 8));
-    } else {
-        OUTPUT_VERBOSE((7, "   [ %s  ] [%s] >> [%s] (rc=%d)",
-            _BOLDGREEN((char *)"OK"), argv[0], test->info ? test->info : "",
-            rc >> 8));
-    }
+    /* Showing the result */
+    OUTPUT_VERBOSE((7, "   [%s] >> [%s] (rc=%d)", argv[0],
+        test->info ? test->info : "", rc >> 8));
 
     return rc >> 8;
 }
