@@ -212,7 +212,7 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
         /* Show help */
         case 'h':
             OUTPUT_VERBOSE((1, "option 'h' set"));
-            argp_state_help(state, stdout, ARGP_HELP_STD_HELP);
+            module_help("all");
             break;
 
         /* Show modules help */
