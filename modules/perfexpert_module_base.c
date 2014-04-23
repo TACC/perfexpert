@@ -64,6 +64,8 @@ int perfexpert_module_load(const char *name) {
     perfexpert_module_t *m = NULL;
     lt_dlhandle handle = NULL;
 
+    OUTPUT_VERBOSE((9, "loading module [%s]", _CYAN((char *)name)));
+
     /* Sanity check: is this module already loaded? */
     perfexpert_list_for(m, &(module_globals.modules), perfexpert_module_t) {
         if (0 == strcmp(name, m->name)) {
@@ -606,8 +608,6 @@ static lt_dlhandle perfexpert_module_open(const char *name) {
     static const lt_dlinfo *moduleinfo = NULL;
     lt_dlhandle handle = NULL;
     char *filename = NULL;
-
-    OUTPUT_VERBOSE((9, "loading module [%s]", _CYAN((char *)name)));
 
     /* Initialize LIBTOOL */
     if (0 != lt_dlinit()) {
