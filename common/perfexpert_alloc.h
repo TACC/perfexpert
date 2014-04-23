@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #endif
 
+#include <sys/types.h>
 #include "common/perfexpert_output.h"
 
 #ifdef __cplusplus
@@ -38,13 +39,20 @@ extern "C" {
         OUTPUT(("%s", _ERROR((char *)"unable to allocate memory"))); \
         exit(PERFEXPERT_ERROR);                                      \
     }                                                                \
+    perfexpert_alloc_add(ptr, size);                                 \
     bzero(ptr, size)
 
-#define PERFEXPERT_DEALLOC(ptr) \
-    if (NULL != ptr) {          \
-        free(ptr);              \
-    }                           \
+#define PERFEXPERT_DEALLOC(ptr)    \
+    if (NULL != ptr) {             \
+        free(ptr);                 \
+        perfexpert_alloc_del(ptr); \
+    }                              \
     ptr = NULL
+
+/* Accounting functions */
+void perfexpert_alloc_add(void *ptr, ssize_t size);
+void perfexpert_alloc_del(void *ptr);
+void perfexpert_alloc_free_all(void);
 
 #ifdef __cplusplus
 }
