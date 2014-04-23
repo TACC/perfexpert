@@ -34,7 +34,7 @@
 /* Modules headers */
 #include "lcpi.h"
 #include "lcpi_types.h"
-#include "lcpi_metrics.h"
+#include "lcpi_metrics_papi.h"
 
 /* PerfExpert common headers */
 #include "common/perfexpert_alloc.h"
@@ -44,11 +44,12 @@
 #include "common/perfexpert_md5.h"
 #include "common/perfexpert_output.h"
 
-int metrics_generate(void) {
+int metrics_papi_generate(void) {
     lcpi_metric_t *m = NULL, *temp = NULL;
 
-    OUTPUT_VERBOSE((4, "%s", _YELLOW("Generating LCPI metrics")));
+    OUTPUT_VERBOSE((4, "%s", _YELLOW("Generating LCPI metrics (PAPI)")));
 
+    /* Initialize PAPI */
     if (PAPI_NOT_INITED == PAPI_is_initialized()) {
         if (PAPI_VER_CURRENT != PAPI_library_init(PAPI_VER_CURRENT)) {
             OUTPUT(("%s", _ERROR("initializing PAPI")));
@@ -56,32 +57,41 @@ int metrics_generate(void) {
         }
     }
 
-    /* Generate LCPI metrics (be sure the events are ordered) */
+    /* Generate LCPI PAPI metrics (be sure the events are ordered) */
     if (PERFEXPERT_SUCCESS != generate_ratio_floating_point()) {
+        OUTPUT(("%s", _ERROR("generating ratio floating point")));
         return PERFEXPERT_ERROR;
     }
     if (PERFEXPERT_SUCCESS != generate_ratio_data_accesses()) {
+        OUTPUT(("%s", _ERROR("generating ratio data access")));
         return PERFEXPERT_ERROR;
     }
     if (PERFEXPERT_SUCCESS != generate_gflops()) {
+        OUTPUT(("%s", _ERROR("generating GFLOPS")));
         return PERFEXPERT_ERROR;
     }
     if (PERFEXPERT_SUCCESS != generate_overall()) {
+        OUTPUT(("%s", _ERROR("generating overall")));
         return PERFEXPERT_ERROR;
     }
     if (PERFEXPERT_SUCCESS != generate_data_accesses()) {
+        OUTPUT(("%s", _ERROR("generating data access")));
         return PERFEXPERT_ERROR;
     }
     if (PERFEXPERT_SUCCESS != generate_instruction_accesses()) {
+        OUTPUT(("%s", _ERROR("generating instruction access")));
         return PERFEXPERT_ERROR;
     }
     if (PERFEXPERT_SUCCESS != generate_tlb_metrics()) {
+        OUTPUT(("%s", _ERROR("generating TLB metrics")));
         return PERFEXPERT_ERROR;
     }
     if (PERFEXPERT_SUCCESS != generate_branch_metrics()) {
+        OUTPUT(("%s", _ERROR("generating branch metrics")));
         return PERFEXPERT_ERROR;
     }
     if (PERFEXPERT_SUCCESS != generate_floating_point_instr()) {
+        OUTPUT(("%s", _ERROR("generating floating point instructions")));
         return PERFEXPERT_ERROR;
     }
 
@@ -93,6 +103,7 @@ int metrics_generate(void) {
     OUTPUT_VERBOSE((4, "(%d) %s",
         perfexpert_hash_count_str(my_module_globals.metrics_by_name),
         _MAGENTA("LCPI metrics")));
+
 
     return PERFEXPERT_SUCCESS;
 }

@@ -26,7 +26,8 @@ libperfexpert_module_lcpi_la_LDFLAGS = -lpapi -lmatheval -lm -lsqlite3 -module \
 libperfexpert_module_lcpi_la_SOURCES = lcpi_module.c \
 	lcpi_database.c \
 	lcpi_logic.c \
-	lcpi_metrics.c \
+	lcpi_metrics_papi.c \
+	lcpi_metrics_intel.c \
 	lcpi_options.c \
 	lcpi_output.c \
 	lcpi_sort.c

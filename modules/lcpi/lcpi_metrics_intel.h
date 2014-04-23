@@ -19,18 +19,20 @@
  * $HEADER$
  */
 
-#ifndef PERFEXPERT_MODULE_LCPI_METRICS_H_
-#define PERFEXPERT_MODULE_LCPI_METRICS_H_
+#ifndef PERFEXPERT_MODULE_LCPI_METRICS_INTEL_H_
+#define PERFEXPERT_MODULE_LCPI_METRICS_INTEL_H_
 
 #define MAX_LCPI 1024
 
 /* PerfExpert common headers */
 #include "common/perfexpert_constants.h"
 
-#define USE_EVENT(X)                                                        \
-    if (PERFEXPERT_SUCCESS != my_module_globals.hpctoolkit->set_event(X)) { \
-        return PERFEXPERT_ERROR;                                            \
+#define USE_EVENT(X)                                                   \
+    if (PERFEXPERT_SUCCESS != my_module_globals.vtune->set_event(X)) { \
+        return PERFEXPERT_ERROR;                                       \
     }
+
+#define EVENT_AVAIL(X) my_module_globals.vtune->query_event(X)
 
 /* Function declarations */
 static int generate_ratio_floating_point(void);
@@ -42,6 +44,5 @@ static int generate_instruction_accesses(void);
 static int generate_tlb_metrics(void);
 static int generate_branch_metrics(void);
 static int generate_floating_point_instr(void);
-static int event_avail(const char *event);
 
-#endif /* PERFEXPERT_MODULE_LCPI_METRICS_H_ */
+#endif /* PERFEXPERT_MODULE_LCPI_METRICS_INTEL_H_ */
