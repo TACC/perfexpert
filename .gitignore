@@ -12,3 +12,4 @@ configure
 m4/
 Makefile.in
 common/config.h.in
+common/config.h.in~
