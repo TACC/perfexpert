@@ -72,20 +72,6 @@ int parse_cli_params(int argc, char *argv[]) {
     /* Parse arguments */
     argp_parse(&argp, argc, argv, 0, 0, NULL);
 
-    /* Expand program arguments */
-    while (NULL != arg_options.program_argv[i]) {
-        int j = 0;
-
-        perfexpert_string_split(perfexpert_string_remove_spaces(
-            arg_options.program_argv[i]), arg_options.program_argv_temp, ' ');
-        while (NULL != arg_options.program_argv_temp[j]) {
-            globals.program_argv[k] = arg_options.program_argv_temp[j];
-            j++;
-            k++;
-        }
-        i++;
-    }
-
     /* Sanity check: verbose level should be between 1-10 */
     if ((0 > globals.verbose) || (10 < globals.verbose)) {
         OUTPUT(("%s", _ERROR("invalid verbose level")));
@@ -130,6 +116,20 @@ int parse_cli_params(int argc, char *argv[]) {
     } else {
         OUTPUT(("%s", _ERROR("undefined program")));
         return PERFEXPERT_ERROR;
+    }
+
+    /* Expand program arguments */
+    while (NULL != arg_options.program_argv[i]) {
+        int j = 0;
+
+        perfexpert_string_split(perfexpert_string_remove_spaces(
+            arg_options.program_argv[i]), arg_options.program_argv_temp, ' ');
+        while (NULL != arg_options.program_argv_temp[j]) {
+            globals.program_argv[k] = arg_options.program_argv_temp[j];
+            j++;
+            k++;
+        }
+        i++;
     }
 
     OUTPUT(("%s", _BLUE("Summary of options")));
