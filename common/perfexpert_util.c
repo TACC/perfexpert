@@ -265,29 +265,35 @@ int perfexpert_util_path_only(const char *file, char **path) {
         }
         PERFEXPERT_DEALLOC(my_path);
     } else {
-        /* Search in $PATH */
-        char *env_path = NULL, try_file[PATH_MAX], *try_path;
-        struct stat fin;
+        /* Search in PATH */
+        if (NULL != getenv("PATH")) {
+            char *env_path, *try_file, *try_path;
+            struct stat fin;
 
-        PERFEXPERT_ALLOC(char, env_path, (strlen(getenv("PATH")) + 1));
-        memcpy(env_path, getenv("PATH"), strlen(getenv("PATH")));
+            PERFEXPERT_ALLOC(char, env_path, PATH_MAX);
+            memcpy(env_path, getenv("PATH"), strlen(getenv("PATH")));
 
-        while (NULL != (try_path = strsep(&env_path, ":"))) {
-            if (('\0' == *try_path) || ('.' == *try_path)) {
-                try_path = getcwd(NULL, 0);
-            }
-            sprintf(try_file, "%s/%s", try_path, file);
-
-            if ((0 == access(try_file, X_OK)) && (0 == stat(try_file, &fin))) {
-                if ((S_ISREG(fin.st_mode)) && ((0 != getuid()) ||
-                    (0 != (fin.st_mode & (S_IXUSR | S_IXGRP | S_IXOTH))))) {
-                    PERFEXPERT_ALLOC(char, resolved_path,
-                        (strlen(try_path) + 1));
-                    memcpy(resolved_path, try_path, strlen(try_path));
+            while (NULL != (try_path = strsep(&env_path, ":"))) {
+                if (('\0' == *try_path) || ('.' == *try_path)) {
+                    try_path = getcwd(NULL, 0);
                 }
+                PERFEXPERT_ALLOC(char, try_file,
+                    (strlen(try_path) + strlen(file) + 2));
+                sprintf(try_file, "%s/%s", try_path, file);
+
+                if ((0 == access(try_file, X_OK)) &&
+                    (0 == stat(try_file, &fin))) {
+                    if ((S_ISREG(fin.st_mode)) && ((0 != getuid()) ||
+                        (0 != (fin.st_mode & (S_IXUSR | S_IXGRP | S_IXOTH))))) {
+                        PERFEXPERT_ALLOC(char, resolved_path,
+                            (strlen(try_path) + 1));
+                        memcpy(resolved_path, try_path, strlen(try_path));
+                    }
+                }
+                PERFEXPERT_DEALLOC(try_file);
             }
+            PERFEXPERT_DEALLOC(env_path);
         }
-        PERFEXPERT_DEALLOC(env_path);
     }
 
     if (NULL == resolved_path) {
