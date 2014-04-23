@@ -34,7 +34,7 @@
 /* Modules headers */
 #include "lcpi.h"
 #include "lcpi_types.h"
-#include "lcpi_metrics_mic.h"
+#include "lcpi_metrics_papi_mic.h"
 
 /* PerfExpert common headers */
 #include "common/perfexpert_alloc.h"
@@ -58,27 +58,35 @@ int metrics_generate_mic(void) {
 
     /* Generate LCPI metrics (be sure the events are ordered) */
     if (PERFEXPERT_SUCCESS != generate_mic_ratio_floating_point()) {
+        OUTPUT(("%s", _ERROR("generating MIC ratio floating point")));
         return PERFEXPERT_ERROR;
     }
     if (PERFEXPERT_SUCCESS != generate_mic_ratio_data_accesses()) {
+        OUTPUT(("%s", _ERROR("generating MIC ratio data access")));
         return PERFEXPERT_ERROR;
     }
     if (PERFEXPERT_SUCCESS != generate_mic_overall()) {
+        OUTPUT(("%s", _ERROR("generating MIC overall")));
         return PERFEXPERT_ERROR;
     }
     if (PERFEXPERT_SUCCESS != generate_mic_data_accesses()) {
+        OUTPUT(("%s", _ERROR("generating MIC data access")));
         return PERFEXPERT_ERROR;
     }
     if (PERFEXPERT_SUCCESS != generate_mic_instruction_accesses()) {
+        OUTPUT(("%s", _ERROR("generating MIC instruction access")));
         return PERFEXPERT_ERROR;
     }
     if (PERFEXPERT_SUCCESS != generate_mic_tlb_metrics()) {
+        OUTPUT(("%s", _ERROR("generating MIC TLB metrics")));
         return PERFEXPERT_ERROR;
     }
     if (PERFEXPERT_SUCCESS != generate_mic_branch_metrics()) {
+        OUTPUT(("%s", _ERROR("generating MIC branch metrics")));
         return PERFEXPERT_ERROR;
     }
     if (PERFEXPERT_SUCCESS != generate_mic_floating_point_instr()) {
+        OUTPUT(("%s", _ERROR("generating MIC floating point instructions")));
         return PERFEXPERT_ERROR;
     }
 

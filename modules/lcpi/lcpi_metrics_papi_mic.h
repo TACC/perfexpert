@@ -19,8 +19,8 @@
  * $HEADER$
  */
 
-#ifndef PERFEXPERT_MODULE_LCPI_METRICS_MIC_H_
-#define PERFEXPERT_MODULE_LCPI_METRICS_MIC_H_
+#ifndef PERFEXPERT_MODULE_LCPI_METRICS_MIC_PAPI_H_
+#define PERFEXPERT_MODULE_LCPI_METRICS_MIC_PAPI_H_
 
 #define MAX_LCPI 1024
 
@@ -42,4 +42,4 @@ static int generate_mic_tlb_metrics(void);
 static int generate_mic_branch_metrics(void);
 static int generate_mic_floating_point_instr(void);
 
-#endif /* PERFEXPERT_MODULE_LCPI_METRICS_MIC_H_ */
+#endif /* PERFEXPERT_MODULE_LCPI_METRICS_MIC_PAPI_H_ */
