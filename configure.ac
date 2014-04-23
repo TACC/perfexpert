@@ -729,6 +729,45 @@ AS_IF([test x"$HAVE_HPCTOOLKIT_MIC" = xyes], [
 ])
 
 #------------------------------------------------------------------------------
+# VTune module requirements
+#
+AC_ARG_ENABLE([module-vtune],
+    [AS_HELP_STRING([--disable-module-vtune],
+        [disable Intel Vtune measurement module])],
+    [ENABLE_VTUNE=$enableval], [ENABLE_VTUNE=yes])
+
+AC_MSG_CHECKING([whether to enable VTune measurement module])
+AS_IF([test x"$ENABLE_VTUNE" = xyes], [
+    AC_MSG_RESULT([yes])
+    AC_DEFINE([HAVE_VTUNE], [1], [Enable VTune support])
+
+    # Programs: amplxe-cl
+    #
+    AC_PATH_TOOL([VTUNE_PROGRAM], [amplxe-cl])
+    AS_IF([test x"$HPCSTRUCT_PROGRAM" = x], [
+        AC_MSG_ERROR([amplxe-cl not found. Do you have VTune installed?])
+    ])
+
+    # SQLite support (headers, lib, and program)
+    #
+    AC_PATH_TOOL([SQLITE3_PROGRAM], [sqlite3])
+    AS_IF([test x"$SQLITE3_PROGRAM" = x], [
+        AC_MSG_ERROR([sqlite3 not found. Do you have SQLite3 installed?])
+    ])
+    AC_CHECK_LIB([sqlite3], [sqlite3_open, sqlite3_close, sqlite3_exec], [],
+        [AC_MSG_ERROR([not found: libsqlite3.so])])
+    AC_CHECK_HEADER([sqlite3.h], [], [AC_MSG_ERROR([not found: sqlite3.h])])
+
+    ENABLE_VTUNE=vtune
+    ENABLED_MODULES+="vtune "
+    AC_CONFIG_FILES([modules/vtune/Makefile])
+], [
+    AC_MSG_RESULT([no])
+    ENABLE_VTUNE=
+])
+AC_SUBST([ENABLE_VTUNE])
+
+#------------------------------------------------------------------------------
 # timb module requirements
 #
 AC_ARG_ENABLE([module-timb],
