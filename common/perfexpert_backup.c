@@ -91,9 +91,7 @@ perfexpert_backup_file_version_t *perfexpert_backup_file(
         filehandle, file))) {
         OUTPUT(("%s", _ERROR((char *)"adding backup file version")));
     }
-
-    /* Now we are done */
-    versionhandle->version_count++;
+    filehandle->version_count++;
 
     return versionhandle;
 }
