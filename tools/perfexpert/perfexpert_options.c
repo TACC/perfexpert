@@ -204,6 +204,8 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
         /* Leave the garbage there? */
         case 'g':
             globals.remove_garbage = PERFEXPERT_TRUE;
+            OUTPUT(("%s in this version the -g option actually removes the "
+                "temporary directory", _BOLDRED("WARNING: ")));
             OUTPUT_VERBOSE((1, "option 'g' set"));
             break;
 
