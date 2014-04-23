@@ -78,6 +78,14 @@ int module_init(void) {
         return PERFEXPERT_ERROR;
     }
 
+    /* Initialize PAPI */
+    if (PAPI_NOT_INITED == PAPI_is_initialized()) {
+        if (PAPI_VER_CURRENT != PAPI_library_init(PAPI_VER_CURRENT)) {
+            OUTPUT(("%s", _ERROR("initializing PAPI")));
+            return PERFEXPERT_ERROR;
+        }
+    }
+
     OUTPUT_VERBOSE((5, "%s", _MAGENTA("initialized")));
 
     return PERFEXPERT_SUCCESS;
@@ -185,19 +193,13 @@ int module_set_event(const char *name) {
     }
 
     /* Check if event exists */
-    if (PAPI_NOT_INITED == PAPI_is_initialized()) {
-        if (PAPI_VER_CURRENT != PAPI_library_init(PAPI_VER_CURRENT)) {
-            OUTPUT(("%s", _ERROR("initializing PAPI")));
-            return PERFEXPERT_ERROR;
-        }
-    }
     if (PAPI_OK != PAPI_event_name_to_code((char *)name, &event_code)) {
         OUTPUT(("%s [%s]", _ERROR("event not available (name->code)"), name));
-        return HPCTOOLKIT_INVALID_EVENT;
+        return PERFEXPERT_ERROR;
     }
     if (PAPI_OK != PAPI_query_event(event_code)) {
         OUTPUT(("%s [%s]", _ERROR("event not available (query code)"), name));
-        return HPCTOOLKIT_INVALID_EVENT;
+        return PERFEXPERT_ERROR;
     }
 
     /* Add event to the hash of events */

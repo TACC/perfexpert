@@ -32,9 +32,6 @@ extern "C" {
 /* PerfExpert common headers */
 #include "common/perfexpert_list.h"
 
-/* Interface constants */
-#define HPCTOOLKIT_INVALID_EVENT -1
-
 /* Interface extenstions */
 typedef int (*perfexpert_module_hpctoolkit_set_event_fn_t)(const char *name);
 
