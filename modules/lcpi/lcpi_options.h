@@ -45,7 +45,7 @@ static struct argp_option options[] = {
       "Order in which hotspots should be sorted (Valid values: relevance, "
       "performance, mixed. Default value: unsorted)" },
 
-    { "threshold=VALUE", 't', 0, OPTION_HIDDEN, 0 },
+    { "threshold", 't', "VALUE", OPTION_HIDDEN, 0 },
     { "mic", 'm', 0, OPTION_HIDDEN, 0 },
     { "sort-order", 's', "relevance|performance|mixed", OPTION_HIDDEN, 0 },
 

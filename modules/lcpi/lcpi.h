@@ -32,6 +32,7 @@ extern "C" {
 /* Modules headers */
 #include "lcpi_types.h"
 #include "modules/hpctoolkit/hpctoolkit_module.h"
+#include "modules/vtune/vtune_module.h"
 
 /* PerfExpert common headers */
 #include "common/perfexpert_hash.h"
@@ -51,6 +52,7 @@ typedef struct {
     perfexpert_list_t profiles;
     lcpi_metric_t *metrics_by_name;
     perfexpert_module_hpctoolkit_t *hpctoolkit;
+    perfexpert_module_vtune_t *vtune;
     double threshold;
     char *order;
     int help_only;
@@ -68,8 +70,10 @@ int module_analyze(void);
 
 /* Function declarations */
 int parse_module_args(int argc, char *argv[]);
-int metrics_generate(void);
-int metrics_generate_mic(void);
+int metrics_papi_generate(void);
+int metrics_papi_generate_mic(void);
+int metrics_intel_generate(void);
+int metrics_intel_generate_mic(void);
 int metrics_attach_machine(void);
 int database_import(perfexpert_list_t *profiles, const char *table);
 int database_export(perfexpert_list_t *profiles);
