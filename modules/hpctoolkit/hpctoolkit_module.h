@@ -43,6 +43,7 @@ typedef struct {
     char *version;
     int  argc;
     char *argv[MAX_ARGUMENTS_COUNT];
+    int  verbose_level;
     perfexpert_module_status_t status;
     perfexpert_module_load_fn_t load;
     perfexpert_module_init_fn_t init;
