@@ -49,4 +49,8 @@ Version 4.1.1:
 	- clearer messages to the user (outside debug mode);
 - other minor improvements and bug fixes.
 
+Known issues:
+
+1) The sniffer tool SEGFAULT with PAPI 5.3. Please, find a patch to this issue on the contrib directory.
+
 EOF
