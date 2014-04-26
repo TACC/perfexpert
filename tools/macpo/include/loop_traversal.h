@@ -33,9 +33,11 @@ class loop_traversal_t : public AstTopDownProcessing<attrib> {
     explicit loop_traversal_t(VariableRenaming*& _var_renaming);
 
     loop_info_list_t& get_loop_info_list();
+    void set_deep_search(bool _deep_search);
     virtual attrib evaluateInheritedAttribute(SgNode* node, attrib attr);
 
  private:
+    bool deep_search;
     SgForStatement* for_stmt;
     reference_list_t reference_list;
     loop_info_list_t loop_info_list;

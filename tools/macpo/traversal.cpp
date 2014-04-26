@@ -39,6 +39,10 @@ traversal_t::~traversal_t() {
     loop_traversal = NULL;
 }
 
+void traversal_t::set_deep_search(bool _deep_search) {
+    loop_traversal->set_deep_search(_deep_search);
+}
+
 void traversal_t::process_loop(loop_info_t& loop_info) {
     // Instrument this loop only if
     // the loop header components have been identified.
@@ -71,7 +75,6 @@ void traversal_t::process_node(SgNode* node) {
 
     // Traverse all loops within this node.
     loop_traversal->traverse(node, attrib());
-
     loop_info_list_t& loop_info_list = get_loop_info_list();
     analysis_profile.set_loop_info_list(loop_info_list);
 

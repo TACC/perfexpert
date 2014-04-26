@@ -33,11 +33,16 @@ using namespace SageInterface;
 
 loop_traversal_t::loop_traversal_t(VariableRenaming*& _var_renaming) {
     for_stmt = NULL;
+    deep_search = true;
     var_renaming = _var_renaming;
 }
 
 loop_info_list_t& loop_traversal_t::get_loop_info_list() {
     return loop_info_list;
+}
+
+void loop_traversal_t::set_deep_search(bool _deep_search) {
+    deep_search = _deep_search;
 }
 
 attrib loop_traversal_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
@@ -64,7 +69,7 @@ attrib loop_traversal_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
         ir_methods::get_loop_header_components(var_renaming, scope_stmt,
                 def_map, idxv, init, test, incr, incr_op);
 
-        streams_t streams(false);
+        streams_t streams(deep_search);
         streams.traverse(node, attrib());
         reference_list_t& _ref_list = streams.get_reference_list();
 
@@ -77,6 +82,10 @@ attrib loop_traversal_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
             loop_body = do_while_stmt->get_body();
 
         loop_traversal_t inner_traversal(var_renaming);
+
+        // Use the same deep_search flag as with the outer loop.
+        inner_traversal.set_deep_search(deep_search);
+
         inner_traversal.traverse(loop_body, attrib());
         loop_info_list_t& child_list = inner_traversal.get_loop_info_list();
 

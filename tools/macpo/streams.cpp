@@ -67,7 +67,7 @@ reference_list_t& streams_t::get_reference_list() {
 
 attrib streams_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
     // If explicit instructions to skip this node, then just return
-    if (attr.skip || isSgExpression(node) == false)
+    if (attr.skip)
         return attr;
 
     attr.access_type = TYPE_UNKNOWN;
