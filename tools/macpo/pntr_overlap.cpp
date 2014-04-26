@@ -121,7 +121,6 @@ bool pntr_overlap_t::instrument_loop(loop_info_t& loop_info) {
         ref_stmt = omp_body_stmt;
     }
 
-#if 1
     SgBasicBlock* bb = getEnclosingNode<SgBasicBlock>(ref_stmt);
 
     // One last thing before adding the instrumentation call.
@@ -150,7 +149,6 @@ bool pntr_overlap_t::instrument_loop(loop_info_t& loop_info) {
             }
         }
     }
-#endif
 
     std::string function_name = SageInterface::is_Fortran_language()
         ? "indigo__overlap_check_f" : "indigo__overlap_check_c";
