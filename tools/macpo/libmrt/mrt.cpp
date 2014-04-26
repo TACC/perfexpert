@@ -354,15 +354,24 @@ void indigo__exit() {
 }
 
 int16_t& get_branch_bin(int line_number, int loop_line_number) {
-    analyzed_loops.insert(loop_line_number);
     int16_t core_id = getCoreID();
+    short_map_coll::iterator it = branch_bin.find(line_number);
+    if (it != branch_bin.end()) {
+        short_map& map = it->second;
+        short_map::iterator it = map.find(core_id);
+        if (it != map.end()) {
+            // It's a hit!
+            analyzed_loops.insert(line_number);
+            return map[core_id];
+        }
+    }
 
+    // We couldn't locate the histogram value, go down the slow path.
     // Obtain lock.
     lock();
 
-    int64_t* return_value = NULL;
     // Check if we need to allocate a new histogram.
-    short_map_coll::iterator it = branch_bin.find(line_number);
+    it = branch_bin.find(line_number);
     if (it == branch_bin.end()) {
         short_map& map = branch_bin[line_number];
         short_map::iterator it = map.find(core_id);
@@ -394,15 +403,24 @@ int64_t* new_histogram(size_t histogram_entries) {
 }
 
 bool& get_overlap_bin(int line_number) {
-    analyzed_loops.insert(line_number);
     int16_t core_id = getCoreID();
+    bool_map_coll::iterator it = overlap_bin.find(line_number);
+    if (it != overlap_bin.end()) {
+        bool_map& map = it->second;
+        bool_map::iterator it = map.find(core_id);
+        if (it != map.end()) {
+            // It's a hit!
+            analyzed_loops.insert(line_number);
+            return map[core_id];
+        }
+    }
 
+    // We couldn't locate the histogram value, go down the slow path.
     // Obtain lock.
     lock();
 
-    int64_t* return_value = NULL;
     // Check if we need to allocate a new histogram.
-    bool_map_coll::iterator it = overlap_bin.find(line_number);
+    it = overlap_bin.find(line_number);
     if (it == overlap_bin.end()) {
         bool_map& map = overlap_bin[line_number];
         bool_map::iterator it = map.find(core_id);
@@ -429,21 +447,32 @@ bool& get_overlap_bin(int line_number) {
     Helper function to allocate / get histogramss for alignment checking.
 */
 
-int64_t* get_histogram(long_histogram_coll& collection, int line_number,
-        size_t histogram_entries) {
+int64_t* get_tripcount_histogram(int line_number) {
     int16_t core_id = getCoreID();
+    long_histogram_coll::iterator it = tripcount_map.find(line_number);
+    if (it != tripcount_map.end()) {
+        long_histogram& histogram = it->second;
+        long_histogram::iterator it = histogram.find(core_id);
+        if (it != histogram.end()) {
+            // It's a hit!
+            analyzed_loops.insert(line_number);
+            return histogram[core_id];
+        }
+    }
+
+    // We couldn't locate the histogram value, go down the slow path.
+    int64_t* return_value = NULL;
 
     // Obtain lock.
     lock();
 
-    int64_t* return_value = NULL;
     // Check if we need to allocate a new histogram.
-    long_histogram_coll::iterator it = collection.find(line_number);
-    if (it == collection.end()) {
-        long_histogram& histogram = collection[line_number];
+    it = tripcount_map.find(line_number);
+    if (it == tripcount_map.end()) {
+        long_histogram& histogram = tripcount_map[line_number];
         long_histogram::iterator it = histogram.find(core_id);
         if (it == histogram.end()) {
-            histogram[core_id] = new_histogram(histogram_entries);
+            histogram[core_id] = new_histogram(MAX_HISTOGRAM_ENTRIES);
             return_value = histogram[core_id];
         } else {
             return_value = it->second;
@@ -452,7 +481,7 @@ int64_t* get_histogram(long_histogram_coll& collection, int line_number,
         long_histogram& histogram = it->second;
         long_histogram::iterator it = histogram.find(core_id);
         if (it == histogram.end()) {
-            histogram[core_id] = new_histogram(histogram_entries);
+            histogram[core_id] = new_histogram(MAX_HISTOGRAM_ENTRIES);
             return_value = histogram[core_id];
         } else {
             return_value = it->second;
@@ -466,15 +495,24 @@ int64_t* get_histogram(long_histogram_coll& collection, int line_number,
 }
 
 int16_t& get_sstore_alignment_bin(int line_number) {
-    analyzed_loops.insert(line_number);
     int16_t core_id = getCoreID();
+    short_map_coll::iterator it = sstore_align_bin.find(line_number);
+    if (it != sstore_align_bin.end()) {
+        short_map& map = it->second;
+        short_map::iterator it = map.find(core_id);
+        if (it != map.end()) {
+            // It's a hit!
+            analyzed_loops.insert(line_number);
+            return map[core_id];
+        }
+    }
 
+    // We couldn't locate the histogram value, go down the slow path.
     // Obtain lock.
     lock();
 
-    int64_t* return_value = NULL;
     // Check if we need to allocate a new histogram.
-    short_map_coll::iterator it = sstore_align_bin.find(line_number);
+    it = sstore_align_bin.find(line_number);
     if (it == sstore_align_bin.end()) {
         short_map& map = sstore_align_bin[line_number];
         short_map::iterator it = map.find(core_id);
@@ -496,15 +534,24 @@ int16_t& get_sstore_alignment_bin(int line_number) {
 }
 
 int16_t& get_alignment_bin(int line_number) {
-    analyzed_loops.insert(line_number);
     int16_t core_id = getCoreID();
+    short_map_coll::iterator it = align_bin.find(line_number);
+    if (it != align_bin.end()) {
+        short_map& map = it->second;
+        short_map::iterator it = map.find(core_id);
+        if (it != map.end()) {
+            // It's a hit!
+            analyzed_loops.insert(line_number);
+            return map[core_id];
+        }
+    }
 
+    // We couldn't locate the histogram value, go down the slow path.
     // Obtain lock.
     lock();
 
-    int64_t* return_value = NULL;
     // Check if we need to allocate a new histogram.
-    short_map_coll::iterator it = align_bin.find(line_number);
+    it = align_bin.find(line_number);
     if (it == align_bin.end()) {
         short_map& map = align_bin[line_number];
         short_map::iterator it = map.find(core_id);
@@ -526,14 +573,24 @@ int16_t& get_alignment_bin(int line_number) {
 }
 
 int16_t& get_stride_bin(int line_number) {
-    analyzed_loops.insert(line_number);
     int16_t core_id = getCoreID();
+    short_map_coll::iterator it = stride_bin.find(line_number);
+    if (it != stride_bin.end()) {
+        short_map& map = it->second;
+        short_map::iterator it = map.find(core_id);
+        if (it != map.end()) {
+            // It's a hit!
+            analyzed_loops.insert(line_number);
+            return map[core_id];
+        }
+    }
 
+    // We couldn't locate the histogram value, go down the slow path.
     // Obtain lock.
     lock();
 
     // Check if we need to allocate a new histogram.
-    short_map_coll::iterator it = stride_bin.find(line_number);
+    it = stride_bin.find(line_number);
     if (it == stride_bin.end()) {
         short_map& map = stride_bin[line_number];
         short_map::iterator it = map.find(core_id);
@@ -552,11 +609,6 @@ int16_t& get_stride_bin(int line_number) {
     unlock();
 
     return stride_bin[line_number][core_id];
-}
-
-int64_t* get_tripcount_histogram(int line_number) {
-    analyzed_loops.insert(line_number);
-    return get_histogram(tripcount_map, line_number, MAX_HISTOGRAM_ENTRIES);
 }
 
 void indigo__record_branch_c(int line_number, int loop_line_number,
