@@ -19,7 +19,9 @@
  * $HEADER$
  */
 
+#include <set>
 #include <string>
+#include <vector>
 
 #include "reuse_dist.h"
 #include "ir_methods.h"
@@ -40,21 +42,46 @@ bool reuse_dist_t::instrument_loop(loop_info_t& loop_info) {
     std::string function_name = SageInterface::is_Fortran_language()
         ? "indigo__reuse_dist_f" : "indigo__reuse_dist_c";
 
+    // Collect indexes of refs that are read or read & written.
+    std::set<int64_t> read_ref_idx;
     for (reference_list_t::iterator it = reference_list.begin();
         it != reference_list.end(); it++) {
         reference_info_t& ref = *it;
+        if (ref.access_type != TYPE_WRITE) {
+            read_ref_idx.insert(ref.idx);
+        }
+    }
+
+    // Use the write-only references and discard the rest.
+    reference_list_t unique_writeonly_refs;
+    for (reference_list_t::iterator it = reference_list.begin();
+        it != reference_list.end(); it++) {
+        reference_info_t& ref = *it;
+        if (read_ref_idx.find(ref.idx) == read_ref_idx.end()) {
+            unique_writeonly_refs.push_back(ref);
+        }
+    }
+
+    for (reference_list_t::iterator it = unique_writeonly_refs.begin();
+        it != unique_writeonly_refs.end(); it++) {
+        reference_info_t& ref = *it;
+
+        // Add all references to the stream list,
+        // skipping any will mess up the indexing.
+        add_stream(ref.name);
+
+        // If the reference is not an expression or if it not a write-only expr,
+        // then don't process it.
+        SgExpression* ref_expr = reinterpret_cast<SgExpression*>(ref.node);
+        if (ref_expr == NULL || ref.access_type != TYPE_WRITE) {
+            continue;
+        }
 
         SgStatement* stmt = NULL;
         if (SgStatement* _stmt = isSgStatement(ref.node)) {
             stmt = _stmt;
         } else {
             stmt = getEnclosingNode<SgStatement>(ref.node);
-        }
-
-        // If the reference is not an expression, then don't process it.
-        SgExpression* ref_expr = reinterpret_cast<SgExpression*>(ref.node);
-        if (ref_expr == NULL) {
-            continue;
         }
 
         // This instrumentation call takes two parameters: index and address.
@@ -77,9 +104,6 @@ bool reuse_dist_t::instrument_loop(loop_info_t& loop_info) {
         reuse_dist_stmt.reference_statement = stmt;
         reuse_dist_stmt.before = false;
         add_stmt(reuse_dist_stmt);
-
-        // And add this reference to the stream list.
-        add_stream(ref.name);
     }
 
     return true;

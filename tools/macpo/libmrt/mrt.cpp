@@ -447,37 +447,32 @@ void indigo__exit() {
         }
     }
 
-    fprintf(stderr, "\n==== Reuse distance metrics ====\n");
-
     for (int i = 0; i < MAX_VARIABLES; i++) {
-        if (histogram_list[i] != NULL) {
-            pair_list_t pair_list;
-            flatten_and_sort_histogram(histogram_list[i], pair_list);
+        if (histogram_list[i] == NULL) {
+            continue;
+        }
 
-            if (i >= stream_list.size()) {
-                // We can't process any more histograms because
-                // stream_list will not contain names for any of them.
-                return;
-            }
+        pair_list_t pair_list;
+        flatten_and_sort_histogram(histogram_list[i], pair_list);
 
-            fprintf(stderr, "%s: ", stream_list[i].c_str());
-            size_t limit = 3 < pair_list.size() ? 3 : pair_list.size();
-            for (size_t j = 0; j < limit; j++) {
-                size_t max_bin = pair_list[j].first;
-                size_t max_val = pair_list[j].second;
+        if (i >= stream_list.size()) {
+            // We can't process any more histograms because
+            // stream_list will not contain names for any of them.
+            return;
+        }
 
-                if (max_bin != DIST_INFINITY - 1) {
-                    if (max_val > 0) {
-                        fprintf(stderr, " %zd (%zd times)", max_bin, max_val);
-                    }
-                } else {
-                    if (max_val > 0) {
-                        fprintf(stderr, " inf. (%zd times)", max_val);
-                    }
-                }
-            }
+        size_t limit = 3 < pair_list.size() ? 3 : pair_list.size();
+        if (limit == 0) {
+            continue;
+        }
 
-            fprintf(stderr, ".\n");
+        size_t max_bin = pair_list[0].first;
+        if (max_bin == DIST_INFINITY) {
+            fprintf(stderr, "\nReuse distance for %s is greater than the size "
+                    "of the last-level cache. Consider adding the following "
+                    "pragma to let the compiler generate non-temporal store "
+                    "instructions:\n#pragma vector nontemporal(%s)\n",
+                    stream_list[i].c_str(), stream_list[i].c_str());
         }
     }
 
