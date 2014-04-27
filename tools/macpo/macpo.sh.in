@@ -120,7 +120,7 @@ do
 done
 
 # Finally, invoke the macpo executable
-${MINST_PATH} -rose:openmp:ast_only -I${MRT_INCLUDE_DIR} -L${MRT_LIB_DIR} $* -lmrt -lstdc++ &> \
+${MINST_PATH} -rose:openmp:ast_only -I${MRT_INCLUDE_DIR} -L${MRT_LIB_DIR} $* -lmrt -lstdc++ -lgsl -lgslcblas  &> \
     "$tmp_macpo"
 
 ret_code=$?
@@ -135,7 +135,7 @@ then
 
     if [ -n "$GNU_FORTRAN_COMPILER" -a -f "$GNU_FORTRAN_COMPILER" ]
     then
-        "$GNU_FORTRAN_COMPILER" -L${MRT_LIB_DIR} $* -lmrt -lstdc++ &> \
+        "$GNU_FORTRAN_COMPILER" -L${MRT_LIB_DIR} $* -lmrt -lstdc++ -lgsl -lgslcblas  &> \
             "$tmp_gfort"
 
         # If this also resulted in an error, show the original macpo error
@@ -147,8 +147,8 @@ then
                 echo
                 echo "Failed to run the following two commands:"
                 echo "${MINST_PATH} -rose:openmp:ast_only -I${MRT_INCLUDE_DIR} -L${MRT_LIB_DIR} $*" \
-                    "-lmrt -lstdc++"
-                echo "$GNU_FORTRAN_COMPILER -L${MRT_LIB_DIR} $* -lmrt -lstdc++"
+                    "-lmrt -lstdc++ -lgsl -lgslcblas"
+                echo "$GNU_FORTRAN_COMPILER -L${MRT_LIB_DIR} $* -lmrt -lstdc++ -lgsl -lgslcblas"
             fi
         else
             # There was no error, hence reset the return code.

@@ -31,8 +31,12 @@
 #include <cstdarg>
 #include <map>
 #include <set>
+#include <string>
+#include <vector>
 #include <utility>
 
+#include "avl_tree.h"
+#include "histogram.h"
 #include "mrt.h"
 #include "macpo_record.h"
 
@@ -50,6 +54,8 @@ typedef std::map<int64_t, bool_map> bool_map_coll;
 typedef std::map<int64_t, short_map> short_map_coll;
 typedef std::map<int64_t, long_histogram> long_histogram_coll;
 
+static const int DIST_INFINITY = 40 * 1024 * 1024 / 64;
+
 static std::set<int> analyzed_loops;
 
 static bool_map_coll overlap_bin;
@@ -60,6 +66,21 @@ static std::map<int, int> branch_loop_line_pair;
 static std::map<int, std::set<int> > loop_branch_line_pair;
 
 static volatile int16_t lock_var;
+static volatile sig_atomic_t sleeping = 0;
+static volatile sig_atomic_t access_count = 0;
+
+static int fd = -1;
+static int sleep_sec = 0;
+static int new_sleep_sec = 1;
+static int *intel_apic_mapping = NULL;
+static node_t terminal_node;
+static size_t numCores = 0;
+
+static std::vector<std::string> stream_list;
+
+static __thread int coreID = -1;
+static __thread avl_tree* tree = NULL;
+static __thread gsl_histogram* histogram_list[MAX_VARIABLES] = {0};
 
 static inline void lock() {
     while (__sync_bool_compare_and_swap(&lock_var, 0, 1) == false) {
@@ -75,6 +96,78 @@ static inline void unlock() {
 
 static bool index_comparator(const val_idx_pair& v1, const val_idx_pair& v2) {
     return v1.first < v2.first;
+}
+
+static int get_proc_kind() {
+    // Get which processor is this running on
+    int proc, info[4];
+    if (!isCPUIDSupported()) {
+        fprintf(stderr, "MACPO :: CPUID not supported, cannot determine "
+                "processor core information, resorting to defaults...\n");
+        proc = PROC_UNKNOWN;
+    } else {
+        char processorName[13];
+        getProcessorName(processorName);
+
+        if (strncmp(processorName, "AuthenticAMD", 12) == 0)
+            proc = PROC_AMD;
+        else if (strncmp(processorName, "GenuineIntel", 12) == 0)
+            proc = PROC_INTEL;
+        else
+            proc = PROC_UNKNOWN;
+    }
+
+    return proc;
+}
+
+static int getCoreID() {
+    if (coreID != -1)
+        return coreID;
+
+    int info[4];
+    if (!isCPUIDSupported()) {
+        coreID = 0;
+        return coreID;  // default
+    }
+
+    int proc = get_proc_kind();
+    if (proc == PROC_AMD) {
+        __cpuid(info, 1, 0);
+        coreID = (info[1] & 0xff000000) >> 24;
+        return coreID;
+    } else if (proc == PROC_INTEL) {
+        int apic_id = 0;
+        __cpuid(info, 0xB, 0);
+        if (info[EBX] != 0) {   // x2APIC
+            __cpuid(info, 0xB, 2);
+            apic_id = info[EDX];
+
+#ifdef DEBUG_PRINT
+            fprintf(stderr, "MACPO :: Request from core with x2APIC ID "
+                "%d\n", apic_id);
+#endif
+        } else {    // Traditonal APIC
+            __cpuid(info, 1, 0);
+            apic_id = (info[EBX] & 0xff000000) >> 24;
+
+#ifdef DEBUG_PRINT
+            fprintf(stderr, "MACPO :: Request from core with legacy APIC ID "
+                    "%d\n", apic_id);
+#endif
+        }
+
+        int i;
+        for (i = 0; i < numCores; i++) {
+            if (apic_id == intel_apic_mapping[i])
+                break;
+        }
+
+        coreID = i == numCores ? 0 : i;
+        return coreID;
+    }
+
+    coreID = 0;
+    return coreID;
 }
 
 static void print_tripcount_histogram(int line_number, int64_t* histogram) {
@@ -162,6 +255,8 @@ static void print_alignment_histogram(int line_number, int64_t* histogram) {
 }
 
 void indigo__exit() {
+    int core_id = getCoreID();
+
     if (fd >= 0)
         close(fd);
 
@@ -351,6 +446,42 @@ void indigo__exit() {
             }
         }
     }
+
+    fprintf(stderr, "\n==== Reuse distance metrics ====\n");
+
+    for (int i = 0; i < MAX_VARIABLES; i++) {
+        if (histogram_list[i] != NULL) {
+            pair_list_t pair_list;
+            flatten_and_sort_histogram(histogram_list[i], pair_list);
+
+            if (i >= stream_list.size()) {
+                // We can't process any more histograms because
+                // stream_list will not contain names for any of them.
+                return;
+            }
+
+            fprintf(stderr, "%s: ", stream_list[i].c_str());
+            size_t limit = 3 < pair_list.size() ? 3 : pair_list.size();
+            for (size_t j = 0; j < limit; j++) {
+                size_t max_bin = pair_list[j].first;
+                size_t max_val = pair_list[j].second;
+
+                if (max_bin != DIST_INFINITY - 1) {
+                    if (max_val > 0) {
+                        fprintf(stderr, " %zd (%zd times)", max_bin, max_val);
+                    }
+                } else {
+                    if (max_val > 0) {
+                        fprintf(stderr, " inf. (%zd times)", max_val);
+                    }
+                }
+            }
+
+            fprintf(stderr, ".\n");
+        }
+    }
+
+    // FIXME: De-allocate all histograms.
 }
 
 int16_t& get_branch_bin(int line_number, int loop_line_number) {
@@ -847,7 +978,245 @@ void indigo__stride_check_c(int line_number, int stride) {
         get_stride_bin(line_number) = status;
 }
 
-void set_thread_affinity() {
+void indigo__reuse_dist_c(int var_id, void* address) {
+    if (sleeping == 1) {
+        return;
+    }
+
+    // FIXME: This measures reuse distance only for those accesses
+    // that are generated from the current thread only.
+
+    if (var_id >= MAX_VARIABLES)
+        return;
+
+    // FIXME: Set DIST_INFINITY to twice the size of the largest cache.
+    if (create_histogram_if_null(histogram_list[var_id], DIST_INFINITY) < 0)
+        return;
+
+    if (tree == NULL) {
+        tree = new avl_tree();
+    }
+
+    // Construct a dummy mem_info_t packet.
+    mem_info_t mem_info;
+    mem_info.coreID = getCoreID();
+    mem_info.var_idx = var_id;
+    mem_info.address = (size_t) address;
+    mem_info.read_write = TYPE_WRITE;
+
+    size_t distance = DIST_INFINITY - 1;
+    size_t cache_line = ADDR_TO_CACHE_LINE(mem_info.address);
+
+    if (tree->contains(cache_line)) {
+        distance = tree->get_distance(cache_line);
+        if (distance >= DIST_INFINITY) {
+            distance = DIST_INFINITY - 1;
+        }
+    }
+
+    gsl_histogram_increment(histogram_list[var_id], distance);
+    tree->insert(&mem_info);
+}
+
+static inline void fill_trace_struct(int read_write, int line_number,
+        size_t base, size_t p, int var_idx) {
+    // If this process was never supposed to record stats
+    // or if the file-open failed, then return
+    if (fd < 0)
+        return;
+
+    if (sleeping == 1 || access_count >= 131072)    // 131072 is 128*1024.
+        return;
+
+    size_t address_base = (size_t) base;
+    size_t address = (size_t) p;
+
+    node_t node;
+    node.type_message = MSG_TRACE_INFO;
+
+    node.trace_info.coreID = getCoreID();
+    node.trace_info.read_write = read_write;
+    node.trace_info.base = address_base;
+    node.trace_info.address = address;
+    node.trace_info.var_idx = var_idx;
+    node.trace_info.line_number = line_number;
+
+    write(fd, &node, sizeof(node_t));
+}
+
+static inline void fill_mem_struct(int read_write, int line_number, size_t p,
+        int var_idx, int type_size) {
+    // If this process was never supposed to record stats
+    // or if the file-open failed, then return
+    if (fd < 0)
+        return;
+
+    if (sleeping == 1 || access_count >= 131072)    // 131072 is 128*1024.
+        return;
+
+    node_t node;
+    node.type_message = MSG_MEM_INFO;
+
+    node.mem_info.coreID = getCoreID();
+    node.mem_info.read_write = read_write;
+    node.mem_info.address = p;
+    node.mem_info.var_idx = var_idx;
+    node.mem_info.line_number = line_number;
+    node.mem_info.type_size = type_size;
+
+    write(fd, &node, sizeof(node_t));
+}
+
+static void indigo__gen_trace_c(int read_write, int line_number, void* base,
+        void* addr, int var_idx) {
+    if (fd >= 0)
+        fill_trace_struct(read_write, line_number, (size_t) base,
+                (size_t) addr, var_idx);
+}
+
+static void indigo__gen_trace_f(int *read_write, int *line_number, void* base,
+        void* addr, int *var_idx) {
+    if (fd >= 0)
+        fill_trace_struct(*read_write, *line_number, (size_t) base,
+                (size_t) addr, *var_idx);
+}
+
+static void indigo__record_c(int read_write, int line_number, void* addr,
+        int var_idx, int type_size) {
+    if (fd >= 0)
+        fill_mem_struct(read_write, line_number, (size_t) addr, var_idx,
+                type_size);
+}
+
+static void indigo__record_f_(int *read_write, int *line_number, void* addr,
+        int *var_idx, int* type_size) {
+    if (fd >= 0)
+        fill_mem_struct(*read_write, *line_number, (size_t) addr, *var_idx,
+                *type_size);
+}
+
+void indigo__write_idx_c(const char* var_name, const int length) {
+    node_t node;
+    node.type_message = MSG_STREAM_INFO;
+#define indigo__MIN(a, b)   (a) < (b) ? (a) : (b)
+    int dst_len = indigo__MIN(STREAM_LENGTH-1, length);
+#undef indigo__MIN
+
+    strncpy(node.stream_info.stream_name, var_name, dst_len);
+    node.stream_info.stream_name[dst_len] = '\0';
+
+    std::string stream_name(node.stream_info.stream_name);
+    stream_list.push_back(stream_name);
+
+    if (fd >= 0) {
+        write(fd, &node, sizeof(node_t));
+    }
+}
+
+static void indigo__write_idx_f_(const char* var_name, const int* length) {
+    indigo__write_idx_c(var_name, *length);
+}
+
+static void create_output_file() {
+    char szFilename[32];
+    snprintf(szFilename, sizeof(szFilename), "macpo.%d.out", getpid());
+
+    fd = open(szFilename, O_CREAT | O_APPEND | O_WRONLY | O_TRUNC, S_IRUSR |
+            S_IWUSR | S_IRGRP);
+    if (fd < 0) {
+        perror("MACPO :: Error opening log for writing");
+        exit(1);
+    }
+
+    if (access("macpo.out", F_OK) == 0) {
+        // file exists, remove it
+        if (unlink("macpo.out") == -1)
+            perror("MACPO :: Failed to remove macpo.out");
+    }
+
+    // Now create the symlink
+    if (symlink(szFilename, "macpo.out") == -1)
+        perror("MACPO :: Failed to create symlink \"macpo.out\"");
+
+    // Now that we are done handling the critical stuff,
+    // write the metadata log to the macpo.out file.
+    node_t node;
+    node.type_message = MSG_METADATA;
+    size_t exe_path_len = readlink("/proc/self/exe",
+            node.metadata_info.binary_name, STRING_LENGTH-1);
+    if (exe_path_len == -1) {
+        perror("MACPO :: Failed to read binary name from /proc/self/exe");
+    } else {
+        // Write the terminating character
+        node.metadata_info.binary_name[exe_path_len] = '\0';
+        time(&node.metadata_info.execution_timestamp);
+        write(fd, &node, sizeof(node_t));
+    }
+
+    terminal_node.type_message = MSG_TERMINAL;
+}
+
+static void signalHandler(int sig) {
+    // Reset the signal handler
+    signal(sig, signalHandler);
+
+    struct itimerval itimer_old, itimer_new;
+    itimer_new.it_interval.tv_sec = 0;
+    itimer_new.it_interval.tv_usec = 0;
+
+    if (sleeping == 1) {
+        // Wake up for a brief period of time
+        if (fd >= 0) {
+            fdatasync(fd);
+            write(fd, &terminal_node, sizeof(node_t));
+        }
+
+        // Don't reorder so that `sleeping = 0' remains after fwrite()
+        asm volatile("" ::: "memory");
+        sleeping = 0;
+
+        itimer_new.it_value.tv_sec = AWAKE_SEC;
+        itimer_new.it_value.tv_usec = AWAKE_USEC;
+        setitimer(ITIMER_PROF, &itimer_new, &itimer_old);
+    } else {
+        // Go to sleep now...
+        sleeping = 1;
+
+        int temp = sleep_sec + new_sleep_sec;
+        sleep_sec = new_sleep_sec;
+        new_sleep_sec = temp;
+
+        itimer_new.it_value.tv_sec = sleep_sec;
+        itimer_new.it_value.tv_usec = 0;
+        setitimer(ITIMER_PROF, &itimer_new, &itimer_old);
+        access_count = 0;
+    }
+}
+
+static void set_timers() {
+    // Set up the signal handler
+    signal(SIGPROF, signalHandler);
+
+    struct itimerval itimer_old, itimer_new;
+    itimer_new.it_interval.tv_sec = 0;
+    itimer_new.it_interval.tv_usec = 0;
+
+    if (sleep_sec != 0) {
+        sleeping = 1;
+
+        itimer_new.it_value.tv_sec = 3+sleep_sec*4;
+        itimer_new.it_value.tv_usec = 0;
+        setitimer(ITIMER_PROF, &itimer_new, &itimer_old);
+    } else {
+        sleeping = 0;
+
+        itimer_new.it_value.tv_sec = AWAKE_SEC;
+        itimer_new.it_value.tv_usec = AWAKE_USEC;
+        setitimer(ITIMER_PROF, &itimer_new, &itimer_old);
+    }
+}
+
+static void set_thread_affinity() {
     int info[4];
     int proc = get_proc_kind();
     if (proc == PROC_UNKNOWN) {
@@ -899,3 +1268,19 @@ void set_thread_affinity() {
     }
 }
 
+void indigo__init_(int16_t create_file, int16_t enable_sampling) {
+    set_thread_affinity();
+
+    if (create_file) {
+        create_output_file();
+    }
+
+    if (enable_sampling) {
+        set_timers();
+    } else {
+        // Explicitly set awake mode to ON.
+        sleeping = 0;
+    }
+
+    atexit(indigo__exit);
+}

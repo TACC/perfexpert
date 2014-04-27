@@ -28,7 +28,7 @@ macpo_SOURCES = argparse.cpp minst.cpp instrumentor.cpp main.cpp streams.cpp \
                 aligncheck.cpp ir_methods.cpp loop_traversal.cpp tracer.cpp \
                 generic_vars.cpp vector_strides.cpp analysis_profile.cpp \
                 tripcount.cpp branchpath.cpp pntr_overlap.cpp stride_check.cpp \
-                traversal.cpp
+                traversal.cpp reuse_dist.cpp
 macpo_CXXFLAGS = -Wno-deprecated -I$(srcdir)/include
 macpo_LDFLAGS = -lrose -ljvm
 

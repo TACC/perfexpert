@@ -132,3 +132,8 @@ void indigo__stride_check_c(int line_number, int stride) {
     std::cerr << test_prefix << "stride_check:" << line_number << ":" <<
         stride << ":" << std::endl;
 }
+
+void indigo__reuse_dist_c(int var_id, void* address) {
+    std::cerr << test_prefix << "reuse_dist:" << var_id << ":" <<
+        address << ":" << std::endl;
+}

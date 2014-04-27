@@ -34,6 +34,7 @@
 #include "loop_traversal.h"
 #include "minst.h"
 #include "pntr_overlap.h"
+#include "reuse_dist.h"
 #include "stride_check.h"
 #include "tracer.h"
 #include "tripcount.h"
@@ -263,6 +264,19 @@ const analysis_profile_list MINST::run_analysis(SgNode* node, int16_t action) {
         profile_list.push_back(visitor.get_analysis_profile());
     }
 
+    if (is_action(action, ACTION_REUSEDISTANCE)) {
+        insert_map_function(node);
+
+        reuse_dist_t visitor(var_renaming);
+        visitor.process_node(node);
+
+        stream_list = visitor.get_stream_list();
+        statement_list.insert(statement_list.end(), visitor.stmt_begin(),
+                visitor.stmt_end());
+
+        profile_list.push_back(visitor.get_analysis_profile());
+    }
+
     return profile_list;
 }
 
@@ -405,7 +419,8 @@ void MINST::visit(SgNode* node) {
                 is_action(action, ACTION_TRIPCOUNT) ||
                 is_action(action, ACTION_BRANCHPATH) ||
                 is_action(action, ACTION_OVERLAPCHECK) ||
-                is_action(action, ACTION_STRIDECHECK)) {
+                is_action(action, ACTION_STRIDECHECK) ||
+                is_action(action, ACTION_REUSEDISTANCE)) {
                 create_file = 0;
             } else {
                 create_file = 1;
@@ -429,13 +444,9 @@ void MINST::visit(SgNode* node) {
             insertStatementBefore(statement, expr_stmt);
             ROSE_ASSERT(expr_stmt);
 
-            if (action == ACTION_NONE ||
-                is_action(action, ACTION_ALIGNCHECK) ||
-                is_action(action, ACTION_TRIPCOUNT) ||
-                is_action(action, ACTION_BRANCHPATH) ||
-                is_action(action, ACTION_OVERLAPCHECK) ||
-                is_action(action, ACTION_STRIDECHECK)) {
-            } else {
+            if (action == ACTION_INSTRUMENT ||
+                is_action(action, ACTION_VECTORSTRIDES) ||
+                is_action(action, ACTION_REUSEDISTANCE)) {
                 SgExprStatement* map_stmt = NULL;
                 map_stmt = ir_methods::prepare_call_statement(body,
                         indigo__create_map, empty_params, expr_stmt);

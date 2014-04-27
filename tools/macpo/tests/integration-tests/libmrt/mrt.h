@@ -141,4 +141,12 @@ void indigo__stride_check_c(int line_number, int stride);
 #if defined (__cplusplus)
 }
 #endif
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
+void indigo__reuse_dist_c(int var_id, void* address);
+#if defined (__cplusplus)
+}
+#endif
 #endif  // TOOLS_MACPO_TESTS_INTEGRATION_TESTS_LIBMRT_MRT_H_

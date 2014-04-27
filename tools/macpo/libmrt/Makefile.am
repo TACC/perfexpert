@@ -20,8 +20,11 @@
 #
 
 lib_LIBRARIES = libmrt.a
-libmrt_a_SOURCES = mrt.cpp
-libmrt_a_CXXFLAGS = -I$(srcdir) -I$(srcdir)/../include
+
+# FIXME: This is ugly! Move histogram and AVL code to separate subdirectories.
+libmrt_a_SOURCES = mrt.cpp ../analyze/avl_tree.cpp ../analyze/histogram.cpp
+libmrt_a_CXXFLAGS = -I$(srcdir) -I$(srcdir)/../include \
+    -I$(srcdir)/../analyze/include
 
 include_HEADERS = mrt.h ../include/macpo_record.h
 

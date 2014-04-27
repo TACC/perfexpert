@@ -42,7 +42,8 @@ const int16_t ACTION_TRIPCOUNT      = 1 <<  4;
 const int16_t ACTION_BRANCHPATH     = 1 <<  5;
 const int16_t ACTION_OVERLAPCHECK   = 1 <<  6;
 const int16_t ACTION_STRIDECHECK    = 1 <<  7;
-const int16_t ACTION_LAST           = 1 <<  8;
+const int16_t ACTION_REUSEDISTANCE  = 1 <<  8;
+const int16_t ACTION_LAST           = 1 <<  9;
 
 typedef struct {
     int16_t action;

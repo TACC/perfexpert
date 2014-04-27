@@ -177,6 +177,12 @@ int argparse::parse_arguments(char* arg, options_t& options) {
 
         set_action(options.action, ACTION_STRIDECHECK);
         parse_location(value, options.function_name, options.line_number);
+    } else if (option == "reuse-distance") {
+        if (!value.size())
+            return -1;
+
+        set_action(options.action, ACTION_REUSEDISTANCE);
+        parse_location(value, options.function_name, options.line_number);
     } else if (option == "backup-filename") {
         if (!value.size())
             return -1;
