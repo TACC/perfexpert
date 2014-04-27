@@ -447,6 +447,8 @@ void indigo__exit() {
         }
     }
 
+    fprintf(stderr, "\n==== Reuse distance metrics ====");
+
     for (int i = 0; i < MAX_VARIABLES; i++) {
         if (histogram_list[i] == NULL) {
             continue;
@@ -467,13 +469,31 @@ void indigo__exit() {
         }
 
         size_t max_bin = pair_list[0].first;
-        if (max_bin == DIST_INFINITY) {
+        if (max_bin == DIST_INFINITY - 1) {
             fprintf(stderr, "\nReuse distance for %s is greater than the size "
                     "of the last-level cache. Consider adding the following "
                     "pragma to let the compiler generate non-temporal store "
                     "instructions:\n#pragma vector nontemporal(%s)\n",
                     stream_list[i].c_str(), stream_list[i].c_str());
         }
+
+        fprintf(stderr, "\n%s: ", stream_list[i].c_str());
+        for (int j = 0; j < limit; j++) {
+            size_t max_bin = pair_list[j].first;
+            size_t max_val = pair_list[j].second;
+
+            if (max_bin != DIST_INFINITY - 1) {
+                if (max_val > 0) {
+                    fprintf(stderr, " %d (%d times)", max_bin, max_val);
+                }
+            } else {
+                if (max_val > 0) {
+                    fprintf(stderr, " inf. (%d times)", max_val);
+                }
+            }
+        }
+
+        fprintf(stderr, ".\n");
     }
 
     // FIXME: De-allocate all histograms.
