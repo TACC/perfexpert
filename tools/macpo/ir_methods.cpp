@@ -22,6 +22,7 @@
 #include <rose.h>
 
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -30,6 +31,28 @@
 
 using namespace SageBuilder;
 using namespace SageInterface;
+
+std::set<std::string> ir_methods::intrinsic_list;
+
+bool ir_methods::is_intrinsic_function(const std::string& name) {
+    // Quick check: "__builtin" prefix.
+    std::string prefix("__builtin");
+    if (name.compare(0, prefix.size(), prefix) == 0) {
+        return true;
+    }
+
+    // Do we need to populate the list first?
+    if (intrinsic_list.size() == 0) {
+        _populate_intrinsic_list();
+    }
+
+    // Okay, check the long list of intrinsic functions.
+    if (intrinsic_list.find(name) != intrinsic_list.end()) {
+        return true;
+    }
+
+    return false;
+}
 
 void ir_methods::match_end_of_constructs(SgNode* ref_node, SgNode* node) {
     SgLocatedNode* located_stmt = isSgLocatedNode(node);
@@ -392,7 +415,7 @@ bool ir_methods::vectorizable(SgStatement*& stmt) {
 
         if (!vectorizable(false_body))
             return false;
-    } else if (scope_stmt && !ir_methods::is_loop(stmt)) {
+    } else if (scope_stmt) {
         const SgStatementPtrList stmt_list =
             scope_stmt->generateStatementList();
         for (int i = 0; i < stmt_list.size(); i++) {
@@ -403,8 +426,34 @@ bool ir_methods::vectorizable(SgStatement*& stmt) {
         }
     } else if (SgExprStatement* expr_stmt = isSgExprStatement(stmt)) {
         SgExpression* expr = expr_stmt->get_expression();
-        if (isSgFunctionCallExp(expr))
+        if (SgFunctionCallExp* call = isSgFunctionCallExp(expr)) {
+            // Check whether this function will likely be inlined.
+            SgFunctionDeclaration* decl = NULL;
+            decl = call->getAssociatedFunctionDeclaration();
+            SgFunctionModifier& modifier = decl->get_functionModifier();
+            if (modifier.isInline() ||
+                modifier.isGnuAttributeAlwaysInline() ||
+                modifier.isPure()) {
+                return true;
+            }
+
+            // Or whether this is an intrinsic math function.
+            std::string& name = decl->get_name().getString();
+            if (ir_methods::is_intrinsic_function(name)) {
+                return true;
+            }
+
+            // If the function body is available, test it.
+            SgFunctionDefinition* def = decl->get_definition();
+            if (def) {
+                SgStatement* statement = def->get_body();
+                if (statement && vectorizable(statement)) {
+                    return true;
+                }
+            }
+
             return false;
+        }
     } else if (isSgArithmeticIfStatement(stmt) ||
             isSgAssertStmt(stmt) ||
             isSgAssignedGotoStatement(stmt) ||
@@ -1176,4 +1225,390 @@ void ir_methods::replace_expr(SgExpression*& expr, SgExpression*& search_expr,
 bool ir_methods::is_loop(SgNode* node) {
     return isSgFortranDo(node) || isSgForStatement(node) || isSgWhileStmt(node)
         || isSgDoWhileStmt(node);
+}
+
+void ir_methods::_populate_intrinsic_list() {
+    // Check if the list is already populated. I know we are inserting into
+    // a set, so duplicates will automatically be removed. But insertion and
+    // duplicate checks will still incur a perf penalty.
+    if (intrinsic_list.size() > 0)
+        return;
+
+    intrinsic_list.insert("abort");
+    intrinsic_list.insert("abs");
+    intrinsic_list.insert("acos");
+    intrinsic_list.insert("acosf");
+    intrinsic_list.insert("acosh");
+    intrinsic_list.insert("acoshf");
+    intrinsic_list.insert("acoshl");
+    intrinsic_list.insert("acosl");
+    intrinsic_list.insert("alloca");
+    intrinsic_list.insert("asin");
+    intrinsic_list.insert("asinf");
+    intrinsic_list.insert("asinh");
+    intrinsic_list.insert("asinhf");
+    intrinsic_list.insert("asinhl");
+    intrinsic_list.insert("asinl");
+    intrinsic_list.insert("atan");
+    intrinsic_list.insert("atan2");
+    intrinsic_list.insert("atan2f");
+    intrinsic_list.insert("atan2l");
+    intrinsic_list.insert("atanf");
+    intrinsic_list.insert("atanh");
+    intrinsic_list.insert("atanhf");
+    intrinsic_list.insert("atanhl");
+    intrinsic_list.insert("atanl");
+    intrinsic_list.insert("bcmp");
+    intrinsic_list.insert("bzero");
+    intrinsic_list.insert("cabs");
+    intrinsic_list.insert("cabsf");
+    intrinsic_list.insert("cabsl");
+    intrinsic_list.insert("cacos");
+    intrinsic_list.insert("cacosf");
+    intrinsic_list.insert("cacosh");
+    intrinsic_list.insert("cacoshf");
+    intrinsic_list.insert("cacoshl");
+    intrinsic_list.insert("cacosl");
+    intrinsic_list.insert("calloc");
+    intrinsic_list.insert("carg");
+    intrinsic_list.insert("cargf");
+    intrinsic_list.insert("cargl");
+    intrinsic_list.insert("casin");
+    intrinsic_list.insert("casinf");
+    intrinsic_list.insert("casinh");
+    intrinsic_list.insert("casinhf");
+    intrinsic_list.insert("casinhl");
+    intrinsic_list.insert("casinl");
+    intrinsic_list.insert("catan");
+    intrinsic_list.insert("catanf");
+    intrinsic_list.insert("catanh");
+    intrinsic_list.insert("catanhf");
+    intrinsic_list.insert("catanhl");
+    intrinsic_list.insert("catanl");
+    intrinsic_list.insert("cbrt");
+    intrinsic_list.insert("cbrtf");
+    intrinsic_list.insert("cbrtl");
+    intrinsic_list.insert("ccos");
+    intrinsic_list.insert("ccosf");
+    intrinsic_list.insert("ccosh");
+    intrinsic_list.insert("ccoshf");
+    intrinsic_list.insert("ccoshl");
+    intrinsic_list.insert("ccosl");
+    intrinsic_list.insert("ceil");
+    intrinsic_list.insert("ceilf");
+    intrinsic_list.insert("ceill");
+    intrinsic_list.insert("cexp");
+    intrinsic_list.insert("cexpf");
+    intrinsic_list.insert("cexpl");
+    intrinsic_list.insert("cimag");
+    intrinsic_list.insert("cimagf");
+    intrinsic_list.insert("cimagl");
+    intrinsic_list.insert("clog");
+    intrinsic_list.insert("clogf");
+    intrinsic_list.insert("clogl");
+    intrinsic_list.insert("conj");
+    intrinsic_list.insert("conjf");
+    intrinsic_list.insert("conjl");
+    intrinsic_list.insert("copysign");
+    intrinsic_list.insert("copysignf");
+    intrinsic_list.insert("copysignl");
+    intrinsic_list.insert("cos");
+    intrinsic_list.insert("cosf");
+    intrinsic_list.insert("cosh");
+    intrinsic_list.insert("coshf");
+    intrinsic_list.insert("coshl");
+    intrinsic_list.insert("cosl");
+    intrinsic_list.insert("cpow");
+    intrinsic_list.insert("cpowf");
+    intrinsic_list.insert("cpowl");
+    intrinsic_list.insert("cproj");
+    intrinsic_list.insert("cprojf");
+    intrinsic_list.insert("cprojl");
+    intrinsic_list.insert("creal");
+    intrinsic_list.insert("crealf");
+    intrinsic_list.insert("creall");
+    intrinsic_list.insert("csin");
+    intrinsic_list.insert("csinf");
+    intrinsic_list.insert("csinh");
+    intrinsic_list.insert("csinhf");
+    intrinsic_list.insert("csinhl");
+    intrinsic_list.insert("csinl");
+    intrinsic_list.insert("csqrt");
+    intrinsic_list.insert("csqrtf");
+    intrinsic_list.insert("csqrtl");
+    intrinsic_list.insert("ctan");
+    intrinsic_list.insert("ctanf");
+    intrinsic_list.insert("ctanh");
+    intrinsic_list.insert("ctanhf");
+    intrinsic_list.insert("ctanhl");
+    intrinsic_list.insert("ctanl");
+    intrinsic_list.insert("dcgettext");
+    intrinsic_list.insert("dgettext");
+    intrinsic_list.insert("drem");
+    intrinsic_list.insert("dremf");
+    intrinsic_list.insert("dreml");
+    intrinsic_list.insert("erf");
+    intrinsic_list.insert("erfc");
+    intrinsic_list.insert("erfcf");
+    intrinsic_list.insert("erfcl");
+    intrinsic_list.insert("erff");
+    intrinsic_list.insert("erfl");
+    intrinsic_list.insert("exit");
+    intrinsic_list.insert("_exit");
+    intrinsic_list.insert("_Exit");
+    intrinsic_list.insert("exp");
+    intrinsic_list.insert("exp10");
+    intrinsic_list.insert("exp10f");
+    intrinsic_list.insert("exp10l");
+    intrinsic_list.insert("exp2");
+    intrinsic_list.insert("exp2f");
+    intrinsic_list.insert("exp2l");
+    intrinsic_list.insert("expf");
+    intrinsic_list.insert("expl");
+    intrinsic_list.insert("expm1");
+    intrinsic_list.insert("expm1f");
+    intrinsic_list.insert("expm1l");
+    intrinsic_list.insert("fabs");
+    intrinsic_list.insert("fabsf");
+    intrinsic_list.insert("fabsl");
+    intrinsic_list.insert("fdim");
+    intrinsic_list.insert("fdimf");
+    intrinsic_list.insert("fdiml");
+    intrinsic_list.insert("ffs");
+    intrinsic_list.insert("ffsl");
+    intrinsic_list.insert("ffsll");
+    intrinsic_list.insert("floor");
+    intrinsic_list.insert("floorf");
+    intrinsic_list.insert("floorl");
+    intrinsic_list.insert("fma");
+    intrinsic_list.insert("fmaf");
+    intrinsic_list.insert("fmal");
+    intrinsic_list.insert("fmax");
+    intrinsic_list.insert("fmaxf");
+    intrinsic_list.insert("fmaxl");
+    intrinsic_list.insert("fmin");
+    intrinsic_list.insert("fminf");
+    intrinsic_list.insert("fminl");
+    intrinsic_list.insert("fmod");
+    intrinsic_list.insert("fmodf");
+    intrinsic_list.insert("fmodl");
+    intrinsic_list.insert("fpclassify");
+    intrinsic_list.insert("fprintf");
+    intrinsic_list.insert("fprintf_unlocked");
+    intrinsic_list.insert("fputs");
+    intrinsic_list.insert("fputs_unlocked");
+    intrinsic_list.insert("frexp");
+    intrinsic_list.insert("frexpf");
+    intrinsic_list.insert("frexpl");
+    intrinsic_list.insert("fscanf");
+    intrinsic_list.insert("gamma");
+    intrinsic_list.insert("gammaf");
+    intrinsic_list.insert("gammaf_r");
+    intrinsic_list.insert("gammal");
+    intrinsic_list.insert("gammal_r");
+    intrinsic_list.insert("gamma_r");
+    intrinsic_list.insert("gettext");
+    intrinsic_list.insert("hypot");
+    intrinsic_list.insert("hypotf");
+    intrinsic_list.insert("hypotl");
+    intrinsic_list.insert("ilogb");
+    intrinsic_list.insert("ilogbf");
+    intrinsic_list.insert("ilogbl");
+    intrinsic_list.insert("imaxabs");
+    intrinsic_list.insert("index");
+    intrinsic_list.insert("isalnum");
+    intrinsic_list.insert("isalpha");
+    intrinsic_list.insert("isascii");
+    intrinsic_list.insert("isblank");
+    intrinsic_list.insert("iscntrl");
+    intrinsic_list.insert("isdigit");
+    intrinsic_list.insert("isfinite");
+    intrinsic_list.insert("isgraph");
+    intrinsic_list.insert("isgreater");
+    intrinsic_list.insert("isgreaterequal");
+    intrinsic_list.insert("isinf_sign");
+    intrinsic_list.insert("isless");
+    intrinsic_list.insert("islessequal");
+    intrinsic_list.insert("islessgreater");
+    intrinsic_list.insert("islower");
+    intrinsic_list.insert("isnormal");
+    intrinsic_list.insert("isprint");
+    intrinsic_list.insert("ispunct");
+    intrinsic_list.insert("isspace");
+    intrinsic_list.insert("isunordered");
+    intrinsic_list.insert("isupper");
+    intrinsic_list.insert("iswblank");
+    intrinsic_list.insert("isxdigit");
+    intrinsic_list.insert("j0");
+    intrinsic_list.insert("j0f");
+    intrinsic_list.insert("j0l");
+    intrinsic_list.insert("j1");
+    intrinsic_list.insert("j1f");
+    intrinsic_list.insert("j1l");
+    intrinsic_list.insert("jn");
+    intrinsic_list.insert("jnf");
+    intrinsic_list.insert("jnl");
+    intrinsic_list.insert("labs");
+    intrinsic_list.insert("ldexp");
+    intrinsic_list.insert("ldexpf");
+    intrinsic_list.insert("ldexpl");
+    intrinsic_list.insert("lgamma");
+    intrinsic_list.insert("lgammaf");
+    intrinsic_list.insert("lgammaf_r");
+    intrinsic_list.insert("lgammal");
+    intrinsic_list.insert("lgammal_r");
+    intrinsic_list.insert("lgamma_r");
+    intrinsic_list.insert("llabs");
+    intrinsic_list.insert("llrint");
+    intrinsic_list.insert("llrintf");
+    intrinsic_list.insert("llrintl");
+    intrinsic_list.insert("llround");
+    intrinsic_list.insert("llroundf");
+    intrinsic_list.insert("llroundl");
+    intrinsic_list.insert("log");
+    intrinsic_list.insert("log10");
+    intrinsic_list.insert("log10f");
+    intrinsic_list.insert("log10l");
+    intrinsic_list.insert("log1p");
+    intrinsic_list.insert("log1pf");
+    intrinsic_list.insert("log1pl");
+    intrinsic_list.insert("log2");
+    intrinsic_list.insert("log2f");
+    intrinsic_list.insert("log2l");
+    intrinsic_list.insert("logb");
+    intrinsic_list.insert("logbf");
+    intrinsic_list.insert("logbl");
+    intrinsic_list.insert("logf");
+    intrinsic_list.insert("logl");
+    intrinsic_list.insert("lrint");
+    intrinsic_list.insert("lrintf");
+    intrinsic_list.insert("lrintl");
+    intrinsic_list.insert("lround");
+    intrinsic_list.insert("lroundf");
+    intrinsic_list.insert("lroundl");
+    intrinsic_list.insert("malloc");
+    intrinsic_list.insert("memchr");
+    intrinsic_list.insert("memcmp");
+    intrinsic_list.insert("memcpy");
+    intrinsic_list.insert("mempcpy");
+    intrinsic_list.insert("memset");
+    intrinsic_list.insert("modf");
+    intrinsic_list.insert("modfl");
+    intrinsic_list.insert("nearbyint");
+    intrinsic_list.insert("nearbyintf");
+    intrinsic_list.insert("nearbyintl");
+    intrinsic_list.insert("nextafter");
+    intrinsic_list.insert("nextafterf");
+    intrinsic_list.insert("nextafterl");
+    intrinsic_list.insert("nexttoward");
+    intrinsic_list.insert("nexttowardf");
+    intrinsic_list.insert("nexttowardl");
+    intrinsic_list.insert("pow");
+    intrinsic_list.insert("pow10");
+    intrinsic_list.insert("pow10f");
+    intrinsic_list.insert("pow10l");
+    intrinsic_list.insert("powf");
+    intrinsic_list.insert("powl");
+    intrinsic_list.insert("printf");
+    intrinsic_list.insert("printf_unlocked");
+    intrinsic_list.insert("putchar");
+    intrinsic_list.insert("puts");
+    intrinsic_list.insert("remainder");
+    intrinsic_list.insert("remainderf");
+    intrinsic_list.insert("remainderl");
+    intrinsic_list.insert("remquo");
+    intrinsic_list.insert("remquof");
+    intrinsic_list.insert("remquol");
+    intrinsic_list.insert("rindex");
+    intrinsic_list.insert("rint");
+    intrinsic_list.insert("rintf");
+    intrinsic_list.insert("rintl");
+    intrinsic_list.insert("round");
+    intrinsic_list.insert("roundf");
+    intrinsic_list.insert("roundl");
+    intrinsic_list.insert("scalb");
+    intrinsic_list.insert("scalbf");
+    intrinsic_list.insert("scalbl");
+    intrinsic_list.insert("scalbln");
+    intrinsic_list.insert("scalblnf");
+    intrinsic_list.insert("scalblnl");
+    intrinsic_list.insert("scalbn");
+    intrinsic_list.insert("scalbnf");
+    intrinsic_list.insert("scalbnl");
+    intrinsic_list.insert("scanf");
+    intrinsic_list.insert("signbit");
+    intrinsic_list.insert("signbitd128");
+    intrinsic_list.insert("signbitd32");
+    intrinsic_list.insert("signbitd64");
+    intrinsic_list.insert("signbitf");
+    intrinsic_list.insert("signbitl");
+    intrinsic_list.insert("significand");
+    intrinsic_list.insert("significandf");
+    intrinsic_list.insert("significandl");
+    intrinsic_list.insert("sin");
+    intrinsic_list.insert("sincos");
+    intrinsic_list.insert("sincosf");
+    intrinsic_list.insert("sincosl");
+    intrinsic_list.insert("sinf");
+    intrinsic_list.insert("sinh");
+    intrinsic_list.insert("sinhf");
+    intrinsic_list.insert("sinhl");
+    intrinsic_list.insert("sinl");
+    intrinsic_list.insert("snprintf");
+    intrinsic_list.insert("sprintf");
+    intrinsic_list.insert("sqrt");
+    intrinsic_list.insert("sqrtf");
+    intrinsic_list.insert("sqrtl");
+    intrinsic_list.insert("sscanf");
+    intrinsic_list.insert("stpcpy");
+    intrinsic_list.insert("stpncpy");
+    intrinsic_list.insert("strcasecmp");
+    intrinsic_list.insert("strcat");
+    intrinsic_list.insert("strchr");
+    intrinsic_list.insert("strcmp");
+    intrinsic_list.insert("strcpy");
+    intrinsic_list.insert("strcspn");
+    intrinsic_list.insert("strdup");
+    intrinsic_list.insert("strfmon");
+    intrinsic_list.insert("strlen");
+    intrinsic_list.insert("strncasecmp");
+    intrinsic_list.insert("strncat");
+    intrinsic_list.insert("strncmp");
+    intrinsic_list.insert("strncpy");
+    intrinsic_list.insert("strndup");
+    intrinsic_list.insert("strpbrk");
+    intrinsic_list.insert("strrchr");
+    intrinsic_list.insert("strspn");
+    intrinsic_list.insert("strstr");
+    intrinsic_list.insert("tan");
+    intrinsic_list.insert("tanf");
+    intrinsic_list.insert("tanh");
+    intrinsic_list.insert("tanhf");
+    intrinsic_list.insert("tanhl");
+    intrinsic_list.insert("tanl");
+    intrinsic_list.insert("tgamma");
+    intrinsic_list.insert("tgammaf");
+    intrinsic_list.insert("tgammal");
+    intrinsic_list.insert("toascii");
+    intrinsic_list.insert("tolower");
+    intrinsic_list.insert("toupper");
+    intrinsic_list.insert("trunc");
+    intrinsic_list.insert("truncf");
+    intrinsic_list.insert("truncl");
+    intrinsic_list.insert("vfprintf");
+    intrinsic_list.insert("vfscanf");
+    intrinsic_list.insert("vprintf");
+    intrinsic_list.insert("vscanf");
+    intrinsic_list.insert("vsnprintf");
+    intrinsic_list.insert("vsprintf");
+    intrinsic_list.insert("vsscanf");
+    intrinsic_list.insert("y0");
+    intrinsic_list.insert("y0f");
+    intrinsic_list.insert("y0l");
+    intrinsic_list.insert("y1");
+    intrinsic_list.insert("y1f");
+    intrinsic_list.insert("y1l");
+    intrinsic_list.insert("yn");
+    intrinsic_list.insert("ynf");
+    intrinsic_list.insert("ynl");
 }

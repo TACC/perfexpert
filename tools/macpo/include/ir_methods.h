@@ -26,6 +26,7 @@
 #include <VariableRenaming.h>
 
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -34,7 +35,9 @@
 
 class ir_methods {
  private:
+    static std::set<std::string> intrinsic_list;
     static SgExpression* _strip_unary_operators(SgExpression* expr);
+    static void _populate_intrinsic_list();
 
  public:
     static const int INVALID_LOOP = 1 << 0;
@@ -143,6 +146,8 @@ class ir_methods {
 
     static void incr_components(Sg_File_Info*& fileInfo,
             SgExpression*& expr, SgExpression*& incr_expr, int& incr_op);
+
+    static bool is_intrinsic_function(const std::string& name);
 };   /* ir_methods */
 
 #endif  // TOOLS_MACPO_INCLUDE_IR_METHODS_H_

@@ -496,6 +496,8 @@ void indigo__exit() {
         fprintf(stderr, ".\n");
     }
 
+    fprintf(stderr, "\n");
+
     // FIXME: De-allocate all histograms.
 }
 
