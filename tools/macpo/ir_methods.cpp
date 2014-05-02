@@ -427,15 +427,8 @@ bool ir_methods::vectorizable(SgStatement*& stmt) {
     } else if (SgExprStatement* expr_stmt = isSgExprStatement(stmt)) {
         SgExpression* expr = expr_stmt->get_expression();
         if (SgFunctionCallExp* call = isSgFunctionCallExp(expr)) {
-            // Check whether this function will likely be inlined.
             SgFunctionDeclaration* decl = NULL;
             decl = call->getAssociatedFunctionDeclaration();
-            SgFunctionModifier& modifier = decl->get_functionModifier();
-            if (modifier.isInline() ||
-                modifier.isGnuAttributeAlwaysInline() ||
-                modifier.isPure()) {
-                return true;
-            }
 
             // Or whether this is an intrinsic math function.
             std::string& name = decl->get_name().getString();
