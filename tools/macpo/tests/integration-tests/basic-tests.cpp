@@ -21,7 +21,7 @@ TEST(BasicTests, NoActions) {
 TEST(BasicTests, BasicInstrumentation) {
     options_t options = {0};
     options.action = ACTION_INSTRUMENT;
-    options.function_name = "main";
+    options.location.function_name = "main";
     std::string tests_dir = get_tests_directory();
     std::string input_file = tests_dir + "/file_002.c";
 
@@ -35,7 +35,7 @@ TEST(BasicTests, BasicInstrumentation) {
 TEST(BasicTests, SmallMatmult) {
     options_t options = {0};
     options.action = ACTION_INSTRUMENT;
-    options.function_name = "compute";
+    options.location.function_name = "compute";
     std::string tests_dir = get_tests_directory();
     std::string input_file = tests_dir + "/file_003.c";
 
@@ -49,7 +49,7 @@ TEST(BasicTests, SmallMatmult) {
 TEST(BasicTests, OverlapCheck) {
     options_t options = {0};
     options.action = ACTION_OVERLAPCHECK;
-    options.function_name = "compute";
+    options.location.function_name = "compute";
     std::string tests_dir = get_tests_directory();
     std::string input_file = tests_dir + "/file_004.c";
 
@@ -63,7 +63,7 @@ TEST(BasicTests, OverlapCheck) {
 TEST(BasicTests, StrideCheck) {
     options_t options = {0};
     options.action = ACTION_STRIDECHECK;
-    options.function_name = "compute";
+    options.location.function_name = "compute";
     std::string tests_dir = get_tests_directory();
     std::string input_file = tests_dir + "/file_005.c";
 
@@ -77,7 +77,7 @@ TEST(BasicTests, StrideCheck) {
 TEST(BasicTests, CompoundCheck) {
     options_t options = {0};
     options.action = ACTION_OVERLAPCHECK | ACTION_STRIDECHECK;
-    options.function_name = "compute";
+    options.location.function_name = "compute";
     std::string tests_dir = get_tests_directory();
     std::string input_file = tests_dir + "/file_006.c";
 
@@ -91,7 +91,7 @@ TEST(BasicTests, CompoundCheck) {
 TEST(BasicTests, OnlineReuseDist) {
     options_t options = {0};
     options.action = ACTION_REUSEDISTANCE;
-    options.function_name = "compute";
+    options.location.function_name = "compute";
     std::string tests_dir = get_tests_directory();
     std::string input_file = tests_dir + "/file_007.c";
 

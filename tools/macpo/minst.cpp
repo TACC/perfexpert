@@ -45,8 +45,8 @@ using namespace SageInterface;
 
 MINST::MINST(const options_t& options, SgProject* project) {
     action = options.action;
-    line_number = options.line_number;
-    inst_func = options.function_name;
+    line_number = options.location.line_number;
+    inst_func = options.location.function_name;
     disable_sampling = options.disable_sampling;
     profile_analysis = options.profile_analysis;
     var_renaming = new VariableRenaming(project);

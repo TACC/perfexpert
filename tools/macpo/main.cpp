@@ -91,7 +91,8 @@ int main(int argc, char *argv[]) {
     }
 
     // Check if at least a function or a loop was specified on the command line.
-    if (options.action != ACTION_NONE && options.function_name.size() == 0) {
+    if (options.action != ACTION_NONE &&
+            options.location.function_name.size() == 0) {
         std::cerr << mprefix << "USAGE: " << argv[0] << " <options>" <<
             std::endl;
         std::cerr << mprefix << "Did not find valid options on the command line"

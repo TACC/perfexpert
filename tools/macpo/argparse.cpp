@@ -73,13 +73,13 @@ bool argparse::copy_file(const char *source_file,
 }
 
 bool argparse::parse_location(const std::string& argument,
-        std::string& function_name, int& line_number) {
+        location_t& location) {
     const std::string str_argument = argument;
 
     // Initialize
     size_t pos = 0;
-    function_name = "";
-    line_number = 0;
+    location.function_name = "";
+    location.line_number = 0;
 
     do {
         // Find the separating ':' character.
@@ -87,7 +87,7 @@ bool argparse::parse_location(const std::string& argument,
 
         // We couldn't find a line number component.
         if (pos == std::string::npos) {
-            function_name = str_argument;
+            location.function_name = str_argument;
             break;
         }
 
@@ -95,8 +95,8 @@ bool argparse::parse_location(const std::string& argument,
         // Make sure that this ':' isn't a part of the '::',
         // which is the separator between the class name and the method name.
         if (pos < str_argument.length() - 1 && isdigit(str_argument[pos+1])) {
-            function_name = str_argument.substr(0, pos);
-            line_number = atoi(str_argument.substr(pos+1).c_str());
+            location.function_name = str_argument.substr(0, pos);
+            location.line_number = atoi(str_argument.substr(pos+1).c_str());
             break;
         } else {
             // Push pos by one character so that we keep making progress.
@@ -134,55 +134,55 @@ int argparse::parse_arguments(char* arg, options_t& options) {
             return -1;
 
         set_action(options.action, ACTION_INSTRUMENT);
-        parse_location(value, options.function_name, options.line_number);
+        parse_location(value, options.location);
     } else if (option == "check-alignment") {
         if (!value.size())
             return -1;
 
         set_action(options.action, ACTION_ALIGNCHECK);
-        parse_location(value, options.function_name, options.line_number);
+        parse_location(value, options.location);
     } else if (option == "record-tripcount") {
         if (!value.size())
             return -1;
 
         set_action(options.action, ACTION_TRIPCOUNT);
-        parse_location(value, options.function_name, options.line_number);
+        parse_location(value, options.location);
     } else if (option == "record-branchpath") {
         if (!value.size())
             return -1;
 
         set_action(options.action, ACTION_BRANCHPATH);
-        parse_location(value, options.function_name, options.line_number);
+        parse_location(value, options.location);
     } else if (option == "gen-trace") {
         if (!value.size())
             return -1;
 
         set_action(options.action, ACTION_GENTRACE);
-        parse_location(value, options.function_name, options.line_number);
+        parse_location(value, options.location);
     } else if (option == "vector-strides") {
         if (!value.size())
             return -1;
 
         set_action(options.action, ACTION_VECTORSTRIDES);
-        parse_location(value, options.function_name, options.line_number);
+        parse_location(value, options.location);
     } else if (option == "overlap-check") {
         if (!value.size())
             return -1;
 
         set_action(options.action, ACTION_OVERLAPCHECK);
-        parse_location(value, options.function_name, options.line_number);
+        parse_location(value, options.location);
     } else if (option == "stride-check") {
         if (!value.size())
             return -1;
 
         set_action(options.action, ACTION_STRIDECHECK);
-        parse_location(value, options.function_name, options.line_number);
+        parse_location(value, options.location);
     } else if (option == "reuse-distance") {
         if (!value.size())
             return -1;
 
         set_action(options.action, ACTION_REUSEDISTANCE);
-        parse_location(value, options.function_name, options.line_number);
+        parse_location(value, options.location);
     } else if (option == "backup-filename") {
         if (!value.size())
             return -1;
@@ -208,14 +208,14 @@ void argparse::init_options(options_t& options) {
     options.no_compile = false;
     options.disable_sampling = false;
     options.profile_analysis = false;
-    options.line_number = 0;
-    options.function_name = "";
+    options.location.line_number = 0;
+    options.location.function_name = "";
     options.backup_filename = "";
 }
 
 bool argparse::validate_options(const options_t& options) {
     // All valid actions require a non-empty function name.
-    if (options.action != ACTION_NONE && options.function_name == "") {
+    if (options.action != ACTION_NONE && options.location.function_name == "") {
         return false;
     }
 

@@ -46,12 +46,17 @@ const int16_t ACTION_REUSEDISTANCE  = 1 <<  8;
 const int16_t ACTION_LAST           = 1 <<  9;
 
 typedef struct {
+    int line_number;
+    std::string function_name;
+} location_t;
+
+typedef struct {
     int16_t action;
     int line_number;
     bool no_compile;
     bool disable_sampling;
     bool profile_analysis;
-    std::string function_name;
+    location_t location;
     std::string backup_filename;
 } options_t;
 

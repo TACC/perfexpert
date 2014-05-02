@@ -32,7 +32,7 @@ class argparse {
     static bool copy_file(const char *source_file,
             const char *destination_file);
     static bool parse_location(const std::string& argument,
-            std::string& function_name, int& line_number);
+            location_t& location);
     static int parse_arguments(char* arg, options_t& options);
     static void init_options(options_t& options);
     static bool validate_options(const options_t& options);
