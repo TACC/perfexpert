@@ -57,31 +57,32 @@ bool aligncheck_t::instrument_streaming_stores(loop_info_t& loop_info) {
         }
     }
 
+    expr_list_t expr_list;
     for (sstore_map_t::iterator it = sstore_map.begin(); it != sstore_map.end();
             it++) {
         const std::string& key = it->first;
         node_list_t& value = it->second;
 
         // Replace index variable with init expression.
-        expr_list_t expr_list;
         for (node_list_t::iterator it = value.begin(); it != value.end();
                 it++) {
             if (SgExpression* expr = isSgExpression(*it))
                 expr_list.push_back(expr);
         }
+    }
 
-        // If we have any expressions, add the instrumentation call.
-        if (expr_list.size()) {
-            statement_list_t _stmt_list;
-            ir_methods::remove_duplicate_expressions(expr_list);
-            ir_methods::place_alignment_checks(expr_list, fileInfo, loop_stmt,
-                    _stmt_list, "indigo__sstore_aligncheck");
+    // If we have any expressions, add the instrumentation call.
+    if (expr_list.size()) {
+        statement_list_t _stmt_list;
+        ir_methods::remove_duplicate_expressions(expr_list);
 
-            for (statement_list_t::iterator it = _stmt_list.begin();
-                    it != _stmt_list.end(); it++) {
-                statement_info_t& stmt = *it;
-                add_stmt(stmt);
-            }
+        ir_methods::place_alignment_checks(expr_list, fileInfo, loop_stmt,
+                _stmt_list, "indigo__sstore_aligncheck");
+
+        for (statement_list_t::iterator it = _stmt_list.begin();
+                it != _stmt_list.end(); it++) {
+            statement_info_t& stmt = *it;
+            add_stmt(stmt);
         }
     }
 

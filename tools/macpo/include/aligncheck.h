@@ -34,7 +34,9 @@
 class aligncheck_t : public traversal_t {
  public:
     explicit aligncheck_t(VariableRenaming*& _var_renaming) :
-        traversal_t(_var_renaming) {}
+        traversal_t(_var_renaming) {
+        set_deep_search(false);
+    }
 
  private:
     typedef std::map<std::string, node_list_t> sstore_map_t;

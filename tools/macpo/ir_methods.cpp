@@ -318,6 +318,10 @@ void ir_methods::place_alignment_checks(expr_list_t& expr_list,
 }
 
 void ir_methods::remove_duplicate_expressions(expr_list_t& expr_list) {
+    if (expr_list.size() <= 1) {
+        return;
+    }
+
     std::map<std::string, SgExpression*> string_expr_map;
     for (expr_list_t::iterator it2 = expr_list.begin();
             it2 != expr_list.end(); it2++) {
