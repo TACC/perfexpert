@@ -44,7 +44,9 @@ class MINST : public AstSimpleProcessing {
  private:
     int16_t action;
     int line_number;
-    bool disable_sampling, profile_analysis;
+    bool disable_sampling;
+    bool profile_analysis;
+    bool map_function_inserted;
     std::string inst_func;
 
     SgGlobal* global_node;
@@ -55,9 +57,11 @@ class MINST : public AstSimpleProcessing {
     void analyze_node(SgNode* node, int16_t action);
     const analysis_profile_list run_analysis(SgNode* node, int16_t action);
     void print_loop_processing_status(const loop_info_t& loop_info);
+    void add_hooks_to_main_function(SgFunctionDefinition* main_def);
 
     statement_list_t statement_list;
     name_list_t stream_list;
+    name_list_t file_list;
 };
 
 #endif  // TOOLS_MACPO_INCLUDE_MINST_H_
