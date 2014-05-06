@@ -1,8 +1,10 @@
 
 #include <fcntl.h>
 #include <rose.h>
+#include <sys/types.h>
 #include <sys/wait.h>
 
+#include <cerrno>
 #include <fstream>
 #include <string>
 #include <vector>
@@ -40,16 +42,40 @@ std::string instrument_and_link(std::string input_file,
     string_list_t args;
     populate_args(args, input_file, output_file, special_args);
 
-    SgProject* project = frontend(args);
+    int pid;
+    switch ((pid = fork())) {
+        default:
+            // Parent process, wait for child to finish.
+            siginfo_t siginfo;
+            waitid(P_PID, pid, &siginfo, WEXITED | WSTOPPED);
+            break;
 
-    // Call the instrumentation code.
-    MINST traversal(options, project);
-    traversal.traverseInputFiles(project, preorder);
+        case 0:
+            // Child process, do the deed!
+            {
+                SgProject* project = frontend(args);
 
-    // Compile the files down to the binary.
-    assert(backend(project) == 0);
+                // Call the instrumentation code.
+                MINST traversal(options, project);
+                traversal.traverseInputFiles(project, preorder);
 
-    delete project;
+                // Compile the files down to the binary.
+                assert(backend(project) == 0);
+
+                delete project;
+                exit(0);
+            }
+
+            break;
+
+        case -1:
+            // Something went wrong.
+            const char* err_msg = strerror(errno);
+            std::cerr << "Failed to spawn child process: " << err_msg << "." <<
+                std::endl;
+            break;
+    }
+
     return output_file;
 }
 
@@ -67,7 +93,7 @@ bool verify_output(std::string& filename, std::string& binary) {
     if (file_lines < prog_lines) {
         // We have more expected output than the lines in the file
         // (which include the expected output), report error.
-        std::cout << "File contents smaller than program output: " << 
+        std::cout << "File contents smaller than program output: " <<
             file_lines << " v/s " << prog_lines << "!" << std::endl;
         return false;
     }
@@ -111,8 +137,8 @@ bool verify_output(std::string& filename, std::string& binary) {
             size_t file_fields = file_field_list.size();
 
             // Quick sanity check.
-            assert (prog_fields >= 2);
-            assert (file_fields >= 2);
+            assert(prog_fields >= 2);
+            assert(file_fields >= 2);
 
             if (prog_fields != file_fields) {
                 std::cout << "Field length mismatch between program output and "
@@ -123,7 +149,7 @@ bool verify_output(std::string& filename, std::string& binary) {
 
             // Start from index 1, because no point in
             // comparing the test identifier [expected_prefix].
-            for (int i=1; i<prog_fields; i++) {
+            for (int i = 1; i < prog_fields; i++) {
                 if (prog_field_list[i] != file_field_list[i] &&
                         file_field_list[i] != "?") {
                     std::cout << "Field mismatch between program output and "
@@ -171,12 +197,12 @@ static void populate_args(string_list_t& args, std::string& input_file,
 }
 
 static std::string get_process_stderr(std::string& binary_name) {
-    int err_pipe[2]; 
-    pipe(err_pipe); 
+    int err_pipe[2];
+    pipe(err_pipe);
 
     // Create args.
     char arg0[1024];
-    snprintf (arg0, 1024, "%s", binary_name.c_str());
+    snprintf(arg0, sizeof(arg0), "%s", binary_name.c_str());
     char *args[] = { arg0, NULL };
 
     switch (fork()) {
@@ -190,48 +216,48 @@ static std::string get_process_stderr(std::string& binary_name) {
             // Duplicate file descriptors.
             if (dup2(err_pipe[1], 1) < 0) {
                 perror("Could not duplicate descriptor");
-                exit(-1); 
+                exit(-1);
             }
 
             if (dup2(err_pipe[1], 2) < 0) {
                 perror("Could not duplicate descriptor");
-                exit(1); 
-            } 
+                exit(1);
+            }
 
             // Run the binary.
-            if (execv(arg0, args) == -1){ 
+            if (execv(arg0, args) == -1) {
                 std::cout << "Could not execute binary file: " << binary_name <<
-                    std::endl; 
-                perror("execv"); 
-                exit(2); 
+                    std::endl;
+                perror("execv");
+                exit(2);
             }
 
             // Done!
             close(err_pipe[1]);
-            exit(0); 
+            exit(0);
     }
 
     // Wait until child process finishes executing.
-    wait(NULL); 
+    wait(NULL);
 
-    fcntl(err_pipe[0], F_SETFL, O_NONBLOCK | O_ASYNC); 
+    fcntl(err_pipe[0], F_SETFL, O_NONBLOCK | O_ASYNC);
 
-    const int buffer_len = 1024;
-    char buffer[buffer_len];
+    const int kLength = 1024;
+    char buffer[kLength];
     std::string str_stderr;
 
     // Read child process's output.
-    while (true) { 
-        ssize_t read_count = read(err_pipe[0], buffer, buffer_len-1);
-        if (read_count <= 0 || read_count >= buffer_len)
-            break; 
+    while (true) {
+        ssize_t read_count = read(err_pipe[0], buffer, kLength-1);
+        if (read_count <= 0 || read_count >= kLength)
+            break;
 
         buffer[read_count] = 0;
         str_stderr += buffer;
     }
 
     // Cleanup and return.
-    close(err_pipe[0]); 
+    close(err_pipe[0]);
     close(err_pipe[1]);
     return str_stderr;
 }
@@ -250,7 +276,7 @@ static std::string get_file_contents(std::string& filename) {
     std::ifstream fileobj(filename.c_str());
 
     if (fileobj.is_open()) {
-        while (getline(fileobj,line))
+        while (getline(fileobj, line))
             contents += line + "\n";
 
         fileobj.close();
