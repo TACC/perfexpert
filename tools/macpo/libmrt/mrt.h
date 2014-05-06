@@ -279,6 +279,50 @@ void indigo__write_idx_c(const char* var_name, const int length);
 }
 #endif
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+void indigo__gen_trace_c(int read_write, int line_number, void* base,
+        void* addr, int var_idx);
+#if defined (__cplusplus)
+}
+#endif
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
+void indigo__gen_trace_f(int *read_write, int *line_number, void* base,
+        void* addr, int *var_idx);
+#if defined (__cplusplus)
+}
+#endif
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
+void indigo__record_c(int read_write, int line_number, void* addr,
+        int var_idx, int type_size);
+#if defined (__cplusplus)
+}
+#endif
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
+void indigo__record_f_(int *read_write, int *line_number, void* addr,
+        int *var_idx, int* type_size);
+#if defined (__cplusplus)
+}
+#endif
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
+void indigo__write_idx_c(const char* var_name, const int length);
+#if defined (__cplusplus)
+}
+#endif
+
 // XXX: Don't change the order of the elements of the enum!
 // XXX: The order is used in arithmetic comparison.
 enum { NOT_ALIGNED = 0, MUTUAL_ALIGNED, FULL_ALIGNED, ALIGN_NOINIT };

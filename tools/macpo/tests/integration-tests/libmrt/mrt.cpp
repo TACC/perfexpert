@@ -53,6 +53,7 @@ int indigo__aligncheck_c(int line_number, int stream_count, ...) {
         std::cerr << address << ":";
     }
 
+    std::cerr << std::endl;
     va_end(args);
     return 0;
 }
@@ -69,6 +70,7 @@ int indigo__sstore_aligncheck_c(int line_number, int stream_count, ...) {
         std::cerr << address << ":";
     }
 
+    std::cerr << std::endl;
     va_end(args);
     return 0;
 }

@@ -246,10 +246,10 @@ void ir_methods::place_alignment_checks(expr_list_t& expr_list,
                 line_number);
         SgType* long_type = buildLongType();
 
+        SgBasicBlock* parent_bb = getEnclosingNode<SgBasicBlock>(loop_stmt);
         SgVariableDeclaration* aligncheck_init = NULL;
         aligncheck_init = ir_methods::create_long_variable(fileInfo, var_name,
                 0);
-        SgBasicBlock* parent_bb = getEnclosingNode<SgBasicBlock>(loop_stmt);
         aligncheck_init->set_parent(parent_bb);
 
         SgStatement* reference_stmt = NULL;
@@ -389,8 +389,8 @@ SgVariableDeclaration* ir_methods::create_long_variable(Sg_File_Info* fileInfo,
     SgType* long_type = buildLongType();
     SgVariableDeclaration* var_decl = new SgVariableDeclaration(fileInfo,
             name, long_type, buildAssignInitializer(buildIntVal(init_value)));
-
     var_decl->set_endOfConstruct(fileInfo);
+
     return var_decl;
 }
 
@@ -1222,6 +1222,10 @@ void ir_methods::replace_expr(SgExpression*& expr, SgExpression*& search_expr,
 bool ir_methods::is_loop(SgNode* node) {
     return isSgFortranDo(node) || isSgForStatement(node) || isSgWhileStmt(node)
         || isSgDoWhileStmt(node);
+}
+
+bool ir_methods::is_function(SgNode* node) {
+    return isSgFunctionDefinition(node);
 }
 
 void ir_methods::_populate_intrinsic_list() {

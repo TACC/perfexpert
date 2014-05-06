@@ -7,7 +7,8 @@
 #include "itest_harness.h"
 
 TEST(BasicTests, NoActions) {
-    options_t options = {0};
+    options_t options;
+
     std::string tests_dir = get_tests_directory();
     std::string input_file = tests_dir + "/file_001.c";
 
@@ -19,9 +20,8 @@ TEST(BasicTests, NoActions) {
 }
 
 TEST(BasicTests, BasicInstrumentation) {
-    options_t options = {0};
-    options.action = ACTION_INSTRUMENT;
-    options.location.function_name = "main";
+    options_t options;
+    options.add_location(ACTION_INSTRUMENT, "main");
     std::string tests_dir = get_tests_directory();
     std::string input_file = tests_dir + "/file_002.c";
 
@@ -33,9 +33,8 @@ TEST(BasicTests, BasicInstrumentation) {
 }
 
 TEST(BasicTests, SmallMatmult) {
-    options_t options = {0};
-    options.action = ACTION_INSTRUMENT;
-    options.location.function_name = "compute";
+    options_t options;
+    options.add_location(ACTION_INSTRUMENT, "compute");
     std::string tests_dir = get_tests_directory();
     std::string input_file = tests_dir + "/file_003.c";
 
@@ -47,9 +46,8 @@ TEST(BasicTests, SmallMatmult) {
 }
 
 TEST(BasicTests, OverlapCheck) {
-    options_t options = {0};
-    options.action = ACTION_OVERLAPCHECK;
-    options.location.function_name = "compute";
+    options_t options;
+    options.add_location(ACTION_OVERLAPCHECK, "compute");
     std::string tests_dir = get_tests_directory();
     std::string input_file = tests_dir + "/file_004.c";
 
@@ -61,9 +59,8 @@ TEST(BasicTests, OverlapCheck) {
 }
 
 TEST(BasicTests, StrideCheck) {
-    options_t options = {0};
-    options.action = ACTION_STRIDECHECK;
-    options.location.function_name = "compute";
+    options_t options;
+    options.add_location(ACTION_STRIDECHECK, "compute");
     std::string tests_dir = get_tests_directory();
     std::string input_file = tests_dir + "/file_005.c";
 
@@ -75,9 +72,8 @@ TEST(BasicTests, StrideCheck) {
 }
 
 TEST(BasicTests, CompoundCheck) {
-    options_t options = {0};
-    options.action = ACTION_OVERLAPCHECK | ACTION_STRIDECHECK;
-    options.location.function_name = "compute";
+    options_t options;
+    options.add_location(ACTION_OVERLAPCHECK | ACTION_STRIDECHECK, "compute");
     std::string tests_dir = get_tests_directory();
     std::string input_file = tests_dir + "/file_006.c";
 
@@ -89,9 +85,8 @@ TEST(BasicTests, CompoundCheck) {
 }
 
 TEST(BasicTests, OnlineReuseDist) {
-    options_t options = {0};
-    options.action = ACTION_REUSEDISTANCE;
-    options.location.function_name = "compute";
+    options_t options;
+    options.add_location(ACTION_REUSEDISTANCE, "compute");
     std::string tests_dir = get_tests_directory();
     std::string input_file = tests_dir + "/file_007.c";
 

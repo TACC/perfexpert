@@ -141,6 +141,8 @@ class ir_methods {
 
     static bool is_loop(SgNode* node);
 
+    static bool is_function(SgNode* node);
+
     static bool in_write_set(SgStatement* statement, SgExpression* expr);
     static SgExpression* rhs_expression(SgStatement* statement);
 

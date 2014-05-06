@@ -24,6 +24,7 @@
 
 #include <stdint.h>
 
+#include <algorithm>
 #include <string>
 #include <vector>
 
@@ -46,18 +47,90 @@ const int16_t ACTION_REUSEDISTANCE  = 1 <<  8;
 const int16_t ACTION_LAST           = 1 <<  9;
 
 typedef struct {
+    int16_t action;
     int line_number;
     std::string function_name;
 } location_t;
 
-typedef struct {
-    int16_t action;
-    int line_number;
+typedef std::vector<location_t> location_list_t;
+
+static bool operator==(const location_t& val_01, const location_t& val_02) {
+    return val_01.line_number == val_02.line_number &&
+        val_01.function_name == val_02.function_name;
+}
+
+typedef struct _tag_options_t {
     bool no_compile;
     bool disable_sampling;
     bool profile_analysis;
-    location_t location;
     std::string backup_filename;
+    location_list_t location_list;
+
+    _tag_options_t() {
+        reset();
+    }
+
+    void add_location(int16_t action, const location_t& _location) {
+        // Check if this location is already in the list.
+        location_list_t::iterator st = location_list.begin();
+        location_list_t::iterator en = location_list.end();
+        location_list_t::iterator it = std::find(st, en, _location);
+
+        // If we find it, add this action to the list of actions.
+        if (it != en) {
+            it->action |= action;
+        }
+
+        // If not, add it to the list.
+        location_t location = _location;
+        location.action = action;
+        location_list.push_back(location);
+    }
+
+    void add_location(int16_t action, const std::string& _function_name,
+            const int& _line_number) {
+        location_t location;
+        location.function_name = _function_name;
+        location.line_number = _line_number;
+        add_location(action, location);
+    }
+
+    void add_location(int16_t action, const std::string& _function_name) {
+        add_location(action, _function_name, 0);
+    }
+
+    int16_t get_action(const location_t& _location) const {
+        location_list_t::const_iterator st = location_list.begin();
+        location_list_t::const_iterator en = location_list.end();
+        location_list_t::const_iterator it = std::find(st, en, _location);
+
+        if (it != en) {
+            return it->action;
+        }
+
+        return ACTION_NONE;
+    }
+
+    int16_t get_action(const std::string& _function_name,
+            const int& _line_number) const {
+        location_t location;
+        location.function_name = _function_name;
+        location.line_number = _line_number;
+        return get_action(location);
+    }
+
+    int16_t get_action(const std::string& _function_name) const {
+        return get_action(_function_name, 0);
+    }
+
+    void reset() {
+        no_compile = false;
+        disable_sampling = false;
+        profile_analysis = false;
+
+        backup_filename.clear();
+        location_list.clear();
+    }
 } options_t;
 
 typedef std::vector<std::string> name_list_t;

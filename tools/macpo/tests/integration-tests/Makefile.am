@@ -32,7 +32,7 @@ check_LTLIBRARIES = libgtest.la
 libgtest_la_SOURCES = $(GTEST_DIR)/src/gtest-all.cc \
                         $(GTEST_DIR)/src/gtest_main.cc
 
-check_PROGRAMS = test_0001
+check_PROGRAMS = test_0001 test_0002
 TESTS = $(check_PROGRAMS)
 
 MINST_BASE = $(srcdir)/../..
@@ -46,4 +46,8 @@ MINST_SOURCE_FILES = $(MINST_BASE)/argparse.cpp $(MINST_BASE)/minst.cpp \
     $(MINST_BASE)/stride_check.cpp $(MINST_BASE)/traversal.cpp \
     $(MINST_BASE)/reuse_dist.cpp
 
-test_0001_SOURCES = $(srcdir)/basic-tests.cpp $(srcdir)/itest_harness.cpp $(MINST_SOURCE_FILES)
+test_0001_SOURCES = $(srcdir)/basic-tests.cpp $(srcdir)/itest_harness.cpp \
+    $(MINST_SOURCE_FILES)
+
+test_0002_SOURCES = $(srcdir)/compound-tests.cpp $(srcdir)/itest_harness.cpp \
+    $(MINST_SOURCE_FILES)

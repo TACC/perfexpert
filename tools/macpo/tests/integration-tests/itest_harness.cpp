@@ -56,8 +56,7 @@ std::string instrument_and_link(std::string input_file,
                 SgProject* project = frontend(args);
 
                 // Call the instrumentation code.
-                MINST traversal(options, project);
-                traversal.traverseInputFiles(project, preorder);
+                assert(midend(project, options) == true);
 
                 // Compile the files down to the binary.
                 assert(backend(project) == 0);
@@ -83,12 +82,21 @@ bool verify_output(std::string& filename, std::string& binary) {
     std::string program_output = get_process_stderr(binary);
     std::string file_contents = get_file_contents(filename);
 
+#if 0
+    std::cout << "program output: " << program_output << std::endl;
+#endif
+
     string_list_t prog_line_list, file_line_list;
     split(program_output, '\n', prog_line_list);
     split(file_contents, '\n', file_line_list);
 
     size_t file_lines = file_line_list.size();
     size_t prog_lines = prog_line_list.size();
+
+    if (file_lines == 0 && prog_lines == 0) {
+        // Nothing to check.
+        return true;
+    }
 
     if (file_lines < prog_lines) {
         // We have more expected output than the lines in the file
@@ -122,7 +130,7 @@ bool verify_output(std::string& filename, std::string& binary) {
             // If we reached the end of the file, terminate the search.
             if (ctr == file_lines) {
                 std::cout << "Expected output has fewer test strings than "
-                    "program output!" << std::endl;
+                    "program output, was expecting: " << prog_line << std::endl;
                 return false;
             }
 

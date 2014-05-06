@@ -1084,28 +1084,28 @@ static inline void fill_mem_struct(int read_write, int line_number, size_t p,
     write(fd, &node, sizeof(node_t));
 }
 
-static void indigo__gen_trace_c(int read_write, int line_number, void* base,
+void indigo__gen_trace_c(int read_write, int line_number, void* base,
         void* addr, int var_idx) {
     if (fd >= 0)
         fill_trace_struct(read_write, line_number, (size_t) base,
                 (size_t) addr, var_idx);
 }
 
-static void indigo__gen_trace_f(int *read_write, int *line_number, void* base,
+void indigo__gen_trace_f(int *read_write, int *line_number, void* base,
         void* addr, int *var_idx) {
     if (fd >= 0)
         fill_trace_struct(*read_write, *line_number, (size_t) base,
                 (size_t) addr, *var_idx);
 }
 
-static void indigo__record_c(int read_write, int line_number, void* addr,
+void indigo__record_c(int read_write, int line_number, void* addr,
         int var_idx, int type_size) {
     if (fd >= 0)
         fill_mem_struct(read_write, line_number, (size_t) addr, var_idx,
                 type_size);
 }
 
-static void indigo__record_f_(int *read_write, int *line_number, void* addr,
+void indigo__record_f_(int *read_write, int *line_number, void* addr,
         int *var_idx, int* type_size) {
     if (fd >= 0)
         fill_mem_struct(*read_write, *line_number, (size_t) addr, *var_idx,
@@ -1130,7 +1130,7 @@ void indigo__write_idx_c(const char* var_name, const int length) {
     }
 }
 
-static void indigo__write_idx_f_(const char* var_name, const int* length) {
+void indigo__write_idx_f_(const char* var_name, const int* length) {
     indigo__write_idx_c(var_name, *length);
 }
 

@@ -30,6 +30,8 @@
 #include "generic_defs.h"
 #include "instrumentor.h"
 
+bool midend(SgProject* project, options_t& options);
+
 class MINST : public AstSimpleProcessing {
  public:
     MINST(const options_t& options, SgProject* project);
@@ -42,12 +44,8 @@ class MINST : public AstSimpleProcessing {
     virtual void visit(SgNode* node);
 
  private:
-    int16_t action;
-    int line_number;
-    bool disable_sampling;
-    bool profile_analysis;
+    const options_t& options;
     bool map_function_inserted;
-    std::string inst_func;
 
     SgGlobal* global_node;
     VariableRenaming* var_renaming;

@@ -27,6 +27,7 @@
 
 #include "aligncheck.h"
 #include "analysis_profile.h"
+#include "argparse.h"
 #include "branchpath.h"
 #include "inst_defs.h"
 #include "instrumentor.h"
@@ -43,12 +44,49 @@
 using namespace SageBuilder;
 using namespace SageInterface;
 
-MINST::MINST(const options_t& options, SgProject* project) {
-    action = options.action;
-    line_number = options.location.line_number;
-    inst_func = options.location.function_name;
-    disable_sampling = options.disable_sampling;
-    profile_analysis = options.profile_analysis;
+bool midend(SgProject* project, options_t& options) {
+    // Check if we really need to invoke the instrumentation.
+    if (options.location_list.size() == 0) {
+        return true;
+    }
+
+    SgFilePtrList files = project->get_fileList();
+    if (options.backup_filename.size()) {
+        // We need to save the input file to a backup file.
+        if (files.size() != 1) {
+            std::cerr << mprefix << "Backup option can be specified with only "
+                << "a single file for compilation, terminating." << std::endl;
+            return false;
+        }
+
+        SgSourceFile* file = isSgSourceFile(*(files.begin()));
+        std::string source = file->get_file_info()->get_filenameString();
+
+        // Copy the file over.
+        if (argparse::copy_file(source.c_str(),
+                options.backup_filename.c_str()) < 0) {
+            std::cerr << mprefix << "Error backing up file." << std::endl;
+            return false;
+        }
+
+        std::cerr << mprefix << "Saved " << source << " into " <<
+            options.backup_filename << "." << std::endl;
+    }
+
+    // Loop over each file
+    for (SgFilePtrList::iterator it = files.begin(); it != files.end(); it++) {
+        SgSourceFile* file = isSgSourceFile(*it);
+
+        // Start the traversal!
+        MINST traversal(options, project);
+        traversal.traverseWithinFile(file, preorder);
+    }
+
+    return true;
+}
+
+MINST::MINST(const options_t& _options, SgProject* project)
+    : options(_options) {
     var_renaming = new VariableRenaming(project);
 }
 
@@ -331,7 +369,7 @@ void MINST::analyze_node(SgNode* node, int16_t action) {
 
     const analysis_profile_list& profile_list = run_analysis(node, action);
 
-    if (profile_analysis) {
+    if (options.profile_analysis) {
         double analysis_time = 0;
         for (analysis_profile_list::const_iterator it = profile_list.begin();
                 it != profile_list.end(); it++) {
@@ -396,22 +434,34 @@ void MINST::add_hooks_to_main_function(SgFunctionDefinition* main_def) {
         indigo__init = "indigo__init_";
     }
 
-    std::vector<SgExpression*> params, empty_params;
-    int create_file, enable_sampling;
+    int create_file = 0;
+    int enable_sampling;
 
-    if (action == ACTION_NONE ||
-            is_action(action, ACTION_ALIGNCHECK) ||
-            is_action(action, ACTION_TRIPCOUNT) ||
-            is_action(action, ACTION_BRANCHPATH) ||
-            is_action(action, ACTION_OVERLAPCHECK) ||
-            is_action(action, ACTION_STRIDECHECK) ||
-            is_action(action, ACTION_REUSEDISTANCE)) {
-        create_file = 0;
-    } else {
-        create_file = 1;
+    bool insert_map_call = false;
+    std::vector<SgExpression*> params, empty_params;
+
+    for (location_list_t::const_iterator it = options.location_list.begin();
+            it != options.location_list.end(); it++) {
+        location_t location = *it;
+        if (create_file == 0 &&
+            (is_action(location.action, ACTION_INSTRUMENT) ||
+                is_action(location.action, ACTION_VECTORSTRIDES))) {
+            create_file = 1;
+        }
+
+        if (insert_map_call == false &&
+            (is_action(location.action, ACTION_INSTRUMENT) ||
+            is_action(location.action, ACTION_VECTORSTRIDES) ||
+            is_action(location.action, ACTION_REUSEDISTANCE))) {
+            insert_map_call = true;
+        }
+
+        if (create_file == 1 && insert_map_call == true) {
+            break;
+        }
     }
 
-    enable_sampling = disable_sampling ? 0 : 1;
+    enable_sampling = options.disable_sampling ? 0 : 1;
 
     SgIntVal* rose_create_file = new SgIntVal(file_info, create_file);
     rose_create_file->set_endOfConstruct(file_info);
@@ -427,9 +477,7 @@ void MINST::add_hooks_to_main_function(SgFunctionDefinition* main_def) {
     insertStatementBefore(statement, expr_stmt);
     ROSE_ASSERT(expr_stmt);
 
-    if (action == ACTION_INSTRUMENT ||
-            is_action(action, ACTION_VECTORSTRIDES) ||
-            is_action(action, ACTION_REUSEDISTANCE)) {
+    if (insert_map_call) {
         SgExprStatement* map_stmt = NULL;
         map_stmt = ir_methods::prepare_call_statement(body,
                 indigo__create_map, empty_params, expr_stmt);
@@ -448,6 +496,12 @@ void MINST::visit(SgNode* node) {
 
     if (isSgGlobal(node)) {
         global_node = static_cast<SgGlobal*>(node);
+    }
+
+    bool is_loop = ir_methods::is_loop(node);
+    bool is_function = ir_methods::is_function(node);
+    if (is_loop == false && is_function == false) {
+        return;
     }
 
     SgLocatedNode* located_node = reinterpret_cast<SgLocatedNode*>(node);
@@ -479,32 +533,39 @@ void MINST::visit(SgNode* node) {
         add_hooks_to_main_function(def_node);
     }
 
-    if (inst_func == "<all>" || inst_func == _this_func_name ||
-            is_same_file(_this_file_name, inst_func)) {
-        // Instrument if we were either told to instrument everything that
-        // matches this file or function or if the requested line number
-        // matches with the line number of this node.
-        if ((line_number == 0 && isSgFunctionDefinition(node)) ||
-                (ir_methods::is_loop(node) &&
-                line_number != 0 &&
-                line_number == _this_line_number)) {
-            // Add header file for indigo's record function.
-            ROSE_ASSERT(global_node);
-
-            // If this file hasn't been encountered in the past,
-            // then add the mrt.h header include line.
-            name_list_t::iterator st = file_list.begin();
-            name_list_t::iterator en = file_list.end();
-            if (std::find(st, en, _this_file_name) != en) {
-                if (!SageInterface::is_Fortran_language()) {
-                    insertHeader("mrt.h", PreprocessingInfo::after, false,
-                            global_node);
-                }
-
-                file_list.push_back(_this_file_name);
-            }
-
-            analyze_node(node, action);
-        }
+    if (options.location_list.size() == 0) {
+        return;
     }
+
+    int16_t action = options.get_action("<all>");
+    action |= options.get_action(_this_func_name, _this_line_number);
+    action |= options.get_action(_this_file_name, _this_line_number);
+
+    if (is_function) {
+        action |= options.get_action(_this_func_name);
+        action |= options.get_action(_this_file_name);
+    }
+
+    // Validate the selected action.
+    if (action <= ACTION_NONE || action >= ACTION_LAST) {
+        return;
+    }
+
+    // Add header file for indigo's record function.
+    ROSE_ASSERT(global_node);
+
+    // If this file hasn't been encountered in the past,
+    // then add the mrt.h header include line.
+    name_list_t::iterator st = file_list.begin();
+    name_list_t::iterator en = file_list.end();
+    if (std::find(st, en, _this_file_name) != en) {
+        if (!SageInterface::is_Fortran_language()) {
+            insertHeader("mrt.h", PreprocessingInfo::after, false,
+                    global_node);
+        }
+
+        file_list.push_back(_this_file_name);
+    }
+
+    analyze_node(node, action);
 }

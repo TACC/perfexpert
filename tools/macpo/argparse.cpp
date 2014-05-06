@@ -129,60 +129,61 @@ int argparse::parse_arguments(char* arg, options_t& options) {
         value = argument.substr(end_position + 1);
     }
 
+    location_t location;
     if (option == "instrument") {
         if (!value.size())
             return -1;
 
-        set_action(options.action, ACTION_INSTRUMENT);
-        parse_location(value, options.location);
+        parse_location(value, location);
+        options.add_location(ACTION_INSTRUMENT, location);
     } else if (option == "check-alignment") {
         if (!value.size())
             return -1;
 
-        set_action(options.action, ACTION_ALIGNCHECK);
-        parse_location(value, options.location);
+        parse_location(value, location);
+        options.add_location(ACTION_ALIGNCHECK, location);
     } else if (option == "record-tripcount") {
         if (!value.size())
             return -1;
 
-        set_action(options.action, ACTION_TRIPCOUNT);
-        parse_location(value, options.location);
+        parse_location(value, location);
+        options.add_location(ACTION_TRIPCOUNT, location);
     } else if (option == "record-branchpath") {
         if (!value.size())
             return -1;
 
-        set_action(options.action, ACTION_BRANCHPATH);
-        parse_location(value, options.location);
+        parse_location(value, location);
+        options.add_location(ACTION_BRANCHPATH, location);
     } else if (option == "gen-trace") {
         if (!value.size())
             return -1;
 
-        set_action(options.action, ACTION_GENTRACE);
-        parse_location(value, options.location);
+        parse_location(value, location);
+        options.add_location(ACTION_GENTRACE, location);
     } else if (option == "vector-strides") {
         if (!value.size())
             return -1;
 
-        set_action(options.action, ACTION_VECTORSTRIDES);
-        parse_location(value, options.location);
+        parse_location(value, location);
+        options.add_location(ACTION_VECTORSTRIDES, location);
     } else if (option == "overlap-check") {
         if (!value.size())
             return -1;
 
-        set_action(options.action, ACTION_OVERLAPCHECK);
-        parse_location(value, options.location);
+        parse_location(value, location);
+        options.add_location(ACTION_OVERLAPCHECK, location);
     } else if (option == "stride-check") {
         if (!value.size())
             return -1;
 
-        set_action(options.action, ACTION_STRIDECHECK);
-        parse_location(value, options.location);
+        parse_location(value, location);
+        options.add_location(ACTION_STRIDECHECK, location);
     } else if (option == "reuse-distance") {
         if (!value.size())
             return -1;
 
-        set_action(options.action, ACTION_REUSEDISTANCE);
-        parse_location(value, options.location);
+        parse_location(value, location);
+        options.add_location(ACTION_REUSEDISTANCE, location);
     } else if (option == "backup-filename") {
         if (!value.size())
             return -1;
@@ -204,38 +205,5 @@ int argparse::parse_arguments(char* arg, options_t& options) {
 }
 
 void argparse::init_options(options_t& options) {
-    options.action = ACTION_NONE;
-    options.no_compile = false;
-    options.disable_sampling = false;
-    options.profile_analysis = false;
-    options.location.line_number = 0;
-    options.location.function_name = "";
-    options.backup_filename = "";
-}
-
-bool argparse::validate_options(const options_t& options) {
-    // All valid actions require a non-empty function name.
-    if (options.action != ACTION_NONE && options.location.function_name == "") {
-        return false;
-    }
-
-    // Validate actions.
-    if (options.action < ACTION_NONE || options.action >= ACTION_LAST) {
-        return false;
-    }
-
-    // ACTION_INSTRUMENT is an exclusive option.
-    if (is_action(options.action, ACTION_INSTRUMENT) &&
-            __builtin_popcount(options.action) != 1) {
-        return false;
-    }
-
-    // ACTION_GENTRACE is an exclusive option.
-    if (is_action(options.action, ACTION_GENTRACE) &&
-            __builtin_popcount(options.action) != 1) {
-        return false;
-    }
-
-    // Everything checked out well.
-    return true;
+    options.reset();
 }
