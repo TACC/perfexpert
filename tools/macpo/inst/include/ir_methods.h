@@ -19,8 +19,8 @@
  * $HEADER$
  */
 
-#ifndef TOOLS_MACPO_INCLUDE_IR_METHODS_H_
-#define TOOLS_MACPO_INCLUDE_IR_METHODS_H_
+#ifndef TOOLS_MACPO_INST_INCLUDE_IR_METHODS_H_
+#define TOOLS_MACPO_INST_INCLUDE_IR_METHODS_H_
 
 #include <rose.h>
 #include <VariableRenaming.h>
@@ -152,4 +152,4 @@ class ir_methods {
     static bool is_intrinsic_function(const std::string& name);
 };   /* ir_methods */
 
-#endif  // TOOLS_MACPO_INCLUDE_IR_METHODS_H_
+#endif  // TOOLS_MACPO_INST_INCLUDE_IR_METHODS_H_

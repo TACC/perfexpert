@@ -19,29 +19,30 @@
  * $HEADER$
  */
 
-#ifndef TOOLS_MACPO_INCLUDE_LOOP_TRAVERSAL_H_
-#define TOOLS_MACPO_INCLUDE_LOOP_TRAVERSAL_H_
+#ifndef TOOLS_MACPO_INST_INCLUDE_INSTRUMENTOR_H_
+#define TOOLS_MACPO_INST_INCLUDE_INSTRUMENTOR_H_
 
-#include <rose.h>
-#include <VariableRenaming.h>
-
+#include "analysis_profile.h"
 #include "generic_defs.h"
 #include "inst_defs.h"
 
-class loop_traversal_t : public AstTopDownProcessing<attrib> {
+class instrumentor_t : public AstTopDownProcessing<attrib> {
  public:
-    explicit loop_traversal_t(VariableRenaming*& _var_renaming);
+    name_list_t& get_stream_list();
 
-    loop_info_list_t& get_loop_info_list();
-    void set_deep_search(bool _deep_search);
     virtual attrib evaluateInheritedAttribute(SgNode* node, attrib attr);
+    virtual void atTraversalStart();
+    virtual void atTraversalEnd();
+
+    const analysis_profile_t& get_analysis_profile();
+
+    const statement_list_t::iterator stmt_begin();
+    const statement_list_t::iterator stmt_end();
 
  private:
-    bool deep_search;
-    SgForStatement* for_stmt;
-    reference_list_t reference_list;
-    loop_info_list_t loop_info_list;
-    VariableRenaming* var_renaming;
+    statement_list_t statement_list;
+    name_list_t stream_list;
+    analysis_profile_t analysis_profile;
 };
 
-#endif  // TOOLS_MACPO_INCLUDE_LOOP_TRAVERSAL_H_
+#endif  // TOOLS_MACPO_INST_INCLUDE_INSTRUMENTOR_H_

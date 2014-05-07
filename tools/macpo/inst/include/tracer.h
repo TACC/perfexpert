@@ -19,8 +19,8 @@
  * $HEADER$
  */
 
-#ifndef TOOLS_MACPO_INCLUDE_TRACER_H_
-#define TOOLS_MACPO_INCLUDE_TRACER_H_
+#ifndef TOOLS_MACPO_INST_INCLUDE_TRACER_H_
+#define TOOLS_MACPO_INST_INCLUDE_TRACER_H_
 
 #include "analysis_profile.h"
 #include "generic_defs.h"
@@ -45,4 +45,4 @@ class tracer_t : public AstTopDownProcessing<attrib> {
     analysis_profile_t analysis_profile;
 };
 
-#endif  // TOOLS_MACPO_INCLUDE_TRACER_H_
+#endif  // TOOLS_MACPO_INST_INCLUDE_TRACER_H_

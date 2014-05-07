@@ -19,8 +19,8 @@
  * $HEADER$
  */
 
-#ifndef TOOLS_MACPO_TESTS_INTEGRATION_TESTS_LIBMRT_MRT_H_
-#define TOOLS_MACPO_TESTS_INTEGRATION_TESTS_LIBMRT_MRT_H_
+#ifndef TOOLS_MACPO_TESTS_LIBMRT_MRT_H_
+#define TOOLS_MACPO_TESTS_LIBMRT_MRT_H_
 
 #include <stdint.h>
 
@@ -149,4 +149,4 @@ void indigo__reuse_dist_c(int var_id, void* address);
 #if defined (__cplusplus)
 }
 #endif
-#endif  // TOOLS_MACPO_TESTS_INTEGRATION_TESTS_LIBMRT_MRT_H_
+#endif  // TOOLS_MACPO_TESTS_LIBMRT_MRT_H_

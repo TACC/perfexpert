@@ -20,8 +20,8 @@
  * $HEADER$
  */
 
-#ifndef TOOLS_MACPO_INCLUDE_ARGPARSE_H_
-#define TOOLS_MACPO_INCLUDE_ARGPARSE_H_
+#ifndef TOOLS_MACPO_INST_INCLUDE_ARGPARSE_H_
+#define TOOLS_MACPO_INST_INCLUDE_ARGPARSE_H_
 
 #include <string>
 
@@ -37,4 +37,4 @@ class argparse {
     static void init_options(options_t& options);
 };
 
-#endif  // TOOLS_MACPO_INCLUDE_ARGPARSE_H_
+#endif  // TOOLS_MACPO_INST_INCLUDE_ARGPARSE_H_

@@ -19,8 +19,8 @@
  * $HEADER$
  */
 
-#ifndef TOOLS_MACPO_INCLUDE_TRAVERSAL_H_
-#define TOOLS_MACPO_INCLUDE_TRAVERSAL_H_
+#ifndef TOOLS_MACPO_INST_INCLUDE_TRAVERSAL_H_
+#define TOOLS_MACPO_INST_INCLUDE_TRAVERSAL_H_
 
 #include <rose.h>
 
@@ -58,4 +58,4 @@ class traversal_t {
     analysis_profile_t analysis_profile;
 };
 
-#endif  // TOOLS_MACPO_INCLUDE_TRAVERSAL_H_
+#endif  // TOOLS_MACPO_INST_INCLUDE_TRAVERSAL_H_

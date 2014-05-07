@@ -19,8 +19,8 @@
  * $HEADER$
  */
 
-#ifndef TOOLS_MACPO_INCLUDE_GENERIC_DEFS_H_
-#define TOOLS_MACPO_INCLUDE_GENERIC_DEFS_H_
+#ifndef TOOLS_MACPO_COMMON_GENERIC_DEFS_H_
+#define TOOLS_MACPO_COMMON_GENERIC_DEFS_H_
 
 #include <stdint.h>
 
@@ -160,4 +160,6 @@ inline bool is_action(int16_t bitmap, const int16_t _action) {
         return true;
 }
 
-#endif  // TOOLS_MACPO_INCLUDE_GENERIC_DEFS_H_
+#define ADDR_TO_CACHE_LINE(x)   (x >> 6)
+
+#endif  // TOOLS_MACPO_COMMON_GENERIC_DEFS_H_

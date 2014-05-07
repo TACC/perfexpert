@@ -19,6 +19,7 @@
  * $HEADER$
  */
 
+#include <assert.h>
 #include <limits.h>
 
 #ifndef _GNU_SOURCE
@@ -36,12 +37,14 @@
 #include <utility>
 
 #include "avl_tree.h"
+#include "generic_defs.h"
 #include "histogram.h"
 #include "mrt.h"
 #include "macpo_record.h"
 
 typedef std::pair<int64_t, int16_t> val_idx_pair;
 typedef std::pair<int, int16_t> line_threadid_pair;
+typedef histogram_t<int64_t, int64_t> rdhist;
 
 typedef int16_t thread_id;
 typedef int line_number;
@@ -80,7 +83,7 @@ static std::vector<std::string> stream_list;
 
 static __thread int coreID = -1;
 static __thread avl_tree* tree = NULL;
-static __thread gsl_histogram* histogram_list[MAX_VARIABLES] = {0};
+static __thread rdhist* histogram_list[MAX_VARIABLES];
 
 static inline void lock() {
     while (__sync_bool_compare_and_swap(&lock_var, 0, 1) == false) {
@@ -450,12 +453,14 @@ void indigo__exit() {
     fprintf(stderr, "\n==== Reuse distance metrics ====");
 
     for (int i = 0; i < MAX_VARIABLES; i++) {
-        if (histogram_list[i] == NULL) {
+        rdhist* hist = histogram_list[i];
+        if (hist == NULL) {
             continue;
         }
 
-        pair_list_t pair_list;
-        flatten_and_sort_histogram(histogram_list[i], pair_list);
+        if (hist->size() == 0) {
+            continue;
+        }
 
         if (i >= stream_list.size()) {
             // We can't process any more histograms because
@@ -463,13 +468,11 @@ void indigo__exit() {
             return;
         }
 
-        size_t limit = 3 < pair_list.size() ? 3 : pair_list.size();
-        if (limit == 0) {
-            continue;
-        }
+        const rdhist::pair_list_t pair_list = hist->sort(3);
+        assert(pair_list.size() > 0);
 
-        size_t max_bin = pair_list[0].first;
-        if (max_bin == DIST_INFINITY - 1) {
+        const rdhist::pair_t pair = pair_list[0];
+        if (pair.first == DIST_INFINITY) {
             fprintf(stderr, "\nReuse distance for %s is greater than the size "
                     "of the last-level cache. Consider adding the following "
                     "pragma to let the compiler generate non-temporal store "
@@ -477,12 +480,12 @@ void indigo__exit() {
                     stream_list[i].c_str(), stream_list[i].c_str());
         }
 
-        fprintf(stderr, "\n%s: ", stream_list[i].c_str());
-        for (int j = 0; j < limit; j++) {
-            size_t max_bin = pair_list[j].first;
-            size_t max_val = pair_list[j].second;
-
-            if (max_bin != DIST_INFINITY - 1) {
+        for (rdhist::pair_list_t::const_iterator it = pair_list.begin();
+                it != pair_list.end(); it++) {
+            const rdhist::pair_t pair = *it;
+            int64_t max_bin = pair.first;
+            int64_t max_val = pair.second;
+            if (max_bin == DIST_INFINITY) {
                 if (max_val > 0) {
                     fprintf(stderr, " %d (%d times)", max_bin, max_val);
                 }
@@ -497,8 +500,6 @@ void indigo__exit() {
     }
 
     fprintf(stderr, "\n");
-
-    // FIXME: De-allocate all histograms.
 }
 
 int16_t& get_branch_bin(int line_number, int loop_line_number) {
@@ -1007,8 +1008,9 @@ void indigo__reuse_dist_c(int var_id, void* address) {
         return;
 
     // FIXME: Set DIST_INFINITY to twice the size of the largest cache.
-    if (create_histogram_if_null(histogram_list[var_id], DIST_INFINITY) < 0)
-        return;
+    if (histogram_list[var_id] == NULL) {
+        histogram_list[var_id] = new histogram_t<int64_t, int64_t>();
+    }
 
     if (tree == NULL) {
         tree = new avl_tree();
@@ -1031,7 +1033,7 @@ void indigo__reuse_dist_c(int var_id, void* address) {
         }
     }
 
-    gsl_histogram_increment(histogram_list[var_id], distance);
+    histogram_list[var_id]->increment(distance, 1);
     tree->insert(&mem_info);
 }
 

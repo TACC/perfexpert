@@ -19,13 +19,24 @@
  * $HEADER$
  */
 
-#ifndef TOOLS_MACPO_INCLUDE_MACPO_RECORD_CXX_H_
-#define TOOLS_MACPO_INCLUDE_MACPO_RECORD_CXX_H_
+#ifndef TOOLS_MACPO_INST_INCLUDE_REUSE_DIST_H_
+#define TOOLS_MACPO_INST_INCLUDE_REUSE_DIST_H_
 
-#include <deque>
+#include <rose.h>
+#include <VariableRenaming.h>
 
-typedef std::deque<mem_info_t> mem_info_list_t;
-typedef std::deque<trace_info_t> trace_info_list_t;
-typedef std::deque<vector_stride_info_t> vector_stride_info_list_t;
+#include "inst_defs.h"
+#include "traversal.h"
 
-#endif  // TOOLS_MACPO_INCLUDE_MACPO_RECORD_CXX_H_
+class reuse_dist_t : public traversal_t {
+ public:
+    explicit reuse_dist_t(VariableRenaming*& _var_renaming) :
+        traversal_t(_var_renaming) {
+        set_deep_search(false);
+    }
+
+ private:
+    bool instrument_loop(loop_info_t& loop_info);
+};
+
+#endif  // TOOLS_MACPO_INST_INCLUDE_REUSE_DIST_H_

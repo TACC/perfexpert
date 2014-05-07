@@ -19,8 +19,8 @@
  * $HEADER$
  */
 
-#ifndef TOOLS_MACPO_INCLUDE_MINST_H_
-#define TOOLS_MACPO_INCLUDE_MINST_H_
+#ifndef TOOLS_MACPO_INST_INCLUDE_MINST_H_
+#define TOOLS_MACPO_INST_INCLUDE_MINST_H_
 
 #include <VariableRenaming.h>
 
@@ -62,4 +62,4 @@ class MINST : public AstSimpleProcessing {
     name_list_t file_list;
 };
 
-#endif  // TOOLS_MACPO_INCLUDE_MINST_H_
+#endif  // TOOLS_MACPO_INST_INCLUDE_MINST_H_

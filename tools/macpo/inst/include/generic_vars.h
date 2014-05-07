@@ -19,22 +19,26 @@
  * $HEADER$
  */
 
-#ifndef TOOLS_MACPO_INCLUDE_TRIPCOUNT_H_
-#define TOOLS_MACPO_INCLUDE_TRIPCOUNT_H_
+#ifndef TOOLS_MACPO_INST_INCLUDE_GENERIC_VARS_H_
+#define TOOLS_MACPO_INST_INCLUDE_GENERIC_VARS_H_
 
-#include <rose.h>
-#include <VariableRenaming.h>
-
+#include "generic_defs.h"
 #include "inst_defs.h"
-#include "traversal.h"
 
-class tripcount_t : public traversal_t {
+class generic_vars_t : public AstTopDownProcessing<attrib> {
  public:
-    explicit tripcount_t(VariableRenaming*& _var_renaming) :
-        traversal_t(_var_renaming) {}
+    explicit generic_vars_t(bool _deep_search = true);
+
+    reference_list_t& get_reference_list();
+
+    virtual attrib evaluateInheritedAttribute(SgNode* node, attrib attr);
+    virtual void atTraversalStart();
+    virtual void atTraversalEnd();
 
  private:
-    bool instrument_loop(loop_info_t& loop_info);
+    bool deep_search;
+    SgScopeStatement* init_scope_stmt;
+    reference_list_t reference_list;
 };
 
-#endif  // TOOLS_MACPO_INCLUDE_TRIPCOUNT_H_
+#endif  // TOOLS_MACPO_INST_INCLUDE_GENERIC_VARS_H_

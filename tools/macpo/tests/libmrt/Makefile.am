@@ -21,6 +21,6 @@
 
 lib_LIBRARIES = libmrt.a
 libmrt_a_SOURCES = mrt.cpp
-libmrt_a_CXXFLAGS = -I$(srcdir) -I$(srcdir)/../../../include
+libmrt_a_CXXFLAGS = -I$(srcdir) -I$(srcdir)/../../../common
 
 # EOF

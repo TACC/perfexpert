@@ -19,8 +19,8 @@
  * $HEADER$
  */
 
-#ifndef TOOLS_MACPO_INCLUDE_ANALYSIS_PROFILE_H_
-#define TOOLS_MACPO_INCLUDE_ANALYSIS_PROFILE_H_
+#ifndef TOOLS_MACPO_INST_INCLUDE_ANALYSIS_PROFILE_H_
+#define TOOLS_MACPO_INST_INCLUDE_ANALYSIS_PROFILE_H_
 
 #include <string>
 #include <vector>
@@ -45,4 +45,4 @@ class analysis_profile_t {
 
 typedef std::vector<analysis_profile_t> analysis_profile_list;
 
-#endif  // TOOLS_MACPO_INCLUDE_ANALYSIS_PROFILE_H_
+#endif  // TOOLS_MACPO_INST_INCLUDE_ANALYSIS_PROFILE_H_

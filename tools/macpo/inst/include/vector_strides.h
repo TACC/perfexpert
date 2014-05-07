@@ -19,8 +19,8 @@
  * $HEADER$
  */
 
-#ifndef TOOLS_MACPO_INCLUDE_BRANCHPATH_H_
-#define TOOLS_MACPO_INCLUDE_BRANCHPATH_H_
+#ifndef TOOLS_MACPO_INST_INCLUDE_VECTOR_STRIDES_H_
+#define TOOLS_MACPO_INST_INCLUDE_VECTOR_STRIDES_H_
 
 #include <rose.h>
 #include <VariableRenaming.h>
@@ -28,13 +28,14 @@
 #include "inst_defs.h"
 #include "traversal.h"
 
-class branchpath_t : public traversal_t {
+class vector_strides_t : public traversal_t {
  public:
-    explicit branchpath_t(VariableRenaming*& _var_renaming) :
+    explicit vector_strides_t(VariableRenaming*& _var_renaming) :
         traversal_t(_var_renaming) {}
 
  private:
     bool instrument_loop(loop_info_t& loop_info);
+    bool contains_non_linear_reference(const reference_list_t& reference_list);
 };
 
-#endif  // TOOLS_MACPO_INCLUDE_BRANCHPATH_H_
+#endif  // TOOLS_MACPO_INST_INCLUDE_VECTOR_STRIDES_H_

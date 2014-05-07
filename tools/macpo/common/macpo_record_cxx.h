@@ -19,26 +19,13 @@
  * $HEADER$
  */
 
-#ifndef TOOLS_MACPO_INCLUDE_STREAMS_H_
-#define TOOLS_MACPO_INCLUDE_STREAMS_H_
+#ifndef TOOLS_MACPO_COMMON_MACPO_RECORD_CXX_H_
+#define TOOLS_MACPO_COMMON_MACPO_RECORD_CXX_H_
 
-#include "generic_defs.h"
-#include "inst_defs.h"
+#include <deque>
 
-class streams_t : public AstTopDownProcessing<attrib> {
- public:
-    explicit streams_t(bool _deep_search = true);
+typedef std::deque<mem_info_t> mem_info_list_t;
+typedef std::deque<trace_info_t> trace_info_list_t;
+typedef std::deque<vector_stride_info_t> vector_stride_info_list_t;
 
-    reference_list_t& get_reference_list();
-
-    virtual attrib evaluateInheritedAttribute(SgNode* node, attrib attr);
-    virtual void atTraversalStart();
-    virtual void atTraversalEnd();
-
- private:
-    bool deep_search;
-    SgScopeStatement* init_scope_stmt;
-    reference_list_t reference_list;
-};
-
-#endif  // TOOLS_MACPO_INCLUDE_STREAMS_H_
+#endif  // TOOLS_MACPO_COMMON_MACPO_RECORD_CXX_H_

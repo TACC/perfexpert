@@ -19,26 +19,24 @@
  * $HEADER$
  */
 
-#ifndef TOOLS_MACPO_INCLUDE_GENERIC_VARS_H_
-#define TOOLS_MACPO_INCLUDE_GENERIC_VARS_H_
+#ifndef TOOLS_MACPO_INST_INCLUDE_PNTR_OVERLAP_H_
+#define TOOLS_MACPO_INST_INCLUDE_PNTR_OVERLAP_H_
 
-#include "generic_defs.h"
+#include <rose.h>
+#include <VariableRenaming.h>
+
 #include "inst_defs.h"
+#include "traversal.h"
 
-class generic_vars_t : public AstTopDownProcessing<attrib> {
+class pntr_overlap_t : public traversal_t {
  public:
-    explicit generic_vars_t(bool _deep_search = true);
-
-    reference_list_t& get_reference_list();
-
-    virtual attrib evaluateInheritedAttribute(SgNode* node, attrib attr);
-    virtual void atTraversalStart();
-    virtual void atTraversalEnd();
+    explicit pntr_overlap_t(VariableRenaming*& _var_renaming) :
+        traversal_t(_var_renaming) {}
 
  private:
-    bool deep_search;
-    SgScopeStatement* init_scope_stmt;
-    reference_list_t reference_list;
+    bool instrument_loop(loop_info_t& loop_info);
+    void create_spans_for_child_loops(SgExpression* expr_init, SgExpression*
+            expr_term, loop_info_t& loop_info);
 };
 
-#endif  // TOOLS_MACPO_INCLUDE_GENERIC_VARS_H_
+#endif  // TOOLS_MACPO_INST_INCLUDE_PNTR_OVERLAP_H_

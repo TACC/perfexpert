@@ -19,30 +19,22 @@
  * $HEADER$
  */
 
-#ifndef TOOLS_MACPO_INCLUDE_ALIGNCHECK_H_
-#define TOOLS_MACPO_INCLUDE_ALIGNCHECK_H_
+#ifndef TOOLS_MACPO_INST_INCLUDE_BRANCHPATH_H_
+#define TOOLS_MACPO_INST_INCLUDE_BRANCHPATH_H_
 
 #include <rose.h>
 #include <VariableRenaming.h>
 
-#include <map>
-#include <string>
-
 #include "inst_defs.h"
 #include "traversal.h"
 
-class aligncheck_t : public traversal_t {
+class branchpath_t : public traversal_t {
  public:
-    explicit aligncheck_t(VariableRenaming*& _var_renaming) :
-        traversal_t(_var_renaming) {
-        set_deep_search(false);
-    }
+    explicit branchpath_t(VariableRenaming*& _var_renaming) :
+        traversal_t(_var_renaming) {}
 
  private:
-    typedef std::map<std::string, node_list_t> sstore_map_t;
     bool instrument_loop(loop_info_t& loop_info);
-    bool instrument_streaming_stores(loop_info_t& loop_info);
-    bool instrument_alignment_checks(loop_info_t& loop_info);
 };
 
-#endif  // TOOLS_MACPO_INCLUDE_ALIGNCHECK_H_
+#endif  // TOOLS_MACPO_INST_INCLUDE_BRANCHPATH_H_

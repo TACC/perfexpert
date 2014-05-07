@@ -19,8 +19,8 @@
  * $HEADER$
  */
 
-#ifndef TOOLS_MACPO_INCLUDE_MACPO_RECORD_H_
-#define TOOLS_MACPO_INCLUDE_MACPO_RECORD_H_
+#ifndef TOOLS_MACPO_COMMON_MACPO_RECORD_H_
+#define TOOLS_MACPO_COMMON_MACPO_RECORD_H_
 
 #include <stdint.h>
 #include <time.h>
@@ -78,4 +78,4 @@ typedef struct node {
     };
 } node_t;
 
-#endif  // TOOLS_MACPO_INCLUDE_MACPO_RECORD_H_
+#endif  // TOOLS_MACPO_COMMON_MACPO_RECORD_H_

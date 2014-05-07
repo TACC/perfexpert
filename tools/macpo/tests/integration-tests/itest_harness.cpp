@@ -18,7 +18,7 @@ bool file_exists(const std::string& filename) {
 }
 
 std::string get_src_directory() {
-    return std::string(getenv("srcdir"));
+    return std::string(getenv("srcdir")) + "/tests/integration-tests";
 }
 
 std::string get_build_directory() {
@@ -192,12 +192,9 @@ static void populate_args(string_list_t& args, std::string& input_file,
     args.push_back("-lstdc++");
 
     // Path to mock libmrt files.
-    std::string mock_include_path = get_src_directory() + "/libmrt";
+    std::string mock_include_path = get_src_directory() + "/../libmrt";
     args.push_back("-I" + mock_include_path);
-
-    std::string mock_library_path = get_build_directory() + "/libmrt";
-    args.push_back("-L" + mock_library_path);
-    args.push_back("-lmrt");
+    args.push_back(get_build_directory() + "/mrt.o");
 
     if (special_args) {
         args.insert(args.end(), special_args->begin(), special_args->end());

@@ -19,8 +19,8 @@
  * $HEADER$
  */
 
-#ifndef TOOLS_MACPO_INCLUDE_VECTOR_STRIDES_H_
-#define TOOLS_MACPO_INCLUDE_VECTOR_STRIDES_H_
+#ifndef TOOLS_MACPO_INST_INCLUDE_STRIDE_CHECK_H_
+#define TOOLS_MACPO_INST_INCLUDE_STRIDE_CHECK_H_
 
 #include <rose.h>
 #include <VariableRenaming.h>
@@ -28,14 +28,17 @@
 #include "inst_defs.h"
 #include "traversal.h"
 
-class vector_strides_t : public traversal_t {
+class stride_check_t : public traversal_t {
  public:
-    explicit vector_strides_t(VariableRenaming*& _var_renaming) :
+    explicit stride_check_t(VariableRenaming*& _var_renaming) :
         traversal_t(_var_renaming) {}
 
  private:
     bool instrument_loop(loop_info_t& loop_info);
-    bool contains_non_linear_reference(const reference_list_t& reference_list);
+
+    void record_unknown_stride(SgScopeStatement* loop_stmt, SgExpression* expr);
+    void record_stride_value(SgScopeStatement* loop_stmt, SgExpression* expr,
+        SgExpression* stride);
 };
 
-#endif  // TOOLS_MACPO_INCLUDE_VECTOR_STRIDES_H_
+#endif  // TOOLS_MACPO_INST_INCLUDE_STRIDE_CHECK_H_

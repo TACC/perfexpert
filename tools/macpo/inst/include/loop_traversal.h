@@ -19,26 +19,29 @@
  * $HEADER$
  */
 
-#ifndef TOOLS_MACPO_INCLUDE_STRIDE_CHECK_H_
-#define TOOLS_MACPO_INCLUDE_STRIDE_CHECK_H_
+#ifndef TOOLS_MACPO_INST_INCLUDE_LOOP_TRAVERSAL_H_
+#define TOOLS_MACPO_INST_INCLUDE_LOOP_TRAVERSAL_H_
 
 #include <rose.h>
 #include <VariableRenaming.h>
 
+#include "generic_defs.h"
 #include "inst_defs.h"
-#include "traversal.h"
 
-class stride_check_t : public traversal_t {
+class loop_traversal_t : public AstTopDownProcessing<attrib> {
  public:
-    explicit stride_check_t(VariableRenaming*& _var_renaming) :
-        traversal_t(_var_renaming) {}
+    explicit loop_traversal_t(VariableRenaming*& _var_renaming);
+
+    loop_info_list_t& get_loop_info_list();
+    void set_deep_search(bool _deep_search);
+    virtual attrib evaluateInheritedAttribute(SgNode* node, attrib attr);
 
  private:
-    bool instrument_loop(loop_info_t& loop_info);
-
-    void record_unknown_stride(SgScopeStatement* loop_stmt, SgExpression* expr);
-    void record_stride_value(SgScopeStatement* loop_stmt, SgExpression* expr,
-        SgExpression* stride);
+    bool deep_search;
+    SgForStatement* for_stmt;
+    reference_list_t reference_list;
+    loop_info_list_t loop_info_list;
+    VariableRenaming* var_renaming;
 };
 
-#endif  // TOOLS_MACPO_INCLUDE_STRIDE_CHECK_H_
+#endif  // TOOLS_MACPO_INST_INCLUDE_LOOP_TRAVERSAL_H_

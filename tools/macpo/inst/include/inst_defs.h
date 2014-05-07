@@ -19,8 +19,8 @@
  * $HEADER$
  */
 
-#ifndef TOOLS_MACPO_INCLUDE_INST_DEFS_H_
-#define TOOLS_MACPO_INCLUDE_INST_DEFS_H_
+#ifndef TOOLS_MACPO_INST_INCLUDE_INST_DEFS_H_
+#define TOOLS_MACPO_INST_INCLUDE_INST_DEFS_H_
 
 #include <rose.h>
 
@@ -74,4 +74,4 @@ class attrib {
     }
 };
 
-#endif  // TOOLS_MACPO_INCLUDE_INST_DEFS_H_
+#endif  // TOOLS_MACPO_INST_INCLUDE_INST_DEFS_H_

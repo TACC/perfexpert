@@ -19,17 +19,47 @@
 # $HEADER$
 #
 
-SUBDIRS = libmrt analyze tests
-
-bin_PROGRAMS = macpo
+SUBDIRS = inst libmrt analyze
 dist_bin_SCRIPTS = macpo.sh
 
-macpo_SOURCES = argparse.cpp minst.cpp instrumentor.cpp main.cpp streams.cpp \
-                aligncheck.cpp ir_methods.cpp loop_traversal.cpp tracer.cpp \
-                generic_vars.cpp vector_strides.cpp analysis_profile.cpp \
-                tripcount.cpp branchpath.cpp pntr_overlap.cpp stride_check.cpp \
-                traversal.cpp reuse_dist.cpp
-macpo_CXXFLAGS = -Wno-deprecated -I$(srcdir)/include
-macpo_LDFLAGS = -lrose -ljvm
+GTEST_DIR = $(srcdir)/../../contrib/gtest
+GTEST_INC = $(GTEST_DIR)/include
+GTEST_SRC = $(GTEST_DIR)/src
 
-# EOF
+check_LTLIBRARIES = libgtest.la
+libgtest_la_SOURCES = $(GTEST_SRC)/gtest-all.cc $(GTEST_SRC)/gtest_main.cc
+
+MACPO_INCLUDE_FLAGS = -I$(srcdir)/inst/include -I$(srcdir)/tests/libmrt \
+    -I$(srcdir)/common
+
+AM_CXXFLAGS = -I$(GTEST_DIR) -isystem $(GTEST_INC) $(MACPO_INCLUDE_FLAGS)
+AM_LDFLAGS = -lpthread -lgtest -lrose
+
+MINST_BASE = $(srcdir)/inst
+MINST_SOURCE_FILES = $(MINST_BASE)/argparse.cpp $(MINST_BASE)/minst.cpp \
+    $(MINST_BASE)/instrumentor.cpp $(MINST_BASE)/streams.cpp \
+    $(MINST_BASE)/aligncheck.cpp $(MINST_BASE)/ir_methods.cpp \
+    $(MINST_BASE)/loop_traversal.cpp $(MINST_BASE)/tracer.cpp \
+    $(MINST_BASE)/generic_vars.cpp $(MINST_BASE)/vector_strides.cpp \
+    $(MINST_BASE)/analysis_profile.cpp $(MINST_BASE)/tripcount.cpp \
+    $(MINST_BASE)/branchpath.cpp $(MINST_BASE)/pntr_overlap.cpp \
+    $(MINST_BASE)/stride_check.cpp $(MINST_BASE)/traversal.cpp \
+    $(MINST_BASE)/reuse_dist.cpp $(srcdir)/tests/libmrt/mrt.cpp
+
+utestdir = $(srcdir)/tests/unit-tests
+itestdir = $(srcdir)/tests/integration-tests
+
+UTESTS = utest_0001 utest_0002 utest_0003
+ITESTS = itest_0001 itest_0002
+
+check_PROGRAMS = $(UTESTS) $(ITESTS)
+TESTS = $(check_PROGRAMS)
+
+utest_0001_SOURCES = $(utestdir)/argparse-tests.cpp $(MINST_SOURCE_FILES)
+utest_0002_SOURCES = $(utestdir)/irmethods-tests.cpp $(MINST_SOURCE_FILES)
+utest_0003_SOURCES = $(utestdir)/libmrt-tests.cpp $(MINST_SOURCE_FILES)
+
+itest_0001_SOURCES = $(itestdir)/basic-tests.cpp $(itestdir)/itest_harness.cpp \
+    $(MINST_SOURCE_FILES)
+itest_0002_SOURCES = $(itestdir)/compound-tests.cpp \
+    $(itestdir)/itest_harness.cpp $(MINST_SOURCE_FILES)

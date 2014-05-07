@@ -19,8 +19,8 @@
  * $HEADER$
  */
 
-#ifndef TOOLS_MACPO_INCLUDE_REUSE_DIST_H_
-#define TOOLS_MACPO_INCLUDE_REUSE_DIST_H_
+#ifndef TOOLS_MACPO_INST_INCLUDE_TRIPCOUNT_H_
+#define TOOLS_MACPO_INST_INCLUDE_TRIPCOUNT_H_
 
 #include <rose.h>
 #include <VariableRenaming.h>
@@ -28,15 +28,13 @@
 #include "inst_defs.h"
 #include "traversal.h"
 
-class reuse_dist_t : public traversal_t {
+class tripcount_t : public traversal_t {
  public:
-    explicit reuse_dist_t(VariableRenaming*& _var_renaming) :
-        traversal_t(_var_renaming) {
-        set_deep_search(false);
-    }
+    explicit tripcount_t(VariableRenaming*& _var_renaming) :
+        traversal_t(_var_renaming) {}
 
  private:
     bool instrument_loop(loop_info_t& loop_info);
 };
 
-#endif  // TOOLS_MACPO_INCLUDE_REUSE_DIST_H_
+#endif  // TOOLS_MACPO_INST_INCLUDE_TRIPCOUNT_H_

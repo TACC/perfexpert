@@ -19,4 +19,4 @@
 # $HEADER$
 #
 
-SUBDIRS = unit-tests integration-tests
+SUBDIRS = libmrt
