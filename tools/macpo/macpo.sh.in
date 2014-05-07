@@ -121,10 +121,10 @@ done
 
 CXXFLAGS="-I${MRT_INCLUDE_DIR}"
 MACPO_EXTRA_FLAGS="-rose:openmp:ast_only"
-LDFLAGS="-L${MRT_LIB_DIR} -lmrt -lstdc++ -lgsl -lgslcblas"
+LDFLAGS="-L${MRT_LIB_DIR} -lmrt -lstdc++"
 
 # Finally, invoke the macpo executable
-MACPO_CMD="${MINST_PATH} ${MACPO_EXTRA_FLAGS} ${CXXFLAGS} ${LDFLAGS} $*"
+MACPO_CMD="${MINST_PATH} ${MACPO_EXTRA_FLAGS} ${CXXFLAGS} $* ${LDFLAGS}"
 eval ${MACPO_CMD} > "$tmp_macpo"
 
 ret_code=$?
@@ -139,7 +139,7 @@ then
 
     if [ -n "$GNU_FORTRAN_COMPILER" -a -f "$GNU_FORTRAN_COMPILER" ]
     then
-        GFORT_CMD="${GNU_FORTRAN_COMPILER} ${LDFLAGS} $*"
+        GFORT_CMD="${GNU_FORTRAN_COMPILER} $* ${LDFLAGS}"
         eval ${GFORT_CMD} > "$tmp_gfort"
 
         # If this also resulted in an error, show the original macpo error
