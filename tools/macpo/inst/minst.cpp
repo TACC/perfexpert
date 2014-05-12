@@ -21,7 +21,6 @@
 
 #include <rose.h>
 
-#include <cstdlib>
 #include <string>
 #include <vector>
 
@@ -193,26 +192,6 @@ void MINST::atTraversalEnd() {
             insertStatementAfter(ref_stmt, stmt);
         }
     }
-}
-
-bool MINST::is_same_file(const std::string& file_1, const std::string& file_2) {
-    char path_1[PATH_MAX+1], path_2[PATH_MAX+1];
-
-    std::string canonical_file_1 = (file_1[0] != '/' && file_1[0] != '.' ? "./"
-            : "") + file_1;
-
-    std::string canonical_file_2 = (file_2[0] != '/' && file_2[0] != '.' ? "./"
-            : "") + file_2;
-
-    if (realpath(canonical_file_1.c_str(), path_1) == NULL) {
-        return false;
-    }
-
-    if (realpath(canonical_file_2.c_str(), path_2) == NULL) {
-        return false;
-    }
-
-    return strcmp(path_1, path_2) == 0;
 }
 
 const analysis_profile_list MINST::run_analysis(SgNode* node, int16_t action) {

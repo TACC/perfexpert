@@ -50,7 +50,6 @@ class MINST : public AstSimpleProcessing {
     SgGlobal* global_node;
     VariableRenaming* var_renaming;
     SgFunctionDeclaration *def_decl, *non_def_decl;
-    bool is_same_file(const std::string& file_1, const std::string& file_2);
 
     void analyze_node(SgNode* node, int16_t action);
     const analysis_profile_list run_analysis(SgNode* node, int16_t action);

@@ -25,6 +25,9 @@
 #include <stdint.h>
 
 #include <algorithm>
+#include <climits>
+#include <cstdlib>
+#include <cstring>
 #include <string>
 #include <vector>
 
@@ -57,6 +60,26 @@ typedef std::vector<location_t> location_list_t;
 static bool operator==(const location_t& val_01, const location_t& val_02) {
     return val_01.line_number == val_02.line_number &&
         val_01.function_name == val_02.function_name;
+}
+
+static bool is_same_file(const std::string& file_1, const std::string& file_2) {
+    char path_1[PATH_MAX+1], path_2[PATH_MAX+1];
+
+    std::string canonical_file_1 = (file_1[0] != '/' && file_1[0] != '.' ? "./"
+            : "") + file_1;
+
+    std::string canonical_file_2 = (file_2[0] != '/' && file_2[0] != '.' ? "./"
+            : "") + file_2;
+
+    if (realpath(canonical_file_1.c_str(), path_1) == NULL) {
+        return false;
+    }
+
+    if (realpath(canonical_file_2.c_str(), path_2) == NULL) {
+        return false;
+    }
+
+    return strncmp(path_1, path_2, PATH_MAX) == 0;
 }
 
 typedef struct _tag_options_t {
@@ -102,13 +125,25 @@ typedef struct _tag_options_t {
     int16_t get_action(const location_t& _location) const {
         location_list_t::const_iterator st = location_list.begin();
         location_list_t::const_iterator en = location_list.end();
-        location_list_t::const_iterator it = std::find(st, en, _location);
+        int16_t action = ACTION_NONE;
 
-        if (it != en) {
-            return it->action;
+        while (st != en) {
+            const location_t& location = *st;
+
+            bool same_file = is_same_file(location.function_name,
+                _location.function_name);
+            bool same_function = location.function_name ==
+                _location.function_name;
+
+            if (location.line_number == _location.line_number &&
+                (same_file || same_function)) {
+                action |= location.action;
+            }
+
+            st += 1;
         }
 
-        return ACTION_NONE;
+        return action;
     }
 
     int16_t get_action(const std::string& _function_name,
