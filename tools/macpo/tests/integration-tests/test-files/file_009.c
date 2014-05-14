@@ -1,9 +1,9 @@
 #if 0
 [macpo-integration-test]:init:0:1:
-[macpo-integration-test]:aligncheck:36:3:?:?:?:
-[macpo-integration-test]:sstore_aligncheck:36:3:?:?:?:
-[macpo-integration-test]:aligncheck:36:3:?:?:?:
-[macpo-integration-test]:sstore_aligncheck:36:3:?:?:?:
+[macpo-integration-test]:aligncheck:36:3:2:?:?:?:
+[macpo-integration-test]:sstore_aligncheck:36:3:2:?:?:?:
+[macpo-integration-test]:aligncheck:36:3:2:?:?:?:
+[macpo-integration-test]:sstore_aligncheck:36:3:2:?:?:?:
 [macpo-integration-test]:overlap_check:25:3:?:?:?:?:?:?:
 [macpo-integration-test]:overlap_check:25:3:?:?:?:?:?:?:
 [macpo-integration-test]:overlap_check:24:3:?:?:?:?:?:?:

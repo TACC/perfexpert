@@ -58,6 +58,11 @@ bool aligncheck_t::instrument_streaming_stores(loop_info_t& loop_info) {
     }
 
     expr_list_t expr_list;
+
+    VariableRenaming::NumNodeRenameTable rename_table =
+        var_renaming->getReachingDefsAtNode(loop_stmt);
+
+    int16_t dep_status = ir_methods::NON_DEPENDENT;
     for (sstore_map_t::iterator it = sstore_map.begin(); it != sstore_map.end();
             it++) {
         const std::string& key = it->first;
@@ -66,8 +71,17 @@ bool aligncheck_t::instrument_streaming_stores(loop_info_t& loop_info) {
         // Replace index variable with init expression.
         for (node_list_t::iterator it = value.begin(); it != value.end();
                 it++) {
-            if (SgExpression* expr = isSgExpression(*it))
+            if (SgExpression* expr = isSgExpression(*it)) {
+                if (SgPntrArrRefExp* pntr = isSgPntrArrRefExp(expr)) {
+                    SgExpression* rhs = pntr->get_rhs_operand();
+                    int16_t _dep = ir_methods::is_input_dep(rhs, rename_table);
+
+                    // Get the minimum level of the two.
+                    dep_status = dep_status < _dep ? dep_status : _dep;
+                }
+
                 expr_list.push_back(expr);
+            }
         }
     }
 
@@ -77,7 +91,7 @@ bool aligncheck_t::instrument_streaming_stores(loop_info_t& loop_info) {
         ir_methods::remove_duplicate_expressions(expr_list);
 
         ir_methods::place_alignment_checks(expr_list, fileInfo, loop_stmt,
-                _stmt_list, "indigo__sstore_aligncheck");
+                _stmt_list, "indigo__sstore_aligncheck", dep_status);
 
         for (statement_list_t::iterator it = _stmt_list.begin();
                 it != _stmt_list.end(); it++) {
@@ -103,17 +117,31 @@ bool aligncheck_t::instrument_alignment_checks(loop_info_t& loop_info) {
     SgBasicBlock* first_bb = getEnclosingNode<SgBasicBlock>(first_statement);
 
     expr_list_t expr_list;
+
+    VariableRenaming::NumNodeRenameTable rename_table =
+        var_renaming->getReachingDefsAtNode(loop_stmt);
+
+    int16_t dep_status = ir_methods::NON_DEPENDENT;
     for (reference_list_t::iterator it = reference_list.begin();
             it != reference_list.end(); it++) {
         reference_info_t& reference_info = *it;
-        if (SgExpression* expr = isSgExpression(reference_info.node))
+        if (SgExpression* expr = isSgExpression(reference_info.node)) {
+            if (SgPntrArrRefExp* pntr = isSgPntrArrRefExp(expr)) {
+                SgExpression* rhs = pntr->get_rhs_operand();
+                int16_t _dep = ir_methods::is_input_dep(rhs, rename_table);
+
+                // Get the minimum level of the two.
+                dep_status = dep_status < _dep ? dep_status : _dep;
+            }
+
             expr_list.push_back(expr);
+        }
     }
 
     statement_list_t _stmt_list;
     ir_methods::remove_duplicate_expressions(expr_list);
     ir_methods::place_alignment_checks(expr_list, fileInfo, loop_stmt,
-        _stmt_list, "indigo__aligncheck");
+        _stmt_list, "indigo__aligncheck", dep_status);
 
     for (statement_list_t::iterator it = _stmt_list.begin();
             it != _stmt_list.end(); it++) {

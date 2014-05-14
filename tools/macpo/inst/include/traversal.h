@@ -52,10 +52,12 @@ class traversal_t {
 
  private:
     name_list_t stream_list;
-    VariableRenaming* var_renaming;
     statement_list_t statement_list;
     loop_traversal_t* loop_traversal;
     analysis_profile_t analysis_profile;
+
+ protected:
+    VariableRenaming* var_renaming;
 };
 
 #endif  // TOOLS_MACPO_INST_INCLUDE_TRAVERSAL_H_

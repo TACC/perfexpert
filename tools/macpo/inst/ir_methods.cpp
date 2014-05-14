@@ -34,6 +34,85 @@ using namespace SageInterface;
 
 std::set<std::string> ir_methods::intrinsic_list;
 
+int16_t ir_methods::is_input_dep(SgNode* node,
+        VariableRenaming::NumNodeRenameTable& rename_table) {
+    if (node == NULL) {
+        return DEP_UNKNOWN;
+    }
+
+    if (isSgValueExp(node)) {
+        return NON_DEPENDENT;
+    }
+
+    if (SgExpression* expr = isSgExpression(node)) {
+        if (isConstType(expr->get_type())) {
+            return NON_DEPENDENT;
+        }
+    }
+
+    if (SgBinaryOp* bin_op = isSgBinaryOp(node)) {
+        int16_t dep_lhs = is_input_dep(bin_op->get_lhs_operand(), rename_table);
+        int16_t dep_rhs = is_input_dep(bin_op->get_rhs_operand(), rename_table);
+
+        if (dep_lhs == DEP_UNKNOWN || dep_rhs == DEP_UNKNOWN) {
+            return DEP_UNKNOWN;
+        }
+
+        if (dep_lhs == DEPENDENT || dep_rhs == DEPENDENT) {
+            return DEPENDENT;
+        }
+
+        return NON_DEPENDENT;
+    }
+
+    def_map_t def_map;
+    // Expand the iterator list into a map for easier lookup.
+    ir_methods::construct_def_map(rename_table, def_map);
+
+    std::string str = node->unparseToString();
+    if (def_map.find(str) == def_map.end()) {
+        return NON_DEPENDENT;
+    }
+
+    VariableRenaming::NumNodeRenameEntry entry_list = def_map[str];
+    entry_iterator entry_first = entry_list.begin();
+    SgNode* def_node = entry_first->second;
+    if (def_node == NULL) {
+        return DEP_UNKNOWN;
+    }
+
+    if (SgVariableDefinition* var_def = isSgVariableDefinition(def_node)) {
+        SgInitializer* init = var_def->get_vardefn()->get_initializer();
+        if (SgAssignInitializer* assign_init = isSgAssignInitializer(init)) {
+            SgExpression* expr = assign_init->get_operand();
+            return is_input_dep(expr, rename_table);
+        }
+
+        return DEP_UNKNOWN;
+    }
+
+    if (SgAssignStatement* assign_stmt = isSgAssignStatement(def_node)) {
+        SgExpression* value = assign_stmt->get_value();
+        return is_input_dep(value, rename_table);
+    }
+
+    if (SgExprStatement* expr_stmt = isSgExprStatement(def_node)) {
+        SgExpression* expr = expr_stmt->get_expression();
+        return is_input_dep(expr, rename_table);
+    }
+
+    if (SgAssignOp* assign_op = isSgAssignOp(def_node)) {
+        SgExpression* expr = assign_op->get_rhs_operand();
+        return is_input_dep(expr, rename_table);
+    }
+
+#if 0
+    std::cout << "action unknown for variant: " <<
+        getVariantName(def_node->variantT()) << "\n";
+#endif
+    return DEP_UNKNOWN;
+}
+
 bool ir_methods::is_intrinsic_function(const std::string& name) {
     // Quick check: "__builtin" prefix.
     std::string prefix("__builtin");
@@ -184,7 +263,8 @@ SgExpression* ir_methods::strip_unary_operators(SgExpression* expr) {
 
 void ir_methods::place_alignment_checks(expr_list_t& expr_list,
         Sg_File_Info* fileInfo, SgScopeStatement* loop_stmt,
-        statement_list_t& statement_list, const std::string& prefix) {
+        statement_list_t& statement_list, const std::string& prefix,
+        int16_t dependence_status) {
     std::vector<SgExpression*> addresses;
     for (expr_list_t::iterator it = expr_list.begin();
             it != expr_list.end(); it++) {
@@ -222,6 +302,10 @@ void ir_methods::place_alignment_checks(expr_list_t& expr_list,
         SgIntVal* val_address_count = new SgIntVal(fileInfo, address_count);
         val_address_count->set_endOfConstruct(fileInfo);
         params.push_back(val_address_count);
+
+        SgIntVal* val_dep_status = new SgIntVal(fileInfo, dependence_status);
+        val_dep_status->set_endOfConstruct(fileInfo);
+        params.push_back(val_dep_status);
 
         // Now push all of the addresses.
         params.insert(params.end(), addresses.begin(), addresses.end());

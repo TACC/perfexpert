@@ -819,7 +819,8 @@ void indigo__vector_stride_c(int loop_line_number, int var_idx, void* addr,
     Checks for alignment to cache line boundary and updates histogram.
     Returns common alignment, if any. Otherwise, returns -1.
 */
-int indigo__aligncheck_c(int line_number, int stream_count, ...) {
+int indigo__aligncheck_c(int line_number, int stream_count, int16_t dep_status,
+        ...) {
     va_list args;
     int i, j;
 
@@ -861,7 +862,8 @@ int indigo__aligncheck_c(int line_number, int stream_count, ...) {
     Returns common alignment, if any. Otherwise, returns -1.
 */
 
-int indigo__sstore_aligncheck_c(int line_number, int stream_count, ...) {
+int indigo__sstore_aligncheck_c(int line_number, int stream_count,
+        int16_t dep_status, ...) {
     va_list args;
     int i, j;
 
@@ -869,7 +871,7 @@ int indigo__sstore_aligncheck_c(int line_number, int stream_count, ...) {
         return -1;
     }
 
-    va_start(args, stream_count);
+    va_start(args, dep_status);
 
     int64_t remainder = -1;
     for (i = 0; i < stream_count; i++) {

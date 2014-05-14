@@ -55,7 +55,8 @@ void indigo__vector_stride_c(int loop_line_number, int var_idx, void* addr,
 #if defined(__cplusplus)
 extern "C" {
 #endif
-int indigo__aligncheck_c(int line_number, int stream_count, ...);
+int indigo__aligncheck_c(int line_number, int stream_count, int dep_status,
+    ...);
 #if defined (__cplusplus)
 }
 #endif
@@ -63,7 +64,8 @@ int indigo__aligncheck_c(int line_number, int stream_count, ...);
 #if defined(__cplusplus)
 extern "C" {
 #endif
-int indigo__sstore_aligncheck_c(int line_number, int stream_count, ...);
+int indigo__sstore_aligncheck_c(int line_number, int stream_count,
+    int dep_status, ...);
 #if defined (__cplusplus)
 }
 #endif

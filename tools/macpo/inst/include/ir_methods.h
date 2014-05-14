@@ -53,9 +53,16 @@ class ir_methods {
     static const int OP_MUL     = 1 << 3;
     static const int OP_DIV     = 1 << 4;
 
+    // XXX: Don't change the order of the elements of this enum!
+    // XXX: The order is important for subsequent arithmetic comparisons.
+    enum { DEPENDENT = 0, DEP_UNKNOWN, NON_DEPENDENT };
+
     typedef VariableRenaming::NumNodeRenameEntry::iterator entry_iterator;
     typedef std::map<std::string, VariableRenaming::NumNodeRenameEntry>
         def_map_t;
+
+    static int16_t is_input_dep(SgNode* node,
+        VariableRenaming::NumNodeRenameTable& rename_table);
 
     static void match_end_of_constructs(SgNode* ref_node, SgNode* stmt);
 
@@ -71,8 +78,8 @@ class ir_methods {
 
     static void place_alignment_checks(expr_list_t& expr_list,
             Sg_File_Info* fileInfo, SgScopeStatement* loop_stmt,
-            statement_list_t& statement_list,
-            const std::string& prefix);
+            statement_list_t& statement_list, const std::string& prefix,
+            int16_t dependence_status);
 
     static void remove_duplicate_expressions(expr_list_t& expr_list);
 

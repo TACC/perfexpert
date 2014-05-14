@@ -41,12 +41,13 @@ void indigo__vector_stride_c(int loop_line_number, int var_idx, void* addr,
         var_idx << ":" << addr << ":" << type_size << ":" << std::endl;
 }
 
-int indigo__aligncheck_c(int line_number, int stream_count, ...) {
+int indigo__aligncheck_c(int line_number, int stream_count, int dep_status,
+        ...) {
     std::cerr << test_prefix << "aligncheck:" << line_number << ":" <<
-        stream_count << ":";
+        stream_count << ":" << dep_status << ":";
 
     va_list args;
-    va_start(args, stream_count);
+    va_start(args, dep_status);
 
     for (int i = 0; i < stream_count; i++) {
         void* address = va_arg(args, void*);
@@ -58,12 +59,13 @@ int indigo__aligncheck_c(int line_number, int stream_count, ...) {
     return 0;
 }
 
-int indigo__sstore_aligncheck_c(int line_number, int stream_count, ...) {
+int indigo__sstore_aligncheck_c(int line_number, int stream_count,
+        int dep_status, ...) {
     std::cerr << test_prefix << "sstore_aligncheck:" << line_number << ":" <<
-        stream_count << ":";
+        stream_count << ":" << dep_status << ":";
 
     va_list args;
-    va_start(args, stream_count);
+    va_start(args, dep_status);
 
     for (int i = 0; i < stream_count; i++) {
         void* address = va_arg(args, void*);

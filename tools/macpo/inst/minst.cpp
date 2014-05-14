@@ -87,6 +87,7 @@ bool midend(SgProject* project, options_t& options) {
 MINST::MINST(const options_t& _options, SgProject* project)
     : options(_options) {
     var_renaming = new VariableRenaming(project);
+    var_renaming->run();
 }
 
 void MINST::insert_map_prototype(SgNode* node) {
