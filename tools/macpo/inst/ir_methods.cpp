@@ -563,6 +563,11 @@ int ir_methods::get_loop_header_components(VariableRenaming*& var_renaming,
         SgExpression*& incr_expr, int& incr_op) {
     int return_value = 0;
 
+    SgLocatedNode* located_node = isSgLocatedNode(scope_stmt);
+    if (located_node == NULL) {
+        return return_value;
+    }
+
     // Initialization
     idxv_expr = NULL;
     init_expr = NULL;
@@ -579,9 +584,13 @@ int ir_methods::get_loop_header_components(VariableRenaming*& var_renaming,
     SgStatement* stmt = first_stmt;
     while (stmt) {
         if (!vectorizable(stmt)) {
-            std::cerr << mprefix << "This loop cannot be vectorized because of "
-                << "the following statement: " << stmt->unparseToString() <<
-                "\n";
+            Sg_File_Info* file_info = located_node->get_file_info();
+            std::string filename = file_info->get_filename();
+            int line_number = file_info->get_line();
+
+            std::cerr << mprefix << "Loop at " << filename << ":" << line_number
+                << " cannot be vectorized because of the following statement: "
+                << stmt->unparseToString() << std::endl;
             return INVALID_FLOW;
         }
 
