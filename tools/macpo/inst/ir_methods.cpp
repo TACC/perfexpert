@@ -34,6 +34,27 @@ using namespace SageInterface;
 
 std::set<std::string> ir_methods::intrinsic_list;
 
+SgCastExp* ir_methods::get_function_address(SgScopeStatement* loop_stmt) {
+    SgFunctionDefinition* func_def = NULL;
+    func_def = getEnclosingNode<SgFunctionDefinition>(loop_stmt);
+    ROSE_ASSERT(func_def);
+
+    SgFunctionDeclaration* func_decl = func_def->get_declaration();
+    ROSE_ASSERT(func_decl);
+
+    Sg_File_Info* file_info = loop_stmt->get_file_info();
+    SgFunctionType* func_type = func_decl->get_type();
+    SgFunctionSymbol* func_symbol = new SgFunctionSymbol(func_decl);
+    SgFunctionRefExp* ref_exp = new SgFunctionRefExp(file_info, func_symbol,
+            func_type);
+    ref_exp->set_endOfConstruct(file_info);
+
+    SgAddressOfOp* address_op = buildAddressOfOp(ref_exp);
+    SgType* void_pointer_type = buildPointerType(buildVoidType());
+
+    return buildCastExp(address_op, void_pointer_type);
+}
+
 int16_t ir_methods::is_input_dep(SgNode* node,
         VariableRenaming::NumNodeRenameTable& rename_table) {
     if (node == NULL) {
@@ -293,10 +314,13 @@ void ir_methods::place_alignment_checks(expr_list_t& expr_list,
     if (addresses.size() > 0) {
         std::vector<SgExpression*> params;
 
-        int line_number = loop_stmt->get_file_info()->get_raw_line();
+        int line_number = fileInfo->get_raw_line();
         SgIntVal* val_line_number = new SgIntVal(fileInfo, line_number);
         val_line_number->set_endOfConstruct(fileInfo);
         params.push_back(val_line_number);
+
+        SgCastExp* param_fn_addr = ir_methods::get_function_address(loop_stmt);
+        params.push_back(param_fn_addr);
 
         int address_count = addresses.size();
         SgIntVal* val_address_count = new SgIntVal(fileInfo, address_count);

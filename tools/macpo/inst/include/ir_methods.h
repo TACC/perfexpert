@@ -61,6 +61,8 @@ class ir_methods {
     typedef std::map<std::string, VariableRenaming::NumNodeRenameEntry>
         def_map_t;
 
+    static SgCastExp* get_function_address(SgScopeStatement* loop_stmt);
+
     static int16_t is_input_dep(SgNode* node,
         VariableRenaming::NumNodeRenameTable& rename_table);
 

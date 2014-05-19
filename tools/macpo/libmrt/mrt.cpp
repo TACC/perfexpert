@@ -37,6 +37,7 @@
 #include <utility>
 
 #include "avl_tree.h"
+#include "elf.h"
 #include "generic_defs.h"
 #include "histogram.h"
 #include "mrt.h"
@@ -46,12 +47,9 @@ typedef std::pair<int64_t, int16_t> val_idx_pair;
 typedef std::pair<int, int16_t> line_threadid_pair;
 typedef histogram_t<int64_t, int64_t> rdhist;
 
-typedef int16_t thread_id;
-typedef int line_number;
-
-typedef std::map<thread_id, bool> bool_map;
-typedef std::map<thread_id, int16_t> short_map;
-typedef std::map<thread_id, int64_t*> long_histogram;
+typedef std::map<int16_t, bool> bool_map;
+typedef std::map<int16_t, int16_t> short_map;
+typedef std::map<int16_t, int64_t*> long_histogram;
 
 typedef std::map<int64_t, bool_map> bool_map_coll;
 typedef std::map<int64_t, short_map> short_map_coll;
@@ -59,16 +57,39 @@ typedef std::map<int64_t, long_histogram> long_histogram_coll;
 
 static const int DIST_INFINITY = 40 * 1024 * 1024 / 64;
 
-static std::set<int> analyzed_loops;
+typedef struct _tag_source_location {
+    int64_t line_number;
+    void* function_address;
+
+    _tag_source_location(void* _function_address, int64_t _line_number) {
+        line_number = _line_number;
+        function_address = _function_address;
+    }
+} src_location_t;
+
+bool operator<(const src_location_t& left, const src_location_t& right) {
+    return left.function_address < right.function_address ||
+        (left.function_address == right.function_address &&
+        left.line_number < right.line_number);
+}
+
+typedef std::set<src_location_t> src_location_list_t;
+static src_location_list_t analyzed_loops;
+
+static multigram_t<int16_t, bool> overlap_hist;
+static multigram_t<int16_t, int16_t> branch_hist;
+static multigram_t<int16_t, int16_t> align_hist;
+static multigram_t<int16_t, int16_t> sstore_align_hist;
+static multigram_t<int16_t, int16_t> stride_hist;
+static multigram_t<int64_t, int64_t> tripcount_hist;
 
 static bool_map_coll overlap_bin;
 static short_map_coll branch_bin, align_bin, sstore_align_bin, stride_bin;
 static long_histogram_coll tripcount_map;
 
-static std::map<int, int> branch_loop_line_pair;
-static std::map<int, std::set<int> > loop_branch_line_pair;
+static std::map<src_location_t, src_location_t> branch_loop_line_pair;
+static std::map<src_location_t, src_location_list_t> loop_branch_line_pair;
 
-static volatile int16_t lock_var;
 static volatile sig_atomic_t sleeping = 0;
 static volatile sig_atomic_t access_count = 0;
 
@@ -84,18 +105,6 @@ static std::vector<std::string> stream_list;
 static __thread int coreID = -1;
 static __thread avl_tree* tree = NULL;
 static __thread rdhist* histogram_list[MAX_VARIABLES];
-
-static inline void lock() {
-    while (__sync_bool_compare_and_swap(&lock_var, 0, 1) == false) {
-    }
-
-    asm volatile("lfence" ::: "memory");
-}
-
-static inline void unlock() {
-    lock_var = 0;
-    asm volatile("sfence" ::: "memory");
-}
 
 static bool index_comparator(const val_idx_pair& v1, const val_idx_pair& v2) {
     return v1.first < v2.first;
@@ -257,197 +266,308 @@ static void print_alignment_histogram(int line_number, int64_t* histogram) {
     }
 }
 
-void indigo__exit() {
+void print_sstore_align_check_results(const src_location_t& location) {
     int core_id = getCoreID();
+    multigram_t<int16_t, int16_t>::pair_list_t sstore_list =
+        sstore_align_hist.get_all_histograms();
 
-    if (fd >= 0)
+    int16_t align_status = ALIGN_NOINIT;
+    for (multigram_t<int16_t, int16_t>::pair_list_t::iterator it =
+            sstore_list.begin(); it != sstore_list.end(); it++) {
+        multigram_t<int16_t, int16_t>::pair_t pair = *it;
+        multigram_t<int16_t, int16_t>::hist_id_t hist_id = pair.first;
+        histogram_t<int16_t, int16_t>* hist = pair.second;
+        assert(hist);
+
+        if (hist_id.line_number != location.line_number) {
+            continue;
+        }
+
+        int16_t _align_status = hist->get(0);
+        if (_align_status < align_status) {
+            align_status = _align_status;
+        }
+    }
+
+    // If there are no histogram entries corresponding to this line number,
+    // then the switch case statement will not print any output.
+    // Hence we do not need a separate guard condition.
+
+    switch (align_status) {
+        case FULL_ALIGNED:
+            fprintf(stderr, "all non-temporal arrays align, use "
+                    "__assume_aligned() or #pragma vector aligned to "
+                    "tell compiler about alignment.\n");
+            break;
+
+        case MUTUAL_ALIGNED:
+            fprintf(stderr, "all non-temporal arrays are mutually "
+                    "aligned but not aligned to cache-line boundary, "
+                    "use _mm_malloc/_mm_free to allocate/free aligned "
+                    "storage.\n");
+            break;
+
+        case NOT_ALIGNED:
+            fprintf(stderr, "non-temporal arrays are not aligned, "
+                    "try using _mm_malloc/_mm_free to allocate/free "
+                    "arrays that are aligned with cache-line "
+                    "bounary.\n");
+            break;
+    }
+}
+
+void print_align_check_results(const src_location_t& location) {
+    int core_id = getCoreID();
+    multigram_t<int16_t, int16_t>::pair_list_t list =
+        align_hist.get_all_histograms();
+
+    int16_t align_status = ALIGN_NOINIT;
+    for (multigram_t<int16_t, int16_t>::pair_list_t::iterator it = list.begin();
+            it != list.end(); it++) {
+        multigram_t<int16_t, int16_t>::pair_t pair = *it;
+        multigram_t<int16_t, int16_t>::hist_id_t hist_id = pair.first;
+        histogram_t<int16_t, int16_t>* hist = pair.second;
+        assert(hist);
+
+        if (hist_id.line_number != location.line_number) {
+            continue;
+        }
+
+        int16_t _align_status = hist->get(0);
+        if (_align_status < align_status) {
+            align_status = _align_status;
+        }
+    }
+
+    // If there are no histogram entries corresponding to this line number,
+    // then the switch case statement will not print any output.
+    // Hence we do not need a separate guard condition.
+
+    switch (align_status) {
+        case FULL_ALIGNED:
+            fprintf(stderr, "all arrays align, use "
+                    "__assume_aligned() or #pragma vector aligned to "
+                    "tell compiler about alignment.\n");
+            break;
+
+        case MUTUAL_ALIGNED:
+            fprintf(stderr, "all arrays are mutually aligned but "
+                    "not aligned to cache-line boundary, use "
+                    "_mm_malloc/_mm_free to allocate/free aligned "
+                    "storage.\n");
+            break;
+
+        case NOT_ALIGNED:
+            fprintf(stderr, "arrays are not aligned, try using "
+                    "_mm_malloc/_mm_free to allocate/free arrays that "
+                    "are aligned with cache-line bounary.\n");
+            break;
+    }
+}
+
+void print_overlap_check_results(const src_location_t& location) {
+    int core_id = getCoreID();
+    multigram_t<int16_t, bool>::pair_list_t list =
+        overlap_hist.get_all_histograms();
+
+    bool init = false;
+    bool overlap = false;
+    for (multigram_t<int16_t, bool>::pair_list_t::iterator it = list.begin();
+            it != list.end(); it++) {
+        multigram_t<int16_t, bool>::pair_t pair = *it;
+        multigram_t<int16_t, bool>::hist_id_t hist_id = pair.first;
+        histogram_t<int16_t, bool>* hist = pair.second;
+        assert(hist);
+
+        if (hist_id.line_number != location.line_number) {
+            continue;
+        }
+
+        init = true;
+        if (hist->get(0) == false) {
+            overlap = false;
+        }
+    }
+
+    if (init && overlap == false) {
+        fprintf(stderr, "Use `restrict' keyword to inform compiler that arrays "
+                " do not overlap.\n");
+    }
+}
+
+void print_trip_count_results(const src_location_t& location) {
+    int core_id = getCoreID();
+    multigram_t<int64_t, int64_t>::pair_list_t list =
+        tripcount_hist.get_all_histograms();
+
+    for (multigram_t<int64_t, int64_t>::pair_list_t::iterator it = list.begin();
+            it != list.end(); it++) {
+        multigram_t<int64_t, int64_t>::pair_t pair = *it;
+        multigram_t<int64_t, int64_t>::hist_id_t hist_id = pair.first;
+        histogram_t<int64_t, int64_t>* hist = pair.second;
+        assert(hist);
+
+        if (hist_id.line_number != location.line_number) {
+            continue;
+        }
+
+        const int VALUE_THRESHOLD = 16;
+        const int COUNT_THRESHOLD = 16;
+
+        const int k = 3;
+        int32_t low_tripcount = 0;
+        int32_t total_loopcount = 0;
+        histogram_t<int64_t, int64_t>::pair_list_t pair_list = hist->sort(k);
+        for (histogram_t<int64_t, int64_t>::pair_list_t::iterator it =
+                pair_list.begin(); it != pair_list.end(); it++) {
+            histogram_t<int64_t, int64_t>::pair_t hist_pair = *it;
+            int64_t bin = hist_pair.first;
+            int64_t val = hist_pair.second;
+            if (bin < VALUE_THRESHOLD && val > COUNT_THRESHOLD) {
+                low_tripcount += 1;
+            }
+
+            total_loopcount += 1;
+        }
+
+        if (total_loopcount > 0) {
+            float fl_tripcount = static_cast<float>(low_tripcount);
+            float fl_loopcount = static_cast<float>(total_loopcount);
+            float percentage = fl_tripcount / fl_loopcount;
+
+            fprintf(stderr, "%%%.2f of the loop instances were found to have "
+                    "low trip counts. insert the following pragma just before "
+                    "the loop body: #pragma loop_count(16)\n",
+                    100.0f * percentage);
+        }
+    }
+}
+
+void print_branch_divergence_results(const src_location_t& location) {
+    int core_id = getCoreID();
+    multigram_t<int16_t, int16_t>::pair_list_t list =
+        branch_hist.get_all_histograms();
+
+    // First get all branch locations within this loop.
+    src_location_list_t& branch_locs = loop_branch_line_pair[location];
+    for (src_location_list_t::iterator it = branch_locs.begin();
+            it != branch_locs.end(); it++) {
+        int16_t branch_status = BRANCH_NOINIT;
+        const src_location_t& branch_loc = *it;
+
+        // Then for each such branch, aggregate metrics across threads.
+        for (multigram_t<int16_t, int16_t>::pair_list_t::iterator it =
+                list.begin(); it != list.end(); it++) {
+            multigram_t<int16_t, int16_t>::pair_t pair = *it;
+            multigram_t<int16_t, int16_t>::hist_id_t hist_id = pair.first;
+            histogram_t<int16_t, int16_t>* hist = pair.second;
+            assert(hist);
+
+            if (hist_id.line_number != branch_loc.line_number) {
+                continue;
+            }
+
+            int16_t _branch_status = hist->get(0);
+                if (_branch_status < branch_status)
+                    branch_status = _branch_status;
+        }
+
+        switch (branch_status) {
+            case BRANCH_UNKNOWN:
+                fprintf(stderr, "branch at line %d is unpredictable.\n",
+                        branch_loc.line_number);
+                break;
+
+            case BRANCH_MOSTLY_FALSE:
+                fprintf(stderr, "branch at line %d mostly evaluates to "
+                        "false.\n", branch_loc.line_number);
+                break;
+
+            case BRANCH_MOSTLY_TRUE:
+                fprintf(stderr, "branch at line %d mostly evaluates to true.\n",
+                        branch_loc.line_number);
+                break;
+
+            case BRANCH_FALSE:
+                fprintf(stderr, "branch at line %d always evaluates to false, "
+                        "use __builtin_expect() to inform compiler about "
+                        "expected branch outcome.\n", branch_loc.line_number);
+                break;
+
+            case BRANCH_TRUE:
+                fprintf(stderr, "branch at line %d always evaluates to true, "
+                        "use __builtin_expect() to inform compiler about "
+                        "expected branch outcome.\n", branch_loc.line_number);
+                break;
+        }
+    }
+}
+
+void print_stride_check_results(const src_location_t& location) {
+    int core_id = getCoreID();
+    multigram_t<int16_t, int16_t>::pair_list_t list =
+        stride_hist.get_all_histograms();
+
+    int16_t stride_status = STRIDE_NOINIT;
+    for (multigram_t<int16_t, int16_t>::pair_list_t::iterator it = list.begin();
+            it != list.end(); it++) {
+        multigram_t<int16_t, int16_t>::pair_t pair = *it;
+        multigram_t<int16_t, int16_t>::hist_id_t hist_id = pair.first;
+        histogram_t<int16_t, int16_t>* hist = pair.second;
+        assert(hist);
+
+        if (hist_id.line_number != location.line_number) {
+            continue;
+        }
+
+        int16_t _stride_status = hist->get(0);
+        if (_stride_status < stride_status) {
+            stride_status = _stride_status;
+        }
+    }
+
+    // If there are no histogram entries corresponding to this line number,
+    // then the switch case statement will not print any output.
+    // Hence we do not need a separate guard condition.
+
+    switch (stride_status) {
+        case STRIDE_UNKNOWN:
+            fprintf(stderr, "Could not determine stride value.\n");
+            break;
+
+        case STRIDE_FIXED:
+            fprintf(stderr, "Each array reference has a fixed (but non-unit) "
+                    "stride.\n");
+            break;
+
+        case STRIDE_UNIT:
+            fprintf(stderr, "Each array reference has a unit stride.\n");
+            break;
+    }
+}
+
+void indigo__exit() {
+    if (fd >= 0) {
         close(fd);
+    }
 
-    if (intel_apic_mapping)
+    if (intel_apic_mapping) {
         free(intel_apic_mapping);
+    }
 
-    for (std::set<int>::iterator it = analyzed_loops.begin();
+    for (std::set<src_location_t>::iterator it = analyzed_loops.begin();
             it != analyzed_loops.end(); it++) {
-        const int& line_number = *it;
+        const src_location_t& loc = *it;
+        const std::string func_name = get_function_name(loc.function_address);
+        fprintf(stderr, "\n==== Loop at %s:%d ====\n", func_name.c_str(),
+                loc.line_number);
 
-        fprintf(stderr, "\n==== Loop at line %d ====\n", line_number);
-
-        if (sstore_align_bin.find(line_number) != sstore_align_bin.end()) {
-            short_map& map = sstore_align_bin[line_number];
-            int16_t align_status = ALIGN_NOINIT;
-            for (short_map::iterator it = map.begin(); it != map.end();
-                    it++) {
-                int16_t _align_status = it->second;
-                if (_align_status < align_status)
-                    align_status = _align_status;
-            }
-
-            switch (align_status) {
-                case FULL_ALIGNED:
-                    fprintf(stderr, "all non-temporal arrays align, use "
-                            "__assume_aligned() or #pragma vector aligned to "
-                            "tell compiler about alignment.\n");
-                    break;
-
-                case MUTUAL_ALIGNED:
-                    fprintf(stderr, "all non-temporal arrays are mutually "
-                            "aligned but not aligned to cache-line boundary, "
-                            "use _mm_malloc/_mm_free to allocate/free aligned "
-                            "storage.\n");
-                    break;
-
-                case NOT_ALIGNED:
-                    fprintf(stderr, "non-temporal arrays are not aligned, "
-                            "try using _mm_malloc/_mm_free to allocate/free "
-                            "arrays that are aligned with cache-line "
-                            "bounary.\n");
-                    break;
-            }
-        }
-
-        if (align_bin.find(line_number) != align_bin.end()) {
-            short_map& map = align_bin[line_number];
-            int16_t align_status = ALIGN_NOINIT;
-            for (short_map::iterator it = map.begin(); it != map.end();
-                    it++) {
-                int16_t _align_status = it->second;
-                if (_align_status < align_status)
-                    align_status = _align_status;
-            }
-
-            switch (align_status) {
-                case FULL_ALIGNED:
-                    fprintf(stderr, "all arrays align, use "
-                            "__assume_aligned() or #pragma vector aligned to "
-                            "tell compiler about alignment.\n");
-                    break;
-
-                case MUTUAL_ALIGNED:
-                    fprintf(stderr, "all arrays are mutually aligned but "
-                            "not aligned to cache-line boundary, use "
-                            "_mm_malloc/_mm_free to allocate/free aligned "
-                            "storage.\n");
-                    break;
-
-                case NOT_ALIGNED:
-                    fprintf(stderr, "arrays are not aligned, try using "
-                            "_mm_malloc/_mm_free to allocate/free arrays that "
-                            "are aligned with cache-line bounary.\n");
-                    break;
-            }
-        }
-
-        if (overlap_bin.find(line_number) != overlap_bin.end()) {
-            bool_map& map = overlap_bin[line_number];
-            bool overlap = false;
-            for (bool_map::iterator it = map.begin(); it != map.end(); it++) {
-                bool _overlap = it->second;
-                if (_overlap == true) {
-                    overlap = true;
-                    break;
-                }
-            }
-
-            if (overlap == false) {
-                fprintf(stderr, "Use `restrict' keyword to inform "
-                        "compiler that arrays do not overlap.\n");
-            }
-        }
-
-        if (tripcount_map.find(line_number) != tripcount_map.end()) {
-            long_histogram& histogram = tripcount_map[line_number];
-            for (long_histogram::iterator it = histogram.begin();
-                    it != histogram.end(); it++) {
-                int64_t* histogram = it->second;
-
-                if (histogram) {
-                    print_tripcount_histogram(line_number, histogram);
-                    free(histogram);
-                }
-            }
-        }
-
-        if (loop_branch_line_pair.find(line_number) !=
-                loop_branch_line_pair.end()) {
-            std::set<int>& branch_lines = loop_branch_line_pair[line_number];
-            for (std::set<int>::iterator it = branch_lines.begin();
-                    it != branch_lines.end(); it++) {
-                const int& branch_line_number = *it;
-
-                if (branch_bin.find(branch_line_number) != branch_bin.end()) {
-                    short_map& map = branch_bin[branch_line_number];
-                    int16_t branch_status = BRANCH_NOINIT;
-                    for (short_map::iterator it = map.begin(); it != map.end();
-                            it++) {
-                        int16_t _branch_status = it->second;
-                        if (_branch_status < branch_status)
-                            branch_status = _branch_status;
-                    }
-
-                    switch (branch_status) {
-                        case BRANCH_UNKNOWN:
-                            fprintf(stderr, "branch at line %d is "
-                                    "unpredictable.\n", branch_line_number);
-                            break;
-
-                        case BRANCH_MOSTLY_FALSE:
-                            fprintf(stderr, "branch at line %d mostly "
-                                    "evaluates to false.\n",
-                                    branch_line_number);
-                            break;
-
-                        case BRANCH_MOSTLY_TRUE:
-                            fprintf(stderr, "branch at line %d mostly "
-                                    "evaluates to true.\n",
-                                    branch_line_number);
-                            break;
-
-                        case BRANCH_FALSE:
-                            fprintf(stderr, "branch at line %d always "
-                                    "evaluates to false, use "
-                                    "__builtin_expect() to inform compiler "
-                                    "about expected branch outcome.\n",
-                                    branch_line_number);
-                            break;
-
-                        case BRANCH_TRUE:
-                            fprintf(stderr, "branch at line %d always "
-                                    "evaluates to true, use "
-                                    "__builtin_expect() to inform compiler "
-                                    "about expected branch outcome.\n",
-                                    branch_line_number);
-                            break;
-                    }
-                }
-            }
-        }
-
-        if (stride_bin.find(line_number) != stride_bin.end()) {
-            short_map& map = stride_bin[line_number];
-            int16_t stride_status = STRIDE_NOINIT;
-            for (short_map::iterator it = map.begin(); it != map.end();
-                    it++) {
-                int16_t _stride_status = it->second;
-                if (_stride_status < stride_status)
-                    stride_status = _stride_status;
-            }
-
-            switch (stride_status) {
-                case STRIDE_UNKNOWN:
-                    fprintf(stderr, "Could not determine stride value.\n");
-                    break;
-
-                case STRIDE_FIXED:
-                    fprintf(stderr, "Each array reference has a fixed "
-                            "(but non-unit) stride.\n");
-                    break;
-
-                case STRIDE_UNIT:
-                    fprintf(stderr, "Each array reference has a unit "
-                            "stride.\n ");
-                    break;
-            }
-        }
+        print_sstore_align_check_results(loc);
+        print_align_check_results(loc);
+        print_overlap_check_results(loc);
+        print_trip_count_results(loc);
+        print_branch_divergence_results(loc);
+        print_stride_check_results(loc);
     }
 
     fprintf(stderr, "\n==== Reuse distance metrics ====");
@@ -502,45 +622,6 @@ void indigo__exit() {
     fprintf(stderr, "\n");
 }
 
-int16_t& get_branch_bin(int line_number, int loop_line_number) {
-    int16_t core_id = getCoreID();
-    short_map_coll::iterator it = branch_bin.find(line_number);
-    if (it != branch_bin.end()) {
-        short_map& map = it->second;
-        short_map::iterator it = map.find(core_id);
-        if (it != map.end()) {
-            // It's a hit!
-            analyzed_loops.insert(line_number);
-            return map[core_id];
-        }
-    }
-
-    // We couldn't locate the histogram value, go down the slow path.
-    // Obtain lock.
-    lock();
-
-    // Check if we need to allocate a new histogram.
-    it = branch_bin.find(line_number);
-    if (it == branch_bin.end()) {
-        short_map& map = branch_bin[line_number];
-        short_map::iterator it = map.find(core_id);
-        if (it == map.end()) {
-            map[core_id] = BRANCH_NOINIT;
-        }
-    } else {
-        short_map& map = it->second;
-        short_map::iterator it = map.find(core_id);
-        if (it == map.end()) {
-            map[core_id] = BRANCH_NOINIT;
-        }
-    }
-
-    // Release lock.
-    unlock();
-
-    return branch_bin[line_number][core_id];
-}
-
 int64_t* new_histogram(size_t histogram_entries) {
     int64_t* histogram = reinterpret_cast<int64_t*>(malloc(sizeof(int64_t)
                 * histogram_entries));
@@ -551,223 +632,26 @@ int64_t* new_histogram(size_t histogram_entries) {
     return histogram;
 }
 
-bool& get_overlap_bin(int line_number) {
-    int16_t core_id = getCoreID();
-    bool_map_coll::iterator it = overlap_bin.find(line_number);
-    if (it != overlap_bin.end()) {
-        bool_map& map = it->second;
-        bool_map::iterator it = map.find(core_id);
-        if (it != map.end()) {
-            // It's a hit!
-            analyzed_loops.insert(line_number);
-            return map[core_id];
-        }
-    }
-
-    // We couldn't locate the histogram value, go down the slow path.
-    // Obtain lock.
-    lock();
-
-    // Check if we need to allocate a new histogram.
-    it = overlap_bin.find(line_number);
-    if (it == overlap_bin.end()) {
-        bool_map& map = overlap_bin[line_number];
-        bool_map::iterator it = map.find(core_id);
-        if (it == map.end()) {
-            map[core_id] = 0;
-        }
-    } else {
-        bool_map& map = it->second;
-        bool_map::iterator it = map.find(core_id);
-        if (it == map.end()) {
-            map[core_id] = 0;
-        }
-    }
-
-    // Release lock.
-    unlock();
-
-    return overlap_bin[line_number][core_id];
-}
-
-#define MAX_ADDR    128
-
 /**
     Helper function to allocate / get histogramss for alignment checking.
 */
 
-int64_t* get_tripcount_histogram(int line_number) {
-    int16_t core_id = getCoreID();
-    long_histogram_coll::iterator it = tripcount_map.find(line_number);
-    if (it != tripcount_map.end()) {
-        long_histogram& histogram = it->second;
-        long_histogram::iterator it = histogram.find(core_id);
-        if (it != histogram.end()) {
-            // It's a hit!
-            analyzed_loops.insert(line_number);
-            return histogram[core_id];
-        }
-    }
+void indigo__record_branch_c(int line_number, void* func_addr,
+        int loop_line_number, int true_branch_count, int false_branch_count) {
+    src_location_t loop_location(func_addr, loop_line_number);
+    analyzed_loops.insert(loop_location);
 
-    // We couldn't locate the histogram value, go down the slow path.
-    int64_t* return_value = NULL;
-
-    // Obtain lock.
-    lock();
-
-    // Check if we need to allocate a new histogram.
-    it = tripcount_map.find(line_number);
-    if (it == tripcount_map.end()) {
-        long_histogram& histogram = tripcount_map[line_number];
-        long_histogram::iterator it = histogram.find(core_id);
-        if (it == histogram.end()) {
-            histogram[core_id] = new_histogram(MAX_HISTOGRAM_ENTRIES);
-            return_value = histogram[core_id];
-        } else {
-            return_value = it->second;
-        }
-    } else {
-        long_histogram& histogram = it->second;
-        long_histogram::iterator it = histogram.find(core_id);
-        if (it == histogram.end()) {
-            histogram[core_id] = new_histogram(MAX_HISTOGRAM_ENTRIES);
-            return_value = histogram[core_id];
-        } else {
-            return_value = it->second;
-        }
-    }
-
-    // Release lock.
-    unlock();
-
-    return return_value;
-}
-
-int16_t& get_sstore_alignment_bin(int line_number) {
-    int16_t core_id = getCoreID();
-    short_map_coll::iterator it = sstore_align_bin.find(line_number);
-    if (it != sstore_align_bin.end()) {
-        short_map& map = it->second;
-        short_map::iterator it = map.find(core_id);
-        if (it != map.end()) {
-            // It's a hit!
-            analyzed_loops.insert(line_number);
-            return map[core_id];
-        }
-    }
-
-    // We couldn't locate the histogram value, go down the slow path.
-    // Obtain lock.
-    lock();
-
-    // Check if we need to allocate a new histogram.
-    it = sstore_align_bin.find(line_number);
-    if (it == sstore_align_bin.end()) {
-        short_map& map = sstore_align_bin[line_number];
-        short_map::iterator it = map.find(core_id);
-        if (it == map.end()) {
-            map[core_id] = ALIGN_NOINIT;
-        }
-    } else {
-        short_map& map = it->second;
-        short_map::iterator it = map.find(core_id);
-        if (it == map.end()) {
-            map[core_id] = ALIGN_NOINIT;
-        }
-    }
-
-    // Release lock.
-    unlock();
-
-    return sstore_align_bin[line_number][core_id];
-}
-
-int16_t& get_alignment_bin(int line_number) {
-    int16_t core_id = getCoreID();
-    short_map_coll::iterator it = align_bin.find(line_number);
-    if (it != align_bin.end()) {
-        short_map& map = it->second;
-        short_map::iterator it = map.find(core_id);
-        if (it != map.end()) {
-            // It's a hit!
-            analyzed_loops.insert(line_number);
-            return map[core_id];
-        }
-    }
-
-    // We couldn't locate the histogram value, go down the slow path.
-    // Obtain lock.
-    lock();
-
-    // Check if we need to allocate a new histogram.
-    it = align_bin.find(line_number);
-    if (it == align_bin.end()) {
-        short_map& map = align_bin[line_number];
-        short_map::iterator it = map.find(core_id);
-        if (it == map.end()) {
-            map[core_id] = ALIGN_NOINIT;
-        }
-    } else {
-        short_map& map = it->second;
-        short_map::iterator it = map.find(core_id);
-        if (it == map.end()) {
-            map[core_id] = ALIGN_NOINIT;
-        }
-    }
-
-    // Release lock.
-    unlock();
-
-    return align_bin[line_number][core_id];
-}
-
-int16_t& get_stride_bin(int line_number) {
-    int16_t core_id = getCoreID();
-    short_map_coll::iterator it = stride_bin.find(line_number);
-    if (it != stride_bin.end()) {
-        short_map& map = it->second;
-        short_map::iterator it = map.find(core_id);
-        if (it != map.end()) {
-            // It's a hit!
-            analyzed_loops.insert(line_number);
-            return map[core_id];
-        }
-    }
-
-    // We couldn't locate the histogram value, go down the slow path.
-    // Obtain lock.
-    lock();
-
-    // Check if we need to allocate a new histogram.
-    it = stride_bin.find(line_number);
-    if (it == stride_bin.end()) {
-        short_map& map = stride_bin[line_number];
-        short_map::iterator it = map.find(core_id);
-        if (it == map.end()) {
-            map[core_id] = STRIDE_NOINIT;
-        }
-    } else {
-        short_map& map = it->second;
-        short_map::iterator it = map.find(core_id);
-        if (it == map.end()) {
-            map[core_id] = STRIDE_NOINIT;
-        }
-    }
-
-    // Release lock.
-    unlock();
-
-    return stride_bin[line_number][core_id];
-}
-
-void indigo__record_branch_c(int line_number, int loop_line_number,
-        int true_branch_count, int false_branch_count) {
     // Short circuit to prevent runtime overhead.
-    if (get_branch_bin(line_number, loop_line_number) == BRANCH_UNKNOWN)
+    if (branch_hist.get(0, func_addr, line_number, 0) == BRANCH_UNKNOWN) {
         return;
+    }
 
-    branch_loop_line_pair[line_number] = loop_line_number;
-    loop_branch_line_pair[loop_line_number].insert(line_number);
+    src_location_t branch_location(func_addr, line_number);
+    std::pair<src_location_t, src_location_t> pair(branch_location,
+            loop_location);
+
+    branch_loop_line_pair.insert(pair);
+    loop_branch_line_pair[loop_location].insert(branch_location);
 
     int status = BRANCH_UNKNOWN;
     int branch_count = true_branch_count + false_branch_count;
@@ -783,11 +667,11 @@ void indigo__record_branch_c(int line_number, int loop_line_number,
         status = BRANCH_UNKNOWN;
     }
 
-    if (get_branch_bin(line_number, loop_line_number) == BRANCH_NOINIT) {
-        get_branch_bin(line_number, loop_line_number) = status;
+    if (branch_hist.get(0, func_addr, line_number, 0) == BRANCH_NOINIT) {
+        branch_hist.set(0, func_addr, line_number, 0, status);
     } else {
-        if (get_branch_bin(line_number, loop_line_number) != status) {
-            get_branch_bin(line_number, loop_line_number) = BRANCH_UNKNOWN;
+        if (branch_hist.get(0, func_addr, line_number, 0) != status) {
+            branch_hist.set(0, func_addr, line_number, 0, BRANCH_UNKNOWN);
         }
     }
 }
@@ -819,12 +703,15 @@ void indigo__vector_stride_c(int loop_line_number, int var_idx, void* addr,
     Checks for alignment to cache line boundary and updates histogram.
     Returns common alignment, if any. Otherwise, returns -1.
 */
-int indigo__aligncheck_c(int line_number, int stream_count, int16_t dep_status,
-        ...) {
+int indigo__aligncheck_c(int line_number, void* func_addr, int stream_count,
+        int16_t dep_status, ...) {
+    src_location_t location(func_addr, line_number);
+    analyzed_loops.insert(location);
+
     va_list args;
     int i, j;
 
-    if (get_alignment_bin(line_number) == NOT_ALIGNED) {
+    if (align_hist.get(0, func_addr, line_number, 0) == NOT_ALIGNED) {
         return -1;
     }
 
@@ -836,7 +723,7 @@ int indigo__aligncheck_c(int line_number, int stream_count, int16_t dep_status,
         int64_t _remainder = ((int64_t) address) % 64;
         if (remainder != -1 && remainder != _remainder) {
             va_end(args);
-            get_alignment_bin(line_number) = NOT_ALIGNED;
+            align_hist.set(0, func_addr, line_number, 0, NOT_ALIGNED);
             return -1;
         }
 
@@ -847,9 +734,9 @@ int indigo__aligncheck_c(int line_number, int stream_count, int16_t dep_status,
     va_end(args);
 
     if (remainder == 0) {
-        get_alignment_bin(line_number) = FULL_ALIGNED;
+        align_hist.set(0, func_addr, line_number, 0, FULL_ALIGNED);
     } else {
-        get_alignment_bin(line_number) = MUTUAL_ALIGNED;
+        align_hist.set(0, func_addr, line_number, 0, MUTUAL_ALIGNED);
     }
 
     return remainder;
@@ -862,12 +749,15 @@ int indigo__aligncheck_c(int line_number, int stream_count, int16_t dep_status,
     Returns common alignment, if any. Otherwise, returns -1.
 */
 
-int indigo__sstore_aligncheck_c(int line_number, int stream_count,
-        int16_t dep_status, ...) {
+int indigo__sstore_aligncheck_c(int line_number, void* func_addr,
+        int stream_count, int16_t dep_status, ...) {
+    src_location_t location(func_addr, line_number);
+    analyzed_loops.insert(location);
+
     va_list args;
     int i, j;
 
-    if (get_sstore_alignment_bin(line_number) == NOT_ALIGNED) {
+    if (sstore_align_hist.get(0, func_addr, line_number, 0) == NOT_ALIGNED) {
         return -1;
     }
 
@@ -879,7 +769,7 @@ int indigo__sstore_aligncheck_c(int line_number, int stream_count,
         int64_t _remainder = ((int64_t) address) % 64;
         if (remainder != -1 && remainder != _remainder) {
             va_end(args);
-            get_sstore_alignment_bin(line_number) = NOT_ALIGNED;
+            sstore_align_hist.set(0, func_addr, line_number, 0, NOT_ALIGNED);
             return -1;
         }
 
@@ -890,9 +780,9 @@ int indigo__sstore_aligncheck_c(int line_number, int stream_count,
     va_end(args);
 
     if (remainder == 0) {
-        get_sstore_alignment_bin(line_number) = FULL_ALIGNED;
+        sstore_align_hist.set(0, func_addr, line_number, 0, FULL_ALIGNED);
     } else {
-        get_sstore_alignment_bin(line_number) = MUTUAL_ALIGNED;
+        sstore_align_hist.set(0, func_addr, line_number, 0, MUTUAL_ALIGNED);
     }
 
     return remainder;
@@ -905,7 +795,11 @@ int indigo__sstore_aligncheck_c(int line_number, int stream_count,
     Returns void.
 */
 
-void indigo__overlap_check_c(int line_number, int stream_count, ...) {
+void indigo__overlap_check_c(int line_number, void* func_addr,
+        int stream_count, ...) {
+    src_location_t location(func_addr, line_number);
+    analyzed_loops.insert(location);
+
     va_list args;
     int i, j, ctr = 0;
 
@@ -914,7 +808,7 @@ void indigo__overlap_check_c(int line_number, int stream_count, ...) {
     void* end_addresses[MAX_STREAMS];
 
     // If we've already found an overlap, terminate the search.
-    if (get_overlap_bin(line_number) == true)
+    if (overlap_hist.get(0, func_addr, line_number, 0) == true)
         return;
 
     va_start(args, stream_count);
@@ -945,35 +839,37 @@ void indigo__overlap_check_c(int line_number, int stream_count, ...) {
             if ((ref_start <= start && ref_end >= start) ||
                     (ref_start <= end && ref_end >= end)) {
                 // We have an overlap!
-                get_overlap_bin(line_number) = true;
+                overlap_hist.set(0, func_addr, line_number, 0, true);
                 return;
             }
         }
     }
 }
 
-void indigo__tripcount_check_c(int line_number, int64_t trip_count) {
-    int64_t* histogram = get_tripcount_histogram(line_number);
-    if (histogram == NULL)
-        return;
+void indigo__tripcount_check_c(int line_number, void* func_addr,
+        int64_t trip_count) {
+    src_location_t location(func_addr, line_number);
+    analyzed_loops.insert(location);
 
     if (trip_count < 0)
         trip_count = 0;
 
-    if (trip_count >= MAX_HISTOGRAM_ENTRIES)
-        trip_count = MAX_HISTOGRAM_ENTRIES-1;
-
-    if (histogram[trip_count] < LONG_MAX)
-        histogram[trip_count]++;
+    tripcount_hist.increment(0, func_addr, line_number, trip_count, 1);
 }
 
-void indigo__unknown_stride_check_c(int line_number) {
-    get_stride_bin(line_number) = STRIDE_UNKNOWN;
+void indigo__unknown_stride_check_c(int line_number, void* func_addr) {
+    src_location_t location(func_addr, line_number);
+    analyzed_loops.insert(location);
+
+    stride_hist.set(0, func_addr, line_number, 0, STRIDE_UNKNOWN);
 }
 
-void indigo__stride_check_c(int line_number, int stride) {
+void indigo__stride_check_c(int line_number, void* func_addr, int stride) {
+    src_location_t location(func_addr, line_number);
+    analyzed_loops.insert(location);
+
     // Short circuit to prevent runtime overhead.
-    if (get_stride_bin(line_number) == STRIDE_UNKNOWN)
+    if (stride_hist.get(0, func_addr, line_number, 0) == STRIDE_UNKNOWN)
         return;
 
     int16_t status = STRIDE_NOINIT;
@@ -994,8 +890,9 @@ void indigo__stride_check_c(int line_number, int stride) {
             break;
     }
 
-    if (get_stride_bin(line_number) > status)
-        get_stride_bin(line_number) = status;
+    if (stride_hist.get(0, func_addr, line_number, 0) > status) {
+        stride_hist.set(0, func_addr, line_number, 0, status);
+    }
 }
 
 void indigo__reuse_dist_c(int var_id, void* address) {

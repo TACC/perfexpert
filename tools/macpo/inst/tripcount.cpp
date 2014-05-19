@@ -61,7 +61,9 @@ bool tripcount_t::instrument_loop(loop_info_t& loop_info) {
 
         std::vector<SgExpression*> params;
         params.push_back(buildIntVal(line_number));
+        params.push_back(ir_methods::get_function_address(loop_stmt));
         params.push_back(trip_count_expr);
+
         SgExprStatement* expr_statement = NULL;
         expr_statement = ir_methods::prepare_call_statement(bb, function_name,
                 params, loop_stmt);

@@ -1,26 +1,26 @@
 #if 0
 [macpo-integration-test]:init:0:1:
-[macpo-integration-test]:stride_check:35:0
-[macpo-integration-test]:stride_check:35:0
-[macpo-integration-test]:stride_check:35:1
-[macpo-integration-test]:stride_check:35:0
-[macpo-integration-test]:stride_check:35:0
-[macpo-integration-test]:stride_check:35:1
-[macpo-integration-test]:stride_check:34:1
-[macpo-integration-test]:stride_check:34:1
-[macpo-integration-test]:stride_check:34:0
-[macpo-integration-test]:stride_check:35:0
-[macpo-integration-test]:stride_check:35:0
-[macpo-integration-test]:stride_check:35:1
-[macpo-integration-test]:stride_check:35:0
-[macpo-integration-test]:stride_check:35:0
-[macpo-integration-test]:stride_check:35:1
-[macpo-integration-test]:stride_check:34:1
-[macpo-integration-test]:stride_check:34:1
-[macpo-integration-test]:stride_check:34:0
-[macpo-integration-test]:stride_check:33:0
-[macpo-integration-test]:stride_check:33:0
-[macpo-integration-test]:stride_check:33:0
+[macpo-integration-test]:stride_check:35:?:0
+[macpo-integration-test]:stride_check:35:?:0
+[macpo-integration-test]:stride_check:35:?:1
+[macpo-integration-test]:stride_check:35:?:0
+[macpo-integration-test]:stride_check:35:?:0
+[macpo-integration-test]:stride_check:35:?:1
+[macpo-integration-test]:stride_check:34:?:1
+[macpo-integration-test]:stride_check:34:?:1
+[macpo-integration-test]:stride_check:34:?:0
+[macpo-integration-test]:stride_check:35:?:0
+[macpo-integration-test]:stride_check:35:?:0
+[macpo-integration-test]:stride_check:35:?:1
+[macpo-integration-test]:stride_check:35:?:0
+[macpo-integration-test]:stride_check:35:?:0
+[macpo-integration-test]:stride_check:35:?:1
+[macpo-integration-test]:stride_check:34:?:1
+[macpo-integration-test]:stride_check:34:?:1
+[macpo-integration-test]:stride_check:34:?:0
+[macpo-integration-test]:stride_check:33:?:0
+[macpo-integration-test]:stride_check:33:?:0
+[macpo-integration-test]:stride_check:33:?:0
 #endif
 
 #include <stdio.h>

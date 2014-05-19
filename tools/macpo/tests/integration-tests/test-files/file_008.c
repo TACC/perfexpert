@@ -1,13 +1,13 @@
 #if 0
 [macpo-integration-test]:init:0:1:
-[macpo-integration-test]:aligncheck:33:3:2:?:?:?:
-[macpo-integration-test]:sstore_aligncheck:33:3:2:?:?:?:
-[macpo-integration-test]:aligncheck:33:3:2:?:?:?:
-[macpo-integration-test]:sstore_aligncheck:33:3:2:?:?:?:
-[macpo-integration-test]:aligncheck:22:3:2:?:?:?:
-[macpo-integration-test]:aligncheck:22:3:2:?:?:?:
-[macpo-integration-test]:aligncheck:22:3:2:?:?:?:
-[macpo-integration-test]:aligncheck:22:3:2:?:?:?:
+[macpo-integration-test]:aligncheck:33:?:3:2:?:?:?:
+[macpo-integration-test]:sstore_aligncheck:33:?:3:2:?:?:?:
+[macpo-integration-test]:aligncheck:33:?:3:2:?:?:?:
+[macpo-integration-test]:sstore_aligncheck:33:?:3:2:?:?:?:
+[macpo-integration-test]:aligncheck:22:?:3:2:?:?:?:
+[macpo-integration-test]:aligncheck:22:?:3:2:?:?:?:
+[macpo-integration-test]:aligncheck:22:?:3:2:?:?:?:
+[macpo-integration-test]:aligncheck:22:?:3:2:?:?:?:
 #endif
 
 #include <stdio.h>

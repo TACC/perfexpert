@@ -123,6 +123,7 @@ void stride_check_t::record_unknown_stride(SgScopeStatement* loop_stmt,
 
     expr_list_t expr_list;
     expr_list.push_back(line_number_val);
+    expr_list.push_back(ir_methods::get_function_address(loop_stmt));
 
     SgBasicBlock* loop_bb = getEnclosingNode<SgBasicBlock>(loop_stmt);
     std::string function_name = SageInterface::is_Fortran_language()
@@ -153,6 +154,7 @@ void stride_check_t::record_stride_value(SgScopeStatement* loop_stmt,
 
     expr_list_t expr_list;
     expr_list.push_back(line_number_val);
+    expr_list.push_back(ir_methods::get_function_address(loop_stmt));
     expr_list.push_back(stride);
 
     SgBasicBlock* loop_bb = getEnclosingNode<SgBasicBlock>(loop_stmt);

@@ -109,6 +109,7 @@ bool pntr_overlap_t::instrument_loop(loop_info_t& loop_info) {
     val_params->set_endOfConstruct(fileInfo);
 
     expr_list.push_back(val_line_number);
+    expr_list.push_back(ir_methods::get_function_address(loop_stmt));
     expr_list.push_back(val_params);
     expr_list.insert(expr_list.end(), params.begin(), params.end());
 

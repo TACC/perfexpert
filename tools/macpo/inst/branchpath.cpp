@@ -135,6 +135,7 @@ bool branchpath_t::instrument_loop(loop_info_t& loop_info) {
             val_for_line_number->set_endOfConstruct(fileInfo);
 
             params.push_back(val_line_number);
+            params.push_back(ir_methods::get_function_address(loop_stmt));
             params.push_back(val_for_line_number);
             params.push_back(buildVarRefExp(var_true_name));
             params.push_back(buildVarRefExp(var_false_name));

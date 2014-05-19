@@ -192,8 +192,8 @@ void indigo__exit();
 #if defined(__cplusplus)
 extern "C" {
 #endif
-void indigo__record_branch_c(int line_number, int loop_line_number,
-    int true_branch_count, int false_branch_count);
+void indigo__record_branch_c(int line_number, void* func_addr,
+    int loop_line_number, int true_branch_count, int false_branch_count);
 #if defined (__cplusplus)
 }
 #endif
@@ -210,16 +210,7 @@ void indigo__vector_stride_c(int loop_line_number, int var_idx, void* addr,
 #if defined(__cplusplus)
 extern "C" {
 #endif
-int indigo__aligncheck_c(int line_number, int stream_count, int16_t dep_status,
-    ...);
-#if defined (__cplusplus)
-}
-#endif
-
-#if defined(__cplusplus)
-extern "C" {
-#endif
-int indigo__sstore_aligncheck_c(int line_number, int stream_count,
+int indigo__aligncheck_c(int line_number, void* func_addr, int stream_count,
     int16_t dep_status, ...);
 #if defined (__cplusplus)
 }
@@ -228,7 +219,8 @@ int indigo__sstore_aligncheck_c(int line_number, int stream_count,
 #if defined(__cplusplus)
 extern "C" {
 #endif
-void indigo__overlap_check_c(int line_number, int stream_count, ...);
+int indigo__sstore_aligncheck_c(int line_number, void* func_addr,
+    int stream_count, int16_t dep_status, ...);
 #if defined (__cplusplus)
 }
 #endif
@@ -236,7 +228,8 @@ void indigo__overlap_check_c(int line_number, int stream_count, ...);
 #if defined(__cplusplus)
 extern "C" {
 #endif
-void indigo__tripcount_check_c(int line_number, int64_t trip_count);
+void indigo__overlap_check_c(int line_number, void* func_addr,
+    int stream_count, ...);
 #if defined (__cplusplus)
 }
 #endif
@@ -244,7 +237,8 @@ void indigo__tripcount_check_c(int line_number, int64_t trip_count);
 #if defined(__cplusplus)
 extern "C" {
 #endif
-void indigo__unknown_stride_check_c(int line_number);
+void indigo__tripcount_check_c(int line_number, void* func_addr,
+    int64_t trip_count);
 #if defined (__cplusplus)
 }
 #endif
@@ -252,7 +246,15 @@ void indigo__unknown_stride_check_c(int line_number);
 #if defined(__cplusplus)
 extern "C" {
 #endif
-void indigo__stride_check_c(int line_number, int stride);
+void indigo__unknown_stride_check_c(int line_number, void* func_addr);
+#if defined (__cplusplus)
+}
+#endif
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
+void indigo__stride_check_c(int line_number, void* func_addr, int stride);
 #if defined (__cplusplus)
 }
 #endif

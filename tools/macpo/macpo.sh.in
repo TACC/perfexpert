@@ -121,7 +121,7 @@ done
 
 CXXFLAGS="-I${MRT_INCLUDE_DIR}"
 MACPO_EXTRA_FLAGS="-rose:openmp:ast_only"
-LDFLAGS="-L${MRT_LIB_DIR} -lmrt -lstdc++"
+LDFLAGS="-L${MRT_LIB_DIR} -lmrt -lstdc++ -ldl -rdynamic"
 
 # Finally, invoke the macpo executable
 MACPO_CMD="${MINST_PATH} ${MACPO_EXTRA_FLAGS} ${CXXFLAGS} $* ${LDFLAGS}"

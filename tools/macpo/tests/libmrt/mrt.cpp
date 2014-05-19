@@ -28,11 +28,11 @@ void indigo__exit() {
     std::cerr << test_prefix << "exit:" << std::endl;
 }
 
-void indigo__record_branch_c(int line_number, int loop_line_number,
-        int true_branch_count, int false_branch_count) {
+void indigo__record_branch_c(int line_number, void* func_addr,
+        int loop_line_number, int true_branch_count, int false_branch_count) {
     std::cerr << test_prefix << "record_branch:" << line_number << ":" <<
-        loop_line_number << ":" << true_branch_count << ":" <<
-        false_branch_count << ":" << std::endl;
+        func_addr << ":" << loop_line_number << ":" << true_branch_count << ":"
+        << false_branch_count << ":" << std::endl;
 }
 
 void indigo__vector_stride_c(int loop_line_number, int var_idx, void* addr,
@@ -41,28 +41,10 @@ void indigo__vector_stride_c(int loop_line_number, int var_idx, void* addr,
         var_idx << ":" << addr << ":" << type_size << ":" << std::endl;
 }
 
-int indigo__aligncheck_c(int line_number, int stream_count, int dep_status,
-        ...) {
-    std::cerr << test_prefix << "aligncheck:" << line_number << ":" <<
-        stream_count << ":" << dep_status << ":";
-
-    va_list args;
-    va_start(args, dep_status);
-
-    for (int i = 0; i < stream_count; i++) {
-        void* address = va_arg(args, void*);
-        std::cerr << address << ":";
-    }
-
-    std::cerr << std::endl;
-    va_end(args);
-    return 0;
-}
-
-int indigo__sstore_aligncheck_c(int line_number, int stream_count,
+int indigo__aligncheck_c(int line_number, void* func_addr, int stream_count,
         int dep_status, ...) {
-    std::cerr << test_prefix << "sstore_aligncheck:" << line_number << ":" <<
-        stream_count << ":" << dep_status << ":";
+    std::cerr << test_prefix << "aligncheck:" << line_number << ":" <<
+        func_addr << ":" << stream_count << ":" << dep_status << ":";
 
     va_list args;
     va_start(args, dep_status);
@@ -77,9 +59,28 @@ int indigo__sstore_aligncheck_c(int line_number, int stream_count,
     return 0;
 }
 
-void indigo__tripcount_check_c(int line_number, int64_t trip_count) {
+int indigo__sstore_aligncheck_c(int line_number, void* func_addr,
+        int stream_count, int dep_status, ...) {
+    std::cerr << test_prefix << "sstore_aligncheck:" << line_number << ":" <<
+        func_addr << ":" << stream_count << ":" << dep_status << ":";
+
+    va_list args;
+    va_start(args, dep_status);
+
+    for (int i = 0; i < stream_count; i++) {
+        void* address = va_arg(args, void*);
+        std::cerr << address << ":";
+    }
+
+    std::cerr << std::endl;
+    va_end(args);
+    return 0;
+}
+
+void indigo__tripcount_check_c(int line_number, void* func_addr,
+        int64_t trip_count) {
     std::cerr << test_prefix << "tripcount_check:" << line_number << ":" <<
-        trip_count << std::endl;
+        func_addr << ":" << trip_count << std::endl;
 }
 
 void indigo__init_(int16_t create_file, int16_t enable_sampling) {
@@ -110,9 +111,10 @@ void indigo__create_map() {
     std::cerr << test_prefix << "create_map:" << std::endl;
 }
 
-void indigo__overlap_check_c(int line_number, int stream_count, ...) {
+void indigo__overlap_check_c(int line_number, void* func_addr,
+        int stream_count, ...) {
     std::cerr << test_prefix << "overlap_check:" << line_number << ":" <<
-        stream_count << ":";
+        func_addr << ":" << stream_count << ":";
 
     va_list args;
     va_start(args, stream_count);
@@ -127,14 +129,14 @@ void indigo__overlap_check_c(int line_number, int stream_count, ...) {
     std::cerr << std::endl;
 }
 
-void indigo__unknown_stride_check_c(int line_number) {
+void indigo__unknown_stride_check_c(int line_number, void* func_addr) {
     std::cerr << test_prefix << "unknown_stride_check:" << line_number << ":" <<
-        std::endl;
+        func_addr << ":" << std::endl;
 }
 
-void indigo__stride_check_c(int line_number, int stride) {
+void indigo__stride_check_c(int line_number, void* func_addr, int stride) {
     std::cerr << test_prefix << "stride_check:" << line_number << ":" <<
-        stride << ":" << std::endl;
+        func_addr << ":" << stride << ":" << std::endl;
 }
 
 void indigo__reuse_dist_c(int var_id, void* address) {
