@@ -181,12 +181,19 @@ AC_ARG_WITH([libdwarf-include],
     [LDFLAGS+=" -L$withval"])
 
 AC_ARG_WITH([libelf],
-    [AS_HELP_STRING([--with-libelf], [set ELF path])],
-    [LDFLAGS+=" -L$withval/lib"])
+    [AS_HELP_STRING([--with-libelf], [set ELF library and include path])],
+    [CPPFLAGS+=" -I$withval/include"
+    LDFLAGS+=" -L$withval/lib"]
+    LIBELF_LIB="$withval/lib"])
 
 AC_ARG_WITH([libelf-lib],
     [AS_HELP_STRING([--with-libelf-lib], [set ELF library path])],
-    [LDFLAGS+=" -L$withval"])
+    [LDFLAGS+=" -L$withval"
+    LIBELF_LIB="$withval"])
+
+AC_ARG_WITH([libelf-include],
+    [AS_HELP_STRING([--with-libelf-include], [set ELF include path])],
+    [CPPFLAGS+=" -I$withval"])
 
 AC_ARG_WITH([libxml2],
     [AS_HELP_STRING([--with-libxml2], [set LibXML2 library and include path])],
@@ -489,6 +496,15 @@ AS_IF([test x"$ENABLE_MACPO" = xyes], [
 
     AC_CHECK_LIB([gsl], [gsl_histogram_alloc, gsl_histogram_free], [],
         [AC_MSG_ERROR([not found: libgsl.so])], [-lgslcblas])
+
+    # Check for libelf (for resolving function addresses to filenames)
+    #
+    AC_CHECK_LIB([elf],
+        [elf_version, elf_begin, elf_nextscn, elf_getdata, elf_strptr, elf_end],
+        [NOOP=noop], [AC_MSG_ERROR([libelf.so not found])], [-lelf])
+    AC_CHECK_HEADER([libelf.h], [], [AC_MSG_ERROR([libelf.h not found])])
+
+    AC_SUBST(LIBELF_LIB)
 
     ENABLE_MACPO=macpo
     ENABLED_TOOLS+="macpo "

@@ -37,7 +37,7 @@
 #include <utility>
 
 #include "avl_tree.h"
-#include "elf.h"
+#include "elf_reader.h"
 #include "generic_defs.h"
 #include "histogram.h"
 #include "mrt.h"
@@ -555,19 +555,44 @@ void indigo__exit() {
         free(intel_apic_mapping);
     }
 
-    for (std::set<src_location_t>::iterator it = analyzed_loops.begin();
-            it != analyzed_loops.end(); it++) {
-        const src_location_t& loc = *it;
-        const std::string func_name = get_function_name(loc.function_address);
-        fprintf(stderr, "\n==== Loop at %s:%d ====\n", func_name.c_str(),
-                loc.line_number);
+    // Get the name of the executable file.
+    const int kLen = 1024;
+    char link_buffer[kLen];
+    std::string binary_path = "unknown";
 
-        print_sstore_align_check_results(loc);
-        print_align_check_results(loc);
-        print_overlap_check_results(loc);
-        print_trip_count_results(loc);
-        print_branch_divergence_results(loc);
-        print_stride_check_results(loc);
+    ssize_t exe_path_len = readlink("/proc/self/exe", link_buffer,
+            sizeof(link_buffer) - 1);
+    if (exe_path_len != -1) {
+        // Write the terminating character
+        link_buffer[exe_path_len] = '\0';
+        binary_path = std::string(link_buffer);
+    }
+
+    {
+        // Scoped so that memory occupied by symbol table for
+        // this binary is freed upon processing all loop hotspots.
+        elf_reader_t elf_reader(binary_path);
+
+        for (std::set<src_location_t>::iterator it = analyzed_loops.begin();
+                it != analyzed_loops.end(); it++) {
+            const src_location_t& loc = *it;
+            const std::string func_name =
+                elf_reader_t::get_function_name(loc.function_address);
+            bfd_vma vma = reinterpret_cast<bfd_vma>(loc.function_address);
+            const elf_reader_t::location_t location =
+                elf_reader.translate_address(vma);
+            const std::string file_name = location.filename;
+
+            fprintf(stderr, "\n==== Loop at %s:%d ====\n", file_name.c_str(),
+                    loc.line_number);
+
+            print_sstore_align_check_results(loc);
+            print_align_check_results(loc);
+            print_overlap_check_results(loc);
+            print_trip_count_results(loc);
+            print_branch_divergence_results(loc);
+            print_stride_check_results(loc);
+        }
     }
 
     fprintf(stderr, "\n==== Reuse distance metrics ====");
