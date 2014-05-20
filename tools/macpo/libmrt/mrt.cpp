@@ -266,6 +266,53 @@ static void print_alignment_histogram(int line_number, int64_t* histogram) {
     }
 }
 
+void bot_print_sstore_align_check_results(const std::string& filename,
+        const src_location_t& location) {
+    int core_id = getCoreID();
+    multigram_t<int16_t, int16_t>::pair_list_t sstore_list =
+        sstore_align_hist.get_all_histograms();
+
+    int16_t align_status = ALIGN_NOINIT;
+    for (multigram_t<int16_t, int16_t>::pair_list_t::iterator it =
+            sstore_list.begin(); it != sstore_list.end(); it++) {
+        multigram_t<int16_t, int16_t>::pair_t pair = *it;
+        multigram_t<int16_t, int16_t>::hist_id_t hist_id = pair.first;
+        histogram_t<int16_t, int16_t>* hist = pair.second;
+        assert(hist);
+
+        if (hist_id.line_number != location.line_number) {
+            continue;
+        }
+
+        int16_t _align_status = hist->get(0);
+        if (_align_status < align_status) {
+            align_status = _align_status;
+        }
+    }
+
+    // If there are no histogram entries corresponding to this line number,
+    // then the switch case statement will not print any output.
+    // Hence we do not need a separate guard condition.
+
+    switch (align_status) {
+        case FULL_ALIGNED:
+            fprintf(stderr, "%s %s:%d|sstore_alignment|status = FULL_ALIGNED\n",
+                    mprefix, filename.c_str(), location.line_number);
+            break;
+
+        case MUTUAL_ALIGNED:
+            fprintf(stderr, "%s %s:%d|sstore_alignment|status = "
+                    "MUTUAL_ALIGNED\n", mprefix, filename.c_str(),
+                    location.line_number);
+            break;
+
+        case NOT_ALIGNED:
+            fprintf(stderr, "%s %s:%d|sstore_alignment|status = NOT_ALIGNED\n",
+                    mprefix, filename.c_str(), location.line_number);
+            break;
+    }
+}
+
 void print_sstore_align_check_results(const src_location_t& location) {
     int core_id = getCoreID();
     multigram_t<int16_t, int16_t>::pair_list_t sstore_list =
@@ -312,6 +359,52 @@ void print_sstore_align_check_results(const src_location_t& location) {
                     "try using _mm_malloc/_mm_free to allocate/free "
                     "arrays that are aligned with cache-line "
                     "bounary.\n");
+            break;
+    }
+}
+
+void bot_print_align_check_results(const std::string& filename,
+        const src_location_t& location) {
+    int core_id = getCoreID();
+    multigram_t<int16_t, int16_t>::pair_list_t list =
+        align_hist.get_all_histograms();
+
+    int16_t align_status = ALIGN_NOINIT;
+    for (multigram_t<int16_t, int16_t>::pair_list_t::iterator it = list.begin();
+            it != list.end(); it++) {
+        multigram_t<int16_t, int16_t>::pair_t pair = *it;
+        multigram_t<int16_t, int16_t>::hist_id_t hist_id = pair.first;
+        histogram_t<int16_t, int16_t>* hist = pair.second;
+        assert(hist);
+
+        if (hist_id.line_number != location.line_number) {
+            continue;
+        }
+
+        int16_t _align_status = hist->get(0);
+        if (_align_status < align_status) {
+            align_status = _align_status;
+        }
+    }
+
+    // If there are no histogram entries corresponding to this line number,
+    // then the switch case statement will not print any output.
+    // Hence we do not need a separate guard condition.
+
+    switch (align_status) {
+        case FULL_ALIGNED:
+            fprintf(stderr, "%s %s:%d|alignment|status = FULL_ALIGNED\n",
+                    mprefix, filename.c_str(), location.line_number);
+            break;
+
+        case MUTUAL_ALIGNED:
+            fprintf(stderr, "%s %s:%d|alignment|status = MUTUAL_ALIGNED\n",
+                    mprefix, filename.c_str(), location.line_number);
+            break;
+
+        case NOT_ALIGNED:
+            fprintf(stderr, "%s %s:%d|alignment|status = NOT_ALIGNED\n",
+                    mprefix, filename.c_str(), location.line_number);
             break;
     }
 }
@@ -365,6 +458,37 @@ void print_align_check_results(const src_location_t& location) {
     }
 }
 
+void bot_print_overlap_check_results(const std::string& filename,
+        const src_location_t& location) {
+    int core_id = getCoreID();
+    multigram_t<int16_t, bool>::pair_list_t list =
+        overlap_hist.get_all_histograms();
+
+    bool init = false;
+    bool overlap = false;
+    for (multigram_t<int16_t, bool>::pair_list_t::iterator it = list.begin();
+            it != list.end(); it++) {
+        multigram_t<int16_t, bool>::pair_t pair = *it;
+        multigram_t<int16_t, bool>::hist_id_t hist_id = pair.first;
+        histogram_t<int16_t, bool>* hist = pair.second;
+        assert(hist);
+
+        if (hist_id.line_number != location.line_number) {
+            continue;
+        }
+
+        init = true;
+        if (hist->get(0) == false) {
+            overlap = false;
+        }
+    }
+
+    if (init && overlap == false) {
+        fprintf(stderr, "%s %s:%d|overlap|status = NO_OVERLAP\n", mprefix,
+                filename.c_str(), location.line_number);
+    }
+}
+
 void print_overlap_check_results(const src_location_t& location) {
     int core_id = getCoreID();
     multigram_t<int16_t, bool>::pair_list_t list =
@@ -392,6 +516,54 @@ void print_overlap_check_results(const src_location_t& location) {
     if (init && overlap == false) {
         fprintf(stderr, "Use `restrict' keyword to inform compiler that arrays "
                 " do not overlap.\n");
+    }
+}
+
+void bot_print_trip_count_results(const std::string& filename,
+        const src_location_t& location) {
+    int core_id = getCoreID();
+    multigram_t<int64_t, int64_t>::pair_list_t list =
+        tripcount_hist.get_all_histograms();
+
+    for (multigram_t<int64_t, int64_t>::pair_list_t::iterator it = list.begin();
+            it != list.end(); it++) {
+        multigram_t<int64_t, int64_t>::pair_t pair = *it;
+        multigram_t<int64_t, int64_t>::hist_id_t hist_id = pair.first;
+        histogram_t<int64_t, int64_t>* hist = pair.second;
+        assert(hist);
+
+        if (hist_id.line_number != location.line_number) {
+            continue;
+        }
+
+        const int VALUE_THRESHOLD = 16;
+        const int COUNT_THRESHOLD = 16;
+
+        const int k = 3;
+        int32_t low_tripcount = 0;
+        int32_t total_loopcount = 0;
+        histogram_t<int64_t, int64_t>::pair_list_t pair_list = hist->sort(k);
+        for (histogram_t<int64_t, int64_t>::pair_list_t::iterator it =
+                pair_list.begin(); it != pair_list.end(); it++) {
+            histogram_t<int64_t, int64_t>::pair_t hist_pair = *it;
+            int64_t bin = hist_pair.first;
+            int64_t val = hist_pair.second;
+            if (bin < VALUE_THRESHOLD && val > COUNT_THRESHOLD) {
+                low_tripcount += 1;
+            }
+
+            total_loopcount += 1;
+        }
+
+        if (total_loopcount > 0) {
+            float fl_tripcount = static_cast<float>(low_tripcount);
+            float fl_loopcount = static_cast<float>(total_loopcount);
+            float percentage = fl_tripcount / fl_loopcount;
+
+            fprintf(stderr, "%s %s:%d|tripcount|low_count = %%%.2f\n", mprefix,
+                    filename.c_str(), location.line_number,
+                    100.0f * percentage);
+        }
     }
 }
 
@@ -439,6 +611,65 @@ void print_trip_count_results(const src_location_t& location) {
                     "low trip counts. insert the following pragma just before "
                     "the loop body: #pragma loop_count(16)\n",
                     100.0f * percentage);
+        }
+    }
+}
+
+void bot_print_branch_divergence_results(const std::string& filename,
+        const src_location_t& location) {
+    int core_id = getCoreID();
+    multigram_t<int16_t, int16_t>::pair_list_t list =
+        branch_hist.get_all_histograms();
+
+    // First get all branch locations within this loop.
+    src_location_list_t& branch_locs = loop_branch_line_pair[location];
+    for (src_location_list_t::iterator it = branch_locs.begin();
+            it != branch_locs.end(); it++) {
+        int16_t branch_status = BRANCH_NOINIT;
+        const src_location_t& branch_loc = *it;
+
+        // Then for each such branch, aggregate metrics across threads.
+        for (multigram_t<int16_t, int16_t>::pair_list_t::iterator it =
+                list.begin(); it != list.end(); it++) {
+            multigram_t<int16_t, int16_t>::pair_t pair = *it;
+            multigram_t<int16_t, int16_t>::hist_id_t hist_id = pair.first;
+            histogram_t<int16_t, int16_t>* hist = pair.second;
+            assert(hist);
+
+            if (hist_id.line_number != branch_loc.line_number) {
+                continue;
+            }
+
+            int16_t _branch_status = hist->get(0);
+                if (_branch_status < branch_status)
+                    branch_status = _branch_status;
+        }
+
+        switch (branch_status) {
+            case BRANCH_UNKNOWN:
+                fprintf(stderr, "%s %s:%d|branch|status = UNPREDICTABLE\n",
+                        mprefix, filename.c_str(), branch_loc.line_number);
+                break;
+
+            case BRANCH_MOSTLY_FALSE:
+                fprintf(stderr, "%s %s:%d|branch|status = MOSTLY_FALSE\n",
+                        mprefix, filename.c_str(), branch_loc.line_number);
+                break;
+
+            case BRANCH_MOSTLY_TRUE:
+                fprintf(stderr, "%s %s:%d|branch|status = MOSTLY_TRUE\n",
+                        mprefix, filename.c_str(), branch_loc.line_number);
+                break;
+
+            case BRANCH_FALSE:
+                fprintf(stderr, "%s %s:%d|branch|status = ALWAYS_FALSE\n",
+                        mprefix, filename.c_str(), branch_loc.line_number);
+                break;
+
+            case BRANCH_TRUE:
+                fprintf(stderr, "%s %s:%d|branch|status = ALWAYS_TRUE\n",
+                        mprefix, filename.c_str(), branch_loc.line_number);
+                break;
         }
     }
 }
@@ -500,6 +731,52 @@ void print_branch_divergence_results(const src_location_t& location) {
                         "expected branch outcome.\n", branch_loc.line_number);
                 break;
         }
+    }
+}
+
+void bot_print_stride_check_results(const std::string& filename,
+        const src_location_t& location) {
+    int core_id = getCoreID();
+    multigram_t<int16_t, int16_t>::pair_list_t list =
+        stride_hist.get_all_histograms();
+
+    int16_t stride_status = STRIDE_NOINIT;
+    for (multigram_t<int16_t, int16_t>::pair_list_t::iterator it = list.begin();
+            it != list.end(); it++) {
+        multigram_t<int16_t, int16_t>::pair_t pair = *it;
+        multigram_t<int16_t, int16_t>::hist_id_t hist_id = pair.first;
+        histogram_t<int16_t, int16_t>* hist = pair.second;
+        assert(hist);
+
+        if (hist_id.line_number != location.line_number) {
+            continue;
+        }
+
+        int16_t _stride_status = hist->get(0);
+        if (_stride_status < stride_status) {
+            stride_status = _stride_status;
+        }
+    }
+
+    // If there are no histogram entries corresponding to this line number,
+    // then the switch case statement will not print any output.
+    // Hence we do not need a separate guard condition.
+
+    switch (stride_status) {
+        case STRIDE_UNKNOWN:
+            fprintf(stderr, "%s %s:%d|stride|status = UNKNOWN\n", mprefix,
+                    filename.c_str(), location.line_number);
+            break;
+
+        case STRIDE_FIXED:
+            fprintf(stderr, "%s %s:%d|stride|status = FIXED\n", mprefix,
+                    filename.c_str(), location.line_number);
+            break;
+
+        case STRIDE_UNIT:
+            fprintf(stderr, "%s %s:%d|stride|status = UNIT_STRIDE\n", mprefix,
+                    filename.c_str(), location.line_number);
+            break;
     }
 }
 
@@ -581,17 +858,29 @@ void indigo__exit() {
             bfd_vma vma = reinterpret_cast<bfd_vma>(loc.function_address);
             const elf_reader_t::location_t location =
                 elf_reader.translate_address(vma);
-            const std::string file_name = location.filename;
+            std::string file_name = location.filename;
+            const std::string rose_prefix = "rose_";
+            file_name.erase(0, rose_prefix.size());
 
-            fprintf(stderr, "\n==== Loop at %s:%d ====\n", file_name.c_str(),
-                    loc.line_number);
+            if (getenv("MACPO_DISPLAY_BOT") != NULL) {
+                fprintf(stderr, "\n");
+                bot_print_sstore_align_check_results(file_name, loc);
+                bot_print_align_check_results(file_name, loc);
+                bot_print_overlap_check_results(file_name, loc);
+                bot_print_trip_count_results(file_name, loc);
+                bot_print_branch_divergence_results(file_name, loc);
+                bot_print_stride_check_results(file_name, loc);
+            } else {
+                fprintf(stderr, "\n==== Loop at %s:%d ====\n",
+                        file_name.c_str(), loc.line_number);
 
-            print_sstore_align_check_results(loc);
-            print_align_check_results(loc);
-            print_overlap_check_results(loc);
-            print_trip_count_results(loc);
-            print_branch_divergence_results(loc);
-            print_stride_check_results(loc);
+                print_sstore_align_check_results(loc);
+                print_align_check_results(loc);
+                print_overlap_check_results(loc);
+                print_trip_count_results(loc);
+                print_branch_divergence_results(loc);
+                print_stride_check_results(loc);
+            }
         }
     }
 
