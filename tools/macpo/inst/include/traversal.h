@@ -48,7 +48,6 @@ class traversal_t {
     void add_stmt(statement_info_t& statement_info);
     void set_deep_search(bool _deep_search);
     loop_info_list_t& get_loop_info_list();
-    VariableRenaming::NumNodeRenameTable get_defs_at_node(SgNode* node);
 
  private:
     name_list_t stream_list;

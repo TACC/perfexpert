@@ -60,15 +60,6 @@ bool stride_check_t::instrument_loop(loop_info_t& loop_info) {
 
     ir_methods::remove_duplicate_expressions(expr_list);
 
-    ir_methods::def_map_t def_map;
-
-    // Check if this variable reference has just one definition.
-    VariableRenaming::NumNodeRenameTable rename_table = get_defs_at_node(
-            loop_stmt);
-
-    // Expand the iterator list into a map for easier lookup.
-    ir_methods::construct_def_map(rename_table, def_map);
-
     expr_list_t params;
     for (expr_list_t::iterator it = expr_list.begin(); it != expr_list.end();
             it++) {

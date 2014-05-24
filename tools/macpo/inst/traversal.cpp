@@ -115,8 +115,3 @@ void traversal_t::add_stream(std::string stream) {
 loop_info_list_t& traversal_t::get_loop_info_list() {
     return loop_traversal->get_loop_info_list();
 }
-
-VariableRenaming::NumNodeRenameTable traversal_t::get_defs_at_node(SgNode*
-        node) {
-    return var_renaming->getReachingDefsAtNode(node);
-}
