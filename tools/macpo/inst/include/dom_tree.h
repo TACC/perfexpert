@@ -55,7 +55,6 @@ class dom_tree_t {
     }
 
     ~dom_tree_t() {
-        _free_dom_tree();
         free_idom_tree();
 
         if (cfg != NULL) {
@@ -115,6 +114,7 @@ class dom_tree_t {
     }
 
     void free_idom_tree() {
+        _free_dom_tree();
         immediate_dominators.clear();
     }
 
