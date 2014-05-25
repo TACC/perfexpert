@@ -20,7 +20,6 @@
  */
 
 #include <rose.h>
-#include <VariableRenaming.h>
 
 #include <string>
 #include <vector>

@@ -86,8 +86,8 @@ bool midend(SgProject* project, options_t& options) {
 
 MINST::MINST(const options_t& _options, SgProject* project)
     : options(_options) {
-    var_renaming = new VariableRenaming(project);
-    var_renaming->run();
+    VariableRenaming* var_renaming = new VariableRenaming(project);
+    def_table = var_renaming->getDefTable();
 }
 
 void MINST::insert_map_prototype(SgNode* node) {
@@ -212,7 +212,7 @@ const analysis_profile_list MINST::run_analysis(SgNode* node, int16_t action) {
     }
 
     if (is_action(action, ACTION_ALIGNCHECK)) {
-        aligncheck_t visitor(var_renaming);
+        aligncheck_t visitor(def_table);
         visitor.process_node(node);
 
         statement_list.insert(statement_list.end(), visitor.stmt_begin(),
@@ -222,7 +222,7 @@ const analysis_profile_list MINST::run_analysis(SgNode* node, int16_t action) {
     }
 
     if (is_action(action, ACTION_TRIPCOUNT)) {
-        tripcount_t visitor(var_renaming);
+        tripcount_t visitor(def_table);
         visitor.process_node(node);
 
         statement_list.insert(statement_list.end(), visitor.stmt_begin(),
@@ -232,7 +232,7 @@ const analysis_profile_list MINST::run_analysis(SgNode* node, int16_t action) {
     }
 
     if (is_action(action, ACTION_BRANCHPATH)) {
-        branchpath_t visitor(var_renaming);
+        branchpath_t visitor(def_table);
         visitor.process_node(node);
 
         statement_list.insert(statement_list.end(), visitor.stmt_begin(),
@@ -258,7 +258,7 @@ const analysis_profile_list MINST::run_analysis(SgNode* node, int16_t action) {
     if (is_action(action, ACTION_VECTORSTRIDES)) {
         insert_map_function(node);
 
-        vector_strides_t visitor(var_renaming);
+        vector_strides_t visitor(def_table);
         visitor.process_node(node);
 
         stream_list = visitor.get_stream_list();
@@ -269,7 +269,7 @@ const analysis_profile_list MINST::run_analysis(SgNode* node, int16_t action) {
     }
 
     if (is_action(action, ACTION_OVERLAPCHECK)) {
-        pntr_overlap_t visitor(var_renaming);
+        pntr_overlap_t visitor(def_table);
         visitor.process_node(node);
 
         statement_list.insert(statement_list.end(), visitor.stmt_begin(),
@@ -279,7 +279,7 @@ const analysis_profile_list MINST::run_analysis(SgNode* node, int16_t action) {
     }
 
     if (is_action(action, ACTION_STRIDECHECK)) {
-        stride_check_t visitor(var_renaming);
+        stride_check_t visitor(def_table);
         visitor.process_node(node);
 
         stream_list = visitor.get_stream_list();
@@ -292,7 +292,7 @@ const analysis_profile_list MINST::run_analysis(SgNode* node, int16_t action) {
     if (is_action(action, ACTION_REUSEDISTANCE)) {
         insert_map_function(node);
 
-        reuse_dist_t visitor(var_renaming);
+        reuse_dist_t visitor(def_table);
         visitor.process_node(node);
 
         stream_list = visitor.get_stream_list();

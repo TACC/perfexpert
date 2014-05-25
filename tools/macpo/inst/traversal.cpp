@@ -29,9 +29,8 @@
 using namespace SageBuilder;
 using namespace SageInterface;
 
-traversal_t::traversal_t(VariableRenaming*& _var_renaming) {
-    var_renaming = _var_renaming;
-    loop_traversal = new loop_traversal_t(var_renaming);
+traversal_t::traversal_t(const du_table_t& _def_table) : def_table(_def_table) {
+    loop_traversal = new loop_traversal_t(_def_table);
 }
 
 traversal_t::~traversal_t() {

@@ -59,8 +59,8 @@ bool aligncheck_t::instrument_streaming_stores(loop_info_t& loop_info) {
 
     expr_list_t expr_list;
 
-    VariableRenaming::NumNodeRenameTable rename_table =
-        var_renaming->getReachingDefsAtNode(loop_stmt);
+    ir_methods::def_map_t def_map;
+    ir_methods::construct_def_map(def_table, def_map);
 
     int16_t dep_status = ir_methods::NON_DEPENDENT;
     for (sstore_map_t::iterator it = sstore_map.begin(); it != sstore_map.end();
@@ -74,7 +74,7 @@ bool aligncheck_t::instrument_streaming_stores(loop_info_t& loop_info) {
             if (SgExpression* expr = isSgExpression(*it)) {
                 if (SgPntrArrRefExp* pntr = isSgPntrArrRefExp(expr)) {
                     SgExpression* rhs = pntr->get_rhs_operand();
-                    int16_t _dep = ir_methods::is_input_dep(rhs, rename_table);
+                    int16_t _dep = ir_methods::is_input_dep(rhs, def_map);
 
                     // Get the minimum level of the two.
                     dep_status = dep_status < _dep ? dep_status : _dep;
@@ -118,8 +118,8 @@ bool aligncheck_t::instrument_alignment_checks(loop_info_t& loop_info) {
 
     expr_list_t expr_list;
 
-    VariableRenaming::NumNodeRenameTable rename_table =
-        var_renaming->getReachingDefsAtNode(loop_stmt);
+    ir_methods::def_map_t def_map;
+    ir_methods::construct_def_map(def_table, def_map);
 
     int16_t dep_status = ir_methods::NON_DEPENDENT;
     for (reference_list_t::iterator it = reference_list.begin();
@@ -128,7 +128,7 @@ bool aligncheck_t::instrument_alignment_checks(loop_info_t& loop_info) {
         if (SgExpression* expr = isSgExpression(reference_info.node)) {
             if (SgPntrArrRefExp* pntr = isSgPntrArrRefExp(expr)) {
                 SgExpression* rhs = pntr->get_rhs_operand();
-                int16_t _dep = ir_methods::is_input_dep(rhs, rename_table);
+                int16_t _dep = ir_methods::is_input_dep(rhs, def_map);
 
                 // Get the minimum level of the two.
                 dep_status = dep_status < _dep ? dep_status : _dep;

@@ -31,10 +31,10 @@
 using namespace SageBuilder;
 using namespace SageInterface;
 
-loop_traversal_t::loop_traversal_t(VariableRenaming*& _var_renaming) {
-    for_stmt = NULL;
+loop_traversal_t::loop_traversal_t(const du_table_t& _def_table) :
+        def_table(_def_table) {
+    initial_node = NULL;
     deep_search = true;
-    var_renaming = _var_renaming;
 }
 
 loop_info_list_t& loop_traversal_t::get_loop_info_list() {
@@ -46,8 +46,11 @@ void loop_traversal_t::set_deep_search(bool _deep_search) {
 }
 
 attrib loop_traversal_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
-    if (var_renaming == NULL || attr.skip)
-        return attr;
+    if (initial_node == NULL) {
+        initial_node = node;
+    }
+
+    ROSE_ASSERT(initial_node);
 
     if (ir_methods::is_loop(node)) {
         SgScopeStatement* scope_stmt = isSgScopeStatement(node);
@@ -60,14 +63,11 @@ attrib loop_traversal_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
         SgExpression* incr = NULL;
         int incr_op = ir_methods::INVALID_OP;
 
-        VariableRenaming::NumNodeRenameTable rename_table =
-            var_renaming->getReachingDefsAtNode(node);
-
         // Expand the iterator list into a map for easier lookup.
-        ir_methods::construct_def_map(rename_table, def_map);
+        ir_methods::construct_def_map(def_table, def_map);
 
-        ir_methods::get_loop_header_components(var_renaming, scope_stmt,
-                def_map, idxv, init, test, incr, incr_op);
+        ir_methods::get_loop_header_components(scope_stmt, idxv, init, test,
+                incr, incr_op, def_map);
 
         streams_t streams(deep_search);
         streams.traverse(node, attrib());
@@ -81,14 +81,6 @@ attrib loop_traversal_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
         else if (SgDoWhileStmt* do_while_stmt = isSgDoWhileStmt(scope_stmt))
             loop_body = do_while_stmt->get_body();
 
-        loop_traversal_t inner_traversal(var_renaming);
-
-        // Use the same deep_search flag as with the outer loop.
-        inner_traversal.set_deep_search(deep_search);
-
-        inner_traversal.traverse(loop_body, attrib());
-        loop_info_list_t& child_list = inner_traversal.get_loop_info_list();
-
         loop_info_t loop_info = {0};
         loop_info.loop_stmt = scope_stmt;
 
@@ -97,15 +89,34 @@ attrib loop_traversal_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
         loop_info.test_expr = test;
         loop_info.incr_expr = incr;
         loop_info.incr_op = incr_op;
-
         loop_info.processed = false;
-
         loop_info.reference_list = _ref_list;
-        loop_info.child_loop_info.push_back(child_list);
-        loop_info_list.push_back(loop_info);
 
-        attr.skip = true;
-        return attr;
+        // Process child loops, if any.
+        loop_traversal_t inner_traversal(def_table);
+        // Use the same deep_search flag as with the outer loop.
+        inner_traversal.set_deep_search(deep_search);
+        inner_traversal.traverse(loop_body, attrib());
+        loop_info_list_t& child_list = inner_traversal.get_loop_info_list();
+        loop_info.child_loop_info.push_back(child_list);
+
+        if (ir_methods::is_loop(initial_node)) {
+            if (initial_node != node) {
+                // This is some other child node of the parent loop node.
+                // Hence skip it.
+                return attr;
+            }
+        } else {
+            // initial_node is a function definition.
+            // is `node' the top-level loop in the function?
+            if (ir_methods::is_top_level_loop(node, initial_node) == false) {
+                return attr;
+            }
+        }
+
+        // Add this loop to the list only if
+        // the above two conditions did not invalidate it.
+        loop_info_list.push_back(loop_info);
     }
 
     return attr;

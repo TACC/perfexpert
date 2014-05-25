@@ -23,15 +23,14 @@
 #define TOOLS_MACPO_INST_INCLUDE_REUSE_DIST_H_
 
 #include <rose.h>
-#include <VariableRenaming.h>
 
 #include "inst_defs.h"
 #include "traversal.h"
 
 class reuse_dist_t : public traversal_t {
  public:
-    explicit reuse_dist_t(VariableRenaming*& _var_renaming) :
-        traversal_t(_var_renaming) {
+    explicit reuse_dist_t(const du_table_t& def_table) :
+        traversal_t(def_table) {
         set_deep_search(false);
     }
 

@@ -23,15 +23,14 @@
 #define TOOLS_MACPO_INST_INCLUDE_BRANCHPATH_H_
 
 #include <rose.h>
-#include <VariableRenaming.h>
 
 #include "inst_defs.h"
 #include "traversal.h"
 
 class branchpath_t : public traversal_t {
  public:
-    explicit branchpath_t(VariableRenaming*& _var_renaming) :
-        traversal_t(_var_renaming) {}
+    explicit branchpath_t(const du_table_t& def_table) :
+        traversal_t(def_table) {}
 
  private:
     bool instrument_loop(loop_info_t& loop_info);

@@ -23,15 +23,14 @@
 #define TOOLS_MACPO_INST_INCLUDE_TRIPCOUNT_H_
 
 #include <rose.h>
-#include <VariableRenaming.h>
 
 #include "inst_defs.h"
 #include "traversal.h"
 
 class tripcount_t : public traversal_t {
  public:
-    explicit tripcount_t(VariableRenaming*& _var_renaming) :
-        traversal_t(_var_renaming) {}
+    explicit tripcount_t(const du_table_t& def_table) :
+        traversal_t(def_table) {}
 
  private:
     bool instrument_loop(loop_info_t& loop_info);

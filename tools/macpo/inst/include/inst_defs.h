@@ -23,6 +23,7 @@
 #define TOOLS_MACPO_INST_INCLUDE_INST_DEFS_H_
 
 #include <rose.h>
+#include <VariableRenaming.h>
 
 #include <string>
 #include <vector>
@@ -73,5 +74,8 @@ class attrib {
         skip = false;
     }
 };
+
+typedef VariableRenaming::TableEntry du_entry_t;
+typedef VariableRenaming::DefUseTable du_table_t;
 
 #endif  // TOOLS_MACPO_INST_INCLUDE_INST_DEFS_H_

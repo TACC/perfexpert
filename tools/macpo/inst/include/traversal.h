@@ -32,7 +32,7 @@
 
 class traversal_t {
  public:
-    explicit traversal_t(VariableRenaming*& _var_renaming);
+    explicit traversal_t(const du_table_t& _def_table);
     ~traversal_t();
 
     virtual name_list_t& get_stream_list();
@@ -56,7 +56,7 @@ class traversal_t {
     analysis_profile_t analysis_profile;
 
  protected:
-    VariableRenaming* var_renaming;
+    const du_table_t def_table;
 };
 
 #endif  // TOOLS_MACPO_INST_INCLUDE_TRAVERSAL_H_

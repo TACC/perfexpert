@@ -34,6 +34,56 @@ using namespace SageInterface;
 
 std::set<std::string> ir_methods::intrinsic_list;
 
+bool ir_methods::is_top_level_loop(SgNode* node, SgNode* ref_node) {
+    if (ref_node == false) {
+        return false;
+    }
+
+    if (ir_methods::is_loop(node) == false) {
+        return false;
+    }
+
+    // Check against each possible loop type.
+
+    // BTW, getEnclosingNode, by default, does not include the self-node.
+    SgDoWhileStmt* do_while_stmt = getEnclosingNode<SgDoWhileStmt>(node);
+    if (do_while_stmt != NULL &&
+        (ref_node == do_while_stmt ||
+         isAncestor(ref_node, do_while_stmt))) {
+        return false;
+    }
+
+    SgForAllStatement* for_all_stmt = getEnclosingNode<SgForAllStatement>(node);
+    if (for_all_stmt != NULL &&
+        (ref_node == for_all_stmt ||
+         isAncestor(ref_node, for_all_stmt))) {
+        return false;
+    }
+
+    SgForStatement* for_stmt = getEnclosingNode<SgForStatement>(node);
+    if (for_stmt != NULL &&
+        (ref_node == for_stmt ||
+         isAncestor(ref_node, for_stmt))) {
+        return false;
+    }
+
+    SgFortranDo* do_stmt = getEnclosingNode<SgFortranDo>(node);
+    if (do_stmt != NULL &&
+        (ref_node == do_stmt ||
+         isAncestor(ref_node, do_stmt))) {
+        return false;
+    }
+
+    SgWhileStmt* while_stmt = getEnclosingNode<SgWhileStmt>(node);
+    if (while_stmt != NULL &&
+        (ref_node == while_stmt ||
+         isAncestor(ref_node, while_stmt))) {
+        return false;
+    }
+
+    return true;
+}
+
 SgCastExp* ir_methods::get_function_address(SgScopeStatement* loop_stmt) {
     SgFunctionDefinition* func_def = NULL;
     func_def = getEnclosingNode<SgFunctionDefinition>(loop_stmt);
@@ -55,8 +105,7 @@ SgCastExp* ir_methods::get_function_address(SgScopeStatement* loop_stmt) {
     return buildCastExp(address_op, void_pointer_type);
 }
 
-int16_t ir_methods::is_input_dep(SgNode* node,
-        VariableRenaming::NumNodeRenameTable& rename_table) {
+int16_t ir_methods::is_input_dep(const SgNode* node, def_map_t& def_map) {
     if (node == NULL) {
         return DEP_UNKNOWN;
     }
@@ -65,15 +114,17 @@ int16_t ir_methods::is_input_dep(SgNode* node,
         return NON_DEPENDENT;
     }
 
-    if (SgExpression* expr = isSgExpression(node)) {
+    if (const SgExpression* expr = isSgExpression(node)) {
         if (isConstType(expr->get_type())) {
             return NON_DEPENDENT;
         }
     }
 
-    if (SgBinaryOp* bin_op = isSgBinaryOp(node)) {
-        int16_t dep_lhs = is_input_dep(bin_op->get_lhs_operand(), rename_table);
-        int16_t dep_rhs = is_input_dep(bin_op->get_rhs_operand(), rename_table);
+    if (const SgBinaryOp* bin_op = isSgBinaryOp(node)) {
+        const SgExpression* lhs_expr = bin_op->get_lhs_operand();
+        const SgExpression* rhs_expr = bin_op->get_rhs_operand();
+        int16_t dep_lhs = is_input_dep(lhs_expr, def_map);
+        int16_t dep_rhs = is_input_dep(rhs_expr, def_map);
 
         if (dep_lhs == DEP_UNKNOWN || dep_rhs == DEP_UNKNOWN) {
             return DEP_UNKNOWN;
@@ -86,45 +137,53 @@ int16_t ir_methods::is_input_dep(SgNode* node,
         return NON_DEPENDENT;
     }
 
-    def_map_t def_map;
-    // Expand the iterator list into a map for easier lookup.
-    ir_methods::construct_def_map(rename_table, def_map);
-
-    std::string str = node->unparseToString();
-    if (def_map.find(str) == def_map.end()) {
+    const std::string node_str = node->unparseToString();
+    if (def_map.find(node_str) == def_map.end()) {
         return NON_DEPENDENT;
     }
 
-    VariableRenaming::NumNodeRenameEntry entry_list = def_map[str];
-    entry_iterator entry_first = entry_list.begin();
-    SgNode* def_node = entry_first->second;
-    if (def_node == NULL) {
-        return DEP_UNKNOWN;
-    }
-
-    if (SgVariableDefinition* var_def = isSgVariableDefinition(def_node)) {
-        SgInitializer* init = var_def->get_vardefn()->get_initializer();
-        if (SgAssignInitializer* assign_init = isSgAssignInitializer(init)) {
-            SgExpression* expr = assign_init->get_operand();
-            return is_input_dep(expr, rename_table);
+    int status = NON_DEPENDENT;
+    const node_list_t& node_list = def_map.at(node_str);
+    // FIXME: Use dominator tree to filter out some of the definitions.
+    // FIXME: Also needs identification of function arguments.
+    for (node_list_t::const_iterator it = node_list.begin();
+            it != node_list.end(); it++) {
+        const SgNode* def_node = *it;
+        if (def_node == NULL) {
+            return DEP_UNKNOWN;
         }
 
-        return DEP_UNKNOWN;
-    }
+        int _status = NON_DEPENDENT;
+        if (const SgVariableDefinition* var_def =
+                isSgVariableDefinition(def_node)) {
+            const SgInitializer* init =
+                var_def->get_vardefn()->get_initializer();
+            if (const SgAssignInitializer* assign =
+                    isSgAssignInitializer(init)) {
+                const SgExpression* expr = assign->get_operand();
+                _status = is_input_dep(expr, def_map);
+            }
 
-    if (SgAssignStatement* assign_stmt = isSgAssignStatement(def_node)) {
-        SgExpression* value = assign_stmt->get_value();
-        return is_input_dep(value, rename_table);
-    }
+            _status = DEP_UNKNOWN;
+        } else if (const SgAssignStatement* assign =
+                isSgAssignStatement(def_node)) {
+            const SgExpression* value = assign->get_value();
+            _status = is_input_dep(value, def_map);
+        } else if (const SgExprStatement* expr_stmt =
+                isSgExprStatement(def_node)) {
+            const SgExpression* expr = expr_stmt->get_expression();
+            _status = is_input_dep(expr, def_map);
+        } else if (const SgAssignOp* assign_op = isSgAssignOp(def_node)) {
+            const SgExpression* expr = assign_op->get_rhs_operand();
+            _status = is_input_dep(expr, def_map);
+        }
 
-    if (SgExprStatement* expr_stmt = isSgExprStatement(def_node)) {
-        SgExpression* expr = expr_stmt->get_expression();
-        return is_input_dep(expr, rename_table);
-    }
-
-    if (SgAssignOp* assign_op = isSgAssignOp(def_node)) {
-        SgExpression* expr = assign_op->get_rhs_operand();
-        return is_input_dep(expr, rename_table);
+        status = status < _status ? status : _status;
+        if (status == DEPENDENT) {
+            // Can't get any lower than this,
+            // so we might as well return now.
+            return DEPENDENT;
+        }
     }
 
 #if 0
@@ -152,6 +211,27 @@ bool ir_methods::is_intrinsic_function(const std::string& name) {
     }
 
     return false;
+}
+
+void ir_methods::construct_def_map(const du_table_t& def_table,
+        def_map_t& def_map) {
+    def_map.clear();
+
+    for (du_table_t::const_iterator it = def_table.begin();
+            it != def_table.end(); it++) {
+        const du_entry_t entry = it->second;
+        for (du_entry_t::const_iterator it = entry.begin(); it != entry.end();
+                it++) {
+            const VariableRenaming::VarName name_list = it->first;
+            const node_list_t& entry_list = it->second;
+
+            for (std::vector<SgInitializedName*>::const_iterator name_it =
+                    name_list.begin(); name_it != name_list.end(); name_it++) {
+                const std::string var_name = (*name_it)->get_name();
+                def_map[var_name] = entry_list;
+            }
+        }
+    }
 }
 
 void ir_methods::match_end_of_constructs(SgNode* ref_node, SgNode* node) {
@@ -581,10 +661,10 @@ bool ir_methods::vectorizable(SgStatement*& stmt) {
     return true;
 }
 
-int ir_methods::get_loop_header_components(VariableRenaming*& var_renaming,
-        SgScopeStatement*& scope_stmt, def_map_t& def_map, SgExpression*&
-        idxv_expr, SgExpression*& init_expr, SgExpression*& test_expr,
-        SgExpression*& incr_expr, int& incr_op) {
+int ir_methods::get_loop_header_components(SgScopeStatement*& scope_stmt,
+        SgExpression*& idxv_expr, SgExpression*& init_expr,
+        SgExpression*& test_expr, SgExpression*& incr_expr, int& incr_op,
+        def_map_t& def_map) {
     int return_value = 0;
 
     SgLocatedNode* located_node = isSgLocatedNode(scope_stmt);
@@ -621,18 +701,9 @@ int ir_methods::get_loop_header_components(VariableRenaming*& var_renaming,
         stmt = getNextStatement(stmt);
     }
 
-    // If we need to instrument at least one scalar variable,
-    // can this instrumentation be relocated to an earlier point
-    // in the program that is outside all loops?
-    VariableRenaming::NumNodeRenameTable rename_table =
-        var_renaming->getReachingDefsAtNode(scope_stmt);
-
-    // Expand the iterator list into a map for easier lookup.
-    ir_methods::construct_def_map(rename_table, def_map);
-
     if (SgForStatement* for_stmt = isSgForStatement(scope_stmt)) {
-        return get_for_loop_header_components(var_renaming, for_stmt, def_map,
-            idxv_expr, init_expr, test_expr, incr_expr, incr_op);
+        return get_for_loop_header_components(for_stmt, idxv_expr, init_expr,
+                test_expr, incr_expr, incr_op, def_map);
     } else {
         return get_while_loop_header_components(scope_stmt, idxv_expr,
                 test_expr, incr_expr, incr_op);
@@ -685,10 +756,10 @@ void ir_methods::incr_components(Sg_File_Info*& fileInfo, SgExpression*& expr,
     }
 }
 
-int ir_methods::get_for_loop_header_components(VariableRenaming*& var_renaming,
-        SgForStatement*& for_stmt, def_map_t& def_map, SgExpression*&
-        idxv_expr, SgExpression*& init_expr, SgExpression*& test_expr,
-        SgExpression*& incr_expr, int& incr_op) {
+int ir_methods::get_for_loop_header_components(SgForStatement*& for_stmt,
+        SgExpression*& idxv_expr, SgExpression*& init_expr,
+        SgExpression*& test_expr, SgExpression*& incr_expr, int& incr_op,
+        def_map_t& def_map) {
     int return_value = 0;
     SgExpression* increment_var[2] = {0};
 
@@ -850,18 +921,18 @@ int ir_methods::get_for_loop_header_components(VariableRenaming*& var_renaming,
             // Find the reaching definition of the index variable.
             std::string istr = idxv_expr->unparseToString();
             if (def_map.find(istr) != def_map.end()) {
-                VariableRenaming::NumNodeRenameEntry entry_list = def_map[istr];
+                node_list_t& entry_list = def_map.at(istr);
 
                 if (entry_list.size() == 1) {
-                    SgNode* def_node = entry_list.begin()->second;
+                    SgNode* def_node = entry_list[0];
                     init_expr = get_expr_value(def_node, istr);
                 } else {
                     int grandchild_count = 0;
                     SgExpression* expr_value = NULL;
-                    for (entry_iterator entry_it = entry_list.begin();
-                            entry_it != entry_list.end() &&
-                            grandchild_count < 2; entry_it++) {
-                        SgNode* def_node = (*entry_it).second;
+                    for (node_list_t::iterator it = entry_list.begin();
+                            it != entry_list.end() && grandchild_count < 2;
+                            it++) {
+                        SgNode* def_node = *it;
                         if (isAncestor(for_stmt, def_node))
                             grandchild_count += 1;
                         else
@@ -1143,26 +1214,6 @@ bool ir_methods::in_write_set(SgStatement* statement, SgExpression* expr) {
     return false;
 }
 
-void ir_methods::construct_def_map(VariableRenaming::NumNodeRenameTable&
-        rename_table, def_map_t& def_map) {
-    typedef VariableRenaming::NumNodeRenameTable::iterator table_iterator;
-
-    def_map.clear();
-
-    for (table_iterator table_it = rename_table.begin();
-            table_it != rename_table.end(); table_it++) {
-        VariableRenaming::VarName name_list = table_it->first;
-        VariableRenaming::NumNodeRenameEntry entry_list = table_it->second;
-
-        for (std::vector<SgInitializedName*>::iterator name_it =
-                name_list.begin(); name_it != name_list.end(); name_it++) {
-            std::string var_name = (*name_it)->get_name();
-
-            def_map[var_name] = entry_list;
-        }
-    }
-}
-
 SgExpression* ir_methods::get_expr_value(SgNode*& node, std::string var_name) {
     SgInitializedName* init_name = isSgInitializedName(node);
     if (init_name && init_name->get_initializer()) {
@@ -1337,8 +1388,12 @@ void ir_methods::replace_expr(SgExpression*& expr, SgExpression*& search_expr,
 }
 
 bool ir_methods::is_loop(SgNode* node) {
+    if (node == NULL) {
+        return false;
+    }
+
     return isSgFortranDo(node) || isSgForStatement(node) || isSgWhileStmt(node)
-        || isSgDoWhileStmt(node);
+        || isSgDoWhileStmt(node) || isSgForAllStatement(node);
 }
 
 bool ir_methods::is_function(SgNode* node) {

@@ -23,7 +23,6 @@
 #define TOOLS_MACPO_INST_INCLUDE_ALIGNCHECK_H_
 
 #include <rose.h>
-#include <VariableRenaming.h>
 
 #include <map>
 #include <string>
@@ -33,9 +32,9 @@
 
 class aligncheck_t : public traversal_t {
  public:
-    explicit aligncheck_t(VariableRenaming*& _var_renaming) :
-        traversal_t(_var_renaming) {
-        set_deep_search(false);
+    explicit aligncheck_t(const du_table_t& def_table) :
+        traversal_t(def_table) {
+            set_deep_search(false);
     }
 
  private:

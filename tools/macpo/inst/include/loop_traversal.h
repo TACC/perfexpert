@@ -23,14 +23,13 @@
 #define TOOLS_MACPO_INST_INCLUDE_LOOP_TRAVERSAL_H_
 
 #include <rose.h>
-#include <VariableRenaming.h>
 
 #include "generic_defs.h"
 #include "inst_defs.h"
 
 class loop_traversal_t : public AstTopDownProcessing<attrib> {
  public:
-    explicit loop_traversal_t(VariableRenaming*& _var_renaming);
+    explicit loop_traversal_t(const du_table_t& def_table);
 
     loop_info_list_t& get_loop_info_list();
     void set_deep_search(bool _deep_search);
@@ -38,10 +37,11 @@ class loop_traversal_t : public AstTopDownProcessing<attrib> {
 
  private:
     bool deep_search;
-    SgForStatement* for_stmt;
+    SgNode* initial_node;
     reference_list_t reference_list;
     loop_info_list_t loop_info_list;
-    VariableRenaming* var_renaming;
+
+    const du_table_t def_table;
 };
 
 #endif  // TOOLS_MACPO_INST_INCLUDE_LOOP_TRAVERSAL_H_

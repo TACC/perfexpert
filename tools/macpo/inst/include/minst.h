@@ -22,12 +22,13 @@
 #ifndef TOOLS_MACPO_INST_INCLUDE_MINST_H_
 #define TOOLS_MACPO_INST_INCLUDE_MINST_H_
 
-#include <VariableRenaming.h>
+#include <rose.h>
 
 #include <string>
 
 #include "analysis_profile.h"
 #include "generic_defs.h"
+#include "inst_defs.h"
 #include "instrumentor.h"
 
 bool midend(SgProject* project, options_t& options);
@@ -48,7 +49,6 @@ class MINST : public AstSimpleProcessing {
     bool map_function_inserted;
 
     SgGlobal* global_node;
-    VariableRenaming* var_renaming;
     SgFunctionDeclaration *def_decl, *non_def_decl;
 
     void analyze_node(SgNode* node, int16_t action);
@@ -59,6 +59,8 @@ class MINST : public AstSimpleProcessing {
     statement_list_t statement_list;
     name_list_t stream_list;
     name_list_t file_list;
+
+    du_table_t def_table;
 };
 
 #endif  // TOOLS_MACPO_INST_INCLUDE_MINST_H_

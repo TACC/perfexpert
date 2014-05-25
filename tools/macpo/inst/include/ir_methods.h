@@ -23,7 +23,6 @@
 #define TOOLS_MACPO_INST_INCLUDE_IR_METHODS_H_
 
 #include <rose.h>
-#include <VariableRenaming.h>
 
 #include <map>
 #include <set>
@@ -53,18 +52,20 @@ class ir_methods {
     static const int OP_MUL     = 1 << 3;
     static const int OP_DIV     = 1 << 4;
 
+    typedef std::map<std::string, node_list_t> def_map_t;
+
     // XXX: Don't change the order of the elements of this enum!
     // XXX: The order is important for subsequent arithmetic comparisons.
     enum { DEPENDENT = 0, DEP_UNKNOWN, NON_DEPENDENT };
 
-    typedef VariableRenaming::NumNodeRenameEntry::iterator entry_iterator;
-    typedef std::map<std::string, VariableRenaming::NumNodeRenameEntry>
-        def_map_t;
+    static bool is_top_level_loop(SgNode* node, SgNode* ref_node);
 
     static SgCastExp* get_function_address(SgScopeStatement* loop_stmt);
 
-    static int16_t is_input_dep(SgNode* node,
-        VariableRenaming::NumNodeRenameTable& rename_table);
+    static void construct_def_map(const du_table_t& def_table,
+            def_map_t& def_map);
+
+    static int16_t is_input_dep(const SgNode* node, def_map_t& def_map);
 
     static void match_end_of_constructs(SgNode* ref_node, SgNode* stmt);
 
@@ -108,24 +109,17 @@ class ir_methods {
             scope_stmt, SgExpression*& idxv_expr, SgExpression*& test_expr,
             SgExpression*& incr_expr, int& incr_op);
 
-    static int get_for_loop_header_components(VariableRenaming*&
-            var_renaming, SgForStatement*& for_stmt, def_map_t& def_map,
+    static int get_for_loop_header_components(SgForStatement*& for_stmt,
             SgExpression*& idxv_expr, SgExpression*& init_expr,
-            SgExpression*& test_expr, SgExpression*& incr_expr,
-            int& incr_op);
+            SgExpression*& test_expr, SgExpression*& incr_expr, int& incr_op,
+            def_map_t& def_map);
 
-    static int get_loop_header_components(VariableRenaming*& var_renaming,
-            SgScopeStatement*& scope_stmt, def_map_t& def_map,
+    static int get_loop_header_components(SgScopeStatement*& scope_stmt,
             SgExpression*& idxv_expr, SgExpression*& init_expr,
-            SgExpression*& test_expr, SgExpression*& incr_expr,
-            int& incr_op);
+            SgExpression*& test_expr, SgExpression*& incr_expr, int& incr_op,
+            def_map_t& def_map);
 
-    static void construct_def_map(VariableRenaming::NumNodeRenameTable&
-            rename_table, std::map<std::string,
-            VariableRenaming::NumNodeRenameEntry>& def_map);
-
-    static SgExpression* get_expr_value(SgNode*& node, std::string
-            var_name);
+    static SgExpression* get_expr_value(SgNode*& node, std::string var_name);
 
     static SgExprStatement* prepare_call_statement(SgBasicBlock* bb,
             const std::string& function_name,
