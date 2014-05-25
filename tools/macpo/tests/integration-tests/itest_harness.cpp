@@ -42,6 +42,8 @@ std::string instrument_and_link(std::string input_file,
     string_list_t args;
     populate_args(args, input_file, output_file, special_args);
 
+    print_args(args);
+
     int pid;
     switch ((pid = fork())) {
         default:
@@ -180,6 +182,17 @@ bool verify_output(std::string& filename, std::string& binary) {
     std::cout << "Remaining entries in expected output, starting with: " <<
         file_line_list[ctr] << "!" << std::endl;
     return false;
+}
+
+static void print_args(const string_list_t& args) {
+    std::cout << mprefix << "running command:";
+    for (string_list_t::const_iterator it = args.begin(); it != args.end();
+            it++) {
+        const std::string& argument = *it;
+        std::cout << " " << argument;
+    }
+
+    std::cout << std::endl;
 }
 
 static void populate_args(string_list_t& args, std::string& input_file,
