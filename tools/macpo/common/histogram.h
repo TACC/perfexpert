@@ -106,19 +106,23 @@ class multigram_t {
         if (it != map_indexes.end()) {
             l2_map_t* l2_map = it->second;
 
-            // If it's defined, it has to be non-NULL.
-            assert(l2_map != NULL);
+            // If it's defined, then we reached a race condition.
+            // Just skip this data point.
+            if (l2_map == NULL) {
+                return NULL;
+            }
 
             l2_iterator it = l2_map->find(function_address);
             if (it != l2_map->end()) {
                 l3_map_t* l3_map = it->second;
 
                 // If it's defined, it has to be non-NULL.
-                assert(l3_map != NULL);
+                if (l3_map == NULL) {
+                    return NULL;
+                }
 
                 l3_iterator it = l3_map->find(line_number);
                 if (it != l3_map->end()) {
-                    assert(it->second);
                     return it->second;
                 } else {
                     hist_t* hist = new hist_t();
@@ -166,7 +170,9 @@ class multigram_t {
 
         hist_t* hist = map_into_histogram(thread_id, function_address,
             line_number);
-        assert(hist != NULL);
+        if (hist == NULL) {
+            return 0;
+        }
 
         return hist->get(bin);
     }
@@ -175,7 +181,9 @@ class multigram_t {
             const bin_t& bin, const val_t& val) {
         hist_t* hist = map_into_histogram(thread_id, function_address,
             line_number);
-        assert(hist != NULL);
+        if (hist == NULL) {
+            return;
+        }
 
         hist->set(bin, val);
     }
@@ -184,7 +192,9 @@ class multigram_t {
             int64_t line_number, const bin_t& bin, const val_t& val) {
         hist_t* hist = map_into_histogram(thread_id, function_address,
             line_number);
-        assert(hist != NULL);
+        if (hist == NULL) {
+            return 0;
+        }
 
         return hist->increment(bin, val);
     }
