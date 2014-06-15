@@ -74,8 +74,9 @@ bool operator<(const src_location_t& left, const src_location_t& right) {
         left.line_number < right.line_number);
 }
 
-typedef std::map<src_location_t, int64_t> src_location_list_t;
+typedef std::set<src_location_t> src_location_list_t;
 static src_location_list_t analyzed_loops;
+static std::map<void*, uint64_t> function_count;
 
 static multigram_t<int16_t, bool> overlap_hist;
 static multigram_t<int16_t, int16_t> branch_hist;
@@ -627,7 +628,7 @@ void bot_print_branch_divergence_results(const std::string& filename,
     for (src_location_list_t::iterator it = branch_locs.begin();
             it != branch_locs.end(); it++) {
         int16_t branch_status = BRANCH_NOINIT;
-        const src_location_t& branch_loc = it->first;
+        const src_location_t& branch_loc = *it;
 
         // Then for each such branch, aggregate metrics across threads.
         for (multigram_t<int16_t, int16_t>::pair_list_t::iterator it =
@@ -685,7 +686,7 @@ void print_branch_divergence_results(const src_location_t& location) {
     for (src_location_list_t::iterator it = branch_locs.begin();
             it != branch_locs.end(); it++) {
         int16_t branch_status = BRANCH_NOINIT;
-        const src_location_t& branch_loc = it->first;
+        const src_location_t& branch_loc = *it;
 
         // Then for each such branch, aggregate metrics across threads.
         for (multigram_t<int16_t, int16_t>::pair_list_t::iterator it =
@@ -853,7 +854,7 @@ void indigo__exit() {
 
         for (src_location_list_t::iterator it = analyzed_loops.begin();
                 it != analyzed_loops.end(); it++) {
-            const src_location_t& loc = it->first;
+            const src_location_t& loc = *it;
             const std::string func_name =
                 elf_reader_t::get_function_name(loc.function_address);
             bfd_vma vma = reinterpret_cast<bfd_vma>(loc.function_address);
@@ -954,14 +955,18 @@ int64_t* new_histogram(size_t histogram_entries) {
 void indigo__record_branch_c(int line_number, void* func_addr,
         int loop_line_number, int true_branch_count, int false_branch_count) {
     src_location_t loop_location(func_addr, loop_line_number);
+    std::map<void*, uint64_t>::iterator it = function_count.find(func_addr);
+    if (it != function_count.end()) {
+        if (it->second >= RECORD_THRESHOLD) {
+            return;
+        }
 
-    if (analyzed_loops[loop_location] >= RECORD_THRESHOLD) {
-        // We have too many measurements, skip the
-        // next datapoints for the sake of overhead.
-        return;
+        it->second += 1;
+    } else {
+        function_count[func_addr] += 1;
     }
 
-    analyzed_loops[loop_location] += 1;
+    analyzed_loops.insert(loop_location);
 
     // Short circuit to prevent runtime overhead.
     if (branch_hist.get(0, func_addr, line_number, 0) == BRANCH_UNKNOWN) {
@@ -973,7 +978,7 @@ void indigo__record_branch_c(int line_number, void* func_addr,
             loop_location);
 
     branch_loop_line_pair.insert(pair);
-    loop_branch_line_pair[loop_location][branch_location] += 1;
+    loop_branch_line_pair[loop_location].insert(branch_location);
 
     int status = BRANCH_UNKNOWN;
     int branch_count = true_branch_count + false_branch_count;
@@ -1028,14 +1033,18 @@ void indigo__vector_stride_c(int loop_line_number, int var_idx, void* addr,
 int indigo__aligncheck_c(int line_number, void* func_addr, int stream_count,
         int16_t dep_status, ...) {
     src_location_t location(func_addr, line_number);
+    std::map<void*, uint64_t>::iterator it = function_count.find(func_addr);
+    if (it != function_count.end()) {
+        if (it->second >= RECORD_THRESHOLD) {
+            return -1;
+        }
 
-    if (analyzed_loops[location] >= RECORD_THRESHOLD) {
-        // We have too many measurements, skip the
-        // next datapoints for the sake of overhead.
-        return -1;
+        it->second += 1;
+    } else {
+        function_count[func_addr] += 1;
     }
 
-    analyzed_loops[location] += 1;
+    analyzed_loops.insert(location);
 
     va_list args;
     int i, j;
@@ -1081,14 +1090,18 @@ int indigo__aligncheck_c(int line_number, void* func_addr, int stream_count,
 int indigo__sstore_aligncheck_c(int line_number, void* func_addr,
         int stream_count, int16_t dep_status, ...) {
     src_location_t location(func_addr, line_number);
+    std::map<void*, uint64_t>::iterator it = function_count.find(func_addr);
+    if (it != function_count.end()) {
+        if (it->second >= RECORD_THRESHOLD) {
+            return -1;
+        }
 
-    if (analyzed_loops[location] >= RECORD_THRESHOLD) {
-        // We have too many measurements, skip the
-        // next datapoints for the sake of overhead.
-        return -1;
+        it->second += 1;
+    } else {
+        function_count[func_addr] += 1;
     }
 
-    analyzed_loops[location] += 1;
+    analyzed_loops.insert(location);
 
     va_list args;
     int i, j;
@@ -1134,14 +1147,18 @@ int indigo__sstore_aligncheck_c(int line_number, void* func_addr,
 void indigo__overlap_check_c(int line_number, void* func_addr,
         int stream_count, ...) {
     src_location_t location(func_addr, line_number);
+    std::map<void*, uint64_t>::iterator it = function_count.find(func_addr);
+    if (it != function_count.end()) {
+        if (it->second >= RECORD_THRESHOLD) {
+            return;
+        }
 
-    if (analyzed_loops[location] >= RECORD_THRESHOLD) {
-        // We have too many measurements, skip the
-        // next datapoints for the sake of overhead.
-        return;
+        it->second += 1;
+    } else {
+        function_count[func_addr] += 1;
     }
 
-    analyzed_loops[location] += 1;
+    analyzed_loops.insert(location);
 
     va_list args;
     int i, j, ctr = 0;
@@ -1192,14 +1209,18 @@ void indigo__overlap_check_c(int line_number, void* func_addr,
 void indigo__tripcount_check_c(int line_number, void* func_addr,
         int64_t trip_count) {
     src_location_t location(func_addr, line_number);
+    std::map<void*, uint64_t>::iterator it = function_count.find(func_addr);
+    if (it != function_count.end()) {
+        if (it->second >= RECORD_THRESHOLD) {
+            return;
+        }
 
-    if (analyzed_loops[location] >= RECORD_THRESHOLD) {
-        // We have too many measurements, skip the
-        // next datapoints for the sake of overhead.
-        return;
+        it->second += 1;
+    } else {
+        function_count[func_addr] += 1;
     }
 
-    analyzed_loops[location] += 1;
+    analyzed_loops.insert(location);
 
     if (trip_count < 0)
         trip_count = 0;
@@ -1209,28 +1230,36 @@ void indigo__tripcount_check_c(int line_number, void* func_addr,
 
 void indigo__unknown_stride_check_c(int line_number, void* func_addr) {
     src_location_t location(func_addr, line_number);
+    std::map<void*, uint64_t>::iterator it = function_count.find(func_addr);
+    if (it != function_count.end()) {
+        if (it->second >= RECORD_THRESHOLD) {
+            return;
+        }
 
-    if (analyzed_loops[location] >= RECORD_THRESHOLD) {
-        // We have too many measurements, skip the
-        // next datapoints for the sake of overhead.
-        return;
+        it->second += 1;
+    } else {
+        function_count[func_addr] += 1;
     }
 
-    analyzed_loops[location] += 1;
+    analyzed_loops.insert(location);
 
     stride_hist.set(0, func_addr, line_number, 0, STRIDE_UNKNOWN);
 }
 
 void indigo__stride_check_c(int line_number, void* func_addr, int stride) {
     src_location_t location(func_addr, line_number);
+    std::map<void*, uint64_t>::iterator it = function_count.find(func_addr);
+    if (it != function_count.end()) {
+        if (it->second >= RECORD_THRESHOLD) {
+            return;
+        }
 
-    if (analyzed_loops[location] >= RECORD_THRESHOLD) {
-        // We have too many measurements, skip the
-        // next datapoints for the sake of overhead.
-        return;
+        it->second += 1;
+    } else {
+        function_count[func_addr] += 1;
     }
 
-    analyzed_loops[location] += 1;
+    analyzed_loops.insert(location);
 
     // Short circuit to prevent runtime overhead.
     if (stride_hist.get(0, func_addr, line_number, 0) == STRIDE_UNKNOWN)
