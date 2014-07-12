@@ -107,8 +107,6 @@ bool argparse::parse_location(const std::string& argument,
     return true;
 }
 
-#define CHECK_EQUAL_SIGN(eq)    if (!eq || !*(++eq))    return -1;
-
 int argparse::parse_arguments(char* arg, options_t& options) {
     std::string argument = arg, option, value;
 
@@ -197,6 +195,13 @@ int argparse::parse_arguments(char* arg, options_t& options) {
         options.disable_sampling = true;
     } else if (option == "profile-analysis") {
         options.profile_analysis = true;
+    } else if (option == "compiler") {
+        // Check if we were passed a valid executable.
+        if (!value.size()) {
+            return -1;
+        }
+
+        options.base_compiler = value;
     } else {
         return -1;
     }

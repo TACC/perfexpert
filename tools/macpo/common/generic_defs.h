@@ -23,12 +23,14 @@
 #define TOOLS_MACPO_COMMON_GENERIC_DEFS_H_
 
 #include <stdint.h>
+#include <sys/wait.h>
 
 #include <algorithm>
 #include <climits>
 #include <cstdlib>
 #include <cstring>
 #include <string>
+#include <sstream>
 #include <vector>
 
 #define mprefix "[macpo] "
@@ -86,6 +88,7 @@ typedef struct _tag_options_t {
     bool no_compile;
     bool disable_sampling;
     bool profile_analysis;
+    std::string base_compiler;
     std::string backup_filename;
     location_list_t location_list;
 
@@ -193,6 +196,74 @@ inline bool is_action(int16_t bitmap, const int16_t _action) {
 
     if (bitmap & _action)
         return true;
+}
+
+inline void split(const std::string& string, char delim, name_list_t& list) {
+    std::stringstream stream(string);
+    std::string item;
+
+    while (std::getline(stream, item, delim)) {
+        list.push_back(item);
+    }
+}
+
+static std::string get_path(std::string filename) {
+    if (filename.empty() || filename[0] == '/' || filename[0] == '.') {
+        return filename;
+    }
+
+    std::string path = getenv("PATH");
+    name_list_t dirs;
+    split(path, ':', dirs);
+
+    for (name_list_t::iterator it = dirs.begin(); it != dirs.end(); it++) {
+        std::string& dir = *it;
+        std::string filepath = dir + "/" + filename;
+
+        if (access(filepath.c_str(), R_OK | X_OK) == 0) {
+            return filepath;
+        }
+    }
+
+    return filename;
+}
+
+static bool execute_command(name_list_t arguments) {
+    if (arguments.empty()) {
+        return false;
+    }
+
+    // Construct argument list.
+    int pid;
+    const int num_args = arguments.size();
+    char* argv[num_args + 1];
+    for (int i = 0; i < num_args; i++) {
+        size_t malloc_size = arguments[i].size() + 1 * sizeof(char);
+        argv[i] = reinterpret_cast<char*>(malloc(malloc_size));
+        strncpy(argv[i], arguments[i].c_str(), arguments[i].size());
+        argv[i][arguments[i].size()] = '\0';
+    }
+
+    argv[num_args] = NULL;
+    switch (pid = fork()) {
+        case -1:
+            return false;
+
+        case 0:
+            execvp(argv[0], argv);
+            return false;
+
+        default:
+            wait(NULL);
+            break;
+    }
+
+    for (int i = 0; i < num_args; i++) {
+        free(argv[i]);
+        argv[i] = NULL;
+    }
+
+    return true;
 }
 
 #define ADDR_TO_CACHE_LINE(x)   (x >> 6)

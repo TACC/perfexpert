@@ -195,3 +195,20 @@ TEST(ArgParse, NoLocation02) {
     snprintf(argument, sizeof(argument), "--macpo:instrument=");
     EXPECT_EQ(argparse::parse_arguments(argument, options), -1);
 }
+
+TEST(ArgParse, CompilerBinary) {
+    char argument[128] = {0};
+    options_t options;
+
+    snprintf(argument, sizeof(argument), "--macpo:compiler=randcc");
+    EXPECT_EQ(argparse::parse_arguments(argument, options), 0);
+    EXPECT_EQ(options.base_compiler, "randcc");
+}
+
+TEST(ArgParse, EmptyCompilerBinary) {
+    char argument[128] = {0};
+    options_t options;
+
+    snprintf(argument, sizeof(argument), "--macpo:compiler=");
+    EXPECT_EQ(argparse::parse_arguments(argument, options), -1);
+}

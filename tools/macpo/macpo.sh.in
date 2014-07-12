@@ -109,6 +109,8 @@ do
       echo "  --macpo:profile-analysis              Collect basic profiling information"
       echo "                                        about the requested analysis or "
       echo "                                        instrumentation."
+      echo "  --macpo:compiler=<binary>             Use <binary> file as the underlying"
+      echo "                                        compiler."
       echo "  --help                                Give this help list."
       echo
       echo "  In addition to above options, all options accepted by GNU compilers can be"

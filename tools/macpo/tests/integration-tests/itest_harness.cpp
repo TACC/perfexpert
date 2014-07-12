@@ -280,15 +280,6 @@ static std::string get_process_stderr(std::string& binary_name) {
     return str_stderr;
 }
 
-static void split(const std::string& string, char delim, string_list_t& list) {
-    std::stringstream stream(string);
-    std::string item;
-
-    while (std::getline(stream, item, delim)) {
-        list.push_back(item);
-    }
-}
-
 static std::string get_file_contents(std::string& filename) {
     std::string line, contents;
     std::ifstream fileobj(filename.c_str());
