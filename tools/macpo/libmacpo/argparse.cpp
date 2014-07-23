@@ -23,6 +23,7 @@
 #include "argparse.h"
 
 #include <fcntl.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #include <cstring>
@@ -52,6 +53,7 @@ bool argparse::copy_file(const char *source_file,
         return false;
     }
 
+    fstat(src, &stat_buf);
     dst = open(destination_file, O_WRONLY | O_CREAT | O_TRUNC,
             stat_buf.st_mode & 0777);
     if (dst < 0) {

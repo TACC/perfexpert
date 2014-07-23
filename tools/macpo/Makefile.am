@@ -19,7 +19,7 @@
 # $HEADER$
 #
 
-SUBDIRS = inst libmrt analyze
+SUBDIRS = libmacpo inst libmrt analyze
 dist_bin_SCRIPTS = macpo.sh
 
 GTEST_DIR = $(srcdir)/../../contrib/gtest

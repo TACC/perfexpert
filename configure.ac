@@ -183,7 +183,7 @@ AC_ARG_WITH([libdwarf-include],
 AC_ARG_WITH([libelf],
     [AS_HELP_STRING([--with-libelf], [set ELF library and include path])],
     [CPPFLAGS+=" -I$withval/include"
-    LDFLAGS+=" -L$withval/lib"]
+    LDFLAGS+=" -L$withval/lib"
     LIBELF_LIB="$withval/lib"])
 
 AC_ARG_WITH([libelf-lib],
@@ -516,6 +516,7 @@ AS_IF([test x"$ENABLE_MACPO" = xyes], [
     AC_CONFIG_FILES([tools/macpo/analyze/Makefile])
     AC_CONFIG_FILES([tools/macpo/tests/Makefile])
     AC_CONFIG_FILES([tools/macpo/tests/libmrt/Makefile])
+    AC_CONFIG_FILES([tools/macpo/libmacpo/Makefile])
     AC_CONFIG_FILES([modules/macpo/Makefile])
 ], [
     AC_MSG_RESULT([no])

@@ -19,10 +19,15 @@
 # $HEADER$
 #
 
-bin_PROGRAMS = macpo
+lib_LIBRARIES = libmacpo.a
 
-macpo_SOURCES = inst.cc
-macpo_CXXFLAGS = -Wno-deprecated -I$(srcdir)/../libmacpo -I$(srcdir)/../common
-macpo_LDFLAGS = -lrose -L../libmacpo -lmacpo
+libmacpo_a_SOURCES = libmacpo.cc argparse.cpp minst.cpp instrumentor.cpp \
+                streams.cpp aligncheck.cpp ir_methods.cpp loop_traversal.cpp \
+                tracer.cpp generic_vars.cpp vector_strides.cpp \
+                analysis_profile.cpp tripcount.cpp branchpath.cpp \
+                pntr_overlap.cpp stride_check.cpp traversal.cpp reuse_dist.cpp
 
-# EOF
+libmacpo_a_CXXFLAGS = -I. -Wno-deprecated -I$(srcdir)/include \
+                -I$(srcdir)/../common
+
+include_HEADERS = libmacpo.h

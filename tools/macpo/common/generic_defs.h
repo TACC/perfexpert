@@ -27,29 +27,16 @@
 
 #include <algorithm>
 #include <climits>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <string>
 #include <sstream>
 #include <vector>
 
+#include "actions.h"
+
 #define mprefix "[macpo] "
-
-// Bitmap for ACTION values.
-// XXX: ACTION_NONE and ACTION_LAST are special actions!
-// Define all other actions after ACTION_NONE and before ACTION_LAST!
-
-const int16_t ACTION_NONE           = 0;
-const int16_t ACTION_INSTRUMENT     = 1 <<  0;
-const int16_t ACTION_ALIGNCHECK     = 1 <<  1;
-const int16_t ACTION_GENTRACE       = 1 <<  2;
-const int16_t ACTION_VECTORSTRIDES  = 1 <<  3;
-const int16_t ACTION_TRIPCOUNT      = 1 <<  4;
-const int16_t ACTION_BRANCHPATH     = 1 <<  5;
-const int16_t ACTION_OVERLAPCHECK   = 1 <<  6;
-const int16_t ACTION_STRIDECHECK    = 1 <<  7;
-const int16_t ACTION_REUSEDISTANCE  = 1 <<  8;
-const int16_t ACTION_LAST           = 1 <<  9;
 
 typedef struct {
     int16_t action;
@@ -167,6 +154,7 @@ typedef struct _tag_options_t {
         profile_analysis = false;
 
         backup_filename.clear();
+        base_compiler.clear();
         location_list.clear();
     }
 } options_t;
