@@ -108,6 +108,29 @@ static __thread int coreID = -1;
 static __thread avl_tree* tree = NULL;
 static __thread rdhist* histogram_list[MAX_VARIABLES];
 
+static volatile int16_t global_lock = 0;
+
+static inline void lock(volatile int16_t* lock_var) {
+    if (lock_var == NULL) {
+        return;
+    }
+
+    while (__sync_bool_compare_and_swap(lock_var, 0, 1) == false) {
+        // do nothing.
+    }
+
+    asm volatile("lfence" ::: "memory");
+}
+
+static inline void unlock(volatile int16_t* lock_var) {
+    if (lock_var == NULL) {
+        return;
+    }
+
+    *lock_var = 0;
+    asm volatile("sfence" ::: "memory");
+}
+
 static bool index_comparator(const val_idx_pair& v1, const val_idx_pair& v2) {
     return v1.first < v2.first;
 }
@@ -963,7 +986,9 @@ void indigo__record_branch_c(int line_number, void* func_addr,
 
         it->second += 1;
     } else {
+        lock(&global_lock);
         function_count[func_addr] += 1;
+        unlock(&global_lock);
     }
 
     analyzed_loops.insert(loop_location);
@@ -1041,7 +1066,9 @@ int indigo__aligncheck_c(int line_number, void* func_addr, int stream_count,
 
         it->second += 1;
     } else {
+        lock(&global_lock);
         function_count[func_addr] += 1;
+        unlock(&global_lock);
     }
 
     analyzed_loops.insert(location);
@@ -1098,7 +1125,9 @@ int indigo__sstore_aligncheck_c(int line_number, void* func_addr,
 
         it->second += 1;
     } else {
+        lock(&global_lock);
         function_count[func_addr] += 1;
+        unlock(&global_lock);
     }
 
     analyzed_loops.insert(location);
@@ -1155,7 +1184,9 @@ void indigo__overlap_check_c(int line_number, void* func_addr,
 
         it->second += 1;
     } else {
+        lock(&global_lock);
         function_count[func_addr] += 1;
+        unlock(&global_lock);
     }
 
     analyzed_loops.insert(location);
@@ -1217,7 +1248,9 @@ void indigo__tripcount_check_c(int line_number, void* func_addr,
 
         it->second += 1;
     } else {
+        lock(&global_lock);
         function_count[func_addr] += 1;
+        unlock(&global_lock);
     }
 
     analyzed_loops.insert(location);
@@ -1238,7 +1271,9 @@ void indigo__unknown_stride_check_c(int line_number, void* func_addr) {
 
         it->second += 1;
     } else {
+        lock(&global_lock);
         function_count[func_addr] += 1;
+        unlock(&global_lock);
     }
 
     analyzed_loops.insert(location);
@@ -1256,7 +1291,9 @@ void indigo__stride_check_c(int line_number, void* func_addr, int stride) {
 
         it->second += 1;
     } else {
+        lock(&global_lock);
         function_count[func_addr] += 1;
+        unlock(&global_lock);
     }
 
     analyzed_loops.insert(location);
