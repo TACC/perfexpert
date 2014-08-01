@@ -125,8 +125,9 @@ uint8_t instrument_block(macpo_options_t* macpo_options, uint16_t action,
 
     // Check if this location has already been added to the list.
     code_location_t* head = macpo_options->location;
-    while (head != NULL && strcmp(head->name, name) != 0 &&
-            head->line_number != line_number) {
+    while (head != NULL && (strcmp(head->name, name) != 0 ||
+            (strcmp(head->name, name) == 0 &&
+            head->line_number != line_number))) {
         head = head->next;
     }
 
