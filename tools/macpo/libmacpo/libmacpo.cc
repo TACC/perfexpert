@@ -253,7 +253,8 @@ uint8_t instrument(macpo_options_t* macpo_options, const char* args[],
             // Replace the macpo binary with the target compiler.
             arguments[0] = base_compiler;
 
-            // Loop over each file, replacing the name with the modified name.
+            // Loop over each file, creating a backup of the original file
+            // and renaming the unparsed file to the name of the original file.
             for (int i = 0; i < project->numberOfFiles(); i++) {
                 SgFile* file = (*project)[i];
                 std::string in_filename = file->getFileName();
@@ -265,21 +266,18 @@ uint8_t instrument(macpo_options_t* macpo_options, const char* args[],
                     continue;
                 }
 
-                name_list_t::iterator it = std::find(arguments.begin(),
-                        arguments.end(), in_filename);
-                if (it == arguments.end()) {
-                    size_t last_slash = in_filename.rfind('/');
-                    std::string base = in_filename.substr(last_slash + 1);
-                    it = std::find(arguments.begin(), arguments.end(), base);
-                    if (it == arguments.end()) {
-                        // Funny, this is a file being compiled but
-                        // we cannot find it in the argument list.
-                        assert(false && "Cannot find file in argument list!");
-                    }
-                }
+                size_t last_slash = in_filename.rfind('/');
+                std::string base = in_filename.substr(last_slash + 1);
+                std::string dir = in_filename.substr(0, last_slash);
+                std::string backup_filename = dir + "/backup." + base;
 
-                size_t index = std::distance(arguments.begin(), it);
-                arguments[index] = out_filename;
+                // Backup the original file.
+                argparse::copy_file(in_filename.c_str(),
+                        backup_filename.c_str());
+
+                // Now overwrite the original file with the unparsed file.
+                argparse::copy_file(out_filename.c_str(), in_filename.c_str());
+                unlink(out_filename.c_str());
             }
 
             // Remove the -rose:openmp:ast_only option as
