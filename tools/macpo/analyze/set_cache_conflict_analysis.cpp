@@ -31,13 +31,15 @@
 // TODO(goyalankit): remove hardcoded associativity
 #define ASSOCIATIVITY 8
 
-#define BIT_MASK (((unsigned) -1 >> (31 - (11))) & ~((1U << (6)) - 1))
+#define BIT_MASK (size_t)(((size_t) -1 >> ((sizeof(size_t)*8) \
+                - (11))) & ~((1U << (6)) - 1))
 
 unsigned address_to_set(size_t address) {
     return ((address & BIT_MASK) >> 6);
 }
 
-void print_set_conflicts(std::vector<conflict_list_t> &conflicts, int num_sets) {
+void print_set_conflicts(std::vector<conflict_list_t> &conflicts,
+        int num_sets) {
     int total_conflicts = 0;
     std::map< int, std::map<int, int>* > core_set_var_conf;
     for (int core_id = 0; core_id < conflicts.size(); core_id++) {
