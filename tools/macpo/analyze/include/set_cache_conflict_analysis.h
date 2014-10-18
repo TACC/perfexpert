@@ -28,13 +28,14 @@
 
 int set_cache_conflict_analysis(const global_data_t& global_data);
 
-
-typedef struct conflict_t{
+struct conflict_t{
     size_t set_number;
     size_t var_idx;
 
     conflict_t(size_t _s, size_t _v) :
         set_number(_s), var_idx(_v) {}
 };
+
+typedef std::vector<conflict_t> conflict_list_t;
 
 #endif /* SET_CACHE_CONFLICT_ANALYSIS_H_ */
