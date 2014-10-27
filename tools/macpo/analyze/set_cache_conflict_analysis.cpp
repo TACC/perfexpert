@@ -31,11 +31,13 @@
 // TODO(goyalankit): remove hardcoded associativity
 #define ASSOCIATIVITY 8
 
-#define BIT_MASK (size_t)(((size_t) -1 >> ((sizeof(size_t)*8) \
-                - (11))) & ~((1U << (6)) - 1))
+// creates a bit mask with bits between a and b from the right as 1.
+// example: b = 4, a = 2 => 0000001100
+#define BIT_MASK(a, b) (size_t)(((size_t) -1 >> ((sizeof(size_t)*8) \
+                - (b))) & ~((1U << (a)) - 1))
 
 unsigned address_to_set(size_t address) {
-    return ((address & BIT_MASK) >> 6);
+    return ((address & BIT_MASK(6, 12)) >> 6);
 }
 
 void print_set_conflicts(std::vector<conflict_list_t> &conflicts,
@@ -75,9 +77,13 @@ int set_cache_conflict_analysis(const global_data_t& global_data) {
     const int num_sets = l1_data.size/
         (l1_data.line_size  * l1_data.associativity);
     std::vector< conflict_list_t > set_conflicts_per_core(num_cores);
+
     // list of per set avl trees for each core
-    std::vector<avl_tree_list_t *> avl_trees_per_core(num_cores,
-            new avl_tree_list_t(num_sets, new avl_tree()));
+    std::vector<avl_tree_list_t *> avl_trees_per_core(num_cores);
+
+    for (int k = 0; k < num_cores; k++) {
+        avl_trees_per_core[k] = new avl_tree_list_t(num_sets, new avl_tree());
+    }
 
     std::cout << "Getting set cache conflicts" << std::endl;
 
