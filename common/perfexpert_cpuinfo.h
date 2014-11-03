@@ -30,6 +30,8 @@
 extern "C" {
 #endif
 
+
+// TODO: this looks like garbage. Only the VTune module is using it...
 /* Intel CPUs models */
 typedef enum {
     NEHALEM_EP      = 26,
