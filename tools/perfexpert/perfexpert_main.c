@@ -276,7 +276,7 @@ int main(int argc, char** argv) {
     /* Step 7: Disconnect from DB */
     if (PERFEXPERT_SUCCESS != perfexpert_database_disconnect(globals.db)) {
         OUTPUT(("%s", _ERROR("disconnecting from database")));
-        goto CLEANUP;
+        return PERFEXPERT_FAILURE;
     }
 
     /* Step 8: Remove the garbage */
@@ -306,9 +306,9 @@ int main(int argc, char** argv) {
     PERFEXPERT_DEALLOC(globals.dbfile);
     PERFEXPERT_DEALLOC(globals.workdir);
     PERFEXPERT_DEALLOC(globals.moduledir);
-    PERFEXPERT_DEALLOC(globals.program);
     PERFEXPERT_DEALLOC(globals.program_path);
     PERFEXPERT_DEALLOC(globals.program_full);
+    perfexpert_alloc_free_all();
 
     return rc;
 }
