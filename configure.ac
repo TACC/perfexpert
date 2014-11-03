@@ -860,6 +860,47 @@ AS_IF([test x"$ENABLE_LCPI" = xyes], [
 AC_SUBST([ENABLE_LCPI])
 
 #------------------------------------------------------------------------------
+# MACVEC module requirements
+#
+AC_ARG_ENABLE([module-macvec],
+    [AS_HELP_STRING([--disable-module-macvec],
+        [disable MACVEC analysis module])],
+    [ENABLE_MACVEC=$enableval], [ENABLE_MACVEC=yes])
+
+AC_MSG_CHECKING([whether to enable MACVEC analysis module])
+AS_IF([test x"$ENABLE_MACVEC" = xyes], [
+    AC_MSG_RESULT([yes])
+
+    # Requires HPCToolkit module
+    #
+    AS_IF([test x"$ENABLE_HPCTOOLKIT" = x],
+        [AC_MSG_ERROR([MACVEC module requires HPTCoolkit module])], [])
+
+    # Math library
+    #
+    AC_CHECK_LIB([m], [isnormal, isnan, isinf], [],
+        [AC_MSG_ERROR([libm.so not found])])
+
+    # SQLite support (headers, lib, and program)
+    #
+    AC_PATH_TOOL([SQLITE3_PROGRAM], [sqlite3])
+    AS_IF([test x"$SQLITE3_PROGRAM" = x], [
+        AC_MSG_ERROR([sqlite3 not found. Do you have SQLite3 installed?])
+    ])
+    AC_CHECK_LIB([sqlite3], [sqlite3_open, sqlite3_close, sqlite3_exec], [],
+        [AC_MSG_ERROR([not found: libsqlite3.so])])
+    AC_CHECK_HEADER([sqlite3.h], [], [AC_MSG_ERROR([not found: sqlite3.h])])
+
+    ENABLE_MACVEC=macvec
+    ENABLED_MODULES+="macvec "
+    AC_CONFIG_FILES([modules/macvec/Makefile])
+], [
+    AC_MSG_RESULT([no])
+    ENABLE_MACVEC=
+])
+AC_SUBST([ENABLE_MACVEC])
+
+#------------------------------------------------------------------------------
 # SQL Rules module requirements
 #
 AC_ARG_ENABLE([module-sqlrules], [AS_HELP_STRING([--disable-module-sqlrules],
