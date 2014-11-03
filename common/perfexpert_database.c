@@ -133,6 +133,7 @@ int perfexpert_database_disconnect(sqlite3 *db) {
     PERFEXPERT_ALLOC(char, my_file,
         (strlen(PERFEXPERT_DB) + strlen(globals.workdir) + 2));
     sprintf(my_file, "%s/%s", globals.workdir, PERFEXPERT_DB);
+
     if (SQLITE_OK != sqlite3_open(my_file, &disk_db)) {
         OUTPUT(("%s (%s), %s", _ERROR((char *)"openning output database"),
             my_file, sqlite3_errmsg(disk_db)));
@@ -146,11 +147,12 @@ int perfexpert_database_disconnect(sqlite3 *db) {
       (void)sqlite3_backup_step(pBackup, -1);
       (void)sqlite3_backup_finish(pBackup);
     }
-    if (SQLITE_OK != sqlite3_errcode(db)) {
-        OUTPUT(("%s (%s), %s", _ERROR((char *)"writing output database"),
-            my_file, sqlite3_errmsg(disk_db)));
-        return PERFEXPERT_ERROR;
-    }
+    // if (SQLITE_OK != sqlite3_errcode(db)) {
+    //     OUTPUT(("%s (%s), %s", _ERROR((char *)"writing output database"),
+    //         my_file, sqlite3_errmsg(disk_db)));
+    //     PERFEXPERT_DEALLOC(my_file);
+    //     return PERFEXPERT_ERROR;
+    // }
 
     sqlite3_close(db);
     sqlite3_close(disk_db);
