@@ -28,6 +28,7 @@ extern "C" {
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <linux/limits.h>
 
 #include "common/perfexpert_fake_globals.h"
 #include "common/perfexpert_constants.h"
@@ -40,7 +41,21 @@ extern "C" {
 int perfexpert_fork_and_wait(test_t *test, char *argv[]) {
     int pipe1[2], pipe2[2], pid = 0, input_FP = 0, output_FP = 0;
     int r_bytes = 0, w_bytes = 0, rc = PERFEXPERT_UNDEFINED;
-    char temp_str[MAX_BUFFER_SIZE], buffer[MAX_BUFFER_SIZE];
+    char temp_str[PATH_MAX], buffer[MAX_BUFFER_SIZE];
+
+    /* Sanity check: what is the full path of the binary? */
+    if (PERFEXPERT_SUCCESS != perfexpert_util_path_only(argv[0], &temp_str)) {
+        OUTPUT(("%s", _ERROR((char *)"file does not exist")));
+        return PERFEXPERT_ERROR;
+    } else {
+        strcat(temp_str, argv[0]);
+    }
+
+    /* Sanity check: does the binary exists? */
+    if (PERFEXPERT_ERROR == perfexpert_util_file_is_exec(temp_str)) {
+        OUTPUT(("%s (%s)", _ERROR((char *)"file is not executable"), temp_str));
+        return PERFEXPERT_ERROR;
+    }
 
     #define PARENT_READ  pipe1[0]
     #define CHILD_WRITE  pipe1[1]
