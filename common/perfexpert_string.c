@@ -141,6 +141,20 @@ char* perfexpert_string_replace_char(char *str, int out, int in) {
     return str;
 }
 
+/* perfexpert_string_to_lower */
+char* perfexpert_string_to_lower(char *str) {
+    int i;
+
+    if (NULL == str) {
+        return NULL;
+    }
+
+    for (i = 0; str[i]; i++) {
+        str[i] = tolower(str[i]);
+    }
+    return str;
+}
+
 #ifdef __cplusplus
 }
 #endif

@@ -32,6 +32,7 @@ char* perfexpert_string_remove_spaces(char *str);
 char* perfexpert_string_remove_char_pos(char *str, int token, int pos);
 char* perfexpert_string_remove_char(char *str, int token);
 char* perfexpert_string_replace_char(char *str, int out, int in);
+char* perfexpert_string_to_lower(char *str);
 
 #ifdef __cplusplus
 }
