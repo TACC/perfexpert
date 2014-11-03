@@ -92,13 +92,13 @@ int output_analysis(perfexpert_list_t *profiles) {
     perfexpert_list_for(p, profiles, lcpi_profile_t) {
         /* Print total runtime for this profile */
         PRETTY_PRINT(81, "-");
-        printf(
-            "Total running time for %s is %.2f seconds between all %d cores\n",
-            _CYAN(p->name), p->cycles / database_get_hound("CPU_freq"),
-            (int)sysconf(_SC_NPROCESSORS_ONLN));
-        printf("The wall-clock time for %s is approximately %.2f seconds\n\n",
-            _CYAN(p->name), (p->cycles / database_get_hound("CPU_freq") /
-                sysconf(_SC_NPROCESSORS_ONLN)));
+        // printf(
+        //     "Total running time for %s is %.2f seconds between all %d cores\n",
+        //     _CYAN(p->name), p->cycles / database_get_hound("CPU_freq"),
+        //     (int)sysconf(_SC_NPROCESSORS_ONLN));
+        // printf("The wall-clock time for %s is approximately %.2f seconds\n\n",
+        //     _CYAN(p->name), (p->cycles / database_get_hound("CPU_freq") /
+        //         sysconf(_SC_NPROCESSORS_ONLN)));
 
         /* For each module in the profile's list of modules... */
         perfexpert_hash_iter_str(p->modules_by_name, m, t) {
