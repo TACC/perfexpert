@@ -32,6 +32,7 @@ cd ../../..
 tar -xzvf ./hwloc-1.9-0.tar.gz
 cd hwloc-1.9-0
 mkdir _build
+cd _build
 ../configure --prefix=${INSTALL_DIR} --enable-libpci
 make install
 cd ../../
