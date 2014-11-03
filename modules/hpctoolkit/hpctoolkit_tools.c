@@ -94,11 +94,14 @@ int run_hpcrun(void) {
     struct timespec time_start, time_end, time_diff;
     hpctoolkit_event_t *event = NULL, *t = NULL;
     perfexpert_list_t experiments;
+    char *str = NULL;
     experiment_t *e;
     test_t test;
 
     /* Initiate the list of experiments by adding the events */
     perfexpert_list_construct(&experiments);
+    OUTPUT_VERBOSE((10, "there will be %d events/run", papi_max_events() - 1));
+
     perfexpert_hash_iter_str(my_module_globals.events_by_name, event, t) {
         if (0 < event_count) {
             /* Add event */
@@ -136,15 +139,24 @@ int run_hpcrun(void) {
         sprintf(e->argv[e->argc],"%s/measurements", globals.moduledir);
         e->argc++;
 
-        /* Set PAPI_TOT_INS */
+        event_count = papi_max_events() - 3;
+
+        /* Set total number of instructions on every experiment */
+        if (NULL == myself_module.total_inst_counter) {
+            OUTPUT(("%s", _ERROR("total # of instructions counter not set")));
+            return PERFEXPERT_ERROR;
+        } else {
+            PERFEXPERT_ALLOC(char, str,
+                (strlen(myself_module.total_inst_counter) + 1));
+            strcpy(str, myself_module.total_inst_counter);
+            perfexpert_string_replace_char(str, '.', ':');
+        }
+
         e->argv[e->argc] = "--event";
         e->argc++;
-        PERFEXPERT_ALLOC(char, e->argv[e->argc], (strlen("PAPI_TOT_INS") + 15));
-        sprintf(e->argv[e->argc], "PAPI_TOT_INS:%d",
-            papi_get_sampling_rate("PAPI_TOT_INS"));
+        PERFEXPERT_ALLOC(char, e->argv[e->argc], (strlen(str) + 15));
+        sprintf(e->argv[e->argc], "%s:%d", str, papi_get_sampling_rate(str));
         e->argc++;
-
-        event_count = papi_max_events() - 1;
 
         /* Add event */
         e->argv[e->argc] = "--event";
@@ -154,7 +166,6 @@ int run_hpcrun(void) {
             papi_get_sampling_rate(event->name));
         e->argc++;
 
-        event_count--;
         continue;
     }
 
@@ -213,9 +224,15 @@ int run_hpcrun(void) {
             printf("\n");
         }
 
-        /* fork_and_wait_and_pray */
-        rc = perfexpert_fork_and_wait(&(e->test), (char **)e->argv);
+        /* fork_and_wait_and_pray and calculate and display runtime */
         clock_gettime(CLOCK_MONOTONIC, &time_start);
+        rc = perfexpert_fork_and_wait(&(e->test), (char **)e->argv);
+        clock_gettime(CLOCK_MONOTONIC, &time_end);
+
+        perfexpert_time_diff(&time_diff, &time_start, &time_end);
+        OUTPUT(("   [%d/%d] %lld.%.9ld seconds (includes measurement overhead)",
+            experiment_count, experiment_total, (long long)time_diff.tv_sec,
+            time_diff.tv_nsec));
 
         /* Evaluate results if required to */
         if (PERFEXPERT_FALSE == my_module_globals.ignore_return_code) {
@@ -227,7 +244,7 @@ int run_hpcrun(void) {
                         "the program's output, check the content of this file: "
                         "[%s]. If you want to PerfExpert ignore the return code"
                         " next time you run this program, set the 'return-code'"
-                        " option for the HPCToolkit module (see 'perfepxert -H "
+                        " option for the HPCToolkit module. See 'perfepxert -H "
                         "hpctoolkit' for details.",
                         _ERROR("the target program returned non-zero"), rc,
                         e->test.output));
@@ -241,13 +258,6 @@ int run_hpcrun(void) {
                     break;
             }
         }
-
-        /* Calculate and display runtime */
-        clock_gettime(CLOCK_MONOTONIC, &time_end);
-        perfexpert_time_diff(&time_diff, &time_start, &time_end);
-        OUTPUT(("   [%d/%d] %lld.%.9ld seconds (includes measurement overhead)",
-            experiment_count, experiment_total, (long long)time_diff.tv_sec,
-            time_diff.tv_nsec));
 
         /* Run the AFTER program */
         if (NULL != my_module_globals.after[0]) {
@@ -272,139 +282,6 @@ int run_hpcrun(void) {
     }
     return rc;
 }
-
-/* run_hpcrun_knc */
-// int run_hpcrun_knc(void) {
-//     hpctoolkit_event_t *event = NULL, *t = NULL;
-//     int experiment_count = 0, count = 0, rc = PERFEXPERT_SUCCESS;
-//     char *script_file, *argv[4];
-//     FILE *script_file_FP;
-//     test_t test;
-
-//     /* If this command should run on the MIC, encapsulate it in a script */
-//     PERFEXPERT_ALLOC(char, script_file, (strlen(globals.stepdir) + 15));
-//     sprintf(script_file, "%s/knc_hpcrun.sh", globals.stepdir);
-
-//     if (NULL == (script_file_FP = fopen(script_file, "w"))) {
-//         OUTPUT(("%s (%s)", _ERROR("unable to open file"), script_file));
-//         return PERFEXPERT_ERROR;
-//     }
-
-//     fprintf(script_file_FP, "#!/bin/sh");
-
-//     /* Fill the script file with all the experiments, before, and after */
-//     perfexpert_hash_iter_str(my_module_globals.events_by_name, event, t) {
-//         if (0 < count) {
-//             /* Add event */
-//             fprintf(script_file_FP, " --event %s:%d", event->name,
-//                 papi_get_sampling_rate(event->name));
-
-//             count--;
-//             continue;
-//         }
-
-//         /* Is this a new experiment, but not the first? */
-//         if (0 < experiment_count) {
-//             /* Add the program and the program arguments to experiment */
-//             fprintf(script_file_FP, " %s", globals.program_full);
-//             count = 0;
-//             while (NULL != globals.program_argv[count]) {
-//                 fprintf(script_file_FP, " %s", globals.program_argv[count]);
-//                 count++;
-//             }
-
-//             /* Add the AFTER program */
-//             if (NULL != my_module_globals.knc_after) {
-//                 fprintf(script_file_FP, "\n\n# AFTER command\n");
-//                 fprintf(script_file_FP, "%s", my_module_globals.knc_after);
-//             }
-//         }
-
-//         /* Add the BEFORE program */
-//         if (NULL != my_module_globals.knc_before) {
-//             fprintf(script_file_FP, "\n\n# BEFORE command\n");
-//             fprintf(script_file_FP, "%s", my_module_globals.knc_before);
-//         }
-
-//         fprintf(script_file_FP, "\n\n# HPCRUN (%d)\n", experiment_count);
-
-//         /* Add PREFIX */
-//         if (NULL != my_module_globals.knc_prefix) {
-//             fprintf(script_file_FP, "%s ", my_module_globals.knc_prefix);
-//         }
-
-//          Arguments to run hpcrun
-//         fprintf(script_file_FP, "%s --output %s/measurements", HPCRUN,
-//             globals.stepdir);
-
-//         experiment_count++;
-//     }
-
-//     /* Add the program and the program arguments to experiment's */
-//     fprintf(script_file_FP, " %s", globals.program_full);
-//     count = 0;
-//     while (NULL != globals.program_argv[count]) {
-//         fprintf(script_file_FP, " %s", globals.program_argv[count]);
-//         count++;
-//     }
-
-//     /* Add the AFTER program */
-//     if (NULL != my_module_globals.knc_after) {
-//         fprintf(script_file_FP, "\n\n# AFTER command\n");
-//         fprintf(script_file_FP, "%s", my_module_globals.knc_after);
-//     }
-//     fprintf(script_file_FP, "\n\nexit 0\n\n# EOF\n");
-
-//     /* Close file and set mode */
-//     fclose(script_file_FP);
-//     if (-1 == chmod(script_file, S_IRWXU)) {
-//         OUTPUT(("%s (%s)", _ERROR("unable to set script mode"), script_file));
-//         PERFEXPERT_DEALLOC(script_file);
-//         return PERFEXPERT_ERROR;
-//     }
-
-//     /* The super-ninja test sctructure */
-//     PERFEXPERT_ALLOC(char, test.output, (strlen(globals.stepdir) + 19));
-//     sprintf(test.output, "%s/knc_hpcrun.output", globals.stepdir);
-//     test.input = NULL;
-//     test.info = globals.program;
-
-//     argv[0] = "ssh";
-//     argv[1] = my_module_globals.knc;
-//     argv[2] = script_file;
-//     argv[3] = NULL;
-
-//     /* Not using OUTPUT_VERBOSE because I want only one line */
-//     if (8 <= globals.verbose) {
-//         printf("%s %s %s %s %s\n", PROGRAM_PREFIX, _YELLOW("command line:"),
-//             argv[0], argv[1], argv[2]);
-//     }
-
-//     /* Run program and test return code (should I really test it?) */
-//     switch (rc = perfexpert_fork_and_wait(&test, argv)) {
-//         case PERFEXPERT_ERROR:
-//             OUTPUT_VERBOSE((7, "[%s]", _BOLDYELLOW("ERROR")));
-//             break;
-
-//         case PERFEXPERT_FAILURE:
-//         case 255:
-//             OUTPUT_VERBOSE((7, "[%s ]", _BOLDRED("FAIL")));
-//             break;
-
-//         case PERFEXPERT_SUCCESS:
-//             OUTPUT_VERBOSE((7, "[ %s  ]", _BOLDGREEN("OK")));
-//             break;
-
-//         default:
-//             OUTPUT_VERBOSE((7, "[UNKNO]"));
-//             break;
-//     }
-
-//     PERFEXPERT_DEALLOC(script_file);
-//     PERFEXPERT_DEALLOC(test.output);
-
-//     return rc;
-// }
 
 /* run_hpcprof */
 int run_hpcprof(char **file) {

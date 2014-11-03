@@ -62,6 +62,7 @@ int parse_module_args(int argc, char *argv[]) {
     OUTPUT_VERBOSE((7, "%s", _BLUE("Summary of options")));
     OUTPUT_VERBOSE((7, "   Threshold:     %f", my_module_globals.threshold));
     OUTPUT_VERBOSE((7, "   Sorting order: %s", my_module_globals.order));
+    OUTPUT_VERBOSE((7, "   Architecture:  %s", my_module_globals.architecture));
 
     /* Not using OUTPUT_VERBOSE because I want only one line */
     if (8 <= globals.verbose) {
@@ -80,6 +81,13 @@ int parse_module_args(int argc, char *argv[]) {
 /* parse_options */
 static error_t parse_options(int key, char *arg, struct argp_state *state) {
     switch (key) {
+        /* Sorting order */
+        case 'a':
+            my_module_globals.architecture = arg;
+            OUTPUT_VERBOSE((1, "option 'a' set [%s]",
+                my_module_globals.architecture));
+            break;
+
         /* Sorting order */
         case 's':
             my_module_globals.order = arg;
@@ -117,6 +125,12 @@ static int parse_env_vars(void) {
     if (NULL != getenv("PERFEXPERT_MODULE_LCPI_SORT")) {
         my_module_globals.order = getenv("PERFEXPERT_MODULE_LCPI_SORT");
         OUTPUT_VERBOSE((1, "ENV: order=%s", my_module_globals.order));
+    }
+
+    if (NULL != getenv("PERFEXPERT_MODULE_LCPI_ARCHITECTURE")) {
+        my_module_globals.architecture =
+            getenv("PERFEXPERT_MODULE_LCPI_ARCHITECTURE");
+        OUTPUT_VERBOSE((1, "ENV: order=%s", my_module_globals.architecture));
     }
 
     return PERFEXPERT_SUCCESS;

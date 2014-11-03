@@ -30,7 +30,9 @@ libperfexpert_module_lcpi_la_SOURCES = lcpi_module.c \
 	lcpi_metrics_intel.c \
 	lcpi_options.c \
 	lcpi_output.c \
-	lcpi_sort.c
+	lcpi_sort.c \
+	lcpi_metrics_jaketown.c \
+	lcpi_metrics_mic.c
 
 # Install lcpi module database
 install-exec-local:

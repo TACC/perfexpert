@@ -37,6 +37,11 @@ extern "C" {
 static struct argp_option options[] = {
     { 0, 0, 0, 0, "\n[LCPI module options]", 1 },
 
+    { "architecture=VALUE", 0, 0, OPTION_DOC, "Set the architecture which the "
+      "LCPI module should generate metrics for (Valid values: Bonnell, "
+      "Broadwell, Haswell, IvyBridge, IvyTown, Jaketown, NehalemEP, NehalemEX, "
+      "SandyBridge, Silvermont, WestmereEP-DP, WestmereEP-SP, WestmereEX, and "
+      "KnightsCorner or MIC" },
     { "threshold=VALUE", 0, 0, OPTION_DOC, "Threshold (relevance % of "
       "runtime) to take hotspots into consideration (range: fractional number "
       "greater than 0 and smaller than 1)" },
@@ -47,7 +52,10 @@ static struct argp_option options[] = {
 
     { "threshold", 't', "VALUE", OPTION_HIDDEN, 0 },
     { "mic", 'm', 0, OPTION_HIDDEN, 0 },
-    { "sort-order", 's', "relevance|performance|mixed", OPTION_HIDDEN, 0 },
+    { "sort-order", 's', 0, OPTION_HIDDEN, 0 },
+    { "architecture", 'a', "Bonnell|Broadwell|Haswell|IvyBridge|IvyTown|"
+      "Jaketown|NehalemEP|NehalemEX|SandyBridge|Silvermont|WestmereEP-DP|"
+      "WestmereEP-SP|WestmereEX|KnightsCorner (or MIC)", OPTION_HIDDEN, 0 },
 
     { 0 }
 };
