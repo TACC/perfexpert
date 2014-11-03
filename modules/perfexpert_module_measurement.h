@@ -19,8 +19,8 @@
  * $HEADER$
  */
 
-#ifndef PREFEXPERT_MODULE_HPCTOOLKIT_MODULE_H_
-#define PREFEXPERT_MODULE_HPCTOOLKIT_MODULE_H_
+#ifndef PREFEXPERT_MODULE_MEASUREMENT_H_
+#define PREFEXPERT_MODULE_MEASUREMENT_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -33,7 +33,7 @@ extern "C" {
 #include "common/perfexpert_list.h"
 
 /* Interface extenstions */
-typedef int (*perfexpert_module_hpctoolkit_set_event_fn_t)(const char *name);
+typedef int (*perfexpert_module_measurement_set_event_fn_t)(const char *name);
 
 /* HPCToolkit module interface */
 typedef struct {
@@ -56,14 +56,13 @@ typedef struct {
     perfexpert_module_analyze_fn_t analyze;
     perfexpert_module_recommend_fn_t recommend;
     /* Extended module interface */
-    perfexpert_module_hpctoolkit_set_event_fn_t set_event;
-    perfexpert_list_t profiles;
-} perfexpert_module_hpctoolkit_1_0_0_t;
+    perfexpert_module_measurement_set_event_fn_t set_event;
+} perfexpert_module_measurement_1_0_0_t;
 
-typedef perfexpert_module_hpctoolkit_1_0_0_t perfexpert_module_hpctoolkit_t;
+typedef perfexpert_module_measurement_1_0_0_t perfexpert_module_measurement_t;
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* PREFEXPERT_MODULE_HPCTOOLKIT_MODULE_H_ */
+#endif /* PREFEXPERT_MODULE_MEASUREMENT_H_ */

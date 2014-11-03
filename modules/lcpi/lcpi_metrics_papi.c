@@ -44,7 +44,7 @@
 #include "common/perfexpert_md5.h"
 #include "common/perfexpert_output.h"
 
-int metrics_papi_generate(void) {
+int metrics_papi(void) {
     lcpi_metric_t *m = NULL, *temp = NULL;
 
     OUTPUT_VERBOSE((4, "%s", _YELLOW("Generating LCPI metrics (PAPI)")));
@@ -56,6 +56,10 @@ int metrics_papi_generate(void) {
             return PERFEXPERT_ERROR;
         }
     }
+
+    /* Set the profile total cycles and total instructions counters */
+    my_module_globals.measurement->total_cycles_counter = "PAPY_TOT_CYC";
+    my_module_globals.measurement->total_inst_counter = "PAPI_TOT_INS";
 
     /* Generate LCPI PAPI metrics (be sure the events are ordered) */
     if (PERFEXPERT_SUCCESS != generate_ratio_floating_point()) {

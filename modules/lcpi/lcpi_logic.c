@@ -52,7 +52,8 @@ int logic_lcpi_compute(lcpi_profile_t *profile) {
 
     /* For each hotspot in this profile... */
     perfexpert_list_for(h, &(profile->hotspots), lcpi_hotspot_t) {
-        OUTPUT_VERBOSE((8, "  %s", _YELLOW(h->name)));
+        OUTPUT_VERBOSE((8, "  %s (%s:%d@%s)", _YELLOW(h->name), h->file,
+            h->line, h->module->name));
 
         /* For each LCPI definition... */
         perfexpert_hash_iter_str(my_module_globals.metrics_by_name, l, t) {
@@ -71,9 +72,9 @@ int logic_lcpi_compute(lcpi_profile_t *profile) {
                     if (-1.0 != database_get_hound(names[i])) {
                         values[i] = database_get_hound(names[i]);
                     } else if (-1.0 != database_get_event(names[i],
-                        my_module_globals.hpctoolkit->name, h->id)) {
+                        my_module_globals.measurement->name, h->id)) {
                         values[i] = database_get_event(names[i],
-                            my_module_globals.hpctoolkit->name, h->id);
+                            my_module_globals.measurement->name, h->id);
                     }
                 }
 

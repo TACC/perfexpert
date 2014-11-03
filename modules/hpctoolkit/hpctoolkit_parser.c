@@ -191,7 +191,7 @@ static int parse_profile(xmlDocPtr document, xmlNodePtr node,
                 /* Set the name (only the performance counter name) */
                 PERFEXPERT_ALLOC(char, metric->name,
                     (strlen(temp_str[1]) + 1));
-                perfexpert_string_replace_char(temp_str[1], ':', '_');
+                perfexpert_string_replace_char(temp_str[1], ':', '.');
                 strcpy(metric->name, temp_str[1]);
                 strcpy(metric->name_md5, perfexpert_md5_string(metric->name));
 

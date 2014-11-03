@@ -26,37 +26,47 @@
 extern "C" {
 #endif
 
+/* System standard headers */
+#include <string.h>
+
+/* Utility headers */
+#include <matheval.h>
+
 /* Tools headers */
 #include "tools/perfexpert/perfexpert_types.h"
 
 /* Modules headers */
 #include "lcpi_types.h"
-#include "modules/hpctoolkit/hpctoolkit_module.h"
-#include "modules/vtune/vtune_module.h"
+#include "modules/perfexpert_module_measurement.h"
 
-/* PerfExpert common headers */
-#include "common/perfexpert_hash.h"
-#include "common/perfexpert_list.h"
-#include "common/perfexpert_md5.h"
+/* Default values for some files and directories */
+#define LCPI_VARIANCE_LIMIT 0.2
+#define MAX_LCPI 1024
 
 #ifdef PROGRAM_PREFIX
 #undef PROGRAM_PREFIX
 #endif
 #define PROGRAM_PREFIX "[perfexpert_module_lcpi]"
 
-/* Default values for some files and directories */
-#define LCPI_VARIANCE_LIMIT 0.2
+/* PerfExpert common headers */
+#include "common/perfexpert_output.h"
+#include "common/perfexpert_alloc.h"
+#include "common/perfexpert_constants.h"
+#include "common/perfexpert_hash.h"
+#include "common/perfexpert_list.h"
+#include "common/perfexpert_md5.h"
+#include "common/perfexpert_string.h"
 
 /* Module types */
 typedef struct {
     perfexpert_list_t profiles;
     lcpi_metric_t *metrics_by_name;
-    perfexpert_module_hpctoolkit_t *hpctoolkit;
-    perfexpert_module_vtune_t *vtune;
+    perfexpert_module_measurement_t *measurement;
     double threshold;
     char *order;
     int help_only;
     int mic;
+    char *architecture;
 } my_module_globals_t;
 
 extern my_module_globals_t my_module_globals;
@@ -70,7 +80,6 @@ int module_analyze(void);
 
 /* Function declarations */
 int parse_module_args(int argc, char *argv[]);
-int metrics_papi_generate(void);
 int metrics_papi_generate_mic(void);
 int metrics_intel_generate(void);
 int metrics_intel_generate_mic(void);
@@ -82,6 +91,11 @@ double database_get_event(const char *name, const char *table, int hotspot_id);
 int logic_lcpi_compute(lcpi_profile_t *profile);
 int output_analysis(perfexpert_list_t *profiles);
 int hotspot_sort(perfexpert_list_t *profiles);
+
+/* Processor specific functions */
+int metrics_jaketown(void);
+int metrics_mic(void);
+int metrics_papi(void); // Fallback for unknown processors
 
 /* lcpi_get_value */
 static inline double lcpi_get_value(lcpi_metric_t *db, const char *key) {
@@ -95,6 +109,34 @@ static inline double lcpi_get_value(lcpi_metric_t *db, const char *key) {
         return entry->value;
     }
 }
+
+/* lcpi_add_metric */
+static inline int lcpi_add_metric (char *name, char *value) {
+    lcpi_metric_t *metric;
+
+    /* Replace the '.' on the metric, GNU libmatheval does not like them... */
+    perfexpert_string_replace_char(value, '.', '_');
+
+    PERFEXPERT_ALLOC(lcpi_metric_t, metric, sizeof(lcpi_metric_t));
+    PERFEXPERT_ALLOC(char, metric->name, (strlen(name) + 1));
+    strcpy(metric->name, name);
+    strcpy(metric->name_md5, perfexpert_md5_string(metric->name));
+    metric->value = 0.0;
+    metric->expression = evaluator_create(value);
+    if (NULL == metric->expression) {
+        OUTPUT(("%s (%s) [%s]", _ERROR("invalid expression"), name, value));
+        return PERFEXPERT_ERROR;
+    }
+    perfexpert_hash_add_str(my_module_globals.metrics_by_name, name_md5, metric);
+
+    return PERFEXPERT_SUCCESS;
+}
+
+#define USE_EVENT(X)                                                         \
+    if (PERFEXPERT_SUCCESS != my_module_globals.measurement->set_event(X)) { \
+        OUTPUT(("%s [%s]", _ERROR("invalid event name"), X));                \
+        return PERFEXPERT_ERROR;                                             \
+    }
 
 #ifdef __cplusplus
 }

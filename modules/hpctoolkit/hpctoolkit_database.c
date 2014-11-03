@@ -34,6 +34,7 @@ extern "C" {
 #include "hpctoolkit_database.h"
 
 /* PerfExpert common headers */
+#include "common/perfexpert_alloc.h"
 #include "common/perfexpert_constants.h"
 #include "common/perfexpert_database.h"
 #include "common/perfexpert_list.h"
@@ -141,7 +142,7 @@ static int database_hotspots(hpctoolkit_profile_t *profile) {
 
 /* database_metrics */
 static int database_metrics(hpctoolkit_procedure_t *hotspot) {
-    char *error = NULL, sql[MAX_BUFFER_SIZE];
+    char *error = NULL, sql[MAX_BUFFER_SIZE], *str;
     hpctoolkit_metric_t *m = NULL;
     long long int id = 0;
 
@@ -167,12 +168,17 @@ static int database_metrics(hpctoolkit_procedure_t *hotspot) {
 
     /* For each metric in the list of metrics... */
     perfexpert_list_for(m, &(hotspot->metrics), hpctoolkit_metric_t) {
+        /* Replace the '.' by '_' on the metrics name, this is bullshit... */
+        PERFEXPERT_ALLOC(char, str, (strlen(m->name) + 1));
+        strcpy(str, m->name);
+        perfexpert_string_replace_char(str, '.', '_');
+
         bzero(sql, MAX_BUFFER_SIZE);
         sprintf(sql, "INSERT INTO hpctoolkit_event (name, thread_id, mpi_task, "
             "experiment, value, hotspot_id) VALUES ('%s', %d, %d, %d, %f, %llu)"
-            ";", m->name, m->thread, m->mpi_rank, m->experiment, m->value, id);
+            ";", str, m->thread, m->mpi_rank, m->experiment, m->value, id);
 
-        OUTPUT_VERBOSE((10, "    [%d] %s SQL: %s", m->id, _CYAN(m->name), sql));
+        OUTPUT_VERBOSE((10, "    [%d] %s SQL: %s", m->id, _CYAN(str), sql));
 
         /* Insert metric in database */
         if (SQLITE_OK != sqlite3_exec(globals.db, sql, NULL, NULL, &error)) {

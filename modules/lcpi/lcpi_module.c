@@ -24,18 +24,21 @@ extern "C" {
 #endif
 
 /* System standard headers */
-#include <papi.h>
 
 /* Module headers */
 #include "modules/perfexpert_module_base.h"
-#include "modules/hpctoolkit/hpctoolkit_module.h"
+#include "modules/perfexpert_module_measurement.h"
 #include "lcpi_module.h"
 #include "lcpi.h"
 
 /* PerfExpert common headers */
 #include "common/perfexpert_constants.h"
+#include "common/perfexpert_database.h"
+#include "common/perfexpert_cpuinfo.h"
+#include "common/perfexpert_hash.h"
 #include "common/perfexpert_list.h"
 #include "common/perfexpert_output.h"
+#include "common/perfexpert_string.h"
 
 /* Global variable to define the module itself */
 perfexpert_module_lcpi_t myself_module;
@@ -50,69 +53,66 @@ int module_load(void) {
 
 /* module_init */
 int module_init(void) {
+    char *error = NULL, sql[MAX_BUFFER_SIZE];
+
     /* Initialize list of events */
     perfexpert_list_construct(&(my_module_globals.profiles));
     my_module_globals.metrics_by_name = NULL;
     my_module_globals.threshold = 0.0;
     my_module_globals.help_only = PERFEXPERT_FALSE;
+    my_module_globals.measurement = NULL;
+    my_module_globals.architecture = NULL;
     my_module_globals.mic = PERFEXPERT_FALSE;
-    my_module_globals.hpctoolkit = NULL;
-    my_module_globals.vtune = NULL;
 
     /* Check if at least one of HPCToolkit or VTune is loaded */
     if ((PERFEXPERT_FALSE == perfexpert_module_available("hpctoolkit")) &&
         (PERFEXPERT_FALSE == perfexpert_module_available("vtune"))) {
-        OUTPUT(("%s", _ERROR("Neither HPCToolkit nor VTune module loaded")));
-        return PERFEXPERT_ERROR;
+        OUTPUT(("%s", _RED("Neither HPCToolkit nor VTune module loaded")));
+
+        /* Default to HPCToolkit */
+        perfexpert_module_load("hpctoolkit");
+        OUTPUT(("%s", _RED("PerfExpert will try to load HPCToolkit module")));
     }
 
-    /* Should we generate metrics to use with HPCToolkit? */
+    /* Should we use HPCToolkit? */
     if (PERFEXPERT_TRUE == perfexpert_module_available("hpctoolkit")) {
-        if (PERFEXPERT_SUCCESS != perfexpert_module_requires("lcpi",
-            PERFEXPERT_PHASE_MEASURE, "hpctoolkit", PERFEXPERT_PHASE_MEASURE,
-            PERFEXPERT_MODULE_AFTER)) {
-            OUTPUT(("%s", _ERROR("required module/phase not available")));
-            return PERFEXPERT_ERROR;
-        }
+        OUTPUT_VERBOSE((5, "%s",
+            _CYAN("will use HPCToolkit as measurement module")));
         if (PERFEXPERT_SUCCESS != perfexpert_module_requires("lcpi",
             PERFEXPERT_PHASE_ANALYZE, "hpctoolkit", PERFEXPERT_PHASE_MEASURE,
             PERFEXPERT_MODULE_BEFORE)) {
             OUTPUT(("%s", _ERROR("required module/phase not available")));
             return PERFEXPERT_ERROR;
         }
-        if (NULL == (my_module_globals.hpctoolkit =
-            (perfexpert_module_hpctoolkit_t *)
+        if (NULL == (my_module_globals.measurement =
+            (perfexpert_module_measurement_t *)
             perfexpert_module_get("hpctoolkit"))) {
-            OUTPUT(("%s", _ERROR("required module/phase not available")));
+            OUTPUT(("%s", _ERROR("required module not available")));
             return PERFEXPERT_ERROR;
         }
     }
 
     /* Should we generate metrics to use with Vtune? */
     if (PERFEXPERT_TRUE == perfexpert_module_available("vtune")) {
-        if (PERFEXPERT_SUCCESS != perfexpert_module_requires("lcpi",
-            PERFEXPERT_PHASE_MEASURE, "vtune", PERFEXPERT_PHASE_MEASURE,
-            PERFEXPERT_MODULE_AFTER)) {
-            OUTPUT(("%s", _ERROR("required module/phase not available")));
-            return PERFEXPERT_ERROR;
-        }
+        OUTPUT_VERBOSE((5, "%s",
+            _CYAN("will use VTune as measurement module")));
         if (PERFEXPERT_SUCCESS != perfexpert_module_requires("lcpi",
             PERFEXPERT_PHASE_ANALYZE, "vtune", PERFEXPERT_PHASE_MEASURE,
             PERFEXPERT_MODULE_BEFORE)) {
             OUTPUT(("%s", _ERROR("required module/phase not available")));
             return PERFEXPERT_ERROR;
         }
-        if (NULL == (my_module_globals.vtune = (perfexpert_module_vtune_t *)
+        if (NULL == (my_module_globals.measurement =
+            (perfexpert_module_measurement_t *)
             perfexpert_module_get("vtune"))) {
-            OUTPUT(("%s", _ERROR("required module/phase not available")));
+            OUTPUT(("%s", _ERROR("required module not available")));
             return PERFEXPERT_ERROR;
         }
     }
 
-    /* Triple check: at least HPCToolkit or VTune should be available */
-    if ((NULL == my_module_globals.hpctoolkit) &&
-        (NULL == my_module_globals.vtune)) {
-        OUTPUT(("%s", _ERROR("Neither HPCToolkit nor VTune module loaded")));
+    /* Triple check: at least one measurement module should be available */
+    if (NULL == my_module_globals.measurement) {
+        OUTPUT(("%s", _ERROR("No measurement module loaded")));
         return PERFEXPERT_ERROR;
     }
 
@@ -120,6 +120,66 @@ int module_init(void) {
     if (PERFEXPERT_SUCCESS != parse_module_args(myself_module.argc,
         myself_module.argv)) {
         OUTPUT(("%s", _ERROR("parsing module arguments")));
+        return PERFEXPERT_ERROR;
+    }
+
+    /* If the architecture was not set, we should try to identify it... */
+    if (NULL == my_module_globals.architecture) {
+        int family = perfexpert_cpuinfo_get_family();
+        int model  = perfexpert_cpuinfo_get_model();
+
+        bzero(sql, MAX_BUFFER_SIZE);
+        sprintf(sql, "SELECT description FROM lcpi_proc WHERE family=%d AND "
+            "model=%d;", family, model);
+        OUTPUT_VERBOSE((10, "   SQL: %s", _CYAN(sql)));
+
+        if (SQLITE_OK != sqlite3_exec(globals.db, sql,
+            perfexpert_database_get_string,
+            (void *)&my_module_globals.architecture, &error)) {
+            OUTPUT(("%s %s", _ERROR("SQL error"), error));
+            sqlite3_free(error);
+            return PERFEXPERT_ERROR;
+        }
+
+        if (NULL == my_module_globals.architecture) {
+            OUTPUT_VERBOSE((1, "Unknown architecture, using PAPI defaults"));
+            my_module_globals.architecture = "unknown";
+        }
+
+        OUTPUT_VERBOSE((1, "Architecture not set but it looks like [%s]",
+            my_module_globals.architecture));
+    }
+
+    OUTPUT(("%s", _YELLOW("Setting performance events")));
+
+    /* Jaketown (or SandyBridgeEP) */
+    if (0 == strcmp("jaketown",
+        perfexpert_string_to_lower(my_module_globals.architecture))) {
+        if (PERFEXPERT_SUCCESS != metrics_jaketown()) {
+            OUTPUT(("%s", _ERROR("generating LCPI metrics (Jaketown)")));
+            return PERFEXPERT_ERROR;
+        }
+    }
+    /* MIC (or KnightsCorner) */
+    else if (0 == strcmp("mic",
+        perfexpert_string_to_lower(my_module_globals.architecture))) {
+        if (PERFEXPERT_SUCCESS != metrics_mic()) {
+            OUTPUT(("%s", _ERROR("generating LCPI metrics (MIC)")));
+            return PERFEXPERT_ERROR;
+        }
+    }
+    /* Unknown */
+    else if (0 == strcmp("unknown",
+        perfexpert_string_to_lower(my_module_globals.architecture))) {
+        if (PERFEXPERT_SUCCESS != metrics_papi()) {
+            OUTPUT(("%s", _ERROR("generating LCPI metrics (PAPI)")));
+            return PERFEXPERT_ERROR;
+        }
+    }
+    /* If not any of the above, I'm sorry... */
+    else {
+        OUTPUT(("%s (%s)", _ERROR("generating LCPI metrics"),
+            my_module_globals.architecture));
         return PERFEXPERT_ERROR;
     }
 
@@ -135,43 +195,6 @@ int module_fini(void) {
     return PERFEXPERT_SUCCESS;
 }
 
-/* module_measure */
-int module_measure(void) {
-    OUTPUT(("%s", _YELLOW("Setting performance events")));
-
-    /* If using HPCToolkit, shall we use HOST or MIC metrics? */
-    if (NULL != my_module_globals.hpctoolkit) {
-        if (PERFEXPERT_FALSE == my_module_globals.mic) {
-            if (PERFEXPERT_SUCCESS != metrics_papi_generate()) {
-                OUTPUT(("%s", _ERROR("generating LCPI metrics (PAPI)")));
-                return PERFEXPERT_ERROR;
-            }
-        } else {
-            if (PERFEXPERT_SUCCESS != metrics_generate_papi_mic()) {
-                OUTPUT(("%s", _ERROR("generating MIC LCPI metrics (PAPI)")));
-                return PERFEXPERT_ERROR;
-            }
-        }
-    }
-
-    /* If using VTune, shall we use HOST or MIC metrics? */
-    if (NULL != my_module_globals.vtune) {
-        if (PERFEXPERT_FALSE == my_module_globals.mic) {
-            if (PERFEXPERT_SUCCESS != metrics_intel_generate()) {
-                OUTPUT(("%s", _ERROR("generating LCPI metrics (native)")));
-                return PERFEXPERT_ERROR;
-            }
-        // } else {
-        //     if (PERFEXPERT_SUCCESS != metrics_generate_intel_mic()) {
-        //         OUTPUT(("%s", _ERROR("generating MIC LCPI metrics (native)")));
-        //         return PERFEXPERT_ERROR;
-        //     }
-        }
-    }
-
-    return PERFEXPERT_SUCCESS;
-}
-
 /* module_analyze */
 int module_analyze(void) {
     lcpi_profile_t *p = NULL;
@@ -181,8 +204,8 @@ int module_analyze(void) {
     // TODO: Wrap all these functions in a SQL transaction
 
     if (PERFEXPERT_SUCCESS != database_import(&(my_module_globals.profiles),
-        my_module_globals.hpctoolkit->name)) {
-        OUTPUT(("%s", _ERROR("unable to import HPCToolkit profiles")));
+        my_module_globals.measurement->name)) {
+        OUTPUT(("%s", _ERROR("unable to import profiles")));
         return PERFEXPERT_ERROR;
     }
 

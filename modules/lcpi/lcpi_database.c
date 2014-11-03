@@ -154,6 +154,7 @@ int database_import(perfexpert_list_t *profiles, const char *table) {
         OUTPUT_VERBOSE((5, "%s", _YELLOW("Calculating metadata")));
         if (PERFEXPERT_SUCCESS != calculate_metadata(p, table)) {
             OUTPUT(("%s", _ERROR("calculating metadata")));
+            return PERFEXPERT_ERROR;
         }
     }
 
@@ -318,15 +319,27 @@ static int map_modules_to_hotspots(lcpi_hotspot_t *h, lcpi_module_t *db,
 
 /* calculate_metadata */
 static int calculate_metadata(lcpi_profile_t *profile, const char *table) {
-    char *error = NULL, sql[MAX_BUFFER_SIZE];
+    char *error = NULL, sql[MAX_BUFFER_SIZE], *total_cycles, *total_inst;
     lcpi_module_t *m = NULL, *t = NULL;
     lcpi_hotspot_t *h = NULL;
 
+    /* Replace the '.' by '_' on the metrics name, this is bullshit... */
+    PERFEXPERT_ALLOC(char, total_cycles,
+        (strlen(my_module_globals.measurement->total_cycles_counter) + 1));
+    strcpy(total_cycles, my_module_globals.measurement->total_cycles_counter);
+    perfexpert_string_replace_char(total_cycles, '.', '_');
+
+    PERFEXPERT_ALLOC(char, total_inst,
+        (strlen(my_module_globals.measurement->total_inst_counter) + 1));
+    strcpy(total_inst, my_module_globals.measurement->total_inst_counter);
+    perfexpert_string_replace_char(total_inst, '.', '_');
+
+    /* For each hotspot... */
     perfexpert_list_for(h, &(profile->hotspots), lcpi_hotspot_t) {
         /* Import instructions (sum of all experiments) */
         bzero(sql, MAX_BUFFER_SIZE);
         sprintf(sql, "SELECT SUM(value) FROM %s_event WHERE hotspot_id = %llu "
-            "AND name = 'PAPI_TOT_INS' GROUP BY experiment;", table, h->id);
+            "AND name = '%s' GROUP BY experiment;", table, h->id, total_inst);
 
         if (SQLITE_OK != sqlite3_exec(globals.db, sql, import_instructions,
             (void *)h, &error)) {
@@ -339,7 +352,7 @@ static int calculate_metadata(lcpi_profile_t *profile, const char *table) {
         bzero(sql, MAX_BUFFER_SIZE);
         sprintf(sql,
             "SELECT MAX(a) FROM (SELECT SUM(value) AS a FROM %s_event WHERE "
-            "hotspot_id = %llu AND name = 'PAPI_TOT_INS');", table, h->id);
+            "hotspot_id = %llu AND name = '%s');", table, h->id, total_inst);
 
         if (SQLITE_OK != sqlite3_exec(globals.db, sql,
             perfexpert_database_get_double, (void *)&(h->max_inst), &error)) {
@@ -352,7 +365,7 @@ static int calculate_metadata(lcpi_profile_t *profile, const char *table) {
         bzero(sql, MAX_BUFFER_SIZE);
         sprintf(sql,
             "SELECT MIN(a) FROM (SELECT SUM(value) AS a FROM %s_event WHERE "
-            "hotspot_id = %llu AND name = 'PAPI_TOT_INS');", table, h->id);
+            "hotspot_id = %llu AND name = '%s');", table, h->id, total_inst);
 
         if (SQLITE_OK != sqlite3_exec(globals.db, sql,
             perfexpert_database_get_double, (void *)&(h->min_inst), &error)) {
@@ -376,7 +389,7 @@ static int calculate_metadata(lcpi_profile_t *profile, const char *table) {
         /* Import cycles */
         bzero(sql, MAX_BUFFER_SIZE);
         sprintf(sql, "SELECT SUM(value) FROM %s_event WHERE hotspot_id = %llu "
-            "AND name = 'PAPI_TOT_CYC';", table, h->id);
+            "AND name = '%s';", table, h->id, total_cycles);
 
         if (SQLITE_OK != sqlite3_exec(globals.db, sql,
             perfexpert_database_get_double, (void *)&(h->cycles), &error)) {
@@ -396,6 +409,8 @@ static int calculate_metadata(lcpi_profile_t *profile, const char *table) {
             profile->cycles += h->cycles;
         }
     }
+    OUTPUT_VERBOSE((3, "total # of instructions: [%f]", profile->instructions));
+    OUTPUT_VERBOSE((3, "total # of cycles: [%f]", profile->cycles));
 
     /* Calculate importance for hotspots */
     perfexpert_list_for(h, &(profile->hotspots), lcpi_hotspot_t) {
@@ -412,6 +427,7 @@ static int calculate_metadata(lcpi_profile_t *profile, const char *table) {
         if (SQLITE_OK != sqlite3_exec(globals.db, sql, NULL, NULL, &error)) {
             OUTPUT(("%s %s", _ERROR("SQL error"), error));
             sqlite3_free(error);
+            OUTPUT(("SQL: %s", sql));
             return PERFEXPERT_ERROR;
         }
     }

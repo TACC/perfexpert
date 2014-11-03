@@ -49,5 +49,5 @@ CREATE TABLE IF NOT EXISTS hpctoolkit_event (
     value         REAL    NOT NULL,
     hotspot_id    INTEGER NOT NULL,
 
-    FOREIGN KEY (hotspot_id) REFERENCES hpctoolkit_hotspot(id)
+    FOREIGN KEY (hpctoolkit_hotspot_id) REFERENCES hpctoolkit_hotspot(id)
 );

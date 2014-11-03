@@ -27,12 +27,8 @@
 /* PerfExpert common headers */
 #include "common/perfexpert_constants.h"
 
-#define USE_EVENT(X)                                                   \
-    if (PERFEXPERT_SUCCESS != my_module_globals.vtune->set_event(X)) { \
-        return PERFEXPERT_ERROR;                                       \
-    }
-
-#define EVENT_AVAIL(X) my_module_globals.vtune->query_event(X)
+// #define EVENT_AVAIL(X) my_module_globals.measurement->query_event(X)
+#define EVENT_AVAIL(X) 1
 
 /* Function declarations */
 static int generate_ratio_floating_point(void);

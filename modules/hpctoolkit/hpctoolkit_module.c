@@ -63,6 +63,8 @@ int module_load(void) {
 int module_init(void) {
     /* Extended interface */
     myself_module.set_event = &module_set_event;
+    myself_module.total_inst_counter = NULL;
+    myself_module.total_cycles_counter = NULL;
 
     /* Initialize list of events */
     my_module_globals.events_by_name = NULL;
@@ -97,6 +99,8 @@ int module_fini(void) {
 
     /* Extended interface */
     myself_module.set_event = NULL;
+    myself_module.total_inst_counter = NULL;
+    myself_module.total_cycles_counter = NULL;
 
     /* Free the list of events */
     perfexpert_hash_iter_str(my_module_globals.events_by_name, event, tmp) {
@@ -138,8 +142,8 @@ int module_measure(void) {
             return PERFEXPERT_ERROR;
         }
     } else {
-        if (PERFEXPERT_SUCCESS != run_hpcrun_knc()) {
-            OUTPUT(("%s", _ERROR("unable to run hpcrun on KNC")));
+        if (PERFEXPERT_SUCCESS != run_hpcrun_mic()) {
+            OUTPUT(("%s", _ERROR("unable to run hpcrun on MIC")));
             OUTPUT(("Are you adding the flags to compile for MIC?"));
             return PERFEXPERT_ERROR;
         }
@@ -181,35 +185,59 @@ int module_measure(void) {
 /* module_set_event */
 int module_set_event(const char *name) {
     hpctoolkit_event_t *event = NULL;
+    char *str = NULL;
     int event_code;
+
+    /* Make a local copy because we will need to change the string... */
+    PERFEXPERT_ALLOC(char, str, (strlen(name) + 1));
+    strcpy(str, name);
+
+    /* PAPI requires to convert the event name, replacing '.' by ':' */
+    perfexpert_string_replace_char(str, '.', ':');
 
     /* Check if event is already set or if it is PAPI_TOT_INS */
     perfexpert_hash_find_str(my_module_globals.events_by_name,
-        perfexpert_md5_string(name), event);
+        perfexpert_md5_string(str), event);
 
-    if ((NULL != event) || (0 == strcmp(name, "PAPI_TOT_INS"))) {
-        OUTPUT_VERBOSE((10, "event %s already set", _RED((char *)name)));
+    if ((NULL != event) ||
+        (0 == strcmp(name, "PAPI_TOT_INS")) ||
+        (0 == strcmp(name, "INST_RETIRED.ANY")) ||
+        (0 == strcmp(name, "INST_RETIRED.ANY_P"))) {
+        OUTPUT_VERBOSE((10, "event %s already set", _RED((char *)str)));
+        PERFEXPERT_DEALLOC(str);
         return PERFEXPERT_SUCCESS;
     }
 
+    /* Initialize PAPI */
+    if (PAPI_NOT_INITED == PAPI_is_initialized()) {
+        if (PAPI_VER_CURRENT != PAPI_library_init(PAPI_VER_CURRENT)) {
+            OUTPUT(("%s", _ERROR("initializing PAPI")));
+            return PERFEXPERT_ERROR;
+        }
+    }
+
     /* Check if event exists */
-    if (PAPI_OK != PAPI_event_name_to_code((char *)name, &event_code)) {
-        OUTPUT(("%s [%s]", _ERROR("event not available (name->code)"), name));
+    if (PAPI_OK != PAPI_event_name_to_code((char *)str, &event_code)) {
+        OUTPUT(("%s [%s]", _ERROR("event not available (name->code)"), str));
+        PERFEXPERT_DEALLOC(str);
         return PERFEXPERT_ERROR;
     }
     if (PAPI_OK != PAPI_query_event(event_code)) {
-        OUTPUT(("%s [%s]", _ERROR("event not available (query code)"), name));
+        OUTPUT(("%s [%s]", _ERROR("event not available (query code)"), str));
+        PERFEXPERT_DEALLOC(str);
         return PERFEXPERT_ERROR;
     }
 
     /* Add event to the hash of events */
     PERFEXPERT_ALLOC(hpctoolkit_event_t, event, sizeof(hpctoolkit_event_t));
-    PERFEXPERT_ALLOC(char, event->name, (strlen(name) + 1));
-    strcpy(event->name, name);
-    strcpy(event->name_md5, perfexpert_md5_string(name));
+    PERFEXPERT_ALLOC(char, event->name, (strlen(str) + 1));
+    strcpy(event->name, str);
+    strcpy(event->name_md5, perfexpert_md5_string(str));
     perfexpert_hash_add_str(my_module_globals.events_by_name, name_md5, event);
 
     OUTPUT_VERBOSE((6, "event %s set", _CYAN(event->name)));
+
+    PERFEXPERT_DEALLOC(str);
 
     return PERFEXPERT_SUCCESS;
 }

@@ -27,11 +27,6 @@
 /* PerfExpert common headers */
 #include "common/perfexpert_constants.h"
 
-#define USE_EVENT(X)                                                        \
-    if (PERFEXPERT_SUCCESS != my_module_globals.hpctoolkit->set_event(X)) { \
-        return PERFEXPERT_ERROR;                                            \
-    }
-
 /* Function declarations */
 static int generate_ratio_floating_point(void);
 static int generate_ratio_data_accesses(void);
