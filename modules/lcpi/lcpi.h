@@ -132,10 +132,15 @@ static inline int lcpi_add_metric (char *name, char *value) {
     return PERFEXPERT_SUCCESS;
 }
 
-#define USE_EVENT(X)                                                         \
-    if (PERFEXPERT_SUCCESS != my_module_globals.measurement->set_event(X)) { \
-        OUTPUT(("%s [%s]", _ERROR("invalid event name"), X));                \
-        return PERFEXPERT_ERROR;                                             \
+#define USE_EVENT(X)                                                           \
+    if (NULL == my_module_globals.measurement->set_event) {                    \
+        OUTPUT(("%s [%s]", _ERROR("'set_event' function not found on module"), \
+            my_module_globals.measurement->name));                             \
+        return PERFEXPERT_ERROR;                                               \
+    }                                                                          \
+    if (PERFEXPERT_SUCCESS != my_module_globals.measurement->set_event(X)) {   \
+        OUTPUT(("%s [%s]", _ERROR("invalid event name"), X));                  \
+        return PERFEXPERT_ERROR;                                               \
     }
 
 #ifdef __cplusplus

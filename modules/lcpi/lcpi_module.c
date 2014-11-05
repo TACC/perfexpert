@@ -70,8 +70,29 @@ int module_init(void) {
         OUTPUT(("%s", _RED("Neither HPCToolkit nor VTune module loaded")));
 
         /* Default to HPCToolkit */
-        perfexpert_module_load("hpctoolkit");
         OUTPUT(("%s", _RED("PerfExpert will try to load HPCToolkit module")));
+        if (PERFEXPERT_SUCCESS != perfexpert_module_load("hpctoolkit")) {
+            OUTPUT(("%s", _ERROR("while loading HPCToolkit module")));
+            return PERFEXPERT_ERROR;
+        }
+
+        /* Get the module address */
+        if (NULL == (my_module_globals.measurement =
+                (perfexpert_module_measurement_t *)
+                perfexpert_module_get("hpctoolkit"))) {
+            OUTPUT(("%s", _ERROR("unable to get measurements module")));
+            return PERFEXPERT_SUCCESS;
+        }
+
+        /* Initialize the measurements module before using it */
+        if (PERFEXPERT_MODULE_LOADED == my_module_globals.measurement->status) {
+            if (PERFEXPERT_SUCCESS != my_module_globals.measurement->init()) {
+                OUTPUT(("%s [%s]", _ERROR("error initializing module"),
+                    my_module_globals.measurement->name));
+                return PERFEXPERT_ERROR;
+            }
+        }
+        my_module_globals.measurement->status = PERFEXPERT_MODULE_INITIALIZED;
     }
 
     /* Should we use HPCToolkit? */
@@ -151,7 +172,6 @@ int module_init(void) {
     }
 
     OUTPUT(("%s", _YELLOW("Setting performance events")));
-
     /* Jaketown (or SandyBridgeEP) */
     if (0 == strcmp("jaketown",
         perfexpert_string_to_lower(my_module_globals.architecture))) {
