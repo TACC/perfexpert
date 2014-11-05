@@ -28,12 +28,12 @@ extern "C" {
 
 /* Modules headers */
 #include "modules/perfexpert_module_base.h"
+#include "modules/perfexpert_module_measurement.h"
 
 /* PerfExpert common headers */
 #include "common/perfexpert_list.h"
 
 /* Interface extenstions */
-typedef int (*perfexpert_module_hpctoolkit_set_event_fn_t)(const char *name);
 
 /* HPCToolkit module interface */
 typedef struct {
@@ -44,8 +44,6 @@ typedef struct {
     int  argc;
     char *argv[MAX_ARGUMENTS_COUNT];
     int  verbose_level;
-    char *total_cycles_counter;
-    char *total_inst_counter;
     perfexpert_module_status_t status;
     perfexpert_module_load_fn_t load;
     perfexpert_module_init_fn_t init;
@@ -56,7 +54,9 @@ typedef struct {
     perfexpert_module_analyze_fn_t analyze;
     perfexpert_module_recommend_fn_t recommend;
     /* Extended module interface */
-    perfexpert_module_hpctoolkit_set_event_fn_t set_event;
+    perfexpert_module_measurement_set_event_fn_t set_event;
+    char *total_cycles_counter;
+    char *total_inst_counter;
     perfexpert_list_t profiles;
 } perfexpert_module_hpctoolkit_1_0_0_t;
 
