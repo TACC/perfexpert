@@ -66,10 +66,10 @@ int module_init(void) {
     myself_module.set_event = &module_set_event;
     myself_module.total_inst_counter = NULL;
     myself_module.total_cycles_counter = NULL;
+    perfexpert_list_construct(&(myself_module.profiles));
 
     /* Initialize list of events */
     my_module_globals.events_by_name = NULL;
-    perfexpert_list_construct(&(myself_module.profiles));
     my_module_globals.prefix[0] = NULL;
     my_module_globals.before[0] = NULL;
     my_module_globals.after[0] = NULL;
@@ -121,6 +121,20 @@ int module_measure(void) {
 
     OUTPUT(("%s (%d events)", _YELLOW("Collecting measurements"),
         perfexpert_hash_count_str(my_module_globals.events_by_name)));
+
+    /* Check if there is any event to collect */
+    if (0 == perfexpert_hash_count_str(my_module_globals.events_by_name)) {
+        OUTPUT_VERBOSE((5, "adding PAPI_TOT_INS and PAPI_TOT_CYC at least"));
+
+        if (PERFEXPERT_SUCCESS != module_set_event("PAPI_TOT_INS")) {
+            OUTPUT(("%s", _ERROR("adding events [PAPI_TOT_INS]")));
+        }
+        if (PERFEXPERT_SUCCESS != module_set_event("PAPI_TOT_CYC")) {
+            OUTPUT(("%s", _ERROR("adding events [PAPI_TOT_CYC]")));
+        }
+        myself_module.total_inst_counter = "PAPI_TOT_INS";
+        myself_module.total_cycles_counter = "PAPI_TOT_CYC";
+    }
 
     /* First of all, does the file exist? (it is just a double check) */
     if (PERFEXPERT_SUCCESS !=

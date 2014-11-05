@@ -72,7 +72,7 @@ int papi_get_sampling_rate(const char *name) {
     PAPI_event_info_t info;
 
     static sample_t sample[] = {
-        {99999999, 10000000, "" },
+        {99999999, 10000000, " " },
         {9999999, 5000000, "FP_COMP_OPS_EXE:SSE_FP_PACKED_DOUBLE ARITH:FPU_DIV "
             "FP_COMP_OPS_EXE:SSE_FP_SCALAR_SINGLE:SSE_SCALAR_DOUBLE "
             "PAPI_TOT_INS PAPI_TOT_CYC L1I_CYCLES_STALLED "
@@ -164,6 +164,7 @@ int papi_get_sampling_rate(const char *name) {
             OUTPUT(("%s [%s]", _ERROR("unable to get prime"), name));
             return PERFEXPERT_FAILURE;
         }
+
         sample[cat].last = rate;
         return rate;
     }
