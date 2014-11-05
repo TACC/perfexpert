@@ -29,8 +29,11 @@ int metrics_mic(void) {
     char s[MAX_LCPI];
 
     /* Set the events on the measurement module */
+    USE_EVENT("L2_DATA_READ_MISS_MEM_FILL");
     USE_EVENT("BRANCHES");
+    USE_EVENT("L2_DATA_WRITE_MISS_MEM_FILL");
     USE_EVENT("BRANCHES_MISPREDICTED");
+    USE_EVENT("L2_VICTIM_REQ_WITH_DATA");
     USE_EVENT("CPU_CLK_UNHALTED");
     USE_EVENT("CODE_READ");
     USE_EVENT("CODE_CACHE_MISS");
@@ -38,11 +41,8 @@ int metrics_mic(void) {
     USE_EVENT("DATA_PAGE_WALK");
     USE_EVENT("DATA_READ_OR_WRITE");
     USE_EVENT("DATA_READ_MISS_OR_WRITE_MISS");
-    USE_EVENT("HWP_L2MISS");
+    // USE_EVENT("HWP_L2MISS");
     USE_EVENT("INSTRUCTIONS_EXECUTED");
-    USE_EVENT("L2_DATA_READ_MISS_MEM_FILL");
-    USE_EVENT("L2_DATA_WRITE_MISS_MEM_FILL");
-    USE_EVENT("L2_VICTIM_REQ_WITH_DATA");
     USE_EVENT("SNP_HITM_L2");
     USE_EVENT("VPU_ELEMENTS_ACTIVE");
     USE_EVENT("VPU_INSTRUCTIONS_EXECUTED");
@@ -96,23 +96,36 @@ int metrics_mic(void) {
 
     /* data_accesses.LLC_misses */
     if (PERFEXPERT_SUCCESS != lcpi_add_metric("data_accesses.LLC_misses",
-        "((L2_DATA_READ_MISS_MEM_FILL + L2_DATA_WRITE_MISS_MEM_FILL)) * "
+        "((L2_DATA_READ_MISS_MEM_FILL + L2_DATA_WRITE_MISS_MEM_FILL) * "
             "mem_lat) / INSTRUCTIONS_EXECUTED")) {
         return PERFEXPERT_ERROR;
     }
 
     /* memory_bandwidth.overall */
+    // TODO: I need to make PAPI known the HWP_L2MISS event
+    // if (PERFEXPERT_SUCCESS != lcpi_add_metric("memory_bandwidth.overall",
+    //     "((L2_DATA_READ_MISS_MEM_FILL + L2_DATA_WRITE_MISS_MEM_FILL + "
+    //         "HWP_L2MISS) * 64 / CPU_CLK_UNHALTED) + ((L2_VICTIM_REQ_WITH_DATA "
+    //         "+ SNP_HITM_L2) * 64 / CPU_CLK_UNHALTED) * CPU_freq")) {
+    //     return PERFEXPERT_ERROR;
+    // }
     if (PERFEXPERT_SUCCESS != lcpi_add_metric("memory_bandwidth.overall",
-        "((L2_DATA_READ_MISS_MEM_FILL + L2_DATA_WRITE_MISS_MEM_FILL + "
-            "HWP_L2MISS) * 64 / CPU_CLK_UNHALTED) + ((L2_VICTIM_REQ_WITH_DATA "
-            "+ SNP_HITM_L2) * 64 / CPU_CLK_UNHALTED) * CPU_freq")) {
+        "((L2_DATA_READ_MISS_MEM_FILL + L2_DATA_WRITE_MISS_MEM_FILL) * 64 / "
+            "CPU_CLK_UNHALTED) + ((L2_VICTIM_REQ_WITH_DATA + SNP_HITM_L2) * 64 "
+            "/ CPU_CLK_UNHALTED) * CPU_freq")) {
         return PERFEXPERT_ERROR;
     }
 
     /* memory_bandwidth.read */
+    // TODO: I need to make PAPI known the HWP_L2MISS event
+    // if (PERFEXPERT_SUCCESS != lcpi_add_metric("memory_bandwidth.read",
+    //     "(L2_DATA_READ_MISS_MEM_FILL + L2_DATA_WRITE_MISS_MEM_FILL + "
+    //         "HWP_L2MISS) * 64 / CPU_CLK_UNHALTED")) {
+    //     return PERFEXPERT_ERROR;
+    // }
     if (PERFEXPERT_SUCCESS != lcpi_add_metric("memory_bandwidth.read",
-        "(L2_DATA_READ_MISS_MEM_FILL + L2_DATA_WRITE_MISS_MEM_FILL + "
-            "HWP_L2MISS) * 64 / CPU_CLK_UNHALTED")) {
+        "(L2_DATA_READ_MISS_MEM_FILL + L2_DATA_WRITE_MISS_MEM_FILL) * 64 / "
+            "CPU_CLK_UNHALTED")) {
         return PERFEXPERT_ERROR;
     }
 
