@@ -196,17 +196,17 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
 
         /* Which database file? */
         case 'd':
-            globals.dbfile = arg;
             OUTPUT_VERBOSE((1, "option 'd' set [%s]", globals.dbfile ?
                 globals.dbfile : "(null)"));
+            globals.dbfile = arg;
             break;
 
         /* Leave the garbage there? */
         case 'g':
-            globals.remove_garbage = PERFEXPERT_TRUE;
+            OUTPUT_VERBOSE((1, "option 'g' set"));
             OUTPUT(("%s in this version the -g option actually removes the "
                 "temporary directory", _BOLDRED("WARNING: ")));
-            OUTPUT_VERBOSE((1, "option 'g' set"));
+            globals.remove_garbage = PERFEXPERT_TRUE;
             break;
 
         /* Show help */
@@ -223,6 +223,7 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
             break;
 
         case 'i':
+            OUTPUT_VERBOSE((1, "option 'i' set"));
             bzero(str, MAX_BUFFER_SIZE);
             sprintf(str, "hpctoolkit,inputfile=%s", arg ? arg : "(null)");
             if (PERFEXPERT_SUCCESS != set_module_option(str)) {
@@ -230,10 +231,11 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
             }
             break;
 
-        /* Verbose level (has an alias: v) */
+        /* Verbose level */
         case 'l':
+        case 'v':
             globals.verbose = arg ? atoi(arg) : 5;
-            OUTPUT_VERBOSE((1, "option 'l' set [%d]", globals.verbose));
+            OUTPUT_VERBOSE((1, "option 'v' set [%d]", globals.verbose));
             break;
 
         /* List of modules */
@@ -252,14 +254,9 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
             }
             break;
 
-        /* Verbose level (has an alias: l) */
-        case 'v':
-            globals.verbose = arg ? atoi(arg) : 5;
-            OUTPUT_VERBOSE((1, "option 'v' set [%d]", globals.verbose));
-            break;
-
-        /* Shortcuts for compile modules (m) */
+        /* Shortcuts for other modules */
         case 'r':
+            OUTPUT_VERBOSE((1, "option 'r' set [%s]", arg ? arg : "(null)"));
             bzero(str, MAX_BUFFER_SIZE);
             sprintf(str, "sqlrules,recommendations=%s", arg ? arg : "");
             if (PERFEXPERT_SUCCESS != set_module_option(str)) {
@@ -268,6 +265,7 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
             break;
 
         case 'm':
+            OUTPUT_VERBOSE((1, "option 'm' set [%s]", arg ? arg : "(null)"));
             bzero(str, MAX_BUFFER_SIZE);
             sprintf(str, "make,target=%s", arg ? arg : "");
             if (PERFEXPERT_SUCCESS != set_module_option(str)) {
@@ -276,6 +274,7 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
             break;
 
         case 's':
+            OUTPUT_VERBOSE((1, "option 's' set [%s]", arg ? arg : "(null)"));
             if (NULL == (m = guess_compile_module())) {
                 argp_error(state, "unable to guess compiler, set CC");
             }
@@ -287,7 +286,11 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
             break;
 
         /* Shortcuts for HPCToolkit module (a, A, b, B, C, i, p, P) */
+        /* TODO: those arguments should be postponed, because they may reffer to
+                 other module than HCPToolkit, like VTune for instance
+        */
         case 'a':
+            OUTPUT_VERBOSE((1, "option 'a' set [%s]", arg ? arg : "(null)"));
             bzero(str, MAX_BUFFER_SIZE);
             sprintf(str, "hpctoolkit,after=%s", arg ? arg : "");
             if (PERFEXPERT_SUCCESS != set_module_option(str)) {
@@ -296,6 +299,7 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
             break;
 
         case 'A':
+            OUTPUT_VERBOSE((1, "option 'A' set [%s]", arg ? arg : "(null)"));
             bzero(str, MAX_BUFFER_SIZE);
             sprintf(str, "hpctoolkit,mic-after=%s", arg ? arg : "(null)");
             if (PERFEXPERT_SUCCESS != set_module_option(str)) {
@@ -304,6 +308,7 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
             break;
 
         case 'b':
+            OUTPUT_VERBOSE((1, "option 'b' set [%s]", arg ? arg : "(null)"));
             bzero(str, MAX_BUFFER_SIZE);
             sprintf(str, "hpctoolkit,before=%s", arg ? arg : "");
             if (PERFEXPERT_SUCCESS != set_module_option(str)) {
@@ -312,6 +317,7 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
             break;
 
         case 'B':
+            OUTPUT_VERBOSE((1, "option 'B' set [%s]", arg ? arg : "(null)"));
             bzero(str, MAX_BUFFER_SIZE);
             sprintf(str, "hpctoolkit,mic-before=%s", arg ? arg : "");
             if (PERFEXPERT_SUCCESS != set_module_option(str)) {
@@ -320,14 +326,21 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
             break;
 
         case 'C':
+            OUTPUT_VERBOSE((1, "option 'C' set [%s]", arg ? arg : "(null)"));
             bzero(str, MAX_BUFFER_SIZE);
             sprintf(str, "hpctoolkit,mic-card=%s", arg ? arg : "");
+            if (PERFEXPERT_SUCCESS != set_module_option(str)) {
+                argp_error(state, "error setting module option");
+            }
+            bzero(str, MAX_BUFFER_SIZE);
+            sprintf(str, "lcpi,architecture=mic");
             if (PERFEXPERT_SUCCESS != set_module_option(str)) {
                 argp_error(state, "error setting module option");
             }
             break;
 
         case 'p':
+            OUTPUT_VERBOSE((1, "option 'p' set [%s]", arg ? arg : "(null)"));
             bzero(str, MAX_BUFFER_SIZE);
             sprintf(str, "hpctoolkit,prefix=%s", arg ? arg : "");
             if (PERFEXPERT_SUCCESS != set_module_option(str)) {
@@ -336,6 +349,7 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
             break;
 
         case 'P':
+            OUTPUT_VERBOSE((1, "option 'P' set [%s]", arg ? arg : "(null)"));
             bzero(str, MAX_BUFFER_SIZE);
             sprintf(str, "hpctoolkit,mic-prefix=%s", arg ? arg : "");
             if (PERFEXPERT_SUCCESS != set_module_option(str)) {

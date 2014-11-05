@@ -560,9 +560,9 @@ void perfexpert_module_help(const char *name) {
                     continue;
                 }
                 if (NULL != (help = lt_dlsym(handle, "module_help"))) {
-                    printf("\n To set one of the following options use --module"
-                        "-option=%s,OPTION=VALUE\n", m);
                     help();
+                    printf("\n To set one of the above options use --module"
+                        "-option=%s,OPTION=VALUE\n", m);
                 } else {
                     OUTPUT_VERBOSE((8, "module_help() not defined"));
                 }

@@ -67,8 +67,9 @@ static struct argp_option options[] = {
     #if HAVE_HPCTOOLKIT_MIC
     { 0, 0, 0, 0, "Target program execution on Intel(R) Phi (MIC) options "
         "(HPCToolkit only):", 3},
-    { "mic-card", 'C', "CARD", 0,  "Same as --module-option=hpctoolkit,"
-        "mic-card=CARD See HPCToolkit module help for details" },
+    { "mic-card", 'C', "CARD", 0,  "Same as --module-option=hpctoolkit,mic-card"
+        "CARD See HPCToolkit module help for details. This also sets --module-"
+        "option=lcpi,architecture=mic See LCPI module help for details" },
     { "mic-after", 'A', "COMMAND", 0,  "Same as --module-option=hpctoolkit,"
         "mic-after=COMMAND See HPCToolkit module help for details" },
     { "mic-before", 'B', "COMMAND", 0,  "Same as --module-option=hpctoolkit,"
