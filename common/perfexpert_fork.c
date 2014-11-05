@@ -41,19 +41,17 @@ extern "C" {
 int perfexpert_fork_and_wait(test_t *test, char *argv[]) {
     int pipe1[2], pipe2[2], pid = 0, input_FP = 0, output_FP = 0;
     int r_bytes = 0, w_bytes = 0, rc = PERFEXPERT_UNDEFINED;
-    char temp_str[PATH_MAX], buffer[MAX_BUFFER_SIZE];
+    char *temp_str, buffer[MAX_BUFFER_SIZE];
 
     /* Sanity check: what is the full path of the binary? */
     if (PERFEXPERT_SUCCESS != perfexpert_util_path_only(argv[0], &temp_str)) {
         OUTPUT(("%s", _ERROR((char *)"file does not exist")));
         return PERFEXPERT_ERROR;
-    } else {
-        strcat(temp_str, argv[0]);
     }
 
-    /* Sanity check: does the binary exists? */
-    if (PERFEXPERT_ERROR == perfexpert_util_file_is_exec(temp_str)) {
-        OUTPUT(("%s (%s)", _ERROR((char *)"file is not executable"), temp_str));
+    /* Sanity check: does the binary exists and is executable? */
+    if (PERFEXPERT_ERROR == perfexpert_util_file_is_exec(argv[0])) {
+        OUTPUT(("%s (%s)", _ERROR((char *)"file is not executable"), argv[0]));
         return PERFEXPERT_ERROR;
     }
 
