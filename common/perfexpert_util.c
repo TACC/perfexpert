@@ -304,6 +304,32 @@ int perfexpert_util_path_only(const char *file, char **path) {
     return PERFEXPERT_SUCCESS;
 }
 
+/* perfexpert_util_full_path */
+int perfexpert_util_full_path(const char *file, char **fullpath) {
+    char *filename = NULL, *path = NULL, *local = NULL;
+
+    if (NULL == file) {
+        OUTPUT(("%s", _ERROR((char *)"file is NULL")));
+        return PERFEXPERT_ERROR;
+    }
+
+    if (PERFEXPERT_SUCCESS != perfexpert_util_filename_only(file, &filename)) {
+        OUTPUT(("%s", _ERROR((char *)"unable to extract filename")));
+        return PERFEXPERT_ERROR;
+    }
+
+    if (PERFEXPERT_SUCCESS != perfexpert_util_path_only(filename, &path)) {
+        OUTPUT(("%s", _ERROR((char *)"file does not exist")));
+        return PERFEXPERT_ERROR;
+    }
+
+    PERFEXPERT_ALLOC(char, local, (strlen(filename) + strlen(path) + 2));
+    sprintf(local, "%s/%s", path, filename);
+    *fullpath = local;
+
+    return PERFEXPERT_SUCCESS;
+}
+
 /* perfexpert_util_file_copy */
 int perfexpert_util_file_copy(const char *to, const char *from) {
     int fd_to = 0, fd_from = 0, saved_errno = 0;

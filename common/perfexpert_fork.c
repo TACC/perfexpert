@@ -44,14 +44,14 @@ int perfexpert_fork_and_wait(test_t *test, char *argv[]) {
     char *temp_str, buffer[MAX_BUFFER_SIZE];
 
     /* Sanity check: what is the full path of the binary? */
-    if (PERFEXPERT_SUCCESS != perfexpert_util_path_only(argv[0], &temp_str)) {
-        OUTPUT(("%s", _ERROR((char *)"file does not exist")));
+    if (PERFEXPERT_SUCCESS != perfexpert_util_full_path(argv[0], &temp_str)) {
+        OUTPUT(("%s", _ERROR("file does not exist or is not in the PATH")));
         return PERFEXPERT_ERROR;
     }
 
     /* Sanity check: does the binary exists and is executable? */
-    if (PERFEXPERT_ERROR == perfexpert_util_file_is_exec(argv[0])) {
-        OUTPUT(("%s (%s)", _ERROR((char *)"file is not executable"), argv[0]));
+    if (PERFEXPERT_ERROR == perfexpert_util_file_is_exec(temp_str)) {
+        OUTPUT(("%s (%s)", _ERROR((char *)"file is not executable"), temp_str));
         return PERFEXPERT_ERROR;
     }
 
