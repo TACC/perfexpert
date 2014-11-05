@@ -35,6 +35,7 @@ typedef struct {
 /* Function declarations */
 int papi_max_events(void);
 int papi_get_sampling_rate(const char *name);
+int papi_check_event(const char *name);
 static int get_prime(int start, int end);
 
 #ifdef __cplusplus

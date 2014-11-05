@@ -76,7 +76,7 @@ int papi_get_sampling_rate(const char *name) {
         {9999999, 5000000, "FP_COMP_OPS_EXE:SSE_FP_PACKED_DOUBLE ARITH:FPU_DIV "
             "FP_COMP_OPS_EXE:SSE_FP_SCALAR_SINGLE:SSE_SCALAR_DOUBLE "
             "PAPI_TOT_INS PAPI_TOT_CYC L1I_CYCLES_STALLED "
-            "INST_RETIRED:ANY_P "
+            "INST_RETIRED:ANY_P VPU_INSTRUCTIONS_EXECUTED"
             "PAPI_LD_INS PAPI_L1_DCA PAPI_L1_ICA ICACHE ARITH:CYCLES_DIV_BUSY "
             "SSEX_UOPS_RETIRED:SCALAR_DOUBLE ARITH FP_COMP_OPS_EXE:SSE_FP "
             "FP_COMP_OPS_EXE:SSE_FP_PACKED FP_COMP_OPS_EXE:SSE_FP_SCALAR "
@@ -96,20 +96,46 @@ int papi_get_sampling_rate(const char *name) {
             "SIMD_COMP_INST_RETIRED:SCALAR_SINGLE:SCALAR_DOUBLE "
             "FP_COMP_OPS_EXE:SSE_DOUBLE_PRECISION:SSE_FP:SSE_FP_PACKED:"
             "SSE_FP_SCALAR:SSE_SINGLE_PRECISION:X87 CPU_CLK_UNHALTED:THREAD_P "
-            "BR_INST_RETIRED:ALL_BRANCHES BR_MISP_RETIRED:ALL_BRANCHES" },
+            "BR_INST_RETIRED:ALL_BRANCHES BR_MISP_RETIRED:ALL_BRANCHES"
+            "BRANCHES_MISPREDICTED INSTRUCTIONS_EXECUTED VPU_ELEMENTS_ACTIVE "},
         {4999999, 500000, "PAPI_L2_DCA PAPI_L2_TCA PAPI_L2_ICA PAPI_L2_DCM "
             "PAPI_L2_ICM PAPI_L2_TCM PAPI_L3_TCM PAPI_L3_TCA PAPI_BR_INS "
             "L2_RQSTS:DEMAND_DATA_RD_HIT PAPI_BR_MSP MEM_UOP_RETIRED:ALL_LOADS "
             "L2_RQSTS:ALL_DEMAND_RD_HIT LAST_LEVEL_CACHE_REFERENCES "
             "LAST_LEVEL_CACHE_MISSES ICACHE:MISSES L2_RQSTS:CODE_RD_HIT "
-            "MEM_UOP_RETIRED:ANY_LOADS L2_RQSTS:CODE_RD_MISS"},
+            "MEM_UOP_RETIRED:ANY_LOADS L2_RQSTS:CODE_RD_MISS CODE_READ "
+            "CODE_CACHE_MISS DATA_READ_OR_WRITE HWP_L2MISS "
+            "L2_DATA_WRITE_MISS_MEM_FILL L2_VICTIM_REQ_WITH_DATA "},
         {499999, 100000, "DTLB_STORE_MISSES:CAUSES_A_WALK"
             "PAPI_TLB_DM DTLB_LOAD_MISSES:WALK_DURATION PAPI_TLB_IM "
-            "ITLB_MISSES:WALK_DURATION DTLB_LOAD_MISSES:CAUSES_A_WALK " },
+            "ITLB_MISSES:WALK_DURATION DTLB_LOAD_MISSES:CAUSES_A_WALK "
+            "DATA_PAGE_WALK " },
         {99999, 0, "" },
         {0, 0, "" }
     };
 
+    /* TODO: if the architecture is MIC, consider the event exists, this should
+             be tested in the future (not sure how exactly...)
+    */
+    if (NULL != my_module_globals.mic) {
+        OUTPUT_VERBOSE((3, "event not checked because the architecture is MIC "
+            "[%s]", name));
+        while (0 != strcmp("", sample[cat].events)) {
+            if (NULL != strstr(sample[cat].events, name)) {
+                break;
+            }
+            cat++;
+        }
+
+        if (0 >= (rate = get_prime(sample[cat].last, sample[cat].end))) {
+            OUTPUT(("%s [%s]", _ERROR("unable to get prime"), name));
+            return PERFEXPERT_FAILURE;
+        }
+        sample[cat].last = rate;
+        return rate;
+    }
+
+    /* Otherwise, check if the event is derived and return the sample rate */
     if (PAPI_OK != PAPI_event_name_to_code((char *)name, &event_code)) {
         OUTPUT(("%s [%s]", _ERROR("event not available (name->code)"), name));
         return PERFEXPERT_FAILURE;
@@ -142,6 +168,39 @@ int papi_get_sampling_rate(const char *name) {
         return rate;
     }
     return PERFEXPERT_FAILURE;
+}
+
+/* papi_check_event */
+int papi_check_event(const char *event) {
+    int event_code;
+
+    /* Initialize PAPI */
+    if (PAPI_NOT_INITED == PAPI_is_initialized()) {
+        if (PAPI_VER_CURRENT != PAPI_library_init(PAPI_VER_CURRENT)) {
+            OUTPUT(("%s", _ERROR("initializing PAPI")));
+            return PERFEXPERT_ERROR;
+        }
+    }
+
+    /* TODO: if the architecture is MIC, consider the event exists, this should
+             be tested in the future (not sure how exactly...)
+    */
+    if (NULL != my_module_globals.mic) {
+        OUTPUT_VERBOSE((3, "event not checked because the architecture is MIC "
+            "[%s]", event));
+        return PERFEXPERT_SUCCESS;
+    }
+
+    /* Check event */
+    if (PAPI_OK != PAPI_event_name_to_code((char *)event, &event_code)) {
+        OUTPUT(("%s [%s]", _ERROR("event not available (name->code)"), event));
+        return PERFEXPERT_ERROR;
+    }
+    if (PAPI_OK != PAPI_query_event(event_code)) {
+        OUTPUT(("%s [%s]", _ERROR("event not available (query code)"), event));
+        return PERFEXPERT_ERROR;
+    }
+    return PERFEXPERT_SUCCESS;
 }
 
 /* get_prime */

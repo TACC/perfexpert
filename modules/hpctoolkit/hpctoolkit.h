@@ -73,10 +73,6 @@ int module_set_event(const char *name);
 
 /* Function declarations */
 int parse_file(const char *file);
-int run_hpcstruct(void);
-int run_hpcrun(void);
-int run_hpcrun_mic(void);
-int run_hpcprof(char **file);
 int profile_check_all(perfexpert_list_t *profiles);
 int profile_flatten_all(perfexpert_list_t *profiles);
 int database_profiles(perfexpert_list_t *profiles);

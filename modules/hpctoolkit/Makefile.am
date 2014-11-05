@@ -29,8 +29,7 @@ libperfexpert_module_hpctoolkit_la_SOURCES = hpctoolkit_module.c \
 	hpctoolkit_options.c  \
 	hpctoolkit_papi.c     \
 	hpctoolkit_profile.c  \
-	hpctoolkit_tools.c    \
-	hpctoolkit_tools_mic.c
+	hpctoolkit_tools.c
 
 # Install hpctoolkit module database
 install-exec-local:

@@ -32,6 +32,7 @@ extern "C" {
 /* Module headers */
 #include "hpctoolkit.h"
 #include "hpctoolkit_module.h"
+#include "hpctoolkit_tools.h"
 
 /* PerfExpert common headers */
 #include "common/perfexpert_alloc.h"
@@ -69,6 +70,12 @@ int module_init(void) {
     /* Initialize list of events */
     my_module_globals.events_by_name = NULL;
     perfexpert_list_construct(&(myself_module.profiles));
+    my_module_globals.prefix[0] = NULL;
+    my_module_globals.before[0] = NULL;
+    my_module_globals.after[0] = NULL;
+    my_module_globals.mic_prefix[0] = NULL;
+    my_module_globals.mic_before[0] = NULL;
+    my_module_globals.mic_after[0] = NULL;
     my_module_globals.mic = NULL;
     my_module_globals.inputfile = NULL;
     my_module_globals.ignore_return_code = PERFEXPERT_FALSE;
@@ -78,14 +85,6 @@ int module_init(void) {
         myself_module.argv)) {
         OUTPUT(("%s", _ERROR("parsing module arguments")));
         return PERFEXPERT_ERROR;
-    }
-
-    /* Initialize PAPI */
-    if (PAPI_NOT_INITED == PAPI_is_initialized()) {
-        if (PAPI_VER_CURRENT != PAPI_library_init(PAPI_VER_CURRENT)) {
-            OUTPUT(("%s", _ERROR("initializing PAPI")));
-            return PERFEXPERT_ERROR;
-        }
     }
 
     OUTPUT_VERBOSE((5, "%s", _MAGENTA("initialized")));
@@ -186,7 +185,6 @@ int module_measure(void) {
 int module_set_event(const char *name) {
     hpctoolkit_event_t *event = NULL;
     char *str = NULL;
-    int event_code;
 
     /* Make a local copy because we will need to change the string... */
     PERFEXPERT_ALLOC(char, str, (strlen(name) + 1));
@@ -208,23 +206,9 @@ int module_set_event(const char *name) {
         return PERFEXPERT_SUCCESS;
     }
 
-    /* Initialize PAPI */
-    if (PAPI_NOT_INITED == PAPI_is_initialized()) {
-        if (PAPI_VER_CURRENT != PAPI_library_init(PAPI_VER_CURRENT)) {
-            OUTPUT(("%s", _ERROR("initializing PAPI")));
-            return PERFEXPERT_ERROR;
-        }
-    }
-
     /* Check if event exists */
-    if (PAPI_OK != PAPI_event_name_to_code((char *)str, &event_code)) {
-        OUTPUT(("%s [%s]", _ERROR("event not available (name->code)"), str));
-        PERFEXPERT_DEALLOC(str);
-        return PERFEXPERT_ERROR;
-    }
-    if (PAPI_OK != PAPI_query_event(event_code)) {
-        OUTPUT(("%s [%s]", _ERROR("event not available (query code)"), str));
-        PERFEXPERT_DEALLOC(str);
+    if (PERFEXPERT_SUCCESS != papi_check_event(str)) {
+        OUTPUT(("%s [%s]", _ERROR("invalid event name"), name));
         return PERFEXPERT_ERROR;
     }
 

@@ -28,6 +28,7 @@ extern "C" {
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <sys/stat.h>
 #include <papi.h>
 
 /* Modules headers */
@@ -280,6 +281,163 @@ int run_hpcrun(void) {
         PERFEXPERT_DEALLOC(e);
         e = (experiment_t *)perfexpert_list_get_first(&experiments);
     }
+    return rc;
+}
+
+/* run_hpcrun_mic */
+int run_hpcrun_mic(void) {
+    struct timespec time_start, time_end, time_diff;
+    int experiment_count = 0, event_count = MIC_EVENTS_PER_RUN, i = 0;
+    int rc = PERFEXPERT_SUCCESS;
+    hpctoolkit_event_t *event = NULL, *t = NULL;
+    char *script_file, *argv[4];
+    FILE *script_file_FP;
+    test_t test;
+
+    OUTPUT_VERBOSE((10, "there will be 2 events/run"));
+
+    /* If this command should run on the MIC, encapsulate it in a script */
+    PERFEXPERT_ALLOC(char, script_file, (strlen(globals.moduledir) + 15));
+    sprintf(script_file, "%s/mic_hpcrun.sh", globals.moduledir);
+
+    if (NULL == (script_file_FP = fopen(script_file, "w"))) {
+        OUTPUT(("%s (%s)", _ERROR("unable to open file"), script_file));
+        return PERFEXPERT_ERROR;
+    }
+
+    fprintf(script_file_FP, "#!/bin/sh\n\n");
+
+    /* Fill the script file with all the experiments, before, and after */
+    perfexpert_hash_iter_str(my_module_globals.events_by_name, event, t) {
+        /* First add the before and the beginning of the command line */
+        if (MIC_EVENTS_PER_RUN == event_count) {
+            /* Add the BEFORE program */
+            if (NULL != my_module_globals.mic_before[0]) {
+                fprintf(script_file_FP, "# BEFORE command\n");
+                i = 0;
+                while (NULL != my_module_globals.mic_before[i]) {
+                    fprintf(script_file_FP, "%s ",
+                        (char *)my_module_globals.mic_before[i]);
+                    i++;
+                }
+                fprintf(script_file_FP, "\n\n");
+            }
+
+            fprintf(script_file_FP, "# HPCRUN (%d)\n", experiment_count);
+
+            /* Add PREFIX */
+            if (NULL != my_module_globals.mic_prefix[0]) {
+                i = 0;
+                while (NULL != my_module_globals.mic_prefix[i]) {
+                    fprintf(script_file_FP, "%s ",
+                        (char *)my_module_globals.mic_prefix[i]);
+                    i++;
+                }
+            }
+
+            /* Arguments to run hpcrun */
+            fprintf(script_file_FP, "%s --output %s/measurements ", MIC_HPCRUN,
+                globals.moduledir);
+        }
+
+        /* Add event */
+        if ((MIC_EVENTS_PER_RUN >= event_count) && (1 < event_count)) {
+            fprintf(script_file_FP, "--event %s:%d ", event->name,
+                papi_get_sampling_rate(event->name));
+
+            event_count--;
+            continue;
+        }
+
+        /* Add event */
+        fprintf(script_file_FP, "--event %s:%d ", event->name,
+            papi_get_sampling_rate(event->name));
+        event_count++;
+
+        /* Add the program and the program arguments to experiment */
+        fprintf(script_file_FP, "%s ", globals.program_full);
+        i = 0;
+        while (NULL != globals.program_argv[i]) {
+            fprintf(script_file_FP, "%s ", globals.program_argv[i]);
+            i++;
+        }
+        fprintf(script_file_FP, "\n\n");
+
+        /* Add the AFTER program */
+        if (NULL != my_module_globals.mic_after[0]) {
+            i = 0;
+            fprintf(script_file_FP, "# AFTER command\n");
+            while (NULL != my_module_globals.mic_after[i]) {
+                fprintf(script_file_FP, "%s ",
+                    (char *)my_module_globals.mic_after[i]);
+                i++;
+            }
+            fprintf(script_file_FP, "\n\n");
+        }
+
+        /* Reset the event counter and increase the experiment counter */
+        event_count = MIC_EVENTS_PER_RUN;
+        experiment_count++;
+    }
+
+    /* End the run script */
+    fprintf(script_file_FP, "exit 0\n\n# EOF\n");
+
+    /* Close file and set mode */
+    fclose(script_file_FP);
+    if (-1 == chmod(script_file, S_IRWXU)) {
+        OUTPUT(("%s (%s)", _ERROR("unable to set script mode"), script_file));
+        PERFEXPERT_DEALLOC(script_file);
+        return PERFEXPERT_ERROR;
+    }
+
+    /* The super-ninja test sctructure */
+    PERFEXPERT_ALLOC(char, test.output, (strlen(globals.moduledir) + 19));
+    sprintf(test.output, "%s/mic_hpcrun.output", globals.moduledir);
+    test.input = NULL;
+    test.info = globals.program;
+
+    argv[0] = "ssh";
+    argv[1] = my_module_globals.mic;
+    argv[2] = script_file;
+    argv[3] = NULL;
+
+    /* Not using OUTPUT_VERBOSE because I want only one line */
+    if (8 <= globals.verbose) {
+        printf("%s %s %s %s %s\n", PROGRAM_PREFIX, _YELLOW("command line:"),
+            argv[0], argv[1], argv[2]);
+    }
+
+    /* Run program and test return code (should I really test it?) */
+    clock_gettime(CLOCK_MONOTONIC, &time_start);
+    switch (rc = perfexpert_fork_and_wait(&test, argv)) {
+        case PERFEXPERT_ERROR:
+            OUTPUT_VERBOSE((7, "[%s]", _BOLDYELLOW("ERROR")));
+            break;
+
+        case PERFEXPERT_FAILURE:
+        case 255:
+            OUTPUT_VERBOSE((7, "[%s ]", _BOLDRED("FAIL")));
+            break;
+
+        case PERFEXPERT_SUCCESS:
+            OUTPUT_VERBOSE((7, "[ %s  ]", _BOLDGREEN("OK")));
+            break;
+
+        default:
+            OUTPUT_VERBOSE((7, "[UNKNO]"));
+            break;
+    }
+    clock_gettime(CLOCK_MONOTONIC, &time_end);
+
+    perfexpert_time_diff(&time_diff, &time_start, &time_end);
+    OUTPUT(("   %lld.%.9ld seconds for %d runs (includes measurement overhead)",
+        (long long)time_diff.tv_sec, time_diff.tv_nsec, experiment_count));
+
+    /* Free memory */
+    PERFEXPERT_DEALLOC(script_file);
+    PERFEXPERT_DEALLOC(test.output);
+
     return rc;
 }
 

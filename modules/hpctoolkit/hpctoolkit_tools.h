@@ -22,6 +22,9 @@
 #ifndef PERFEXPERT_MODULE_HPCTOOLKIT_TOOLS_H_
 #define PERFEXPERT_MODULE_HPCTOOLKIT_TOOLS_H_
 
+/* Constants */
+#define MIC_EVENTS_PER_RUN 2
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -37,6 +40,12 @@ typedef struct experiment {
     char *argv[MAX_ARGUMENTS_COUNT];
     int  argc;
 } experiment_t;
+
+/* Function declarations */
+int run_hpcstruct(void);
+int run_hpcrun(void);
+int run_hpcrun_mic(void);
+int run_hpcprof(char **file);
 
 #ifdef __cplusplus
 }
