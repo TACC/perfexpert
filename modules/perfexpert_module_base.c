@@ -175,11 +175,10 @@ int perfexpert_module_load(const char *name) {
     if (PERFEXPERT_SUCCESS != m->load()) {
         OUTPUT(("%s [%s]", _ERROR("error running module's load()"), m->name));
         goto MODULE_ERROR;
-    } else {
-        m->status = PERFEXPERT_MODULE_LOADED;
-        m->argv[0] = m->name;
-        m->argc = 1;
     }
+    m->status = PERFEXPERT_MODULE_LOADED;
+    m->argv[0] = m->name;
+    m->argc = 1;
 
     /* Append to the lists of modules */
     perfexpert_list_append(&(module_globals.modules),
