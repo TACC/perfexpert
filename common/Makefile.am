@@ -35,4 +35,10 @@ libperfexpert_common_la_SOURCES = perfexpert_alloc.c \
 	perfexpert_time.c \
 	perfexpert_util.c
 
+# Install architecture database
+install-exec-local:
+	$(MKDIR_P) $(DESTDIR)$(sysconfdir)
+	$(INSTALL) -m 644 $(top_srcdir)/common/perfexpert_architecture.sql \
+		$(DESTDIR)$(sysconfdir)/
+
 # EOF
