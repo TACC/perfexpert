@@ -24,11 +24,11 @@
 AC_PREREQ(2.63)
 
 # Define the package name, version, author, etc.
-AC_INIT([perfexpert], [4.1.1],
+AC_INIT([perfexpert], [4.2],
     [PerfExpert mailing list: perfexpert@lists.tacc.utexas.edu],
-    [perfexpert-4.1.1.tar.gz], [http://www.tacc.com.br/perfexpert/])
+    [perfexpert-4.2.tar.gz], [http://www.tacc.com.br/perfexpert/])
 AC_COPYRIGHT([University of Texas at Austin])
-AC_REVISION([$Revision: 4.1.1 $])
+AC_REVISION([$Revision: 4.2 $])
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_MACRO_DIR([m4])
 
@@ -934,6 +934,22 @@ AS_IF([test x"$ENABLE_SQLRULES" = xyes], [
     ENABLE_SQLRULES=
 ])
 AC_SUBST([ENABLE_SQLRULES])
+
+#------------------------------------------------------------------------------
+# MIC support (there are other items on the HPCToolkit module)
+#
+AC_MSG_NOTICE([HAVE_HPCTOOLKIT_MIC=$HAVE_HPCTOOLKIT_MIC])
+AC_MSG_CHECKING([whether to enable MIC support])
+AS_IF([test x"$HAVE_HPCTOOLKIT_MIC" = xyes], [
+    AC_MSG_RESULT([yes])
+    AC_DEFINE([HAVE_MIC_SUPPORT], [1], [Enable MIC support])
+    HAVE_MIC_SUPPORT=yes
+], [
+    AC_MSG_RESULT([no])
+    AC_DEFINE([HAVE_MIC_SUPPORT], [0], [Enable MIC support])
+    HAVE_MIC_SUPPORT=no
+])
+AM_CONDITIONAL([HAVE_MIC_SUPPORT], [test x"$HAVE_MIC_SUPPORT" = x"yes"])
 
 #------------------------------------------------------------------------------
 AC_CONFIG_FILES([tests/run_tests.pl], [chmod +x tests/run_tests.pl])
