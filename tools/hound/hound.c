@@ -252,11 +252,15 @@ int main( int argc, char * argv[] ) {
 -- Create tables if not exist\n\
 --\n\
 CREATE TABLE IF NOT EXISTS hound (\n\
-    name          VARCHAR NOT NULL,\n\
-    value         REAL    NOT NULL\n\
+    id     INTEGER,\n\
+    family INTEGER NOT NULL,\n\
+    model  INTEGER NOT NULL,\n\
+    name   VARCHAR NOT NULL,\n\
+    value  REAL    NOT NULL\n\
 );\n\n");
 
-    printf("INSERT INTO hound (name, value) VALUES ('CPI_threshold', 0.5);\n");
+    printf("INSERT INTO hound (id, family, model, name, value) VALUES "
+        "(7, 6, 45, 'CPI_threshold', 0.5);\n");
 
     if (processor == PROC_UNKNOWN) {
         discoverCachesWithoutCPUID();    // Also prints values
@@ -308,8 +312,8 @@ CREATE TABLE IF NOT EXISTS hound (\n\
                         lpCache->info.lineSize, 1);
 
                 L1_dlat = get90thPercentile(cycleCollection, COLLECTION_SIZE);
-                printf("INSERT INTO hound (name, value) VALUES ('L1_dlat', "
-                    "%lf);\n", L1_dlat);
+                printf("INSERT INTO hound (id, family, model, name, value) "
+                    "VALUES (7, 6, 45, 'L1_dlat', %lf);\n", L1_dlat);
                 break;
             }
 
@@ -320,8 +324,8 @@ CREATE TABLE IF NOT EXISTS hound (\n\
         // printf ("L1_ilat = %.2lf\n", getIntelL1InstructionLatency());
 
         // Temporary fix:
-        printf("INSERT INTO hound (name, value) VALUES ('L1_ilat', %lf);\n",
-            L1_dlat);
+        printf("INSERT INTO hound (id, family, model, name, value) VALUES "
+            "(7, 6, 45, 'L1_ilat', %lf);\n", L1_dlat);
 
         // Then L2
         lpCache = caches.lpL2Caches;
@@ -345,13 +349,13 @@ CREATE TABLE IF NOT EXISTS hound (\n\
                         lpCache->info.lineSize, 1);
 
                 if (lpCache->info.type == UNIFIED)
-                    printf("INSERT INTO hound (name, value) VALUES ('L2_lat', "
-                        "%lf);\n", get90thPercentile(cycleCollection,
-                        COLLECTION_SIZE));
+                    printf("INSERT INTO hound (id, family, model, name, value) "
+                        "VALUES (7, 6, 45, 'L2_lat', %lf);\n",
+                        get90thPercentile(cycleCollection, COLLECTION_SIZE));
                 else
-                    printf("INSERT INTO hound (name, value) VALUES ('L2_dlat', "
-                        "%lf);\n", get90thPercentile(cycleCollection,
-                        COLLECTION_SIZE));
+                    printf("INSERT INTO hound (id, family, model, name, value) "
+                        "VALUES (7, 6, 45, 'L2_dlat', %lf);\n",
+                        get90thPercentile(cycleCollection, COLLECTION_SIZE));
                 break;
             }
             lpCache = lpCache->lpNext;
@@ -378,7 +382,8 @@ CREATE TABLE IF NOT EXISTS hound (\n\
                     lpCache->info.lineSize * lpCache->info.lineCount,
                     lpCache->info.lineSize, 1);
 
-            printf ("INSERT INTO hound (name, value) VALUES ('L3_lat', %lf);\n",
+            printf ("INSERT INTO hound (id, family, model, name, value) VALUES "
+                "(7, 6, 45, 'L3_lat', %lf);\n",
                 get90thPercentile(cycleCollection, COLLECTION_SIZE));
 
             // FIXME: Non-sensical to include a `break' here
@@ -416,7 +421,8 @@ CREATE TABLE IF NOT EXISTS hound (\n\
         }
 
         destroyCacheLists(&caches);
-        printf ("INSERT INTO hound (name, value) VALUES ('mem_lat', %lf);\n",
+        printf ("INSERT INTO hound (id, family, model, name, value) VALUES "
+            "(7, 6, 45, 'mem_lat', %lf);\n",
             get90thPercentile(cycleCollection, COLLECTION_SIZE));
     }
 
@@ -442,25 +448,27 @@ CREATE TABLE IF NOT EXISTS hound (\n\
 
     double frequency = 0;
     sscanf(line, "cpu MHz :%lf", &frequency);
-    printf("INSERT INTO hound (name, value) VALUES ('CPU_freq', %.0lf);\n",
-        frequency * 1000000);
+    printf("INSERT INTO hound (id, family, model, name, value) VALUES "
+        "(7, 6, 45, 'CPU_freq', %.0lf);\n", frequency * 1000000);
 
     double FP_lat, FP_slow_lat, BR_lat, BR_miss_lat, TLB_lat;
 
     FP_lat = getFPLatency();
-    printf("INSERT INTO hound (name, value) VALUES ('FP_lat', %lf);\n",
-        FP_lat < 1.0 ? 1.0 : FP_lat);
+    printf("INSERT INTO hound (id, family, model, name, value) VALUES "
+        "(7, 6, 45, 'FP_lat', %lf);\n", FP_lat < 1.0 ? 1.0 : FP_lat);
 
     FP_slow_lat = getFPSlowLatency();
-    printf("INSERT INTO hound (name, value) VALUES ('FP_slow_lat', %lf);\n",
+    printf("INSERT INTO hound (id, family, model, name, value) VALUES "
+        "(7, 6, 45, 'FP_slow_lat', %lf);\n",
         FP_slow_lat < 1.0 ? 1.0 : FP_slow_lat);
 
     BR_lat = getPredictedBranchLatency();
-    printf("INSERT INTO hound (name, value) VALUES ('BR_lat', %lf);\n",
-        BR_lat < 1.0 ? 1.0 : BR_lat);
+    printf("INSERT INTO hound (id, family, model, name, value) VALUES "
+        "(7, 6, 45, 'BR_lat', %lf);\n", BR_lat < 1.0 ? 1.0 : BR_lat);
 
     BR_miss_lat = getMisPredictedBranchLatency();
-    printf("INSERT INTO hound (name, value) VALUES ('BR_miss_lat', %lf);\n",
+    printf("INSERT INTO hound (id, family, model, name, value) VALUES "
+        "(7, 6, 45, 'BR_miss_lat', %lf);\n",
         BR_miss_lat < 1.0 ? 1.0 : BR_miss_lat);
 
     // Warm up TLBs?
@@ -469,8 +477,8 @@ CREATE TABLE IF NOT EXISTS hound (\n\
     }
 
     TLB_lat = getTLBLatency(512 * 1024);
-    printf("INSERT INTO hound (name, value) VALUES ('TLB_lat', %lf);\n\n",
-        TLB_lat < 1.0 ? 1.0 : TLB_lat);
+    printf("INSERT INTO hound (id, family, model, name, value) VALUES "
+        "(7, 6, 45, 'TLB_lat', %lf);\n\n", TLB_lat < 1.0 ? 1.0 : TLB_lat);
 
     return 0;
 }

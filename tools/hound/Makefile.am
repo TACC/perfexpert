@@ -24,9 +24,9 @@ hound_SOURCES = hound.c
 
 # Overwrite CFLAGS from 'configure'
 if ENABLE_DEBUG
-    AM_CFLAGS = -fPIC -DDEBUG_PRINT -g
+AM_CFLAGS = -fPIC -DDEBUG_PRINT -g
 else
-    AM_CFLAGS = -fPIC
+AM_CFLAGS = -fPIC
 endif
 
 install-exec-local:
