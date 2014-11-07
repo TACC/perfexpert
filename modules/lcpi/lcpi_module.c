@@ -150,8 +150,8 @@ int module_init(void) {
         int model  = perfexpert_cpuinfo_get_model();
 
         bzero(sql, MAX_BUFFER_SIZE);
-        sprintf(sql, "SELECT description FROM lcpi_proc WHERE family=%d AND "
-            "model=%d;", family, model);
+        sprintf(sql, "SELECT description FROM arch_processor WHERE family=%d "
+            "AND model=%d;", family, model);
         OUTPUT_VERBOSE((10, "   SQL: %s", _CYAN(sql)));
 
         if (SQLITE_OK != sqlite3_exec(globals.db, sql,
