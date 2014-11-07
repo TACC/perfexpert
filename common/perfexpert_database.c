@@ -139,7 +139,6 @@ int perfexpert_database_disconnect(sqlite3 *db) {
             my_file, sqlite3_errmsg(disk_db)));
         return PERFEXPERT_ERROR;
     }
-    PERFEXPERT_DEALLOC(my_file);
 
     /* Copy the data from disk DB to in-memory DB */
     pBackup = sqlite3_backup_init(disk_db, "main", db, "main");
@@ -147,12 +146,13 @@ int perfexpert_database_disconnect(sqlite3 *db) {
       (void)sqlite3_backup_step(pBackup, -1);
       (void)sqlite3_backup_finish(pBackup);
     }
-    // if (SQLITE_OK != sqlite3_errcode(db)) {
-    //     OUTPUT(("%s (%s), %s", _ERROR((char *)"writing output database"),
-    //         my_file, sqlite3_errmsg(disk_db)));
-    //     PERFEXPERT_DEALLOC(my_file);
-    //     return PERFEXPERT_ERROR;
-    // }
+    if (SQLITE_OK != sqlite3_errcode(db)) {
+        OUTPUT(("%s (%s), %s", _ERROR((char *)"writing output database"),
+            my_file, sqlite3_errmsg(disk_db)));
+        PERFEXPERT_DEALLOC(my_file);
+        return PERFEXPERT_ERROR;
+    }
+    PERFEXPERT_DEALLOC(my_file);
 
     sqlite3_close(db);
     sqlite3_close(disk_db);
@@ -167,6 +167,7 @@ int perfexpert_database_disconnect(sqlite3 *db) {
 int perfexpert_database_connect(sqlite3 **db, const char *file) {
     sqlite3_backup *pBackup;
     sqlite3 *disk_db;
+    char *error = NULL;
 
     /* Check if file exists */
     if (-1 == access(file, F_OK)) {
@@ -195,6 +196,13 @@ int perfexpert_database_connect(sqlite3 **db, const char *file) {
         (void)sqlite3_backup_finish(pBackup);
     }
     if (SQLITE_OK != sqlite3_errcode(*db)) {
+        goto CLEAN_UP;
+    }
+
+    /* Enable foreign keys */
+    if (SQLITE_OK != sqlite3_exec(*db, "PRAGMA foreign_keys = ON;", NULL, NULL, &error)) {
+        OUTPUT(("%s %s", _ERROR("SQL error (enabling foreign keys)"), error));
+        sqlite3_free(error);
         goto CLEAN_UP;
     }
 
