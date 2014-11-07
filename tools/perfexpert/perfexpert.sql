@@ -56,18 +56,16 @@ CREATE TABLE IF NOT EXISTS language (
 
 CREATE TABLE IF NOT EXISTS pattern (
     id         INTEGER PRIMARY KEY,
-    language   INTEGER NOT NULL,
+    language   INTEGER REFERENCES language,
     recognizer VARCHAR NOT NULL,
-    name       VARCHAR NOT NULL,
-    FOREIGN KEY (language) REFERENCES language(id)
+    name       VARCHAR NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS transformation (
     id          INTEGER PRIMARY KEY,
-    language    INTEGER NOT NULL,
+    language    INTEGER REFERENCES language,
     transformer VARCHAR NOT NULL,
-    name        VARCHAR NOT NULL,
-    FOREIGN KEY (language) REFERENCES language(id)
+    name        VARCHAR NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS architecture (
@@ -83,40 +81,30 @@ CREATE TABLE IF NOT EXISTS strategy (
 );
 
 CREATE TABLE IF NOT EXISTS ra (
-    rid INTEGER NOT NULL,
-    aid INTEGER NOT NULL,
-    FOREIGN KEY (rid) REFERENCES recommendation(id),
-    FOREIGN KEY (aid) REFERENCES architecture(id)
+    rid INTEGER REFERENCES recommendation,
+    aid INTEGER REFERENCES architecture
 );
 
 CREATE TABLE IF NOT EXISTS rt (
-    rid INTEGER NOT NULL,
-    tid INTEGER NOT NULL,
-    FOREIGN KEY (rid) REFERENCES recommendation(id),
-    FOREIGN KEY (tid) REFERENCES transformation(id)
+    rid INTEGER REFERENCES recommendation,
+    tid INTEGER REFERENCES transformation
 );
 
 CREATE TABLE IF NOT EXISTS tp (
-    tid INTEGER NOT NULL,
-    pid INTEGER NOT NULL,
-    FOREIGN KEY (tid) REFERENCES transformation(id),
-    FOREIGN KEY (pid) REFERENCES pattern(id)
+    tid INTEGER REFERENCES transformation,
+    pid INTEGER REFERENCES pattern(id)
 );
 
 CREATE TABLE IF NOT EXISTS rc (
-    rid    INTEGER NOT NULL,
-    cid    INTEGER NOT NULL,
-    weight REAL DEFAULT 1,
-    FOREIGN KEY (cid) REFERENCES category(id),
-    FOREIGN KEY (rid) REFERENCES recommendation(id)
+    rid    INTEGER REFERENCES recommendation,
+    cid    INTEGER REFERENCES category,
+    weight REAL DEFAULT 1
 );
 
 CREATE TABLE IF NOT EXISTS rf (
-    rid    INTEGER NOT NULL,
-    fid    INTEGER NOT NULL,
-    weight REAL,
-    FOREIGN KEY (rid) REFERENCES recommendation(id),
-    FOREIGN KEY (fid) REFERENCES function(id)
+    rid    INTEGER REFERENCES recommendation,
+    fid    INTEGER REFERENCES function,
+    weight REAL
 );
 
 --

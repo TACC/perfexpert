@@ -47,7 +47,5 @@ CREATE TABLE IF NOT EXISTS hpctoolkit_event (
     mpi_task      INTEGER NOT NULL,
     experiment    INTEGER NOT NULL,
     value         REAL    NOT NULL,
-    hotspot_id    INTEGER NOT NULL,
-
-    FOREIGN KEY (hpctoolkit_hotspot_id) REFERENCES hpctoolkit_hotspot(id)
+    hotspot_id    INTEGER REFERENCES hpctoolkit_hotspot
 );
