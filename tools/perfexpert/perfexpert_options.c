@@ -337,6 +337,8 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
             if (PERFEXPERT_SUCCESS != set_module_option(str)) {
                 argp_error(state, "error setting module option");
             }
+            perfexpert_cpuinfo_set_family(11);
+            perfexpert_cpuinfo_set_model(1);
             break;
 
         case 'p':

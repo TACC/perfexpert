@@ -30,30 +30,12 @@
 extern "C" {
 #endif
 
-
-// TODO: this looks like garbage. Only the VTune module is using it...
-/* Intel CPUs models */
-typedef enum {
-    NEHALEM_EP      = 26,
-    NEHALEM         = 30,
-    NEHALEM_2       = 31,
-    CLARKDALE       = 37,
-    WESTMERE_EP     = 44,
-    NEHALEM_EX      = 46,
-    WESTMERE_EX     = 47,
-    SANDY_BRIDGE    = 42,
-    SANDY_BRIDGE_EP = 45,
-    IVY_BRIDGE      = 58,
-    IVYTOWN         = 62,
-    HASWELL         = 60,
-    HASWELL_ULT     = 69,
-    HASWELL_2       = 70,
-} intel_models_t;
-
 /* Function declarations */
 static int perfexpert_cpuinfo(void);
 int perfexpert_cpuinfo_get_model(void);
 int perfexpert_cpuinfo_get_family(void);
+int perfexpert_cpuinfo_set_model(int value);
+int perfexpert_cpuinfo_set_family(int value);
 
 #ifdef __cplusplus
 }

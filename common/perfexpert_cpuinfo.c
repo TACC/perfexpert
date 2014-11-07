@@ -55,6 +55,8 @@ static int perfexpert_cpuinfo(void) {
         }
     }
 
+    fclose(cpuinfo);
+
     OUTPUT_VERBOSE((4, "CPUINFO Processor family: [%d]", family));
     OUTPUT_VERBOSE((4, "CPUINFO Processor model:  [%d]", model));
 
@@ -68,8 +70,8 @@ int perfexpert_cpuinfo_get_model(void) {
     }
 
     if (PERFEXPERT_SUCCESS != perfexpert_cpuinfo()) {
-    OUTPUT(("%s", _ERROR("unable to get CPU info")));
-    return -1;
+        OUTPUT(("%s", _ERROR("unable to get CPU info")));
+        return -1;
     }
 
     return model;
@@ -82,11 +84,29 @@ int perfexpert_cpuinfo_get_family(void) {
     }
 
     if (PERFEXPERT_SUCCESS != perfexpert_cpuinfo()) {
-    OUTPUT(("%s", _ERROR("unable to get CPU info")));
-    return -1;
+        OUTPUT(("%s", _ERROR("unable to get CPU info")));
+        return -1;
     }
 
     return family;
+}
+
+/* perfexpert_cpuinfo_set_model */
+int perfexpert_cpuinfo_set_model(int value) {
+    model = value;
+
+    OUTPUT_VERBOSE((4, "CPUINFO Processor model:  [%d]", model));
+
+    return PERFEXPERT_SUCCESS;
+}
+
+/* perfexpert_cpuinfo_set_family */
+int perfexpert_cpuinfo_set_family(int value) {
+    family = value;
+
+    OUTPUT_VERBOSE((4, "CPUINFO Processor family: [%d]", family));
+
+    return PERFEXPERT_SUCCESS;
 }
 
 #ifdef __cplusplus

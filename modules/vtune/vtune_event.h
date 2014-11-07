@@ -3071,6 +3071,25 @@ const char * const haswell[] = {
     NULL,
 };
 
+// TODO: this looks like garbage. Only the VTune module is using it...
+/* Intel CPUs models */
+typedef enum {
+    NEHALEM_EP      = 26,
+    NEHALEM         = 30,
+    NEHALEM_2       = 31,
+    CLARKDALE       = 37,
+    WESTMERE_EP     = 44,
+    NEHALEM_EX      = 46,
+    WESTMERE_EX     = 47,
+    SANDY_BRIDGE    = 42,
+    SANDY_BRIDGE_EP = 45,
+    IVY_BRIDGE      = 58,
+    IVYTOWN         = 62,
+    HASWELL         = 60,
+    HASWELL_ULT     = 69,
+    HASWELL_2       = 70,
+} intel_models_t;
+
 /* Intel events supported by architecture */
 typedef struct {
     const intel_models_t model_id;

@@ -26,23 +26,22 @@
 -- Create tables if not exist
 --
 CREATE TABLE IF NOT EXISTS hound (
-    id     INTEGER,
     family INTEGER NOT NULL,
     model  INTEGER NOT NULL,
     name   VARCHAR NOT NULL,
     value  REAL    NOT NULL
 );
 
-INSERT INTO hound (id, family, model, name, value) VALUES (7, 6, 45, 'CPI_threshold', 0.5);
-INSERT INTO hound (id, family, model, name, value) VALUES (7, 6, 45, 'L1_dlat', 3.499146);
-INSERT INTO hound (id, family, model, name, value) VALUES (7, 6, 45, 'L1_ilat', 3.499146);
-INSERT INTO hound (id, family, model, name, value) VALUES (7, 6, 45, 'L2_lat', 10.471001);
-INSERT INTO hound (id, family, model, name, value) VALUES (7, 6, 45, 'L3_lat', 16.949942);
-INSERT INTO hound (id, family, model, name, value) VALUES (7, 6, 45, 'mem_lat', 269.272278);
-INSERT INTO hound (id, family, model, name, value) VALUES (7, 6, 45, 'CPU_freq', 2701000000);
-INSERT INTO hound (id, family, model, name, value) VALUES (7, 6, 45, 'FP_lat', 1.744904);
-INSERT INTO hound (id, family, model, name, value) VALUES (7, 6, 45, 'FP_slow_lat', 20.375633);
-INSERT INTO hound (id, family, model, name, value) VALUES (7, 6, 45, 'BR_lat', 1.000000);
-INSERT INTO hound (id, family, model, name, value) VALUES (7, 6, 45, 'BR_miss_lat', 13.406250);
-INSERT INTO hound (id, family, model, name, value) VALUES (7, 6, 45, 'TLB_lat', 40.054688);
+INSERT INTO hound (family, model, name, value) VALUES (6, 45, 'CPI_threshold', 0.5);
+INSERT INTO hound (family, model, name, value) VALUES (6, 45, 'L1_dlat', 3.499146);
+INSERT INTO hound (family, model, name, value) VALUES (6, 45, 'L1_ilat', 3.499146);
+INSERT INTO hound (family, model, name, value) VALUES (6, 45, 'L2_lat', 10.471001);
+INSERT INTO hound (family, model, name, value) VALUES (6, 45, 'L3_lat', 16.949942);
+INSERT INTO hound (family, model, name, value) VALUES (6, 45, 'mem_lat', 269.272278);
+INSERT INTO hound (family, model, name, value) VALUES (6, 45, 'CPU_freq', 2701000000);
+INSERT INTO hound (family, model, name, value) VALUES (6, 45, 'FP_lat', 1.744904);
+INSERT INTO hound (family, model, name, value) VALUES (6, 45, 'FP_slow_lat', 20.375633);
+INSERT INTO hound (family, model, name, value) VALUES (6, 45, 'BR_lat', 1.000000);
+INSERT INTO hound (family, model, name, value) VALUES (6, 45, 'BR_miss_lat', 13.406250);
+INSERT INTO hound (family, model, name, value) VALUES (6, 45, 'TLB_lat', 40.054688);
 

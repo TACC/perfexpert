@@ -23,6 +23,8 @@
 -- Create tables if not exist
 --
 CREATE TABLE IF NOT EXISTS hound (
-    name          VARCHAR NOT NULL,
-    value         REAL    NOT NULL
+    family INTEGER NOT NULL,
+    model  INTEGER NOT NULL,
+    name   VARCHAR NOT NULL,
+    value  REAL    NOT NULL
 );

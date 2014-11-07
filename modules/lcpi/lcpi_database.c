@@ -465,7 +465,9 @@ double database_get_hound(const char *name) {
     double value = -1.0;
 
     bzero(sql, MAX_BUFFER_SIZE);
-    sprintf(sql, "SELECT value FROM hound WHERE name = '%s';", name);
+    sprintf(sql,
+        "SELECT value FROM hound WHERE name='%s' AND family=%d AND model=%d;",
+        name, perfexpert_cpuinfo_get_family(), perfexpert_cpuinfo_get_model());
 
     if (SQLITE_OK != sqlite3_exec(globals.db, sql,
         perfexpert_database_get_double, (void *)&value, &error)) {
