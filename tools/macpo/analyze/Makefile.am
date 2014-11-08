@@ -23,6 +23,7 @@ bin_PROGRAMS = macpo-analyze
 
 macpo_analyze_SOURCES = main.cpp record_io.cpp record_analysis.cpp \
     cache_info.cpp histogram.cpp stride_analysis.cpp latency_analysis.cpp \
-    vector_stride_analysis.cpp argp_custom.cpp set_cache_conflict_analysis.cpp
+    vector_stride_analysis.cpp argp_custom.cpp  associative_cache.cpp \
+	set_cache_conflict_analysis.cpp
 macpo_analyze_CXXFLAGS = -I$(srcdir)/include -I$(srcdir)/../common -fopenmp
 macpo_analyze_LDFLAGS = -fopenmp -lgmp -lgsl -lgslcblas -lhwloc
