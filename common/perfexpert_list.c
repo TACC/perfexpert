@@ -63,6 +63,10 @@ void perfexpert_list_item_destruct(perfexpert_list_item_t *item) {
 
 /* perfexpert_list_get_first */
 perfexpert_list_item_t* perfexpert_list_get_first(perfexpert_list_t* list) {
+    if ((perfexpert_list_item_t*)list->sentinel.next ==
+        (perfexpert_list_item_t*)(&(list->sentinel))) {
+        return NULL;
+    }
     perfexpert_list_item_t* item = (perfexpert_list_item_t*)list->sentinel.next;
     return item;
 }
@@ -144,6 +148,14 @@ int perfexpert_list_insert(perfexpert_list_t *list,
 void perfexpert_list_swap(perfexpert_list_item_t *a,
     perfexpert_list_item_t *b) {
     volatile perfexpert_list_item_t *temp = NULL;
+
+    /* Set the neighbor elements */
+    a->prev->next = b;
+    a->next->prev = b;
+    b->prev->next = a;
+    b->next->prev = a;
+
+    /* Set the elements themselves */
     temp = a->prev;
     a->prev = b->prev;
     b->prev = temp;
