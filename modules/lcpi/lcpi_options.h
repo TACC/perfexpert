@@ -49,13 +49,15 @@ static struct argp_option options[] = {
     { "sort-order=VALUE", 0, 0, OPTION_DOC,
       "Order in which hotspots should be sorted (Valid values: relevance, "
       "performance, mixed. Default value: unsorted)" },
+    { "verbose=VALUE", 0, 0, OPTION_DOC, "Enable verbose mode (range: 0-10)" },
 
     { "threshold", 't', "VALUE", OPTION_HIDDEN, 0 },
     { "mic", 'm', 0, OPTION_HIDDEN, 0 },
-    { "sort-order", 's', 0, OPTION_HIDDEN, 0 },
+    { "sort-order", 's', "relevance|performance|mixed", OPTION_HIDDEN, 0 },
     { "architecture", 'a', "Bonnell|Broadwell|Haswell|IvyBridge|IvyTown|"
       "Jaketown|NehalemEP|NehalemEX|SandyBridge|Silvermont|WestmereEP-DP|"
       "WestmereEP-SP|WestmereEX|KnightsCorner (or MIC)", OPTION_HIDDEN, 0 },
+    { "verbose", 'v', "VALUE", OPTION_HIDDEN, 0 },
 
     { 0 }
 };

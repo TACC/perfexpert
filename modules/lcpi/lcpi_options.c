@@ -63,9 +63,10 @@ int parse_module_args(int argc, char *argv[]) {
     OUTPUT_VERBOSE((7, "   Threshold:     %f", my_module_globals.threshold));
     OUTPUT_VERBOSE((7, "   Sorting order: %s", my_module_globals.order));
     OUTPUT_VERBOSE((7, "   Architecture:  %s", my_module_globals.architecture));
+    OUTPUT_VERBOSE((7, "   Verbose level: %d", my_module_globals.verbose));
 
     /* Not using OUTPUT_VERBOSE because I want only one line */
-    if (8 <= globals.verbose) {
+    if (8 <= my_module_globals.verbose) {
         i = 0;
         printf("%s %s", PROGRAM_PREFIX, _YELLOW("options:"));
         for (i = 0; i < argc; i++) {
@@ -99,6 +100,13 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
             my_module_globals.threshold = atof(arg);
             OUTPUT_VERBOSE((1, "option 't' set [%f]",
                 my_module_globals.threshold));
+            break;
+
+        /* Verbose */
+        case 'v':
+            my_module_globals.verbose = atoi(arg);
+            OUTPUT_VERBOSE((1, "option 'v' set [%f]",
+                my_module_globals.verbose));
             break;
 
         /* no arguments... */

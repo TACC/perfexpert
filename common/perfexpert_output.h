@@ -195,7 +195,11 @@ static inline void output_verbose(int level, const char *format, ...) {
     int rc = 0;
     size_t total_len = 0;
 
+    #ifdef _I_AM_A_MODULE_
+    if (my_module_globals.verbose >= level) {
+    #else
     if (globals.verbose >= level) {
+    #endif
         va_start(arglist, format);
         rc = vasprintf(&str, format, arglist);
         total_len = strlen(str) + 14 + strlen(PROGRAM_PREFIX);

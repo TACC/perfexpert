@@ -22,6 +22,10 @@
 #ifndef PERFEXPERT_MODULE_LCPI_H_
 #define PERFEXPERT_MODULE_LCPI_H_
 
+#ifndef _I_AM_A_MODULE_
+#define _I_AM_A_MODULE_
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -48,15 +52,6 @@ extern "C" {
 #endif
 #define PROGRAM_PREFIX "[perfexpert_module_lcpi]"
 
-/* PerfExpert common headers */
-#include "common/perfexpert_output.h"
-#include "common/perfexpert_alloc.h"
-#include "common/perfexpert_constants.h"
-#include "common/perfexpert_hash.h"
-#include "common/perfexpert_list.h"
-#include "common/perfexpert_md5.h"
-#include "common/perfexpert_string.h"
-
 /* Module types */
 typedef struct {
     perfexpert_list_t profiles;
@@ -67,9 +62,19 @@ typedef struct {
     int help_only;
     int mic;
     char *architecture;
+    int verbose;
 } my_module_globals_t;
 
 extern my_module_globals_t my_module_globals;
+
+/* PerfExpert common headers */
+#include "common/perfexpert_output.h"
+#include "common/perfexpert_alloc.h"
+#include "common/perfexpert_constants.h"
+#include "common/perfexpert_hash.h"
+#include "common/perfexpert_list.h"
+#include "common/perfexpert_md5.h"
+#include "common/perfexpert_string.h"
 
 /* Module interface */
 int module_load(void);
