@@ -25,6 +25,8 @@ extern "C" {
 
 /* System standard headers */
 #include <string.h>
+#include <stdlib.h>
+#include <math.h>
 
 /* Modules headers */
 #include "lcpi.h"
@@ -37,16 +39,18 @@ extern "C" {
 
 /* Sorting orders */
 static sort_t orders[] = {
-    {"relevance",   &sort_by_relevance},
-    {"performance", &sort_by_performance},
-    {"mixed",       &sort_by_mixed}, // Sorting mixed? It makes no sense :/
-    {NULL, NULL}
+    { "relevance",   &cmp_relevance },
+    { "performance", &cmp_performance },
+    { "mixed",       &cmp_mixed }, // Sorting mixed? It makes no sense :/
+    { NULL,          NULL}
 };
 
 /* hotspot_sort */
 int hotspot_sort(perfexpert_list_t *profiles) {
+    perfexpert_list_item_t **items, *item;
+    int i = 0, n = 0, index = 0;
+    lcpi_hotspot_t *h = NULL;
     lcpi_profile_t *p;
-    int i = 0;
 
     OUTPUT_VERBOSE((2, "%s", _BLUE("Sorting hotspots")));
 
@@ -58,10 +62,43 @@ int hotspot_sort(perfexpert_list_t *profiles) {
                 OUTPUT_VERBOSE((7, "   sorting %s by %s", _YELLOW(p->name),
                     my_module_globals.order));
 
-                /* Call the sorting function */
-                if (PERFEXPERT_SUCCESS != (*orders[i].function)(p)) {
-                    OUTPUT(("%s", _ERROR("unable to sort hotspots")));
+                OUTPUT_VERBOSE((10, "   %s", _CYAN("original order")));
+                perfexpert_list_for(h, &(p->hotspots), lcpi_hotspot_t) {
+                    OUTPUT_VERBOSE((10, "      [%f] [%f] %s", h->importance,
+                        lcpi_get_value(h->metrics_by_name, "overall"),
+                        h->name));
+                }
+
+                if (0 == perfexpert_list_get_size(&(p->hotspots))) {
+                    return PERFEXPERT_SUCCESS;
+                }
+                items = (perfexpert_list_item_t**)malloc(
+                    sizeof(perfexpert_list_item_t*) *
+                    perfexpert_list_get_size(&(p->hotspots)));
+
+                if (NULL == items) {
                     return PERFEXPERT_ERROR;
+                }
+
+                while (NULL != (item =
+                    perfexpert_list_get_first(&(p->hotspots)))) {
+                    perfexpert_list_remove_item(&(p->hotspots), item);
+                    items[index++] = item;
+                }
+
+                qsort(items, index, sizeof(perfexpert_list_item_t*),
+                    (int(*)(const void*, const void*))(*orders[i].function));
+
+                for (n = 0; n < index; n++) {
+                    perfexpert_list_append(&(p->hotspots), items[n]);
+                }
+                free(items);
+
+                OUTPUT_VERBOSE((10, "   %s", _CYAN("sorted order")));
+                perfexpert_list_for(h, &(p->hotspots), lcpi_hotspot_t) {
+                    OUTPUT_VERBOSE((10, "      [%f] [%f] %s", h->importance,
+                        lcpi_get_value(h->metrics_by_name, "overall"),
+                        h->name));
                 }
             }
             return PERFEXPERT_SUCCESS;
@@ -74,109 +111,39 @@ int hotspot_sort(perfexpert_list_t *profiles) {
     return PERFEXPERT_SUCCESS;
 }
 
-/* sort_by_relevance */
-static int sort_by_relevance(lcpi_profile_t *profile) {
-    lcpi_hotspot_t *i = NULL, *j = NULL;
-    int swapped = PERFEXPERT_FALSE;
-
-    OUTPUT_VERBOSE((10, "   %s", _CYAN("original order")));
-    perfexpert_list_for(i, &(profile->hotspots), lcpi_hotspot_t) {
-        OUTPUT_VERBOSE((10, "      [%f] %s", i->importance, i->name));
-    }
-
-    perfexpert_list_for(i, &(profile->hotspots), lcpi_hotspot_t) {
-        swapped = PERFEXPERT_FALSE;
-        perfexpert_list_reverse_for(j, &(profile->hotspots), lcpi_hotspot_t) {
-            if (j->importance < ((lcpi_hotspot_t *)j->prev)->importance) {
-                perfexpert_list_swap((perfexpert_list_item_t *)j,
-                    (perfexpert_list_item_t *)j->prev);
-                swapped = PERFEXPERT_TRUE;
-            }
-        }
-        if (PERFEXPERT_FALSE == swapped) {
-            break;
-        }
-    }
-
-    OUTPUT_VERBOSE((10, "   %s", _CYAN("sorted order (relevance)")));
-    perfexpert_list_for(i, &(profile->hotspots), lcpi_hotspot_t) {
-        OUTPUT_VERBOSE((10, "      [%f] %s", i->importance, i->name));
-    }
-
-    OUTPUT_VERBOSE((10, "   %s", _MAGENTA("done")));
-
-    return PERFEXPERT_SUCCESS;
+static int cmp_relevance(const lcpi_hotspot_t **a, const lcpi_hotspot_t **b) {
+    if ((*a)->importance > (*b)->importance) return 1;
+    if ((*a)->importance < (*b)->importance) return -1;
+    if ((*a)->importance == (*b)->importance) return 0;
 }
 
-/* sort_by_performance */
-static int sort_by_performance(lcpi_profile_t *profile) {
-    lcpi_hotspot_t *i = NULL, *j = NULL;
-    int swapped = PERFEXPERT_FALSE;
-
-    OUTPUT_VERBOSE((10, "   %s", _CYAN("original order")));
-    perfexpert_list_for(i, &(profile->hotspots), lcpi_hotspot_t) {
-        OUTPUT_VERBOSE((10, "      [%f] %s", i->importance, i->name));
-    }
-
-    perfexpert_list_for(i, &(profile->hotspots), lcpi_hotspot_t) {
-        swapped = PERFEXPERT_FALSE;
-        perfexpert_list_reverse_for(j, &(profile->hotspots), lcpi_hotspot_t) {
-            if (lcpi_get_value(j->metrics_by_name, "overall") < lcpi_get_value(
-                ((lcpi_hotspot_t *)j->prev)->metrics_by_name, "overall")) {
-                perfexpert_list_swap((perfexpert_list_item_t *)j,
-                    (perfexpert_list_item_t *)j->prev);
-                swapped = PERFEXPERT_TRUE;
-            }
-        }
-        if (PERFEXPERT_FALSE == swapped) {
-            break;
-        }
-    }
-
-    OUTPUT_VERBOSE((10, "   %s", _CYAN("sorted order (relevance)")));
-    perfexpert_list_for(i, &(profile->hotspots), lcpi_hotspot_t) {
-        OUTPUT_VERBOSE((10, "      [%f] %s", i->importance, i->name));
-    }
-
-    OUTPUT_VERBOSE((10, "   %s", _MAGENTA("done")));
-
-    return PERFEXPERT_SUCCESS;
+static int cmp_performance(const lcpi_hotspot_t **a, const lcpi_hotspot_t **b) {
+    if (isnan(lcpi_get_value((*a)->metrics_by_name, "overall"))) return 1;
+    if (isnan(lcpi_get_value((*b)->metrics_by_name, "overall"))) return -1;
+    if (isinf(lcpi_get_value((*a)->metrics_by_name, "overall"))) return 1;
+    if (isinf(lcpi_get_value((*b)->metrics_by_name, "overall"))) return -1;
+    if (lcpi_get_value((*a)->metrics_by_name, "overall") >
+        lcpi_get_value((*b)->metrics_by_name, "overall")) return -1;
+    if (lcpi_get_value((*a)->metrics_by_name, "overall") <
+        lcpi_get_value((*b)->metrics_by_name, "overall")) return 1;
+    if (lcpi_get_value((*a)->metrics_by_name, "overall") ==
+        lcpi_get_value((*b)->metrics_by_name, "overall")) return 0;
 }
 
-/* sort_by_mixed */
-static int sort_by_mixed(lcpi_profile_t *profile) {
-    lcpi_hotspot_t *i = NULL, *j = NULL;
-    int swapped = PERFEXPERT_FALSE;
-
-    OUTPUT_VERBOSE((10, "   %s", _CYAN("original order")));
-    perfexpert_list_for(i, &(profile->hotspots), lcpi_hotspot_t) {
-        OUTPUT_VERBOSE((10, "      [%f] %s", i->importance, i->name));
-    }
-
-    perfexpert_list_for(i, &(profile->hotspots), lcpi_hotspot_t) {
-        swapped = PERFEXPERT_FALSE;
-        perfexpert_list_reverse_for(j, &(profile->hotspots), lcpi_hotspot_t) {
-            if ((lcpi_get_value(j->metrics_by_name, "overall") * j->importance) <
-                (lcpi_get_value(((lcpi_hotspot_t *)j->prev)->metrics_by_name,
-                    "overall") * ((lcpi_hotspot_t *)j->prev)->importance)) {
-                perfexpert_list_swap((perfexpert_list_item_t *)j,
-                    (perfexpert_list_item_t *)j->prev);
-                swapped = PERFEXPERT_TRUE;
-            }
-        }
-        if (PERFEXPERT_FALSE == swapped) {
-            break;
-        }
-    }
-
-    OUTPUT_VERBOSE((10, "   %s", _CYAN("sorted order (relevance)")));
-    perfexpert_list_for(i, &(profile->hotspots), lcpi_hotspot_t) {
-        OUTPUT_VERBOSE((10, "      [%f] %s", i->importance, i->name));
-    }
-
-    OUTPUT_VERBOSE((10, "   %s", _MAGENTA("done")));
-
-    return PERFEXPERT_SUCCESS;
+static int cmp_mixed(const lcpi_hotspot_t **a, const lcpi_hotspot_t **b) {
+    if (isnan(lcpi_get_value((*a)->metrics_by_name, "overall"))) return 1;
+    if (isnan(lcpi_get_value((*b)->metrics_by_name, "overall"))) return -1;
+    if (isinf(lcpi_get_value((*a)->metrics_by_name, "overall"))) return 1;
+    if (isinf(lcpi_get_value((*b)->metrics_by_name, "overall"))) return -1;
+    if ((lcpi_get_value((*a)->metrics_by_name, "overall") * (*a)->importance) >
+        (lcpi_get_value((*b)->metrics_by_name, "overall") * (*b)->importance))
+        return -1;
+    if ((lcpi_get_value((*a)->metrics_by_name, "overall") * (*a)->importance) <
+        (lcpi_get_value((*b)->metrics_by_name, "overall") * (*b)->importance))
+        return 1;
+    if ((lcpi_get_value((*a)->metrics_by_name, "overall") * (*a)->importance) ==
+        (lcpi_get_value((*b)->metrics_by_name, "overall") * (*b)->importance))
+        return 0;
 }
 
 #ifdef __cplusplus

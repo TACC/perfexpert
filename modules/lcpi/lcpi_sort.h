@@ -38,7 +38,7 @@ extern "C" {
 #include "common/perfexpert_list.h"
 
 /* Module types */
-typedef int (*sort_fn_t)(lcpi_profile_t *profile);
+typedef int (*sort_fn_t)(const lcpi_hotspot_t **a, const lcpi_hotspot_t **b);
 
 typedef struct sort {
     const char *name;
@@ -46,9 +46,9 @@ typedef struct sort {
 } sort_t;
 
 /* Function declarations */
-static int sort_by_relevance(lcpi_profile_t *profile);
-static int sort_by_performance(lcpi_profile_t *profile);
-static int sort_by_mixed(lcpi_profile_t *profile);
+static int cmp_relevance(const lcpi_hotspot_t **a, const lcpi_hotspot_t **b);
+static int cmp_performance(const lcpi_hotspot_t **a, const lcpi_hotspot_t **b);
+static int cmp_mixed(const lcpi_hotspot_t **a, const lcpi_hotspot_t **b);
 
 #ifdef __cplusplus
 }
