@@ -222,6 +222,7 @@ static int output_profile(lcpi_hotspot_t *h) {
             printf("\n%s\n", _WHITE("Slowdown Caused By      LCPI    "
                 "(interpretation varies according to the metric)"));
         } else if ((0 == strcmp(cat, "data accesses")) ||
+            (0 == strcmp(cat, "memory bandwidth")) ||
             (0 == strcmp(cat, "instruction accesses")) ||
             (0 == strcmp(cat, "data TLB")) ||
             (0 == strcmp(cat, "instruction TLB")) ||
