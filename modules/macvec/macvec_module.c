@@ -190,6 +190,54 @@ int module_fini(void) {
     return PERFEXPERT_SUCCESS;
 }
 
+static int cmp_relevance(const macvec_hotspot_t **a,
+        const macvec_hotspot_t **b) {
+    if ((*a)->importance > (*b)->importance) {
+        return -1;
+    }
+
+    if ((*a)->importance < (*b)->importance) {
+        return +1;
+    }
+
+    return 0;
+}
+
+int filter_and_sort_hotspots(perfexpert_list_t* hotspots, double threshold) {
+    if (0 == perfexpert_list_get_size(hotspots)) {
+        return PERFEXPERT_SUCCESS;
+    }
+
+    perfexpert_list_item_t **items, *item;
+    items = (perfexpert_list_item_t**)malloc(sizeof(perfexpert_list_item_t*) *
+            perfexpert_list_get_size(hotspots));
+
+    if (NULL == items) {
+        return PERFEXPERT_ERROR;
+    }
+
+    int index = 0;
+    while (NULL != (item = perfexpert_list_get_first(hotspots))) {
+        perfexpert_list_remove_item(hotspots, item);
+        macvec_hotspot_t* hotspot = (macvec_hotspot_t*) item;
+        if (hotspot->importance >= threshold &&
+                hotspot->type == PERFEXPERT_HOTSPOT_LOOP) {
+            items[index++] = item;
+        }
+    }
+
+    qsort(items, index, sizeof(perfexpert_list_item_t*),
+            (int(*)(const void*, const void*)) cmp_relevance);
+
+    int n;
+    for (n = 0; n < index; n++) {
+        perfexpert_list_append(hotspots, items[n]);
+    }
+
+    free(items);
+
+    return PERFEXPERT_SUCCESS;
+}
 /* module_analyze */
 int module_analyze(void) {
     macvec_profile_t *p = NULL;
@@ -205,14 +253,13 @@ int module_analyze(void) {
     }
 
     /* For each profile... */
-    perfexpert_list_for(p, &(my_module_globals.profiles), macvec_profile_t) {
-        /* For each hotspot in this profile... */
-        perfexpert_list_for(h, &(p->hotspots), macvec_hotspot_t) {
-
-            /* Do thatever you want to do... just printing */
-            OUTPUT_VERBOSE((8, "  %s (%s:%d@%s)", _YELLOW(h->name), h->file,
-                h->line, h->module->name));
-        }
+    macvec_profile_t* profile;
+    double threshold = my_module_globals.threshold;
+    perfexpert_list_for(profile, &(my_module_globals.profiles),
+            macvec_profile_t) {
+        perfexpert_list_t* hotspots = &(profile->hotspots);
+        filter_and_sort_hotspots(hotspots, threshold);
+        process_hotspots(hotspots);
     }
 
     return PERFEXPERT_SUCCESS;
