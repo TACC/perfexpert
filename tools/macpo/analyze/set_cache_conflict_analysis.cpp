@@ -72,7 +72,6 @@ void print_set_conflicts(std::vector<conflict_list_t> &conflicts,
 
 void print_set_conflicts_for_l2_cache(std::vector< conflict_prob_list_t >
         &conflicts, int num_sets) {
-    
     std::map< int, std::map<int, double>* > core_set_var_conf;
     std::vector<int> per_set_conflict_num(num_sets, 0);
     double total_miss_prob = 0.0;
@@ -121,7 +120,10 @@ int set_cache_conflict_analysis(const global_data_t& global_data) {
     std::vector<avl_tree_list_t *> avl_trees_per_core(num_cores);
 
     for (int k = 0; k < num_cores; k++) {
-        avl_trees_per_core[k] = new avl_tree_list_t(num_sets, new avl_tree());
+        avl_trees_per_core[k] = new avl_tree_list_t(num_sets);
+        for (int l = 0; l < num_sets; l++) {
+            (*avl_trees_per_core[k])[l] = new avl_tree();
+        }
     }
 
     std::cout << "Getting set cache conflicts" << std::endl;
@@ -154,8 +156,7 @@ int set_cache_conflict_analysis(const global_data_t& global_data) {
                     var_idx >= 0 && var_idx < num_streams) {
                 // if address is already seen => not a cold miss
                 if (set_avl_list[set_id]->contains(cache_line)) {
-                    reuse_distance = set_avl_list[set_id]->
-                        get_distance(cache_line);
+                    reuse_distance = set_avl_list[set_id]->get_distance(cache_line);
 
                     // L1 conflicts
                     if (reuse_distance > l1_data.associativity) {
