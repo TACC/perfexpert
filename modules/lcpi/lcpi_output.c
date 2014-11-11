@@ -44,39 +44,47 @@ extern "C" {
 #include "common/perfexpert_util.h"
 
 /* prety_print */
-#define PRETTY_PRINT(size, symbol) \
-    {                              \
-        int i = size;              \
-        while (i > 0) {            \
-            printf("%s", symbol);  \
-            i--;                   \
-        }                          \
-        printf("\n");              \
+#define PRETTY_PRINT(size, symbol)            \
+    {                                         \
+        int i = size;                         \
+        while (i > 0) {                       \
+            printf("%s", symbol);             \
+            fprintf(report_FP, "%s", symbol); \
+            i--;                              \
+        }                                     \
+        printf("\n");                         \
+        fprintf(report_FP, "\n");             \
     }
 
 /* prety_print_bar */
-#define PRETTY_PRINT_BAR(size, symbol)        \
-    {                                         \
-        int n = 0;                            \
-        printf("[");                          \
-        for (n = 0; n < 50; n++) {            \
-            if (size > n) {                   \
-                if ((n != 49) &&              \
-                    (size <= 50)) {           \
-                    printf("%s", symbol);     \
-                } else {                      \
-                    printf("+");              \
-                }                             \
-            } else {                          \
-                if ((0 == (n+1) % 5)          \
-                    && (n != 49)) {           \
-                    printf("%s", _BLUE(".")); \
-                } else {                      \
-                    printf(" ");              \
-                }                             \
-            }                                 \
-        }                                     \
-        printf("]\n");                        \
+#define PRETTY_PRINT_BAR(size, symbol)                \
+    {                                                 \
+        int n = 0;                                    \
+        printf("[");                                  \
+        fprintf(report_FP, "[");                      \
+        for (n = 0; n < 50; n++) {                    \
+            if (size > n) {                           \
+                if ((n != 49) &&                      \
+                    (size <= 50)) {                   \
+                    printf("%s", symbol);             \
+                    fprintf(report_FP, "%s", symbol); \
+                } else {                              \
+                    printf("+");                      \
+                    fprintf(report_FP, "+");          \
+                }                                     \
+            } else {                                  \
+                if ((0 == (n+1) % 5)                  \
+                    && (n != 49)) {                   \
+                    printf("%s", _BLUE("."));         \
+                    fprintf(report_FP, ".");          \
+                } else {                              \
+                    printf(" ");                      \
+                    fprintf(report_FP, " ");          \
+                }                                     \
+            }                                         \
+        }                                             \
+        printf("]\n");                                \
+        fprintf(report_FP, "]\n");                    \
     }
 
 /* output_analysis */
@@ -85,8 +93,20 @@ int output_analysis(perfexpert_list_t *profiles) {
     lcpi_profile_t *p = NULL;
     lcpi_module_t *m = NULL, *t = NULL;
     char *shortname = NULL;
+    FILE *report_FP;
+    char *report_FP_file;
 
     OUTPUT_VERBOSE((4, "%s", _YELLOW("Printing analysis report")));
+
+    /* Save the report on a file inside the tempdir */
+    PERFEXPERT_ALLOC(char, report_FP_file, (strlen(globals.moduledir) + 15));
+    sprintf(report_FP_file, "%s/report.txt", globals.moduledir);
+
+    if (NULL == (report_FP = fopen(report_FP_file, "w"))) {
+        OUTPUT(("%s (%s)", _ERROR("unable to open file"), report_FP_file));
+        return PERFEXPERT_ERROR;
+    }
+    PERFEXPERT_DEALLOC(report_FP_file);
 
     /* For each profile in the list of profiles... */
     perfexpert_list_for(p, profiles, lcpi_profile_t) {
@@ -106,13 +126,17 @@ int output_analysis(perfexpert_list_t *profiles) {
             m->importance = m->cycles / p->cycles;
             printf("Module %s takes %.2f%% of the total runtime\n",
                 _MAGENTA(shortname), m->importance * 100);
+            fprintf(report_FP, "Module %s takes %.2f%% of the total runtime\n",
+                shortname, m->importance * 100);
+
         }
         printf("\n");
+        fprintf(report_FP, "\n");
 
         /* For each hotspot in the profile's list of hotspots... */
         perfexpert_list_for(h, &(p->hotspots), lcpi_hotspot_t) {
             if (my_module_globals.threshold <= h->importance) {
-                if (PERFEXPERT_SUCCESS != output_profile(h)) {
+                if (PERFEXPERT_SUCCESS != output_profile(h, report_FP)) {
                     OUTPUT(("%s (%s)",
                         _ERROR("printing hotspot analysis"), h->name));
                     return PERFEXPERT_ERROR;
@@ -120,11 +144,14 @@ int output_analysis(perfexpert_list_t *profiles) {
             }
         }
     }
+    /* Close file */
+    fclose(report_FP);
+
     return PERFEXPERT_SUCCESS;
 }
 
 /* output_profile */
-static int output_profile(lcpi_hotspot_t *h) {
+static int output_profile(lcpi_hotspot_t *h, FILE *report_FP) {
     int print_ratio = PERFEXPERT_TRUE, warn_fp_ratio = PERFEXPERT_FALSE;
     lcpi_metric_t *l = NULL, *t = NULL;
     char *shortname = NULL;
@@ -137,18 +164,26 @@ static int output_profile(lcpi_hotspot_t *h) {
         case PERFEXPERT_HOTSPOT_PROGRAM:
             printf("Aggregate (%.2f%% of the total runtime)\n",
                 h->importance * 100);
+            fprintf(report_FP, "Aggregate (%.2f%% of the total runtime)\n",
+                h->importance * 100);
             break;
 
         case PERFEXPERT_HOTSPOT_FUNCTION:
             printf(
                 "Function %s in line %d of %s (%.2f%% of the total runtime)\n",
                 _CYAN(h->name), h->line, shortname, h->importance * 100);
+            fprintf(report_FP,
+                "Function %s in line %d of %s (%.2f%% of the total runtime)\n",
+                h->name, h->line, shortname, h->importance * 100);
             break;
 
         case PERFEXPERT_HOTSPOT_LOOP:
             printf(
                 "Loop in function %s in %s:%d (%.2f%% of the total runtime)\n",
                 _CYAN(h->name), shortname, h->line, h->importance * 100);
+            fprintf(report_FP,
+                "Loop in function %s in %s:%d (%.2f%% of the total runtime)\n",
+                h->name, shortname, h->line, h->importance * 100);
             break;
 
         case PERFEXPERT_HOTSPOT_UNKNOWN:
@@ -189,13 +224,18 @@ static int output_profile(lcpi_hotspot_t *h) {
                 printf("%s", _WHITE("Instructions Ratio        %   "));
                 printf("%s\n", _CYAN("0..........25..........50...........75"
                     ".........100"));
+                fprintf(report_FP, "Instructions Ratio        %%   ");
+                fprintf(report_FP, "0..........25..........50...........75"
+                    ".........100\n");
                 print_ratio = PERFEXPERT_FALSE;
             }
             if (100 > (l->value * 100)) {
                 printf("%s %4.1f ", desc, (l->value * 100));
+                fprintf(report_FP, "%s %4.1f ", desc, (l->value * 100));
                 PRETTY_PRINT_BAR((int)rint((l->value * 50)), ">");
             } else {
                 printf("%s%4.1f ", desc, (l->value * 100));
+                fprintf(report_FP, "%s%4.1f ", desc, (l->value * 100));
                 PRETTY_PRINT_BAR(50, ">");
                 warn_fp_ratio = PERFEXPERT_TRUE;
             }
@@ -206,21 +246,30 @@ static int output_profile(lcpi_hotspot_t *h) {
             printf("\n%s", _WHITE("Performance Assessment  LCPI  "));
             printf("%s\n", _CYAN("good.......okay........fair........poor"
                 "........bad"));
+            fprintf(report_FP, "\nPerformance Assessment  LCPI  ");
+            fprintf(report_FP, "good.......okay........fair........poor"
+                "........bad\n");
             if (0.5 >= l->value) {
                 printf("%s%5.2f ", _GREEN(desc), l->value);
+                fprintf(report_FP, "%s%5.2f ", desc, l->value);
                 PRETTY_PRINT_BAR((int)rint((l->value * 20)), _GREEN(">"));
             } else if ((0.5 < l->value) && (1.5 >= l->value)) {
                 printf("%s%5.2f ", _YELLOW(desc), l->value);
+                fprintf(report_FP, "%s%5.2f ", desc, l->value);
                 PRETTY_PRINT_BAR((int)rint((l->value * 20)), _YELLOW(">"));
             } else if ((1.5 < l->value) && (2.5 >= l->value)) {
                 printf("%s%5.2f ", _RED(desc), l->value);
+                fprintf(report_FP, "%s%5.2f ", desc, l->value);
                 PRETTY_PRINT_BAR((int)rint((l->value * 20)), _RED(">"));
             } else {
                 printf("%s%5.2f ", _BOLDRED(desc), l->value);
+                fprintf(report_FP, "%s%5.2f ", desc, l->value);
                 PRETTY_PRINT_BAR((int)rint((l->value * 20)), _BOLDRED(">"));
             }
             printf("\n%s\n", _WHITE("Slowdown Caused By      LCPI    "
                 "(interpretation varies according to the metric)"));
+            fprintf(report_FP, "\nSlowdown Caused By      LCPI    "
+                "(interpretation varies according to the metric)\n");
         } else if ((0 == strcmp(cat, "data accesses")) ||
             (0 == strcmp(cat, "memory bandwidth")) ||
             (0 == strcmp(cat, "instruction accesses")) ||
@@ -229,6 +278,7 @@ static int output_profile(lcpi_hotspot_t *h) {
             (0 == strcmp(cat, "branch instructions")) ||
             (0 == strcmp(cat, "FP instructions"))) {
             printf("%s%5.2f ", desc, l->value);
+            fprintf(report_FP, "%s%5.2f ", desc, l->value);
             PRETTY_PRINT_BAR((int)rint((l->value * 20)), ">");
         }
         PERFEXPERT_DEALLOC(temp);
@@ -239,32 +289,47 @@ static int output_profile(lcpi_hotspot_t *h) {
         printf("\n%s the instruction count variation for this bottleneck is "
             "%.2f%%, making\n         the results unreliable!",
             _BOLDRED("WARNING:"), h->variance * 100);
+        fprintf(report_FP, "\nWARNING: the instruction count variation for this"
+            " bottleneck is %.2f%%, making\n         the results unreliable!",
+            h->variance * 100);
     }
     if ((0 == h->cycles) || (0 == h->instructions)) {
         printf("\n%s the runtime for this code section is too short, PerfExpert"
             " was unable\n         to collect the performance counters it needs"
             ", making the results\n         unreliable!",
             _BOLDRED("WARNING:"));
+        fprintf(report_FP, "\nWARNING: the runtime for this code section is too"
+            " short, PerfExpert was unable\n         to collect the performance"
+            " counters it needs, making the results\n         unreliable!");
     }
     if (database_get_hound("CPU_freq") > h->cycles) {
         printf("\n%s the runtime for this code section is too short to gather "
             "meaningful\n         measurements!\n", _BOLDRED("WARNING:"));
+        fprintf(report_FP, "\nWARNING: the runtime for this code section is too"
+            " short to gather meaningful\n         measurements!\n");
         PRETTY_PRINT(81, "-");
         printf("\n");
+        fprintf(report_FP, "\n");
         return PERFEXPERT_SUCCESS;
     }
     if (database_get_hound("CPI_threshold") >= h->cycles / h->instructions) {
         printf("\n%s  this code section performs just fine!",
             _BOLDGREEN("NOTICE:"));
+        fprintf(report_FP, "\nNOTICE:  this code section performs just fine!");
     }
     if (PERFEXPERT_TRUE == warn_fp_ratio) {
         printf("\n%s this architecture overcounts floating-point operations, "
             "expect to see\n         more than 100%% of these instructions!",
             _BOLDRED("WARNING:"));
+        fprintf(report_FP, "\nWARNING: this architecture overcounts floating-"
+            "point operations, expect to see\n         more than 100%% of these"
+            " instructions!");
     }
     printf("\n");
+    fprintf(report_FP, "\n");
     PRETTY_PRINT(81, "-");
     printf("\n");
+    fprintf(report_FP, "\n");
 
     return PERFEXPERT_SUCCESS;
 }
