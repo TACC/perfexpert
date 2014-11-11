@@ -54,6 +54,7 @@ int module_load(void) {
 /* module_init */
 int module_init(void) {
     char *error = NULL, sql[MAX_BUFFER_SIZE];
+    lcpi_metric_t *m = NULL, *t = NULL;
 
     /* Initialize list of events */
     perfexpert_list_construct(&(my_module_globals.profiles));
@@ -204,6 +205,15 @@ int module_init(void) {
         return PERFEXPERT_ERROR;
     }
 
+    /* Show the list of metrics */
+    perfexpert_hash_iter_str(my_module_globals.metrics_by_name, m, t) {
+        OUTPUT_VERBOSE((7, "   %s=%s", _CYAN(m->name),
+            evaluator_get_string(m->expression)));
+    }
+
+    OUTPUT_VERBOSE((4, "(%d) %s",
+        perfexpert_hash_count_str(my_module_globals.metrics_by_name),
+        _MAGENTA("LCPI metrics")));
     OUTPUT_VERBOSE((5, "%s", _MAGENTA("initialized")));
 
     return PERFEXPERT_SUCCESS;
