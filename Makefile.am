@@ -31,7 +31,7 @@ SUBDIRS = common modules tools
 
 # Set database version
 install-exec-local:
-	echo 1.27 > perfexpert.db.version
+	echo 1.28 > perfexpert.db.version
 	test -d $(DESTDIR)$(sysconfdir) || mkdir $(DESTDIR)$(sysconfdir)
 	$(INSTALL) -m 644 perfexpert.db.version $(DESTDIR)$(sysconfdir)/
 
