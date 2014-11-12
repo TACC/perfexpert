@@ -56,6 +56,7 @@ int module_load(void) {
     // TODO: check for HPCToolkit binaries availability here
 
     OUTPUT_VERBOSE((5, "%s", _MAGENTA("loaded")));
+    myself_module.status = PERFEXPERT_MODULE_LOADED;
 
     return PERFEXPERT_SUCCESS;
 }
@@ -88,6 +89,7 @@ int module_init(void) {
     }
 
     OUTPUT_VERBOSE((5, "%s", _MAGENTA("initialized")));
+    myself_module.status = PERFEXPERT_MODULE_INITIALIZED;
 
     return PERFEXPERT_SUCCESS;
 }
@@ -111,6 +113,7 @@ int module_fini(void) {
     my_module_globals.ignore_return_code = PERFEXPERT_FALSE;
 
     OUTPUT_VERBOSE((5, "%s", _MAGENTA("finalized")));
+    myself_module.status = PERFEXPERT_MODULE_FINALIZED;
 
     return PERFEXPERT_SUCCESS;
 }

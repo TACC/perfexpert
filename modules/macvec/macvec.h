@@ -83,10 +83,15 @@ int counters_jaketown(void);
 int counters_mic(void);
 int counters_papi(void); // Fallback for unknown processors
 
-#define USE_EVENT(X)                                                         \
-    if (PERFEXPERT_SUCCESS != my_module_globals.measurement->set_event(X)) { \
-        OUTPUT(("%s [%s]", _ERROR("invalid event name"), X));                \
-        return PERFEXPERT_ERROR;                                             \
+#define USE_EVENT(X)                                                           \
+    if (NULL == my_module_globals.measurement->set_event) {                    \
+        OUTPUT(("%s [%s]", _ERROR("'set_event' function not found on module"), \
+            my_module_globals.measurement->name));                             \
+        return PERFEXPERT_ERROR;                                               \
+    }                                                                          \
+    if (PERFEXPERT_SUCCESS != my_module_globals.measurement->set_event(X)) {   \
+        OUTPUT(("%s [%s]", _ERROR("invalid event name"), X));                  \
+        return PERFEXPERT_ERROR;                                               \
     }
 
 #ifdef __cplusplus

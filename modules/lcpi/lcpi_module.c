@@ -85,16 +85,6 @@ int module_init(void) {
             OUTPUT(("%s", _ERROR("unable to get measurements module")));
             return PERFEXPERT_SUCCESS;
         }
-
-        /* Initialize the measurements module before using it */
-        if (PERFEXPERT_MODULE_LOADED == my_module_globals.measurement->status) {
-            if (PERFEXPERT_SUCCESS != my_module_globals.measurement->init()) {
-                OUTPUT(("%s [%s]", _ERROR("error initializing module"),
-                    my_module_globals.measurement->name));
-                return PERFEXPERT_ERROR;
-            }
-        }
-        my_module_globals.measurement->status = PERFEXPERT_MODULE_INITIALIZED;
     }
 
     /* Should we use HPCToolkit? */
@@ -173,7 +163,17 @@ int module_init(void) {
             my_module_globals.architecture));
     }
 
+    /* Initialize the measurements module before using it */
+    if (PERFEXPERT_MODULE_LOADED == my_module_globals.measurement->status) {
+        if (PERFEXPERT_SUCCESS != my_module_globals.measurement->init()) {
+            OUTPUT(("%s [%s]", _ERROR("error initializing module"),
+                my_module_globals.measurement->name));
+            return PERFEXPERT_ERROR;
+        }
+    }
+
     OUTPUT(("%s", _YELLOW("Setting performance events")));
+
     /* Jaketown (or SandyBridgeEP) */
     if (0 == strcmp("jaketown",
         perfexpert_string_to_lower(my_module_globals.architecture))) {

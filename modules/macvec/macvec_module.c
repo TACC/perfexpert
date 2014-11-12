@@ -64,8 +64,19 @@ int module_init(void) {
         OUTPUT(("%s", _RED("Neither HPCToolkit nor VTune module loaded")));
 
         /* Default to HPCToolkit */
-        perfexpert_module_load("hpctoolkit");
         OUTPUT(("%s", _RED("PerfExpert will try to load HPCToolkit module")));
+        if (PERFEXPERT_SUCCESS != perfexpert_module_load("hpctoolkit")) {
+            OUTPUT(("%s", _ERROR("while loading HPCToolkit module")));
+            return PERFEXPERT_ERROR;
+        }
+
+        /* Get the module address */
+        if (NULL == (my_module_globals.measurement =
+                (perfexpert_module_measurement_t *)
+                perfexpert_module_get("hpctoolkit"))) {
+            OUTPUT(("%s", _ERROR("unable to get measurements module")));
+            return PERFEXPERT_SUCCESS;
+        }
     }
 
     /* Should we use HPCToolkit? */
@@ -143,6 +154,15 @@ int module_init(void) {
 
         OUTPUT_VERBOSE((1, "Architecture not set but it looks like [%s]",
             my_module_globals.architecture));
+    }
+
+    /* Initialize the measurements module before using it */
+    if (PERFEXPERT_MODULE_LOADED == my_module_globals.measurement->status) {
+        if (PERFEXPERT_SUCCESS != my_module_globals.measurement->init()) {
+            OUTPUT(("%s [%s]", _ERROR("error initializing module"),
+                my_module_globals.measurement->name));
+            return PERFEXPERT_ERROR;
+        }
     }
 
     OUTPUT(("%s", _YELLOW("Setting performance events")));
