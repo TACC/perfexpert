@@ -111,11 +111,11 @@ int module_init(void) {
     }
 
     /* Parse module options */
-    // if (PERFEXPERT_SUCCESS != parse_module_args(myself_module.argc,
-    //     myself_module.argv)) {
-    //     OUTPUT(("%s", _ERROR("parsing module arguments")));
-    //     return PERFEXPERT_ERROR;
-    // }
+    if (PERFEXPERT_SUCCESS != parse_module_args(myself_module.argc,
+                myself_module.argv)) {
+        OUTPUT(("%s", _ERROR("parsing module arguments")));
+        return PERFEXPERT_ERROR;
+    }
 
     /* If the architecture was not set, we should try to identify it... */
     if (NULL == my_module_globals.architecture) {

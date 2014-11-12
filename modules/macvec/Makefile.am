@@ -24,6 +24,6 @@ libperfexpert_module_macvec_la_CPPFLAGS = -I$(srcdir)/../..
 libperfexpert_module_macvec_la_LDFLAGS = -lm -lsqlite3 -module \
 	-version-info 1:0:0 -export-symbols $(srcdir)/macvec_module.sym
 libperfexpert_module_macvec_la_SOURCES = macvec_module.c macvec_counters.c \
-    macvec_database.c macvec_options.c macvec_parse.cc
+    macvec_database.c macvec_options.c macvec_parse.c
 
 # EOF
