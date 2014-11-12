@@ -28,6 +28,7 @@ extern "C" {
 #include <stdlib.h>
 // #include <string.h>
 #include <argp.h>
+#include <unistd.h>
 
 /* Modules headers */
 #include "macvec.h"
@@ -62,10 +63,17 @@ int parse_module_args(int argc, char *argv[]) {
         return PERFEXPERT_ERROR;
     }
 
+    if (my_module_globals.report_file == NULL ||
+            access(my_module_globals.report_file, R_OK) == -1) {
+        OUTPUT(("%s", _ERROR("invalid report file")));
+        return PERFEXPERT_ERROR;
+    }
+
     OUTPUT_VERBOSE((7, "%s", _BLUE("Summary of options")));
     OUTPUT_VERBOSE((7, "   Threshold:     %f", my_module_globals.threshold));
     OUTPUT_VERBOSE((7, "   Architecture:  %s", my_module_globals.architecture));
     OUTPUT_VERBOSE((7, "   Verbose level: %d", my_module_globals.verbose));
+    OUTPUT_VERBOSE((7, "   Report file: : %s", my_module_globals.report_file));
 
     /* Not using OUTPUT_VERBOSE because I want only one line */
     if (8 <= my_module_globals.verbose) {
@@ -96,6 +104,13 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
             my_module_globals.threshold = atof(arg);
             OUTPUT_VERBOSE((1, "option 't' set [%f]",
                 my_module_globals.threshold));
+            break;
+
+        /* Vectorization report */
+        case 'r':
+            my_module_globals.report_file = arg;
+            OUTPUT_VERBOSE((1, "option 'r' set [%s]",
+                my_module_globals.report_file));
             break;
 
         /* Verbose */

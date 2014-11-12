@@ -235,9 +235,7 @@ void print_recommendations(perfexpert_list_t* locations) {
     }
 }
 
-int process_hotspots(perfexpert_list_t* hotspots) {
-    const char* report_filename = "vec-report.txt";
-
+int process_hotspots(perfexpert_list_t* hotspots, const char* report_filename) {
     perfexpert_list_t locations;
     perfexpert_list_construct(&locations);
 

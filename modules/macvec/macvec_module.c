@@ -279,7 +279,7 @@ int module_analyze(void) {
             macvec_profile_t) {
         perfexpert_list_t* hotspots = &(profile->hotspots);
         filter_and_sort_hotspots(hotspots, threshold);
-        process_hotspots(hotspots);
+        process_hotspots(hotspots, my_module_globals.report_file);
     }
 
     return PERFEXPERT_SUCCESS;
