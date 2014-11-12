@@ -49,7 +49,7 @@ const char* msg_float_conv = "Use limited types";
 
 const char* dsc_ptr_check = "If the compiler is unaware that pointers do not "
         "overlap in memory, the compiler's dependence analysis may infer "
-        "existance of vector dependence. If the pointers used in this loop "
+        "existence of vector dependence. If the pointers used in this loop "
         "body indeed do not overlap, declare them with the 'restrict' keyword. "
         "For instance: double* restrict ptr_a;. See "
         "https://software.intel.com/en-us/articles/vectorization-with-the-intel-compilers-part-i for additional details.";
