@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS hound (
     value  REAL    NOT NULL
 );
 
-INSERT INTO hound (family, model, name, value) VALUES (11, 1, 'CPI_threshold', 1.000000);
+INSERT INTO hound (family, model, name, value) VALUES (11, 1, 'CPI_threshold', 8.000000);
 INSERT INTO hound (family, model, name, value) VALUES (11, 1, 'L1_dlat', 3.000000);
 INSERT INTO hound (family, model, name, value) VALUES (11, 1, 'L1_ilat', 3.000000);
 INSERT INTO hound (family, model, name, value) VALUES (11, 1, 'L2_lat', 24.000000);
@@ -43,4 +43,5 @@ INSERT INTO hound (family, model, name, value) VALUES (11, 1, 'FP_slow_lat', 20.
 INSERT INTO hound (family, model, name, value) VALUES (11, 1, 'BR_lat', 1.000000);
 INSERT INTO hound (family, model, name, value) VALUES (11, 1, 'BR_miss_lat', 15.000000);
 INSERT INTO hound (family, model, name, value) VALUES (11, 1, 'TLB_lat', 40.000000);
+INSERT INTO hound (family, model, name, value) VALUES (11, 1, 'mem_bandwidth', 85899345920.000000);
 

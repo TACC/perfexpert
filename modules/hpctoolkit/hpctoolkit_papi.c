@@ -110,7 +110,7 @@ int papi_get_sampling_rate(const char *name) {
         {499999, 100000, "DTLB_STORE_MISSES:CAUSES_A_WALK"
             "PAPI_TLB_DM DTLB_LOAD_MISSES:WALK_DURATION PAPI_TLB_IM "
             "ITLB_MISSES:WALK_DURATION DTLB_LOAD_MISSES:CAUSES_A_WALK "
-            "DATA_PAGE_WALK CODE_PAGE_WALK " },
+            "DATA_PAGE_WALK CODE_PAGE_WALK LONG_DATA_PAGE_WALK " },
         {99999, 0, "" },
         {0, 0, "" }
     };
