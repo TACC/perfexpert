@@ -43,6 +43,12 @@ extern "C" {
 #include "common/perfexpert_string.h"
 #include "common/perfexpert_util.h"
 
+/* some pre-defined headers */
+#define PRETTY_OK_BAR      "good.......okay........fair........poor........bad"
+#define PRETTY_PERCENT_BAR "0..........25..........50...........75.........100"
+#define PRETTY_SLOWDOWN    "Slowdown Caused By      LCPI    (interpretation varies according to the metric)"
+#define PRETTY_ASSESSMENT  "Performance Assessment  LCPI  "
+
 /* prety_print */
 #define PRETTY_PRINT(size, symbol)            \
     {                                         \
@@ -136,10 +142,21 @@ int output_analysis(perfexpert_list_t *profiles) {
         /* For each hotspot in the profile's list of hotspots... */
         perfexpert_list_for(h, &(p->hotspots), lcpi_hotspot_t) {
             if (my_module_globals.threshold <= h->importance) {
-                if (PERFEXPERT_SUCCESS != output_profile(h, report_FP)) {
-                    OUTPUT(("%s (%s)",
-                        _ERROR("printing hotspot analysis"), h->name));
-                    return PERFEXPERT_ERROR;
+                if (0 == strcmp("jaketown", perfexpert_string_to_lower(
+                    my_module_globals.architecture))) {
+                    if (PERFEXPERT_SUCCESS != output_profile(h, report_FP, 20)) {
+                        OUTPUT(("%s (%s)", _ERROR("printing hotspot analysis"),
+                            h->name));
+                        return PERFEXPERT_ERROR;
+                    }
+                }
+                if (0 == strcmp("mic", perfexpert_string_to_lower(
+                    my_module_globals.architecture))) {
+                    if (PERFEXPERT_SUCCESS != output_profile(h, report_FP, 40)) {
+                        OUTPUT(("%s (%s)", _ERROR("printing hotspot analysis"),
+                            h->name));
+                        return PERFEXPERT_ERROR;
+                    }
                 }
             }
         }
@@ -151,7 +168,7 @@ int output_analysis(perfexpert_list_t *profiles) {
 }
 
 /* output_profile */
-static int output_profile(lcpi_hotspot_t *h, FILE *report_FP) {
+static int output_profile(lcpi_hotspot_t *h, FILE *report_FP, const int scale) {
     int print_ratio = PERFEXPERT_TRUE, warn_fp_ratio = PERFEXPERT_FALSE;
     lcpi_metric_t *l = NULL, *t = NULL;
     char *shortname = NULL;
@@ -217,16 +234,14 @@ static int output_profile(lcpi_hotspot_t *h, FILE *report_FP) {
             strcat(desc, " ");
         }
 
-        /* Print ratio and GFLOPS section */
+        /* Print ratio and GFLOPS section (percentage: scale = 100) */
         if ((0 == strcmp(cat, "ratio")) ||
             (0 == strncmp(cat, "GFLOPS", 6))) {
             if (PERFEXPERT_TRUE == print_ratio) {
                 printf("%s", _WHITE("Instructions Ratio        %   "));
-                printf("%s\n", _CYAN("0..........25..........50...........75"
-                    ".........100"));
+                printf("%s\n", _CYAN(PRETTY_PERCENT_BAR));
                 fprintf(report_FP, "Instructions Ratio        %%   ");
-                fprintf(report_FP, "0..........25..........50...........75"
-                    ".........100\n");
+                fprintf(report_FP, "%s\n", PRETTY_PERCENT_BAR);
                 print_ratio = PERFEXPERT_FALSE;
             }
             if (100 > (l->value * 100)) {
@@ -243,35 +258,31 @@ static int output_profile(lcpi_hotspot_t *h, FILE *report_FP) {
 
         /* Print LCPI section: special colors for overall */
         if (0 == strcmp(cat, "overall")) {
-            printf("\n%s", _WHITE("Performance Assessment  LCPI  "));
-            printf("%s\n", _CYAN("good.......okay........fair........poor"
-                "........bad"));
-            fprintf(report_FP, "\nPerformance Assessment  LCPI  ");
-            fprintf(report_FP, "good.......okay........fair........poor"
-                "........bad\n");
+            printf("\n%s", _WHITE(PRETTY_ASSESSMENT));
+            printf("%s\n", _CYAN(PRETTY_OK_BAR));
+            fprintf(report_FP, "\n%s", PRETTY_ASSESSMENT);
+            fprintf(report_FP, "%s\n", PRETTY_OK_BAR);
             if (0.5 >= l->value) {
                 printf("%s%5.2f ", _GREEN(desc), l->value);
                 fprintf(report_FP, "%s%5.2f ", desc, l->value);
-                PRETTY_PRINT_BAR((int)rint((l->value * 20)), _GREEN(">"));
+                PRETTY_PRINT_BAR((int)rint((l->value * scale)), _GREEN(">"));
             } else if ((0.5 < l->value) && (1.5 >= l->value)) {
                 printf("%s%5.2f ", _YELLOW(desc), l->value);
                 fprintf(report_FP, "%s%5.2f ", desc, l->value);
-                PRETTY_PRINT_BAR((int)rint((l->value * 20)), _YELLOW(">"));
+                PRETTY_PRINT_BAR((int)rint((l->value * scale)), _YELLOW(">"));
             } else if ((1.5 < l->value) && (2.5 >= l->value)) {
                 printf("%s%5.2f ", _RED(desc), l->value);
                 fprintf(report_FP, "%s%5.2f ", desc, l->value);
-                PRETTY_PRINT_BAR((int)rint((l->value * 20)), _RED(">"));
+                PRETTY_PRINT_BAR((int)rint((l->value * scale)), _RED(">"));
             } else {
                 printf("%s%5.2f ", _BOLDRED(desc), l->value);
                 fprintf(report_FP, "%s%5.2f ", desc, l->value);
-                PRETTY_PRINT_BAR((int)rint((l->value * 20)), _BOLDRED(">"));
+                PRETTY_PRINT_BAR((int)rint((l->value * scale)), _BOLDRED(">"));
             }
-            printf("\n%s\n", _WHITE("Slowdown Caused By      LCPI    "
-                "(interpretation varies according to the metric)"));
-            fprintf(report_FP, "\nSlowdown Caused By      LCPI    "
-                "(interpretation varies according to the metric)\n");
+            printf("\n%s\n", _WHITE(PRETTY_SLOWDOWN));
+            fprintf(report_FP, "\n%s\n", PRETTY_SLOWDOWN);
         } else if ((0 == strcmp(cat, "data accesses")) ||
-            (0 == strcmp(cat, "memory bandwidth")) ||
+            (0 == strcmp(cat, "vectorization level")) ||
             (0 == strcmp(cat, "instruction accesses")) ||
             (0 == strcmp(cat, "data TLB")) ||
             (0 == strcmp(cat, "instruction TLB")) ||
@@ -279,8 +290,13 @@ static int output_profile(lcpi_hotspot_t *h, FILE *report_FP) {
             (0 == strcmp(cat, "FP instructions"))) {
             printf("%s%5.2f ", desc, l->value);
             fprintf(report_FP, "%s%5.2f ", desc, l->value);
-            PRETTY_PRINT_BAR((int)rint((l->value * 20)), ">");
+            PRETTY_PRINT_BAR((int)rint((l->value * scale)), ">");
+        } else if (0 == strcmp(cat, "memory bandwidth")) {
+            printf("%s%5.1f ", desc, l->value * 100);
+            fprintf(report_FP, "%s%5.1f ", desc, l->value * 100);
+            PRETTY_PRINT_BAR((int)rint((l->value * scale)), ">");
         }
+
         PERFEXPERT_DEALLOC(temp);
     }
 

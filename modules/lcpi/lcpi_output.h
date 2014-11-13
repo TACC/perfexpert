@@ -29,7 +29,7 @@ extern "C" {
 /* Modules headers */
 #include "lcpi_types.h"
 
-static int output_profile(lcpi_hotspot_t *h, FILE *report_FP);
+static int output_profile(lcpi_hotspot_t *h, FILE *report_FP, const int scale);
 
 #ifdef __cplusplus
 }
