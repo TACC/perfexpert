@@ -64,6 +64,7 @@ typedef struct {
     char *architecture;
     double threshold;
     int verbose;
+    char* report_file;
 } my_module_globals_t;
 
 extern my_module_globals_t my_module_globals;
