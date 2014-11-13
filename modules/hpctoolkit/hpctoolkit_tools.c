@@ -380,6 +380,29 @@ int run_hpcrun_mic(void) {
         experiment_count++;
     }
 
+    if (MIC_EVENTS_PER_RUN != event_count) {
+        /* Add the program and the program arguments to experiment */
+        fprintf(script_file_FP, "%s ", globals.program_full);
+        i = 0;
+        while (NULL != globals.program_argv[i]) {
+            fprintf(script_file_FP, "%s ", globals.program_argv[i]);
+            i++;
+        }
+        fprintf(script_file_FP, "\n\n");
+
+        /* Add the AFTER program */
+        if (NULL != my_module_globals.mic_after[0]) {
+            i = 0;
+            fprintf(script_file_FP, "# AFTER command\n");
+            while (NULL != my_module_globals.mic_after[i]) {
+                fprintf(script_file_FP, "%s ",
+                    (char *)my_module_globals.mic_after[i]);
+                i++;
+            }
+            fprintf(script_file_FP, "\n\n");
+        }
+    }
+
     /* End the run script */
     fprintf(script_file_FP, "exit 0\n\n# EOF\n");
 
