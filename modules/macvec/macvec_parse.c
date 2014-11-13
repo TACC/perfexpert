@@ -16,11 +16,21 @@ enum { SUCCESS = 0,
     ERR_FILE_CONTENTS,
 };
 
+#define k_var_len       64
 #define k_line_len      1024
 #define k_filename_len  1024
 #define k_remarks_count 1024
 
-typedef struct _tag_location {
+typedef struct {
+    /* For list iteration. */
+    volatile perfexpert_list_item_t *next;
+    volatile perfexpert_list_item_t *prev;
+
+    char name[k_var_len];
+    int line_number;
+} var_t;
+
+typedef struct {
     /* For list iteration. */
     volatile perfexpert_list_item_t *next;
     volatile perfexpert_list_item_t *prev;
@@ -33,12 +43,16 @@ typedef struct _tag_location {
 
     uint32_t remark_count;
     uint32_t remarks_list[k_remarks_count];
+
+    perfexpert_list_t var_list;
 } location_t;
 
 typedef struct {
     long remark_number;
     const char** message;
     const char** description;
+
+    void (*process_fn)(const char*, location_t*);
 } message_t;
 
 const char* msg_ptr_check = "Check if pointers overlap";
@@ -84,20 +98,71 @@ const char* dsc_float_conv = "Using mixed precision (single- as well as double-"
         "possible, convert all floating point values to use the same "
         "precision.";
 
-const message_t messages[13] = {
-    {   15046,  &msg_ptr_check,     &dsc_ptr_check      },
-    {   15344,  &msg_ptr_check,     &dsc_ptr_check      },
-    {   15037,  &msg_trip_count,    &dsc_trip_count     },
-    {   15017,  &msg_trip_count,    &dsc_trip_count     },
-    {   15315,  &msg_trip_count,    &dsc_trip_count     },
-    {   15523,  &msg_trip_count,    &dsc_trip_count     },
-    {   15167,  &msg_mem_align,     &dsc_mem_align      },
-    {   15524,  &msg_mem_align,     &dsc_mem_align      },
-    {   15421,  &msg_mem_align,     &dsc_mem_align      },
-    {   15167,  &msg_mem_align,     &dsc_mem_align      },
-    {   15038,  &msg_branch_eval,   &dsc_branch_eval    },
-    {   15336,  &msg_branch_eval,   &dsc_branch_eval    },
-    {   15327,  &msg_float_conv,    &dsc_float_conv     },
+static regex_t re_dep_var;
+
+void extract_var(const char* line, location_t* location) {
+    regmatch_t pmatch[5] = {0};
+    if (regexec(&re_dep_var, line, 5, pmatch, 0) == 0) {
+        int start = pmatch[1].rm_so;
+        int length = pmatch[1].rm_eo - pmatch[1].rm_so;
+
+        if (k_filename_len < length) {
+            length = k_filename_len;
+        }
+
+        char name_01[k_filename_len] = "";
+        strncat(name_01, line + start, length);
+        long line_01 = strtol(line + pmatch[2].rm_so, NULL, 10);
+
+        start = pmatch[3].rm_so;
+        length = pmatch[3].rm_eo - pmatch[3].rm_so;
+
+        if (k_filename_len < length) {
+            length = k_filename_len;
+        }
+
+        char name_02[k_filename_len] = "";
+        strncat(name_02, line + start, length);
+        long line_02 = strtol(line + pmatch[2].rm_so, NULL, 10);
+
+        // Add name_01, line_01 and name_02, line_02 to location_t::var_list.
+        var_t *var_01, *var_02;
+        PERFEXPERT_ALLOC(var_t, var_01, sizeof(var_t));
+        PERFEXPERT_ALLOC(var_t, var_02, sizeof(var_t));
+
+        snprintf(var_01->name, k_var_len, "%s", name_01);
+        snprintf(var_02->name, k_var_len, "%s", name_02);
+
+        var_01->line_number = line_01;
+        var_02->line_number = line_02;
+
+        perfexpert_list_item_t* list_item = NULL;
+        list_item = (perfexpert_list_item_t*) var_01;
+        perfexpert_list_item_construct(list_item);
+        perfexpert_list_append(&(location->var_list), list_item);
+
+        // TODO: Will uncomment after infinite-loop problem is resolved.
+        // list_item = (perfexpert_list_item_t*) var_02;
+        // perfexpert_list_item_construct(list_item);
+        // perfexpert_list_append(&(location->var_list), list_item);
+    }
+}
+
+const message_t messages[] = {
+    {   15046,  &msg_ptr_check,     &dsc_ptr_check,     NULL,           },
+    {   15344,  &msg_ptr_check,     &dsc_ptr_check,     NULL,           },
+    {   15346,  &msg_ptr_check,     NULL,               &extract_var,   },
+    {   15037,  &msg_trip_count,    &dsc_trip_count,    NULL,           },
+    {   15017,  &msg_trip_count,    &dsc_trip_count,    NULL,           },
+    {   15315,  &msg_trip_count,    &dsc_trip_count,    NULL,           },
+    {   15523,  &msg_trip_count,    &dsc_trip_count,    NULL,           },
+    {   15167,  &msg_mem_align,     &dsc_mem_align,     NULL,           },
+    {   15524,  &msg_mem_align,     &dsc_mem_align,     NULL,           },
+    {   15421,  &msg_mem_align,     &dsc_mem_align,     NULL,           },
+    {   15167,  &msg_mem_align,     &dsc_mem_align,     NULL,           },
+    {   15038,  &msg_branch_eval,   &dsc_branch_eval,   NULL,           },
+    {   15336,  &msg_branch_eval,   &dsc_branch_eval,   NULL,           },
+    {   15327,  &msg_float_conv,    &dsc_float_conv,    NULL,           },
 };
 
 const long message_count = sizeof(messages) / sizeof(message_t);
@@ -125,6 +190,13 @@ int process_file(perfexpert_list_t* hotspots, FILE* stream,
 
     perfexpert_list_t stack;
     perfexpert_list_construct(&stack);
+
+    const char* dep_var_pattern = "remark #15346: vector dependence: assumed "
+            "[A-Z]* dependence between ([^ ]*) line ([0-9]*) and ([^ ]*) line "
+            "([0-9]*)";
+    if (regcomp(&re_dep_var, dep_var_pattern, REG_EXTENDED) != 0) {
+        return -ERR_REGEX;
+    }
 
     while (fgets(file_line, k_line_len, stream)) {
         regmatch_t pmatch[3] = {0};
@@ -165,6 +237,8 @@ int process_file(perfexpert_list_t* hotspots, FILE* stream,
             snprintf(loc->filename, k_filename_len, "%s", _file);
             loc->remark_count = 0;
             loc->line_number = line_number;
+            perfexpert_list_construct(&(loc->var_list));
+
             if (hotspot != NULL) {
                 loc->ignored = 0;
                 loc->importance = hotspot->importance;
@@ -187,7 +261,23 @@ int process_file(perfexpert_list_t* hotspots, FILE* stream,
                 long remark_number = strtol(file_line + pmatch[1].rm_so, NULL,
                         10);
 
+                /* Check if this is an "interesting" remark. */
                 uint32_t i = 0;
+                for (i = 0; i < message_count; i++) {
+                    if (messages[i].remark_number == remark_number) {
+                        break;
+                    }
+                }
+
+                if (i == message_count) {
+                    /* Not found in interested remarks. */
+                    continue;
+                }
+
+                if (messages[i].process_fn != NULL) {
+                    messages[i].process_fn(file_line, location);
+                }
+
                 for (i = 0; i < location->remark_count && i < k_remarks_count-1;
                         i++) {
                     if (location->remarks_list[i] == remark_number) {
@@ -208,6 +298,8 @@ int process_file(perfexpert_list_t* hotspots, FILE* stream,
             }
         }
     }
+
+    regfree(&re_dep_var);
 
     while (perfexpert_list_get_size(&stack) != 0) {
         perfexpert_list_item_t* last = NULL;
@@ -266,6 +358,18 @@ void print_recommendations(perfexpert_list_t* locations) {
                 "runtime)\n", location->function, location->filename,
                 location->line_number, location->importance * 100);
 
+        if (perfexpert_list_get_size(&location->var_list) != 0) {
+            var_t* var;
+            fprintf(stdout, "Affected variables: [%d]: ",
+                    perfexpert_list_get_size(&location->var_list));
+            perfexpert_list_for (var, &(location->var_list), var_t) {
+                fprintf(stdout, "%s at line %ld  ", var->name,
+                var->line_number);
+            }
+
+            fprintf(stdout, "\n");
+        }
+
         uint32_t i, j;
         for (i = 0; i < location->remark_count; i++) {
             uint32_t remark_number = location->remarks_list[i];
@@ -273,7 +377,9 @@ void print_recommendations(perfexpert_list_t* locations) {
                 if (messages[j].remark_number == remark_number) {
                     const char** message = messages[j].message;
                     const char** description = messages[j].description;
-                    fprintf(stdout, "  - %s: %s\n", *message, *description);
+                    if (message != NULL && description != NULL) {
+                        fprintf(stdout, "  - %s: %s\n", *message, *description);
+                    }
                 }
             }
         }
@@ -299,10 +405,20 @@ int process_hotspots(perfexpert_list_t* hotspots, const char* report_filename) {
         perfexpert_list_item_t* last = NULL;
         last = perfexpert_list_get_last(&locations);
         perfexpert_list_remove_item(&locations, last);
+
+        location_t* location = (location_t*) last;
+        perfexpert_list_t* var_list = &(location->var_list);
+        while (perfexpert_list_get_size(var_list) != 0) {
+            perfexpert_list_item_t* _last = NULL;
+            _last = perfexpert_list_get_last(var_list);
+            perfexpert_list_remove_item(var_list, _last);
+            // PERFEXPERT_DEALLOC(_last);
+        }
+
+        perfexpert_list_destruct(var_list);
         PERFEXPERT_DEALLOC(last);
     }
 
     perfexpert_list_destruct(&locations);
-
     return PERFEXPERT_SUCCESS;
 }
