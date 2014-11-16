@@ -206,8 +206,9 @@ macvec_hotspot_t* find(perfexpert_list_t* hotspots, char* filename, int line) {
     }
 
     perfexpert_list_for(hotspot, hotspots, macvec_hotspot_t) {
-        char* base = basename(hotspot->file);
-        if (strncmp(base, filename, k_filename_len) == 0 &&
+        char* base_01 = basename(hotspot->file);
+        char* base_02 = basename(filename);
+        if (strncmp(base_01, base_02, k_filename_len) == 0 &&
                 line == hotspot->line) {
             return (macvec_hotspot_t*) hotspot;
         }

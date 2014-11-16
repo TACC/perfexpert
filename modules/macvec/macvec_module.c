@@ -251,6 +251,11 @@ int filter_and_sort_hotspots(perfexpert_list_t* hotspots, double threshold) {
 
     int n;
     for (n = 0; n < index; n++) {
+        // Log hotspots.
+        macvec_hotspot_t* hotspot = (macvec_hotspot_t*) items[n];
+        OUTPUT_VERBOSE((4, "Found hotspot %s at %s:%ld [imp: %.2lf]\n",
+                hotspot->name, hotspot->file, hotspot->line,
+                hotspot->importance));
         perfexpert_list_append(hotspots, items[n]);
     }
 
