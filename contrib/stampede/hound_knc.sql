@@ -43,5 +43,5 @@ INSERT INTO hound (family, model, name, value) VALUES (11, 1, 'FP_slow_lat', 20.
 INSERT INTO hound (family, model, name, value) VALUES (11, 1, 'BR_lat', 1.000000);
 INSERT INTO hound (family, model, name, value) VALUES (11, 1, 'BR_miss_lat', 15.000000);
 INSERT INTO hound (family, model, name, value) VALUES (11, 1, 'TLB_lat', 40.000000);
-INSERT INTO hound (family, model, name, value) VALUES (11, 1, 'mem_bandwidth', 85899345920.000000);
+INSERT INTO hound (family, model, name, value) VALUES (11, 1, 'mem_bandwidth', 141733920768.000000);
 

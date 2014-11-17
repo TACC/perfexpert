@@ -67,7 +67,7 @@ int metrics_mic(void) {
 
     /* overall */
     if (PERFEXPERT_SUCCESS != lcpi_add_metric("overall",
-        "CPU_CLK_UNHALTED / INSTRUCTIONS_EXECUTED / CPI_threshold / 2")) {
+        "CPU_CLK_UNHALTED / INSTRUCTIONS_EXECUTED / CPI_threshold")) {
         return PERFEXPERT_ERROR;
     }
 
