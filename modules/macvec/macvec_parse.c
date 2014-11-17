@@ -99,7 +99,51 @@ const char* dsc_float_conv = "Using mixed precision (single- as well as double-"
     "possible, convert all floating point values to use the same "
     "precision.";
 
-static regex_t re_dep_var;
+static regex_t re_dep_var, re_align_var;
+
+void align_var(const char* line, location_t* location) {
+    regmatch_t pmatch[3] = {0};
+    OUTPUT_VERBOSE((4, "Trying to extract variable and line number from: %s.",
+            line));
+    if (regexec(&re_align_var, line, 3, pmatch, 0) == 0) {
+        var_t *var;
+
+        int start = pmatch[1].rm_so;
+        int length = pmatch[1].rm_eo - pmatch[1].rm_so;
+
+        if (k_filename_len < length) {
+            length = k_filename_len;
+        }
+
+        char name[k_filename_len] = "";
+        strncat(name, line + start, length);
+        long line_number = strtol(line + pmatch[2].rm_so, NULL, 10);
+
+        OUTPUT_VERBOSE((4, "Found variable %s, line %d.", name, line_number));
+
+        // Add name, line location_t::var_list.
+
+        PERFEXPERT_ALLOC(var_t, var, sizeof(var_t));
+
+        perfexpert_list_item_construct((perfexpert_list_item_t *) var);
+        snprintf(var->name, k_var_len, "%s", name);
+        var->line_number = line_number;
+
+        var_t* it_var = NULL;
+        perfexpert_list_for(it_var, &(location->var_list), var_t) {
+            if (strncmp(it_var->name, name, k_var_len) == 0 &&
+                    it_var->line_number == line_number) {
+                return;
+            }
+        }
+
+        perfexpert_list_append(&(location->var_list),
+                (perfexpert_list_item_t *)var);
+
+        OUTPUT_VERBOSE((2, "List size after adding variables: %d.",
+                perfexpert_list_get_size(&(location->var_list))));
+    }
+}
 
 void extract_var(const char* line, location_t* location) {
     regmatch_t pmatch[5] = {0};
@@ -192,12 +236,46 @@ const message_t messages[] = {
     { 15524, &msg_mem_align,   &dsc_mem_align,   NULL,         },
     { 15421, &msg_mem_align,   &dsc_mem_align,   NULL,         },
     { 15167, &msg_mem_align,   &dsc_mem_align,   NULL,         },
+    { 15389, &msg_mem_align,   &dsc_mem_align,   &align_var,   },
     { 15038, &msg_branch_eval, &dsc_branch_eval, NULL,         },
     { 15336, &msg_branch_eval, &dsc_branch_eval, NULL,         },
     { 15327, &msg_float_conv,  &dsc_float_conv,  NULL,         },
 };
 
 const long message_count = sizeof(messages) / sizeof(message_t);
+
+var_t* find_var(perfexpert_list_t* vars, char* name, int line) {
+    var_t* var;
+    if (vars == NULL || name == NULL) {
+        return NULL;
+    }
+
+    perfexpert_list_for(var, vars, var_t) {
+        if (strncmp(var->name, name, k_var_len) == 0 &&
+                line == var->line_number) {
+            return (var_t*) var;
+        }
+    }
+
+    return NULL;
+}
+
+location_t* find_location(perfexpert_list_t* locations, char* filename,
+        int line) {
+    location_t* location;
+    if (locations == NULL || filename == NULL) {
+        return NULL;
+    }
+
+    perfexpert_list_for(location, locations, location_t) {
+        if (strncmp(location->filename, filename, k_filename_len) == 0 &&
+                line == location->line_number) {
+            return (location_t*) location;
+        }
+    }
+
+    return NULL;
+}
 
 macvec_hotspot_t* find(perfexpert_list_t* hotspots, char* filename, int line) {
     macvec_hotspot_t* hotspot;
@@ -231,26 +309,72 @@ int process_file(perfexpert_list_t* hotspots, FILE* stream,
         return -ERR_REGEX;
     }
 
+    const char* align_var_pattern = "remark #15389: vectorization support: "
+            "reference ([^ ]*) has unaligned access[ ]* "
+            "\\[ [^\\(]*\\(([0-9]*),[0-9]*\\) \\]";
+    if (regcomp(&re_align_var, align_var_pattern, REG_EXTENDED) != 0) {
+        regfree(&re_dep_var);
+        return -ERR_REGEX;
+    }
+
     while (fgets(file_line, k_line_len, stream)) {
         regmatch_t pmatch[3] = {0};
         if (strstr(file_line, "LOOP END") != NULL) {
             if (0 != perfexpert_list_get_size(&stack)) {
                 location_t *location = (location_t*)perfexpert_list_get_last(&stack);
                 if (location->ignored == 0) {
-                    /* Copy this location into `locations'. */
-                    location_t* loc;
-                    PERFEXPERT_ALLOC(location_t, loc, sizeof(location_t));
-                    memcpy(loc, location, sizeof(location_t));
-                    perfexpert_list_item_construct((perfexpert_list_item_t *)loc);
-                    perfexpert_list_append(locations, (perfexpert_list_item_t *)loc);
+                    location_t* loc = NULL;
+                    /* First search if this already exists in 'locations'. */
+                    loc = find_location(locations, location->filename,
+                            location->line_number);
 
-                    OUTPUT_VERBOSE((2, "Adding new hotspot: %s:%d",
-                        location->function, location->line_number));
+                    if (loc == NULL) {
+                        /* Copy this location into `locations'. */
+                        PERFEXPERT_ALLOC(location_t, loc, sizeof(location_t));
+                        memcpy(loc, location, sizeof(location_t));
+                        perfexpert_list_item_construct((perfexpert_list_item_t *)loc);
+                        perfexpert_list_append(locations, (perfexpert_list_item_t *)loc);
 
-                    perfexpert_list_construct(&(loc->var_list));
+                        OUTPUT_VERBOSE((2, "Adding new hotspot: %s:%d",
+                                    location->filename, location->line_number));
+
+                        perfexpert_list_construct(&(loc->var_list));
+                    } else {
+                        OUTPUT_VERBOSE((2, "Found existing hotspot: %s:%d",
+                                    location->filename, location->line_number));
+
+                        // Copy remark numbers?
+                        int i, j;
+                        for (i=0; i<location->remark_count && i<k_remarks_count;
+                                i++) {
+                            for (j=0; j<loc->remark_count && j<k_remarks_count;
+                                    j++) {
+                                if (loc->remarks_list[j] ==
+                                        location->remarks_list[i]) {
+                                    break;
+                                }
+                            }
+
+                            if (j<loc->remark_count && j<k_remarks_count) {
+                                // Already found this remark, ignore.
+                            } else if (j<k_remarks_count) {
+                                // Add this remark at the end of the list.
+                                loc->remarks_list[j] = location->remarks_list[i];
+                                loc->remark_count += 1;
+                            } else {
+                                // Ignore.
+                            }
+                        }
+                    }
+
                     var_t* var;
                     perfexpert_list_for(var, &(location->var_list), var_t) {
-                        var_t* var_duplicate = NULL;
+                        var_t* var_duplicate = find_var(&(loc->var_list),
+                                var->name, var->line_number);
+                        if (var_duplicate != NULL) {
+                            continue;
+                        }
+
                         PERFEXPERT_ALLOC(var_t, var_duplicate, sizeof(var_t));
                         snprintf(var_duplicate->name, k_var_len, "%s",
                                 var->name);
@@ -329,6 +453,8 @@ int process_file(perfexpert_list_t* hotspots, FILE* stream,
                     OUTPUT_VERBOSE((4, "Exited remark-specific handler..."));
                 }
 
+                OUTPUT_VERBOSE((4, "Looping over %d remarks.",
+                        location->remark_count));
                 for (i = 0; i < location->remark_count && i < k_remarks_count-1;
                         i++) {
                     if (location->remarks_list[i] == remark_number) {
@@ -356,6 +482,7 @@ int process_file(perfexpert_list_t* hotspots, FILE* stream,
     }
 
     regfree(&re_dep_var);
+    regfree(&re_align_var);
 
     OUTPUT(("%s [%d]", _YELLOW("Location list size after matching "
             "vectorization report with hotspots:"),
@@ -405,12 +532,13 @@ int parse(perfexpert_list_t* hotspots, const char* report_filename, perfexpert_l
         return -ERR_FILE;
     }
 
-    if (process_file(hotspots, stream, &re_loop, &re_remark, locations) != 0) {
+    int err = process_file(hotspots, stream, &re_loop, &re_remark, locations);
+    if (err != 0) {
         regfree(&re_remark);
         regfree(&re_loop);
         fclose(stream);
 
-        return -ERR_FILE_CONTENTS;
+        return err;
     }
 
     regfree(&re_remark);
@@ -453,6 +581,8 @@ static void print_recommendations(perfexpert_list_t* locations) {
 
             fprintf(stdout, "\n");
         }
+
+        OUTPUT_VERBOSE((4, "Remark count: %d.", location->remark_count));
 
         uint32_t i, j;
         for (i = 0; i < location->remark_count; i++) {
