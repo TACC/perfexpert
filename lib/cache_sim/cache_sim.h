@@ -34,7 +34,12 @@ extern "C" {
 #include <stdint.h>
 #endif
 
-/* Macros */
+/* Return codes */
+#define CACHE_SIM_SUCCESS 0
+#define CACHE_SIM_ERROR   1
+
+#define CACHE_SIM_HIT_L1  32
+#define CACHE_SIM_MISS_L1 64
 
 /* Cache type */
 typedef struct cache_handle cache_handle_t;
@@ -55,25 +60,27 @@ struct cache_handle {
     int offset_length;
     int set_length;
     /* replacement policy (or algorithm) */
-    policy_fn_t put_fn;
-    policy_fn_t get_fn;
+    policy_fn_t access_fn;
     /* data section */
     void *data;
     /* performance counters */
+    uint64_t hit;
+    uint64_t miss;
+    uint64_t access;
 };
 
 /* Policy structure */
 typedef struct {
     const char *name;
     policy_init_fn_t init_fn;
-    policy_fn_t put_fn;
-    policy_fn_t get_fn;
+    policy_fn_t access_fn;
 } policy_t;
 
 /* Function declaration */
 cache_handle_t* cache_sim_init(const unsigned int total_size,
     const unsigned int line_size, const unsigned int associativity,
     const char *policy);
+int cache_sim_fini(cache_handle_t *cache);
 
 static cache_handle_t* cache_create(const unsigned int total_size,
     const unsigned int line_size, const unsigned int associativity);

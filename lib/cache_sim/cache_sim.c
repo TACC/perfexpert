@@ -32,15 +32,14 @@
 
 /* List of policies */
 static policy_t policies[] = {
-    { "lru", &policy_lru_init, &policy_lru_put, &policy_lru_get },
-    { NULL,  NULL,             NULL,            NULL }
+    { "lru", &policy_lru_init, &policy_lru_access },
+    { NULL,  NULL,             NULL,              }
 };
 
 /* cache_sim_init */
 cache_handle_t* cache_sim_init(const unsigned int total_size,
     const unsigned int line_size, const unsigned int associativity,
     const char *policy) {
-
     /* safety checks */
     if ((0 >= total_size) || (0 >= line_size) || (0 >= associativity)) {
         return NULL;
@@ -72,6 +71,22 @@ cache_handle_t* cache_sim_init(const unsigned int total_size,
     return cache;
 }
 
+/* cache_sim_fini */
+int cache_sim_fini(cache_handle_t *cache) {
+    #ifdef DEBUG
+    printf("--------------------------------\n");
+    printf("Cache hits:     %d\n", cache->hit);
+    printf("Cache misses:   %d\n", cache->miss);
+    printf("Total accesses: %d\n", cache->access);
+    printf("Cache finalized successfully\n");
+    printf("--------------------------------\n");
+    #endif
+
+    cache_destroy(cache);
+
+    return CACHE_SIM_SUCCESS;
+}
+
 /* create_cache */
 static cache_handle_t* cache_create(const unsigned int total_size,
     const unsigned int line_size, const unsigned int associativity) {
@@ -94,9 +109,13 @@ static cache_handle_t* cache_create(const unsigned int total_size,
     cache->total_sets    = cache->total_lines / associativity;
     cache->offset_length = (int)log2(line_size);
     cache->set_length    = (int)log2(cache->total_sets);
-    cache->put_fn        = NULL;
-    cache->get_fn        = NULL;
+    cache->access_fn     = NULL;
     cache->data          = NULL;
+
+    /* initialize performance counters */
+    cache->hit    = 0;
+    cache->miss   = 0;
+    cache->access = 0;
 
     #ifdef DEBUG
     printf("Cache created successfully\n");
@@ -130,24 +149,25 @@ static int set_policy(cache_handle_t *cache, const char *policy) {
     while (NULL != policies[i].name) {
         if (0 == strcmp(policy, policies[i].name)) {
 
-            /* set the policy functions */
-            cache->put_fn = policies[i].put_fn;
-            cache->get_fn = policies[i].get_fn;
+            /* set the policy function */
+            cache->access_fn = policies[i].access_fn;
 
             #ifdef DEBUG
             printf("Replacem policy: %s\n", policy);
             #endif
 
             /* initialize the data area */
-            policies[i].init_fn(cache);
+            if (CACHE_SIM_SUCCESS != policies[i].init_fn(cache)) {
+                printf("error initializing the cache data area\n");
+            }
 
-            return 0;
+            return CACHE_SIM_SUCCESS;
         }
         i++;
     }
 
     printf("replacement policy not found\n");
-    return 1;
+    return CACHE_SIM_ERROR;
 }
 
 // EOF

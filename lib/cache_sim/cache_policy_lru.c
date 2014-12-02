@@ -35,45 +35,91 @@ int policy_lru_init(cache_handle_t *cache) {
     void *ptr = NULL;
 
     /* allocate data area */
-    ptr = malloc((sizeof(uint64_t) + sizeof(uint8_t)) * cache->total_lines);
+    ptr = malloc(sizeof(policy_lru_t) * cache->total_lines);
 
     if (NULL == ptr) {
         printf("unable to allocate memory for cache data\n");
-        return 1;
+        return CACHE_SIM_ERROR;
     }
 
     /* initialize data area */
-    memset(ptr, 0, ((sizeof(uint64_t) + sizeof(uint8_t)) * cache->total_lines));
+    memset(ptr, UINT32_MAX, (sizeof(policy_lru_t) * cache->total_lines));
     cache->data = ptr;
 
     #ifdef DEBUG
     printf("Memory required: %d bytes\n", (sizeof(cache_handle_t) +
-        ((sizeof(uint64_t) + sizeof(uint8_t)) * cache->total_lines)));
+        (sizeof(policy_lru_t) * cache->total_lines)));
     #endif
 
-    return 0;
+    return CACHE_SIM_SUCCESS;
 }
 
-/* policy_lru_put */
-int policy_lru_put(cache_handle_t *cache, uint64_t address) {
+/* policy_lru_read */
+int policy_lru_access(cache_handle_t *cache, uint64_t address) {
     uint32_t set = address;
     uint32_t tag = address;
+    policy_lru_t *base_addr = NULL;
+    policy_lru_t *lru = NULL;
+    int way = 0;
+    int i = 0;
+
+    /* increment and access */
+    cache->access++;
 
     /* calculate set and tag (offset does not matter) */
     POLICY_LRU_SET(set);
     POLICY_LRU_TAG(tag);
 
-    #ifdef DEBUG
-    printf("Address: [%d], Tag: [%d], Set: [%d]\n", address, tag, set);
+    /* calculate data area base address for this set */
+    base_addr = (policy_lru_t *)((uint64_t)cache->data +
+        (set * cache->associativity * sizeof(policy_lru_t)));
+    lru = base_addr;
+
+    /* iterate across all the ways of the set */
+    for (i = cache->associativity; i > 0; i--) {
+        /* check if data is present */
+        if (base_addr->tag == tag) {
+            /* increment hits counter */
+            cache->hit++;
+            /* update access age */
+            base_addr->age = cache->access;
+            #if 0
+            printf("HIT  address [%p] tag [%p] to set [%2d:%d] using age [%d]\n",
+                address, tag, set, i, age);
+            #endif
+            return CACHE_SIM_HIT_L1;
+        }
+
+        /* if it is a free way use it (bonus!) */
+        if (UINT32_MAX == base_addr->age) {
+            lru = base_addr;
+            way = i;
+            break;
+        }
+
+        /* find the last recently used way in the set */
+        if (base_addr->age <= lru->age) {
+            lru = base_addr;
+            way = i;
+        }
+
+        /* increment way address */
+        base_addr++;
+    }
+
+    /* if data was not found, load it */
+    lru->age = cache->access;
+    lru->tag = tag;
+
+    /* increment misses counter */
+    cache->miss++;
+
+    #if 0
+    printf("LOAD address [%p] tag [%p] to set [%2d:%d] using age [%d]\n",
+        address, tag, set, way, age);
     #endif
 
-    // TODO: write the TAG to a specific SET and update the alrogithm index
-
-}
-
-/* policy_lru_get */
-int policy_lru_get(cache_handle_t *cache, uint64_t address) {
-    // TODO: everything :/
+    return CACHE_SIM_MISS_L1;
 }
 
 // EOF
