@@ -58,7 +58,7 @@ cache_handle_t* cache_sim_init(const unsigned int total_size,
     }
 
     /* set the cache replacement policy (or algorithm) */
-    if (0 != (set_policy(cache, policy))) {
+    if (CACHE_SIM_SUCCESS != (set_policy(cache, policy))) {
         cache_destroy(cache);
         return NULL;
     }

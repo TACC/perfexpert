@@ -45,8 +45,8 @@ extern "C" {
 typedef struct cache_handle cache_handle_t;
 
 /* Policy function type declarations */
-typedef int (*policy_fn_t)(cache_handle_t *, uint64_t);
 typedef int (*policy_init_fn_t)(cache_handle_t *);
+typedef int (*policy_access_fn_t)(cache_handle_t *, uint64_t);
 
 /* Cache structure */
 struct cache_handle {
@@ -60,7 +60,7 @@ struct cache_handle {
     int offset_length;
     int set_length;
     /* replacement policy (or algorithm) */
-    policy_fn_t access_fn;
+    policy_access_fn_t access_fn;
     /* data section */
     void *data;
     /* performance counters */
@@ -73,7 +73,7 @@ struct cache_handle {
 typedef struct {
     const char *name;
     policy_init_fn_t init_fn;
-    policy_fn_t access_fn;
+    policy_access_fn_t access_fn;
 } policy_t;
 
 /* Function declaration */
