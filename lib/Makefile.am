@@ -19,20 +19,6 @@
 # $HEADER$
 #
 
-ACLOCAL_AMFLAGS = -I m4
-
-SUBDIRS = lib common modules tools
-
-# .PHONY: check
-
-# check:
-#	cd $(top_builddir)/tests/
-#	./run_tests.pl
-
-# Set database version
-install-exec-local:
-	echo 1.28 > perfexpert.db.version
-	test -d $(DESTDIR)$(sysconfdir) || mkdir $(DESTDIR)$(sysconfdir)
-	$(INSTALL) -m 644 perfexpert.db.version $(DESTDIR)$(sysconfdir)/
+SUBDIRS = cache_sim
 
 # EOF

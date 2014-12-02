@@ -952,6 +952,15 @@ AS_IF([test x"$HAVE_HPCTOOLKIT_MIC" = xyes], [
 AM_CONDITIONAL([HAVE_MIC_SUPPORT], [test x"$HAVE_MIC_SUPPORT" = x"yes"])
 
 #------------------------------------------------------------------------------
+# Libraries
+#
+AC_CONFIG_FILES([lib/Makefile])
+
+# Cache simulator
+AC_MSG_NOTICE([enabling the cache simulator library])
+AC_CONFIG_FILES([lib/cache_sim/Makefile])
+
+#------------------------------------------------------------------------------
 AC_CONFIG_FILES([tests/run_tests.pl], [chmod +x tests/run_tests.pl])
 LIBS=""
 AC_OUTPUT
