@@ -60,6 +60,8 @@ const char* msg_trip_count = "Inform compiler about loop trip count";
 const char* msg_mem_align = "Align memory references";
 const char* msg_branch_eval = "Indicate branch evaluations";
 const char* msg_float_conv = "Use limited types";
+const char* msg_unit_stride = "Try and use unit strides";
+const char* msg_prefetch = "Try software prefetching";
 
 const char* dsc_ptr_check = "If the compiler is unaware that pointers do not "
     "overlap in memory, the compiler's dependence analysis may infer "
@@ -98,6 +100,19 @@ const char* dsc_float_conv = "Using mixed precision (single- as well as double-"
     "format to another and in estimating the cost of vectorization. If "
     "possible, convert all floating point values to use the same "
     "precision.";
+
+const char* dsc_unit_stride = "Strided accesses to array elements leads to "
+    "cache and TLB misses. A unit stride (stride increment of 1) is not only "
+    "cache and TLB friendly but also assists in vectorization. To enforce unit "
+    "strides, check that the loop induction variable is incremented by one and "
+    "that the loop induction variable is used to index into the last "
+    "(innermost) dimension of the array.";
+
+const char* dsc_prefetch = "Gather and scatter accesses in vector instructions "
+    "cause high penalty at execution time. If the code is being compiled for "
+    "the Xeon Phi coprocessor, using software prefetching may help. See "
+    "https://software.intel.com/sites/products/documentation/doclib/iss/2013/compiler/cpp-lin/GUID-3A086451-4C82-4BB1-B742-FF93EBF60DA3.htm "
+    "for details.";
 
 static regex_t re_dep_var, re_align_var;
 
@@ -225,21 +240,51 @@ void extract_var(const char* line, location_t* location) {
 }
 
 const message_t messages[] = {
-    { 15046, &msg_ptr_check,   &dsc_ptr_check,   NULL,         },
-    { 15344, &msg_ptr_check,   &dsc_ptr_check,   NULL,         },
-    { 15346, &msg_ptr_check,   NULL,             &extract_var, },
-    { 15037, &msg_trip_count,  &dsc_trip_count,  NULL,         },
-    { 15017, &msg_trip_count,  &dsc_trip_count,  NULL,         },
-    { 15315, &msg_trip_count,  &dsc_trip_count,  NULL,         },
-    { 15523, &msg_trip_count,  &dsc_trip_count,  NULL,         },
-    { 15167, &msg_mem_align,   &dsc_mem_align,   NULL,         },
-    { 15524, &msg_mem_align,   &dsc_mem_align,   NULL,         },
-    { 15421, &msg_mem_align,   &dsc_mem_align,   NULL,         },
-    { 15167, &msg_mem_align,   &dsc_mem_align,   NULL,         },
-    { 15389, &msg_mem_align,   &dsc_mem_align,   &align_var,   },
-    { 15038, &msg_branch_eval, &dsc_branch_eval, NULL,         },
-    { 15336, &msg_branch_eval, &dsc_branch_eval, NULL,         },
-    { 15327, &msg_float_conv,  &dsc_float_conv,  NULL,         },
+    { 15308, &msg_ptr_check,    &dsc_ptr_check,     NULL,         },
+    { 15344, &msg_ptr_check,    &dsc_ptr_check,     NULL,         },
+    { 15346, &msg_ptr_check,    NULL,               &extract_var, },
+
+    { 15315, &msg_trip_count,   &dsc_trip_count,    NULL,         },
+    { 15321, &msg_trip_count,   &dsc_trip_count,    NULL,         },
+    { 15335, &msg_trip_count,   &dsc_trip_count,    NULL,         },
+    { 15523, &msg_trip_count,   &dsc_trip_count,    NULL,         },
+
+    { 15381, &msg_mem_align,    &dsc_mem_align,     NULL,         },
+    { 15389, &msg_mem_align,    &dsc_mem_align,     &align_var,   },
+    { 15409, &msg_mem_align,    &dsc_mem_align,     NULL,         },
+    { 15421, &msg_mem_align,    &dsc_mem_align,     NULL,         },
+    { 15450, &msg_mem_align,    &dsc_mem_align,     NULL,         },
+    { 15451, &msg_mem_align,    &dsc_mem_align,     NULL,         },
+    { 15456, &msg_mem_align,    &dsc_mem_align,     NULL,         },
+    { 15457, &msg_mem_align,    &dsc_mem_align,     NULL,         },
+    { 15468, &msg_mem_align,    &dsc_mem_align,     NULL,         },
+    { 15469, &msg_mem_align,    &dsc_mem_align,     NULL,         },
+    { 15472, &msg_mem_align,    &dsc_mem_align,     NULL,         },
+    { 15473, &msg_mem_align,    &dsc_mem_align,     NULL,         },
+    { 15524, &msg_mem_align,    &dsc_mem_align,     NULL,         },
+
+    { 15336, &msg_branch_eval,  &dsc_branch_eval,   NULL,         },
+
+    { 15311, &msg_float_conv,   &dsc_float_conv,    NULL,         },
+    { 15327, &msg_float_conv,   &dsc_float_conv,    NULL,         },
+    { 15386, &msg_float_conv,   &dsc_float_conv,    NULL,         },
+    { 15410, &msg_float_conv,   &dsc_float_conv,    NULL,         },
+    { 15411, &msg_float_conv,   &dsc_float_conv,    NULL,         },
+    { 15417, &msg_float_conv,   &dsc_float_conv,    NULL,         },
+    { 15418, &msg_float_conv,   &dsc_float_conv,    NULL,         },
+
+    { 15320, &msg_unit_stride,  &dsc_unit_stride,   NULL,         },
+    { 15452, &msg_unit_stride,  &dsc_unit_stride,   NULL,         },
+    { 15453, &msg_unit_stride,  &dsc_unit_stride,   NULL,         },
+    { 15460, &msg_unit_stride,  &dsc_unit_stride,   NULL,         },
+    { 15461, &msg_unit_stride,  &dsc_unit_stride,   NULL,         },
+
+    { 15415, &msg_prefetch,     &dsc_prefetch,      NULL,         },
+    { 15416, &msg_prefetch,     &dsc_prefetch,      NULL,         },
+    { 15458, &msg_prefetch,     &dsc_prefetch,      NULL,         },
+    { 15459, &msg_prefetch,     &dsc_prefetch,      NULL,         },
+    { 15462, &msg_prefetch,     &dsc_prefetch,      NULL,         },
+    { 15463, &msg_prefetch,     &dsc_prefetch,      NULL,         },
 };
 
 const long message_count = sizeof(messages) / sizeof(message_t);
