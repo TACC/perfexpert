@@ -938,7 +938,6 @@ AC_SUBST([ENABLE_SQLRULES])
 #------------------------------------------------------------------------------
 # MIC support (there are other items on the HPCToolkit module)
 #
-AC_MSG_NOTICE([HAVE_HPCTOOLKIT_MIC=$HAVE_HPCTOOLKIT_MIC])
 AC_MSG_CHECKING([whether to enable MIC support])
 AS_IF([test x"$HAVE_HPCTOOLKIT_MIC" = xyes], [
     AC_MSG_RESULT([yes])
@@ -952,13 +951,13 @@ AS_IF([test x"$HAVE_HPCTOOLKIT_MIC" = xyes], [
 AM_CONDITIONAL([HAVE_MIC_SUPPORT], [test x"$HAVE_MIC_SUPPORT" = x"yes"])
 
 #------------------------------------------------------------------------------
-# Libraries
+# Libraries: every library should be an independent 'autoconfiscated' package
 #
 AC_CONFIG_FILES([lib/Makefile])
 
 # Cache simulator
 AC_MSG_NOTICE([enabling the cache simulator library])
-AC_CONFIG_FILES([lib/cache_sim/Makefile])
+AC_CONFIG_SUBDIRS([lib/cache_sim])
 
 #------------------------------------------------------------------------------
 AC_CONFIG_FILES([tests/run_tests.pl], [chmod +x tests/run_tests.pl])

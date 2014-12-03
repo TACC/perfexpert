@@ -48,9 +48,7 @@ cache_handle_t* cache_sim_init(const unsigned int total_size,
     /* variables declaration and initialization */
     cache_handle_t *cache = NULL;
 
-    #ifdef DEBUG
     printf("--------------------------------\n");
-    #endif
 
     /* create the cache */
     if (NULL == (cache = cache_create(total_size, line_size, associativity))) {
@@ -63,24 +61,20 @@ cache_handle_t* cache_sim_init(const unsigned int total_size,
         return NULL;
     }
 
-    #ifdef DEBUG
     printf("Cache initialized successfully\n");
     printf("--------------------------------\n");
-    #endif
 
     return cache;
 }
 
 /* cache_sim_fini */
 int cache_sim_fini(cache_handle_t *cache) {
-    #ifdef DEBUG
     printf("--------------------------------\n");
     printf("Cache hits:     %d\n", cache->hit);
     printf("Cache misses:   %d\n", cache->miss);
     printf("Total accesses: %d\n", cache->access);
     printf("Cache finalized successfully\n");
     printf("--------------------------------\n");
-    #endif
 
     cache_destroy(cache);
 
@@ -117,7 +111,6 @@ static cache_handle_t* cache_create(const unsigned int total_size,
     cache->miss   = 0;
     cache->access = 0;
 
-    #ifdef DEBUG
     printf("Cache created successfully\n");
     printf("Cache size:      %d bytes\n", cache->total_size);
     printf("Line length:     %d bytes\n", cache->line_size);
@@ -126,7 +119,6 @@ static cache_handle_t* cache_create(const unsigned int total_size,
     printf("Number of sets:  %d\n", cache->total_sets);
     printf("Offset length:   %d bits\n", cache->offset_length);
     printf("Set length:      %d bits\n", cache->set_length);
-    #endif
 
     return cache;
 }
@@ -152,9 +144,7 @@ static int set_policy(cache_handle_t *cache, const char *policy) {
             /* set the policy function */
             cache->access_fn = policies[i].access_fn;
 
-            #ifdef DEBUG
             printf("Replacem policy: %s\n", policy);
-            #endif
 
             /* initialize the data area */
             if (CACHE_SIM_SUCCESS != policies[i].init_fn(cache)) {

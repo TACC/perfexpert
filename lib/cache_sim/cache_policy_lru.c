@@ -46,10 +46,8 @@ int policy_lru_init(cache_handle_t *cache) {
     memset(ptr, UINT32_MAX, (sizeof(policy_lru_t) * cache->total_lines));
     cache->data = ptr;
 
-    #ifdef DEBUG
     printf("Memory required: %d bytes\n", (sizeof(cache_handle_t) +
         (sizeof(policy_lru_t) * cache->total_lines)));
-    #endif
 
     return CACHE_SIM_SUCCESS;
 }
@@ -83,9 +81,9 @@ int policy_lru_access(cache_handle_t *cache, uint64_t address) {
             cache->hit++;
             /* update access age */
             base_addr->age = cache->access;
-            #if 0
+            #ifdef DEBUG
             printf("HIT  address [%p] tag [%p] to set [%2d:%d] using age [%d]\n",
-                address, tag, set, i, age);
+                address, tag, set, i, base_addr->age);
             #endif
             return CACHE_SIM_HIT_L1;
         }
@@ -114,9 +112,9 @@ int policy_lru_access(cache_handle_t *cache, uint64_t address) {
     /* increment misses counter */
     cache->miss++;
 
-    #if 0
+    #ifdef DEBUG
     printf("LOAD address [%p] tag [%p] to set [%2d:%d] using age [%d]\n",
-        address, tag, set, way, age);
+        address, tag, set, way, lru->age);
     #endif
 
     return CACHE_SIM_MISS_L1;

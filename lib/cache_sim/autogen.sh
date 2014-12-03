@@ -1,3 +1,4 @@
+#!/bin/sh
 #
 # Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
 #
@@ -9,22 +10,21 @@
 #
 # PerfExpert is free software: you can redistribute it and/or modify it under
 # the terms of the The University of Texas at Austin Research License
-#
+# 
 # PerfExpert is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
 # A PARTICULAR PURPOSE.
-#
+# 
 # Authors: Leonardo Fialho and Ashay Rane
 #
 # $HEADER$
 #
 
-lib_LTLIBRARIES = libcache_sim.la
-
-libcache_sim_la_CPPFLAGS =
-libcache_sim_la_LDFLAGS = -lm -version-info 1:0:0 \
-	-export-symbols $(srcdir)/cache_sim.sym
-libcache_sim_la_SOURCES = cache_sim.c \
-	cache_policy_lru.c
+# Run autoreconf
+mkdir -p m4
+mkdir -p config
+aclocal -I m4 --install
+autoreconf -ivf --warnings=all,no-obsolete,no-override -I config
+# autoreconf --install
 
 # EOF
