@@ -38,15 +38,32 @@ extern "C" {
 #define CACHE_SIM_SUCCESS 0
 #define CACHE_SIM_ERROR   1
 
-#define CACHE_SIM_HIT_L1  32
-#define CACHE_SIM_MISS_L1 64
+#define CACHE_SIM_L1_HIT  32
+#define CACHE_SIM_L1_MISS 64
+
+/* Macro to extract the offset, set, and tag of an address */
+#ifndef CACHE_SIM_OFFSET
+#define CACHE_SIM_OFFSET(a) \
+    (a <<= ((sizeof(uint64_t)*8) - cache->offset_length)); \
+    (a >>= ((sizeof(uint64_t)*8) - cache->offset_length));
+#endif
+
+#ifndef CACHE_SIM_SET
+#define CACHE_SIM_SET(a) \
+    (a <<= ((sizeof(uint64_t)*8) - cache->set_length - cache->offset_length)); \
+    (a >>= ((sizeof(uint64_t)*8) - cache->set_length));
+#endif
+
+#ifndef CACHE_SIM_TAG
+#define CACHE_SIM_TAG(a) (a >>= (cache->set_length + cache->offset_length));
+#endif
 
 /* Cache type */
 typedef struct cache_handle cache_handle_t;
 
 /* Policy function type declarations */
 typedef int (*policy_init_fn_t)(cache_handle_t *);
-typedef int (*policy_access_fn_t)(cache_handle_t *, uint64_t);
+typedef int (*policy_access_fn_t)(cache_handle_t *, uint64_t, uint64_t);
 
 /* Cache structure */
 struct cache_handle {
@@ -61,7 +78,7 @@ struct cache_handle {
     int set_length;
     /* replacement policy (or algorithm) */
     policy_access_fn_t access_fn;
-    /* data section */
+    /* data section (replacement algorithm dependent) */
     void *data;
     /* performance counters */
     uint64_t hit;
@@ -81,6 +98,7 @@ cache_handle_t* cache_sim_init(const unsigned int total_size,
     const unsigned int line_size, const unsigned int associativity,
     const char *policy);
 int cache_sim_fini(cache_handle_t *cache);
+int cache_sim_access(cache_handle_t *cache, const uint64_t address);
 
 static cache_handle_t* cache_create(const unsigned int total_size,
     const unsigned int line_size, const unsigned int associativity);

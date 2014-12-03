@@ -1,2 +1,3 @@
 cache_sim_init
 cache_sim_fini
+cache_sim_access

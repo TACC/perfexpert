@@ -70,9 +70,13 @@ cache_handle_t* cache_sim_init(const unsigned int total_size,
 /* cache_sim_fini */
 int cache_sim_fini(cache_handle_t *cache) {
     printf("--------------------------------\n");
+    printf("Total accesses: %d\n", cache->access);
     printf("Cache hits:     %d\n", cache->hit);
     printf("Cache misses:   %d\n", cache->miss);
-    printf("Total accesses: %d\n", cache->access);
+    printf("Hit rate:       %5.2f%%\n",
+        (((float)cache->hit / (float)cache->access) * 100));
+    printf("Miss rate:      %5.2f%%\n",
+        (((float)cache->miss / (float)cache->access) * 100));
     printf("Cache finalized successfully\n");
     printf("--------------------------------\n");
 
@@ -158,6 +162,39 @@ static int set_policy(cache_handle_t *cache, const char *policy) {
 
     printf("replacement policy not found\n");
     return CACHE_SIM_ERROR;
+}
+
+/* cache_sim_access */
+int cache_sim_access(cache_handle_t *cache, const uint64_t address) {
+    /* variables declaration */
+    int rc = CACHE_SIM_ERROR;
+    uint64_t set = address;
+    uint64_t tag = address;
+
+    /* calculate set and tag (offset does not matter) */
+    CACHE_SIM_SET(set);
+    CACHE_SIM_TAG(tag);
+
+    /* increment access counter */
+    cache->access++;
+
+    #ifdef DEBUG
+    printf("ACCESS address [%p] tag [%p] set [%2d]\n", address, tag, set);
+    #endif
+
+    /* call the replacement algorithm access function and evalute the result */
+    switch(rc = cache->access_fn(cache, set, tag)) {
+        case CACHE_SIM_L1_HIT:
+            /* increment hits counter */
+            cache->hit++;
+            break;
+        case CACHE_SIM_L1_MISS:
+            /* increment misses counter */
+            cache->miss++;
+            break;
+    }
+
+    return rc;
 }
 
 // EOF

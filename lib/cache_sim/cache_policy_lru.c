@@ -43,7 +43,7 @@ int policy_lru_init(cache_handle_t *cache) {
     }
 
     /* initialize data area */
-    memset(ptr, UINT32_MAX, (sizeof(policy_lru_t) * cache->total_lines));
+    memset(ptr, UINT64_MAX, (sizeof(policy_lru_t) * cache->total_lines));
     cache->data = ptr;
 
     printf("Memory required: %d bytes\n", (sizeof(cache_handle_t) +
@@ -53,20 +53,11 @@ int policy_lru_init(cache_handle_t *cache) {
 }
 
 /* policy_lru_read */
-int policy_lru_access(cache_handle_t *cache, uint64_t address) {
-    uint32_t set = address;
-    uint32_t tag = address;
+int policy_lru_access(cache_handle_t *cache, uint64_t set, uint64_t tag) {
     policy_lru_t *base_addr = NULL;
     policy_lru_t *lru = NULL;
     int way = 0;
     int i = 0;
-
-    /* increment and access */
-    cache->access++;
-
-    /* calculate set and tag (offset does not matter) */
-    POLICY_LRU_SET(set);
-    POLICY_LRU_TAG(tag);
 
     /* calculate data area base address for this set */
     base_addr = (policy_lru_t *)((uint64_t)cache->data +
@@ -77,15 +68,12 @@ int policy_lru_access(cache_handle_t *cache, uint64_t address) {
     for (i = cache->associativity; i > 0; i--) {
         /* check if data is present */
         if (base_addr->tag == tag) {
-            /* increment hits counter */
-            cache->hit++;
             /* update access age */
             base_addr->age = cache->access;
             #ifdef DEBUG
-            printf("HIT  address [%p] tag [%p] to set [%2d:%d] using age [%d]\n",
-                address, tag, set, i, base_addr->age);
+            printf("HIT    set [%2d:%d]\n", set, i);
             #endif
-            return CACHE_SIM_HIT_L1;
+            return CACHE_SIM_L1_HIT;
         }
 
         /* if it is a free way use it (bonus!) */
@@ -109,15 +97,11 @@ int policy_lru_access(cache_handle_t *cache, uint64_t address) {
     lru->age = cache->access;
     lru->tag = tag;
 
-    /* increment misses counter */
-    cache->miss++;
-
     #ifdef DEBUG
-    printf("LOAD address [%p] tag [%p] to set [%2d:%d] using age [%d]\n",
-        address, tag, set, way, lru->age);
+    printf("LOAD   set [%2d:%d]\n", set, way);
     #endif
 
-    return CACHE_SIM_MISS_L1;
+    return CACHE_SIM_L1_MISS;
 }
 
 // EOF
