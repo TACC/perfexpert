@@ -69,6 +69,11 @@ cache_handle_t* cache_sim_init(const unsigned int total_size,
 
 /* cache_sim_fini */
 int cache_sim_fini(cache_handle_t *cache) {
+    /* is reuse distance calculation enabled? */
+    if (NULL != cache->reuse) {
+        cache_sim_reuse_disable(cache);
+    }
+
     printf("--------------------------------\n");
     printf("Total accesses: %d\n", cache->access);
     printf("Cache hits:     %d\n", cache->hit);
@@ -80,6 +85,7 @@ int cache_sim_fini(cache_handle_t *cache) {
     printf("Cache finalized successfully\n");
     printf("--------------------------------\n");
 
+    /* destroy the cache and free memory */
     cache_destroy(cache);
 
     return CACHE_SIM_SUCCESS;
@@ -93,7 +99,6 @@ static cache_handle_t* cache_create(const unsigned int total_size,
 
     /* allocate memory for this cache */
     cache = (cache_handle_t *)malloc(sizeof(cache_handle_t));
-
     if (NULL == cache) {
         printf("unable to allocate memory for cache structure\n");
         return NULL;
@@ -109,6 +114,7 @@ static cache_handle_t* cache_create(const unsigned int total_size,
     cache->set_length    = (int)log2(cache->total_sets);
     cache->access_fn     = NULL;
     cache->data          = NULL;
+    cache->reuse         = NULL;
 
     /* initialize performance counters */
     cache->hit    = 0;
@@ -170,10 +176,12 @@ int cache_sim_access(cache_handle_t *cache, const uint64_t address) {
     int rc = CACHE_SIM_ERROR;
     uint64_t set = address;
     uint64_t tag = address;
+    uint64_t line_id = address;
 
     /* calculate set and tag (offset does not matter) */
     CACHE_SIM_SET(set);
     CACHE_SIM_TAG(tag);
+    CACHE_SIM_LINE_ID(line_id);
 
     /* increment access counter */
     cache->access++;
@@ -182,8 +190,8 @@ int cache_sim_access(cache_handle_t *cache, const uint64_t address) {
     printf("ACCESS address [%p] tag [%p] set [%2d]\n", address, tag, set);
     #endif
 
-    /* call the replacement algorithm access function and evalute the result */
-    switch(rc = cache->access_fn(cache, set, tag)) {
+    /* call the replacement algorithm access function and evaluate the result */
+    switch (rc = cache->access_fn(cache, set, tag)) {
         case CACHE_SIM_L1_HIT:
             /* increment hits counter */
             cache->hit++;
@@ -192,6 +200,11 @@ int cache_sim_access(cache_handle_t *cache, const uint64_t address) {
             /* increment misses counter */
             cache->miss++;
             break;
+    }
+
+    /* calculate reuse distance */
+    if (NULL != cache->reuse) {
+        cache_sim_reuse(cache, line_id);
     }
 
     return rc;

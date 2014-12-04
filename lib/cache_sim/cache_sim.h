@@ -41,7 +41,11 @@ extern "C" {
 #define CACHE_SIM_L1_HIT  32
 #define CACHE_SIM_L1_MISS 64
 
-/* Macro to extract the offset, set, and tag of an address */
+/* Macro to extract the ID (add - offset), offset, set, and tag of an address */
+#ifndef CACHE_SIM_LINE_ID
+#define CACHE_SIM_LINE_ID(a) (a >>= cache->offset_length);
+#endif
+
 #ifndef CACHE_SIM_OFFSET
 #define CACHE_SIM_OFFSET(a) \
     (a <<= ((sizeof(uint64_t)*8) - cache->offset_length)); \
@@ -80,6 +84,8 @@ struct cache_handle {
     policy_access_fn_t access_fn;
     /* data section (replacement algorithm dependent) */
     void *data;
+    /* reuse distance section */
+    void *reuse;
     /* performance counters */
     uint64_t hit;
     uint64_t miss;
@@ -99,6 +105,9 @@ cache_handle_t* cache_sim_init(const unsigned int total_size,
     const char *policy);
 int cache_sim_fini(cache_handle_t *cache);
 int cache_sim_access(cache_handle_t *cache, const uint64_t address);
+int cache_sim_reuse_enable(cache_handle_t *cache);
+int cache_sim_reuse_disable(cache_handle_t *cache);
+int cache_sim_reuse(cache_handle_t *cache, const uint64_t lineid);
 
 static cache_handle_t* cache_create(const unsigned int total_size,
     const unsigned int line_size, const unsigned int associativity);
