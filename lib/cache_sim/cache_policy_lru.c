@@ -71,13 +71,13 @@ int policy_lru_access(cache_handle_t *cache, uint64_t set, uint64_t tag) {
             /* update access age */
             base_addr->age = cache->access;
             #ifdef DEBUG
-            printf("HIT    set [%2d:%d]\n", set, i);
+            printf("HIT    tag [%d] set [%2d:%d]\n", tag, set, i);
             #endif
             return CACHE_SIM_L1_HIT;
         }
 
         /* if it is a free way use it (bonus!) */
-        if (UINT32_MAX == base_addr->age) {
+        if (UINT64_MAX == base_addr->tag) {
             lru = base_addr;
             way = i;
             break;
@@ -93,12 +93,19 @@ int policy_lru_access(cache_handle_t *cache, uint64_t set, uint64_t tag) {
         base_addr++;
     }
 
-    /* if data was not found, load it */
+    /* if the location is being used, report eviction */
+    #ifdef DEBUG
+    if (UINT64_MAX != lru->tag) {
+        printf("EVICT  tag [%d] set [%2d:%d]\n", tag, set, way);
+    }
+    #endif
+
+    /* if data was not found, load it and report that */
     lru->age = cache->access;
     lru->tag = tag;
 
     #ifdef DEBUG
-    printf("LOAD   set [%2d:%d]\n", set, way);
+    printf("LOAD   tag [%d] set [%2d:%d]\n", tag, set, way);
     #endif
 
     return CACHE_SIM_L1_MISS;
