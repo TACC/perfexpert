@@ -62,7 +62,7 @@ cache_handle_t* cache_sim_init(const unsigned int total_size,
         return NULL;
     }
 
-    printf("Cache initialized successfully\n");
+    printf(" Cache initialized successfully \n");
     printf("--------------------------------\n");
 
     return cache;
@@ -76,14 +76,15 @@ int cache_sim_fini(cache_handle_t *cache) {
     }
 
     printf("--------------------------------\n");
-    printf("Total accesses: %d\n", cache->access);
-    printf("Cache hits:     %d\n", cache->hit);
-    printf("Cache misses:   %d\n", cache->miss);
-    printf("Hit rate:       %5.2f%%\n",
+    printf("Total accesses: %16d\n", cache->access);
+    printf("Cache hits:     %16d\n", cache->hit);
+    printf("Cache misses:   %16d\n", cache->miss);
+    printf("Hit rate:       %15.2f%%\n",
         (((float)cache->hit / (float)cache->access) * 100));
-    printf("Miss rate:      %5.2f%%\n",
+    printf("Miss rate:      %15.2f%%\n",
         (((float)cache->miss / (float)cache->access) * 100));
-    printf("Cache finalized successfully\n");
+    printf("Set conflicts:  %16d\n", cache->conflict);
+    printf("  Cache finalized successfully  \n");
     printf("--------------------------------\n");
 
     /* destroy the cache and free memory */
@@ -120,18 +121,19 @@ static cache_handle_t* cache_create(const unsigned int total_size,
     cache->reuse_fn      = NULL;
 
     /* initialize performance counters */
-    cache->hit    = 0;
-    cache->miss   = 0;
-    cache->access = 0;
+    cache->hit      = 0;
+    cache->miss     = 0;
+    cache->access   = 0;
+    cache->conflict = 0;
 
-    printf("Cache created successfully\n");
-    printf("Cache size:      %d bytes\n", cache->total_size);
-    printf("Line length:     %d bytes\n", cache->line_size);
-    printf("Number of lines: %d\n", cache->total_lines);
-    printf("Associativity:   %d\n", cache->associativity);
-    printf("Number of sets:  %d\n", cache->total_sets);
-    printf("Offset length:   %d bits\n", cache->offset_length);
-    printf("Set length:      %d bits\n", cache->set_length);
+    printf("   Cache created successfully   \n");
+    printf("Cache size:      %9d bytes\n", cache->total_size);
+    printf("Line length:     %9d bytes\n", cache->line_size);
+    printf("Number of lines: %15d\n", cache->total_lines);
+    printf("Associativity:   %15d\n", cache->associativity);
+    printf("Number of sets:  %15d\n", cache->total_sets);
+    printf("Offset length:   %10d bits\n", cache->offset_length);
+    printf("Set length:      %10d bits\n", cache->set_length);
 
     return cache;
 }
@@ -157,7 +159,7 @@ static int set_policy(cache_handle_t *cache, const char *policy) {
             /* set the policy function */
             cache->access_fn = policies[i].access_fn;
 
-            printf("Replacem policy: %s\n", policy);
+            printf("Replacem policy: %15s\n", policy);
 
             /* initialize the data area */
             if (CACHE_SIM_SUCCESS != policies[i].init_fn(cache)) {
@@ -176,37 +178,49 @@ static int set_policy(cache_handle_t *cache, const char *policy) {
 /* cache_sim_access */
 int cache_sim_access(cache_handle_t *cache, const uint64_t address) {
     /* variables declaration */
-    int rc = CACHE_SIM_ERROR;
-    uint64_t set = address;
-    uint64_t tag = address;
-    uint64_t line_id = address;
-
-    /* calculate set and tag (offset does not matter) */
-    CACHE_SIM_SET(set);
-    CACHE_SIM_TAG(tag);
-    CACHE_SIM_LINE_ID(line_id);
+    static int rc = CACHE_SIM_ERROR;
+    static uint64_t evicted = UINT64_MAX;
+    static uint64_t line_id = UINT64_MAX;
 
     /* increment access counter */
     cache->access++;
 
+    /* calculate tag and set for this address */
+    line_id = address;
+    CACHE_SIM_ADDRESS_TO_LINE_ID(line_id);
+
     #ifdef DEBUG
-    printf("ACCESS address [%p] tag [%p] set [%2d]\n", address, tag, set);
+    printf("ACCESS address [%p]\n", address);
     #endif
 
     /* call the replacement algorithm access function and evaluate the result */
-    switch (rc = cache->access_fn(cache, set, tag)) {
+    switch (rc = cache->access_fn(cache, line_id, &evicted)) {
         case CACHE_SIM_L1_HIT:
             /* increment hits counter */
             cache->hit++;
             break;
+        case CACHE_SIM_L1_MISS + CACHE_SIM_L1_EVICT:
         case CACHE_SIM_L1_MISS:
             /* increment misses counter */
             cache->miss++;
             break;
     }
 
-    /* calculate reuse distance */
+    /* calculate reuse distance and check for associativity conflicts */
     if (NULL != cache->reuse_data) {
+        /* check for associativity conflicts */
+        if ((UINT64_MAX != evicted) &&
+            ((cache->total_lines - 1) > (cache_sim_reuse_get_age(cache, evicted)))) {
+            /* increment conflicts counter */
+            cache->conflict++;
+
+            #ifdef DEBUG
+            printf("CONFLI address [%p] distance [%d]\n", address,
+                cache_sim_reuse_get_age(cache, evicted));
+            #endif
+        }
+
+        /* update reuse distance */
         cache->reuse_fn(cache, line_id);
     }
 

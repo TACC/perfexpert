@@ -62,7 +62,7 @@ int cache_sim_reuse_enable(cache_handle_t *cache, uint64_t limit) {
 
         printf("--------------------------------\n");
         printf("Reuse distance calculation is ON\n");
-        printf("Reuse limit:     unlimited\n");
+        printf("Reuse limit:           unlimited\n");
         printf("Memory required: %d bytes +%d/l\n", sizeof(list_t),
             sizeof(list_item_t));
         printf("--------------------------------\n");
@@ -95,8 +95,8 @@ int cache_sim_reuse_enable(cache_handle_t *cache, uint64_t limit) {
 
         printf("--------------------------------\n");
         printf("Reuse distance calculation is ON\n");
-        printf("Reuse limit:     %d\n", cache->reuse_limit);
-        printf("Memory required: %d bytes\n", sizeof(list_t) +
+        printf("Reuse limit:     %15d\n", cache->reuse_limit);
+        printf("Memory required: %9d bytes\n", sizeof(list_t) +
             (cache->reuse_limit * sizeof(list_item_t)));
         printf("--------------------------------\n");
     }
@@ -110,9 +110,11 @@ int cache_sim_reuse_disable(cache_handle_t *cache) {
 
         // TODO: print something nice here...
         printf("--------------------------------\n");
+        printf("(someday I will report reuse...)\n");
         printf("Reuse distance calculation is OFF\n");
         printf("--------------------------------\n");
 
+        // TODO: free the list elements when reuse distance is unlimited
         free(cache->reuse_data);
 
         return CACHE_SIM_SUCCESS;
@@ -207,6 +209,25 @@ int cache_sim_reuse_unlimited(cache_handle_t *cache, const uint64_t line_id) {
     #endif
 
     return CACHE_SIM_SUCCESS;
+}
+
+/* cache_sim_reuse_get_age */
+uint64_t cache_sim_reuse_get_age(cache_handle_t *cache, const uint64_t line_id) {
+    /* variable declarations */
+    list_item_t *item;
+
+    /* for all elements in the list of lines... */
+    for (item = (list_item_t *)((list_t *)cache->reuse_data)->head.next;
+        item != &(((list_t *)cache->reuse_data)->head);
+        item = (list_item_t *)item->next) {
+        /* ...if we find the line... */
+        if (line_id == item->line_id) {
+            /* ...report its age... */
+            return item->age;
+        }
+    }
+
+    return UINT64_MAX;
 }
 
 // EOF

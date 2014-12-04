@@ -35,10 +35,10 @@ extern "C" {
 #endif
 
 int policy_lru_init(cache_handle_t *cache);
-int policy_lru_access(cache_handle_t *cache, uint64_t set, uint64_t tag);
+int policy_lru_access(cache_handle_t *cache, uint64_t line_id, uint64_t *evicted);
 
 typedef struct {
-    uint64_t tag;
+    uint64_t line_id;
     uint64_t age;
 } policy_lru_t;
 

@@ -55,6 +55,7 @@ int cache_sim_reuse_enable(cache_handle_t *cache, uint64_t limit);
 int cache_sim_reuse_disable(cache_handle_t *cache);
 int cache_sim_reuse_limited(cache_handle_t *cache, const uint64_t lineid);
 int cache_sim_reuse_unlimited(cache_handle_t *cache, const uint64_t lineid);
+uint64_t cache_sim_reuse_get_age(cache_handle_t *cache, const uint64_t lineid);
 
 static inline void list_prepend_item(list_t *list, list_item_t *item) {
     item->next = list->head.next;
