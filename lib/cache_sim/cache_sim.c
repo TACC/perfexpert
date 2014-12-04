@@ -28,6 +28,7 @@
 
 /* Cache simulator headers */
 #include "cache_sim.h"
+#include "cache_sim_reuse.h"
 #include "cache_policy_lru.h"
 
 /* List of policies */
@@ -70,7 +71,7 @@ cache_handle_t* cache_sim_init(const unsigned int total_size,
 /* cache_sim_fini */
 int cache_sim_fini(cache_handle_t *cache) {
     /* is reuse distance calculation enabled? */
-    if (NULL != cache->reuse) {
+    if (NULL != cache->reuse_data) {
         cache_sim_reuse_disable(cache);
     }
 
@@ -114,7 +115,9 @@ static cache_handle_t* cache_create(const unsigned int total_size,
     cache->set_length    = (int)log2(cache->total_sets);
     cache->access_fn     = NULL;
     cache->data          = NULL;
-    cache->reuse         = NULL;
+    cache->reuse_data    = NULL;
+    cache->reuse_limit   = UINT64_MAX;
+    cache->reuse_fn      = NULL;
 
     /* initialize performance counters */
     cache->hit    = 0;
@@ -203,8 +206,8 @@ int cache_sim_access(cache_handle_t *cache, const uint64_t address) {
     }
 
     /* calculate reuse distance */
-    if (NULL != cache->reuse) {
-        cache_sim_reuse(cache, line_id);
+    if (NULL != cache->reuse_data) {
+        cache->reuse_fn(cache, line_id);
     }
 
     return rc;

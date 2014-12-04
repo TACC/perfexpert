@@ -65,9 +65,10 @@ extern "C" {
 /* Cache type */
 typedef struct cache_handle cache_handle_t;
 
-/* Policy function type declarations */
+/* Function type declarations */
 typedef int (*policy_init_fn_t)(cache_handle_t *);
 typedef int (*policy_access_fn_t)(cache_handle_t *, uint64_t, uint64_t);
+typedef int (*reuse_fn_t)(cache_handle_t *, const uint64_t);
 
 /* Cache structure */
 struct cache_handle {
@@ -85,7 +86,9 @@ struct cache_handle {
     /* data section (replacement algorithm dependent) */
     void *data;
     /* reuse distance section */
-    void *reuse;
+    void *reuse_data;
+    uint64_t reuse_limit;
+    reuse_fn_t reuse_fn;
     /* performance counters */
     uint64_t hit;
     uint64_t miss;
@@ -105,9 +108,6 @@ cache_handle_t* cache_sim_init(const unsigned int total_size,
     const char *policy);
 int cache_sim_fini(cache_handle_t *cache);
 int cache_sim_access(cache_handle_t *cache, const uint64_t address);
-int cache_sim_reuse_enable(cache_handle_t *cache);
-int cache_sim_reuse_disable(cache_handle_t *cache);
-int cache_sim_reuse(cache_handle_t *cache, const uint64_t lineid);
 
 static cache_handle_t* cache_create(const unsigned int total_size,
     const unsigned int line_size, const unsigned int associativity);

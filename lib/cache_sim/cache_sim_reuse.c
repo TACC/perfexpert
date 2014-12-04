@@ -28,59 +28,106 @@
 #include "cache_sim_reuse.h"
 
 /* cache_sim_reuse_enable */
-int cache_sim_reuse_enable(cache_handle_t *cache) {
+int cache_sim_reuse_enable(cache_handle_t *cache, uint64_t limit) {
     /* sanity check */
-    if (NULL != cache->reuse) {
-        return CACHE_SIM_ERROR;
+    if (NULL != cache->reuse_data) {
+        return CACHE_SIM_SUCCESS;
     }
 
     /* variables declaration */
+    list_item_t *item = NULL;
     list_t *list = NULL;
+    int i = 0;
 
-    /* allocate memory for to calculate cache reuse distance */
-    cache->reuse = malloc(sizeof(list_t));
-    if (NULL == cache->reuse) {
-        printf("unable to allocate memory to calculate reuse distance\n");
-        return CACHE_SIM_ERROR;
+    /* set reuse limit */
+    cache->reuse_limit = limit;
+
+    /* allocate memory for reuse data area acording to reuse limit */
+    if (0 == cache->reuse_limit) {
+        /* for unlimited reuse distance */
+        cache->reuse_data = malloc(sizeof(list_t));
+        if (NULL == cache->reuse_data) {
+            printf("unable to allocate memory to calculate reuse distance\n");
+            return CACHE_SIM_ERROR;
+        }
+
+        /* initialize the list */
+        list = cache->reuse_data;
+        list->head.next = &(list->head);
+        list->head.prev = &(list->head);
+        list->len = 0;
+
+        /* set the reuse distance function */
+        cache->reuse_fn = &cache_sim_reuse_unlimited;
+
+        printf("--------------------------------\n");
+        printf("Reuse distance calculation is ON\n");
+        printf("Reuse limit:     unlimited\n");
+        printf("Memory required: %d bytes +%d/l\n", sizeof(list_t),
+            sizeof(list_item_t));
+        printf("--------------------------------\n");
+    } else {
+        /* for a particular reuse distance limit */
+        cache->reuse_data = malloc(sizeof(list_t) +
+            (cache->reuse_limit * sizeof(list_item_t)));
+        if (NULL == cache->reuse_data) {
+            printf("unable to allocate memory to calculate reuse distance\n");
+            return CACHE_SIM_ERROR;
+        }
+
+        /* initialize the list */
+        list = cache->reuse_data;
+        list->head.next = &(list->head);
+        list->head.prev = &(list->head);
+        list->len = 0;
+
+        /* set the reuse distance function */
+        cache->reuse_fn = &cache_sim_reuse_limited;
+
+        /* initialize list elements */
+        item = (list_item_t *)((uint64_t)cache->reuse_data + sizeof(list_t));
+        for (i = 0; i < cache->reuse_limit; i++) {
+            list_prepend_item((list_t *)(cache->reuse_data), item);
+            item->line_id = UINT64_MAX;
+            item->age = UINT16_MAX;
+            item++;
+        }
+
+        printf("--------------------------------\n");
+        printf("Reuse distance calculation is ON\n");
+        printf("Reuse limit:     %d\n", cache->reuse_limit);
+        printf("Memory required: %d bytes\n", sizeof(list_t) +
+            (cache->reuse_limit * sizeof(list_item_t)));
+        printf("--------------------------------\n");
     }
-    list = cache->reuse;
-
-    /* initialize the list */
-    list->head.next = &(list->head);
-    list->head.prev = &(list->head);
-    list->len = 0;
-
-    printf("--------------------------------\n");
-    printf("Reuse distance calculation is ON\n");
-    printf("Memory required: %d bytes +%d/l\n", sizeof(list_t), sizeof(list_item_t));
-    printf("--------------------------------\n");
 
     return CACHE_SIM_SUCCESS;
 }
 
 /* cache_sim_reuse_disable */
 int cache_sim_reuse_disable(cache_handle_t *cache) {
-    if (NULL != cache->reuse) {
-        free(cache->reuse);
+    if (NULL != cache->reuse_data) {
 
         // TODO: print something nice here...
         printf("--------------------------------\n");
         printf("Reuse distance calculation is OFF\n");
         printf("--------------------------------\n");
 
+        free(cache->reuse_data);
+
         return CACHE_SIM_SUCCESS;
     }
     return CACHE_SIM_ERROR;
 }
 
-/* cache_sim_reuse */
-int cache_sim_reuse(cache_handle_t *cache, const uint64_t line_id) {
+/* cache_sim_reuse_limited */
+int cache_sim_reuse_limited(cache_handle_t *cache, const uint64_t line_id) {
     /* variable declarations */
     list_item_t *item;
 
     /* for all elements in the list of lines... */
-    for (item = (list_item_t *)((list_t *)cache->reuse)->head.next;
-        item != &(((list_t *)cache->reuse)->head);
+    for (item = (list_item_t *)((list_t *)cache->reuse_data)->head.next;
+        item != &(((list_t *)cache->reuse_data)->head);
         item = (list_item_t *)item->next) {
         /* ...if we find the line... */
         if (line_id == item->line_id) {
@@ -91,7 +138,7 @@ int cache_sim_reuse(cache_handle_t *cache, const uint64_t line_id) {
             #endif
 
             /* ...move the line to the top of the list... */
-            list_movetop_item((list_t *)cache->reuse, item);
+            list_movetop_item((list_t *)cache->reuse_data, item);
 
             /* ...set the line's age to zero */
             item->age = 0;
@@ -99,7 +146,50 @@ int cache_sim_reuse(cache_handle_t *cache, const uint64_t line_id) {
             return CACHE_SIM_SUCCESS;
         }
 
-        /* increment age for every line above the line_id we are looking for */
+        /* increment age for every line above the line we are looking for */
+        item->age++;
+    }
+
+    /* if the line was not found take the last one and move it up to the top */
+    item = (list_item_t *)((list_t *)cache->reuse_data)->head.prev;
+    list_movetop_item((list_t *)cache->reuse_data, item);
+    item->line_id = line_id;
+    item->age = 0;
+
+    #ifdef DEBUG
+    printf("USE    line id [%d]\n", item->line_id);
+    #endif
+
+    return CACHE_SIM_SUCCESS;
+}
+
+/* cache_sim_reuse_unlimited */
+int cache_sim_reuse_unlimited(cache_handle_t *cache, const uint64_t line_id) {
+    /* variable declarations */
+    list_item_t *item;
+
+    /* for all elements in the list of lines... */
+    for (item = (list_item_t *)((list_t *)cache->reuse_data)->head.next;
+        item != &(((list_t *)cache->reuse_data)->head);
+        item = (list_item_t *)item->next) {
+        /* ...if we find the line... */
+        if (line_id == item->line_id) {
+            /* ...report it... */
+            #ifdef DEBUG
+            printf("REUSE  line id [%d] reuse distance [%d]\n",
+                item->line_id, item->age);
+            #endif
+
+            /* ...move the line to the top of the list... */
+            list_movetop_item((list_t *)cache->reuse_data, item);
+
+            /* ...set the line's age to zero */
+            item->age = 0;
+
+            return CACHE_SIM_SUCCESS;
+        }
+
+        /* increment age for every line above the line we are looking for */
         item->age++;
     }
 
@@ -108,7 +198,7 @@ int cache_sim_reuse(cache_handle_t *cache, const uint64_t line_id) {
     if (NULL == item) {
         return CACHE_SIM_ERROR;
     }
-    list_prepend_item((list_t *)cache->reuse, item);
+    list_prepend_item((list_t *)cache->reuse_data, item);
     item->line_id = line_id;
     item->age = 0;
 
