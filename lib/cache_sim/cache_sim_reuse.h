@@ -47,7 +47,6 @@ struct list_item {
 /* Struct of a list and base type for list containers */
 typedef struct list {
     list_item_t head;
-    volatile list_item_t *tmp;
     volatile uint32_t len;
 } list_t;
 

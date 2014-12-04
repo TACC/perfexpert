@@ -48,7 +48,6 @@ int cache_sim_reuse_enable(cache_handle_t *cache) {
     /* initialize the list */
     list->head.next = &(list->head);
     list->head.prev = &(list->head);
-    list->tmp = NULL;
     list->len = 0;
 
     printf("--------------------------------\n");
