@@ -20,6 +20,7 @@
  */
 
 /* System standard headers */
+#include <inttypes.h>
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -95,7 +96,7 @@ int cache_sim_reuse_enable(cache_handle_t *cache, uint64_t limit) {
 
         printf("--------------------------------\n");
         printf("Reuse distance calculation is ON\n");
-        printf("Reuse limit:     %15d\n", cache->reuse_limit);
+        printf("Reuse limit:     %15"PRIu64"\n", cache->reuse_limit);
         printf("Memory required: %9d bytes\n", sizeof(list_t) +
             (cache->reuse_limit * sizeof(list_item_t)));
         printf("--------------------------------\n");
@@ -135,7 +136,7 @@ int cache_sim_reuse_limited(cache_handle_t *cache, const uint64_t line_id) {
         if (line_id == item->line_id) {
             /* ...report it... */
             #ifdef DEBUG
-            printf("REUSE  line id [%d] reuse distance [%d]\n",
+            printf("REUSE  line id [%p] reuse distance [%d]\n",
                 item->line_id, item->age);
             #endif
 
@@ -159,7 +160,7 @@ int cache_sim_reuse_limited(cache_handle_t *cache, const uint64_t line_id) {
     item->age = 0;
 
     #ifdef DEBUG
-    printf("USE    line id [%d]\n", item->line_id);
+    printf("USE    line id [%p]\n", item->line_id);
     #endif
 
     return CACHE_SIM_SUCCESS;
@@ -178,7 +179,7 @@ int cache_sim_reuse_unlimited(cache_handle_t *cache, const uint64_t line_id) {
         if (line_id == item->line_id) {
             /* ...report it... */
             #ifdef DEBUG
-            printf("REUSE  line id [%d] reuse distance [%d]\n",
+            printf("REUSE  line id [%p] reuse distance [%d]\n",
                 item->line_id, item->age);
             #endif
 
@@ -205,7 +206,7 @@ int cache_sim_reuse_unlimited(cache_handle_t *cache, const uint64_t line_id) {
     item->age = 0;
 
     #ifdef DEBUG
-    printf("USE    line id [%d]\n", item->line_id);
+    printf("USE    line id [%p]\n", item->line_id);
     #endif
 
     return CACHE_SIM_SUCCESS;

@@ -20,6 +20,7 @@
  */
 
 /* System standard headers */
+#include <inttypes.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -76,14 +77,14 @@ int cache_sim_fini(cache_handle_t *cache) {
     }
 
     printf("--------------------------------\n");
-    printf("Total accesses: %16d\n", cache->access);
-    printf("Cache hits:     %16d\n", cache->hit);
-    printf("Cache misses:   %16d\n", cache->miss);
+    printf("Total accesses: %16"PRIu64"\n", cache->access);
+    printf("Cache hits:     %16"PRIu64"\n", cache->hit);
+    printf("Cache misses:   %16"PRIu64"\n", cache->miss);
     printf("Hit rate:       %15.2f%%\n",
-        (((float)cache->hit / (float)cache->access) * 100));
+        (((double)cache->hit / (double)cache->access) * 100));
     printf("Miss rate:      %15.2f%%\n",
-        (((float)cache->miss / (float)cache->access) * 100));
-    printf("Set conflicts:  %16d\n", cache->conflict);
+        (((double)cache->miss / (double)cache->access) * 100));
+    printf("Set conflicts:  %16"PRIu64"\n", cache->conflict);
     printf("  Cache finalized successfully  \n");
     printf("--------------------------------\n");
 
@@ -208,6 +209,10 @@ int cache_sim_access(cache_handle_t *cache, const uint64_t address) {
 
     /* calculate reuse distance and check for associativity conflicts */
     if (NULL != cache->reuse_data) {
+        // BUG: these lines are potencial conflict, they should be considered
+        //      conflict only if they are broght back to the cache before
+        //      num-of-lines-that-fit-into-cache < num-of-lines-loaded
+
         /* check for associativity conflicts */
         if ((UINT64_MAX != evicted) &&
             ((cache->total_lines - 1) > (cache_sim_reuse_get_age(cache, evicted)))) {

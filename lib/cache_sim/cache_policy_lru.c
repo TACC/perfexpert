@@ -81,9 +81,11 @@ int policy_lru_access(cache_handle_t *cache, uint64_t line_id, uint64_t *evicted
         if (base_addr->line_id == line_id) {
             /* update access age */
             base_addr->age = cache->access;
+
             #ifdef DEBUG
-            printf("HIT    line id [%d] set [%2d:%d]\n", line_id, set, rc);
+            printf("HIT    line id [%p] set [%2d:%d]\n", line_id, set, rc);
             #endif
+
             return CACHE_SIM_L1_HIT;
         }
 
@@ -116,7 +118,7 @@ int policy_lru_access(cache_handle_t *cache, uint64_t line_id, uint64_t *evicted
         rc += CACHE_SIM_L1_EVICT;
 
         #ifdef DEBUG
-        printf("EVICT  line_id [%d] set [%2d:%d]\n", line_id, set, way);
+        printf("EVICT  line id [%p] set [%2d:%d]\n", line_id, set, way);
         #endif
     }
 
@@ -125,7 +127,8 @@ int policy_lru_access(cache_handle_t *cache, uint64_t line_id, uint64_t *evicted
     lru->line_id = line_id;
 
     #ifdef DEBUG
-    printf("LOAD   line id [%d] set [%2d:%d]\n", line_id, set, way);
+    printf("MISS   line id [%p]\n", line_id);
+    printf("LOAD   line id [%p] set [%2d:%d]\n", line_id, set, way);
     #endif
 
     return CACHE_SIM_L1_MISS;

@@ -68,6 +68,7 @@ AS_IF([test x"$ENABLE_DEBUG" = x"yes"], [
 # Headers: generic
 #
 AC_CHECK_HEADER([math.h],         [], [AC_MSG_ERROR([math.h not found])])
+AC_CHECK_HEADER([inttypes.h],     [], [AC_MSG_ERROR([inttypes.h not found])])
 AC_CHECK_HEADER([stdint.h],       [], [AC_MSG_ERROR([stdint.h not found])])
 AC_CHECK_HEADER([stdio.h],        [], [AC_MSG_ERROR([stdio.h not found])])
 AC_CHECK_HEADER([stdlib.h],       [], [AC_MSG_ERROR([stdlib.h not found])])
