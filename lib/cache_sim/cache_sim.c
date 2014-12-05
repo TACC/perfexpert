@@ -209,13 +209,24 @@ int cache_sim_access(cache_handle_t *cache, const uint64_t address) {
 
     /* calculate reuse distance and check for associativity conflicts */
     if (NULL != cache->reuse_data) {
-        // BUG: these lines are potencial conflict, they should be considered
-        //      conflict only if they are broght back to the cache before
-        //      num-of-lines-that-fit-into-cache < num-of-lines-loaded
-
         /* check for associativity conflicts */
         if ((UINT64_MAX != evicted) &&
             ((cache->total_lines - 1) > (cache_sim_reuse_get_age(cache, evicted)))) {
+            // BUG: this line is a potencial conflict only. It should be
+            //      considered a set associative conflict only if in the moment
+            //      of a further reference to it the number of distinct lines
+            //      brought into the cache plus the line's reuse distance at
+            //      the moment of eviction is smaller than the total number of
+            //      lines a cache can hold. Therefore to fix this bug, for each
+            //      line 'here' we have to allocate memory for a list to hold
+            //      cache->total_lines - cache_sim_reuse_get_age(cache, evicted)
+            //      elements. For every memory access we add the line to the
+            //      list (if the line is not there yet, of course). When the
+            //      list gets full, it is safe to eliminate this line from the
+            //      list of possible candidates. If a new reference occurs to
+            //      this line before the list gets full it will be considered a
+            //      SET ASSOCIATIVE CONFLICT. Fuck yeah!
+
             /* increment conflicts counter */
             cache->conflict++;
 
