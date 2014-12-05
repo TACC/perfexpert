@@ -44,7 +44,9 @@ extern "C" {
 
 /* Macro to extract the ID (add - offset), offset, set, and tag of an address */
 #ifndef CACHE_SIM_ADDRESS_TO_LINE_ID
-#define CACHE_SIM_ADDRESS_TO_LINE_ID(a) (a >>= cache->offset_length);
+#define CACHE_SIM_ADDRESS_TO_LINE_ID(a) \
+    (a >>= cache->offset_length); \
+    (a <<= cache->offset_length);
 #endif
 
 #ifndef CACHE_SIM_ADDRESS_TO_OFFSET
@@ -65,9 +67,7 @@ extern "C" {
 #endif
 
 #ifndef CACHE_SIM_LINE_ID_TO_SET
-#define CACHE_SIM_LINE_ID_TO_SET(a) \
-    (a <<= ((sizeof(uint64_t)*8) - cache->set_length)); \
-    (a >>= ((sizeof(uint64_t)*8) - cache->set_length));
+#define CACHE_SIM_LINE_ID_TO_SET(a) CACHE_SIM_ADDRESS_TO_SET(a)
 #endif
 
 /* Cache type */
