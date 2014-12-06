@@ -59,7 +59,7 @@ int policy_lru_init(cache_handle_t *cache) {
 }
 
 /* policy_lru_read */
-int policy_lru_access(cache_handle_t *cache, uint64_t line_id, uint64_t *evicted) {
+int policy_lru_access(cache_handle_t *cache, uint64_t line_id) {
     static policy_lru_t *base_addr = NULL;
     static policy_lru_t *lru = NULL;
     static uint64_t set = UINT64_MAX;
@@ -83,7 +83,7 @@ int policy_lru_access(cache_handle_t *cache, uint64_t line_id, uint64_t *evicted
             base_addr->age = cache->access;
 
             #ifdef DEBUG
-            printf("HIT    line id [%p] set [%2d:%d]\n", line_id, set, rc);
+            printf("HIT    line id [%018p] set [%2d:%d]\n", line_id, set, rc);
             #endif
 
             return CACHE_SIM_L1_HIT;
@@ -109,26 +109,13 @@ int policy_lru_access(cache_handle_t *cache, uint64_t line_id, uint64_t *evicted
     /* set the return code value */
     rc = CACHE_SIM_L1_MISS;
 
-    /* if the location is being used, report eviction */
-    if (UINT64_MAX != lru->line_id) {
-        /* return the evicted tag */
-        *evicted = lru->line_id;
-
-        /* update return code */
-        rc += CACHE_SIM_L1_EVICT;
-
-        #ifdef DEBUG
-        printf("EVICT  line id [%p] set [%2d:%d]\n", line_id, set, way);
-        #endif
-    }
-
     /* if data was not found, load it and report that */
     lru->age = cache->access;
     lru->line_id = line_id;
 
     #ifdef DEBUG
-    printf("MISS   line id [%p]\n", line_id);
-    printf("LOAD   line id [%p] set [%2d:%d]\n", line_id, set, way);
+    printf("MISS   line id [%018p]\n", line_id);
+    printf("LOAD   line id [%018p] set [%2d:%d]\n", line_id, set, way);
     #endif
 
     return CACHE_SIM_L1_MISS;

@@ -180,7 +180,6 @@ static int set_policy(cache_handle_t *cache, const char *policy) {
 int cache_sim_access(cache_handle_t *cache, const uint64_t address) {
     /* variables declaration */
     static int rc = CACHE_SIM_ERROR;
-    static uint64_t evicted = UINT64_MAX;
     static uint64_t line_id = UINT64_MAX;
 
     /* increment access counter */
@@ -191,16 +190,15 @@ int cache_sim_access(cache_handle_t *cache, const uint64_t address) {
     CACHE_SIM_ADDRESS_TO_LINE_ID(line_id);
 
     #ifdef DEBUG
-    printf("ACCESS address [%p]\n", address);
+    printf("ACCESS address [%018p]\n", address);
     #endif
 
     /* call the replacement algorithm access function and evaluate the result */
-    switch (rc = cache->access_fn(cache, line_id, &evicted)) {
+    switch (rc = cache->access_fn(cache, line_id)) {
         case CACHE_SIM_L1_HIT:
             /* increment hits counter */
             cache->hit++;
             break;
-        case CACHE_SIM_L1_MISS + CACHE_SIM_L1_EVICT:
         case CACHE_SIM_L1_MISS:
             /* increment misses counter */
             cache->miss++;
@@ -209,30 +207,16 @@ int cache_sim_access(cache_handle_t *cache, const uint64_t address) {
 
     /* calculate reuse distance and check for associativity conflicts */
     if (NULL != cache->reuse_data) {
-        /* check for associativity conflicts */
-        if ((UINT64_MAX != evicted) &&
-            ((cache->total_lines - 1) > (cache_sim_reuse_get_age(cache, evicted)))) {
-            // BUG: this line is a potencial conflict only. It should be
-            //      considered a set associative conflict only if in the moment
-            //      of a further reference to it the number of distinct lines
-            //      brought into the cache plus the line's reuse distance at
-            //      the moment of eviction is smaller than the total number of
-            //      lines a cache can hold. Therefore to fix this bug, for each
-            //      line 'here' we have to allocate memory for a list to hold
-            //      cache->total_lines - cache_sim_reuse_get_age(cache, evicted)
-            //      elements. For every memory access we add the line to the
-            //      list (if the line is not there yet, of course). When the
-            //      list gets full, it is safe to eliminate this line from the
-            //      list of possible candidates. If a new reference occurs to
-            //      this line before the list gets full it will be considered a
-            //      SET ASSOCIATIVE CONFLICT. Fuck yeah!
+        /* check for set associativity conflicts */
+        if ((cache->total_lines > cache_sim_reuse_get_age(cache, line_id)) &&
+            (CACHE_SIM_L1_MISS == rc)) {
 
             /* increment conflicts counter */
             cache->conflict++;
 
             #ifdef DEBUG
-            printf("CONFLI address [%p] distance [%d]\n", address,
-                cache_sim_reuse_get_age(cache, evicted));
+            printf("CONFLI line id [%018p] distance [%"PRIu64"]\n", line_id,
+                cache_sim_reuse_get_age(cache, line_id));
             #endif
         }
 

@@ -40,9 +40,8 @@ extern "C" {
 
 #define CACHE_SIM_L1_HIT   32
 #define CACHE_SIM_L1_MISS  64
-#define CACHE_SIM_L1_EVICT 128
 
-/* Macro to extract the ID (add - offset), offset, set, and tag of an address */
+/* Macro to extract the ID (tag - offset), offset, set, and tag of an address */
 #ifndef CACHE_SIM_ADDRESS_TO_LINE_ID
 #define CACHE_SIM_ADDRESS_TO_LINE_ID(a) \
     (a >>= cache->offset_length); \
@@ -76,7 +75,7 @@ typedef struct cache_handle cache_handle_t;
 /* Function type declarations */
 typedef int (*reuse_fn_t)(cache_handle_t *, const uint64_t);
 typedef int (*policy_init_fn_t)(cache_handle_t *);
-typedef int (*policy_access_fn_t)(cache_handle_t *, uint64_t, uint64_t *);
+typedef int (*policy_access_fn_t)(cache_handle_t *, uint64_t);
 
 /* Cache structure */
 struct cache_handle {

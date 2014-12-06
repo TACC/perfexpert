@@ -107,20 +107,27 @@ int cache_sim_reuse_enable(cache_handle_t *cache, uint64_t limit) {
 
 /* cache_sim_reuse_disable */
 int cache_sim_reuse_disable(cache_handle_t *cache) {
-    if (NULL != cache->reuse_data) {
-
-        // TODO: print something nice here...
-        printf("--------------------------------\n");
-        printf("(someday I will report reuse...)\n");
-        printf("Reuse distance calculation is OFF\n");
-        printf("--------------------------------\n");
-
-        // TODO: free the list elements when reuse distance is unlimited
-        free(cache->reuse_data);
-
-        return CACHE_SIM_SUCCESS;
+    if (NULL == cache->reuse_data) {
+        return CACHE_SIM_ERROR;
     }
-    return CACHE_SIM_ERROR;
+
+    /* variables declaration */
+    list_item_t *item;
+
+    printf("--------------------------------\n");
+    // for (item = (list_item_t *)((list_t *)cache->reuse_data)->head.next;
+    //     item != &(((list_t *)cache->reuse_data)->head);
+    //     item = (list_item_t *)item->next) {
+    //     printf("Line: %018p, Distance: %"PRIu64"\n", item->line_id, item->age);
+    // }
+    printf(" (print something nice here...) \n");
+    printf("Reuse distance calculation is OFF\n");
+    printf("--------------------------------\n");
+
+    // TODO: free the list elements when reuse distance is unlimited
+    free(cache->reuse_data);
+
+    return CACHE_SIM_SUCCESS;
 }
 
 /* cache_sim_reuse_limited */
@@ -136,7 +143,7 @@ int cache_sim_reuse_limited(cache_handle_t *cache, const uint64_t line_id) {
         if (line_id == item->line_id) {
             /* ...report it... */
             #ifdef DEBUG
-            printf("REUSE  line id [%p] reuse distance [%d]\n",
+            printf("REUSE  line id [%018p] reuse distance [%"PRIu64"]\n",
                 item->line_id, item->age);
             #endif
 
@@ -160,7 +167,7 @@ int cache_sim_reuse_limited(cache_handle_t *cache, const uint64_t line_id) {
     item->age = 0;
 
     #ifdef DEBUG
-    printf("USE    line id [%p]\n", item->line_id);
+    printf("USE    line id [%018p]\n", item->line_id);
     #endif
 
     return CACHE_SIM_SUCCESS;
@@ -168,7 +175,7 @@ int cache_sim_reuse_limited(cache_handle_t *cache, const uint64_t line_id) {
 
 /* cache_sim_reuse_unlimited */
 int cache_sim_reuse_unlimited(cache_handle_t *cache, const uint64_t line_id) {
-    /* variable declarations */
+    /* variables declaration */
     list_item_t *item;
 
     /* for all elements in the list of lines... */
@@ -179,7 +186,7 @@ int cache_sim_reuse_unlimited(cache_handle_t *cache, const uint64_t line_id) {
         if (line_id == item->line_id) {
             /* ...report it... */
             #ifdef DEBUG
-            printf("REUSE  line id [%p] reuse distance [%d]\n",
+            printf("REUSE  line id [%018p] reuse distance [%"PRIu64"]\n",
                 item->line_id, item->age);
             #endif
 
@@ -206,7 +213,7 @@ int cache_sim_reuse_unlimited(cache_handle_t *cache, const uint64_t line_id) {
     item->age = 0;
 
     #ifdef DEBUG
-    printf("USE    line id [%p]\n", item->line_id);
+    printf("USE    line id [%018p]\n", item->line_id);
     #endif
 
     return CACHE_SIM_SUCCESS;
