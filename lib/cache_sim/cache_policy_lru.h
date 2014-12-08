@@ -35,7 +35,7 @@ extern "C" {
 #endif
 
 int policy_lru_init(cache_handle_t *cache);
-int policy_lru_access(cache_handle_t *cache, uint64_t line_id);
+int policy_lru_access(cache_handle_t *cache, const uint64_t line_id);
 
 typedef struct {
     uint64_t line_id;

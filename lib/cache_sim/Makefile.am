@@ -25,7 +25,9 @@ libcache_sim_la_CPPFLAGS =
 libcache_sim_la_LDFLAGS = -lm -version-info 1:0:0 \
 	-export-symbols $(srcdir)/cache_sim.sym
 libcache_sim_la_SOURCES = cache_sim.c \
+	cache_sim_conflict.c \
 	cache_sim_reuse.c \
+	cache_sim_symbol.c \
 	cache_policy_lru.c
 
 # EOF

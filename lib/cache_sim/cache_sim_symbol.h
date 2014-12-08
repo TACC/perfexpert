@@ -19,30 +19,31 @@
  * $HEADER$
  */
 
-#ifndef CACHE_SIM_REUSE_H_
-#define CACHE_SIM_REUSE_H_
+#ifndef CACHE_SIM_SYMBOL_H_
+#define CACHE_SIM_SYMBOL_H_
 
 #ifdef __cplusplus
 extern "C" {
-#endif
-
-#ifndef CACHE_SIM_H_
-#include "cache_sim.h"
 #endif
 
 #ifndef _STDINT_H
 #include <stdint.h>
 #endif
 
+#ifndef CACHE_SIM_H_
+#include "cache_sim.h"
+#endif
+
+#define CACHE_SIM_SYMBOL_MAX_LENGTH 56
+
 /* Functions declaration */
-int cache_sim_reuse_enable(cache_handle_t *cache, const uint64_t limit);
-int cache_sim_reuse_disable(cache_handle_t *cache);
-int cache_sim_reuse_limited(cache_handle_t *cache, const uint64_t lineid);
-int cache_sim_reuse_unlimited(cache_handle_t *cache, const uint64_t lineid);
-uint64_t cache_sim_reuse_get_age(cache_handle_t *cache, const uint64_t lineid);
+int cache_sim_symbol_enable(cache_handle_t *cache);
+int cache_sim_symbol_disable(cache_handle_t *cache);
+int cache_sim_symbol_access(cache_handle_t *cache, const uint64_t address,
+    const char *symbol);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* CACHE_SIM_REUSE_H_ */
+#endif /* CACHE_SIM_SYMBOL_H_ */

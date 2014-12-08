@@ -30,6 +30,7 @@
 /* Cache simulator headers */
 #include "cache_sim.h"
 #include "cache_sim_reuse.h"
+#include "cache_sim_symbol.h"
 #include "cache_policy_lru.h"
 
 /* List of policies */
@@ -76,15 +77,22 @@ int cache_sim_fini(cache_handle_t *cache) {
         cache_sim_reuse_disable(cache);
     }
 
+    /* is symbols tracking enabled? */
+    if (NULL != cache->symbol_data) {
+        cache_sim_symbol_disable(cache);
+    }
+
     printf("--------------------------------\n");
     printf("Total accesses: %16"PRIu64"\n", cache->access);
     printf("Cache hits:     %16"PRIu64"\n", cache->hit);
-    printf("Cache misses:   %16"PRIu64"\n", cache->miss);
-    printf("Hit rate:       %15.2f%%\n",
+    printf(" -> rate        %15.2f%%\n",
         (((double)cache->hit / (double)cache->access) * 100));
-    printf("Miss rate:      %15.2f%%\n",
+    printf("Cache misses:   %16"PRIu64"\n", cache->miss);
+    printf(" -> rate        %15.2f%%\n",
         (((double)cache->miss / (double)cache->access) * 100));
     printf("Set conflicts:  %16"PRIu64"\n", cache->conflict);
+    printf(" -> rate        %15.2f%%\n",
+        (((double)cache->conflict / (double)cache->miss) * 100));
     printf("  Cache finalized successfully  \n");
     printf("--------------------------------\n");
 
@@ -118,7 +126,7 @@ static cache_handle_t* cache_create(const unsigned int total_size,
     cache->access_fn     = NULL;
     cache->data          = NULL;
     cache->reuse_data    = NULL;
-    cache->reuse_limit   = UINT64_MAX;
+    cache->reuse_limit   = 0;
     cache->reuse_fn      = NULL;
 
     /* initialize performance counters */
@@ -218,6 +226,8 @@ int cache_sim_access(cache_handle_t *cache, const uint64_t address) {
             printf("CONFLI line id [%018p] distance [%"PRIu64"]\n", line_id,
                 cache_sim_reuse_get_age(cache, line_id));
             #endif
+
+            rc = CACHE_SIM_L1_MISS_CONFLICT;
         }
 
         /* update reuse distance */

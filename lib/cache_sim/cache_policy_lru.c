@@ -59,12 +59,12 @@ int policy_lru_init(cache_handle_t *cache) {
 }
 
 /* policy_lru_read */
-int policy_lru_access(cache_handle_t *cache, uint64_t line_id) {
+int policy_lru_access(cache_handle_t *cache, const uint64_t line_id) {
     static policy_lru_t *base_addr = NULL;
     static policy_lru_t *lru = NULL;
     static uint64_t set = UINT64_MAX;
     static int way = 0;
-    static int rc = 0; // Used as loop counter and also as return code
+    register int i = 0;
 
     /* calculate tag and set for this address */
     set = line_id;
@@ -76,14 +76,14 @@ int policy_lru_access(cache_handle_t *cache, uint64_t line_id) {
     lru = base_addr;
 
     /* iterate across all the ways of the set */
-    for (rc = cache->associativity; rc > 0; rc--) {
+    for (i = cache->associativity; i > 0; i--) {
         /* check if data is present */
         if (base_addr->line_id == line_id) {
             /* update access age */
             base_addr->age = cache->access;
 
             #ifdef DEBUG
-            printf("HIT    line id [%018p] set [%2d:%d]\n", line_id, set, rc);
+            printf("HIT    line id [%018p] set [%2d:%d]\n", line_id, set, i);
             #endif
 
             return CACHE_SIM_L1_HIT;
@@ -92,22 +92,19 @@ int policy_lru_access(cache_handle_t *cache, uint64_t line_id) {
         /* if it is a free way use it (bonus!) */
         if (UINT64_MAX == base_addr->line_id) {
             lru = base_addr;
-            way = rc;
+            way = i;
             break;
         }
 
         /* find the last recently used way in the set */
         if (base_addr->age <= lru->age) {
             lru = base_addr;
-            way = rc;
+            way = i;
         }
 
         /* increment way address */
         base_addr++;
     }
-
-    /* set the return code value */
-    rc = CACHE_SIM_L1_MISS;
 
     /* if data was not found, load it and report that */
     lru->age = cache->access;

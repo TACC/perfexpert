@@ -19,8 +19,8 @@
  * $HEADER$
  */
 
-#ifndef CACHE_SIM_REUSE_H_
-#define CACHE_SIM_REUSE_H_
+#ifndef CACHE_SIM_CONFLICT_H_
+#define CACHE_SIM_CONFLICT_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -30,19 +30,11 @@ extern "C" {
 #include "cache_sim.h"
 #endif
 
-#ifndef _STDINT_H
-#include <stdint.h>
-#endif
-
 /* Functions declaration */
-int cache_sim_reuse_enable(cache_handle_t *cache, const uint64_t limit);
-int cache_sim_reuse_disable(cache_handle_t *cache);
-int cache_sim_reuse_limited(cache_handle_t *cache, const uint64_t lineid);
-int cache_sim_reuse_unlimited(cache_handle_t *cache, const uint64_t lineid);
-uint64_t cache_sim_reuse_get_age(cache_handle_t *cache, const uint64_t lineid);
+int cache_sim_conflict_enable(cache_handle_t *cache);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* CACHE_SIM_REUSE_H_ */
+#endif /* CACHE_SIM_CONFLICT_H_ */
