@@ -5,3 +5,5 @@ cache_sim_reuse_enable
 cache_sim_reuse_disable
 cache_sim_conflict_enable
 cache_sim_symbol_access
+cache_sim_prefetcher_enable
+cache_sim_prefetcher_disable

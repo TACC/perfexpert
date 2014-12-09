@@ -93,6 +93,8 @@ int cache_sim_fini(cache_handle_t *cache) {
     printf("Set conflicts:  %16"PRIu64"\n", cache->conflict);
     printf(" -> rate        %15.2f%%\n",
         (((double)cache->conflict / (double)cache->miss) * 100));
+    printf("Prefetcher:                     \n");
+    printf(" -> next line   %16"PRIu64"\n", cache->prefetcher_next_line);
     printf("  Cache finalized successfully  \n");
     printf("--------------------------------\n");
 
@@ -130,10 +132,11 @@ static cache_handle_t* cache_create(const unsigned int total_size,
     cache->reuse_fn      = NULL;
 
     /* initialize performance counters */
-    cache->hit      = 0;
-    cache->miss     = 0;
-    cache->access   = 0;
-    cache->conflict = 0;
+    cache->hit                  = 0;
+    cache->miss                 = 0;
+    cache->access               = 0;
+    cache->conflict             = 0;
+    cache->prefetcher_next_line = 0;
 
     printf("   Cache created successfully   \n");
     printf("Cache size:      %9d bytes\n", cache->total_size);
@@ -210,6 +213,18 @@ int cache_sim_access(cache_handle_t *cache, const uint64_t address) {
         case CACHE_SIM_L1_MISS:
             /* increment misses counter */
             cache->miss++;
+
+            /* if prefetcher next line is ON fetch next line */
+            if (1 == cache->next_line) {
+                cache->access_fn(cache, (line_id + cache->line_size));
+
+                /* increment misses counter */
+                cache->prefetcher_next_line++;
+
+                #ifdef DEBUG
+                printf("PREFET line id [%018p]\n", line_id + cache->line_size);
+                #endif
+            }
             break;
     }
 

@@ -120,6 +120,14 @@ typedef int (*reuse_fn_t)(cache_handle_t *, const uint64_t);
 typedef int (*policy_init_fn_t)(cache_handle_t *);
 typedef int (*policy_access_fn_t)(cache_handle_t *, const uint64_t);
 
+/* Type declaration: enum to hold different types of prefetcher */
+typedef enum {
+    PREFETCHER_ANY_TYPE,
+    PREFETCHER_NEXT_LINE,
+    PREFETCHER_STREAM,
+    PREFETCHER_INVALID
+} prefetcher_t;
+
 /* Cache structure */
 struct cache_handle {
     /* provided information */
@@ -141,11 +149,14 @@ struct cache_handle {
     reuse_fn_t reuse_fn;
     /* symbols mapping data */
     void *symbol_data;
+    /* prefetchers */
+    int next_line;
     /* performance counters */
     uint64_t access;
     uint64_t hit;
     uint64_t miss;
     uint64_t conflict;
+    uint64_t prefetcher_next_line;
 };
 
 /* Policy structure */

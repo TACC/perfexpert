@@ -27,6 +27,7 @@ libcache_sim_la_LDFLAGS = -lm -version-info 1:0:0 \
 libcache_sim_la_SOURCES = cache_sim.c \
 	cache_sim_conflict.c \
 	cache_sim_reuse.c \
+	cache_sim_prefetcher.c \
 	cache_sim_symbol.c \
 	cache_policy_lru.c
 
