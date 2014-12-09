@@ -30,6 +30,12 @@
 
 /* cache_sim_reuse_enable */
 int cache_sim_reuse_enable(cache_handle_t *cache, const uint64_t limit) {
+    /* sanity check: does cache exist? */
+    if (NULL == cache) {
+        printf("Error: cache does not exists\n");
+        return CACHE_SIM_ERROR;
+    }
+
     /* sanity check: already enabled with the same limit */
     if ((NULL != cache->reuse_data) && (limit == cache->reuse_limit)) {
         printf("Warning: reuse distance was already enabled\n");
@@ -44,6 +50,12 @@ int cache_sim_reuse_enable(cache_handle_t *cache, const uint64_t limit) {
             printf("Error: unable to redefine cache reuse limit\n");
             return CACHE_SIM_ERROR;
         }
+    }
+
+    /* sanity check: limit higher than zero */
+    if (0 >= limit) {
+        printf("Error: limit is smaller than 1\n");
+        return CACHE_SIM_ERROR;
     }
 
     /* variables declaration */
@@ -83,7 +95,7 @@ int cache_sim_reuse_enable(cache_handle_t *cache, const uint64_t limit) {
         cache->reuse_data = malloc(sizeof(list_t) +
             (cache->reuse_limit * sizeof(list_item_reuse_t)));
         if (NULL == cache->reuse_data) {
-            printf("unable to allocate memory to calculate reuse distance\n");
+            printf("Error: unable to allocate memory to reuse distance area\n");
             return CACHE_SIM_ERROR;
         }
 
@@ -118,6 +130,13 @@ int cache_sim_reuse_enable(cache_handle_t *cache, const uint64_t limit) {
 
 /* cache_sim_reuse_disable */
 int cache_sim_reuse_disable(cache_handle_t *cache) {
+    /* sanity check: does cache exist? */
+    if (NULL == cache) {
+        printf("Error: cache does not exists\n");
+        return CACHE_SIM_ERROR;
+    }
+
+    /* sanity check: already disabled */
     if (NULL == cache->reuse_data) {
         printf("Error: reuse distance is not enabled\n");
         return CACHE_SIM_ERROR;
@@ -233,8 +252,14 @@ int cache_sim_reuse_unlimited(cache_handle_t *cache, const uint64_t line_id) {
 
 /* cache_sim_reuse_get_age */
 uint64_t cache_sim_reuse_get_age(cache_handle_t *cache, const uint64_t line_id) {
+    /* sanity check: does cache exist? */
+    if (NULL == cache) {
+        printf("Error: cache does not exists\n");
+        return CACHE_SIM_ERROR;
+    }
+
     /* variable declarations */
-    list_item_reuse_t *item;
+    static list_item_reuse_t *item = NULL;
 
     /* for all elements in the list of lines... */
     for (item = (list_item_reuse_t *)((list_t *)cache->reuse_data)->head.next;

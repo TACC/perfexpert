@@ -31,6 +31,12 @@
 
 /* policy_lru_init */
 int policy_lru_init(cache_handle_t *cache) {
+    /* sanity check: does cache exist? */
+    if (NULL == cache) {
+        printf("Error: cache does not exists\n");
+        return CACHE_SIM_ERROR;
+    }
+
     /* variables declaration and initialization */
     void *ptr = NULL;
     uint64_t i = 0;
@@ -39,7 +45,7 @@ int policy_lru_init(cache_handle_t *cache) {
     ptr = malloc(sizeof(policy_lru_t) * cache->total_lines);
 
     if (NULL == ptr) {
-        printf("unable to allocate memory for cache data\n");
+        printf("Error: unable to allocate memory for cache data\n");
         return CACHE_SIM_ERROR;
     }
     cache->data = ptr;

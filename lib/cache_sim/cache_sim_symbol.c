@@ -31,6 +31,12 @@
 
 /* cache_sim_symbol_enable */
 int cache_sim_symbol_enable(cache_handle_t *cache) {
+    /* sanity check: does cache exist? */
+    if (NULL == cache) {
+        printf("Error: cache does not exists\n");
+        return CACHE_SIM_ERROR;
+    }
+
     /* sanity check: already enabled */
     if (NULL != cache->symbol_data) {
         printf("Warning: symbols tracking was already enabled\n");
@@ -64,6 +70,13 @@ int cache_sim_symbol_enable(cache_handle_t *cache) {
 
 /* cache_sim_symbol_disable */
 int cache_sim_symbol_disable(cache_handle_t *cache) {
+    /* sanity check: does cache exist? */
+    if (NULL == cache) {
+        printf("Error: cache does not exists\n");
+        return CACHE_SIM_ERROR;
+    }
+
+    /* sanity check: already disabled */
     if (NULL == cache->symbol_data) {
         printf("Error: symbols tracking is not enabled\n");
         return CACHE_SIM_ERROR;

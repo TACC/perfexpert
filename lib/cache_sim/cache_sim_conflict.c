@@ -30,6 +30,12 @@
 
 /* cache_sim_conflict_enable */
 int cache_sim_conflict_enable(cache_handle_t *cache) {
+    /* sanity check: does cache exist? */
+    if (NULL == cache) {
+        printf("Error: cache does not exists\n");
+        return CACHE_SIM_ERROR;
+    }
+
     /* reset conflicts counters */
     cache->conflict = 0;
 
