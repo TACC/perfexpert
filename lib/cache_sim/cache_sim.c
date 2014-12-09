@@ -213,7 +213,7 @@ int cache_sim_access(cache_handle_t *cache, const uint64_t address) {
             break;
     }
 
-    /* calculate reuse distance and check for associativity conflicts */
+    /* calculate reuse distance and check for set associative conflicts */
     if (NULL != cache->reuse_data) {
         /* check for set associativity conflicts */
         if ((cache->total_lines > cache_sim_reuse_get_age(cache, line_id)) &&
@@ -227,10 +227,10 @@ int cache_sim_access(cache_handle_t *cache, const uint64_t address) {
                 cache_sim_reuse_get_age(cache, line_id));
             #endif
 
-            rc = CACHE_SIM_L1_MISS_CONFLICT;
+            rc += CACHE_SIM_L1_MISS_CONFLICT;
         }
 
-        /* update reuse distance */
+        /* calculate reuse distance */
         cache->reuse_fn(cache, line_id);
     }
 
