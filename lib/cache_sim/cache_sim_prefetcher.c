@@ -35,14 +35,14 @@ int cache_sim_prefetcher_enable(cache_handle_t *cache, prefetcher_t type) {
         return CACHE_SIM_ERROR;
     }
 
-    /* enable prefetcher next line */
-    if ((PREFETCHER_ANY_TYPE == type) || (PREFETCHER_NEXT_LINE == type)) {
-        cache->next_line = 1;
+    /* enable prefetcher next line on a miss (single line prefetching) */
+    if (PREFETCHER_NEXT_LINE_SINGLE == type) {
+        cache->next_line = PREFETCHER_NEXT_LINE_SINGLE;
     }
 
-    /* enable prefetcher stream */
-    if ((PREFETCHER_ANY_TYPE == type) || (PREFETCHER_STREAM == type)) {
-
+    /* enable prefetcher next line on a miss (single line prefetching) */
+    if (PREFETCHER_NEXT_LINE_TAGGED == type) {
+        cache->next_line = PREFETCHER_NEXT_LINE_TAGGED;
     }
 
     /* unknown prefetcher type */
@@ -53,7 +53,11 @@ int cache_sim_prefetcher_enable(cache_handle_t *cache, prefetcher_t type) {
 
     /* be nice and print something... */
     printf("--------------------------------\n");
-    printf("Next line prefetcher: %10s\n", cache->next_line ? "ON" : "OFF");
+    printf("Next line prefetcher: %10s\n",
+        (PREFETCHER_INVALID == cache->next_line) ? "OFF" :
+            ((PREFETCHER_NEXT_LINE_SINGLE == cache->next_line) ? "SINGLE" :
+                (PREFETCHER_NEXT_LINE_TAGGED == cache->next_line) ? "TAGGED" :
+                    "UNKNOWN"));
     printf("      Hardware prefetcher       \n");
     printf("--------------------------------\n");
 
@@ -69,13 +73,9 @@ int cache_sim_prefetcher_disable(cache_handle_t *cache, prefetcher_t type) {
     }
 
     /* disable prefetcher next line */
-    if ((PREFETCHER_ANY_TYPE == type) || (PREFETCHER_NEXT_LINE == type)) {
-        cache->next_line = 0;
-    }
-
-    /* disable prefetcher stream */
-    if ((PREFETCHER_ANY_TYPE == type) || (PREFETCHER_STREAM == type)) {
-
+    if ((PREFETCHER_NEXT_LINE_SINGLE == type) ||
+        (PREFETCHER_NEXT_LINE_TAGGED == type)) {
+        cache->next_line = PREFETCHER_INVALID;
     }
 
     /* unknown prefetcher type */
@@ -86,7 +86,11 @@ int cache_sim_prefetcher_disable(cache_handle_t *cache, prefetcher_t type) {
 
     /* be nice and print something... */
     printf("--------------------------------\n");
-    printf("Next line prefetcher: %10s\n", cache->next_line ? "ON" : "OFF");
+    printf("Next line prefetcher: %10s\n",
+        (PREFETCHER_INVALID == cache->next_line) ? "OFF" :
+            ((PREFETCHER_NEXT_LINE_SINGLE == cache->next_line) ? "SINGLE" :
+                (PREFETCHER_NEXT_LINE_TAGGED == cache->next_line) ? "TAGGED" :
+                    "UNKNOWN"));
     printf("      Hardware prefetcher       \n");
     printf("--------------------------------\n");
 

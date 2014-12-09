@@ -65,7 +65,8 @@ int policy_lru_init(cache_handle_t *cache) {
 }
 
 /* policy_lru_read */
-int policy_lru_access(cache_handle_t *cache, const uint64_t line_id) {
+int policy_lru_access(cache_handle_t *cache, const uint64_t line_id,
+    const load_t load) {
     static policy_lru_t *base_addr = NULL;
     static policy_lru_t *lru = NULL;
     static uint64_t set = UINT64_MAX;
@@ -92,6 +93,14 @@ int policy_lru_access(cache_handle_t *cache, const uint64_t line_id) {
             printf("HIT    line id [%018p] set [%2d:%d]\n", line_id, set, i);
             #endif
 
+            /* if the hit was on a prefetched line */
+            if (LOAD_PREFETCH == base_addr->load) {
+                /* update the load reason */
+                base_addr->load = LOAD_ACCESS;
+
+                return (CACHE_SIM_L1_HIT + CACHE_SIM_L1_HIT_PREFETCH);
+            }
+
             return CACHE_SIM_L1_HIT;
         }
 
@@ -112,14 +121,27 @@ int policy_lru_access(cache_handle_t *cache, const uint64_t line_id) {
         base_addr++;
     }
 
-    /* if data was not found, load it and report that */
-    lru->age = cache->access;
-    lru->line_id = line_id;
-
+    /* if data was not found, report that and load it */
     #ifdef DEBUG
     printf("MISS   line id [%018p]\n", line_id);
-    printf("LOAD   line id [%018p] set [%2d:%d]\n", line_id, set, way);
+    printf("LOAD   line id [%018p] set [%2d:%d] load reason [%d]\n", line_id,
+        set, way, load);
     #endif
+
+    /* if the evicted line was prefetched and never accessed */
+    if (LOAD_PREFETCH == lru->load) {
+        /* load the data */
+        lru->age = cache->access;
+        lru->line_id = line_id;
+        lru->load = load;
+
+        return (CACHE_SIM_L1_MISS + CACHE_SIM_L1_PREFETCH_EVICT);
+    }
+
+    /* load the data */
+    lru->age = cache->access;
+    lru->line_id = line_id;
+    lru->load = load;
 
     return CACHE_SIM_L1_MISS;
 }

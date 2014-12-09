@@ -35,11 +35,14 @@ extern "C" {
 #endif
 
 int policy_lru_init(cache_handle_t *cache);
-int policy_lru_access(cache_handle_t *cache, const uint64_t line_id);
+int policy_lru_access(cache_handle_t *cache, const uint64_t line_id,
+	const load_t load);
 
 typedef struct {
     uint64_t line_id;
     uint64_t age;
+    uint8_t  load;
+    uint8_t  padding[15];
 } policy_lru_t;
 
 #ifdef __cplusplus

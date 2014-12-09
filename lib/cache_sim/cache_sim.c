@@ -87,6 +87,7 @@ int cache_sim_fini(cache_handle_t *cache) {
     printf("Cache hits:     %16"PRIu64"\n", cache->hit);
     printf(" -> rate        %15.2f%%\n",
         (((double)cache->hit / (double)cache->access) * 100));
+    printf(" -> prefetched  %16"PRIu64"\n", cache->prefetcher_hit);
     printf("Cache misses:   %16"PRIu64"\n", cache->miss);
     printf(" -> rate        %15.2f%%\n",
         (((double)cache->miss / (double)cache->access) * 100));
@@ -95,6 +96,7 @@ int cache_sim_fini(cache_handle_t *cache) {
         (((double)cache->conflict / (double)cache->miss) * 100));
     printf("Prefetcher:                     \n");
     printf(" -> next line   %16"PRIu64"\n", cache->prefetcher_next_line);
+    printf(" -> pollution   %16"PRIu64"\n", cache->prefetcher_evict);
     printf("  Cache finalized successfully  \n");
     printf("--------------------------------\n");
 
@@ -125,11 +127,21 @@ static cache_handle_t* cache_create(const unsigned int total_size,
     cache->total_sets    = cache->total_lines / associativity;
     cache->offset_length = (int)log2(line_size);
     cache->set_length    = (int)log2(cache->total_sets);
-    cache->access_fn     = NULL;
-    cache->data          = NULL;
-    cache->reuse_data    = NULL;
-    cache->reuse_limit   = 0;
-    cache->reuse_fn      = NULL;
+
+    /* replacement policy */
+    cache->access_fn = NULL;
+    cache->data      = NULL;
+
+    /* reused distance */
+    cache->reuse_data  = NULL;
+    cache->reuse_limit = 0;
+    cache->reuse_fn    = NULL;
+
+    /* symbols tracking */
+    cache->symbol_data = NULL;
+
+    /* prefetchers */
+    cache->next_line = PREFETCHER_INVALID;
 
     /* initialize performance counters */
     cache->hit                  = 0;
@@ -137,6 +149,8 @@ static cache_handle_t* cache_create(const unsigned int total_size,
     cache->access               = 0;
     cache->conflict             = 0;
     cache->prefetcher_next_line = 0;
+    cache->prefetcher_hit       = 0;
+    cache->prefetcher_evict     = 0;
 
     printf("   Cache created successfully   \n");
     printf("Cache size:      %9d bytes\n", cache->total_size);
@@ -205,20 +219,56 @@ int cache_sim_access(cache_handle_t *cache, const uint64_t address) {
     #endif
 
     /* call the replacement algorithm access function and evaluate the result */
-    switch (rc = cache->access_fn(cache, line_id)) {
+    switch (rc = cache->access_fn(cache, line_id, LOAD_ACCESS)) {
+        /* hit on a prefetched line */
+        case CACHE_SIM_L1_HIT + CACHE_SIM_L1_HIT_PREFETCH: // fallover!
+            /* increment prefetcher hits counter */
+            cache->prefetcher_hit++;
+
+            /* if the next line prefetcher is tagged, keep prefething */
+            if (PREFETCHER_NEXT_LINE_TAGGED == cache->next_line) {
+                /* if the next line load evicts a prefetched line */
+                if ((CACHE_SIM_L1_MISS + CACHE_SIM_L1_PREFETCH_EVICT) ==
+                    cache->access_fn(cache, (line_id + cache->line_size),
+                        LOAD_PREFETCH)) {
+                    /* increment prefetched evicted lines counter */
+                    cache->prefetcher_evict++;
+                }
+
+                /* increment prefetcher next line counter */
+                cache->prefetcher_next_line++;
+
+                #ifdef DEBUG
+                printf("PREFET line id [%018p]\n", line_id + cache->line_size);
+                #endif
+            }
+
+        /* hit on a pre-loaded cache line */
         case CACHE_SIM_L1_HIT:
             /* increment hits counter */
             cache->hit++;
             break;
+        /* miss on a prefetched line that have never been accessed */
+        case CACHE_SIM_L1_MISS + CACHE_SIM_L1_PREFETCH_EVICT: // fallover!
+            /* increment prefetched evicted lines counter */
+            cache->prefetcher_evict++;
+        /* common miss */
         case CACHE_SIM_L1_MISS:
             /* increment misses counter */
             cache->miss++;
 
             /* if prefetcher next line is ON fetch next line */
-            if (1 == cache->next_line) {
-                cache->access_fn(cache, (line_id + cache->line_size));
+            if ((PREFETCHER_NEXT_LINE_SINGLE == cache->next_line) ||
+               (PREFETCHER_NEXT_LINE_TAGGED == cache->next_line)) {
+                /* if the next line load evicts a prefetched line */
+                if ((CACHE_SIM_L1_MISS + CACHE_SIM_L1_PREFETCH_EVICT) ==
+                    cache->access_fn(cache, (line_id + cache->line_size),
+                        LOAD_PREFETCH)) {
+                    /* increment prefetched evicted lines counter */
+                    cache->prefetcher_evict++;
+                }
 
-                /* increment misses counter */
+                /* increment prefetcher next line counter */
                 cache->prefetcher_next_line++;
 
                 #ifdef DEBUG

@@ -38,9 +38,11 @@ extern "C" {
 #define CACHE_SIM_SUCCESS  0
 #define CACHE_SIM_ERROR    1
 
-#define CACHE_SIM_L1_HIT           32
-#define CACHE_SIM_L1_MISS          64
-#define CACHE_SIM_L1_MISS_CONFLICT 128
+#define CACHE_SIM_L1_HIT            16
+#define CACHE_SIM_L1_HIT_PREFETCH   32
+#define CACHE_SIM_L1_MISS           64
+#define CACHE_SIM_L1_MISS_CONFLICT  128
+#define CACHE_SIM_L1_PREFETCH_EVICT 256
 
 /* Macro to extract the ID (tag - offset), offset, set, and tag of an address */
 #ifndef CACHE_SIM_ADDRESS_TO_LINE_ID
@@ -115,18 +117,27 @@ typedef struct {
     char symbol[CACHE_SIM_SYMBOL_MAX_LENGTH];
 } list_item_symbol_t;
 
+/* Type declaration: enum to hold different types of prefetcher */
+typedef enum {
+    PREFETCHER_NEXT_LINE_SINGLE, // prefetch the next line when a miss occurs
+    PREFETCHER_NEXT_LINE_TAGGED, // prefetch the next line when a miss occurs
+                                 // and keep prefechting if a hit happens on a
+                                 // prefetched line
+    // PREFETCHER_STREAM,
+    PREFETCHER_INVALID
+} prefetcher_t;
+
+/* Type declaration: the reason why a line have been loaded into the cache */
+typedef enum {
+    LOAD_ACCESS,
+    LOAD_PREFETCH
+} load_t;
+
 /* Function type declarations */
 typedef int (*reuse_fn_t)(cache_handle_t *, const uint64_t);
 typedef int (*policy_init_fn_t)(cache_handle_t *);
-typedef int (*policy_access_fn_t)(cache_handle_t *, const uint64_t);
-
-/* Type declaration: enum to hold different types of prefetcher */
-typedef enum {
-    PREFETCHER_ANY_TYPE,
-    PREFETCHER_NEXT_LINE,
-    PREFETCHER_STREAM,
-    PREFETCHER_INVALID
-} prefetcher_t;
+typedef int (*policy_access_fn_t)(cache_handle_t *, const uint64_t,
+    const load_t);
 
 /* Cache structure */
 struct cache_handle {
@@ -147,16 +158,18 @@ struct cache_handle {
     void *reuse_data;
     uint64_t reuse_limit;
     reuse_fn_t reuse_fn;
-    /* symbols mapping data */
+    /* symbols tracking data */
     void *symbol_data;
     /* prefetchers */
     int next_line;
     /* performance counters */
-    uint64_t access;
-    uint64_t hit;
-    uint64_t miss;
-    uint64_t conflict;
-    uint64_t prefetcher_next_line;
+    uint64_t access;               // # of cache hits (inclusive)
+    uint64_t hit;                  // # of cache misses (inclusive)
+    uint64_t miss;                 // # of cache accesses (inclusive)
+    uint64_t conflict;             // # of set associative conflicts
+    uint64_t prefetcher_next_line; // # of lines loaded by this prefetcher
+    uint64_t prefetcher_hit;       // # of prefetched lines hit
+    uint64_t prefetcher_evict;     // # of evicted lines loaded by prefetcher
 };
 
 /* Policy structure */
