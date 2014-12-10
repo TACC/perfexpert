@@ -44,6 +44,9 @@ extern "C" {
 #define CACHE_SIM_L1_MISS_CONFLICT  128
 #define CACHE_SIM_L1_PREFETCH_EVICT 256
 
+/* Some limitations */
+#define CACHE_SIM_SYMBOL_MAX_LENGTH 40
+
 /* Macro to extract the ID (tag - offset), offset, set, and tag of an address */
 #ifndef CACHE_SIM_ADDRESS_TO_LINE_ID
 #define CACHE_SIM_ADDRESS_TO_LINE_ID(a) \
@@ -98,9 +101,9 @@ typedef struct {
 } list_item_reuse_t;
 
 /* Required to define the symbol list item type */
-#ifndef CACHE_SIM_SYMBOL_H_
-#include "cache_sim_symbol.h"
-#endif
+// #ifndef CACHE_SIM_SYMBOL_H_
+// #include "cache_sim_symbol.h"
+// #endif
 
 /* Types declaration: symbol list item (128 bytes) */
 typedef struct {
@@ -108,12 +111,14 @@ typedef struct {
     volatile list_item_t *next;
     volatile list_item_t *prev;
     list_t lines;
-    /* performance counters (32 bytes) */
+    /* performance counters (48 bytes) */
     uint64_t access;
     uint64_t hit;
     uint64_t miss;
     uint64_t conflict;
-    /* the symbols itself (56 bytes) */
+    uint64_t prefetcher_hit;
+    uint64_t prefetcher_evict;
+    /* the symbols itself (40 bytes) */
     char symbol[CACHE_SIM_SYMBOL_MAX_LENGTH];
 } list_item_symbol_t;
 
@@ -179,7 +184,7 @@ typedef struct {
     policy_access_fn_t access_fn;
 } policy_t;
 
-/* Function declaration */
+/* Functions declaration */
 cache_handle_t* cache_sim_init(const unsigned int total_size,
     const unsigned int line_size, const unsigned int associativity,
     const char *policy);

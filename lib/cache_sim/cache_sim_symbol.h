@@ -34,8 +34,6 @@ extern "C" {
 #include "cache_sim.h"
 #endif
 
-#define CACHE_SIM_SYMBOL_MAX_LENGTH 56
-
 /* Functions declaration */
 int cache_sim_symbol_enable(cache_handle_t *cache);
 int cache_sim_symbol_disable(cache_handle_t *cache);

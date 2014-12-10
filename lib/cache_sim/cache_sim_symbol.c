@@ -175,13 +175,32 @@ int cache_sim_symbol_access(cache_handle_t *cache, const uint64_t address,
 
     /* call the real access function and increment hit/miss counter */
     switch (rc = cache_sim_access(cache, address)) {
+        /* hit on a prefetched line */
+        case CACHE_SIM_L1_HIT + CACHE_SIM_L1_HIT_PREFETCH: // fallover
+            /* increment prefetcher hits counter */
+            item->prefetcher_hit++;
+        /* hit on a pre-loaded cache line */
         case CACHE_SIM_L1_HIT:
             /* increment hits counter */
             item->hit++;
             break;
-        case CACHE_SIM_L1_MISS_CONFLICT:
-            /* increment conflicted misses counter and rollover miss */
+
+        /* miss on a prefetched line that have never been accessed */
+        case CACHE_SIM_L1_MISS + CACHE_SIM_L1_PREFETCH_EVICT + CACHE_SIM_L1_MISS_CONFLICT: // fallover
+            /* increment conflicts counter */
             item->conflict++;
+        case CACHE_SIM_L1_MISS + CACHE_SIM_L1_PREFETCH_EVICT:
+            /* increment prefetched evicted lines counter */
+            item->prefetcher_evict++;
+            /* increment misses counter */
+            item->miss++;
+            break;
+
+        /* miss on a prefetched line that have never been accessed */
+        case CACHE_SIM_L1_MISS + CACHE_SIM_L1_MISS_CONFLICT: // fallover
+            /* increment conflicts counter */
+            item->conflict++;
+        /* common miss */
         case CACHE_SIM_L1_MISS:
             /* increment misses counter */
             item->miss++;
