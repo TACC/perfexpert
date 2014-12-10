@@ -32,11 +32,13 @@
 #include "cache_sim_reuse.h"
 #include "cache_sim_symbol.h"
 #include "cache_policy_lru.h"
+#include "cache_policy_plru.h"
 
 /* List of policies */
 static policy_t policies[] = {
-    { "lru", &policy_lru_init, &policy_lru_access },
-    { NULL,  NULL,             NULL,              }
+    { "lru",  &policy_lru_init,  &policy_lru_access  },
+    { "plru", &policy_plru_init, &policy_plru_access },
+    { NULL,   NULL,              NULL,               }
 };
 
 /* cache_sim_init */

@@ -29,6 +29,7 @@ libcache_sim_la_SOURCES = cache_sim.c \
 	cache_sim_reuse.c \
 	cache_sim_prefetcher.c \
 	cache_sim_symbol.c \
-	cache_policy_lru.c
+	cache_policy_lru.c \
+	cache_policy_plru.c
 
 # EOF
