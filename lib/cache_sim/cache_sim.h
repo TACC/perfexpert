@@ -47,34 +47,6 @@ extern "C" {
 /* Some limitations */
 #define CACHE_SIM_SYMBOL_MAX_LENGTH 40
 
-/* Macro to extract the ID (tag - offset), offset, set, and tag of an address */
-#ifndef CACHE_SIM_ADDRESS_TO_LINE_ID
-#define CACHE_SIM_ADDRESS_TO_LINE_ID(a) \
-    (a >>= cache->offset_length); \
-    (a <<= cache->offset_length);
-#endif
-
-#ifndef CACHE_SIM_ADDRESS_TO_OFFSET
-#define CACHE_SIM_ADDRESS_TO_OFFSET(a) \
-    (a <<= ((sizeof(uint64_t)*8) - cache->offset_length)); \
-    (a >>= ((sizeof(uint64_t)*8) - cache->offset_length));
-#endif
-
-#ifndef CACHE_SIM_ADDRESS_TO_SET
-#define CACHE_SIM_ADDRESS_TO_SET(a) \
-    (a <<= ((sizeof(uint64_t)*8) - cache->set_length - cache->offset_length)); \
-    (a >>= ((sizeof(uint64_t)*8) - cache->set_length));
-#endif
-
-#ifndef CACHE_SIM_ADDRESS_TO_TAG
-#define CACHE_SIM_ADDRESS_TO_TAG(a) \
-    (a >>= (cache->set_length + cache->offset_length));
-#endif
-
-#ifndef CACHE_SIM_LINE_ID_TO_SET
-#define CACHE_SIM_LINE_ID_TO_SET(a) CACHE_SIM_ADDRESS_TO_SET(a)
-#endif
-
 /* Types declaration: the cache itself */
 typedef struct cache_handle cache_handle_t;
 
@@ -195,29 +167,6 @@ static cache_handle_t* cache_create(const unsigned int total_size,
     const unsigned int line_size, const unsigned int associativity);
 static void cache_destroy(cache_handle_t *cache);
 static int set_policy(cache_handle_t *cache, const char *policy);
-
-static inline void list_prepend_item(list_t *list, list_item_t *item) {
-    item->next = list->head.next;
-    item->prev = &(list->head);
-    list->head.next->prev = item;
-    list->head.next = item;
-    list->len++;
-}
-
-static inline void list_remove_item(list_t *list, list_item_t *item) {
-    item->prev->next = item->next;
-    item->next->prev = item->prev;
-    list->len--;
-}
-
-static inline void list_movetop_item(list_t *list, list_item_t *item) {
-    item->prev->next = item->next;
-    item->next->prev = item->prev;
-    item->next = list->head.next;
-    item->prev = &(list->head);
-    list->head.next->prev = item;
-    list->head.next = item;
-}
 
 #ifdef __cplusplus
 }

@@ -28,6 +28,7 @@
 
 /* Cache simulator headers */
 #include "cache_sim.h"
+#include "cache_sim_util.h"
 #include "cache_policy_plru.h"
 
 /* policy_plru_init */
