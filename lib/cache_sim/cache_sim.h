@@ -35,14 +35,14 @@ extern "C" {
 #endif
 
 /* Return codes */
-#define CACHE_SIM_SUCCESS  0
-#define CACHE_SIM_ERROR    1
+#define CACHE_SIM_SUCCESS  0x000
+#define CACHE_SIM_ERROR    0x001
 
-#define CACHE_SIM_L1_HIT            16
-#define CACHE_SIM_L1_HIT_PREFETCH   32
-#define CACHE_SIM_L1_MISS           64
-#define CACHE_SIM_L1_MISS_CONFLICT  128
-#define CACHE_SIM_L1_PREFETCH_EVICT 256
+#define CACHE_SIM_L1_HIT            0x010
+#define CACHE_SIM_L1_HIT_PREFETCH   0x020
+#define CACHE_SIM_L1_MISS           0x040
+#define CACHE_SIM_L1_MISS_CONFLICT  0x080
+#define CACHE_SIM_L1_PREFETCH_EVICT 0x100
 
 /* Some limitations */
 #define CACHE_SIM_SYMBOL_MAX_LENGTH 40
