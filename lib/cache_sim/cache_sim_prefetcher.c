@@ -25,6 +25,7 @@
 
 /* Cache simulator headers */
 #include "cache_sim.h"
+#include "cache_sim_types.h"
 #include "cache_sim_prefetcher.h"
 
 /* cache_sim_prefetcher_enable */

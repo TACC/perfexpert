@@ -26,6 +26,7 @@
 
 /* Cache simulator headers */
 #include "cache_sim.h"
+#include "cache_sim_types.h"
 #include "cache_sim_util.h"
 #include "cache_sim_reuse.h"
 

@@ -19,8 +19,8 @@
  * $HEADER$
  */
 
-#ifndef CACHE_SIM_H_
-#define CACHE_SIM_H_
+#ifndef CACHE_SIM_TYPES_H_
+#define CACHE_SIM_TYPES_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -34,36 +34,24 @@ extern "C" {
 #include <stdint.h>
 #endif
 
-/* Return codes */
-#define CACHE_SIM_SUCCESS  0x000
-#define CACHE_SIM_ERROR    0x001
+#ifndef CACHE_SIM_H_
+#include "cache_sim.h"
+#endif
 
-#define CACHE_SIM_L1_HIT            0x010
-#define CACHE_SIM_L1_HIT_PREFETCH   0x020
-#define CACHE_SIM_L1_MISS           0x040
-#define CACHE_SIM_L1_MISS_CONFLICT  0x080
-#define CACHE_SIM_L1_PREFETCH_EVICT 0x100
-
-/* Some limitations */
-#define CACHE_SIM_SYMBOL_MAX_LENGTH 40
-
-/* Types declaration: the cache itself */
-typedef struct cache_handle cache_handle_t;
-
-/* Types declaration: list item and base type for items that are put in lists */
+/* Type declaration: list item and base type for items that are put in lists */
 typedef struct list_item list_item_t;
 struct list_item {
     volatile list_item_t *next;
     volatile list_item_t *prev;
 };
 
-/* Types declaration: list and base type for list containers */
+/* Type declaration: list and base type for list containers */
 typedef struct list {
     list_item_t head;
     volatile uint32_t len;
 } list_t;
 
-/* Types declaration: reuse list item (64 bytes) */
+/* Type declaration: reuse list item (64 bytes) */
 typedef struct {
     volatile list_item_t *next;
     volatile list_item_t *prev;
@@ -72,12 +60,7 @@ typedef struct {
     uint16_t padding[3]; // can be safely used for something else
 } list_item_reuse_t;
 
-/* Required to define the symbol list item type */
-// #ifndef CACHE_SIM_SYMBOL_H_
-// #include "cache_sim_symbol.h"
-// #endif
-
-/* Types declaration: symbol list item (128 bytes) */
+/* Type declaration: symbol list item (128 bytes) */
 typedef struct {
     /* list basic type and list of caches this symbol spans to (40 bytes) */
     volatile list_item_t *next;
@@ -116,8 +99,11 @@ typedef int (*policy_init_fn_t)(cache_handle_t *);
 typedef int (*policy_access_fn_t)(cache_handle_t *, const uint64_t,
     const load_t);
 
-/* Cache structure */
+/* Type declaration: cache structure */
 struct cache_handle {
+    /* make the cache 'listable' */
+    volatile list_item_t *next;
+    volatile list_item_t *prev;
     /* provided information */
     int total_size;
     int line_size;
@@ -131,7 +117,7 @@ struct cache_handle {
     policy_access_fn_t access_fn;
     /* data section (replacement algorithm dependent) */
     void *data;
-    /* reuse distance section */
+    /* reuse distance data */
     void *reuse_data;
     uint64_t reuse_limit;
     reuse_fn_t reuse_fn;
@@ -139,6 +125,10 @@ struct cache_handle {
     void *symbol_data;
     /* prefetchers */
     int next_line;
+    /* cache hierarchy */
+    int level;
+    list_t upper;
+    list_t lower;
     /* performance counters */
     uint64_t access;               // # of cache hits (inclusive)
     uint64_t hit;                  // # of cache misses (inclusive)
@@ -149,27 +139,15 @@ struct cache_handle {
     uint64_t prefetcher_evict;     // # of evicted lines loaded by prefetcher
 };
 
-/* Policy structure */
+/* Type declaration: policy structure */
 typedef struct {
     const char *name;
     policy_init_fn_t init_fn;
     policy_access_fn_t access_fn;
 } policy_t;
 
-/* Functions declaration */
-cache_handle_t* cache_sim_init(const unsigned int total_size,
-    const unsigned int line_size, const unsigned int associativity,
-    const char *policy);
-int cache_sim_fini(cache_handle_t *cache);
-int cache_sim_access(cache_handle_t *cache, const uint64_t address);
-
-static cache_handle_t* cache_create(const unsigned int total_size,
-    const unsigned int line_size, const unsigned int associativity);
-static void cache_destroy(cache_handle_t *cache);
-static int set_policy(cache_handle_t *cache, const char *policy);
-
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* CACHE_SIM_H_ */
+#endif /* CACHE_SIM_TYPES_H_ */
