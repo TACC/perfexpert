@@ -20,6 +20,7 @@
  */
 
 #include <iostream>
+#include <map>
 
 #include "histogram.h"
 #include "vector_stride_analysis.h"

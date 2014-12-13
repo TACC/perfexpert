@@ -21,6 +21,7 @@
 
 #include <cassert>
 #include <iostream>
+#include <map>
 
 #include "analysis_defs.h"
 #include "avl_tree.h"
@@ -82,7 +83,7 @@ static bool conflict(histogram_matrix_t& hist_matrix,
                 dist >= 0 && dist < DIST_INFINITY) {
             conflict = true;
 
-            tree_list[i]->set_distance(cache_line, DIST_INFINITY-1);
+            tree_list[i]->make_infinite_distance(cache_line);
 
             if (create_histogram_if_null(hist_matrix[i][var_idx],
                         DIST_INFINITY) < 0) {
@@ -104,7 +105,6 @@ static bool conflict(histogram_matrix_t& hist_matrix,
 static size_t calculate_distance(histogram_matrix_t& hist_matrix,
         avl_tree_list_t& tree_list, int num_cores, int core_id, size_t var_idx,
         size_t cache_line, short read_or_write, const int DIST_INFINITY) {
-    assert(tree_list[core_id]->contains(cache_line));
     if (conflict(hist_matrix, tree_list, num_cores, var_idx, core_id,
                 cache_line, read_or_write, DIST_INFINITY)) {
         return DIST_INFINITY;
@@ -305,18 +305,13 @@ int latency_analysis(const global_data_t& global_data,
                     size_t distance = 0;
                     histogram_t* hist = histogram_matrix[core_id][var_idx];
 
-                    if (tree->contains(cache_line)) {
-                        distance = calculate_distance(histogram_matrix,
-                                tree_list, num_cores, core_id, var_idx,
-                                cache_line, read_write, DIST_INFINITY);
+                    distance = calculate_distance(histogram_matrix, tree_list,
+                            num_cores, core_id, var_idx, cache_line, read_write,
+                            DIST_INFINITY);
 
-                        // Occupy the last bin in case of overflow.
-                        if (distance >= DIST_INFINITY)
-                            distance = DIST_INFINITY - 1;
-                    } else {
-                        // Record a reuse distance of infinity.
+                    // Occupy the last bin in case of overflow.
+                    if (distance >= DIST_INFINITY)
                         distance = DIST_INFINITY - 1;
-                    }
 
                     gsl_histogram_increment(hist, distance);
                     tree->insert(&mem_info);

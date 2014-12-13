@@ -1355,11 +1355,9 @@ void indigo__reuse_dist_c(int var_id, void* address) {
     size_t distance = DIST_INFINITY - 1;
     size_t cache_line = ADDR_TO_CACHE_LINE(mem_info.address);
 
-    if (tree->contains(cache_line)) {
-        distance = tree->get_distance(cache_line);
-        if (distance >= DIST_INFINITY) {
-            distance = DIST_INFINITY - 1;
-        }
+    distance = tree->get_distance(cache_line);
+    if (distance >= DIST_INFINITY) {
+        distance = DIST_INFINITY - 1;
     }
 
     histogram_list[var_id]->increment(distance, 1);
