@@ -31,6 +31,7 @@
 #include "latency_analysis.h"
 #include "stride_analysis.h"
 #include "vector_stride_analysis.h"
+#include "set_cache_conflict_analysis.h"
 
 int filter_low_freq_records(global_data_t& global_data) {
     mem_info_bucket_t& bucket = global_data.mem_info_bucket;
@@ -120,6 +121,9 @@ int analyze_records(const global_data_t& global_data, int analysis_flags,
 
         if ((code = latency_analysis(global_data, rd_list, conflict_list,
                         DIST_INFINITY)) < 0)
+            return code;
+
+        if ((code = set_cache_conflict_analysis(global_data)) < 0) 
             return code;
 
         print_reuse_distances(global_data, rd_list, DIST_INFINITY, info.bot);
