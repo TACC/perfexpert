@@ -1459,8 +1459,10 @@ void indigo__write_idx_c(const char* var_name, const int length) {
     }
 }
 
+extern "C" {
 void indigo__write_idx_f_(const char* var_name, const int* length) {
     indigo__write_idx_c(var_name, *length);
+}
 }
 
 static void create_output_file() {

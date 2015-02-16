@@ -185,147 +185,52 @@ static void getProcessorName(char* string) {
 extern "C" {
 #endif
 void indigo__exit();
-#if defined (__cplusplus)
-}
-#endif
 
-#if defined(__cplusplus)
-extern "C" {
-#endif
 void indigo__record_branch_c(int line_number, void* func_addr,
     int loop_line_number, int true_branch_count, int false_branch_count);
-#if defined (__cplusplus)
-}
-#endif
 
-#if defined(__cplusplus)
-extern "C" {
-#endif
 void indigo__vector_stride_c(int loop_line_number, int var_idx, void* addr,
     int type_size);
-#if defined (__cplusplus)
-}
-#endif
 
-#if defined(__cplusplus)
-extern "C" {
-#endif
 int indigo__aligncheck_c(int line_number, void* func_addr, int stream_count,
     int16_t dep_status, ...);
-#if defined (__cplusplus)
-}
-#endif
 
-#if defined(__cplusplus)
-extern "C" {
-#endif
 int indigo__sstore_aligncheck_c(int line_number, void* func_addr,
     int stream_count, int16_t dep_status, ...);
-#if defined (__cplusplus)
-}
-#endif
 
-#if defined(__cplusplus)
-extern "C" {
-#endif
 void indigo__overlap_check_c(int line_number, void* func_addr,
     int stream_count, ...);
-#if defined (__cplusplus)
-}
-#endif
 
-#if defined(__cplusplus)
-extern "C" {
-#endif
 void indigo__tripcount_check_c(int line_number, void* func_addr,
     int64_t trip_count);
-#if defined (__cplusplus)
-}
-#endif
 
-#if defined(__cplusplus)
-extern "C" {
-#endif
 void indigo__unknown_stride_check_c(int line_number, void* func_addr);
-#if defined (__cplusplus)
-}
-#endif
 
-#if defined(__cplusplus)
-extern "C" {
-#endif
 void indigo__stride_check_c(int line_number, void* func_addr, int stride);
-#if defined (__cplusplus)
-}
-#endif
 
-#if defined(__cplusplus)
-extern "C" {
-#endif
 void indigo__reuse_dist_c(int index, void* address);
-#if defined (__cplusplus)
-}
-#endif
 
-#if defined(__cplusplus)
-extern "C" {
-#endif
 void indigo__init_(int16_t create_file, int16_t enable_sampling);
-#if defined (__cplusplus)
-}
-#endif
 
-#if defined(__cplusplus)
-extern "C" {
-#endif
 void indigo__write_idx_c(const char* var_name, const int length);
-#if defined (__cplusplus)
-}
-#endif
 
-#if defined(__cplusplus)
-extern "C" {
-#endif
 void indigo__gen_trace_c(int read_write, int line_number, void* base,
         void* addr, int var_idx);
-#if defined (__cplusplus)
-}
-#endif
 
-#if defined(__cplusplus)
-extern "C" {
-#endif
 void indigo__gen_trace_f(int *read_write, int *line_number, void* base,
         void* addr, int *var_idx);
-#if defined (__cplusplus)
-}
-#endif
 
-#if defined(__cplusplus)
-extern "C" {
-#endif
 void indigo__record_c(int read_write, int line_number, void* addr,
         int var_idx, int type_size);
-#if defined (__cplusplus)
-}
-#endif
 
-#if defined(__cplusplus)
-extern "C" {
-#endif
 void indigo__record_f_(int *read_write, int *line_number, void* addr,
         int *var_idx, int* type_size);
-#if defined (__cplusplus)
-}
-#endif
 
-#if defined(__cplusplus)
-extern "C" {
-#endif
-void indigo__write_idx_c(const char* var_name, const int length);
+    void indigo__write_idx_c(const char* var_name, const int length);
 #if defined (__cplusplus)
 }
 #endif
+void indigo__write_idx_f_(const char* var_name, const int length);
 
 // XXX: Don't change the order of the elements of the enum!
 // XXX: The order is used in arithmetic comparison.

@@ -236,9 +236,9 @@ uint8_t instrument(macpo_options_t* macpo_options, const char* args[],
             // FIXME: ROSE tests seem to be broken,
             // operand of AddressOfOp is not allowed to be an l-value.
             // AstTests::runAllTests(project);
-            return backend(project) == 0 ? 0 : -4;
+            /* Disabling backend of macpo.sh. Need to compile separately. */
+            // return backend(project) == 0 ? 0 : -4;
         }
-
         project->unparse();
 
         if (options.base_compiler.size() > 0) {
