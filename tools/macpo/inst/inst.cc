@@ -205,6 +205,8 @@ int parse_argument(char* arg, macpo_options_t& macpo_options) {
         char* name = reinterpret_cast<char*>(alloc);
         snprintf(name, value.size() + 1, "%s", value.c_str());
         macpo_options.base_compiler = name;
+    } else if (option == "dynamic_inst") {
+        set_dynamic_instrumentation_flag(&macpo_options, 1);
     } else {
         return -1;
     }

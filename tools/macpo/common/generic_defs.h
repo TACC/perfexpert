@@ -76,6 +76,7 @@ typedef struct _tag_options_t {
     bool no_compile;
     bool disable_sampling;
     bool profile_analysis;
+    bool dynamic_inst;
     std::string base_compiler;
     std::string backup_filename;
     location_list_t location_list;
@@ -153,6 +154,7 @@ typedef struct _tag_options_t {
         no_compile = false;
         disable_sampling = false;
         profile_analysis = false;
+        dynamic_inst = false;
 
         backup_filename.clear();
         base_compiler.clear();

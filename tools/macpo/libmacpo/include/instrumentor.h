@@ -39,10 +39,13 @@ class instrumentor_t : public AstTopDownProcessing<attrib> {
     const statement_list_t::iterator stmt_begin();
     const statement_list_t::iterator stmt_end();
 
+    void set_dynamic_instrumentation(bool);
+
  private:
     statement_list_t statement_list;
     name_list_t stream_list;
     analysis_profile_t analysis_profile;
+    bool use_dyanmic_inst;
 };
 
 #endif  // TOOLS_MACPO_INST_INCLUDE_INSTRUMENTOR_H_

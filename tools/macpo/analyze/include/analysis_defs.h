@@ -25,10 +25,10 @@
 #include <vector>
 #include <gsl/gsl_histogram.h>
 
-#include "avl_tree.h"
-#include "generic_defs.h"
-#include "macpo_record.h"
-#include "macpo_record_cxx.h"
+#include "tools/macpo/common/avl_tree.h"
+#include "tools/macpo/common/generic_defs.h"
+#include "tools/macpo/common/macpo_record.h"
+#include "tools/macpo/common/macpo_record_cxx.h"
 
 typedef gsl_histogram histogram_t;
 

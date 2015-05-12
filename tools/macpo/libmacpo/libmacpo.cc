@@ -64,6 +64,14 @@ void set_disable_sampling_flag(macpo_options_t* macpo_options, uint8_t flag) {
     macpo_options->disable_sampling_flag = flag;
 }
 
+void set_dynamic_instrumentation_flag(macpo_options_t *macpo_options, uint8_t flag) {
+    if (macpo_options == NULL) {
+        return;
+    }
+
+    macpo_options->dynamic_inst_flag = flag;
+}
+
 uint8_t get_profiling_flag(const macpo_options_t* macpo_options) {
     if (macpo_options == NULL) {
         return -1;
@@ -188,6 +196,7 @@ static options_t convert_macpo_options(macpo_options_t* macpo_options) {
     options.no_compile          = macpo_options->no_compile_flag == 1;
     options.disable_sampling    = macpo_options->disable_sampling_flag == 1;
     options.profile_analysis    = macpo_options->profiling_flag == 1;
+    options.dynamic_inst        = macpo_options->dynamic_inst_flag == 1;
 
     if (macpo_options->backup_filename) {
         options.backup_filename = std::string(macpo_options->backup_filename);
@@ -227,6 +236,9 @@ uint8_t instrument(macpo_options_t* macpo_options, const char* args[],
     try {
         SgProject *project = project = frontend(arguments);
         ROSE_ASSERT(project != NULL);
+
+        // uncomment to generate dot file to view AST
+        //generateDOT(*project);
 
         if (midend(project, options) == false) {
             return -3;

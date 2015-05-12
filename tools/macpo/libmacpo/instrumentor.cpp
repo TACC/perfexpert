@@ -114,22 +114,46 @@ attrib instrumentor_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
         param_line_number->set_endOfConstruct(fileInfo);
         param_idx->set_endOfConstruct(fileInfo);
         param_read_write->set_endOfConstruct(fileInfo);
-
-        std::string function_name = SageInterface::is_Fortran_language() ?
-            "indigo__record_f" : "indigo__record_c";
+        std::string function_name = "";
+        if (use_dyanmic_inst) {
+            function_name = SageInterface::is_Fortran_language() ?
+                "indigo__process_f" : "indigo__process_c";
+        } else {
+            function_name = SageInterface::is_Fortran_language() ?
+                "indigo__record_f" : "indigo__record_c";
+        }
+    
 
         SgType* type = expr->get_type();
-        SgSizeOfOp* size_of_op = new SgSizeOfOp(fileInfo, NULL, type, type);
-        size_of_op->set_endOfConstruct(fileInfo);
+        SgSizeOfOp* size_of_op;
+        SgExpression *storage_size_op;
+        if (!SageInterface::is_Fortran_language()) {
+            size_of_op = new SgSizeOfOp(fileInfo, NULL, type, type);
+            size_of_op->set_endOfConstruct(fileInfo);
+            ROSE_ASSERT(size_of_op);
+        } else {
+            // SgSizeofOp doesn't work for fortran.
+            // storage_size gives the size of one element of given array.
+            std::vector<SgExpression*> storage_size_params;
+            SgVarRefExp *ref_param = buildVarRefExp(SgName(stream), containingBB);
+            storage_size_params.push_back(ref_param);
 
-        ROSE_ASSERT(size_of_op);
+            SgExprListExp* storage_size_params_list =  SageBuilder::buildExprListExp(storage_size_params);
+            storage_size_op = SageBuilder::buildFunctionCallExp ("storage_size", type, storage_size_params_list, containingBB);
+        }
+
 
         std::vector<SgExpression*> params;
         params.push_back(param_read_write);
         params.push_back(param_line_number);
         params.push_back(param_addr);
         params.push_back(param_idx);
-        params.push_back(size_of_op);
+
+        if (SageInterface::is_Fortran_language()) {
+            params.push_back(storage_size_op);
+        } else {
+            params.push_back(size_of_op);
+        }
 
         statement_info_t statement_info;
         statement_info.statement = ir_methods::prepare_call_statement(
@@ -153,4 +177,8 @@ const statement_list_t::iterator instrumentor_t::stmt_begin() {
 
 const statement_list_t::iterator instrumentor_t::stmt_end() {
     return statement_list.end();
+}
+
+void instrumentor_t::set_dynamic_instrumentation(bool dyanmic_inst) {
+    use_dyanmic_inst = dyanmic_inst;
 }

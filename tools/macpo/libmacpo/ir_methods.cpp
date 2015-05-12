@@ -1236,7 +1236,6 @@ SgExprStatement* ir_methods::prepare_call_statement(SgBasicBlock* bb,
         const std::string& function_name, const std::vector<SgExpression*>&
         params, const SgNode* reference_statement) {
     ROSE_ASSERT(reference_statement);
-
     SgNode* parent = bb->get_parent();
     SgNode* ref_parent = reference_statement->get_parent();
 
@@ -1291,7 +1290,7 @@ std::string ir_methods::strip_index_expr(const std::string& stream_name) {
 
     // For fortran array notation
     while (return_string.length() > 0 &&
-        return_string.at(return_string.length()-1) == ')') {
+        return_string.at(return_string.length()-1) == ')' && is_Fortran_language()) {
         // Strip off the last [.*]
         unsigned index = return_string.find_last_of('(');
         return_string = return_string.substr(0, index);

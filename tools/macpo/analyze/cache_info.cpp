@@ -2,7 +2,7 @@
 #include <hwloc.h>
 #include <iostream>
 
-#include "cache_info.h"
+#include "tools/macpo/analyze/include/cache_info.h"
 
 int update_cache_fields(cache_data_t& cache_data, size_t cache_level,
         size_t cache_size, size_t line_size, size_t associativity) {

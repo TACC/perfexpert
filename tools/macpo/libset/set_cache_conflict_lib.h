@@ -19,19 +19,21 @@
  * $HEADER$
  */
 
-#ifndef SET_CACHE_CONFLICT_ANALYSIS_H_ 
-#define SET_CACHE_CONFLICT_ANALYSIS_H_ 
+#ifndef SET_CACHE_CONFLICT_LIB_H_ 
+#define SET_CACHE_CONFLICT_LIB_H_ 
 
-#include "analysis_defs.h"
-#include "histogram.h"
+#if defined(__cplusplus)
+extern "C" {
+    void indigo__process_c(int read_write, int line_number, void* addr,
+                    int var_idx, int type_size);
 
-// This method iterates through the trace and based on reuse distance
-// (maintained using AVL tree), calculates the conflicts.
-int set_cache_conflict_analysis(const global_data_t& global_data);
+    void indigo__process_f_(int *read_write, int *line_number, void* addr,
+                    int *var_idx, int* type_size);
 
-// this method returns the set number to which an address
-// maps to in a cache
-unsigned address_to_set(size_t address);
+void indigo_set_cache_init();
+void indigo__end();
+};
+#endif
 
 // this struct is used to store a coflict when we are
 // 'almost' certain. There are no probabilities involved.
@@ -69,7 +71,14 @@ struct cache_stats_t {
     }
 };
 
-typedef std::vector<conflict_t> conflict_list_t;
-typedef std::vector<conflict_prob_t> conflict_prob_list_t;
+
+/*
+ * Static variables
+ *
+ * */
+
+int num_cores; // total number of cores on the current system
+
+// estoy en libset
 
 #endif /* SET_CACHE_CONFLICT_ANALYSIS_H_ */

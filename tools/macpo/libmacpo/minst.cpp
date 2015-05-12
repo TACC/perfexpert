@@ -49,6 +49,9 @@ bool midend(SgProject* project, options_t& options) {
         return true;
     }
 
+    // uncomment to generate a .dot graph
+    // generateDOT(*project);
+
     SgFilePtrList files = project->get_fileList();
     if (options.backup_filename.size()) {
         // We need to save the input file to a backup file.
@@ -201,6 +204,7 @@ const analysis_profile_list MINST::run_analysis(SgNode* node, int16_t action) {
         insert_map_function(node);
 
         instrumentor_t inst;
+        inst.set_dynamic_instrumentation(options.dynamic_inst);
         inst.traverse(node, attrib());
 
         // Pull information from AST traversal.
@@ -379,8 +383,14 @@ void MINST::analyze_node(SgNode* node, int16_t action) {
 void MINST::add_hooks_to_main_function(SgFunctionDefinition* main_def) {
     // Add header file for indigo's record function
     ROSE_ASSERT(global_node);
-    if (!SageInterface::is_Fortran_language())
+    if (!SageInterface::is_Fortran_language()) {
         insertHeader("mrt.h", PreprocessingInfo::after, false, global_node);
+
+        if (options.dynamic_inst) {
+            insertHeader("set_cache_conflict_lib.h", PreprocessingInfo::after, false,
+                            global_node);
+        }
+    }
 
     SgLocatedNode* located_node = reinterpret_cast<SgLocatedNode*>(main_def);
     Sg_File_Info* file_info = located_node->get_file_info();
@@ -401,6 +411,19 @@ void MINST::add_hooks_to_main_function(SgFunctionDefinition* main_def) {
             break;
         }
     }
+
+    SgStatement *last_stmt = NULL;
+    for (SgStatementPtrList::iterator it = stmts.end(); it != stmts.begin();
+            it--) {
+        last_stmt = *it;
+
+        if(reinterpret_cast<SgReturnStmt*>(last_stmt)) {
+            break;
+        }
+        it--;
+    }
+
+    ROSE_ASSERT(last_stmt);
 
     if (statement == NULL) {
         return;
@@ -457,6 +480,15 @@ void MINST::add_hooks_to_main_function(SgFunctionDefinition* main_def) {
     insertStatementBefore(statement, expr_stmt);
     ROSE_ASSERT(expr_stmt);
 
+    if (options.dynamic_inst == true) {
+        SgExprStatement* end_stmt = NULL;
+        end_stmt = ir_methods::prepare_call_statement(body, "indigo__end", empty_params,
+                last_stmt);
+        SgStatementPtrList::iterator it = stmts.end();
+        insertStatementAfter(last_stmt, end_stmt);
+        ROSE_ASSERT(end_stmt);
+    }
+
     if (insert_map_call) {
         SgExprStatement* map_stmt = NULL;
         map_stmt = ir_methods::prepare_call_statement(body,
@@ -491,6 +523,18 @@ void MINST::visit(SgNode* node) {
 
     bool main_def = false;
     SgFunctionDefinition* def_node = isSgFunctionDefinition(node);
+
+    
+    if (SageInterface::is_Fortran_language()) {
+        std::cout << "It is Fortan!!" << std::endl;
+        SgNode *parent = node->get_parent();
+        SgProgramHeaderStatement *program_node = isSgProgramHeaderStatement(parent);
+        if (program_node) {
+            std::cout << "Main node found" << std::endl;
+            main_def = true;
+        }
+    }
+
     if (def_node) {
         SgFunctionDeclaration* decl_node = def_node->get_declaration();
         if (decl_node->get_name().getString() == "main") {
@@ -542,6 +586,10 @@ void MINST::visit(SgNode* node) {
         if (!SageInterface::is_Fortran_language()) {
             insertHeader("mrt.h", PreprocessingInfo::after, false,
                     global_node);
+            if (options.dynamic_inst) {
+                insertHeader("set_cache_conflict_lib.h", PreprocessingInfo::after, false,
+                        global_node);
+            }
         }
 
         file_list.push_back(_this_file_name);

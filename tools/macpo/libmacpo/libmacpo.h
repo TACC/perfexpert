@@ -37,6 +37,7 @@ typedef struct {
     uint8_t no_compile_flag;
     uint8_t disable_sampling_flag;
     uint8_t profiling_flag;
+    uint8_t dynamic_inst_flag;
 
     const char* base_compiler;
     const char* backup_filename;
@@ -47,6 +48,8 @@ typedef struct {
 extern "C" {
 uint8_t get_no_compile_flag(const macpo_options_t* macpo_options);
 void set_no_compile_flag(macpo_options_t* macpo_options, uint8_t flag);
+void set_dynamic_instrumentation_flag(macpo_options_t *macpo_options,
+        uint8_t flag);
 
 uint8_t get_disable_sampling_flag(const macpo_options_t* macpo_options);
 void set_disable_sampling_flag(macpo_options_t* macpo_options, uint8_t flag);

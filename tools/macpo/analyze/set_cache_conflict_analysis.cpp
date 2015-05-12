@@ -25,7 +25,7 @@
 #include <string>
 
 #include "analysis_defs.h"
-#include "avl_tree.h"
+#include "reuse_distance.h"
 #include "histogram.h"
 #include <iostream>
 
@@ -34,6 +34,8 @@
 
 // TODO(goyalankit): remove hardcoded associativity
 #define ASSOCIATIVITY 8
+
+typedef std::vector<reuse_distance_manager *> reuse_distance_list_t;
 
 // creates a bit mask with bits between a and b from the right as 1.
 // example: b = 4, a = 2 => 0000001100
@@ -87,25 +89,35 @@ void print_set_conflicts(std::vector<conflict_list_t> &conflicts,
     }
 }
 
+void printCacheInformation(cache_data_t cache_data, int number_of_sets) {
+    std::cout << "----- Cache Information ----------" << std::endl;
+    std::cout << "Cache size:            " << cache_data.size << std::endl;
+    std::cout << "Cache line size:       " << cache_data.line_size << std::endl;
+    std::cout << "Number of cache lines: " << (cache_data.size / cache_data.line_size) << std::endl;
+    std::cout << "Cache associativity:   " << ASSOCIATIVITY << std::endl;
+    std::cout << "Number of sets:        " << number_of_sets <<  std::endl;
+}
+
+
 int set_cache_conflict_analysis(const global_data_t& global_data) {
     const mem_info_bucket_t& bucket = global_data.mem_info_bucket;
     const int num_cores = sysconf(_SC_NPROCESSORS_CONF);
     const int num_streams = global_data.stream_list.size();
     cache_data_t l1_data = global_data.l1_data;
     size_t l1_cache_lines = l1_data.size / l1_data.line_size;
-
     l1_data.associativity = ASSOCIATIVITY;
+    cache_stats_t cache_stats;
+
     const int num_sets = l1_data.size/
         (l1_data.line_size  * l1_data.associativity);
     std::vector< conflict_list_t > set_conflicts_per_core_for_l1_cache(num_cores);
-
-    // list of per set avl trees for each core
-    std::vector<avl_tree_list_t *> avl_trees_per_core(num_cores);
+    // list of per set reuse distance manager for each core
+    std::vector<reuse_distance_list_t *> rd_trees_per_core(num_cores);
 
     for (int k = 0; k < num_cores; k++) {
-        avl_trees_per_core[k] = new avl_tree_list_t(num_sets);
+        rd_trees_per_core[k] = new reuse_distance_list_t(num_sets);
         for (int l = 0; l < num_sets; l++) {
-            (*avl_trees_per_core[k])[l] = new avl_tree();
+            (*rd_trees_per_core[k])[l] = new reuse_distance_manager();
         }
     }
 
@@ -119,37 +131,54 @@ int set_cache_conflict_analysis(const global_data_t& global_data) {
 
     for (int i = 0; i < bucket.size(); i++) {
         const mem_info_list_t& list = bucket.at(i);
-
         unsigned set_id = 0;
         long reuse_distance;
         size_t core_id;
         size_t var_idx, cache_line;
+
         for (int j = 0; j < list.size(); j++) {
             const mem_info_t& mem_info = list.at(j);
             var_idx = mem_info.var_idx;
             cache_line = ADDR_TO_CACHE_LINE(mem_info.address);
             set_id = address_to_set(mem_info.address);
             core_id = mem_info.coreID;
-            avl_tree_list_t &set_avl_list = (*avl_trees_per_core[core_id]);
+            reuse_distance_list_t &set_rd_list = (*rd_trees_per_core[core_id]);
             conflict_list_t &set_conflicts_for_l1_cache =
                 set_conflicts_per_core_for_l1_cache[core_id];
 
+            cache_stats.addr_accesses++;
             // Quick validation check
             if (core_id >= 0 && core_id < num_cores ||
                     var_idx >= 0 && var_idx < num_streams) {
                 // if address is already seen => not a cold miss
-                reuse_distance = set_avl_list[set_id]->get_distance(cache_line);
-                if (reuse_distance != -1) {   
+                reuse_distance = set_rd_list[set_id]->get_distance(cache_line);
+                if (reuse_distance != -1) {
                     // L1 conflicts
                     if (reuse_distance > l1_data.associativity && reuse_distance < l1_cache_lines) {
                         conflict_t conflict(set_id, var_idx);
                         set_conflicts_for_l1_cache.push_back(conflict);
+                        cache_stats.addr_conflict_misses++;
+                    } else if (reuse_distance >= l1_cache_lines){
+                        cache_stats.addr_capacity_misses++;
+                    } else{
+                        cache_stats.addr_hits++;
                     }
+                } else {
+                    cache_stats.addr_cold_misses++;
                 }
-                set_avl_list[set_id]->insert(&mem_info);
+                set_rd_list[set_id]->insert(cache_line);
+            } else {
+                std::cout << "Fatal Mistake" << std::endl;
             }
         }
     }
+    std::cout << "-----------------------------" << std::endl;
+    std::cout << "Total Address Accesses " <<  cache_stats.addr_accesses << std::endl;
+    std::cout << "Total Address Cold Misses " <<  cache_stats.addr_cold_misses << std::endl;
+    std::cout << "Total Address Conflict Misses   " <<  cache_stats.addr_conflict_misses << std::endl;
+    std::cout << "Total Address Capacity Misses   " <<  cache_stats.addr_capacity_misses << std::endl;
+    std::cout << "Total Address Hits     " <<  cache_stats.addr_hits << std::endl;
+    std::cout << "-----------------------------" << std::endl;
 
     print_set_conflicts(set_conflicts_per_core_for_l1_cache, num_sets, global_data.stream_list);
 

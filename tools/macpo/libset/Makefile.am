@@ -19,15 +19,11 @@
 # $HEADER$
 #
 
-lib_LTLIBRARIES = libmacpo.la
+lib_LTLIBRARIES = libset.la 
 
-libmacpo_la_SOURCES = libmacpo.cc argparse.cpp minst.cpp instrumentor.cpp \
-                streams.cpp aligncheck.cpp ir_methods.cpp loop_traversal.cpp \
-                tracer.cpp generic_vars.cpp vector_strides.cpp \
-                analysis_profile.cpp tripcount.cpp branchpath.cpp \
-                pntr_overlap.cpp stride_check.cpp traversal.cpp reuse_dist.cpp
+libset_la_SOURCES = ../analyze/cache_info.cpp set_cache_conflict_lib.cpp
 
-libmacpo_la_CXXFLAGS = -I. -Wno-deprecated -I$(srcdir)/include \
-                -I$(srcdir)/../common
+libset_la_CXXFLAGS = -I. -Wno-deprecated -I$(srcdir)/../../../ -fopenmp
+#libcache_la_CXXFLAGS = -I. -Wno-deprecated -I$(srcdir)/../../../ -fopenmp
 
-include_HEADERS = libmacpo.h
+include_HEADERS = set_cache_conflict_lib.h
