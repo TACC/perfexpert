@@ -413,7 +413,9 @@ void MINST::add_hooks_to_main_function(SgFunctionDefinition* main_def) {
     }
 
     SgStatement *last_stmt = NULL;
-    for (SgStatementPtrList::iterator it = stmts.end(); it != stmts.begin();
+    SgStatementPtrList::iterator it = stmts.end();
+    --it; // skip the null
+    for (; it != stmts.begin();
             it--) {
         last_stmt = *it;
 
@@ -484,10 +486,10 @@ void MINST::add_hooks_to_main_function(SgFunctionDefinition* main_def) {
         SgExprStatement* end_stmt = NULL;
         end_stmt = ir_methods::prepare_call_statement(body, "indigo__end", empty_params,
                 last_stmt);
-        SgStatementPtrList::iterator it = stmts.end();
-        insertStatementAfter(last_stmt, end_stmt);
+        insertStatementBefore(last_stmt, end_stmt);
         ROSE_ASSERT(end_stmt);
     }
+
 
     if (insert_map_call) {
         SgExprStatement* map_stmt = NULL;
@@ -498,6 +500,7 @@ void MINST::add_hooks_to_main_function(SgFunctionDefinition* main_def) {
 
         insert_map_prototype(main_def);
     }
+
 }
 
 void MINST::visit(SgNode* node) {
