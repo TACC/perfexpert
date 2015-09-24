@@ -37,7 +37,7 @@
 
 #include "actions.h"
 
-#define mprefix "[macpo] "
+#define macpoprefix "[macpo] "
 
 typedef struct {
     int16_t action;
