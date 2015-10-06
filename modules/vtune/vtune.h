@@ -67,7 +67,10 @@ extern perfexpert_module_vtune_t myself_module;
 /* Module constants */
 #define VTUNE_DATABASE ""
 #define VTUNE_CL_BIN   "amplxe-cl"
-
+#define VTUNE_ACT_COLLECT  "-collect"
+#define VTUNE_ACT_COLLECTWITH "-collect-with"
+#define VTUNE_ACT_REPORT   "-report"
+#define VTUNE_RPT_HW       "hw-events"
 /* Module interface */
 int module_load(void);
 int module_init(void);
@@ -79,6 +82,9 @@ int module_set_event(const char *name);
 int module_query_event(const char *name);
 
 /* Function declarations */
+int create_report (const char* results_folder, const char* parse_file);
+
+int parse (const char * parse_file);
 int run_amplxe_cl(void);
 
 #ifdef __cplusplus

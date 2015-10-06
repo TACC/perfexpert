@@ -44,6 +44,121 @@ extern "C" {
 #include "common/perfexpert_time.h"
 #include "install_dirs.h"
 
+// This function takes the output of running VTune and creates a report CSV file
+// The results of running VTune are in results_folder
+// The output of this function is in parse_file
+// The command it executes is like:
+    // amplxe-cl -R hw-events -r results_folder  -group-by=function -format=csv -report-output=parse_file -csv-delimiter=',' 
+int create_report (const char* results_folder, const char* parse_file) {
+    struct timespec time_start, time_end, time_diff;
+    char *argv[MAX_ARGUMENTS_COUNT];
+    int argc = 0, i, rc;
+    char buffer[MAX_BUFFER_SIZE];
+    test_t test;
+
+    argv[argc] = VTUNE_CL_BIN;
+    argc++;
+    argv[argc] = VTUNE_ACT_REPORT;
+    argc++;
+    argv[argc] = VTUNE_RPT_HW;
+    argc++;
+    argv[argc] = "-r";
+    argc++;
+    argv[argc] = results_folder;
+    argc++;
+    argv[argc] = "-group-by=function";
+    argc++;
+    argv[argc] = "-format=csv";
+    argc++;
+    strcpy (buffer, "-report-output=");
+    strcat (buffer, parse_file);
+    argv[argc] = buffer;
+    argc++;
+    argv[argc] = "-csv-delimiter=','";
+    argc++;
+
+    argv[argc] = NULL;
+
+    /* Not using OUTPUT_VERBOSE because I want only one line */
+    if (8 <= globals.verbose) {
+        printf("%s    %s", PROGRAM_PREFIX, _YELLOW("command line:"));
+        for (i = 0; i < argc; i++) {
+            printf(" %s", argv[i]);
+        }   
+        printf("\n");
+    } 
+    /* The super-ninja test sctructure */
+    PERFEXPERT_ALLOC(char, test.output, (strlen(globals.moduledir) + 14));
+    sprintf(test.output, "%s/vtune.output", globals.moduledir);
+    test.input = my_module_globals.inputfile;
+    test.info = globals.program;
+
+    /* fork_and_wait_and_pray */
+    rc = perfexpert_fork_and_wait(&test, (char **)argv);
+    clock_gettime(CLOCK_MONOTONIC, &time_start);
+
+    /* Evaluate results if required to */
+    if (PERFEXPERT_FALSE == my_module_globals.ignore_return_code) {
+        switch (rc) {
+            case PERFEXPERT_FAILURE:
+            case PERFEXPERT_ERROR:
+                OUTPUT(("%s (return code: %d) Usually, this means that an error"
+                    " happened during the program execution. To see the program"
+                    "'s output, check the content of this file: [%s]. If you "
+                    "want to PerfExpert ignore the return code next time you "
+                    "run this program, set the 'return-code' option for the "
+                    "Vtune module. See 'perfepxert -H vtune' for details.",
+                    _ERROR("the target program returned non-zero"), rc,
+                    test.output));
+                return PERFEXPERT_ERROR;
+
+            case PERFEXPERT_SUCCESS:
+                OUTPUT_VERBOSE((7, "[ %s  ]", _BOLDGREEN("OK")));
+                break;
+
+            default:
+                break;
+        }
+    }
+
+    /* Calculate and display runtime */
+    clock_gettime(CLOCK_MONOTONIC, &time_end);
+    perfexpert_time_diff(&time_diff, &time_start, &time_end);
+    OUTPUT(("   [1/1] %lld.%.9ld seconds (includes measurement overhead)",
+        (long long)time_diff.tv_sec, time_diff.tv_nsec));
+    PERFEXPERT_DEALLOC(test.output);
+
+    /* Run the AFTER program */
+    if (NULL != my_module_globals.after[0]) {
+        PERFEXPERT_ALLOC(char, test.output, (strlen(globals.moduledir) + 20));
+        sprintf(test.output, "%s/after.output", globals.moduledir);
+        test.input = NULL;
+        test.info = my_module_globals.after[0];
+
+        if (0 != perfexpert_fork_and_wait(&test,
+            (char **)my_module_globals.after)) {
+            OUTPUT(("%s", _RED("'after' command return non-zero")));
+        }
+        PERFEXPERT_DEALLOC(test.output);
+    }
+
+    return PERFEXPERT_SUCCESS;
+
+}
+
+//This function processes a CSV file that looks like this:
+  //Function,Module,Hardware Event Count:CPU_CLK_UNHALTED.REF_TSC:Self,Hardware Event Count:CPU_CLK_UNHALTED.THREAD
+  //func@0x370780f010,libgomp.so.1.0.0,84000126,92000138
+  //bpnn_adjust_weights.omp_fn.0,backprop,80000120,90000135
+  //bpnn_layerforward.omp_fn.1,backprop,24000036,28000042
+  //[Outside any known module],[Unknown],16000024,20000030
+
+int parse (const char * parse_file) {
+
+}
+
+
+//it will probably need an argument: folder where the results will be stored
 /* run_amplxe_cl */
 int run_amplxecl(void) {
     struct timespec time_start, time_end, time_diff;
@@ -95,7 +210,7 @@ int run_amplxecl(void) {
     argc++;
     argv[argc] = "-allow-multiple-runs";
     argc++;
-    argv[argc] = "-collect-with";
+    argv[argc] = VTUNE_ACT_COLLECTWITH ;
     argc++;
     argv[argc] = "runsa";
     argc++;
