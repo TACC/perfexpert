@@ -23,6 +23,7 @@
 extern "C" {
 #endif
 
+#include <sys/types.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -39,7 +40,8 @@ extern "C" {
 
 /* perfexpert_fork_and_wait */
 int perfexpert_fork_and_wait(test_t *test, char *argv[]) {
-    int pipe1[2], pipe2[2], pid = 0, input_FP = 0, output_FP = 0;
+    int pipe1[2], pipe2[2], input_FP = 0, output_FP = 0;
+    pid_t pid = -1;
     int r_bytes = 0, w_bytes = 0, rc = PERFEXPERT_UNDEFINED;
     char *temp_str, buffer[MAX_BUFFER_SIZE];
 
