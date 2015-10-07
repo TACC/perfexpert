@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
+ * Copyright (c) 2011-2015  University of Texas at Austin. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -14,7 +14,7 @@
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
  *
- * Authors: Leonardo Fialho and Ashay Rane
+ * Authors: Antonio Gomez-Iglesias, Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
  */
@@ -43,55 +43,42 @@ extern "C" {
 
 /* database_hw_events */
 static int database_hw_events(vtune_hw_profile_t *profile) {
-    /*
+    
     char *error = NULL, sql[MAX_BUFFER_SIZE];
-    hpctoolkit_procedure_t *h = NULL;
+    int id = 0; 
+    const char * ext_id;
 
-    // For each hotspot in the list of hotspots...
-    perfexpert_list_for(h, &(profile->hotspots), hpctoolkit_procedure_t) {
+    vtune_event_t * v = NULL;
+    perfexpert_list_for (v, profile->events_by_id, vtune_event_t) {
         bzero(sql, MAX_BUFFER_SIZE);
-        if (PERFEXPERT_HOTSPOT_FUNCTION == h->type) {
-            sprintf(sql, "INSERT INTO hpctoolkit_hotspot (perfexpert_id, "
-                "profile, name, line, type, module, file, depth) VALUES "
-                "(%llu, '%s', '%s', %d, %d, '%s', '%s', 0);",
-                globals.unique_id, profile->name, h->name, h->line, h->type,
-                h->module != NULL ? h->module->name : "---",
-                h->file != NULL ? h->file->name : "---");
+        sprintf (sql, "SELECT id FROM vtune_counter_type WHERE "
+            "name='%s'", v->name);
 
-            OUTPUT_VERBOSE((9, "  [%d] %s (%s@%s:%d) SQL: %s", h->id,
-                _YELLOW(h->name),
-                h->module != NULL ? h->module->shortname : "---",
-                h->file != NULL ? h->file->shortname : "---", h->line, sql));
-
-        } else if (PERFEXPERT_HOTSPOT_LOOP == h->type) {
-            hpctoolkit_loop_t *l = (hpctoolkit_loop_t *)h;
-
-            sprintf(sql, "INSERT INTO hpctoolkit_hotspot (perfexpert_id, "
-                "profile, name, line, type, module, file, depth) VALUES ("
-                "%llu, '%s', '%s', %d, %d, '%s', '%s', %d);", globals.unique_id,
-            profile->name, l->procedure->name, l->line, l->type,
-                l->procedure->module->name, l->procedure->file->name, l->depth);
-
-            OUTPUT_VERBOSE((9, "  [%d] %s (%s@%s:%d) SQL: %s", h->id,
-                _YELLOW("loop"), l->procedure->module->shortname,
-                l->procedure->file->shortname, h->line, sql));
+        OUTPUT_VERBOSE((9, "  %s SQL: %s", _YELLOW(v->name), sql));
+        
+        if (SQLITE_OK != sqlite3_exec(globals.db, sql, NULL, (void*) ext_id, &error)) {
+            OUTPUT(("%s %s", _ERROR("SQL error"), error));
+            sqlite3_free(error);
+            return PERFEXPERT_ERROR;
         }
 
+        sprintf (sql, "INSERT INTO vtune_counters (perfexpert_id, "
+            "id, samples, value, vtune_counters_id) VALUES " 
+            "(%llu, %llu, %llu, %llu, %llu);",
+            globals.unique_id, id, v->samples, v->value, ext_id);
+
+        OUTPUT_VERBOSE((9, "  [%d] %s SQL: %s", id,
+            _YELLOW(v->name),
+            sql));
+        
         // Insert procedure in database
         if (SQLITE_OK != sqlite3_exec(globals.db, sql, NULL, NULL, &error)) {
             OUTPUT(("%s %s", _ERROR("SQL error"), error));
             sqlite3_free(error);
             return PERFEXPERT_ERROR;
         }
-
-        // Do the same with its metrics
-        if (PERFEXPERT_SUCCESS != database_metrics(h)) {
-            OUTPUT(("%s (%s)", _ERROR("writing hotspot"),
-                h->name));
-            return PERFEXPERT_ERROR;
-        }
+        id++;
     }
-    */
     return PERFEXPERT_SUCCESS;
 }
 
