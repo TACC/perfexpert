@@ -66,6 +66,10 @@ int parse_module_args(int argc, char *argv[]) {
     if (my_module_globals.report_file == NULL ||
             access(my_module_globals.report_file, R_OK) == -1) {
         OUTPUT(("%s", _ERROR("invalid report file")));
+        if (my_module_globals.report_file == NULL)
+          OUTPUT_VERBOSE((8, "%s", _ERROR("report_file not set")));
+        else
+          OUTPUT_VERBOSE((8, "%s %s", _ERROR("impossible to access report file"), my_module_globals.report_file));
         return PERFEXPERT_ERROR;
     }
 
