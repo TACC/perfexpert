@@ -121,18 +121,19 @@ int module_measure(void) {
 
     /* Collect measurements */
     if (NULL == my_module_globals.mic) {
-        if (PERFEXPERT_SUCCESS != run_amplxecl()) {
+        if (PERFEXPERT_SUCCESS != run_amplxe_cl()) {
             OUTPUT(("%s", _ERROR("unable to run amplxe-cl")));
             return PERFEXPERT_ERROR;
         }
-    // } else {
-    //     if (PERFEXPERT_SUCCESS != run_amplxecl_mic()) {
-    //         OUTPUT(("%s", _ERROR("unable to run amplxecl on MIC")));
-    //         OUTPUT(("Are you adding the flags to compile for MIC?"));
-    //         return PERFEXPERT_ERROR;
-    //     }
+     } else {
+         if (PERFEXPERT_SUCCESS != run_amplxe_cl_mic()) {
+             OUTPUT(("%s", _ERROR("unable to run amplxecl on MIC")));
+             OUTPUT(("Are you adding the flags to compile for MIC?"));
+             return PERFEXPERT_ERROR;
+         }
     }
 
+    //if (PERFEXPERT_SUCCESS !=
     // /* Sumarize results */
     // if (PERFEXPERT_SUCCESS != run_hpcprof(&str)) {
     //     OUTPUT(("%s", _ERROR("unable to run hpcprof")));

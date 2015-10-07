@@ -65,8 +65,10 @@ int module_query_event(const char *name);
 /* Function declarations */
 int create_report (char* results_folder, const char* parse_file);
 int parse_line (char* line, char *argv[], int *argc);
-int parse (const char * parse_file);
+int parse_report (const char * parse_file, vtune_hw_profile_t *profile);
 int run_amplxe_cl(void);
+int run_amplxe_cl_mic(void);
+int collect_results(void);
 
 #ifdef __cplusplus
 }
