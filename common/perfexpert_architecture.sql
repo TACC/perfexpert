@@ -34,12 +34,14 @@ CREATE TABLE IF NOT EXISTS arch_processor (
     description VARCHAR NOT NULL);
 
 CREATE TABLE IF NOT EXISTS arch_event (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT, 
     code         INTEGER NOT NULL,
     umask        INTEGER NOT NULL,
     name         VARCHAR NOT NULL,
     description  VARCHAR,
     type         VARCHAR NOT NULL,
-    processor_id INTEGER NOT NULL
+    
+    FOREIGN KEY processor_id REFERENCES arch_processor(id)
 );
 
 --
