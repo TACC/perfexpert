@@ -118,7 +118,7 @@ int print_cache_conflicts(const global_data_t& global_data,
     std::cout << std::endl;
 
     if (bot == false) {
-        std::cout << mprefix << "Cache conflicts:" << std::endl;
+        std::cout << macpoprefix << "Cache conflicts:" << std::endl;
 
         const int num_streams = global_data.stream_list.size();
         for (int i=0; i<num_streams; i++) {
@@ -161,7 +161,7 @@ int print_reuse_distances(const global_data_t& global_data,
     std::cout << std::endl;
 
     if (bot == false) {
-        std::cout << mprefix << "Reuse distances:" << std::endl;
+        std::cout << macpoprefix << "Reuse distances:" << std::endl;
 
         const int num_streams = global_data.stream_list.size();
         for (int i=0; i<num_streams; i++) {
