@@ -95,7 +95,7 @@ int analyze_records(const global_data_t& global_data, int analysis_flags,
 
     if (analysis_flags & (ANALYSIS_CACHE_CONFLICTS | ANALYSIS_REUSE_DISTANCE)) {
         if (info.bot == false) {
-            std::cout << mprefix << "Analyzing records for latency." <<
+            std::cout << macpoprefix << "Analyzing records for latency." <<
                 std::endl;
         }
 
@@ -132,7 +132,7 @@ int analyze_records(const global_data_t& global_data, int analysis_flags,
 
     if (analysis_flags & ANALYSIS_STRIDES) {
         if (info.bot == false) {
-            std::cout << mprefix << "Analyzing records for stride values." <<
+            std::cout << macpoprefix << "Analyzing records for stride values." <<
                 std::endl;
         }
 
@@ -147,7 +147,7 @@ int analyze_records(const global_data_t& global_data, int analysis_flags,
 
     if (analysis_flags & ANALYSIS_VECTOR_STRIDES) {
         if (info.bot == false) {
-            std::cout << mprefix << "Analyzing records for vector stride "
+            std::cout << macpoprefix << "Analyzing records for vector stride "
                 "values." << std::endl;
         }
 

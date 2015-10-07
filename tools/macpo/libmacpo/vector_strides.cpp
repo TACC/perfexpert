@@ -53,7 +53,7 @@ bool vector_strides_t::instrument_loop(loop_info_t& loop_info) {
     if (contains_non_linear_reference(loop_info.reference_list)) {
         std::string filename = fileInfo->get_filename();
         int line_number = fileInfo->get_line();
-        std::cerr << mprefix << "Found non-linear reference(s) in loop at " <<
+        std::cerr << macpoprefix << "Found non-linear reference(s) in loop at " <<
             filename << ":" << line_number << std::endl;
         return false;
     }

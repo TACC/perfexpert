@@ -40,7 +40,7 @@ bool argparse::copy_file(const char *source_file,
     struct stat stat_buf;
 
     if (access(source_file, R_OK) < 0) {
-        std::cerr << mprefix << "Cannot read file: " << source_file <<
+        std::cerr << macpoprefix << "Cannot read file: " << source_file <<
             std::endl;
         return false;
     }
@@ -48,7 +48,7 @@ bool argparse::copy_file(const char *source_file,
     int src, dst;
     src = open(source_file, O_RDONLY);
     if (src < 0) {
-        std::cerr << mprefix << "Cannot open file for reading: " <<
+        std::cerr << macpoprefix << "Cannot open file for reading: " <<
             source_file << std::endl;
         return false;
     }
@@ -57,7 +57,7 @@ bool argparse::copy_file(const char *source_file,
     dst = open(destination_file, O_WRONLY | O_CREAT | O_TRUNC,
             stat_buf.st_mode & 0777);
     if (dst < 0) {
-        std::cerr << mprefix << "Cannot open file for writing: " <<
+        std::cerr << macpoprefix << "Cannot open file for writing: " <<
             destination_file << std::endl;
         close(src);
         return false;

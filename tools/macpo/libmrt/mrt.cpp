@@ -322,18 +322,18 @@ void bot_print_sstore_align_check_results(const std::string& filename,
     switch (align_status) {
         case FULL_ALIGNED:
             fprintf(stderr, "%s %s:%d|sstore_alignment|status = FULL_ALIGNED\n",
-                    mprefix, filename.c_str(), location.line_number);
+                    macpoprefix, filename.c_str(), location.line_number);
             break;
 
         case MUTUAL_ALIGNED:
             fprintf(stderr, "%s %s:%d|sstore_alignment|status = "
-                    "MUTUAL_ALIGNED\n", mprefix, filename.c_str(),
+                    "MUTUAL_ALIGNED\n", macpoprefix, filename.c_str(),
                     location.line_number);
             break;
 
         case NOT_ALIGNED:
             fprintf(stderr, "%s %s:%d|sstore_alignment|status = NOT_ALIGNED\n",
-                    mprefix, filename.c_str(), location.line_number);
+                    macpoprefix, filename.c_str(), location.line_number);
             break;
     }
 }
@@ -419,17 +419,17 @@ void bot_print_align_check_results(const std::string& filename,
     switch (align_status) {
         case FULL_ALIGNED:
             fprintf(stderr, "%s %s:%d|alignment|status = FULL_ALIGNED\n",
-                    mprefix, filename.c_str(), location.line_number);
+                    macpoprefix, filename.c_str(), location.line_number);
             break;
 
         case MUTUAL_ALIGNED:
             fprintf(stderr, "%s %s:%d|alignment|status = MUTUAL_ALIGNED\n",
-                    mprefix, filename.c_str(), location.line_number);
+                    macpoprefix, filename.c_str(), location.line_number);
             break;
 
         case NOT_ALIGNED:
             fprintf(stderr, "%s %s:%d|alignment|status = NOT_ALIGNED\n",
-                    mprefix, filename.c_str(), location.line_number);
+                    macpoprefix, filename.c_str(), location.line_number);
             break;
     }
 }
@@ -509,7 +509,7 @@ void bot_print_overlap_check_results(const std::string& filename,
     }
 
     if (init && overlap == false) {
-        fprintf(stderr, "%s %s:%d|overlap|status = NO_OVERLAP\n", mprefix,
+        fprintf(stderr, "%s %s:%d|overlap|status = NO_OVERLAP\n", macpoprefix,
                 filename.c_str(), location.line_number);
     }
 }
@@ -585,7 +585,7 @@ void bot_print_trip_count_results(const std::string& filename,
             float fl_loopcount = static_cast<float>(total_loopcount);
             float percentage = fl_tripcount / fl_loopcount;
 
-            fprintf(stderr, "%s %s:%d|tripcount|low_count = %%%.2f\n", mprefix,
+            fprintf(stderr, "%s %s:%d|tripcount|low_count = %%%.2f\n", macpoprefix,
                     filename.c_str(), location.line_number,
                     100.0f * percentage);
         }
@@ -673,27 +673,27 @@ void bot_print_branch_divergence_results(const std::string& filename,
         switch (branch_status) {
             case BRANCH_UNKNOWN:
                 fprintf(stderr, "%s %s:%d|branch|status = UNPREDICTABLE\n",
-                        mprefix, filename.c_str(), branch_loc.line_number);
+                        macpoprefix, filename.c_str(), branch_loc.line_number);
                 break;
 
             case BRANCH_MOSTLY_FALSE:
                 fprintf(stderr, "%s %s:%d|branch|status = MOSTLY_FALSE\n",
-                        mprefix, filename.c_str(), branch_loc.line_number);
+                        macpoprefix, filename.c_str(), branch_loc.line_number);
                 break;
 
             case BRANCH_MOSTLY_TRUE:
                 fprintf(stderr, "%s %s:%d|branch|status = MOSTLY_TRUE\n",
-                        mprefix, filename.c_str(), branch_loc.line_number);
+                        macpoprefix, filename.c_str(), branch_loc.line_number);
                 break;
 
             case BRANCH_FALSE:
                 fprintf(stderr, "%s %s:%d|branch|status = ALWAYS_FALSE\n",
-                        mprefix, filename.c_str(), branch_loc.line_number);
+                        macpoprefix, filename.c_str(), branch_loc.line_number);
                 break;
 
             case BRANCH_TRUE:
                 fprintf(stderr, "%s %s:%d|branch|status = ALWAYS_TRUE\n",
-                        mprefix, filename.c_str(), branch_loc.line_number);
+                        macpoprefix, filename.c_str(), branch_loc.line_number);
                 break;
         }
     }
@@ -789,17 +789,17 @@ void bot_print_stride_check_results(const std::string& filename,
 
     switch (stride_status) {
         case STRIDE_UNKNOWN:
-            fprintf(stderr, "%s %s:%d|stride|status = UNKNOWN\n", mprefix,
+            fprintf(stderr, "%s %s:%d|stride|status = UNKNOWN\n", macpoprefix,
                     filename.c_str(), location.line_number);
             break;
 
         case STRIDE_FIXED:
-            fprintf(stderr, "%s %s:%d|stride|status = FIXED\n", mprefix,
+            fprintf(stderr, "%s %s:%d|stride|status = FIXED\n", macpoprefix,
                     filename.c_str(), location.line_number);
             break;
 
         case STRIDE_UNIT:
-            fprintf(stderr, "%s %s:%d|stride|status = UNIT_STRIDE\n", mprefix,
+            fprintf(stderr, "%s %s:%d|stride|status = UNIT_STRIDE\n", macpoprefix,
                     filename.c_str(), location.line_number);
             break;
     }

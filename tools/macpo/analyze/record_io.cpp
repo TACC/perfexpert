@@ -70,7 +70,7 @@ static int handle_metadata_msg(const metadata_info_t& metadata_info, bool bot) {
     // We don't need this metadata after we've read it,
     // so use it and discard it instead of saving it for later.
     if (bot == false) {
-        std::cout << mprefix << "Analyzing logs created from the binary " <<
+        std::cout << macpoprefix << "Analyzing logs created from the binary " <<
             metadata_info.binary_name << " at " <<
             ctime(&metadata_info.execution_timestamp) << std::endl;
     } else {

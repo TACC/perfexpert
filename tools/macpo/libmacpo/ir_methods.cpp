@@ -692,7 +692,7 @@ int ir_methods::get_loop_header_components(SgScopeStatement*& scope_stmt,
             std::string filename = file_info->get_filename();
             int line_number = file_info->get_line();
 
-            std::cerr << mprefix << "Loop at " << filename << ":" << line_number
+            std::cerr << macpoprefix << "Loop at " << filename << ":" << line_number
                 << " cannot be vectorized because of the following statement: "
                 << stmt->unparseToString() << std::endl;
             return INVALID_FLOW;

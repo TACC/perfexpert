@@ -56,7 +56,7 @@ bool midend(SgProject* project, options_t& options) {
     if (options.backup_filename.size()) {
         // We need to save the input file to a backup file.
         if (files.size() != 1) {
-            std::cerr << mprefix << "Backup option can be specified with only "
+            std::cerr << macpoprefix << "Backup option can be specified with only "
                 << "a single file for compilation, terminating." << std::endl;
             return false;
         }
@@ -67,11 +67,11 @@ bool midend(SgProject* project, options_t& options) {
         // Copy the file over.
         if (argparse::copy_file(source.c_str(),
                 options.backup_filename.c_str()) < 0) {
-            std::cerr << mprefix << "Error backing up file." << std::endl;
+            std::cerr << macpoprefix << "Error backing up file." << std::endl;
             return false;
         }
 
-        std::cerr << mprefix << "Saved " << source << " into " <<
+        std::cerr << macpoprefix << "Saved " << source << " into " <<
             options.backup_filename << "." << std::endl;
     }
 
@@ -323,10 +323,10 @@ void MINST::print_loop_processing_status(const loop_info_t& loop_info) {
     int line_number = file_info->get_line();
 
     if (loop_info.processed) {
-        std::cerr << mprefix << "Processed loop at " << file_name << ":" <<
+        std::cerr << macpoprefix << "Processed loop at " << file_name << ":" <<
             line_number << "." << std::endl;
     } else {
-        std::cerr << mprefix << "Unsupported loop at " << file_name << ":" <<
+        std::cerr << macpoprefix << "Unsupported loop at " << file_name << ":" <<
             line_number << "." << std::endl;
     }
 
@@ -370,12 +370,12 @@ void MINST::analyze_node(SgNode* node, int16_t action) {
             analysis_time += profile.get_running_time();
         }
 
-        std::cerr << mprefix << "Analysis time: " << analysis_time <<
+        std::cerr << macpoprefix << "Analysis time: " << analysis_time <<
             " second(s)." << std::endl;
     }
 
     if (statement_list.size() != last_statement_count) {
-        std::cerr << mprefix << "Analyzed code at " << file_name << ":" <<
+        std::cerr << macpoprefix << "Analyzed code at " << file_name << ":" <<
             line_number << "." << std::endl;
     }
 }

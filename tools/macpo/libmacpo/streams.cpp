@@ -90,7 +90,7 @@ attrib streams_t::evaluateInheritedAttribute(SgNode* node, attrib attr) {
     }
 
     if (!isSgLocatedNode(node)) {
-        std::cerr << mprefix << "Debug info not present, cannot proceed!"
+        std::cerr << macpoprefix << "Debug info not present, cannot proceed!"
             << std::endl;
         return attr;
     }
