@@ -49,7 +49,7 @@ extern "C" {
 // The output of this function is in parse_file
 // The command it executes is like:
     // amplxe-cl -R hw-events -r results_folder  -group-by=function -format=csv -report-output=parse_file -csv-delimiter=',' 
-int create_report (const char* results_folder, const char* parse_file) {
+int create_report (char* results_folder, const char* parse_file) {
     struct timespec time_start, time_end, time_diff;
     char *argv[MAX_ARGUMENTS_COUNT];
     int argc = 0, i, rc;
@@ -146,6 +146,19 @@ int create_report (const char* results_folder, const char* parse_file) {
 
 }
 
+int parse_line (char* line, char *argv[], int *argc) {
+    int i = 0;
+    const char* tok;
+    argc = 0;
+    for (tok = strtok(line, ",");  tok && *tok; tok = strtok(NULL, ";\n")) {
+        argv = (char **) realloc (argv, (i+1)*sizeof(char *));
+        PERFEXPERT_ALLOC(char, argv[i], (strlen(tok)));
+//        argv[i] = (char *) malloc (strlen(tok)*sizeof(char));
+        strcpy (argv[i], tok);
+    }
+    return PERFEXPERT_SUCCESS;
+}
+
 //This function processes a CSV file that looks like this:
   //Function,Module,Hardware Event Count:CPU_CLK_UNHALTED.REF_TSC:Self,Hardware Event Count:CPU_CLK_UNHALTED.THREAD
   //func@0x370780f010,libgomp.so.1.0.0,84000126,92000138
@@ -154,7 +167,25 @@ int create_report (const char* results_folder, const char* parse_file) {
   //[Outside any known module],[Unknown],16000024,20000030
 
 int parse (const char * parse_file) {
+    FILE * in = fopen (parse_file, "r");
+    char line [MAX_BUFFER_SIZE];
+    char header [MAX_BUFFER_SIZE];
+    int i;
+    char *argv [MAX_ARGUMENTS_COUNT];
+    int argc;
 
+    fgets(header, MAX_BUFFER_SIZE, in);
+    parse_line (header, argv, &argc);
+    //Parse the header here
+    while (fgets(line,MAX_BUFFER_SIZE, in)) {
+        char * argv;
+        int argc;
+        parse_line (line, &argv, &argc);
+        //Process the list of arguments
+        for (i=0; i<argc; ++i) {
+            PERFEXPERT_DEALLOC(argv[i]);
+        }
+    }
 }
 
 

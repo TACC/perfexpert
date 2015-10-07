@@ -33,6 +33,7 @@ extern "C" {
 
 /* Modules headers */
 #include "vtune_module.h"
+#include "vtune_types.h"
 
 /* Tools headers */
 #include "tools/perfexpert/perfexpert_types.h"
@@ -40,26 +41,6 @@ extern "C" {
 /* PerfExpert common headers */
 #include "common/perfexpert_hash.h"
 #include "common/perfexpert_list.h"
-
-/* Private module types */
-typedef struct {
-    char *name;
-    char name_md5[33];
-    perfexpert_hash_handle_t hh_str;
-} vtune_event_t;
-
-typedef struct {
-    char *prefix[MAX_ARGUMENTS_COUNT];
-    char *before[MAX_ARGUMENTS_COUNT];
-    char *after[MAX_ARGUMENTS_COUNT];
-    char *mic;
-    char *mic_prefix[MAX_ARGUMENTS_COUNT];
-    char *mic_before[MAX_ARGUMENTS_COUNT];
-    char *mic_after[MAX_ARGUMENTS_COUNT];
-    char *inputfile;
-    vtune_event_t *events_by_name;
-    int ignore_return_code;
-} my_module_globals_t;
 
 extern my_module_globals_t my_module_globals;
 extern perfexpert_module_vtune_t myself_module;
@@ -82,8 +63,8 @@ int module_set_event(const char *name);
 int module_query_event(const char *name);
 
 /* Function declarations */
-int create_report (const char* results_folder, const char* parse_file);
-
+int create_report (char* results_folder, const char* parse_file);
+int parse_line (char* line, char *argv[], int *argc);
 int parse (const char * parse_file);
 int run_amplxe_cl(void);
 
