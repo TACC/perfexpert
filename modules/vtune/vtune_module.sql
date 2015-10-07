@@ -48,6 +48,23 @@ CREATE TABLE IF NOT EXISTS vtune_event (
     experiment    INTEGER NOT NULL,
     value         REAL    NOT NULL,
     hotspot_id    INTEGER NOT NULL,
+    
+    FOREIGN KEY (vtune_hotspot_id) REFERENCES vtune_hotspot(id),
+    FOREIGN KEY (arch_event_id) REFERENCES arch_event(id)
+);
 
-    FOREIGN KEY (vtune_hotspot_id) REFERENCES vtune_hotspot(id)
+-- The information in this table is collected with
+-- $ amplxe-runss -event-list
+CREATE TABLE IF NOT EXISTS vtune_counter_type (
+    id            INTEGER PRIMARY KEY,
+    name          VARCHAR NOT NULL,
+);
+
+CREATE TABLE IF NOT EXISTS vtune_counters (
+    perfexpert_id INTEGER NOT NULL,
+    id            INTEGER PRIMARY KEY,
+    samples       INTEGER NOT NULL,
+    value         INTEGER NOT NULL,
+
+    FOREIGN KEY (vtune_counters_id) REFERENCES vtune_counter_type(id)
 );
