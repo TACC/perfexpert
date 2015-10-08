@@ -33,12 +33,59 @@ extern "C" {
 #include "vtune_database.h"
 
 /* PerfExpert common headers */
+#include "common/perfexpert_cpuinfo.h"
 #include "common/perfexpert_alloc.h"
 #include "common/perfexpert_constants.h"
 #include "common/perfexpert_database.h"
 #include "common/perfexpert_list.h"
 #include "common/perfexpert_output.h"
 
+/* Takes the output of a SELECT statement and adds events to
+ * the global variable */
+int add_event(void *unused, int argc, char **argv, char **event) {
+    int i;
+    
+    for (i=0; i<argc; ++i) {
+        vtune_event_t * event = NULL;
+        char name_md5[33];
+        perfexpert_hash_find_str(my_module_globals.events_by_name, perfexpert_md5_string(argv[i]), event);
+        if (event!=NULL) {
+            //For whatever reason the event is already in the set, so don't duplicate it
+            continue;
+        }
+        PERFEXPERT_ALLOC (vtune_event_t, event, sizeof(vtune_event_t));
+        PERFEXPERT_ALLOC (char, event->name, (strlen(argv[i])));
+        strcpy (event->name, argv[i]);
+        strcpy (event->name_md5, perfexpert_md5_string(argv[i]));
+        perfexpert_add_hash_str(my_module_globals.events_by_name, name_md5, event);
+        OUTPUT_VERBOSE((6, "event %s set", _CYAN(event->name)));
+    }
+}
+
+/* Read the default events for this CPU */
+static int database_default_events(void) {
+    char sql[MAX_BUFFER_SIZE];
+    int family = -1;
+    char *error = NULL;
+    
+    family = perfexpert_cpuinfo_get_family();
+    if (family == -1){
+        OUTPUT (("%s", _ERROR("incorrect CPU family")));
+        return PERFEXPERT_ERROR;  
+    }
+
+    sprintf (sql, "SELECT name from vtune_counter_type, vtune_default_events WHERE "
+            "vtune_counter_type.id=vtune_default_events.id AND "
+            "vtune_default_events.arch=%d", family);
+
+    if (SQLITE_OK != sqlite3_exec(globals.db, sql, add_event, 0, &error)) {
+        OUTPUT(("%s %s", _ERROR("SQL error"), error));
+        sqlite3_free(error);
+        return PERFEXPERT_ERROR;
+    }
+
+    return PERFEXPERT_SUCCESS;
+}
 
 /* database_hw_events */
 static int database_hw_events(vtune_hw_profile_t *profile) {

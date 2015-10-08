@@ -69,3 +69,8 @@ CREATE TABLE IF NOT EXISTS vtune_counters (
 
     FOREIGN KEY (vtune_counters_id) REFERENCES vtune_counter_type(id)
 );
+
+CREATE TABLE IF NOT EXISTS vtune_default_events (
+   FOREIGN KEY (id) REFERENCES vtune_counter_type(id),
+   FOREIGN KEY (arch) REFERENCES arch_processor(id)
+);

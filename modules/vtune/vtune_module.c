@@ -112,6 +112,19 @@ int module_measure(void) {
 
     OUTPUT(("%s (%d events)", _YELLOW("Collecting measurements"),
         perfexpert_hash_count_str(my_module_globals.events_by_name)));
+    
+    if (PERFEXPERT_SUCCESS != database_default_events(my_module_globals)) {
+        OUTPUT(("%s", _ERROR("reading default events from the database")));
+    }
+
+    if (0 == perfexpert_hash_count_str(my_module_globals.events_by_name)) {
+        OUTPUT_VERBOSE((5, "adding events to collect"));
+        if (PERFEXPERT_SUCCESS != module_set_event("CPU_CLK_UNHALTED.REF_TSC")) {
+            OUTPUT(("%s", _ERROR("ADDING EVENTS [CPU_CLK_UNHALTED.REF_TSC]")));
+        }
+        if (PERFEXPERT_SUCCESS != module_set_event("CPU_CLK_UNHALTED.REF_TSC")) {
+        }
+    }
 
     /* First of all, does the file exist? (it is just a double check) */
     if (PERFEXPERT_SUCCESS !=

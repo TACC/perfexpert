@@ -29,6 +29,7 @@ extern "C" {
 /* PerfExpert common headers */
 #include "common/perfexpert_hash.h"
 #include "common/perfexpert_list.h"
+#include "common/perfexpert_constants.h"
 
 typedef struct {
     char *name;   // Name of the counter (VTune name)
@@ -56,7 +57,8 @@ typedef struct {
     volatile perfexpert_list_item_t *prev;
     int id;
     char * name;
-    vtune_event_t * events_by_id;
+    perfexpert_list_t *events_by_id;
+//    vtune_event_t * events_by_id;
 } vtune_hw_profile_t;
 
 #ifdef __cplusplus

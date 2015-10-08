@@ -26,6 +26,7 @@ libperfexpert_module_vtune_la_LDFLAGS = -lsqlite3 -lrt \
 libperfexpert_module_vtune_la_SOURCES = vtune_module.c \
 	vtune_event.c \
 	vtune_options.c \
+	vtune_database.c \
 	vtune_tools.c
 
 # Install vtune module database
