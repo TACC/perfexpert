@@ -55,10 +55,11 @@ CREATE TABLE IF NOT EXISTS vtune_event (
 
 -- The information in this table is collected with
 -- $ amplxe-runss -event-list
-CREATE TABLE IF NOT EXISTS vtune_counter_type (
-    id            INTEGER PRIMARY KEY,
-    name          VARCHAR NOT NULL,
-);
+--CREATE TABLE IF NOT EXISTS vtune_counter_type (
+--    id            INTEGER PRIMARY KEY,
+--    name          VARCHAR NOT NULL UNIQUE,
+--);
+-- Not really needed. We use arc_event instead
 
 CREATE TABLE IF NOT EXISTS vtune_counters (
     perfexpert_id INTEGER NOT NULL,
@@ -71,6 +72,14 @@ CREATE TABLE IF NOT EXISTS vtune_counters (
 );
 
 CREATE TABLE IF NOT EXISTS vtune_default_events (
-   FOREIGN KEY (id) REFERENCES vtune_counter_type(id),
+   FOREIGN KEY (id) REFERENCES arch_event(id),
    FOREIGN KEY (arch) REFERENCES arch_processor(id)
 );
+
+--
+-- Populate tables
+--
+BEGIN TRANSACTION;
+    INSERT INTO vtune_default_events (1499, 6); -- 'INST_RETIRED.ANY' SandyBridge
+    INSERT INTO vtune_default_events (3211, 13); --'L1_DATA_PF1_MISS' Xeon Phi
+END TRANSACTION;
