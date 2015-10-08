@@ -367,13 +367,10 @@ int run_amplxe_cl(void) {
     return PERFEXPERT_SUCCESS;
 }
 
-int collect_results(void) {
+int collect_results(vtune_hw_profile_t *profile) {
     int fid = -1;
     static char template[] = "vtune_out-XXXXXX";
     char csv_name [MAX_FILENAME];
-    //This will probably be a global variable to the module
-    vtune_hw_profile_t *profile;
-    PERFEXPERT_ALLOC (vtune_hw_profile_t, profile, sizeof(vtune_hw_profile_t));
 
     strcpy (csv_name, template);
     mktemp(csv_name);
@@ -388,7 +385,6 @@ int collect_results(void) {
          PERFEXPERT_DEALLOC (profile);
          return PERFEXPERT_ERROR;
     }
-    PERFEXPERT_DEALLOC(profile);
     return PERFEXPERT_SUCCESS;
 }
 

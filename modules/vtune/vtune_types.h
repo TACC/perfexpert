@@ -31,9 +31,10 @@ extern "C" {
 #include "common/perfexpert_list.h"
 
 typedef struct {
-    char *name;
+    char *name;   // Name of the counter (VTune name)
     char name_md5[33];
-    long samples, value;
+    long samples, value; //Number of samples and value
+    int mpi_rank; // To which rank belongs this counter
     perfexpert_hash_handle_t hh_str;
 } vtune_event_t;
 

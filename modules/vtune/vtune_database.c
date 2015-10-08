@@ -29,7 +29,6 @@ extern "C" {
 #include <sqlite3.h>
 
 /* Modules headers */
-#include "hpctoolkit.h"
 #include "vtune_types.h"
 #include "vtune_database.h"
 
@@ -63,9 +62,9 @@ static int database_hw_events(vtune_hw_profile_t *profile) {
         }
 
         sprintf (sql, "INSERT INTO vtune_counters (perfexpert_id, "
-            "id, samples, value, vtune_counters_id) VALUES " 
+            "id, value, mpi_rank, vtune_counters_id) VALUES " 
             "(%llu, %llu, %llu, %llu, %llu);",
-            globals.unique_id, id, v->samples, v->value, ext_id);
+            globals.unique_id, id, v->samples, v->mpi_rank, v->value, ext_id);
 
         OUTPUT_VERBOSE((9, "  [%d] %s SQL: %s", id,
             _YELLOW(v->name),

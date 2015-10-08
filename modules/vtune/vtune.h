@@ -68,7 +68,7 @@ int parse_line (char* line, char *argv[], int *argc);
 int parse_report (const char * parse_file, vtune_hw_profile_t *profile);
 int run_amplxe_cl(void);
 int run_amplxe_cl_mic(void);
-int collect_results(void);
+int collect_results(vtune_hw_profile_t *profile);
 
 #ifdef __cplusplus
 }

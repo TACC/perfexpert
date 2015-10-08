@@ -63,9 +63,9 @@ CREATE TABLE IF NOT EXISTS vtune_counter_type (
 CREATE TABLE IF NOT EXISTS vtune_counters (
     perfexpert_id INTEGER NOT NULL,
     id            INTEGER PRIMARY KEY,
-    samples       INTEGER NOT NULL,
+    samples       INTEGER,
     value         INTEGER NOT NULL,
-    mpi_rank      INTEGER NOT NULL,
+    mpi_rank      INTEGER,
 
     FOREIGN KEY (vtune_counters_id) REFERENCES vtune_counter_type(id)
 );
