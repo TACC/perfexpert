@@ -1,5 +1,5 @@
 --
--- Copyright (c) 2011-2013 University of Texas at Austin. All rights reserved.
+-- Copyright (c) 2011-2015 University of Texas at Austin. All rights reserved.
 --
 -- $COPYRIGHT$
 --
@@ -14,7 +14,7 @@
 -- WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
 -- A PARTICULAR PURPOSE.
 --
--- Authors: Leonardo Fialho and Ashay Rane
+-- Authors: Antonio Gomez-Iglesias, Leonardo Fialho and Ashay Rane
 --
 -- $HEADER$
 --
@@ -28,6 +28,7 @@ PRAGMA foreign_keys = ON;
 -- Create tables if not exist
 --
 CREATE TABLE IF NOT EXISTS arch_processor (
+    idx         INTEGER PRIMARY KEY AUTOINCREMENT,
     id          INTEGER,
     family      INTEGER NOT NULL,
     model       INTEGER NOT NULL,
@@ -40,8 +41,9 @@ CREATE TABLE IF NOT EXISTS arch_event (
     name         VARCHAR NOT NULL,
     description  VARCHAR,
     type         VARCHAR NOT NULL,
+    processor_id INTEGER,
     
-    FOREIGN KEY processor_id REFERENCES arch_processor(id)
+    FOREIGN KEY (processor_id) REFERENCES arch_processor(idx)
 );
 
 --

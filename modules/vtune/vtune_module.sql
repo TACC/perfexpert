@@ -1,5 +1,5 @@
 --
--- Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
+-- Copyright (c) 2011-2015  University of Texas at Austin. All rights reserved.
 --
 -- $COPYRIGHT$
 --
@@ -14,7 +14,7 @@
 -- WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
 -- A PARTICULAR PURPOSE.
 --
--- Authors: Leonardo Fialho and Ashay Rane
+-- Authors: Antonio Gomez-Iglesias, Leonardo Fialho and Ashay Rane
 --
 -- $HEADER$
 --
@@ -48,6 +48,8 @@ CREATE TABLE IF NOT EXISTS vtune_event (
     experiment    INTEGER NOT NULL,
     value         REAL    NOT NULL,
     hotspot_id    INTEGER NOT NULL,
+    vtune_hotspot_id INTEGER,
+    arch_event_id   INTEGER,
     
     FOREIGN KEY (vtune_hotspot_id) REFERENCES vtune_hotspot(id),
     FOREIGN KEY (arch_event_id) REFERENCES arch_event(id)
@@ -67,11 +69,14 @@ CREATE TABLE IF NOT EXISTS vtune_counters (
     samples       INTEGER,
     value         INTEGER NOT NULL,
     mpi_rank      INTEGER,
+    vtune_counters_id INTEGER,
 
     FOREIGN KEY (vtune_counters_id) REFERENCES vtune_counter_type(id)
 );
 
 CREATE TABLE IF NOT EXISTS vtune_default_events (
+   id             INTEGER,
+   arch           INTEGER,
    FOREIGN KEY (id) REFERENCES arch_event(id),
    FOREIGN KEY (arch) REFERENCES arch_processor(id)
 );
