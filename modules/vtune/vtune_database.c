@@ -74,8 +74,8 @@ int database_default_events(void) {
         return PERFEXPERT_ERROR;  
     }
 
-    sprintf (sql, "SELECT name from vtune_counter_type, vtune_default_events WHERE "
-            "vtune_counter_type.id=vtune_default_events.id AND "
+    sprintf (sql, "SELECT name FROM arch_event, vtune_default_events WHERE "
+            "arch_event.id=vtune_default_events.id AND "
             "vtune_default_events.arch=%d", family);
 
     if (SQLITE_OK != sqlite3_exec(globals.db, sql, add_event, 0, &error)) {
@@ -97,7 +97,7 @@ int database_hw_events(vtune_hw_profile_t *profile) {
     vtune_event_t * v = NULL;
     perfexpert_list_for (v, profile->events_by_id, vtune_event_t) {
         bzero(sql, MAX_BUFFER_SIZE);
-        sprintf (sql, "SELECT id FROM vtune_counter_type WHERE "
+        sprintf (sql, "SELECT id FROM arch_event WHERE "
             "name='%s'", v->name);
 
         OUTPUT_VERBOSE((9, "  %s SQL: %s", _YELLOW(v->name), sql));
