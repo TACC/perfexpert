@@ -73,18 +73,18 @@ CREATE TABLE IF NOT EXISTS vtune_counters (
 
     FOREIGN KEY (vtune_counters_id) REFERENCES vtune_counter_type(id)
 );
-
-CREATE TABLE IF NOT EXISTS vtune_default_events (
-   id             INTEGER,
-   arch           INTEGER,
-   FOREIGN KEY (id) REFERENCES arch_event(id),
-   FOREIGN KEY (arch) REFERENCES arch_processor(id)
-);
+-- This is still not final
+--CREATE TABLE IF NOT EXISTS vtune_default_events (
+--   id             INTEGER,
+--   arch           INTEGER,
+--   FOREIGN KEY (id) REFERENCES arch_event(id),
+--   FOREIGN KEY (arch) REFERENCES arch_processor(idx)
+--);
 
 --
 -- Populate tables
 --
-BEGIN TRANSACTION;
-    INSERT INTO vtune_default_events (1499, 6); -- 'INST_RETIRED.ANY' SandyBridge
-    INSERT INTO vtune_default_events (3211, 13); --'L1_DATA_PF1_MISS' Xeon Phi
-END TRANSACTION;
+--BEGIN TRANSACTION;
+--    INSERT INTO vtune_default_events (1499, 6); -- 'INST_RETIRED.ANY' SandyBridge
+--    INSERT INTO vtune_default_events (3211, 13); --'L1_DATA_PF1_MISS' Xeon Phi
+--END TRANSACTION;
