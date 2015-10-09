@@ -82,7 +82,6 @@ int module_query_event(const char *name) {
         if (perfexpert_cpuinfo_get_model() == intel_events[i].model_id) {
             j = 0;
             while (NULL != intel_events[i].events[j]) {
-                OUTPUT_VERBOSE((9, "checking event %s", intel_events[i].events[j]));
                 if (0 == strcmp(intel_events[i].events[j], name)) {
                     return PERFEXPERT_TRUE;
                 }
