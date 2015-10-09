@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
+# Copyright (c) 2011-2015  University of Texas at Austin. All rights reserved.
 #
 # $COPYRIGHT$
 #
@@ -14,7 +14,7 @@
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
 # A PARTICULAR PURPOSE.
 #
-# Authors: Leonardo Fialho and Ashay Rane
+# Authors: Antonio Gomez-Iglesias, Leonardo Fialho and Ashay Rane
 #
 # $HEADER$
 #
@@ -31,7 +31,7 @@ SUBDIRS = lib common modules tools
 
 # Set database version
 install-exec-local:
-	echo 1.28 > perfexpert.db.version
+	echo 1.29 > perfexpert.db.version
 	test -d $(DESTDIR)$(sysconfdir) || mkdir $(DESTDIR)$(sysconfdir)
 	$(INSTALL) -m 644 perfexpert.db.version $(DESTDIR)$(sysconfdir)/
 
