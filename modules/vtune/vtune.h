@@ -70,6 +70,7 @@ int run_amplxe_cl(void);
 int run_amplxe_cl_mic(void);
 int collect_results(vtune_hw_profile_t *profile);
 
+
 #ifdef __cplusplus
 }
 #endif

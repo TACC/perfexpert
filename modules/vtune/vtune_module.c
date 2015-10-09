@@ -30,6 +30,7 @@ extern "C" {
 
 /* Module headers */
 #include "vtune.h"
+#include "vtune_database.h"
 #include "vtune_module.h"
 
 /* PerfExpert common headers */
@@ -113,7 +114,7 @@ int module_measure(void) {
     OUTPUT(("%s (%d events)", _YELLOW("Collecting measurements"),
         perfexpert_hash_count_str(my_module_globals.events_by_name)));
     
-    if (PERFEXPERT_SUCCESS != database_default_events(my_module_globals)) {
+    if (PERFEXPERT_SUCCESS != database_default_events(/*my_module_globals*/)) {
         OUTPUT(("%s", _ERROR("reading default events from the database")));
     }
 

@@ -281,9 +281,9 @@ int run_amplxe_cl(void) {
     argv[argc] = "-knob";
     argc++;
     //events = getenv ("PERFEXPERT_VTUNE_EVENTS");
-    //sctrpy (argv[argc], "event-config=");
-    //strcat (argv[argc], events);
-    argv[argc] = "event-config=$PERFEXPERT_VTUNE_EVENTS";
+    strcpy (argv[argc], "event-config=");
+    strcat (argv[argc], events);
+    //argv[argc] = "event-config=$PERFEXPERT_VTUNE_EVENTS";
     argc++;
     argv[argc] = "--";
     argc++;

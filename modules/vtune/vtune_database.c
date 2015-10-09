@@ -63,7 +63,7 @@ int add_event(void *unused, int argc, char **argv, char **event) {
 }
 
 /* Read the default events for this CPU */
-static int database_default_events(void) {
+int database_default_events(void) {
     char sql[MAX_BUFFER_SIZE];
     int family = -1;
     char *error = NULL;
@@ -88,7 +88,7 @@ static int database_default_events(void) {
 }
 
 /* database_hw_events */
-static int database_hw_events(vtune_hw_profile_t *profile) {
+int database_hw_events(vtune_hw_profile_t *profile) {
     
     char *error = NULL, sql[MAX_BUFFER_SIZE];
     int id = 0; 
