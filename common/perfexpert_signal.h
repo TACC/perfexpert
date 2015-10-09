@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
+ * Copyright (c) 2011-2015  University of Texas at Austin. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -14,7 +14,7 @@
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
  *
- * Authors: Leonardo Fialho and Ashay Rane
+ * Authors: Antonio Gomez-Iglesias, Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
  */
@@ -51,7 +51,7 @@ void perfexpert_sighandler(int sig) {
 
     fprintf(stderr, "\nPerfExpert received an error signal (%d)\n\n", sig);
     fprintf(stderr, "Please, send a copy of this error and the compressed file "
-        "of the temporary\ndirectory to fialho@utexas.edu. Also, include the "
+        "of the temporary\ndirectory to agomez@utexas.edu. Also, include the "
         "command line you used to run\nPerfExpert.\n\nThis will help us to "
         "improve PerfExpert. You may also want join our mailing list\nto get "
         "some help. To do that, send a blank message to:\n\nperfexpert-"
