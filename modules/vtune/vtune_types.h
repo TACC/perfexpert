@@ -48,6 +48,8 @@ typedef struct {
     char *mic_before[MAX_ARGUMENTS_COUNT];
     char *mic_after[MAX_ARGUMENTS_COUNT];
     char *inputfile;
+//    char *res_folder;
+    char res_folder [MAX_FILENAME];
     vtune_event_t *events_by_name;
     int ignore_return_code;
 } my_module_globals_t;
