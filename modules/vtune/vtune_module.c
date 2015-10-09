@@ -154,11 +154,15 @@ int module_measure(void) {
         PERFEXPERT_DEALLOC (profile);
         return PERFEXPERT_ERROR;
     }
+    OUTPUT_VERBOSE((8, "%s", "results collected"));
+
     if (PERFEXPERT_SUCCESS != database_hw_events (profile)) {
         OUTPUT (("%s", _ERROR ("writing profiles to database")));
         PERFEXPERT_DEALLOC (profile);
         return PERFEXPERT_ERROR;
     }
+    OUTPUT_VERBOSE((8,"%s", "results stored in the database"));
+
     PERFEXPERT_DEALLOC (profile);
 
     //if (PERFEXPERT_SUCCESS != collect_results()

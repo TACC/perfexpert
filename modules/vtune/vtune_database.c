@@ -94,6 +94,7 @@ int database_hw_events(vtune_hw_profile_t *profile) {
     int id = 0; 
     const char * ext_id;
 
+    OUTPUT_VERBOSE((8, "%s", "storing data"));
     vtune_event_t * v = NULL;
     perfexpert_list_for (v, profile->events_by_id, vtune_event_t) {
         bzero(sql, MAX_BUFFER_SIZE);
@@ -125,6 +126,7 @@ int database_hw_events(vtune_hw_profile_t *profile) {
         }
         id++;
     }
+    OUTPUT_VERBOSE ((9, "%s", "data stored"));
     return PERFEXPERT_SUCCESS;
 }
 
