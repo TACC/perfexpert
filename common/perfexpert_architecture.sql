@@ -3323,5 +3323,4 @@ INSERT INTO arch_event (id, code, umask, name, description, type, processor_id) 
 INSERT INTO arch_event (id, code, umask, name, description, type, processor_id) VALUES (3245, 0, 0, 'VPU_INSTRUCTIONS_EXECUTED', 'Counts the number of VPU instructions executed in both u- and v-pipes.', 'core', 13);
 INSERT INTO arch_event (id, code, umask, name, description, type, processor_id) VALUES (3246, 0, 0, 'VPU_INSTRUCTIONS_EXECUTED_V_PIPE', 'Counts the number of VPU instructions that paired and executed in the v-pipe.', 'core', 13);
 INSERT INTO arch_event (id, code, umask, name, description, type, processor_id) VALUES (3247, 0, 0, 'VPU_STALL_REG', 'VPU stall on Register Dependency. Counts the number of occurrences. Dependencies will include RAW, WAW, WAR.', 'core', 13);
-
 END TRANSACTION;
