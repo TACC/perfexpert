@@ -199,12 +199,14 @@ int parse_report (const char * parse_file, vtune_hw_profile_t *profile) {
         //Process the list of arguments
         //TODO: only collect statistics about a specific set of functions??
         for (i=2; i<argc; ++i) {
+            
             PERFEXPERT_ALLOC (vtune_event_t, e, sizeof(vtune_event_t));
             strcpy(e->name, events[i]);
             strcpy(e->name_md5, perfexpert_md5_string(e->name));
             e->samples = 0;
             e->value = atol (argv[i]);
-            perf_expert_hash_add_in (profile->events_by_id, i-2, e);
+            //perf_expert_hash_add_in (profile->events_by_id, i-2, e);
+            perf_expert_hash_add_in (profile->events, e->name_md5, e);
         //    PERFEXPERT_DEALLOC(argv[i]);
         }
         //PERFEXPERT_DEALLOC(argv[1]);

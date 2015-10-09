@@ -59,7 +59,7 @@ typedef struct {
     volatile perfexpert_list_item_t *prev;
     int id;
     char * name;
-    perfexpert_list_t *events_by_id;
+    perfexpert_list_t *events;
 //    vtune_event_t * events_by_id;
 } vtune_hw_profile_t;
 

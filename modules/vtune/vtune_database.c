@@ -96,7 +96,8 @@ int database_hw_events(vtune_hw_profile_t *profile) {
 
     OUTPUT_VERBOSE((8, "%s", "storing data"));
     vtune_event_t * v = NULL;
-    perfexpert_list_for (v, profile->events_by_id, vtune_event_t) {
+    perfexpert_list_for (v, profile->events, vtune_event_t) {
+        OUTPUT_VERBOSE((8, "%s", v->name));
         bzero(sql, MAX_BUFFER_SIZE);
         sprintf (sql, "SELECT id FROM arch_event WHERE "
             "name='%s'", v->name);
