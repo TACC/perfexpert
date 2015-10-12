@@ -41,6 +41,22 @@ typedef struct {
     perfexpert_hash_handle_t hh_str;
 } vtune_event_t;
 
+// A hotspot is each one of the functions evaluated with VTune. In the
+// output that we process, it corresponds to one line like:
+// bpnn_zero_weights','backprop','0','0','800018','0','0','0','0','0','0','0','0','0','0','0','0','0','0','100003','4000006','0','0
+// 'name' is the first column of the line.
+// The events is a list of vtune_event_t
+typedef struct {
+    volatile perfexpert_list_item_t *next;
+    volatile perfexpert_list_item_t *prev;
+    char *name;
+    char name_md5[33];
+
+    perfexpert_list_t events;
+    vtune_event_t *events_by_name;
+    perfexpert_hash_handle_t hh_str;
+} vtune_hotspots_t;
+
 typedef struct {
     char *prefix[MAX_ARGUMENTS_COUNT];
     char *before[MAX_ARGUMENTS_COUNT];
@@ -57,12 +73,14 @@ typedef struct {
 } my_module_globals_t;
 
 typedef struct {
-    volatile perfexpert_list_item_t *next;
-    volatile perfexpert_list_item_t *prev;
+//    volatile perfexpert_list_item_t *next;
+//    volatile perfexpert_list_item_t *prev;
     int id;
     char * name;
-    perfexpert_list_t events_list;
-    vtune_event_t *events_by_name;
+    perfexpert_list_t hotspots;
+    vtune_hotspots_t * hotspots_by_name;
+//    perfexpert_list_t events_list;
+//    vtune_event_t *events_by_name;
 //    vtune_event_t * events_by_id;
 } vtune_hw_profile_t;
 

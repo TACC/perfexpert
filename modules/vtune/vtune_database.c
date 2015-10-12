@@ -97,14 +97,15 @@ int database_hw_events(vtune_hw_profile_t *profile) {
     OUTPUT_VERBOSE((8, "%s", "storing data"));
     vtune_event_t * v = NULL;
     
-    perfexpert_list_for (v, &(profile->events_list), vtune_event_t) {
+    /*
+    perfexpert_list_for (v, &(profile->hotspots), vtune_hotspot_t) {
         OUTPUT_VERBOSE((8, "%s %d %s",v->name, v->value, v->name_md5));
         bzero(sql, MAX_BUFFER_SIZE);
         sprintf (sql, "SELECT id FROM arch_event WHERE "
             "name='%s'", v->name);
 
-   //     OUTPUT_VERBOSE((9, "  %s SQL: %s", _YELLOW(v->name), sql));
-/*        
+        OUTPUT_VERBOSE((9, "  %s SQL: %s", _YELLOW(v->name), sql));
+        
         if (SQLITE_OK != sqlite3_exec(globals.db, sql, NULL, (void*) ext_id, &error)) {
             OUTPUT(("%s %s", _ERROR("SQL error"), error));
             sqlite3_free(error);
@@ -127,8 +128,8 @@ int database_hw_events(vtune_hw_profile_t *profile) {
             return PERFEXPERT_ERROR;
         }
         id++;
-        */
     }
+    */
     
     OUTPUT_VERBOSE ((8, "%s", "data stored"));
     return PERFEXPERT_SUCCESS;
