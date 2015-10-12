@@ -47,10 +47,10 @@ CREATE TABLE IF NOT EXISTS vtune_event (
     mpi_task      INTEGER NOT NULL,
     experiment    INTEGER NOT NULL,
     value         REAL    NOT NULL,
-    vtune_hotspot_id INTEGER NOT NULL,
+    hotspot_id    INTEGER NOT NULL,
     arch_event_id   INTEGER,
     
-    FOREIGN KEY (vtune_hotspot_id) REFERENCES vtune_hotspot(id),
+    FOREIGN KEY (hotspot_id) REFERENCES vtune_hotspot(id),
     FOREIGN KEY (arch_event_id) REFERENCES arch_event(id)
 );
 

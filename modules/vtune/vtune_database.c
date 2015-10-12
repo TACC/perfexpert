@@ -134,7 +134,7 @@ int database_hw_events(vtune_hw_profile_t *profile) {
      
             bzero(sql, MAX_BUFFER_SIZE);       
             sprintf (sql, "INSERT INTO vtune_event (name, "
-                "thread_id, mpi_task, experiment, value, vtune_hotspot_id, arch_event_id) VALUES "
+                "thread_id, mpi_task, experiment, value, hotspot_id, arch_event_id) VALUES "
                 " ('%s', %d, %d, %d, %llu, %d, %d)", e->name, e->thread, e->mpi_rank, globals.cycle, e->value,
                 id, family);
  
