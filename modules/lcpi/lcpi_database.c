@@ -343,7 +343,7 @@ static int calculate_metadata(lcpi_profile_t *profile, const char *table) {
 
         if (SQLITE_OK != sqlite3_exec(globals.db, sql, import_instructions,
             (void *)h, &error)) {
-            OUTPUT(("%s %s", _ERROR("SQL error"), error));
+            OUTPUT(("%s %s \n%s", _ERROR("SQL error"), error, sql));
             sqlite3_free(error);
             return PERFEXPERT_ERROR;
         }
