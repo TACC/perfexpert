@@ -177,28 +177,6 @@ int parse_hotspot_name (char *hp, char *name) {
     return PERFEXPERT_SUCCESS;
 }
 
-int parse_event_name (char *event, char *name) {
-    char * tok;
-    int parts=0;
-    tok = strtok(event, ":");
-    while (tok!=NULL) {
-        if (parts==1) {
-            name = tok;
-            break;
-        }
-        tok = strtok(NULL, ",");
-        parts++;
-    }
-    if (parts==0)
-        name = event;
-    tok = strstr(name, ":Self");
-    if (tok!=NULL) {
-        sprintf (name+(strlen(name)-6), "\0");
-    }
-    OUTPUT_VERBOSE ((8, "event name %s", name));
-    return PERFEXPERT_SUCCESS;
-}
-
 //This function processes a CSV file that looks like this:
   //Function,Module,Hardware Event Count:CPU_CLK_UNHALTED.REF_TSC:Self,Hardware Event Count:CPU_CLK_UNHALTED.THREAD
   //func@0x370780f010,libgomp.so.1.0.0,84000126,92000138
@@ -228,8 +206,27 @@ int parse_report (const char * parse_file, vtune_hw_profile_t *profile) {
     }
 
     //The two first columns are not event names, so skip them
+    //Also, VTune adds extra text before and after the counter, so
+    //we have to process that. We remove everything before the first ':'
+    //and the final ':Self'
     for (i=2; i< argc; ++i)  {
-        events[i] = c_events[i];
+        char * tok;
+        int parts=0;
+        tok = strtok(c_events[i], ":");
+        while (tok!=NULL) {
+            if (parts==1) {
+                events[i] = tok;
+                break;
+            }  
+            tok = strtok(NULL, ",");
+            parts++;
+        }   
+        if (parts==0)
+            events[i] = c_events[i];
+        tok = strstr(events[i], ":Self");
+        if (tok!=NULL) {
+            sprintf (events[i]+(strlen(events[i])-5), "\0");
+        } 
     }
 
     //Read the rest of the csv file
