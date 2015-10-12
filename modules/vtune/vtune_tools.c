@@ -260,7 +260,12 @@ int parse_report (const char * parse_file, vtune_hw_profile_t *profile) {
             PERFEXPERT_ALLOC (char, e->name, strlen(events[i])+1);
             strcpy(e->name, events[i]);
             strcpy(e->name_md5, perfexpert_md5_string(e->name));
-            
+        
+            //TODO
+            e->mpi_rank = 0;
+            e->thread = 0;
+            ////////////////
+            //
             e->samples = 0;
             e->value = atol (argv[i]);
             perfexpert_hash_add_str(hotspot->events_by_name, name_md5, e);

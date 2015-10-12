@@ -95,9 +95,12 @@ int database_hw_events(vtune_hw_profile_t *profile) {
     const char * hp_id; //hotspot id as returned from the database
     //TODO right now hotspot id is hardcoded here. It will be better to
 
+    int family = perfexpert_cpuinfo_get_family();
+
     OUTPUT_VERBOSE((8, "%s", "storing data"));
     vtune_hotspots_t * h = NULL;
 
+    //TODO
     bzero(sql, MAX_BUFFER_SIZE);
     sprintf (sql, "SELECT id FROM vtune_hotspot ORDER BY id DESC LIMIT 1");
     
@@ -132,8 +135,8 @@ int database_hw_events(vtune_hw_profile_t *profile) {
             bzero(sql, MAX_BUFFER_SIZE);       
             sprintf (sql, "INSERT INTO vtune_event (name, "
                 "thread_id, mpi_task, experiment, value, vtune_hotspot_id, arch_event_id) VALUES "
-                " (%s, %llu, %llu, %llu, %f, %llu, %llu)", e->name, e->thread, e->mpi_rank, globals.cycle, e->value,
-                id, 7);
+                " ('%s', %d, %d, %d, %llu, %d, %d)", e->name, e->thread, e->mpi_rank, globals.cycle, e->value,
+                id, family);
  
             OUTPUT_VERBOSE((9, "  [%d] %s SQL: %s", id,
                 _YELLOW(e->name), sql));
