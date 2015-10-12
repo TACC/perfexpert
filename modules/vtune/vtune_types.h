@@ -32,6 +32,8 @@ extern "C" {
 #include "common/perfexpert_constants.h"
 
 typedef struct {
+    volatile perfexpert_list_item_t *next;
+    volatile perfexpert_list_item_t *prev;
     char *name;   // Name of the counter (VTune name)
     char name_md5[33];
     long samples, value; //Number of samples and value
