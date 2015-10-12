@@ -96,7 +96,17 @@ int database_hw_events(vtune_hw_profile_t *profile) {
 
     OUTPUT_VERBOSE((8, "%s", "storing data"));
     vtune_event_t * v = NULL;
-    perfexpert_list_for (v, profile->events, vtune_event_t) {
+    if (profile==NULL)
+        OUTPUT_VERBOSE ((8, "profile is null"));
+    else {
+    if (profile->events_by_name==NULL)
+        OUTPUT_VERBOSE((8, "list is empty"));
+    else
+        OUTPUT_VERBOSE((8, "list is NOT empty"));
+    }
+    /*
+   // perfexpert_list_for (v, my_module_globals.events_by_name, vtune_event_t) {
+    perfexpert_list_for (v, profile->events_list, vtune_event_t) {
         OUTPUT_VERBOSE((8, "%s", v->name));
         bzero(sql, MAX_BUFFER_SIZE);
         sprintf (sql, "SELECT id FROM arch_event WHERE "
@@ -127,7 +137,8 @@ int database_hw_events(vtune_hw_profile_t *profile) {
         }
         id++;
     }
-    OUTPUT_VERBOSE ((9, "%s", "data stored"));
+    */
+    OUTPUT_VERBOSE ((8, "%s", "data stored"));
     return PERFEXPERT_SUCCESS;
 }
 

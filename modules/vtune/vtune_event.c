@@ -38,7 +38,7 @@ extern "C" {
 #include "common/perfexpert_constants.h"
 #include "common/perfexpert_cpuinfo.h"
 #include "common/perfexpert_hash.h"
-#include "common/perfexpert_md5.h"
+//#include "common/perfexpert_md5.h"
 #include "common/perfexpert_output.h"
 
 /* module_set_event */

@@ -41,6 +41,7 @@ extern "C" {
 /* PerfExpert common headers */
 #include "common/perfexpert_hash.h"
 #include "common/perfexpert_list.h"
+#include "common/perfexpert_md5.h"
 
 extern my_module_globals_t my_module_globals;
 extern perfexpert_module_vtune_t myself_module;
