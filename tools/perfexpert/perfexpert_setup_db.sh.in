@@ -67,6 +67,12 @@ if [ -f ${prefix}/etc/hpctoolkit_module.sql ]; then
     echo "HPCToolkit module set"
 fi
 
+# Setup VTUNE module
+if [ -f ${prefix}/etc/vtune_module.sql ]; then
+    sqlite3 ${HOME}/.perfexpert.db < ${prefix}/etc/vtune_module.sql
+    echo "VTune module set"
+fi
+
 # Setup ReadELF module
 if [ -f ${prefix}/etc/readelf_module.sql ]; then
     sqlite3 ${HOME}/.perfexpert.db < ${prefix}/etc/readelf_module.sql
