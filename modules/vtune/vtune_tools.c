@@ -252,7 +252,6 @@ int parse_report (const char * parse_file, vtune_hw_profile_t *profile) {
 
         perfexpert_list_item_construct((perfexpert_list_item_t *)hotspot);
         perfexpert_list_construct (&hotspot->events);
-        OUTPUT_VERBOSE ((8, "Created hotspot %s", hotspot->name));
         //Process the list of arguments
         //TODO: only collect statistics about a specific set of functions??
         for (i=2; i<argc; ++i) {
@@ -266,13 +265,9 @@ int parse_report (const char * parse_file, vtune_hw_profile_t *profile) {
             e->value = atol (argv[i]);
             perfexpert_hash_add_str(hotspot->events_by_name, name_md5, e);
             perfexpert_list_append (&(hotspot->events), (perfexpert_list_item_t *) e);
-            OUTPUT_VERBOSE ((8, "Added event to hotspot"));
-//            perfexpert_hash_add_str(profile->events_by_name, name_md5, e);
-//            perfexpert_list_append (&(profile->events_list), (perfexpert_list_item_t *) e);
         }
         perfexpert_hash_add_str(profile->hotspots_by_name, name_md5, hotspot);
         perfexpert_list_append (&(profile->hotspots), (perfexpert_list_item_t *) hotspot);
-        OUTPUT_VERBOSE ((8, "Added hotspot to profile"));
     }
     fclose (in);
     return PERFEXPERT_SUCCESS;

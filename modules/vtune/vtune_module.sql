@@ -41,14 +41,13 @@ CREATE TABLE IF NOT EXISTS vtune_hotspot (
 );
 
 CREATE TABLE IF NOT EXISTS vtune_event (
-    id            INTEGER PRIMARY KEY,
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
     name          VARCHAR NOT NULL,
     thread_id     INTEGER NOT NULL,
     mpi_task      INTEGER NOT NULL,
     experiment    INTEGER NOT NULL,
     value         REAL    NOT NULL,
-    hotspot_id    INTEGER NOT NULL,
-    vtune_hotspot_id INTEGER,
+    vtune_hotspot_id INTEGER NOT NULL,
     arch_event_id   INTEGER,
     
     FOREIGN KEY (vtune_hotspot_id) REFERENCES vtune_hotspot(id),

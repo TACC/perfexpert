@@ -38,6 +38,7 @@ typedef struct {
     char name_md5[33];
     long samples, value; //Number of samples and value
     int mpi_rank; // To which rank belongs this counter
+    int thread;
     perfexpert_hash_handle_t hh_str;
 } vtune_event_t;
 
