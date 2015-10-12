@@ -99,21 +99,22 @@ int database_hw_events(vtune_hw_profile_t *profile) {
     if (profile==NULL)
         OUTPUT_VERBOSE ((8, "profile is null"));
     else {
-    if (profile->events_by_name==NULL)
-        OUTPUT_VERBOSE((8, "list is empty"));
-    else
-        OUTPUT_VERBOSE((8, "list is NOT empty"));
+    //if (profile->events_list==NULL)
+   //     OUTPUT_VERBOSE((8, "list is empty"));
+   // else
+    //    OUTPUT_VERBOSE((8, "list is NOT empty"));
     }
-    /*
+    OUTPUT_VERBOSE ((8, "%s %d", "size of events_list", perfexpert_list_get_size(&(profile->events_list))));
+    
    // perfexpert_list_for (v, my_module_globals.events_by_name, vtune_event_t) {
-    perfexpert_list_for (v, profile->events_list, vtune_event_t) {
-        OUTPUT_VERBOSE((8, "%s", v->name));
+    perfexpert_list_for (v, &(profile->events_list), vtune_event_t) {
+        OUTPUT_VERBOSE((8, "%s %d", v->name, v->value));
         bzero(sql, MAX_BUFFER_SIZE);
         sprintf (sql, "SELECT id FROM arch_event WHERE "
             "name='%s'", v->name);
 
-        OUTPUT_VERBOSE((9, "  %s SQL: %s", _YELLOW(v->name), sql));
-        
+   //     OUTPUT_VERBOSE((9, "  %s SQL: %s", _YELLOW(v->name), sql));
+/*        
         if (SQLITE_OK != sqlite3_exec(globals.db, sql, NULL, (void*) ext_id, &error)) {
             OUTPUT(("%s %s", _ERROR("SQL error"), error));
             sqlite3_free(error);
@@ -136,8 +137,9 @@ int database_hw_events(vtune_hw_profile_t *profile) {
             return PERFEXPERT_ERROR;
         }
         id++;
+        */
     }
-    */
+    
     OUTPUT_VERBOSE ((8, "%s", "data stored"));
     return PERFEXPERT_SUCCESS;
 }

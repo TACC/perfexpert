@@ -152,6 +152,13 @@ int parse_line (char* line, char *argv[], int *argc) {
     tok = strtok(line, ",");
     while (tok!=NULL) {
         argv[(*argc)] = tok;
+        //Remove possible trailing single quotes from the text
+        if (argv[(*argc)][0]=='\''){
+            argv[(*argc)]++;
+        }
+        if (argv[(*argc)][strlen(argv[(*argc)])-1] =='\'') {
+            argv[(*argc)][strlen(argv[(*argc)])-1] = 0;
+        }
         (*argc)++;
         tok = strtok (NULL, ",");
     }
@@ -200,7 +207,7 @@ int parse_report (const char * parse_file, vtune_hw_profile_t *profile) {
     int argc;
 
     OUTPUT_VERBOSE ((8, "%s", "processing VTune's results"));
-    PERFEXPERT_ALLOC (vtune_hw_profile_t, profile, sizeof(vtune_hw_profile_t));
+//    PERFEXPERT_ALLOC (vtune_hw_profile_t, profile, sizeof(vtune_hw_profile_t));
     fgets(header, MAX_BUFFER_SIZE, in);
     //Parse the header here
     if (PERFEXPERT_SUCCESS!=parse_line (header, c_events, &argc)) {
@@ -212,7 +219,7 @@ int parse_report (const char * parse_file, vtune_hw_profile_t *profile) {
     for (i=2; i< argc; ++i)  {
 //        parse_event_name (c_events[i], events[i]);
         events[i] = c_events[i];
-        OUTPUT_VERBOSE ((8, "event[%d] = %s", i, events[i]));
+ //       OUTPUT_VERBOSE ((8, "event[%d] = %s", i, events[i]));
     }
     //Read the rest of the csv file
     while (fgets(line,MAX_BUFFER_SIZE, in)) {
@@ -237,10 +244,12 @@ int parse_report (const char * parse_file, vtune_hw_profile_t *profile) {
             
             e->samples = 0;
             e->value = atol (argv[i]);
+            OUTPUT_VERBOSE ((8, "appending name %s value %d -- %s", e->name, e->value, argv[i]));
             perfexpert_hash_add_str(profile->events_by_name, name_md5, e);
-//            perfexpert_hash_add_str(my_module_globals.events_by_name, name_md5, e);          
+            perfexpert_list_append (&(profile->events_list), (perfexpert_list_item_t *) e);
         }
     }
+    OUTPUT_VERBOSE ((8, "%s %d", "size of events_list", perfexpert_list_get_size(&(profile->events_list))));
     fclose (in);
     return PERFEXPERT_SUCCESS;
 }
@@ -410,6 +419,7 @@ int run_amplxe_cl(void) {
 }
 
 int collect_results(vtune_hw_profile_t *profile) {
+    OUTPUT_VERBOSE ((8, "%s %d", "INSIDE size of events_list", perfexpert_list_get_size(&(profile->events_list))));
     int fid = -1;
     static char template[] = "vtune_out-XXXXXX";
     char csv_name [MAX_FILENAME];
