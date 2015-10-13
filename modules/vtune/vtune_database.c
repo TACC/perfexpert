@@ -93,14 +93,11 @@ int database_hw_events(vtune_hw_profile_t *profile) {
     char *error = NULL, sql[MAX_BUFFER_SIZE];
     int id = 0; 
     const char * hp_id; //hotspot id as returned from the database
-    //TODO right now hotspot id is hardcoded here. It will be better to
 
     int family = perfexpert_cpuinfo_get_family();
 
-    OUTPUT_VERBOSE((8, "%s", "storing data"));
     vtune_hotspots_t * h = NULL;
 
-    //TODO
     bzero(sql, MAX_BUFFER_SIZE);
     sprintf (sql, "SELECT id FROM vtune_hotspot ORDER BY id DESC LIMIT 1");
     
@@ -111,17 +108,16 @@ int database_hw_events(vtune_hw_profile_t *profile) {
         sqlite3_free(error);
         return PERFEXPERT_ERROR;
     }
-    OUTPUT_VERBOSE ((8, "max previous id %d", id));
     
     perfexpert_list_for (h, &(profile->hotspots), vtune_hotspots_t) {
         bzero(sql, MAX_BUFFER_SIZE);
         //TODO the module is the second column in the VTune's profile. collect it.
         sprintf(sql, "INSERT INTO vtune_hotspot (perfexpert_id, "
                 "id, name, type, profile, module, file, line, depth, "
-                "relevance) VALUES (%llu, %llu, '%s', 0, 'profile', 'module', "
-                "'file', 0,0,0);", globals.unique_id, id, h->name);
+                "relevance) VALUES (%llu, %llu, '%s', 0, 'profile', '%s', "
+                "'file', 0,0,0);", globals.unique_id, id, h->name, h->module);
 
-        OUTPUT_VERBOSE((9, "  %s SQL: %s", _YELLOW(h->name), sql));
+        OUTPUT_VERBOSE((9, "  Hotspot: %s SQL: %s", _YELLOW(h->name), sql));
 
         if (SQLITE_OK != sqlite3_exec(globals.db, sql, NULL, NULL, &error)) {
             OUTPUT(("%s %s", _ERROR("SQL error"), error));
@@ -135,7 +131,7 @@ int database_hw_events(vtune_hw_profile_t *profile) {
             bzero(sql, MAX_BUFFER_SIZE);       
             sprintf (sql, "INSERT INTO vtune_event (name, "
                 "thread_id, mpi_task, experiment, value, hotspot_id, arch_event_id) VALUES "
-                " ('%s', %d, %d, %d, %llu, %d, %d)", e->name, e->thread, e->mpi_rank, globals.cycle, e->value,
+                " ('%s', %d, %d, %d, %llu, %d, %d)", e->name, h->thread, h->mpi_rank, globals.cycle, e->value,
                 id, family);
  
             OUTPUT_VERBOSE((9, "  [%d] %s SQL: %s", id,
@@ -151,7 +147,6 @@ int database_hw_events(vtune_hw_profile_t *profile) {
         id++;
     }
     
-    OUTPUT_VERBOSE ((8, "%s", "data stored"));
     return PERFEXPERT_SUCCESS;
 }
 

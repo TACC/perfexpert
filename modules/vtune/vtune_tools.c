@@ -243,9 +243,15 @@ int parse_report (const char * parse_file, vtune_hw_profile_t *profile) {
 
         PERFEXPERT_ALLOC (vtune_hotspots_t, hotspot, sizeof(vtune_hotspots_t));
         PERFEXPERT_ALLOC (char, hotspot->name, strlen(argv[0]));
+        PERFEXPERT_ALLOC (char, hotspot->module, strlen(argv[1]));
         parse_hotspot_name (argv[0], argv[0]);
         strcpy (hotspot->name, argv[0]);
+        strcpy (hotspot->module, argv[1]);
         strcpy (hotspot->name_md5, perfexpert_md5_string(hotspot->name));
+
+        //TODO
+        hotspot->mpi_rank = 0;
+        hotspot->thread = 0;
 
         perfexpert_list_item_construct((perfexpert_list_item_t *)hotspot);
         perfexpert_list_construct (&hotspot->events);
@@ -258,11 +264,6 @@ int parse_report (const char * parse_file, vtune_hw_profile_t *profile) {
             strcpy(e->name, events[i]);
             strcpy(e->name_md5, perfexpert_md5_string(e->name));
         
-            //TODO
-            e->mpi_rank = 0;
-            e->thread = 0;
-            ////////////////
-            //
             e->samples = 0;
             e->value = atol (argv[i]);
             perfexpert_hash_add_str(hotspot->events_by_name, name_md5, e);

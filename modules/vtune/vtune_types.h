@@ -37,8 +37,6 @@ typedef struct {
     char *name;   // Name of the counter (VTune name)
     char name_md5[33];
     long samples, value; //Number of samples and value
-    int mpi_rank; // To which rank belongs this counter
-    int thread;
     perfexpert_hash_handle_t hh_str;
 } vtune_event_t;
 
@@ -51,7 +49,12 @@ typedef struct {
     volatile perfexpert_list_item_t *next;
     volatile perfexpert_list_item_t *prev;
     char *name;
+    char * module; //module where the hotspot is located
+    char * src_file;
     char name_md5[33];
+    int mpi_rank;
+    int thread;
+    int src_line;
 
     perfexpert_list_t events;
     vtune_event_t *events_by_name;
