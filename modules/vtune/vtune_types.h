@@ -70,22 +70,16 @@ typedef struct {
     char *mic_before[MAX_ARGUMENTS_COUNT];
     char *mic_after[MAX_ARGUMENTS_COUNT];
     char *inputfile;
-//    char *res_folder;
     char res_folder [MAX_FILENAME];
     vtune_event_t *events_by_name;
     int ignore_return_code;
 } my_module_globals_t;
 
 typedef struct {
-//    volatile perfexpert_list_item_t *next;
-//    volatile perfexpert_list_item_t *prev;
     int id;
     char * name;
     perfexpert_list_t hotspots;
     vtune_hotspots_t * hotspots_by_name;
-//    perfexpert_list_t events_list;
-//    vtune_event_t *events_by_name;
-//    vtune_event_t * events_by_id;
 } vtune_hw_profile_t;
 
 #ifdef __cplusplus

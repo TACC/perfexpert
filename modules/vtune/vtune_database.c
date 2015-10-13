@@ -64,6 +64,7 @@ int add_event(void *unused, int argc, char **argv, char **event) {
 
 /* Read the default events for this CPU */
 int database_default_events(void) {
+    /*
     char sql[MAX_BUFFER_SIZE];
     int family = -1;
     char *error = NULL;
@@ -83,7 +84,7 @@ int database_default_events(void) {
         sqlite3_free(error);
         return PERFEXPERT_ERROR;
     }
-
+    */
     return PERFEXPERT_SUCCESS;
 }
 
@@ -117,7 +118,7 @@ int database_hw_events(vtune_hw_profile_t *profile) {
                 "relevance) VALUES (%llu, %llu, '%s', 0, 'profile', '%s', "
                 "'file', 0,0,0);", globals.unique_id, id, h->name, h->module);
 
-        OUTPUT_VERBOSE((9, "  Hotspot: %s SQL: %s", _YELLOW(h->name), sql));
+        //OUTPUT_VERBOSE((9, "  Hotspot: %s SQL: %s", _YELLOW(h->name), sql));
 
         if (SQLITE_OK != sqlite3_exec(globals.db, sql, NULL, NULL, &error)) {
             OUTPUT(("%s %s", _ERROR("SQL error"), error));
@@ -136,7 +137,7 @@ int database_hw_events(vtune_hw_profile_t *profile) {
  
             OUTPUT_VERBOSE((9, "  [%d] %s SQL: %s", id,
                 _YELLOW(e->name), sql));
-        
+      
             // Insert procedure in database
             if (SQLITE_OK != sqlite3_exec(globals.db, sql, NULL, NULL, &error)) {
                 OUTPUT(("%s %s", _ERROR("SQL error"), error));

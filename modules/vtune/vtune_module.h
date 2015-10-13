@@ -58,6 +58,10 @@ typedef struct {
     perfexpert_module_vtune_set_event_fn_t set_event;
     perfexpert_module_vtune_query_event_fn_t query_event;
     perfexpert_list_t profiles;
+
+//    perfexpert_module_measurement_set_event_fn_t set_event;
+    char *total_cycles_counter;
+    char *total_inst_counter;
 } perfexpert_module_vtune_1_0_0_t;
 
 typedef perfexpert_module_vtune_1_0_0_t perfexpert_module_vtune_t;
