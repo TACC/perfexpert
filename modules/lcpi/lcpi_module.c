@@ -64,7 +64,7 @@ int module_init(void) {
     my_module_globals.measurement = NULL;
     my_module_globals.architecture = NULL;
     my_module_globals.mic = PERFEXPERT_FALSE;
-    my_module_globals.verbose = 0;
+    my_module_globals.verbose = globals.verbose; //0;
 
     /* Check if at least one of HPCToolkit or VTune is loaded */
     if ((PERFEXPERT_FALSE == perfexpert_module_available("hpctoolkit")) &&
@@ -181,6 +181,7 @@ int module_init(void) {
             OUTPUT(("%s", _ERROR("generating LCPI metrics (Jaketown)")));
             return PERFEXPERT_ERROR;
         }
+        OUTPUT_VERBOSE((8, "total instr counter %s", my_module_globals.measurement->total_inst_counter));
     }
     /* MIC (or KnightsCorner) */
     else if (0 == strcmp("mic",
@@ -205,6 +206,7 @@ int module_init(void) {
         return PERFEXPERT_ERROR;
     }
 
+    OUTPUT_VERBOSE((8, "total instr counter %s", my_module_globals.measurement->total_inst_counter));
     /* Show the list of metrics */
     perfexpert_hash_iter_str(my_module_globals.metrics_by_name, m, t) {
         OUTPUT_VERBOSE((7, "   %s=%s", _CYAN(m->name),
@@ -215,7 +217,7 @@ int module_init(void) {
         perfexpert_hash_count_str(my_module_globals.metrics_by_name),
         _MAGENTA("LCPI metrics")));
     OUTPUT_VERBOSE((5, "%s", _MAGENTA("initialized")));
-
+    OUTPUT_VERBOSE((8, "[initialize] total instr counter %s", my_module_globals.measurement->total_inst_counter));
     return PERFEXPERT_SUCCESS;
 }
 
@@ -229,6 +231,8 @@ int module_fini(void) {
 /* module_analyze */
 int module_analyze(void) {
     lcpi_profile_t *p = NULL;
+
+    OUTPUT_VERBOSE((8, "[analyze] total instr counter %s", my_module_globals.measurement->total_inst_counter));
 
     OUTPUT(("%s", _YELLOW("Analyzing measurements")));
 
@@ -259,7 +263,8 @@ int module_analyze(void) {
         return PERFEXPERT_ERROR;
     }
 
-    if (PERFEXPERT_SUCCESS != database_export(&(my_module_globals.profiles))) {
+    if (PERFEXPERT_SUCCESS != database_export(&(my_module_globals.profiles), 
+        my_module_globals.measurement->name)) {
         OUTPUT(("%s", _ERROR("writing metrics to database")));
         return PERFEXPERT_ERROR;
     }

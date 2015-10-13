@@ -50,7 +50,7 @@ extern "C" {
 #include "common/perfexpert_output.h"
 
 /* database_export */
-int database_export(perfexpert_list_t *profiles) {
+int database_export(perfexpert_list_t *profiles, const char *table) {
     char *error = NULL, sql[MAX_BUFFER_SIZE];
     lcpi_metric_t *m = NULL, *t = NULL;
     lcpi_profile_t *p = NULL;
@@ -59,6 +59,16 @@ int database_export(perfexpert_list_t *profiles) {
     OUTPUT_VERBOSE((5, "%s", _YELLOW("Exporting metrics")));
 
     /* Check if the required tables are available */
+    bzero(sql, MAX_BUFFER_SIZE);
+    sprintf(sql, "PRAGMA foreign_keys = ON; " 
+                 "CREATE TABLE IF NOT EXISTS lcpi_metric (  " 
+                 "id            INTEGER PRIMARY KEY,        "
+                 "name          VARCHAR NOT NULL,           "
+                 "value         REAL    NOT NULL,           "
+                 "hotspot_id    INTEGER NOT NULL,           "
+                 "FOREIGN KEY (hotspot_id) REFERENCES %s_hotspot(id));", table);
+              
+    /*
     char sql_table[] = "PRAGMA foreign_keys = ON;      \
         CREATE TABLE IF NOT EXISTS lcpi_metric ( \
             id            INTEGER PRIMARY KEY,   \
@@ -66,10 +76,11 @@ int database_export(perfexpert_list_t *profiles) {
             value         REAL    NOT NULL,      \
             hotspot_id    INTEGER NOT NULL,      \
         FOREIGN KEY (hotspot_id) REFERENCES hpctoolkit_hotspot(id));";
+    */
 
     OUTPUT_VERBOSE((5, "%s", _BLUE("Writing profiles to database")));
 
-    if (SQLITE_OK != sqlite3_exec(globals.db, sql_table, NULL, NULL, &error)) {
+    if (SQLITE_OK != sqlite3_exec(globals.db, sql, NULL, NULL, &error)) {
         OUTPUT(("%s %s", _ERROR("SQL error"), error));
         sqlite3_free(error);
         return PERFEXPERT_ERROR;
@@ -119,6 +130,7 @@ int database_export(perfexpert_list_t *profiles) {
 
 /* database_import */
 int database_import(perfexpert_list_t *profiles, const char *table) {
+    OUTPUT_VERBOSE((8, "total instr counter before import %s", my_module_globals.measurement->total_inst_counter));
     lcpi_profile_t *p = NULL;
     lcpi_hotspot_t *h = NULL;
 
@@ -136,6 +148,7 @@ int database_import(perfexpert_list_t *profiles, const char *table) {
         }
 
         /* Select and import hotspots */
+        OUTPUT_VERBOSE((8, "total instr counter before select hotspots %s", my_module_globals.measurement->total_inst_counter));
         OUTPUT_VERBOSE((5, "%s", _YELLOW("Importing hotspots")));
         if (PERFEXPERT_SUCCESS != select_hotspots(&(p->hotspots), table)) {
             OUTPUT(("%s", _ERROR("importing hotspots")));
@@ -143,6 +156,7 @@ int database_import(perfexpert_list_t *profiles, const char *table) {
 
         /* Map modules to hotspots */
         OUTPUT_VERBOSE((5, "%s", _YELLOW("Mapping hotspots <-> modules")));
+        OUTPUT_VERBOSE((8, "total instr counter before mapping hotspots %s", my_module_globals.measurement->total_inst_counter));
         perfexpert_list_for(h, &(p->hotspots), lcpi_hotspot_t) {
             if (PERFEXPERT_SUCCESS != map_modules_to_hotspots(h,
                 p->modules_by_name, table)) {
@@ -323,16 +337,26 @@ static int calculate_metadata(lcpi_profile_t *profile, const char *table) {
     lcpi_module_t *m = NULL, *t = NULL;
     lcpi_hotspot_t *h = NULL;
 
+    OUTPUT_VERBOSE((8, "total instr counter %s", my_module_globals.measurement->total_inst_counter));
+    OUTPUT_VERBOSE((8, "total cycles counter %s", my_module_globals.measurement->total_cycles_counter));
+
+
     /* Replace the '.' by '_' on the metrics name, this is bullshit... */
     PERFEXPERT_ALLOC(char, total_cycles,
         (strlen(my_module_globals.measurement->total_cycles_counter) + 1));
     strcpy(total_cycles, my_module_globals.measurement->total_cycles_counter);
-    perfexpert_string_replace_char(total_cycles, '.', '_');
+    
+    if (table=="hpctoolkit") {
+        perfexpert_string_replace_char(total_cycles, '.', '_');
+    }
 
     PERFEXPERT_ALLOC(char, total_inst,
         (strlen(my_module_globals.measurement->total_inst_counter) + 1));
     strcpy(total_inst, my_module_globals.measurement->total_inst_counter);
-    perfexpert_string_replace_char(total_inst, '.', '_');
+
+    if (table=="hpctoolkit") {
+        perfexpert_string_replace_char(total_inst, '.', '_');
+    }
 
     /* For each hotspot... */
     perfexpert_list_for(h, &(profile->hotspots), lcpi_hotspot_t) {
@@ -340,6 +364,8 @@ static int calculate_metadata(lcpi_profile_t *profile, const char *table) {
         bzero(sql, MAX_BUFFER_SIZE);
         sprintf(sql, "SELECT SUM(value) FROM %s_event WHERE hotspot_id = %llu "
             "AND name = '%s' GROUP BY experiment;", table, h->id, total_inst);
+
+        OUTPUT_VERBOSE ((8, "importing instructions %s", sql));
 
         if (SQLITE_OK != sqlite3_exec(globals.db, sql, import_instructions,
             (void *)h, &error)) {
@@ -421,8 +447,8 @@ static int calculate_metadata(lcpi_profile_t *profile, const char *table) {
 
         /* Write the importance back to the database */
         bzero(sql, MAX_BUFFER_SIZE);
-        sprintf(sql, "UPDATE hpctoolkit_hotspot SET relevance = %f WHERE "
-            "id = %llu;", h->importance, h->id);
+        sprintf(sql, "UPDATE %s_hotspot SET relevance = %f WHERE "
+            "id = %llu;", table, h->importance, h->id);
 
         if (SQLITE_OK != sqlite3_exec(globals.db, sql, NULL, NULL, &error)) {
             OUTPUT(("%s %s", _ERROR("SQL error"), error));

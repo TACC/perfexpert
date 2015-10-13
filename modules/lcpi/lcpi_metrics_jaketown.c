@@ -61,6 +61,9 @@ int metrics_jaketown(void) {
     my_module_globals.measurement->total_cycles_counter = "CPU_CLK_UNHALTED.THREAD_P";
     my_module_globals.measurement->total_inst_counter = "INST_RETIRED.ANY_P";
 
+    OUTPUT_VERBOSE((8, "total instr counter %s", my_module_globals.measurement->total_inst_counter));
+    OUTPUT_VERBOSE((8, "total cycles counter %s", my_module_globals.measurement->total_cycles_counter));
+
     /* ratio.floating_point */
     bzero(s, MAX_LCPI);
     strcpy(s, "(SIMD_FP_256.PACKED_SINGLE+SIMD_FP_256.PACKED_DOUBLE+"
