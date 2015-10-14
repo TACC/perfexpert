@@ -346,17 +346,17 @@ static int calculate_metadata(lcpi_profile_t *profile, const char *table) {
         (strlen(my_module_globals.measurement->total_cycles_counter) + 1));
     strcpy(total_cycles, my_module_globals.measurement->total_cycles_counter);
     
-    if (table=="hpctoolkit") {
+    //if (table=="hpctoolkit") {
         perfexpert_string_replace_char(total_cycles, '.', '_');
-    }
+    //}
 
     PERFEXPERT_ALLOC(char, total_inst,
         (strlen(my_module_globals.measurement->total_inst_counter) + 1));
     strcpy(total_inst, my_module_globals.measurement->total_inst_counter);
 
-    if (table=="hpctoolkit") {
+    //if (table=="hpctoolkit") {
         perfexpert_string_replace_char(total_inst, '.', '_');
-    }
+    //}
 
     /* For each hotspot... */
     perfexpert_list_for(h, &(profile->hotspots), lcpi_hotspot_t) {
