@@ -221,12 +221,15 @@ int parse_report (const char * parse_file, vtune_hw_profile_t *profile) {
             tok = strtok(NULL, ",");
             parts++;
         }   
-        if (parts==0)
+        if (parts==0) {
             events[i] = c_events[i];
+        }
         tok = strstr(events[i], ":Self");
         if (tok!=NULL) {
             sprintf (events[i]+(strlen(events[i])-5), "\0");
-        } 
+        }
+        /* Replace the '.' on the metric, GNU libmatheval does not like them... */
+        perfexpert_string_replace_char(events[i], '.', '_');
     }
 
     //Read the rest of the csv file
