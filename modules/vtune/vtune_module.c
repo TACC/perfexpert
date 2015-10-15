@@ -187,7 +187,6 @@ int module_measure(void) {
         PERFEXPERT_DEALLOC (profile);
         return PERFEXPERT_ERROR;
     }
-    OUTPUT_VERBOSE((8, "%s", "results collected"));
 
     if (PERFEXPERT_SUCCESS != database_hw_events (profile)) {
         PERFEXPERT_DEALLOC (profile);
