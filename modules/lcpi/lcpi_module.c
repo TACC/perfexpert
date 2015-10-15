@@ -175,11 +175,20 @@ int module_init(void) {
     OUTPUT(("%s", _YELLOW("Setting performance events")));
 
     /* Jaketown (or SandyBridgeEP) */
+    OUTPUT_VERBOSE ((8,"Measurement module %s", my_module_globals.measurement->name));
     if (0 == strcmp("jaketown",
         perfexpert_string_to_lower(my_module_globals.architecture))) {
-        if (PERFEXPERT_SUCCESS != metrics_jaketown()) {
-            OUTPUT(("%s", _ERROR("generating LCPI metrics (Jaketown)")));
-            return PERFEXPERT_ERROR;
+        if (0==strcmp (my_module_globals.measurement->name,"vtune")) {
+            if (PERFEXPERT_SUCCESS != metrics_jaketown_vtune()) {
+                OUTPUT(("%s", _ERROR("generating LCPI metrics (Jaketown)")));
+                return PERFEXPERT_ERROR;
+            }
+        }
+        else {
+            if (PERFEXPERT_SUCCESS != metrics_jaketown()) {
+                OUTPUT(("%s", _ERROR("generating LCPI metrics (Jaketown)")));
+                return PERFEXPERT_ERROR;
+            }
         }
     }
     /* MIC (or KnightsCorner) */
