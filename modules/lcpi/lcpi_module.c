@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
+ * Copyright (c) 2011-2015  University of Texas at Austin. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -14,7 +14,7 @@
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
  *
- * Authors: Leonardo Fialho and Ashay Rane
+ * Authors: Antonio Gomez-Iglesias, Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
  */
@@ -181,7 +181,6 @@ int module_init(void) {
             OUTPUT(("%s", _ERROR("generating LCPI metrics (Jaketown)")));
             return PERFEXPERT_ERROR;
         }
-        OUTPUT_VERBOSE((8, "total instr counter %s", my_module_globals.measurement->total_inst_counter));
     }
     /* MIC (or KnightsCorner) */
     else if (0 == strcmp("mic",
@@ -206,7 +205,6 @@ int module_init(void) {
         return PERFEXPERT_ERROR;
     }
 
-    OUTPUT_VERBOSE((8, "total instr counter %s", my_module_globals.measurement->total_inst_counter));
     /* Show the list of metrics */
     perfexpert_hash_iter_str(my_module_globals.metrics_by_name, m, t) {
         OUTPUT_VERBOSE((7, "   %s=%s", _CYAN(m->name),
@@ -217,7 +215,6 @@ int module_init(void) {
         perfexpert_hash_count_str(my_module_globals.metrics_by_name),
         _MAGENTA("LCPI metrics")));
     OUTPUT_VERBOSE((5, "%s", _MAGENTA("initialized")));
-    OUTPUT_VERBOSE((8, "[initialize] total instr counter %s", my_module_globals.measurement->total_inst_counter));
     return PERFEXPERT_SUCCESS;
 }
 
@@ -231,8 +228,6 @@ int module_fini(void) {
 /* module_analyze */
 int module_analyze(void) {
     lcpi_profile_t *p = NULL;
-
-    OUTPUT_VERBOSE((8, "[analyze] total instr counter %s", my_module_globals.measurement->total_inst_counter));
 
     OUTPUT(("%s", _YELLOW("Analyzing measurements")));
 

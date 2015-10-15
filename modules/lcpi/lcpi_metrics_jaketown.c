@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
+ * Copyright (c) 2011-2015  University of Texas at Austin. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -14,7 +14,7 @@
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
  *
- * Authors: Leonardo Fialho and Ashay Rane
+ * Authors: Antonio Gomez-Iglesias, Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
  */
@@ -60,9 +60,6 @@ int metrics_jaketown(void) {
     /* Set the profile total cycles and total instructions counters */
     my_module_globals.measurement->total_cycles_counter = "CPU_CLK_UNHALTED.THREAD_P";
     my_module_globals.measurement->total_inst_counter = "INST_RETIRED.ANY_P";
-
-    OUTPUT_VERBOSE((8, "total instr counter %s", my_module_globals.measurement->total_inst_counter));
-    OUTPUT_VERBOSE((8, "total cycles counter %s", my_module_globals.measurement->total_cycles_counter));
 
     /* ratio.floating_point */
     bzero(s, MAX_LCPI);

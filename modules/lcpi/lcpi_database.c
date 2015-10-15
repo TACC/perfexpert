@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
+ * Copyright (c) 2011-2015  University of Texas at Austin. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -14,7 +14,7 @@
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
  *
- * Authors: Leonardo Fialho and Ashay Rane
+ * Authors: Antonio Gomez-Iglesias, Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
  */
@@ -130,7 +130,6 @@ int database_export(perfexpert_list_t *profiles, const char *table) {
 
 /* database_import */
 int database_import(perfexpert_list_t *profiles, const char *table) {
-    OUTPUT_VERBOSE((8, "total instr counter before import %s", my_module_globals.measurement->total_inst_counter));
     lcpi_profile_t *p = NULL;
     lcpi_hotspot_t *h = NULL;
 
@@ -148,7 +147,6 @@ int database_import(perfexpert_list_t *profiles, const char *table) {
         }
 
         /* Select and import hotspots */
-        OUTPUT_VERBOSE((8, "total instr counter before select hotspots %s", my_module_globals.measurement->total_inst_counter));
         OUTPUT_VERBOSE((5, "%s", _YELLOW("Importing hotspots")));
         if (PERFEXPERT_SUCCESS != select_hotspots(&(p->hotspots), table)) {
             OUTPUT(("%s", _ERROR("importing hotspots")));
@@ -156,7 +154,6 @@ int database_import(perfexpert_list_t *profiles, const char *table) {
 
         /* Map modules to hotspots */
         OUTPUT_VERBOSE((5, "%s", _YELLOW("Mapping hotspots <-> modules")));
-        OUTPUT_VERBOSE((8, "total instr counter before mapping hotspots %s", my_module_globals.measurement->total_inst_counter));
         perfexpert_list_for(h, &(p->hotspots), lcpi_hotspot_t) {
             if (PERFEXPERT_SUCCESS != map_modules_to_hotspots(h,
                 p->modules_by_name, table)) {
@@ -337,26 +334,18 @@ static int calculate_metadata(lcpi_profile_t *profile, const char *table) {
     lcpi_module_t *m = NULL, *t = NULL;
     lcpi_hotspot_t *h = NULL;
 
-    OUTPUT_VERBOSE((8, "total instr counter %s", my_module_globals.measurement->total_inst_counter));
-    OUTPUT_VERBOSE((8, "total cycles counter %s", my_module_globals.measurement->total_cycles_counter));
-
-
     /* Replace the '.' by '_' on the metrics name, this is bullshit... */
     PERFEXPERT_ALLOC(char, total_cycles,
         (strlen(my_module_globals.measurement->total_cycles_counter) + 1));
     strcpy(total_cycles, my_module_globals.measurement->total_cycles_counter);
     
-    //if (table=="hpctoolkit") {
-        perfexpert_string_replace_char(total_cycles, '.', '_');
-    //}
+    perfexpert_string_replace_char(total_cycles, '.', '_');
 
     PERFEXPERT_ALLOC(char, total_inst,
         (strlen(my_module_globals.measurement->total_inst_counter) + 1));
     strcpy(total_inst, my_module_globals.measurement->total_inst_counter);
 
-    //if (table=="hpctoolkit") {
-        perfexpert_string_replace_char(total_inst, '.', '_');
-    //}
+    perfexpert_string_replace_char(total_inst, '.', '_');
 
     /* For each hotspot... */
     perfexpert_list_for(h, &(profile->hotspots), lcpi_hotspot_t) {
