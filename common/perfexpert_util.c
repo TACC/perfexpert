@@ -61,7 +61,7 @@ int perfexpert_util_make_path(const char *path) {
                 strerror(errno)));
             return PERFEXPERT_ERROR;
         }
-        return PERFEXPERT_SUCCESS; // directory already exists
+        return PERFEXPERT_SUCCESS;  /* directory already exists */
     }
 
     /* Save a copy, so we can write to it */
@@ -95,7 +95,7 @@ int perfexpert_util_make_path(const char *path) {
     }
 
     /* Create the final directory component */
-    if (stat(npath, &sb) && mkdir(npath, nmode)) { // This is not portable
+    if (stat(npath, &sb) && mkdir(npath, nmode)) {  /* This is not portable */
         OUTPUT(("%s '%s' %s", _ERROR((char *)"cannot create directory"),
             npath, strerror(errno)));
         PERFEXPERT_DEALLOC(npath);
@@ -143,7 +143,7 @@ int perfexpert_util_remove_dir(const char *dir) {
     }
 
     PERFEXPERT_ALLOC(char, command, (strlen(dir) + 8));
-    sprintf(command, "rm -rf %s", dir); // It is pretty ugly :-(
+    sprintf(command, "rm -rf %s", dir);  /* It is pretty ugly :-( */
     if (-1 == system(command)) {
         PERFEXPERT_DEALLOC(command);
         return PERFEXPERT_ERROR;
