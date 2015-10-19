@@ -45,13 +45,11 @@ int perfexpert_fork_and_wait(test_t *test, char *argv[]) {
     int r_bytes = 0, w_bytes = 0, rc = PERFEXPERT_UNDEFINED;
     char *temp_str, buffer[MAX_BUFFER_SIZE];
 
-    OUTPUT_VERBOSE ((9, "checking %s", argv[0]));
     /* Sanity check: what is the full path of the binary? */
     if (PERFEXPERT_SUCCESS != perfexpert_util_full_path(argv[0], &temp_str)) {
         OUTPUT(("%s", _ERROR("file does not exist or is not in the PATH")));
         return PERFEXPERT_ERROR;
     }
-    OUTPUT_VERBOSE ((9,"[%s] %s", argv[0], "is in the PATH"));
     /* Sanity check: does the binary exists and is executable? */
     if (PERFEXPERT_ERROR == perfexpert_util_file_is_exec(temp_str)) {
         OUTPUT(("%s (%s)", _ERROR((char *)"file is not executable"), temp_str));
