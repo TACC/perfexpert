@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
+ * Copyright (c) 2011-2015  University of Texas at Austin. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -14,7 +14,7 @@
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
  *
- * Authors: Leonardo Fialho and Ashay Rane
+ * Authors: Antonio Gomez-Iglesias, Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
  */
@@ -87,7 +87,7 @@ int run_make(void) {
     test.output = temp_str;
 
     /* fork_and_wait_and_pray */
-    return fork_and_wait(&test, argv);
+    return perfexpert_fork_and_wait(&test, argv);
 }
 
 #ifdef __cplusplus
