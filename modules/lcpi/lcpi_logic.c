@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
+ * Copyright (c) 2011-2015  University of Texas at Austin. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -14,7 +14,7 @@
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
  *
- * Authors: Leonardo Fialho and Ashay Rane
+ * Authors: Antonio Gomez-Iglesias, Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
  */
@@ -62,7 +62,7 @@ int logic_lcpi_compute(lcpi_profile_t *profile) {
             h_lcpi->expression = l->expression;
             h_lcpi->value = l->value;
             h_lcpi->name = l->name;
-            OUTPUT_VERBOSE ((10,"%s ------->  %f", l->name, l->value));
+            OUTPUT_VERBOSE((10, "%s ------->  %f", l->name, l->value));
 
             /* Get the list of variables and their values */
             evaluator_get_variables(h_lcpi->expression, &names, &count);
@@ -77,7 +77,7 @@ int logic_lcpi_compute(lcpi_profile_t *profile) {
                         values[i] = database_get_event(names[i],
                             my_module_globals.measurement->name, h->id);
                     }
-                    OUTPUT_VERBOSE ((10,"Looking for name %s ----> %f", names[i], values[i]));
+                    OUTPUT_VERBOSE((10, "Looking for name %s ----> %f", names[i], values[i]));
                 }
 
                 /* Evaluate the LCPI expression */

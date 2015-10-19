@@ -60,14 +60,13 @@ int database_export(perfexpert_list_t *profiles, const char *table) {
 
     /* Check if the required tables are available */
     bzero(sql, MAX_BUFFER_SIZE);
-    sprintf(sql, "PRAGMA foreign_keys = ON; " 
-                 "CREATE TABLE IF NOT EXISTS lcpi_metric (  " 
+    sprintf(sql, "PRAGMA foreign_keys = ON; "
+                 "CREATE TABLE IF NOT EXISTS lcpi_metric (  "
                  "id            INTEGER PRIMARY KEY,        "
                  "name          VARCHAR NOT NULL,           "
                  "value         REAL    NOT NULL,           "
                  "hotspot_id    INTEGER NOT NULL,           "
                  "FOREIGN KEY (hotspot_id) REFERENCES %s_hotspot(id));", table);
-              
     /*
     char sql_table[] = "PRAGMA foreign_keys = ON;      \
         CREATE TABLE IF NOT EXISTS lcpi_metric ( \
@@ -338,7 +337,7 @@ static int calculate_metadata(lcpi_profile_t *profile, const char *table) {
     PERFEXPERT_ALLOC(char, total_cycles,
         (strlen(my_module_globals.measurement->total_cycles_counter) + 1));
     strcpy(total_cycles, my_module_globals.measurement->total_cycles_counter);
-    
+
     perfexpert_string_replace_char(total_cycles, '.', '_');
 
     PERFEXPERT_ALLOC(char, total_inst,
@@ -354,7 +353,7 @@ static int calculate_metadata(lcpi_profile_t *profile, const char *table) {
         sprintf(sql, "SELECT SUM(value) FROM %s_event WHERE hotspot_id = %llu "
             "AND name = '%s' GROUP BY experiment;", table, h->id, total_inst);
 
-        OUTPUT_VERBOSE ((8, "importing instructions %s", sql));
+        OUTPUT_VERBOSE((8, "importing instructions %s", sql));
 
         if (SQLITE_OK != sqlite3_exec(globals.db, sql, import_instructions,
             (void *)h, &error)) {

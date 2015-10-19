@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
+ * Copyright (c) 2011-2015  University of Texas at Austin. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -14,7 +14,7 @@
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
  *
- * Authors: Leonardo Fialho and Ashay Rane
+ * Authors: Antonio Gomez-Iglesias, Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
  */
@@ -101,7 +101,7 @@ int hotspot_sort(perfexpert_list_t *profiles);
 int metrics_jaketown(void);
 int metrics_jaketown_vtune(void);
 int metrics_mic(void);
-int metrics_papi(void); // Fallback for unknown processors
+int metrics_papi(void);  /* Fallback for unknown processors */
 
 /* lcpi_get_value */
 static inline double lcpi_get_value(lcpi_metric_t *db, const char *key) {

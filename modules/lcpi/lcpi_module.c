@@ -64,7 +64,7 @@ int module_init(void) {
     my_module_globals.measurement = NULL;
     my_module_globals.architecture = NULL;
     my_module_globals.mic = PERFEXPERT_FALSE;
-    my_module_globals.verbose = globals.verbose; //0;
+    my_module_globals.verbose = globals.verbose;
 
     /* Check if at least one of HPCToolkit or VTune is loaded */
     if ((PERFEXPERT_FALSE == perfexpert_module_available("hpctoolkit")) &&
@@ -175,10 +175,10 @@ int module_init(void) {
     OUTPUT(("%s", _YELLOW("Setting performance events")));
 
     /* Jaketown (or SandyBridgeEP) */
-    OUTPUT_VERBOSE ((8,"Measurement module %s", my_module_globals.measurement->name));
+    OUTPUT_VERBOSE((8, "Measurement module %s", my_module_globals.measurement->name));
     if (0 == strcmp("jaketown",
         perfexpert_string_to_lower(my_module_globals.architecture))) {
-        if (0==strcmp (my_module_globals.measurement->name,"vtune")) {
+        if (0 == strcmp(my_module_globals.measurement->name, "vtune")) {
             if (PERFEXPERT_SUCCESS != metrics_jaketown_vtune()) {
                 OUTPUT(("%s", _ERROR("generating LCPI metrics (Jaketown)")));
                 return PERFEXPERT_ERROR;
@@ -240,7 +240,7 @@ int module_analyze(void) {
 
     OUTPUT(("%s", _YELLOW("Analyzing measurements")));
 
-    // TODO: Wrap all these functions in a SQL transaction
+    /* TODO(agomez): Wrap all these functions in a SQL transaction */
 
     if (PERFEXPERT_SUCCESS != database_import(&(my_module_globals.profiles),
         my_module_globals.measurement->name)) {
@@ -267,7 +267,7 @@ int module_analyze(void) {
         return PERFEXPERT_ERROR;
     }
 
-    if (PERFEXPERT_SUCCESS != database_export(&(my_module_globals.profiles), 
+    if (PERFEXPERT_SUCCESS != database_export(&(my_module_globals.profiles),
         my_module_globals.measurement->name)) {
         OUTPUT(("%s", _ERROR("writing metrics to database")));
         return PERFEXPERT_ERROR;
