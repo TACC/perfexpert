@@ -44,19 +44,22 @@ extern "C" {
  * the global variable */
 int add_event(void *unused, int argc, char **argv, char **event) {
     int i;
-    
-    for (i=0; i<argc; ++i) {
+
+    for (i = 0; i < argc; ++i) {
         vtune_event_t * event = NULL;
         char name_md5[33];
-        perfexpert_hash_find_str(my_module_globals.events_by_name, perfexpert_md5_string(argv[i]), event);
-        if (event!=NULL) {
-            //For whatever reason the event is already in the set, so don't duplicate it
+        perfexpert_hash_find_str(my_module_globals.events_by_name,
+                                 perfexpert_md5_string(argv[i]), event);
+        if (event != NULL) {
+            /* For whatever reason the event is already in the set, 
+               so don't duplicate it
+            */
             continue;
         }
-        PERFEXPERT_ALLOC (vtune_event_t, event, sizeof(vtune_event_t));
-        PERFEXPERT_ALLOC (char, event->name, (strlen(argv[i])));
-        strcpy (event->name, argv[i]);
-        strcpy (event->name_md5, perfexpert_md5_string(argv[i]));
+        PERFEXPERT_ALLOC(vtune_event_t, event, sizeof(vtune_event_t));
+        PERFEXPERT_ALLOC(char, event->name, (strlen(argv[i])));
+        strcpy(event->name, argv[i]);
+        strcpy(event->name_md5, perfexpert_md5_string(argv[i]));
         perfexpert_add_hash_str(my_module_globals.events_by_name, name_md5, event);
         OUTPUT_VERBOSE((6, "event %s set", _CYAN(event->name)));
     }
@@ -90,18 +93,17 @@ int database_default_events(void) {
 
 /* database_hw_events */
 int database_hw_events(vtune_hw_profile_t *profile) {
-    
     char *error = NULL, sql[MAX_BUFFER_SIZE];
-    int id = 0; 
-    const char * hp_id; //hotspot id as returned from the database
+    int id = 0;
+    const char * hp_id; /* hotspot id as returned from the database */
 
     int family = perfexpert_cpuinfo_get_family();
 
     vtune_hotspots_t * h = NULL;
 
     bzero(sql, MAX_BUFFER_SIZE);
-    sprintf (sql, "SELECT id FROM vtune_hotspot ORDER BY id DESC LIMIT 1");
-    
+    sprintf(sql, "SELECT id FROM vtune_hotspot ORDER BY id DESC LIMIT 1");
+
     OUTPUT_VERBOSE((9, "  SQL: %s", sql));
 
     if (SQLITE_OK != sqlite3_exec(globals.db, sql, NULL, (void *) id, &error)) {
@@ -109,36 +111,38 @@ int database_hw_events(vtune_hw_profile_t *profile) {
         sqlite3_free(error);
         return PERFEXPERT_ERROR;
     }
-    
-    perfexpert_list_for (h, &(profile->hotspots), vtune_hotspots_t) {
+
+    perfexpert_list_for(h, &(profile->hotspots), vtune_hotspots_t) {
         bzero(sql, MAX_BUFFER_SIZE);
-        //TODO the module is the second column in the VTune's profile. collect it.
+        /* TODO(agomez): the module is the second column in the 
+                         VTune's profile. collect it.
+        */
         sprintf(sql, "INSERT INTO vtune_hotspot (perfexpert_id, "
                 "id, name, type, profile, module, file, line, depth, "
                 "relevance) VALUES (%llu, %llu, '%s', 0, 'profile', '%s', "
                 "'file', 0,0,0);", globals.unique_id, id, h->name, h->module);
 
-        //OUTPUT_VERBOSE((9, "  Hotspot: %s SQL: %s", _YELLOW(h->name), sql));
+        OUTPUT_VERBOSE((9, "  Hotspot: %s SQL: %s", _YELLOW(h->name), sql));
 
         if (SQLITE_OK != sqlite3_exec(globals.db, sql, NULL, NULL, &error)) {
             OUTPUT(("%s %s", _ERROR("SQL error"), error));
             sqlite3_free(error);
             return PERFEXPERT_ERROR;
         }
-       
-        vtune_event_t * e = NULL; 
-        perfexpert_list_for (e, &(h->events), vtune_event_t) {
-     
-            bzero(sql, MAX_BUFFER_SIZE);       
-            sprintf (sql, "INSERT INTO vtune_event (name, "
-                "thread_id, mpi_task, experiment, value, hotspot_id, arch_event_id) VALUES "
-                " ('%s', %d, %d, %d, %llu, %d, %d)", e->name, h->thread, h->mpi_rank, globals.cycle, e->value,
-                id, family);
- 
+
+        vtune_event_t * e = NULL;
+        perfexpert_list_for(e, &(h->events), vtune_event_t) {
+            bzero(sql, MAX_BUFFER_SIZE);
+            sprintf(sql, "INSERT INTO vtune_event (name, \
+                thread_id, mpi_task, experiment, value, hotspot_id, \
+                arch_event_id) VALUES "
+                " ('%s', %d, %d, %d, %llu, %d, %d)", e->name, h->thread,
+                h->mpi_rank, globals.cycle, e->value, id, family);
+
             OUTPUT_VERBOSE((9, "  [%d] %s SQL: %s", id,
                 _YELLOW(e->name), sql));
-      
-            // Insert procedure in database
+
+            /* Insert procedure in database */
             if (SQLITE_OK != sqlite3_exec(globals.db, sql, NULL, NULL, &error)) {
                 OUTPUT(("%s %s", _ERROR("SQL error"), error));
                 sqlite3_free(error);
@@ -147,7 +151,7 @@ int database_hw_events(vtune_hw_profile_t *profile) {
         }
         id++;
     }
-    
+
     return PERFEXPERT_SUCCESS;
 }
 

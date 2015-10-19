@@ -3083,7 +3083,7 @@ const char * const haswell[] = {
     NULL,
 };
 
-// TODO: this looks like garbage. Only the VTune module is using it...
+// TODO(agomez): this looks like garbage. Only the VTune module is using it...
 /* Intel CPUs models */
 typedef enum {
     NEHALEM_EP      = 26,

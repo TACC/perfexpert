@@ -34,22 +34,24 @@ extern "C" {
 typedef struct {
     volatile perfexpert_list_item_t *next;
     volatile perfexpert_list_item_t *prev;
-    char *name;   // Name of the counter (VTune name)
+    char *name;   /* Name of the counter (VTune name) */
     char name_md5[33];
-    long samples, value; //Number of samples and value
+    long samples, value; /* Number of samples and value */
     perfexpert_hash_handle_t hh_str;
 } vtune_event_t;
 
-// A hotspot is each one of the functions evaluated with VTune. In the
-// output that we process, it corresponds to one line like:
-// bpnn_zero_weights','backprop','0','0','800018','0','0','0','0','0','0','0','0','0','0','0','0','0','0','100003','4000006','0','0
-// 'name' is the first column of the line.
-// The events is a list of vtune_event_t
+/*
+ A hotspot is each one of the functions evaluated with VTune. In the
+ output that we process, it corresponds to one line like:
+ bpnn_zero_weights','backprop','0','0','800018','0','0','0','0','0','0','0','0','0','0','0','0','0','0','100003','4000006','0','0
+ 'name' is the first column of the line.
+*/
+/* The events is a list of vtune_event_t */
 typedef struct {
     volatile perfexpert_list_item_t *next;
     volatile perfexpert_list_item_t *prev;
     char *name;
-    char * module; //module where the hotspot is located
+    char * module; /* module where the hotspot is located */
     char * src_file;
     char name_md5[33];
     int mpi_rank;
@@ -70,7 +72,7 @@ typedef struct {
     char *mic_before[MAX_ARGUMENTS_COUNT];
     char *mic_after[MAX_ARGUMENTS_COUNT];
     char *inputfile;
-    char res_folder [MAX_FILENAME];
+    char res_folder[MAX_FILENAME];
     vtune_event_t *events_by_name;
     int ignore_return_code;
 } my_module_globals_t;
