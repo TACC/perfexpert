@@ -65,9 +65,15 @@ static int macpo_instrument(void *n, int c, char **val, char **names) {
     OUTPUT_VERBOSE((4, "   instrumenting %s@%s:%s", name, file, line));
 
     /* Remove everyting after the '.' (for OMP functions) */
+    /*
     name = t;
     if (strstr(t, ".omp_fn.")) {
         strsep(&t, ".");
+    }
+    */
+
+    if (strstr(name, ".omp_fun.")) {
+        strsep (&name, ".");
     }
 
     argv[0] = "macpo";

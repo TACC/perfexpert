@@ -86,10 +86,10 @@ int module_fini(void) {
 int module_instrument(void) {
     OUTPUT(("%s", _YELLOW("Instrumenting the code")));
 
-    // if (PERFEXPERT_SUCCESS != macpo_inst_all()) {
-    //     OUTPUT(("%s", _ERROR("instrumenting files")));
-    //     return PERFEXPERT_ERROR;
-    // }
+    if (PERFEXPERT_SUCCESS != macpo_instrument_all()) {
+        OUTPUT(("%s", _ERROR("instrumenting files")));
+        return PERFEXPERT_ERROR;
+    }
 
     return PERFEXPERT_SUCCESS;
 }
