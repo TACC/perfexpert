@@ -49,6 +49,7 @@ extern "C" {
 // The output of this function is in parse_file
 // The command it executes is like:
     // amplxe-cl -R hw-events -r results_folder  -group-by=function -format=csv -report-output=parse_file -csv-delimiter=','
+    //  amplxe-cl -report hw-events -group-by=function -group-by=module -group-by=source-file -group-by=source-line -group-by=thread -r results_folder -format=csv -report-output=parse-file -csv-delimiter=','
 int create_report(char* results_folder, const char* parse_file) {
     struct timespec time_start, time_end, time_diff;
     char *argv[MAX_ARGUMENTS_COUNT];
@@ -62,11 +63,19 @@ int create_report(char* results_folder, const char* parse_file) {
     argc++;
     argv[argc] = VTUNE_RPT_HW;
     argc++;
+    argv[argc] = "-group-by=function";
+    argc++;
+    argv[argc] = "-group-by=module";
+    argc++;
+    argv[argc] = "-group-by=source-file";
+    argc++;
+    argv[argc] = "-group-by=source-line";
+    argc++;
+    argv[argc] = "-group-by=thread";
+    argc++;
     argv[argc] = "-r";
     argc++;
     argv[argc] = my_module_globals.res_folder;
-    argc++;
-    argv[argc] = "-group-by=function";
     argc++;
     argv[argc] = "-format=csv";
     argc++;
@@ -163,6 +172,23 @@ int parse_line(char* line, char *argv[], int *argc) {
     return PERFEXPERT_SUCCESS;
 }
 
+/* Receives a string like 'OMP Worker Thread #4 (TID: 42223)'
+ * and returns the thread number (right after #)
+ */
+int get_thread_number(const char *argv) {
+    const char *p1 = strstr(argv, "#")+1;
+    const char *p2 = strstr(p1, " (");
+    int len = p2-p1;
+    int val;
+    char *res;
+    PERFEXPERT_ALLOC(char, res, len+1);
+    strncpy(res, p1, len);
+    res[len]='\0';
+    val = atoi(res);
+    PERFEXPERT_DEALLOC(res);
+    return val;
+}
+
 int parse_hotspot_name(char *hp, char *name) {
     char * tok;
     tok = strtok(hp, "@$");
@@ -177,11 +203,8 @@ int parse_hotspot_name(char *hp, char *name) {
 
 /*
 This function processes a CSV file that looks like this:
-  Function,Module,Hardware Event Count:CPU_CLK_UNHALTED.REF_TSC:Self,Hardware Event Count:CPU_CLK_UNHALTED.THREAD
-  func@0x370780f010,libgomp.so.1.0.0,84000126,92000138
-  bpnn_adjust_weights.omp_fn.0,backprop,80000120,90000135
-  bpnn_layerforward.omp_fn.1,backprop,24000036,28000042
-  [Outside any known module],[Unknown],16000024,20000030
+  Function,Module,Source File,Source Line,Thread,Hardware Event Count:ARITH.FPU_DIV...
+  bpnn_adjust_weights$omp$parallel_for@316,backprop,backprop.c,324,OMP Worker Thread #1 (TID: 42220),0,0,0,4000006,0,0
 */
 
 int parse_report(const char * parse_file, vtune_hw_profile_t *profile) {
@@ -210,7 +233,7 @@ int parse_report(const char * parse_file, vtune_hw_profile_t *profile) {
        we have to process that. We remove everything before the first ':'
        and the final ':Self'
     */
-    for (i = 2; i < argc; ++i)  {
+    for (i = 5; i < argc; ++i)  {
         char * tok;
         int parts = 0;
         tok = strtok(c_events[i], ":");
@@ -248,21 +271,25 @@ int parse_report(const char * parse_file, vtune_hw_profile_t *profile) {
         PERFEXPERT_ALLOC(vtune_hotspots_t, hotspot, sizeof(vtune_hotspots_t));
         PERFEXPERT_ALLOC(char, hotspot->name, strlen(argv[0]));
         PERFEXPERT_ALLOC(char, hotspot->module, strlen(argv[1]));
+        PERFEXPERT_ALLOC(char, hotspot->src_file, strlen(argv[2]));
         parse_hotspot_name(argv[0], argv[0]);
         strcpy(hotspot->name, argv[0]);
         strcpy(hotspot->module, argv[1]);
+        strcpy(hotspot->src_file, argv[2]);
+        hotspot->src_line = atoi(argv[3]);
         strcpy(hotspot->name_md5, perfexpert_md5_string(hotspot->name));
-
+        
+        hotspot->thread = get_thread_number(argv[4]);
+        
         /* TODO(agomez) */
         hotspot->mpi_rank = 0;
-        hotspot->thread = 0;
 
         perfexpert_list_item_construct((perfexpert_list_item_t *)hotspot);
         perfexpert_list_construct(&hotspot->events);
         /* Process the list of arguments */
         /* TODO(agomez): only collect statistics about a specific set of functions??
          */
-        for (i = 2; i < argc; ++i) {
+        for (i = 5; i < argc; ++i) {
             vtune_event_t *e;
             PERFEXPERT_ALLOC(vtune_event_t, e, sizeof(vtune_event_t));
             PERFEXPERT_ALLOC(char, e->name, strlen(events[i])+1);
