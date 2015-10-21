@@ -52,8 +52,8 @@ int logic_lcpi_compute(lcpi_profile_t *profile) {
 
     /* For each hotspot in this profile... */
     perfexpert_list_for(h, &(profile->hotspots), lcpi_hotspot_t) {
-        OUTPUT_VERBOSE((8, "  %s (%s:%d@%s)", _YELLOW(h->name), h->file,
-            h->line, h->module->name));
+        OUTPUT_VERBOSE((10, "  %s (%s:%d@%s)", _YELLOW(h->name), 
+            h->file, h->line, h->module->name));
 
         /* For each LCPI definition... */
         perfexpert_hash_iter_str(my_module_globals.metrics_by_name, l, t) {
@@ -62,7 +62,6 @@ int logic_lcpi_compute(lcpi_profile_t *profile) {
             h_lcpi->expression = l->expression;
             h_lcpi->value = l->value;
             h_lcpi->name = l->name;
-            OUTPUT_VERBOSE((10, "%s ------->  %f", l->name, l->value));
 
             /* Get the list of variables and their values */
             evaluator_get_variables(h_lcpi->expression, &names, &count);
@@ -72,10 +71,11 @@ int logic_lcpi_compute(lcpi_profile_t *profile) {
                 for (i = 0; i < count; i++) {
                     if (-1.0 != database_get_hound(names[i])) {
                         values[i] = database_get_hound(names[i]);
+                        OUTPUT_VERBOSE((10, "           Found name %s = %g", names[i], values[i]));
                     } else if (-1.0 != database_get_event(names[i], h->id)) {
                         values[i] = database_get_event(names[i], h->id);
+                        OUTPUT_VERBOSE((10, "      [%d] Found name %s = %g", h->id, names[i], values[i]));
                     }
-                    OUTPUT_VERBOSE((10, "Looking for name %s ----> %f", names[i], values[i]));
                 }
 
                 /* Evaluate the LCPI expression */
@@ -87,7 +87,7 @@ int logic_lcpi_compute(lcpi_profile_t *profile) {
             /* Add the LCPI to the hotspot's list of LCPIs */
             perfexpert_hash_add_str(h->metrics_by_name, name_md5, h_lcpi);
 
-            OUTPUT_VERBOSE((10, "    %s=[%g]", h_lcpi->name, h_lcpi->value));
+            OUTPUT_VERBOSE((10, "    %s = [%g]", h_lcpi->name, h_lcpi->value));
         }
     }
     return PERFEXPERT_SUCCESS;
