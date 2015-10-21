@@ -47,7 +47,7 @@ int database_profiles(perfexpert_list_t *profiles) {
 
     /* Check if the required tables are available */
     char sql[] = "PRAGMA foreign_keys = ON;             \
-        CREATE TABLE IF NOT EXISTS hpctoolkit_hotspot ( \
+        CREATE TABLE IF NOT EXISTS perfexpert_hotspot ( \
             perfexpert_id INTEGER NOT NULL,             \
             id            INTEGER PRIMARY KEY,          \
             name          VARCHAR NOT NULL,             \
@@ -58,7 +58,7 @@ int database_profiles(perfexpert_list_t *profiles) {
             line          INTEGER NOT NULL,             \
             depth         INTEGER NOT NULL,             \
             relevance     INTEGER);                     \
-        CREATE TABLE IF NOT EXISTS hpctoolkit_event (   \
+        CREATE TABLE IF NOT EXISTS perfexpert_event (   \
             id            INTEGER PRIMARY KEY,          \
             name          VARCHAR NOT NULL,             \
             thread_id     INTEGER NOT NULL,             \
@@ -66,7 +66,7 @@ int database_profiles(perfexpert_list_t *profiles) {
             experiment    INTEGER NOT NULL,             \
             value         REAL    NOT NULL,             \
             hotspot_id    INTEGER NOT NULL,             \
-        FOREIGN KEY (hotspot_id) REFERENCES hpctoolkit_hotspot(id));";
+        FOREIGN KEY (hotspot_id) REFERENCES perfexpert_hotspot(id));";
 
     OUTPUT_VERBOSE((5, "%s", _BLUE("Writing profiles to database")));
 
@@ -96,7 +96,7 @@ static int database_hotspots(hpctoolkit_profile_t *profile) {
     perfexpert_list_for(h, &(profile->hotspots), hpctoolkit_procedure_t) {
         bzero(sql, MAX_BUFFER_SIZE);
         if (PERFEXPERT_HOTSPOT_FUNCTION == h->type) {
-            sprintf(sql, "INSERT INTO hpctoolkit_hotspot (perfexpert_id, "
+            sprintf(sql, "INSERT INTO perfexpert_hotspot (perfexpert_id, "
                 "profile, name, line, type, module, file, depth) VALUES "
                 "(%llu, '%s', '%s', %d, %d, '%s', '%s', 0);",
                 globals.unique_id, profile->name, h->name, h->line, h->type,
@@ -111,7 +111,7 @@ static int database_hotspots(hpctoolkit_profile_t *profile) {
         } else if (PERFEXPERT_HOTSPOT_LOOP == h->type) {
             hpctoolkit_loop_t *l = (hpctoolkit_loop_t *)h;
 
-            sprintf(sql, "INSERT INTO hpctoolkit_hotspot (perfexpert_id, "
+            sprintf(sql, "INSERT INTO perfexpert_hotspot (perfexpert_id, "
                 "profile, name, line, type, module, file, depth) VALUES ("
                 "%llu, '%s', '%s', %d, %d, '%s', '%s', %d);", globals.unique_id,
             profile->name, l->procedure->name, l->line, l->type,
@@ -148,7 +148,7 @@ static int database_metrics(hpctoolkit_procedure_t *hotspot) {
 
     /* Find the hotspot_id */
     bzero(sql, MAX_BUFFER_SIZE);
-    sprintf(sql, "SELECT id FROM hpctoolkit_hotspot WHERE perfexpert_id = %llu "
+    sprintf(sql, "SELECT id FROM perfexpert_hotspot WHERE perfexpert_id = %llu "
         "ORDER BY id DESC LIMIT 1;", globals.unique_id);
 
     if (SQLITE_OK != sqlite3_exec(globals.db, sql,
@@ -174,7 +174,7 @@ static int database_metrics(hpctoolkit_procedure_t *hotspot) {
         perfexpert_string_replace_char(str, '.', '_');
 
         bzero(sql, MAX_BUFFER_SIZE);
-        sprintf(sql, "INSERT INTO hpctoolkit_event (name, thread_id, mpi_task, "
+        sprintf(sql, "INSERT INTO perfexpert_event (name, thread_id, mpi_task, "
             "experiment, value, hotspot_id) VALUES ('%s', %d, %d, %d, %f, %llu)"
             ";", str, m->thread, m->mpi_rank, m->experiment, m->value, id);
 

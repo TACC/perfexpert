@@ -92,7 +92,7 @@ int metrics_attach_machine(void);
 int database_import(perfexpert_list_t *profiles, const char *table);
 int database_export(perfexpert_list_t *profiles, const char *table);
 double database_get_hound(const char *name);
-double database_get_event(const char *name, const char *table, int hotspot_id);
+double database_get_event(const char *name, int hotspot_id);
 int logic_lcpi_compute(lcpi_profile_t *profile);
 int output_analysis(perfexpert_list_t *profiles);
 int hotspot_sort(perfexpert_list_t *profiles);

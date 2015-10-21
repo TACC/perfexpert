@@ -71,6 +71,7 @@ int run_amplxe_cl(void);
 int run_amplxe_cl_mic(void);
 int collect_results(vtune_hw_profile_t *profile);
 int get_thread_number(const char *);
+int init_database(void);
 
 #ifdef __cplusplus
 }

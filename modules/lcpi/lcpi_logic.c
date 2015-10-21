@@ -72,10 +72,8 @@ int logic_lcpi_compute(lcpi_profile_t *profile) {
                 for (i = 0; i < count; i++) {
                     if (-1.0 != database_get_hound(names[i])) {
                         values[i] = database_get_hound(names[i]);
-                    } else if (-1.0 != database_get_event(names[i],
-                        my_module_globals.measurement->name, h->id)) {
-                        values[i] = database_get_event(names[i],
-                            my_module_globals.measurement->name, h->id);
+                    } else if (-1.0 != database_get_event(names[i], h->id)) {
+                        values[i] = database_get_event(names[i], h->id);
                     }
                     OUTPUT_VERBOSE((10, "Looking for name %s ----> %f", names[i], values[i]));
                 }

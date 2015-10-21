@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
+ * Copyright (c) 2011-2015  University of Texas at Austin. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -14,7 +14,7 @@
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
  *
- * Authors: Leonardo Fialho and Ashay Rane
+ * Authors: Antonio Gomez-Iglesias, Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
  */
@@ -56,20 +56,20 @@ int database_import(perfexpert_list_t *profiles, const char *table) {
 
     /* Select and import profiles */
     OUTPUT_VERBOSE((5, "%s", _YELLOW("Importing profiles")));
-    if (PERFEXPERT_SUCCESS != select_profiles(profiles, table)) {
+    if (PERFEXPERT_SUCCESS != select_profiles(profiles)) {
         OUTPUT(("%s", _ERROR("importing profiles")));
     }
 
     /* For each profile, select and import its modules */
     perfexpert_list_for(p, profiles, macvec_profile_t) {
         OUTPUT_VERBOSE((5, "%s", _YELLOW("Importing modules")));
-        if (PERFEXPERT_SUCCESS != select_modules(p, table)) {
+        if (PERFEXPERT_SUCCESS != select_modules(p)) {
             OUTPUT(("%s", _ERROR("importing modules")));
         }
 
         /* Select and import hotspots */
         OUTPUT_VERBOSE((5, "%s", _YELLOW("Importing hotspots")));
-        if (PERFEXPERT_SUCCESS != select_hotspots(&(p->hotspots), table)) {
+        if (PERFEXPERT_SUCCESS != select_hotspots(&(p->hotspots))) {
             OUTPUT(("%s", _ERROR("importing hotspots")));
         }
 
@@ -77,7 +77,7 @@ int database_import(perfexpert_list_t *profiles, const char *table) {
         OUTPUT_VERBOSE((5, "%s", _YELLOW("Mapping hotspots <-> modules")));
         perfexpert_list_for(h, &(p->hotspots), macvec_hotspot_t) {
             if (PERFEXPERT_SUCCESS != map_modules_to_hotspots(h,
-                p->modules_by_name, table)) {
+                p->modules_by_name)) {
                 OUTPUT(("%s", _ERROR("mapping hotspots <-> modules")));
             }
         }
@@ -94,13 +94,13 @@ int database_import(perfexpert_list_t *profiles, const char *table) {
 }
 
 /* select_profiles */
-static int select_profiles(perfexpert_list_t *profiles, const char *table) {
+static int select_profiles(perfexpert_list_t *profiles) {
     char *error = NULL, sql[MAX_BUFFER_SIZE];
 
     bzero(sql, MAX_BUFFER_SIZE);
     sprintf(sql,
-        "SELECT DISTINCT profile FROM %s_hotspot WHERE perfexpert_id = %llu;",
-        table, globals.unique_id);
+        "SELECT DISTINCT profile FROM perfexpert_hotspot WHERE perfexpert_id = %llu;",
+        globals.unique_id);
 
     if (SQLITE_OK != sqlite3_exec(globals.db, sql, import_profiles,
         (void *)profiles, &error)) {
@@ -133,13 +133,13 @@ static int import_profiles(void *profiles, int n, char **val, char **names) {
 }
 
 /* select_modules */
-static int select_modules(macvec_profile_t *profile, const char *table) {
+static int select_modules(macvec_profile_t *profile) {
     char *error = NULL, sql[MAX_BUFFER_SIZE];
 
     bzero(sql, MAX_BUFFER_SIZE);
     sprintf(sql,
-        "SELECT DISTINCT module FROM %s_hotspot WHERE perfexpert_id = %llu;",
-        table, globals.unique_id);
+        "SELECT DISTINCT module FROM perfexpert_hotspot WHERE perfexpert_id = %llu;",
+        globals.unique_id);
 
     if (SQLITE_OK != sqlite3_exec(globals.db, sql, import_modules,
         (void *)profile, &error)) {
@@ -171,13 +171,13 @@ static int import_modules(void *profile, int n, char **val, char **names) {
 }
 
 /* select_hotspots */
-static int select_hotspots(perfexpert_list_t *hotspots, const char *table) {
+static int select_hotspots(perfexpert_list_t *hotspots) {
     char *error = NULL, sql[MAX_BUFFER_SIZE];
 
     bzero(sql, MAX_BUFFER_SIZE);
     sprintf(sql,
         "SELECT id, name, type, profile, module, file, line, depth FROM "
-        "%s_hotspot WHERE perfexpert_id = %llu;", table, globals.unique_id);
+        "perfexpert_hotspot WHERE perfexpert_id = %llu;", globals.unique_id);
 
     if (SQLITE_OK != sqlite3_exec(globals.db, sql, import_hotspots,
         (void *)hotspots, &error)) {
@@ -221,13 +221,12 @@ static int import_hotspots(void *hotspots, int n, char **val, char **names) {
 }
 
 /* map_modules_to_hotspots */
-static int map_modules_to_hotspots(macvec_hotspot_t *h, macvec_module_t *db,
-    const char *table) {
+static int map_modules_to_hotspots(macvec_hotspot_t *h, macvec_module_t *db) {
     char *module_name = NULL, *error = NULL, sql[MAX_BUFFER_SIZE];
 
     bzero(sql, MAX_BUFFER_SIZE);
-    sprintf(sql, "SELECT module FROM %s_hotspot WHERE perfexpert_id = %llu AND "
-        "name = '%s';", table, globals.unique_id, h->name);
+    sprintf(sql, "SELECT module FROM perfexpert_hotspot WHERE perfexpert_id = %llu AND "
+        "name = '%s';", globals.unique_id, h->name);
 
     if (SQLITE_OK != sqlite3_exec(globals.db, sql,
         perfexpert_database_get_string, (void *)&module_name, &error)) {
@@ -269,8 +268,8 @@ static int calculate_metadata(macvec_profile_t *profile, const char *table) {
     perfexpert_list_for(h, &(profile->hotspots), macvec_hotspot_t) {
         /* Import instructions (sum of all experiments) */
         bzero(sql, MAX_BUFFER_SIZE);
-        sprintf(sql, "SELECT SUM(value) FROM %s_event WHERE hotspot_id = %llu "
-            "AND name = '%s' GROUP BY experiment;", table, h->id, total_inst);
+        sprintf(sql, "SELECT SUM(value) FROM perfexpert_event WHERE hotspot_id = %llu "
+            "AND name = '%s' GROUP BY experiment;", h->id, total_inst);
 
         if (SQLITE_OK != sqlite3_exec(globals.db, sql, import_instructions,
             (void *)h, &error)) {
@@ -282,8 +281,8 @@ static int calculate_metadata(macvec_profile_t *profile, const char *table) {
         /* Import maximum instructions */
         bzero(sql, MAX_BUFFER_SIZE);
         sprintf(sql,
-            "SELECT MAX(a) FROM (SELECT SUM(value) AS a FROM %s_event WHERE "
-            "hotspot_id = %llu AND name = '%s');", table, h->id, total_inst);
+            "SELECT MAX(a) FROM (SELECT SUM(value) AS a FROM perfexpert_event WHERE "
+            "hotspot_id = %llu AND name = '%s');", h->id, total_inst);
 
         if (SQLITE_OK != sqlite3_exec(globals.db, sql,
             perfexpert_database_get_double, (void *)&(h->max_inst), &error)) {
@@ -295,8 +294,8 @@ static int calculate_metadata(macvec_profile_t *profile, const char *table) {
         /* Import minimum instructions */
         bzero(sql, MAX_BUFFER_SIZE);
         sprintf(sql,
-            "SELECT MIN(a) FROM (SELECT SUM(value) AS a FROM %s_event WHERE "
-            "hotspot_id = %llu AND name = '%s');", table, h->id, total_inst);
+            "SELECT MIN(a) FROM (SELECT SUM(value) AS a FROM perfexpert_event WHERE "
+            "hotspot_id = %llu AND name = '%s');", h->id, total_inst);
 
         if (SQLITE_OK != sqlite3_exec(globals.db, sql,
             perfexpert_database_get_double, (void *)&(h->min_inst), &error)) {
@@ -307,8 +306,8 @@ static int calculate_metadata(macvec_profile_t *profile, const char *table) {
 
         /* Import number of experiments */
         bzero(sql, MAX_BUFFER_SIZE);
-        sprintf(sql, "SELECT DISTINCT experiment FROM %s_event WHERE "
-            "hotspot_id = %llu;", table, h->id);
+        sprintf(sql, "SELECT DISTINCT experiment FROM perfexpert_event WHERE "
+            "hotspot_id = %llu;", h->id);
 
         if (SQLITE_OK != sqlite3_exec(globals.db, sql, import_experiment,
             (void *)h, &error)) {
@@ -319,8 +318,8 @@ static int calculate_metadata(macvec_profile_t *profile, const char *table) {
 
         /* Import cycles */
         bzero(sql, MAX_BUFFER_SIZE);
-        sprintf(sql, "SELECT SUM(value) FROM %s_event WHERE hotspot_id = %llu "
-            "AND name = '%s';", table, h->id, total_cycles);
+        sprintf(sql, "SELECT SUM(value) FROM perfexpert_event WHERE hotspot_id = %llu "
+            "AND name = '%s';", h->id, total_cycles);
 
         if (SQLITE_OK != sqlite3_exec(globals.db, sql,
             perfexpert_database_get_double, (void *)&(h->cycles), &error)) {
@@ -352,7 +351,7 @@ static int calculate_metadata(macvec_profile_t *profile, const char *table) {
 
         /* Write the importance back to the database */
         bzero(sql, MAX_BUFFER_SIZE);
-        sprintf(sql, "UPDATE hpctoolkit_hotspot SET relevance = %f WHERE "
+        sprintf(sql, "UPDATE perfexpert_hotspot SET relevance = %f WHERE "
             "id = %llu;", h->importance, h->id);
 
         if (SQLITE_OK != sqlite3_exec(globals.db, sql, NULL, NULL, &error)) {

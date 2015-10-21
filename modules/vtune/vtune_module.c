@@ -81,6 +81,11 @@ int module_init(void) {
         return PERFEXPERT_ERROR;
     }
 
+    if (PERFEXPERT_SUCCESS != init_database()) {
+        OUTPUT(("%s", _ERROR("initialing tables")));
+        return PERFEXPERT_ERROR;
+    }
+
     OUTPUT_VERBOSE((5, "%s", _MAGENTA("initialized")));
 
     return PERFEXPERT_SUCCESS;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
+ * Copyright (c) 2011-2015  University of Texas at Austin. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -81,8 +81,8 @@ int output_analysis(void) {
 
     /* Get the total cycles */
     bzero(sql, MAX_BUFFER_SIZE);
-    sprintf(sql, "SELECT SUM(value) AS total FROM hpctoolkit_hotspot AS h JOIN "
-        "hpctoolkit_event AS e ON h.id = e.hotspot_id WHERE h.perfexpert_id = "
+    sprintf(sql, "SELECT SUM(value) AS total FROM perfexpert_hotspot AS h JOIN "
+        "perfexpert_event AS e ON h.id = e.hotspot_id WHERE h.perfexpert_id = "
         "%llu AND e.name = 'PAPI_TOT_CYC';", globals.unique_id);
 
     if (SQLITE_OK != sqlite3_exec(globals.db, sql,
@@ -107,7 +107,7 @@ int output_analysis(void) {
     /* Get thread cycles */
     bzero(sql, MAX_BUFFER_SIZE);
     sprintf(sql, "SELECT h.profile, e.thread_id, SUM(e.value) AS value FROM "
-        "hpctoolkit_hotspot AS h JOIN hpctoolkit_event AS e ON h.id = "
+        "perfexpert_hotspot AS h JOIN perfexpert_event AS e ON h.id = "
         "e.hotspot_id WHERE h.perfexpert_id = %llu AND e.name = 'PAPI_TOT_CYC' "
         "GROUP BY e.thread_id ORDER BY e.thread_id ASC;", globals.unique_id);
 

@@ -40,6 +40,44 @@ extern "C" {
 #include "common/perfexpert_list.h"
 #include "common/perfexpert_output.h"
 
+/* init the tables, in case they didn't exist */
+int init_database(void) {
+    char *error = NULL;
+
+    /* Check if the required tables are available */
+    char sql[] = "PRAGMA foreign_keys = ON;             \
+        CREATE TABLE IF NOT EXISTS perfexpert_hotspot ( \
+            perfexpert_id INTEGER NOT NULL,             \
+            id            INTEGER PRIMARY KEY,          \
+            name          VARCHAR NOT NULL,             \
+            type          INTEGER NOT NULL,             \
+            profile       VARCHAR NOT NULL,             \
+            module        VARCHAR NOT NULL,             \
+            file          VARCHAR NOT NULL,             \
+            line          INTEGER NOT NULL,             \
+            depth         INTEGER NOT NULL,             \
+            relevance     INTEGER);                     \
+        CREATE TABLE IF NOT EXISTS perfexpert_event (   \
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,\
+            name          VARCHAR NOT NULL,             \
+            thread_id     INTEGER NOT NULL,             \
+            mpi_task      INTEGER NOT NULL,             \
+            experiment    INTEGER NOT NULL,             \
+            value         REAL    NOT NULL,             \
+            hotspot_id    INTEGER NOT NULL,             \
+        FOREIGN KEY (hotspot_id) REFERENCES perfexpert_hotspot(id));";
+
+    OUTPUT_VERBOSE((5, "%s", _BLUE("Initializing database")));
+
+    if (SQLITE_OK != sqlite3_exec(globals.db, sql, NULL, NULL, &error)) {
+        OUTPUT(("%s %s", _ERROR("SQL error"), error));
+        sqlite3_free(error);
+        return PERFEXPERT_ERROR;
+    }
+
+    return PERFEXPERT_SUCCESS;
+}
+
 /* Takes the output of a SELECT statement and adds events to
  * the global variable */
 int add_event(void *unused, int argc, char **argv, char **event) {
@@ -102,7 +140,7 @@ int database_hw_events(vtune_hw_profile_t *profile) {
     vtune_hotspots_t * h = NULL;
 
     bzero(sql, MAX_BUFFER_SIZE);
-    sprintf(sql, "SELECT id FROM vtune_hotspot ORDER BY id DESC LIMIT 1");
+    sprintf(sql, "SELECT id FROM perfexpert_hotspot ORDER BY id DESC LIMIT 1");
 
     OUTPUT_VERBOSE((9, "  SQL: %s", sql));
 
@@ -117,7 +155,7 @@ int database_hw_events(vtune_hw_profile_t *profile) {
         /* TODO(agomez): the module is the second column in the 
                          VTune's profile. collect it.
         */
-        sprintf(sql, "INSERT INTO vtune_hotspot (perfexpert_id, "
+        sprintf(sql, "INSERT INTO perfexpert_hotspot (perfexpert_id, "
                 "id, name, type, profile, module, file, line, depth, "
                 "relevance) VALUES (%llu, %llu, '%s', 0, 'profile', '%s', "
                 "'file', 0,0,0);", globals.unique_id, id, h->name, h->module);
@@ -133,11 +171,10 @@ int database_hw_events(vtune_hw_profile_t *profile) {
         vtune_event_t * e = NULL;
         perfexpert_list_for(e, &(h->events), vtune_event_t) {
             bzero(sql, MAX_BUFFER_SIZE);
-            sprintf(sql, "INSERT INTO vtune_event (name, \
-                thread_id, mpi_task, experiment, value, hotspot_id, \
-                arch_event_id) VALUES "
-                " ('%s', %d, %d, %d, %llu, %d, %d)", e->name, h->thread,
-                h->mpi_rank, globals.cycle, e->value, id, family);
+            sprintf(sql, "INSERT INTO perfexpert_event (name, \
+                thread_id, mpi_task, experiment, value, hotspot_id) VALUES \
+                ('%s', %d, %d, %d, %llu, %d)", e->name, h->thread,
+                h->mpi_rank, globals.cycle, e->value, id);
 
             OUTPUT_VERBOSE((9, "  [%d] %s SQL: %s", id,
                 _YELLOW(e->name), sql));
