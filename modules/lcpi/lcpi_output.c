@@ -174,8 +174,12 @@ static int output_profile(lcpi_hotspot_t *h, FILE *report_FP, const int scale) {
     char *shortname = NULL;
 
     OUTPUT_VERBOSE((4, "   [%d] %s", h->id, _YELLOW(h->name)));
-
     /* Print the runtime of this hotspot */
+    if (PERFEXPERT_SUCCESS != perfexpert_util_file_exists(h->file)) {
+        OUTPUT_VERBOSE((4, "   [%d] file %s does not exist. Is it a system file?", h->id, _YELLOW(h->file)));
+        return PERFEXPERT_SUCCESS;
+    }
+
     perfexpert_util_filename_only(h->file, &shortname);
     switch (h->type) {
         case PERFEXPERT_HOTSPOT_PROGRAM:
