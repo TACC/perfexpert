@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
+ * Copyright (c) 2011-2015  University of Texas at Austin. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -14,7 +14,7 @@
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
  *
- * Authors: Leonardo Fialho and Ashay Rane
+ * Authors: Antonio Gomez-Iglesias, Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
  */
@@ -46,7 +46,7 @@ extern "C" {
 #include "common/perfexpert_util.h"
 #include "install_dirs.h"
 
-static struct argp argp = { options, parse_options, args_doc, doc };
+static struct argp argp = { options, parse_options, args_doc, doc};
 static arg_options_t arg_options = { 0 };
 
 /* parse_cli_params */
@@ -553,6 +553,7 @@ static void module_help(const char *name) {
     argp_help(&argp, stdout, ARGP_HELP_STD_HELP, "perfexpert");
     perfexpert_module_help(name);
 
+    printf("\n Copyright (c) 2011 - 2015 University of Texas at Austin. All rights reserved.\n\n");
     exit(0);
 }
 

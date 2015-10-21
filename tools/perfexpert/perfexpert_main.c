@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
+ * Copyright (c) 2011-2015  University of Texas at Austin. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -14,7 +14,7 @@
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
  *
- * Authors: Leonardo Fialho and Ashay Rane
+ * Authors: Antonio Gomez-Iglesias, Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
  */
@@ -58,7 +58,7 @@ globals_t globals; // Variable to hold global options, this one is OK
 /* main, life starts here */
 int main(int argc, char** argv) {
     char *str = NULL, *cwd = NULL, template[33] = { 0 };
-    int rc = PERFEXPERT_ERROR, i = 0;
+    int rc = PERFEXPERT_UNDEFINED, i = 0;
     perfexpert_module_t *m = NULL;
     perfexpert_step_t *s = NULL;
     struct tm *lt;
@@ -310,6 +310,9 @@ int main(int argc, char** argv) {
     PERFEXPERT_DEALLOC(globals.program_full);
     perfexpert_alloc_free_all();
 
+    if (rc == PERFEXPERT_UNDEFINED) { 
+        rc = PERFEXPERT_SUCCESS;
+    }
     return rc;
 }
 

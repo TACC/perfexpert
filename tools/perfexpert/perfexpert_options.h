@@ -117,7 +117,8 @@ static char doc[] = "\nPerfExpert -- an easy-to-use automatic performance "
     " and 1,\n                      same as --module-option=lcpi,threshold="
     "VALUE)\n  PROGRAM             Program (binary) to analyze (do not use "
     "shell scripts)\n  PROGRAM ARGUMENTS   Program arguments, see documentation"
-    " if any argument\n                      starts with a dash sign ('-')";
+    " if any argument\n                      starts with a dash sign ('-') \n\n"
+    "Example: \n\t perfexpert 0.1 ./myprogram argument";
 
 typedef struct arg_options {
     char *modules;
