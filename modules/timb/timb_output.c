@@ -89,7 +89,7 @@ int output_analysis(void) {
     if (my_module_globals.measure_mod == VTUNE_MOD) {
         sprintf(sql, "SELECT SUM(value) AS total FROM perfexpert_hotspot AS h JOIN "
             "perfexpert_event AS e ON h.id = e.hotspot_id WHERE h.perfexpert_id = "
-            "%llu AND e.name = 'CPU_CLK_UNHALTED.REF_TSC';", globals.unique_id);
+            "%llu AND e.name = 'CPU_CLK_UNHALTED_REF_TSC';", globals.unique_id);
     }
 
     if (SQLITE_OK != sqlite3_exec(globals.db, sql,
@@ -125,7 +125,7 @@ int output_analysis(void) {
     if (my_module_globals.measure_mod == VTUNE_MOD) {
         sprintf(sql, "SELECT h.profile, e.thread_id, SUM(e.value) AS value FROM "
             "perfexpert_hotspot AS h JOIN perfexpert_event AS e ON h.id = "
-            "e.hotspot_id WHERE h.perfexpert_id = %llu AND e.name = 'CPU_CLK_UNHALTED.REF_TSC' "
+            "e.hotspot_id WHERE h.perfexpert_id = %llu AND e.name = 'CPU_CLK_UNHALTED_REF_TSC' "
             "GROUP BY e.thread_id ORDER BY e.thread_id ASC;", globals.unique_id);
     }
 
