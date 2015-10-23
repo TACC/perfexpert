@@ -31,15 +31,23 @@ extern "C" {
 
 /* Modules headers */
 #include "modules/hpctoolkit/hpctoolkit_module.h"
+#include "modules/vtune/vtune_module.h"
 
 #ifdef PROGRAM_PREFIX
 #undef PROGRAM_PREFIX
 #endif
 #define PROGRAM_PREFIX "[perfexpert_module_timb]"
 
+typedef enum{
+    HPCTOOLKIT_MOD = 1,
+    VTUNE_MOD = 2,
+} perfexpert_timb_modules;
+
 /* Module types */
 typedef struct {
     perfexpert_module_hpctoolkit_t *hpctoolkit;
+    perfexpert_module_vtune_t *vtune;
+    int measure_mod;
     double total;
     double maximum;
     double minimum;

@@ -49,18 +49,61 @@ int module_load(void) {
 /* module_init */
 int module_init(void) {
     /* Module pre-requisites */
-    if (PERFEXPERT_SUCCESS != perfexpert_module_requires("timb",
-        PERFEXPERT_PHASE_MEASURE, "hpctoolkit", PERFEXPERT_PHASE_MEASURE,
-        PERFEXPERT_MODULE_AFTER)) {
-        OUTPUT(("%s", _ERROR("pre-required module/phase not available")));
-        return PERFEXPERT_ERROR;
+
+    /* Check if at least one of HPCToolkit or VTune is loaded */
+    if ((PERFEXPERT_FALSE == perfexpert_module_available("hpctoolkit")) &&
+        (PERFEXPERT_FALSE == perfexpert_module_available("vtune"))) {
+        OUTPUT(("%s", _RED("Neither HPCToolkit nor VTune module loaded")));
+
+        /* Default to HPCToolkit */
+        OUTPUT(("%s", _RED("PerfExpert will try to load HPCToolkit module")));
+        if (PERFEXPERT_SUCCESS != perfexpert_module_load("hpctoolkit")) {
+            OUTPUT(("%s", _ERROR("while loading HPCToolkit module")));
+            return PERFEXPERT_ERROR;
+        }   
+
+        /* Get the module address */
+        if (NULL == (my_module_globals.hpctoolkit =
+                (perfexpert_module_hpctoolkit_t *)
+                perfexpert_module_get("hpctoolkit"))) {
+            OUTPUT(("%s", _ERROR("unable to get measurements module")));
+            return PERFEXPERT_SUCCESS;
+        }   
+    }   
+
+    if (PERFEXPERT_TRUE == perfexpert_module_available("hpctoolkit")) {
+        if (PERFEXPERT_SUCCESS != perfexpert_module_requires("timb",
+            PERFEXPERT_PHASE_MEASURE, "hpctoolkit", PERFEXPERT_PHASE_MEASURE,
+            PERFEXPERT_MODULE_AFTER)) {
+            OUTPUT(("%s", _ERROR("pre-required module/phase not available")));
+            return PERFEXPERT_ERROR;
+        }
+        if (PERFEXPERT_SUCCESS != perfexpert_module_requires("timb",
+            PERFEXPERT_PHASE_ANALYZE, "hpctoolkit", PERFEXPERT_PHASE_MEASURE,
+            PERFEXPERT_MODULE_BEFORE)) {
+            OUTPUT(("%s", _ERROR("pre-required module/phase not available")));
+            return PERFEXPERT_ERROR;
+        }
+        my_module_globals.measure_mod = HPCTOOLKIT_MOD;
     }
-    if (PERFEXPERT_SUCCESS != perfexpert_module_requires("timb",
-        PERFEXPERT_PHASE_ANALYZE, "hpctoolkit", PERFEXPERT_PHASE_MEASURE,
-        PERFEXPERT_MODULE_BEFORE)) {
-        OUTPUT(("%s", _ERROR("pre-required module/phase not available")));
-        return PERFEXPERT_ERROR;
+
+    if (PERFEXPERT_TRUE == perfexpert_module_available("vtune")) {
+        if (PERFEXPERT_SUCCESS != perfexpert_module_requires("timb",
+            PERFEXPERT_PHASE_MEASURE, "vtune", PERFEXPERT_PHASE_MEASURE,
+            PERFEXPERT_MODULE_AFTER)) {
+            OUTPUT(("%s", _ERROR("pre-required module/phase not available")));
+            return PERFEXPERT_ERROR;
+        }
+        if (PERFEXPERT_SUCCESS != perfexpert_module_requires("timb",
+            PERFEXPERT_PHASE_ANALYZE, "vtune", PERFEXPERT_PHASE_MEASURE,
+            PERFEXPERT_MODULE_BEFORE)) {
+            OUTPUT(("%s", _ERROR("pre-required module/phase not available")));
+            return PERFEXPERT_ERROR;
+        }
+        my_module_globals.measure_mod = VTUNE_MOD;
     }
+
+
 
     /* Initialize some variables */
     my_module_globals.maximum = DBL_MIN;
@@ -83,13 +126,25 @@ int module_fini(void) {
 int module_measure(void) {
     OUTPUT(("%s", _YELLOW("Setting performance events")));
 
-    my_module_globals.hpctoolkit = (perfexpert_module_hpctoolkit_t *)
-        perfexpert_module_get("hpctoolkit");
+    if (my_module_globals.measure_mod == HPCTOOLKIT_MOD) {
+        my_module_globals.hpctoolkit = (perfexpert_module_hpctoolkit_t *)
+            perfexpert_module_get("hpctoolkit");
 
-    if (PERFEXPERT_SUCCESS != my_module_globals.hpctoolkit->set_event(
-        "PAPI_TOT_CYC")) {
-        OUTPUT(("%s", _ERROR("unable to generate add PAPI_TOT_CYC")));
-        return PERFEXPERT_ERROR;
+        if (PERFEXPERT_SUCCESS != my_module_globals.hpctoolkit->set_event(
+            "PAPI_TOT_CYC")) {
+            OUTPUT(("%s", _ERROR("unable to generate add PAPI_TOT_CYC")));
+            return PERFEXPERT_ERROR;
+        }
+    }
+    if (my_module_globals.measure_mod == VTUNE_MOD) {
+        my_module_globals.vtune = (perfexpert_module_vtune_t *)
+            perfexpert_module_get("vtune");
+
+        if (PERFEXPERT_SUCCESS != my_module_globals.vtune->set_event(
+            "CPU_CLK_UNHALTED.REF_TSC")) {
+            OUTPUT(("%s", _ERROR("unable to generate add CPU_CLK_UNHALTED.REF_TSC")));
+            return PERFEXPERT_ERROR;
+        }
     }
 
     return PERFEXPERT_SUCCESS;
