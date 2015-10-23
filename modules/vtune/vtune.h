@@ -47,13 +47,13 @@ extern my_module_globals_t my_module_globals;
 extern perfexpert_module_vtune_t myself_module;
 
 /* Module constants */
-#define VTUNE_DATABASE ""
-#define VTUNE_CL_BIN   "amplxe-cl"
-#define VTUNE_ACT_COLLECT  "-collect"
-#define VTUNE_ACT_COLLECTWITH "-collect-with"
-#define VTUNE_ACT_REPORT   "-report"
-#define VTUNE_RPT_HW       "hw-events"
-/* Module interface */
+static const char * VTUNE_DATABASE = "";
+static const char * VTUNE_CL_BIN = "amplxe-cl";
+static const char * VTUNE_ACT_COLLECT = "-collect";
+static const char * VTUNE_ACT_COLLECTWITH = "-collect-with";
+static const char * VTUNE_ACT_REPORT = "-report";
+static const char * VTUNE_RPT_HW = "hw-events";
+
 int module_load(void);
 int module_init(void);
 int module_fini(void);
