@@ -67,9 +67,18 @@ static int macpo_instrument(void *n, int c, char **val, char **names) {
     int rc;
     char *folder, *fullpath, *filename;
 
-    OUTPUT_VERBOSE((4, "   instrumenting %s@%s:%s", name, file, line));
 
-    perfexpert_util_filename_only(file, &filename);
+    
+    if (PERFEXPERT_SUCCESS != perfexpert_util_file_exists(file)) {
+        return PERFEXPERT_SUCCESS;
+    }
+
+    OUTPUT_VERBOSE((4, "   instrumenting %s@%s:%s", name, file, line));
+    
+    if (PERFEXPERT_SUCCESS != perfexpert_util_filename_only(file, &filename)) {
+        return PERFEXPERT_SUCCESS;
+    }
+    
     if (strstr(filename, "unknown-file")){
         return PERFEXPERT_SUCCESS;
     }
@@ -113,9 +122,6 @@ static int macpo_instrument(void *n, int c, char **val, char **names) {
     PERFEXPERT_ALLOC(char, argv[4], strlen(file));
     strcpy(argv[4], file);
 
-   // OUTPUT(("COMMAND=[%s %s %s %s %s]", argv[0], argv[1], argv[2], argv[3], argv[4]));
-
-    /* The super-ninja test sctructure */
     PERFEXPERT_ALLOC(char, test.output, (strlen(globals.moduledir) + strlen(name) + 14));
     sprintf(test.output, "%s/%s-macpo.output", globals.moduledir, name);
     //test.input = file;
@@ -126,6 +132,7 @@ static int macpo_instrument(void *n, int c, char **val, char **names) {
 
     rc = perfexpert_fork_and_wait(&test, (char **)argv);
 
+    PERFEXPERT_DEALLOC(test.output);
     PERFEXPERT_DEALLOC(argv[2]);
     PERFEXPERT_DEALLOC(argv[3]);
     PERFEXPERT_DEALLOC(argv[4]);
