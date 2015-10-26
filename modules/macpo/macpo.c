@@ -36,6 +36,8 @@ extern "C" {
 /* PerfExpert common headers */
 #include "common/perfexpert_alloc.h"
 #include "common/perfexpert_output.h"
+#include "common/perfexpert_fork.h"
+#include "common/perfexpert_util.h"
 
 /* macpo_instrument_all */
 int macpo_instrument_all(void) {
@@ -60,9 +62,27 @@ int macpo_instrument_all(void) {
 
 /* macpo_instrument */
 static int macpo_instrument(void *n, int c, char **val, char **names) {
-    char *t = NULL, *argv[4], *name = val[0], *file = val[1], *line = val[2];
+    char *t = NULL, *argv[5], *name = val[0], *file = val[1], *line = val[2];
+    test_t test;
+    int rc;
+    char *folder, *fullpath, *filename;
 
     OUTPUT_VERBOSE((4, "   instrumenting %s@%s:%s", name, file, line));
+
+    perfexpert_util_filename_only(file, &filename);
+    if (strstr(filename, "unknown-file")){
+        return PERFEXPERT_SUCCESS;
+    }
+
+    if (PERFEXPERT_SUCCESS != perfexpert_util_path_only(file, &folder)) {
+        return PERFEXPERT_ERROR;
+    }
+
+    PERFEXPERT_ALLOC(char, fullpath, (strlen(globals.moduledir) + strlen(folder) + 1));
+    sprintf(fullpath, "%s/%s", globals.moduledir, folder);
+
+    perfexpert_util_make_path(fullpath);
+
 
     /* Remove everyting after the '.' (for OMP functions) */
     /*
@@ -77,23 +97,39 @@ static int macpo_instrument(void *n, int c, char **val, char **names) {
     }
 
     argv[0] = "macpo";
-    argv[1] = "--nocompile";
+    argv[1] = "" ;//"--macpo:no-compile";
 
     PERFEXPERT_ALLOC(char, argv[2],
-        (strlen(globals.moduledir) + strlen(file) + 17));
-    sprintf(argv[2], "--backup=%s/%s", globals.moduledir, file);
+        (strlen(globals.moduledir) + strlen(file) + 24));
+    sprintf(argv[2], "--macpo:backup-filename=%s/%s", globals.moduledir, file);
 
-    PERFEXPERT_ALLOC(char, argv[3], (strlen(name) + 20));
+    PERFEXPERT_ALLOC(char, argv[3], (strlen(name) + 25));
     if (0 == line) {
-        sprintf(argv[3], "--instrument=%s", name);
+        sprintf(argv[3], "--macpo:instrument=%s", name);
     } else {
-        sprintf(argv[3], "--instrument=%s:%s", name, line);
+        sprintf(argv[3], "--macpo:instrument=%s:%s", name, line);
     }
 
-    OUTPUT(("COMMAND=[%s %s %s %s]", argv[0], argv[1], argv[2], argv[3]));
+    PERFEXPERT_ALLOC(char, argv[4], strlen(file));
+    strcpy(argv[4], file);
+
+   // OUTPUT(("COMMAND=[%s %s %s %s %s]", argv[0], argv[1], argv[2], argv[3], argv[4]));
+
+    /* The super-ninja test sctructure */
+    PERFEXPERT_ALLOC(char, test.output, (strlen(globals.moduledir) + strlen(name) + 14));
+    sprintf(test.output, "%s/%s-macpo.output", globals.moduledir, name);
+    //test.input = file;
+    test.input = NULL;
+    test.info = globals.program;
+
+    OUTPUT(("COMMAND=[%s %s %s %s %s]", argv[0], argv[1], argv[2], argv[3], argv[4]));
+
+    rc = perfexpert_fork_and_wait(&test, (char **)argv);
 
     PERFEXPERT_DEALLOC(argv[2]);
     PERFEXPERT_DEALLOC(argv[3]);
+    PERFEXPERT_DEALLOC(argv[4]);
+    PERFEXPERT_DEALLOC(fullpath);
 
     return PERFEXPERT_SUCCESS;
 }
