@@ -79,10 +79,6 @@ static int macpo_instrument(void *n, int c, char **val, char **names) {
         return PERFEXPERT_SUCCESS;
     }
     
-    if (strstr(filename, "unknown-file")){
-        return PERFEXPERT_SUCCESS;
-    }
-
     if (PERFEXPERT_SUCCESS != perfexpert_util_path_only(file, &folder)) {
         return PERFEXPERT_ERROR;
     }
