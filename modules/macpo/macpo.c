@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
+ * Copyright (c) 2011-2015  University of Texas at Austin. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -14,7 +14,7 @@
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
  *
- * Authors: Leonardo Fialho and Ashay Rane
+ * Authors: Antonio Gomez-Iglesias, Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
  */
@@ -62,19 +62,17 @@ int macpo_instrument_all(void) {
 
 /* macpo_instrument */
 static int macpo_instrument(void *n, int c, char **val, char **names) {
-    char *t = NULL, *argv[5], *name = val[0], *file = val[1], *line = val[2];
+    char *t = NULL, *argv[6], *name = val[0], *file = val[1], *line = val[2];
     test_t test;
     int rc;
-    char *folder, *fullpath, *filename;
+    char *folder, *fullpath, *filename, *rose_name;
 
+    OUTPUT_VERBOSE((6, "  instrumenting %s@%s:%s", name, file, line));
 
-    
     if (PERFEXPERT_SUCCESS != perfexpert_util_file_exists(file)) {
         return PERFEXPERT_SUCCESS;
     }
 
-    OUTPUT_VERBOSE((4, "   instrumenting %s@%s:%s", name, file, line));
-    
     if (PERFEXPERT_SUCCESS != perfexpert_util_filename_only(file, &filename)) {
         return PERFEXPERT_SUCCESS;
     }
@@ -87,7 +85,6 @@ static int macpo_instrument(void *n, int c, char **val, char **names) {
     sprintf(fullpath, "%s/%s", globals.moduledir, folder);
 
     perfexpert_util_make_path(fullpath);
-
 
     /* Remove everyting after the '.' (for OMP functions) */
     /*
@@ -102,6 +99,8 @@ static int macpo_instrument(void *n, int c, char **val, char **names) {
     }
 
     argv[0] = "macpo";
+    argv[5] = NULL;
+   
     argv[1] = "" ;//"--macpo:no-compile";
 
     PERFEXPERT_ALLOC(char, argv[2],
@@ -117,23 +116,49 @@ static int macpo_instrument(void *n, int c, char **val, char **names) {
 
     PERFEXPERT_ALLOC(char, argv[4], strlen(file));
     strcpy(argv[4], file);
-
-    PERFEXPERT_ALLOC(char, test.output, (strlen(globals.moduledir) + strlen(name) + 14));
-    sprintf(test.output, "%s/%s-macpo.output", globals.moduledir, name);
-    //test.input = file;
+    PERFEXPERT_ALLOC(char, test.output, (strlen(globals.moduledir) + strlen(name) + strlen(line) + 15));
+    sprintf(test.output, "%s/%s-%s-macpo.output", globals.moduledir, name, line);
     test.input = NULL;
     test.info = globals.program;
 
-    OUTPUT(("COMMAND=[%s %s %s %s %s]", argv[0], argv[1], argv[2], argv[3], argv[4]));
+    OUTPUT_VERBOSE((6,"   COMMAND=[%s %s %s %s %s]", argv[0], argv[1], argv[2], argv[3], argv[4]));
 
     rc = perfexpert_fork_and_wait(&test, (char **)argv);
+    switch (rc) {
+        case PERFEXPERT_FAILURE:
+        case PERFEXPERT_ERROR:
+            OUTPUT(("%s (return code: %d) Usually, this means that an error"
+                " happened during the program execution. To see the program"
+                "'s output, check the content of this file: [%s]. If you "
+                "want to PerfExpert ignore the return code next time you "
+                "run this program, set the 'return-code' option for the "
+                "macpo module. See 'perfepxert -H macpo' for details.",
+                _ERROR("the target program returned non-zero"), rc, 
+                test.output));
+            return PERFEXPERT_ERROR;
+
+        case PERFEXPERT_SUCCESS:
+            OUTPUT_VERBOSE((7, "[ %s  ]", _BOLDGREEN("OK")));
+            break;
+
+        default:
+            break;
+    }
+
+    PERFEXPERT_ALLOC(char, rose_name, (strlen(filename) + 5));
+    sprintf(rose_name, "rose_%s", filename);
+    OUTPUT_VERBOSE((9, "Copying file %s to: %s", rose_name, file));
+
+
+    if (PERFEXPERT_SUCCESS != perfexpert_util_file_rename(rose_name, file)) {
+        OUTPUT(("%s impossible to copy file %s to %s", _ERROR("IO ERROR"), rose_name, file));
+    }
 
     PERFEXPERT_DEALLOC(test.output);
     PERFEXPERT_DEALLOC(argv[2]);
     PERFEXPERT_DEALLOC(argv[3]);
     PERFEXPERT_DEALLOC(argv[4]);
     PERFEXPERT_DEALLOC(fullpath);
-
     return PERFEXPERT_SUCCESS;
 }
 
