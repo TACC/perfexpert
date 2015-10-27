@@ -51,7 +51,7 @@ void perfexpert_sighandler(int sig) {
 
     fprintf(stderr, "\nPerfExpert received an error signal (%d)\n\n", sig);
     fprintf(stderr, "Please, send a copy of this error and the compressed file "
-        "of the temporary\ndirectory to agomez@utexas.edu. Also, include the "
+        "of the temporary\ndirectory to agomez@tacc.utexas.edu. Also, include the "
         "command line you used to run\nPerfExpert.\n\nThis will help us to "
         "improve PerfExpert. You may also want join our mailing list\nto get "
         "some help. To do that, send a blank message to:\n\nperfexpert-"

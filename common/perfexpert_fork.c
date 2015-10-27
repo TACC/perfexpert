@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
+ * Copyright (c) 2011-2015  University of Texas at Austin. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -14,7 +14,7 @@
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
  *
- * Authors: Leonardo Fialho and Ashay Rane
+ * Authors: Antonio Gomez-Iglesias, Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
  */
@@ -75,6 +75,7 @@ int perfexpert_fork_and_wait(test_t *test, char *argv[]) {
         return PERFEXPERT_ERROR;
     }
 
+
     /* Forking child */
     pid = fork();
     if (-1 == pid) {
@@ -103,6 +104,7 @@ int perfexpert_fork_and_wait(test_t *test, char *argv[]) {
                 return PERFEXPERT_ERROR;
             }
         }
+        
 
         execvp(argv[0], argv);
 
@@ -165,6 +167,10 @@ int perfexpert_fork_and_wait(test_t *test, char *argv[]) {
     OUTPUT_VERBOSE((7, "   [%s] >> [%s] (rc=%d)", argv[0],
         test->info ? test->info : "", rc >> 8));
 
+    if (rc < 0) {
+        perror("while forking");
+    }
+    
     return rc >> 8;
 }
 

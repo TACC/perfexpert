@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
+ * Copyright (c) 2011-2015  University of Texas at Austin. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -14,7 +14,7 @@
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
  *
- * Authors: Leonardo Fialho and Ashay Rane
+ * Authors: Antonio Gomez-Iglesias, Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
  */
@@ -327,6 +327,27 @@ int perfexpert_util_full_path(const char *file, char **fullpath) {
     sprintf(local, "%s/%s", path, filename);
     *fullpath = local;
 
+    return PERFEXPERT_SUCCESS;
+}
+
+/* perfexpert_util_file_rename */
+int perfexpert_util_file_rename(const char *oldname, const char *newname) {
+    int rc;
+
+    if (NULL == newname) {
+        OUTPUT(("%s", _ERROR((char *)"destination file is NULL")));
+        return PERFEXPERT_ERROR;
+    }
+    if (NULL == oldname) {
+        OUTPUT(("%s", _ERROR((char *)"origin file is NULL")));
+        return PERFEXPERT_ERROR;
+    }
+
+    rc = rename(oldname, newname);
+    if (rc < 0){
+        perror ("Renaming file");
+        return PERFEXPERT_ERROR;
+    }
     return PERFEXPERT_SUCCESS;
 }
 

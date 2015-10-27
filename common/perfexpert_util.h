@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
+ * Copyright (c) 2011-2015  University of Texas at Austin. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -14,7 +14,7 @@
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
  *
- * Authors: Leonardo Fialho and Ashay Rane
+ * Authors: Antonio Gomez-Iglesias, Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
  */
@@ -37,6 +37,7 @@ int perfexpert_util_file_is_writable(const char *file);
 int perfexpert_util_filename_only(const char *file, char **only);
 int perfexpert_util_path_only(const char *file, char **path);
 int perfexpert_util_full_path(const char *file, char **fullpath);
+int perfexpert_util_file_rename(const char *oldname, const char *newname);
 int perfexpert_util_file_copy(const char *to, const char *from);
 int perfexpert_util_file_print(const char *file);
 
