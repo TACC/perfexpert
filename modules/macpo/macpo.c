@@ -111,8 +111,8 @@ static int macpo_instrument(void *n, int c, char **val, char **names) {
    
     argv[1] = "--macpo:no-compile";
     PERFEXPERT_ALLOC(char, argv[2],
-        (strlen(globals.moduledir) + strlen(file) + 25));
-    snprintf(argv[2], strlen(globals.moduledir) + strlen(file) + 25, 
+        (strlen(globals.moduledir) + strlen(file) + 27));
+    snprintf(argv[2], strlen(globals.moduledir) + strlen(file) + 27, 
             "--macpo:backup-filename=%s/%s", globals.moduledir, file);
 
     PERFEXPERT_ALLOC(char, argv[3], (strlen(name) + 25));
