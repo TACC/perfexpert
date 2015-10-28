@@ -69,6 +69,14 @@ static int macpo_instrument(void *n, int c, char **val, char **names) {
 
     OUTPUT_VERBOSE((6, "  instrumenting %s@%s:%s", name, file, line));
 
+    // Remove everything before '(' in the function name (if exists)
+    char *ptr = strchr(name, '(');
+    if (ptr) {
+        *ptr = 0;
+    }
+
+    OUTPUT_VERBOSE((6, "short name %s", name));
+    
     if (PERFEXPERT_SUCCESS != perfexpert_util_file_exists(file)) {
         return PERFEXPERT_SUCCESS;
     }
@@ -97,15 +105,15 @@ static int macpo_instrument(void *n, int c, char **val, char **names) {
     if (strstr(name, ".omp_fun.")) {
         strsep (&name, ".");
     }
-
-    argv[0] = "macpo";
-    argv[5] = NULL;
    
-    argv[1] = "" ;//"--macpo:no-compile";
 
+    argv[0] = "macpo.sh";
+   
+    argv[1] = "--macpo:no-compile";
     PERFEXPERT_ALLOC(char, argv[2],
         (strlen(globals.moduledir) + strlen(file) + 24));
-    sprintf(argv[2], "--macpo:backup-filename=%s/%s", globals.moduledir, file);
+    snprintf(argv[2], strlen(globals.moduledir) + strlen(file) + 24, 
+            "--macpo:backup-filename=%s/%s", globals.moduledir, file);
 
     PERFEXPERT_ALLOC(char, argv[3], (strlen(name) + 25));
     if (0 == line) {
@@ -114,8 +122,12 @@ static int macpo_instrument(void *n, int c, char **val, char **names) {
         sprintf(argv[3], "--macpo:instrument=%s:%s", name, line);
     }
 
+
     PERFEXPERT_ALLOC(char, argv[4], strlen(file));
     strcpy(argv[4], file);
+
+    argv[5] = NULL; //Add NULL to indicate the end of arguments
+    
     PERFEXPERT_ALLOC(char, test.output, (strlen(globals.moduledir) + strlen(name) + strlen(line) + 15));
     sprintf(test.output, "%s/%s-%s-macpo.output", globals.moduledir, name, line);
     test.input = NULL;
@@ -146,7 +158,7 @@ static int macpo_instrument(void *n, int c, char **val, char **names) {
     }
 
     PERFEXPERT_ALLOC(char, rose_name, (strlen(filename) + 5));
-    sprintf(rose_name, "rose_%s", filename);
+    snprintf(rose_name, strlen(filename) + 5, "rose_%s", filename);
     OUTPUT_VERBOSE((9, "Copying file %s to: %s", rose_name, file));
 
 
