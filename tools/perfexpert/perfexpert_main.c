@@ -219,44 +219,48 @@ int main(int argc, char** argv) {
             PERFEXPERT_DEALLOC(globals.moduledir);
         }
 
-        // if ((NULL != globals.sourcefile) || (NULL != globals.target)) {
-        //     #if HAVE_CODE_TRANSFORMATION
-        //     /* Call code transformer */
-        //     switch ((rc = transformation())) {
-        //         case PERFEXPERT_ERROR:
-        //         case PERFEXPERT_FAILURE:
-        //         case PERFEXPERT_FORK_ERROR:
-        //             OUTPUT(("%s",
-        //                 _ERROR("while running code transformer")));
-        //             goto CLEANUP;
+        /*
+//         if ((NULL != globals.sourcefile) || (NULL != globals.target)) {
+             #if HAVE_CODE_TRANSFORMATION
+             // Call code transformer 
+             switch ((rc = transformation())) {
+                 case PERFEXPERT_ERROR:
+                 case PERFEXPERT_FAILURE:
+                 case PERFEXPERT_FORK_ERROR:
+                     OUTPUT(("%s",
+                         _ERROR("while running code transformer")));
+                     goto CLEANUP;
 
-        //         case PERFEXPERT_NO_TRANS:
-        //             OUTPUT(("PerfExpert has no automatic optimization for this "
-        //                 "code. If there is"));
-        //             OUTPUT(("any recommendation (shown above) try to apply them"
-        //                 " manually"));
-        //             goto CLEANUP;
-        //     }
-        //     PERFEXPERT_ALLOC(char, file,
-        //         (strlen(globals.stepdir) + strlen(CT_REPORT) + 2));
-        //     sprintf(file, "%s/%s", globals.stepdir, CT_REPORT);
-        //     if (NULL == file) {
-        //         OUTPUT(("%s", _ERROR("null file")));
-        //         return PERFEXPERT_ERROR;
-        //     }
-        //     if (PERFEXPERT_SUCCESS != perfexpert_util_file_print(file)) {
-        //         OUTPUT(("%s", _ERROR("unable to show transformations")));
-        //     }
-        //     PERFEXPERT_DEALLOC(file);
+                 case PERFEXPERT_NO_TRANS:
+                     OUTPUT(("PerfExpert has no automatic optimization for this "
+                         "code. If there is"));
+                     OUTPUT(("any recommendation (shown above) try to apply them"
+                         " manually"));
+                     goto CLEANUP;
+             }
+             char * file;
+             PERFEXPERT_ALLOC(char, file,
+                 (strlen(globals.workdir) + strlen(CT_REPORT) + 2));
+             sprintf(file, "%s/%s", globals.workdir, CT_REPORT);
+             if (NULL == file) {
+                 OUTPUT(("%s", _ERROR("null file")));
+                return PERFEXPERT_ERROR;
+             }
+             if (PERFEXPERT_SUCCESS != perfexpert_util_file_print(file)) {
+                 OUTPUT(("%s", _ERROR("unable to show transformations")));
+             }
+             PERFEXPERT_DEALLOC(file);
 
-        //     #else
-        //     rc = PERFEXPERT_SUCCESS;
-        //     goto CLEANUP;
-        //     #endif
-        // } else {
-        //     rc = PERFEXPERT_SUCCESS;
-        //     goto CLEANUP;
-        // }
+             #else
+             rc = PERFEXPERT_SUCCESS;
+             goto CLEANUP;
+             #endif
+ //        } else {
+//             rc = PERFEXPERT_SUCCESS;
+//             goto CLEANUP;
+//         }
+
+        */
 
         OUTPUT(("%s", _BLUE("Starting another optimization cycle...")));
 
