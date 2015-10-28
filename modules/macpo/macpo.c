@@ -76,7 +76,7 @@ static int macpo_instrument(void *n, int c, char **val, char **names) {
     }
 
     OUTPUT_VERBOSE((6, "short name %s", name));
-    
+
     if (PERFEXPERT_SUCCESS != perfexpert_util_file_exists(file)) {
         return PERFEXPERT_SUCCESS;
     }
@@ -84,13 +84,15 @@ static int macpo_instrument(void *n, int c, char **val, char **names) {
     if (PERFEXPERT_SUCCESS != perfexpert_util_filename_only(file, &filename)) {
         return PERFEXPERT_SUCCESS;
     }
-    
+
     if (PERFEXPERT_SUCCESS != perfexpert_util_path_only(file, &folder)) {
         return PERFEXPERT_ERROR;
     }
 
-    PERFEXPERT_ALLOC(char, fullpath, (strlen(globals.moduledir) + strlen(folder) + 1));
-    sprintf(fullpath, "%s/%s", globals.moduledir, folder);
+    PERFEXPERT_ALLOC(char, fullpath, (strlen(globals.moduledir) +
+                     strlen(folder) + 1));
+    snprintf(fullpath, strlen(globals.moduledir) + strlen(folder) + 1,
+             "%s/%s", globals.moduledir, folder);
 
     perfexpert_util_make_path(fullpath);
 
@@ -103,37 +105,41 @@ static int macpo_instrument(void *n, int c, char **val, char **names) {
     */
 
     if (strstr(name, ".omp_fun.")) {
-        strsep (&name, ".");
+        strsep(&name, ".");
     }
-   
 
     argv[0] = "macpo.sh";
-   
+
     argv[1] = "--macpo:no-compile";
     PERFEXPERT_ALLOC(char, argv[2],
         (strlen(globals.moduledir) + strlen(file) + 27));
-    snprintf(argv[2], strlen(globals.moduledir) + strlen(file) + 27, 
+    snprintf(argv[2], strlen(globals.moduledir) + strlen(file) + 27,
             "--macpo:backup-filename=%s/%s", globals.moduledir, file);
 
     PERFEXPERT_ALLOC(char, argv[3], (strlen(name) + 25));
     if (0 == line) {
         snprintf(argv[3], strlen(name) + 25, "--macpo:instrument=%s", name);
     } else {
-        snprintf(argv[3], strlen(name) + 25, "--macpo:instrument=%s:%s", name, line);
+        snprintf(argv[3], strlen(name) + 25, "--macpo:instrument=%s:%s", name,
+                 line);
     }
 
 
     PERFEXPERT_ALLOC(char, argv[4], strlen(file));
-    strcpy(argv[4], file);
+    strncpy(argv[4], strlen(file), file);
 
-    argv[5] = NULL; //Add NULL to indicate the end of arguments
-    
-    PERFEXPERT_ALLOC(char, test.output, (strlen(globals.moduledir) + strlen(name) + strlen(line) + 15));
-    sprintf(test.output, "%s/%s-%s-macpo.output", globals.moduledir, name, line);
+    argv[5] = NULL;  /* Add NULL to indicate the end of arguments */
+
+    PERFEXPERT_ALLOC(char, test.output, (strlen(globals.moduledir) +
+                     strlen(name) + strlen(line) + 15));
+    snprintf(test.output, strlen(name) + strlen(line) + 15,
+            "%s/%s-%s-macpo.output", globals.moduledir,
+            name, line);
     test.input = NULL;
     test.info = globals.program;
 
-    OUTPUT_VERBOSE((6,"   COMMAND=[%s %s %s %s %s]", argv[0], argv[1], argv[2], argv[3], argv[4]));
+    OUTPUT_VERBOSE((6, "   COMMAND=[%s %s %s %s %s]", argv[0], argv[1],
+                    argv[2], argv[3], argv[4]));
 
     rc = perfexpert_fork_and_wait(&test, (char **)argv);
     switch (rc) {
@@ -145,7 +151,7 @@ static int macpo_instrument(void *n, int c, char **val, char **names) {
                 "want to PerfExpert ignore the return code next time you "
                 "run this program, set the 'return-code' option for the "
                 "macpo module. See 'perfepxert -H macpo' for details.",
-                _ERROR("the target program returned non-zero"), rc, 
+                _ERROR("the target program returned non-zero"), rc,
                 test.output));
             return PERFEXPERT_ERROR;
 
@@ -163,7 +169,8 @@ static int macpo_instrument(void *n, int c, char **val, char **names) {
 
 
     if (PERFEXPERT_SUCCESS != perfexpert_util_file_rename(rose_name, file)) {
-        OUTPUT(("%s impossible to copy file %s to %s", _ERROR("IO ERROR"), rose_name, file));
+        OUTPUT(("%s impossible to copy file %s to %s", _ERROR("IO ERROR"),
+                rose_name, file));
     }
 
     PERFEXPERT_DEALLOC(test.output);
