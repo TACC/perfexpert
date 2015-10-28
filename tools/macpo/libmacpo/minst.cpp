@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
+ * Copyright (c) 2011-2015  University of Texas at Austin. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -14,7 +14,7 @@
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
  * 
- * Authors: Leonardo Fialho and Ashay Rane
+ * Authors: Antonio Gomez-Iglesias, Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
  */
@@ -102,6 +102,8 @@ void MINST::insert_map_prototype(SgNode* node) {
                 buildVoidType(), buildFunctionParameterList(), global_node);
         non_def_decl = SageBuilder::buildNondefiningFunctionDeclaration(decl,
                 global_node);
+        non_def_decl->get_functionModifier().setGnuAttributeWeak();
+
     }
 }
 
