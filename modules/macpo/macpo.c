@@ -111,15 +111,15 @@ static int macpo_instrument(void *n, int c, char **val, char **names) {
    
     argv[1] = "--macpo:no-compile";
     PERFEXPERT_ALLOC(char, argv[2],
-        (strlen(globals.moduledir) + strlen(file) + 24));
-    snprintf(argv[2], strlen(globals.moduledir) + strlen(file) + 24, 
+        (strlen(globals.moduledir) + strlen(file) + 25));
+    snprintf(argv[2], strlen(globals.moduledir) + strlen(file) + 25, 
             "--macpo:backup-filename=%s/%s", globals.moduledir, file);
 
     PERFEXPERT_ALLOC(char, argv[3], (strlen(name) + 25));
     if (0 == line) {
-        sprintf(argv[3], "--macpo:instrument=%s", name);
+        snprintf(argv[3], strlen(name) + 25, "--macpo:instrument=%s", name);
     } else {
-        sprintf(argv[3], "--macpo:instrument=%s:%s", name, line);
+        snprintf(argv[3], strlen(name) + 25, "--macpo:instrument=%s:%s", name, line);
     }
 
 
@@ -157,8 +157,8 @@ static int macpo_instrument(void *n, int c, char **val, char **names) {
             break;
     }
 
-    PERFEXPERT_ALLOC(char, rose_name, (strlen(filename) + 5));
-    snprintf(rose_name, strlen(filename) + 5, "rose_%s", filename);
+    PERFEXPERT_ALLOC(char, rose_name, (strlen(filename) + 6));
+    snprintf(rose_name, strlen(filename) + 6, "rose_%s", filename);
     OUTPUT_VERBOSE((9, "Copying file %s to: %s", rose_name, file));
 
 
