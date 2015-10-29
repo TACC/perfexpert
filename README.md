@@ -2,7 +2,7 @@
 
 ## Authors
 
-Antonio Gomez-Iglesias, Leonardo Fialho and Ashay Rane
+Antonio Gomez-Iglesias, Leonardo Fialho, Ashay Rane and James Browne
 
 ## About PerfExpert
 
@@ -12,12 +12,12 @@ PerfExpert combines a simple user interface with a sophisticated analysis engine
 - Provide performance analysis report and suggestions for bottleneck remediation for application’s performance bottlenecks which we are unable to optimize automatically.
 
 
-PerfExpert is an open-source project. Funding to keep researchers working on
+**PerfExpert is an open-source project. Funding to keep researchers working on
 PerfExpert depends on the value of this tool to the scientific community. For
 that reason, it is really important to know where and who are using our tool.
 We would really appreciate it if you could send us a message
-(**agomez@tacc.utexas.edu**) telling us the institution (name and country) you
-are planning to install and test PerfExpert at.
+(agomez@tacc.utexas.edu) telling us the institution (name and country) you
+are planning to install and test PerfExpert at.**
 
 ## Documentation:
 --------------
