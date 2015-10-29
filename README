@@ -1,23 +1,16 @@
-Copyright (c) 2011-2015  University of Texas at Austin. All rights reserved.
-
-$COPYRIGHT$
-
-Additional copyrights may follow
-
-This file is part of PerfExpert.
-
-PerfExpert is free software: you can redistribute it and/or modify it under
-the terms of the The University of Texas at Austin Research License
-
-PerfExpert is distributed in the hope that it will be useful, but WITHOUT ANY
-WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
-A PARTICULAR PURPOSE.
-
-Authors: Antonio Gomez-Iglesias, Leonardo Fialho and Ashay Rane
-
-$HEADER$
-
 # PerfExpert
+
+## Authors
+
+Antonio Gomez-Iglesias, Leonardo Fialho and Ashay Rane
+
+## About PerfExpert
+
+PerfExpert combines a simple user interface with a sophisticated analysis engine to:
+- Detect and diagnosis the causes for any core-, socket-, and node-level performance bottlenecks in each procedure and loop of an application.
+- Apply pattern-based software transformations on the application source code to enhance performance on identified bottlenecks.- 
+- Provide performance analysis report and suggestions for bottleneck remediation for application’s performance bottlenecks which we are unable to optimize automatically.
+
 
 PerfExpert is an open-source project. Funding to keep researchers working on
 PerfExpert depends on the value of this tool to the scientific community. For
@@ -32,14 +25,14 @@ See doc/ directory.
 
 ## Version History
 
-Version 4.2:
-==============
+### Version 4.2:
+
 - integration of VTune;
 - improved support for MACPO;
 - integration of hotspots and events tables in the database so that all the tools use the same tables
 
-Version 4.1.1:
-==============
+### Version 4.1.1:
+
 - LLC (last level cache, usually L3) support added;
 - tools were rename to perfexpert_something;
 - perfexpert_analyzer now is C only, thus Apache Ant is not a requirement anymore;
@@ -69,4 +62,17 @@ Version 4.1.1:
 
 1) The sniffer tool SEGFAULT with PAPI 5.3. Please, find a patch to this issue on the contrib directory.
 
-EOF
+## COPYRIGHT
+
+Copyright (c) 2011-2015  University of Texas at Austin. All rights reserved.
+
+Additional copyrights may follow
+
+This file is part of PerfExpert.
+
+PerfExpert is free software: you can redistribute it and/or modify it under
+the terms of the The University of Texas at Austin Research License
+
+PerfExpert is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+A PARTICULAR PURPOSE.
