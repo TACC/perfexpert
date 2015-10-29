@@ -130,7 +130,7 @@ Memory analysis & \texttt{--macpo:instrument} \\\hline
 Alignment checking & \texttt{--macpo:check-alignment} \\\hline
 Measure loop trip counts & \texttt{--macpo:record-tripcount} \\\hline
 Count branch outcomes & \texttt{--macpo:record-branchpath} \\\hline
-Measure gather/scatter accesses from vectorization & \textt{--macpo:vector-strides} \\\hline
+Measure gather/scatter accesses from vectorization & \texttt{--macpo:vector-strides} \\\hline
 \end{tabular}
 
 Each of these options accepts a program location (i.e. either a function or a loop specification). Function names can be used as identifiers for instrumentation (e.g. \texttt{--macpo:check-alignment=foo}). To tell MACPO to instrument a loop, pass either the name of the function that contains the loop of interest or the name of the file that contains the loop and the line number at which the loop starts separated by the \texttt{\#} character. For instance, to instrument the loop in \texttt{bar.c} that starts at line \texttt{273} for measuring trip counts, use the option: \texttt{--macpo:record-tripcount=bar.c\#273}. You may also use the option \texttt{--macpo:record-tripcount=foo\#273} to achieve the same effect.
