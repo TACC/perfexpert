@@ -17,16 +17,20 @@ Authors: Antonio Gomez-Iglesias, Leonardo Fialho and Ashay Rane
 
 $HEADER$
 
+# PerfExpert
+
 PerfExpert is an open-source project. Funding to keep researchers working on
 PerfExpert depends on the value of this tool to the scientific community. For
 that reason, it is really important to know where and who are using our tool.
 We would really appreciate it if you could send us a message
-(agomez@tacc.utexas.edu) telling us the institution (name and country) you
+(**agomez@tacc.utexas.edu**) telling us the institution (name and country) you
 are planning to install and test PerfExpert at.
 
-Documentation:
+## Documentation:
 --------------
 See doc/ directory.
+
+## Version History
 
 Version 4.2:
 ==============
@@ -61,7 +65,7 @@ Version 4.1.1:
 	- clearer messages to the user (outside debug mode);
 - other minor improvements and bug fixes.
 
-Known issues:
+## Known issues:
 
 1) The sniffer tool SEGFAULT with PAPI 5.3. Please, find a patch to this issue on the contrib directory.
 
