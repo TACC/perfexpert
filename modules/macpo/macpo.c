@@ -69,7 +69,7 @@ static int macpo_instrument(void *n, int c, char **val, char **names) {
 
     OUTPUT_VERBOSE((6, "  instrumenting %s   @   %s:%s", name, file, line));
 
-    // Remove everything before '(' in the function name (if exists)
+    // Remove everything after '(' in the function name (if exists)
     char *ptr = strchr(name, '(');
     if (ptr) {
         *ptr = 0;
@@ -104,8 +104,9 @@ static int macpo_instrument(void *n, int c, char **val, char **names) {
     }
     */
 
-    if (strstr(name, ".omp_fun.")) {
-        strsep(&name, ".");
+    ptr = strstr (name, ".omp_fn.");
+    if (ptr) {
+        *ptr = 0;
     }
 
     argv[0] = "macpo.sh";
@@ -116,13 +117,13 @@ static int macpo_instrument(void *n, int c, char **val, char **names) {
     snprintf(argv[2], strlen(globals.moduledir) + strlen(file) + 30,
             "--macpo:backup-filename=%s/%s", globals.moduledir, file);
 
-    PERFEXPERT_ALLOC(char, argv[3], (strlen(filename) + 25));
-    if (0 == line) {
-        snprintf(argv[3], strlen(filename) + 25, "--macpo:instrument=%s", filename);
-    } else {
-        snprintf(argv[3], strlen(filename) + 25, "--macpo:instrument=%s:%s", filename,
-                 line);
-    }
+    PERFEXPERT_ALLOC(char, argv[3], (strlen(name) + 25));
+    //if (0 == line) {
+        snprintf(argv[3], strlen(name) + 25, "--macpo:instrument=%s", name);
+    //} else {
+    //    snprintf(argv[3], strlen(name) + 25, "--macpo:instrument=%s:%s", name,
+    //             line);
+   // }
 
 
     PERFEXPERT_ALLOC(char, argv[4], strlen(file)+1);
@@ -142,6 +143,8 @@ static int macpo_instrument(void *n, int c, char **val, char **names) {
                     argv[2], argv[3], argv[4]));
 
     rc = perfexpert_fork_and_wait(&test, (char **)argv);
+
+    /*
     switch (rc) {
         case PERFEXPERT_FAILURE:
         case PERFEXPERT_ERROR:
@@ -162,6 +165,7 @@ static int macpo_instrument(void *n, int c, char **val, char **names) {
         default:
             break;
     }
+    */
 
     PERFEXPERT_ALLOC(char, rose_name, (strlen(filename) + 6));
     snprintf(rose_name, strlen(filename) + 6, "rose_%s", filename);
