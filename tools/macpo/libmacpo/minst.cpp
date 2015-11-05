@@ -9,11 +9,11 @@
  *
  * PerfExpert is free software: you can redistribute it and/or modify it under
  * the terms of the The University of Texas at Austin Research License
- * 
+ *
  * PerfExpert is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
- * 
+ *
  * Authors: Antonio Gomez-Iglesias, Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
@@ -103,6 +103,9 @@ void MINST::insert_map_prototype(SgNode* node) {
         non_def_decl = SageBuilder::buildNondefiningFunctionDeclaration(decl,
                 global_node);
         non_def_decl->get_functionModifier().setGnuAttributeWeak();
+        //SgLinkageModifier* link(non_def_decl->get_freepointer());
+        //link->setCppLinkage();
+        //((SgLinkageModifier* )(global_node))->setCppLinkage ();
 
     }
 }
@@ -492,7 +495,7 @@ void MINST::add_hooks_to_main_function(SgFunctionDefinition* main_def) {
         ROSE_ASSERT(end_stmt);
     }
 
-
+/*
     if (insert_map_call) {
         SgExprStatement* map_stmt = NULL;
         map_stmt = ir_methods::prepare_call_statement(body,
@@ -502,7 +505,7 @@ void MINST::add_hooks_to_main_function(SgFunctionDefinition* main_def) {
 
         insert_map_prototype(main_def);
     }
-
+*/
 }
 
 void MINST::visit(SgNode* node) {
