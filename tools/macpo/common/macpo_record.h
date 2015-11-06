@@ -35,26 +35,26 @@ enum { MSG_TERMINAL = 0, MSG_STREAM_INFO, MSG_MEM_INFO, MSG_METADATA,
 typedef struct {
     uint16_t coreID;
     uint16_t read_write:2;
+    size_t line_number;
     size_t base;
     size_t address;
     size_t var_idx;
-    size_t line_number;
 } trace_info_t;
 
 typedef struct {
     uint16_t coreID;
-    size_t address;
-    size_t var_idx;
     size_t loop_line_number;
+    size_t var_idx;
+    size_t address;
     int type_size;
 } vector_stride_info_t;
 
 typedef struct {
     uint16_t coreID;
     uint16_t read_write:2;
+    size_t line_number;
     size_t address;
     size_t var_idx;
-    size_t line_number;
     int type_size;
 } mem_info_t;
 

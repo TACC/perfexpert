@@ -62,7 +62,7 @@ int macpo_instrument_all(void) {
 
 /* macpo_instrument */
 static int macpo_instrument(void *n, int c, char **val, char **names) {
-    char *t = NULL, *argv[6], *name = val[0], *file = val[1], *line = val[2];
+    char *t = NULL, *argv[9], *name = val[0], *file = val[1], *line = val[2];
     test_t test;
     int rc;
     char *folder, *fullpath, *filename, *rose_name;
@@ -111,25 +111,44 @@ static int macpo_instrument(void *n, int c, char **val, char **names) {
 
     argv[0] = "macpo.sh";
 
-    argv[1] = "--macpo:no-compile";
-    PERFEXPERT_ALLOC(char, argv[2],
+
+    if (0 == line) {
+        PERFEXPERT_ALLOC(char, argv[1], (strlen(name)+25));
+        snprintf(argv[1], strlen(name)+25, "--macpo:check-alignment=%s", name);
+        PERFEXPERT_ALLOC(char, argv[2], (strlen(name)+30));
+        snprintf(argv[2], strlen(name)+30, "--macpo:record-tripcount=%s", name);
+        PERFEXPERT_ALLOC(char, argv[3], (strlen(name)+30));
+        snprintf(argv[3], strlen(name)+30, "--macpo:vector-strides=%s", name);
+    }
+    else{
+        PERFEXPERT_ALLOC(char, argv[1], (strlen(name)+30));
+        snprintf(argv[1], strlen(name)+30, "--macpo:check-alignment=%s:%s", name, line);
+        PERFEXPERT_ALLOC(char, argv[2], (strlen(name)+35));
+        snprintf(argv[2], strlen(name)+35, "--macpo:record-tripcount=%s:%s", name, line);
+        PERFEXPERT_ALLOC(char, argv[3], (strlen(name)+35));
+        snprintf(argv[3], strlen(name)+35, "--macpo:vector-strides=%s:%s", name, line);
+    }
+
+
+    PERFEXPERT_ALLOC(char, argv[4],
         (strlen(globals.moduledir) + strlen(file) + 30));
-    snprintf(argv[2], strlen(globals.moduledir) + strlen(file) + 30,
+    snprintf(argv[4], strlen(globals.moduledir) + strlen(file) + 30,
             "--macpo:backup-filename=%s/%s", globals.moduledir, file);
 
-    PERFEXPERT_ALLOC(char, argv[3], (strlen(name) + 25));
-    //if (0 == line) {
-        snprintf(argv[3], strlen(name) + 25, "--macpo:instrument=%s", name);
-    //} else {
-    //    snprintf(argv[3], strlen(name) + 25, "--macpo:instrument=%s:%s", name,
-    //             line);
-   // }
+    PERFEXPERT_ALLOC(char, argv[5], (strlen(name) + 25));
+    if (0 == line) {
+        snprintf(argv[5], strlen(name) + 25, "--macpo:instrument=%s", name);
+    } else {
+        snprintf(argv[5], strlen(name) + 25, "--macpo:instrument=%s:%s", name,
+                 line);
+    }
 
+    argv[6] = "--macpo:no-compile";
 
-    PERFEXPERT_ALLOC(char, argv[4], strlen(file)+1);
-    snprintf(argv[4], strlen(file)+1,"%s",file);
+    PERFEXPERT_ALLOC(char, argv[7], strlen(file)+1);
+    snprintf(argv[7], strlen(file)+1,"%s",file);
 
-    argv[5] = NULL;  /* Add NULL to indicate the end of arguments */
+    argv[8] = NULL;  /* Add NULL to indicate the end of arguments */
 
     PERFEXPERT_ALLOC(char, test.output, (strlen(globals.moduledir) +
                      strlen(name) + strlen(line) + 20));
@@ -139,8 +158,8 @@ static int macpo_instrument(void *n, int c, char **val, char **names) {
     test.input = NULL;
     test.info = globals.program;
 
-    OUTPUT_VERBOSE((6, "   COMMAND=[%s %s %s %s %s]", argv[0], argv[1],
-                    argv[2], argv[3], argv[4]));
+    OUTPUT_VERBOSE((6, "   COMMAND=[%s %s %s %s %s %s %s %s]", argv[0], argv[1],
+                    argv[2], argv[3], argv[4], argv[5], argv[6], argv[7]));
 
     rc = perfexpert_fork_and_wait(&test, (char **)argv);
 
@@ -178,9 +197,12 @@ static int macpo_instrument(void *n, int c, char **val, char **names) {
     }
 
     PERFEXPERT_DEALLOC(test.output);
+    PERFEXPERT_DEALLOC(argv[1]);
     PERFEXPERT_DEALLOC(argv[2]);
     PERFEXPERT_DEALLOC(argv[3]);
     PERFEXPERT_DEALLOC(argv[4]);
+    PERFEXPERT_DEALLOC(argv[5]);
+    PERFEXPERT_DEALLOC(argv[7]);
     PERFEXPERT_DEALLOC(fullpath);
     return PERFEXPERT_SUCCESS;
 }

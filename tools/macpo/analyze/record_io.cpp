@@ -143,8 +143,10 @@ int read_file(const char* filename, global_data_t& global_data, bool bot) {
     if ((fd = open(filename, O_RDONLY)) < 0)
         return -ERR_FILE;
 
+    std::cout << MSG_STREAM_INFO << " " << MSG_MEM_INFO << " " << MSG_TRACE_INFO << " " << MSG_METADATA << " " << MSG_TERMINAL << " " << MSG_VECTOR_STRIDE_INFO << "\n";
     node_t data_node;
     while (read(fd, &data_node, sizeof(data_node)) == sizeof(data_node)) {
+        std::cout<< "Read " << data_node.type_message << "\n";
         switch(data_node.type_message) {
             case MSG_STREAM_INFO:
                 if ((code = handle_stream_msg(data_node.stream_info,
@@ -188,4 +190,4 @@ int read_file(const char* filename, global_data_t& global_data, bool bot) {
 
     close(fd);
     return 0;
-}                        
+}

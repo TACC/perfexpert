@@ -21,7 +21,9 @@
 
 #include <cstdarg>
 #include <iostream>
+#include <sched.h>
 
+#include "../common/macpo_record.h"
 #include "mrt.h"
 
 void indigo__exit() {
@@ -30,20 +32,20 @@ void indigo__exit() {
 
 void indigo__record_branch_c(int line_number, void* func_addr,
         int loop_line_number, int true_branch_count, int false_branch_count) {
-    std::cerr << test_prefix << "record_branch:" << line_number << ":" <<
+    std::cerr << test_prefix << "record_branch:" << sched_getcpu() << ":" << line_number << ":" <<
         func_addr << ":" << loop_line_number << ":" << true_branch_count << ":"
         << false_branch_count << ":" << std::endl;
 }
 
 void indigo__vector_stride_c(int loop_line_number, int var_idx, void* addr,
         int type_size) {
-    std::cerr << test_prefix << "vector_stride:" << loop_line_number << ":" <<
+    std::cerr << test_prefix << "vector_stride:" << sched_getcpu() << ":" << loop_line_number << ":" <<
         var_idx << ":" << addr << ":" << type_size << ":" << std::endl;
 }
 
 int indigo__aligncheck_c(int line_number, void* func_addr, int stream_count,
         int dep_status, ...) {
-    std::cerr << test_prefix << "aligncheck:" << line_number << ":" <<
+    std::cerr << test_prefix << "aligncheck:" << sched_getcpu() << ":" << line_number << ":" <<
         func_addr << ":" << stream_count << ":" << dep_status << ":";
 
     va_list args;
@@ -61,7 +63,7 @@ int indigo__aligncheck_c(int line_number, void* func_addr, int stream_count,
 
 int indigo__sstore_aligncheck_c(int line_number, void* func_addr,
         int stream_count, int dep_status, ...) {
-    std::cerr << test_prefix << "sstore_aligncheck:" << line_number << ":" <<
+    std::cerr << test_prefix << "sstore_aligncheck:" << sched_getcpu() << ":" << line_number << ":" <<
         func_addr << ":" << stream_count << ":" << dep_status << ":";
 
     va_list args;
@@ -79,25 +81,25 @@ int indigo__sstore_aligncheck_c(int line_number, void* func_addr,
 
 void indigo__tripcount_check_c(int line_number, void* func_addr,
         int64_t trip_count) {
-    std::cerr << test_prefix << "tripcount_check:" << line_number << ":" <<
+    std::cerr << test_prefix << "tripcount_check:" << sched_getcpu() << ":" << line_number << ":" <<
         func_addr << ":" << trip_count << std::endl;
 }
 
 void indigo__init_(int16_t create_file, int16_t enable_sampling) {
-    std::cerr << test_prefix << "init:" << create_file << ":" <<
+    std::cerr << /*test_prefix << "init:" << */  MSG_TERMINAL << ":" << create_file << ":" <<
         enable_sampling << ":" << std::endl;
 }
 
 void indigo__gen_trace_c(int read_write, int line_number, void* base,
         void* addr, int var_idx) {
-    std::cerr << test_prefix << "gen_trace:" << read_write << ":" <<
+    std::cerr << test_prefix << "gen_trace:" << sched_getcpu() << ":" << read_write << ":" <<
         line_number << ":" << base << ":" << addr << ":" << var_idx << ":" <<
         std::endl;
 }
 
 void indigo__record_c(int read_write, int line_number, void* addr,
         int var_idx, int type_size) {
-    std::cerr << test_prefix << "record:" << read_write << ":" << line_number
+    std::cerr << MSG_MEM_INFO << /*test_prefix << "record:" <<*/ ":" << sched_getcpu() << ":" << read_write << ":" << line_number
         << ":" << addr << ":" << var_idx << ":" << type_size << ":" <<
         std::endl;
 }
@@ -113,7 +115,7 @@ void indigo__create_map() {
 
 void indigo__overlap_check_c(int line_number, void* func_addr,
         int stream_count, ...) {
-    std::cerr << test_prefix << "overlap_check:" << line_number << ":" <<
+    std::cerr << test_prefix << "overlap_check:" << sched_getcpu() << ":" << line_number << ":" <<
         func_addr << ":" << stream_count << ":";
 
     va_list args;
@@ -130,12 +132,12 @@ void indigo__overlap_check_c(int line_number, void* func_addr,
 }
 
 void indigo__unknown_stride_check_c(int line_number, void* func_addr) {
-    std::cerr << test_prefix << "unknown_stride_check:" << line_number << ":" <<
+    std::cerr << test_prefix << "unknown_stride_check:" << sched_getcpu() << ":" << line_number << ":" <<
         func_addr << ":" << std::endl;
 }
 
 void indigo__stride_check_c(int line_number, void* func_addr, int stride) {
-    std::cerr << test_prefix << "stride_check:" << line_number << ":" <<
+    std::cerr << test_prefix << "stride_check:" << sched_getcpu() << ":" << line_number << ":" <<
         func_addr << ":" << stride << ":" << std::endl;
 }
 

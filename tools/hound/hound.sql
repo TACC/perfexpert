@@ -19,6 +19,9 @@
 -- $HEADER$
 --
 
+-- Generated using hound
+-- version 2.0
+
 --
 -- Create tables if not exist
 --
@@ -28,3 +31,17 @@ CREATE TABLE IF NOT EXISTS hound (
     name   VARCHAR NOT NULL,
     value  REAL    NOT NULL
 );
+
+INSERT INTO hound (family, model, name, value) VALUES (6, 45, 'CPI_threshold', 0.5);
+INSERT INTO hound (family, model, name, value) VALUES (6, 45, 'L1_dlat', 9.124111);
+INSERT INTO hound (family, model, name, value) VALUES (6, 45, 'L1_ilat', 9.124111);
+INSERT INTO hound (family, model, name, value) VALUES (6, 45, 'L2_lat', 10.359444);
+INSERT INTO hound (family, model, name, value) VALUES (6, 45, 'L3_lat', 18.654980);
+INSERT INTO hound (family, model, name, value) VALUES (6, 45, 'mem_lat', 275.229797);
+INSERT INTO hound (family, model, name, value) VALUES (6, 45, 'CPU_freq', 2699999000);
+INSERT INTO hound (family, model, name, value) VALUES (6, 45, 'FP_lat', 1.656944);
+INSERT INTO hound (family, model, name, value) VALUES (6, 45, 'FP_slow_lat', 17.912338);
+INSERT INTO hound (family, model, name, value) VALUES (6, 45, 'BR_lat', 1.000000);
+INSERT INTO hound (family, model, name, value) VALUES (6, 45, 'BR_miss_lat', 11.343750);
+INSERT INTO hound (family, model, name, value) VALUES (6, 45, 'TLB_lat', 33.890625);
+
