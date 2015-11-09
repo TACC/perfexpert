@@ -50,8 +50,8 @@ int stride_analysis(const global_data_t& global_data,
                     mem_info.type_size;
 
             // Quick validation check.
-            if (core_id >= 0 && core_id < num_cores ||
-                    var_idx >= 0 && var_idx < num_streams) {
+            if ((core_id >= 0 && core_id < num_cores ||
+                    var_idx >= 0) && var_idx < num_streams) {
                 // Check if this address was accessed in the past.
                 if (last_addr.find(var_idx) != last_addr.end()) {
                     size_t last_address = last_addr[var_idx];

@@ -292,7 +292,7 @@ int latency_analysis(const global_data_t& global_data,
                 const short read_write = mem_info.read_write;
 
                 // Quick validation check.
-                if (core_id >= 0 && core_id < num_cores ||
+                if (core_id >= 0 && core_id < num_cores &&
                         var_idx >= 0 && var_idx < num_streams) {
 
                     avl_tree* tree = tree_list[core_id];

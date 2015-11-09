@@ -495,7 +495,6 @@ void MINST::add_hooks_to_main_function(SgFunctionDefinition* main_def) {
         ROSE_ASSERT(end_stmt);
     }
 
-/*
     if (insert_map_call) {
         SgExprStatement* map_stmt = NULL;
         map_stmt = ir_methods::prepare_call_statement(body,
@@ -505,7 +504,6 @@ void MINST::add_hooks_to_main_function(SgFunctionDefinition* main_def) {
 
         insert_map_prototype(main_def);
     }
-*/
 }
 
 void MINST::visit(SgNode* node) {
