@@ -45,6 +45,7 @@ int module_analyze(void);
 /* Module functions */
 int macpo_instrument_all(void);
 static int macpo_instrument(void *n, int c, char **val, char **names);
+int macpo_analyze(void);
 
 #ifdef __cplusplus
 }

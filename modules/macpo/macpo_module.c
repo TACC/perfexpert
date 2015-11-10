@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
+ * Copyright (c) 2011-2015  University of Texas at Austin. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -14,7 +14,7 @@
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
  *
- * Authors: Leonardo Fialho and Ashay Rane
+ * Authors: Antonio Gomez-Iglesias, Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
  */
@@ -105,6 +105,10 @@ int module_measure(void) {
 int module_analyze(void) {
     OUTPUT(("%s", _YELLOW("Analysing measurements")));
 
+    if (PERFEXPERT_SUCCESS != macpo_analyze()) {
+        OUTPUT(("%s", _ERROR("analyzing MACPO result")));
+        return PERFEXPERT_ERROR;
+    }
     return PERFEXPERT_SUCCESS;
 }
 

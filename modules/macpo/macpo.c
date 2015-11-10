@@ -207,6 +207,50 @@ static int macpo_instrument(void *n, int c, char **val, char **names) {
     return PERFEXPERT_SUCCESS;
 }
 
+int macpo_analyze() {
+    char * argv[3];
+    int rc;
+    test_t test;
+
+    argv[0] = "macpo-analyze";
+    argv[1] = "macpo.out";
+    argv[2] = NULL;
+
+    PERFEXPERT_ALLOC(char, test.output, (strlen(globals.moduledir) + 2));
+    snprintf(test.output, strlen(globals.moduledir) + 2,
+            "%s/macpo-analyze.output", globals.moduledir);
+    test.input = NULL;
+    test.info = globals.program;
+
+    OUTPUT_VERBOSE((6, "   COMMAND=[%s %s]", argv[0], argv[1]));
+
+    rc = perfexpert_fork_and_wait(&test, (char **)argv);
+
+    switch (rc) {
+        case PERFEXPERT_FAILURE:
+        case PERFEXPERT_ERROR:
+            OUTPUT(("%s (return code: %d) Usually, this means that an error"
+                " happened during the program execution. To see the program"
+                "'s output, check the content of this file: [%s]. If you "
+                "want to PerfExpert ignore the return code next time you "
+                "run this program, set the 'return-code' option for the "
+                "macpo module. See 'perfepxert -H macpo' for details.",
+                _ERROR("the target program returned non-zero"), rc,
+                test.output));
+            return PERFEXPERT_ERROR;
+
+        case PERFEXPERT_SUCCESS:
+            OUTPUT_VERBOSE((7, "[ %s  ]", _BOLDGREEN("OK")));
+            break;
+
+        default:
+            break;
+    }
+
+    PERFEXPERT_DEALLOC(test.output);
+    return PERFEXPERT_SUCCESS;
+}
+
 #ifdef __cplusplus
 }
 #endif
