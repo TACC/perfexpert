@@ -17,4 +17,14 @@ Authors: Leonardo Fialho and Ashay Rane
 
 $HEADER$
 
+
+# Change Log
+
+## [Unreleased 4.2a]
+### Added
+- VTune module
+- MACPO module
+- Changes in the tables in the DB to only have one table for hotspots and events. This forces the HPCToolkit and the VTune modules to write to the same tables. It simplifies the analysis of the measurements produced by those modules
+- Changes in the MACPO tool so that indigo__create_map is declared consistently (void indigo__create_map() __attribute__((weak)) )
+
 EOF

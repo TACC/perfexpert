@@ -1,0 +1,27 @@
+PerfExpert needs the following tools to work:
+    - Rose compiler:        http://rosecompiler.org/
+    - PAPI:                 http://icl.cs.utk.edu/papi/
+    - HPCToolkit:           http://hpctoolkit.org/
+    - LibElf:               https://directory.fsf.org/wiki/Libelf
+    - Libmatheval:          https://www.gnu.org/software/libmatheval/
+    - GSL:                  http://www.gnu.org/software/gsl/
+
+Also, Rose needs Java and Boost to work. We recommend Boost 1.49 (http://www.boost.org). After installing Boost, untar Rose and run the following:
+
+$ mkdir BUILD
+$ cd BUILD
+$ ../configure --prefix='install location' --with-boost=BOOST_149_INSTALL_FOLDER --disable-tests-directory --with-boost-libdir=BOOST_149_INSTALL_FOLDER/lib
+
+You might need to run the following script before just to make sure that everything works with Java:
+
+if [[ $( cat ../configure | grep 'JAVA_VERSION_RELEASE=`echo ${JAVA_VERSION} | awk '"'"'BEGIN {FS="."} {print $3}'"'"' | awk '"'"'BEGIN {FS="_"} {print $2}'"'"'`' ) != "" ]]
+then
+  sed -i 's/'JAVA_VERSION_RELEASE=`echo ${JAVA_VERSION} | awk '"'"'BEGIN {FS="."} {print $3}'"'"' | awk '"'"'BEGIN {FS="_"} {print $2}'"'"'`'/JAVA_VERSION_RELEASE=" " #/g' ../configure
+fi
+
+
+Once Rose all the dependencies are installed, the configure command for PerfExpert is:
+
+$ CC="gcc" CPPFLAGS="-I$ROSE_INC -I$ROSE_INC/rose -I$LIBELF_INC -I$LIBMATHEVAL_INC -I$DWARF_INC" CFLAGS="-I$ROSE_INC -I$ROSE_INC/rose -I$LIBELF_INC -I$LIBMATHEVAL_INC -I$DWARF_INC" LDFLAGS="-L$ROSE_LIB -L$LIBELF_LIB -L$BOOST_DIR/lib -L$HPCTOOLKIT_LIB -L$LIBMATHEVAL_LIB" LIBS="-lrose -lboost_iostreams" ./configure --with-rose=$ROSE_DIR --with-boost=$BOOST_DIR --with-jvm=$JREDIR  --with-papi=$PAPI_DIR --with-elf=$LIBELF_DIR --with-libxml2-include=/usr/include/libxml2/ --prefix=INSTALL_FOLDER --with-externals=$ROSE_LIB --with-gsl=$GSL_DIR
+
+$ make && make install (under some circunstances you might need to run ' make LIBS="-lboost_iostreams" && make install ')
