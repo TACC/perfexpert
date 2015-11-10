@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
+ * Copyright (c) 2011-2015  University of Texas at Austin. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -14,7 +14,7 @@
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
  * 
- * Authors: Leonardo Fialho and Ashay Rane
+ * Authors: Antonio Gomez-Iglesias, Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
  */
@@ -50,7 +50,7 @@ int vector_stride_analysis(const global_data_t& global_data,
                     vector_stride_info.type_size;
 
             // Quick validation check.
-            if (core_id >= 0 && core_id < num_cores ||
+            if (core_id >= 0 && core_id < num_cores &&
                     var_idx >= 0 && var_idx < num_streams) {
                 // Check if this address was accessed in the past.
                 if (last_addr.find(var_idx) != last_addr.end()) {
