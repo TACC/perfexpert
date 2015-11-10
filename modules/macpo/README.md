@@ -10,8 +10,8 @@ This module calls the MACPO tool (look in the tool/macpo folder) to instrument t
 
 ## Known issues
 
-1.- The compilation process once the code has been instrumented is not fully integrated
-2.- The instrumentation process does not work as expected when the same file is instrumented more than once. This is still work in progress.
+1. The compilation process once the code has been instrumented is not fully integrated
+2. The instrumentation process does not work as expected when the same file is instrumented more than once. This is still work in progress.
 
 ## COPYRIGHT
 
