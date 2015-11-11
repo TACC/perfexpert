@@ -25,7 +25,7 @@ See doc/ directory.
 
 ## Version History
 
-### Version 4.2:
+### Version 4.2 (still in development):
 
 - integration of VTune;
 - improved support for MACPO;
