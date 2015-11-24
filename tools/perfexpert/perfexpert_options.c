@@ -72,6 +72,11 @@ int parse_cli_params(int argc, char *argv[]) {
     /* Parse arguments */
     argp_parse(&argp, argc, argv, 0, 0, NULL);
 
+    printf ("[modules before]");
+   perfexpert_list_for(m, &(module_globals.modules), perfexpert_module_t) {
+            printf(" [%s]", m->name);
+        }
+     printf ("\n");
     /* Sanity check: verbose level should be between 1-10 */
     if ((0 > globals.verbose) || (10 < globals.verbose)) {
         OUTPUT(("%s", _ERROR("invalid verbose level")));
