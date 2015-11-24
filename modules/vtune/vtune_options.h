@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
+ * Copyright (c) 2011-2015  University of Texas at Austin. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -14,7 +14,7 @@
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
  *
- * Authors: Leonardo Fialho and Ashay Rane
+ * Authors: Antonio Gomez-Iglesias, Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
  */
@@ -48,7 +48,7 @@ static struct argp_option options[] = {
     { "prefix=PREFIX", 0, 0, OPTION_DOC, "Add a prefix to the command line, "
       "use double quotes to set arguments with spaces within (e.g., \"mpirun -n"
       " 2\")" },
-    #if HAVE_HPCTOOLKIT_MIC
+//    #if HAVE_HPCTOOLKIT_MIC
     { "mic-card=NAME", 0, 0, OPTION_DOC,
       "MIC Card where experiments should run on (e.g., mic0)" },
     { "mic-after=COMMAND", 0, 0, OPTION_DOC,
@@ -58,7 +58,7 @@ static struct argp_option options[] = {
     { "mic-prefix=PREFIX", 0, 0, OPTION_DOC, "Add a prefix to the command "
       "line which will run on the MIC, use double quotes to set arguments with "
       "spaces within (e.g., \"mpirun -n 2\")" },
-    #endif
+  //  #endif
 
     { "return-code", 'r', 0, OPTION_HIDDEN, 0 },
     { "inputfile", 'i', "FILE", OPTION_HIDDEN, 0 },
@@ -66,12 +66,12 @@ static struct argp_option options[] = {
     { "before", 'b', "COMMAND", OPTION_HIDDEN, 0 },
     { "prefix", 'p', "PREFIX", OPTION_HIDDEN, 0 },
 
-    #if HAVE_HPCTOOLKIT_MIC
+    //#if HAVE_HPCTOOLKIT_MIC
     { "mic-card", 'C', "NAME", OPTION_HIDDEN, 0 },
     { "mic-after", 'A', "COMMAND", OPTION_HIDDEN, 0 },
     { "mic-before", 'B', "COMMAND", OPTION_HIDDEN, 0 },
     { "mic-prefix", 'P', "PREFIX", OPTION_HIDDEN, 0 },
-    #endif
+    //#endif
 
     { 0 }
 };
