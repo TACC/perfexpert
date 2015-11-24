@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
+ * Copyright (c) 2011-2015  University of Texas at Austin. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -14,7 +14,7 @@
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
  *
- * Authors: Leonardo Fialho and Ashay Rane
+ * Authors: Antonio Gomez-Iglesias, Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
  */
@@ -55,7 +55,15 @@ int run_hpcstruct(void) {
     test_t test;
 
     /* Arguments to run hpcstruct */
-    argv[0] = HPCSTRUCT;
+
+    //TODO: This is hardcoded. It should follow the same model than run_hpcproc_mic
+
+    if (NULL == my_module_globals.mic) {
+        argv[0] = HPCSTRUCT;
+    }
+    else {
+        argv[0] = MIC_HPCSTRUCT;
+    }
     argv[1] = "--output";
     PERFEXPERT_ALLOC(char, argv[2],
         (strlen(globals.moduledir) + strlen(globals.program) + 23));
@@ -471,7 +479,15 @@ int run_hpcprof(char **file) {
     test_t test;
 
     /* Arguments to run hpcprof */
-    argv[0] = HPCPROF;
+
+    //TODO: This is hardcoded. It should follow the same model than run_hpcproc_mic
+
+    if (NULL == my_module_globals.mic) {
+        argv[0] = HPCPROF;
+    }
+    else {
+        argv[0] = MIC_HPCPROF;
+    }
     argv[1] = "--force-metric";
     argv[2] = "--metric=thread";
     argv[3] = "--struct";
