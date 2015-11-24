@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
+ * Copyright (c) 2011-2015  University of Texas at Austin. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -14,7 +14,7 @@
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
  *
- * Authors: Leonardo Fialho and Ashay Rane
+ * Authors: Antonio Gomez-Iglesias, Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
  */
@@ -93,7 +93,10 @@ int parse_module_args(int argc, char *argv[]) {
         perfexpert_string_split(perfexpert_string_remove_spaces(
             arg_options.mic_prefix), my_module_globals.mic_prefix, ' ');
     }
-
+    if (NULL != arg_options.mic_card) {
+        perfexpert_string_split(perfexpert_string_remove_spaces(
+            arg_options.mic_card), my_module_globals.mic, ' ');
+    }
     /* Sanity check: MIC options without MIC */
     if ((NULL != my_module_globals.mic_prefix[0]) &&
         (NULL == my_module_globals.mic)) {

@@ -28,6 +28,7 @@
 int metrics_mic(void) {
     char s[MAX_LCPI];
 
+    OUTPUT_VERBOSE((8, "Setting events for the MIC"));
     /* Set the events on the measurement module */
     USE_EVENT("L2_DATA_READ_MISS_MEM_FILL");   // 0
     USE_EVENT("BRANCHES");                     // 1
@@ -48,6 +49,7 @@ int metrics_mic(void) {
     USE_EVENT("VPU_INSTRUCTIONS_EXECUTED");    // 0
     USE_EVENT("LONG_DATA_PAGE_WALK");          // 1
 
+    OUTPUT_VERBOSE((8, "Events set for the MIC"));
     /* Set the profile total cycles and total instructions counters */
     my_module_globals.measurement->total_cycles_counter = "CPU_CLK_UNHALTED";
     my_module_globals.measurement->total_inst_counter = "INSTRUCTIONS_EXECUTED";
