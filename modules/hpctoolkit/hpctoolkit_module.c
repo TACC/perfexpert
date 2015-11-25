@@ -152,19 +152,19 @@ int module_measure(void) {
     }
 
     /* Collect measurements */
-    if (NULL == my_module_globals.mic) {
+//    if (NULL == my_module_globals.mic) {
         if (PERFEXPERT_SUCCESS != run_hpcrun()) {
             OUTPUT(("%s", _ERROR("unable to run hpcrun")));
             return PERFEXPERT_ERROR;
         }
-    } else {
+ /*   } else {
         if (PERFEXPERT_SUCCESS != run_hpcrun_mic()) {
             OUTPUT(("%s", _ERROR("unable to run hpcrun on MIC")));
             OUTPUT(("Are you adding the flags to compile for MIC?"));
             return PERFEXPERT_ERROR;
         }
     }
-
+*/
     /* Sumarize results */
     if (PERFEXPERT_SUCCESS != run_hpcprof(&str)) {
         OUTPUT(("%s", _ERROR("unable to run hpcprof")));

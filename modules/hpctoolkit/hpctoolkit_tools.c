@@ -99,6 +99,7 @@ int run_hpcstruct(void) {
 
 /* run_hpcrun */
 int run_hpcrun(void) {
+    short havePrefix = 0;
     int experiment_count = 0, experiment_total = 0, event_count = 0, i = 0, rc;
     struct timespec time_start, time_end, time_diff;
     hpctoolkit_event_t *event = NULL, *t = NULL;
@@ -136,11 +137,22 @@ int run_hpcrun(void) {
         while (NULL != my_module_globals.prefix[i]) {
             e->argv[e->argc] = my_module_globals.prefix[i];
             e->argc++;
+            havePrefix = 1;
             i++;
         }
 
         /* Arguments to run hpcrun */
-        e->argv[e->argc] = HPCRUN;
+        if (NULL != my_module_globals.mic) {
+            //The next two lines are actually only required by MPI runs (only ibrun.symm)
+            if (havePrefix) {
+                e->argv[e->argc] = "\"";
+                e->argc++;
+            }
+            e->argv[e->argc] = MIC_HPCRUN;
+        }
+        else{
+            e->argv[e->argc] = HPCRUN;
+        }
         e->argc++;
         e->argv[e->argc] = "--output";
         e->argc++;
@@ -201,6 +213,10 @@ int run_hpcrun(void) {
             PERFEXPERT_DEALLOC(test.output);
         }
 
+        //This is usefull to separate the program from all the actual arguments used
+        //by hpcrun
+        e->argv[e->argc] = "--";
+        e->argc++;
         /* Ok, now we have to add the program and... */
         e->argv[e->argc] = globals.program_full;
         e->argc++;
@@ -211,6 +227,12 @@ int run_hpcrun(void) {
             e->argv[e->argc] = globals.program_argv[i];
             e->argc++;
             i++;
+        }
+
+        //This is only needed for MPI runs (ibrun.symm)
+        if (NULL != my_module_globals.mic && havePrefix) {
+            e->argv[e->argc] = "\"";
+            e->argc++;
         }
 
         /* The last of the Mohicans */
@@ -305,6 +327,7 @@ int run_hpcrun_mic(void) {
     OUTPUT_VERBOSE((10, "there will be 2 events/run"));
 
     /* If this command should run on the MIC, encapsulate it in a script */
+    /*
     PERFEXPERT_ALLOC(char, script_file, (strlen(globals.moduledir) + 15));
     sprintf(script_file, "%s/mic_hpcrun.sh", globals.moduledir);
 
@@ -314,6 +337,7 @@ int run_hpcrun_mic(void) {
     }
 
     fprintf(script_file_FP, "#!/bin/sh\n\n");
+    */
 
     /* Fill the script file with all the experiments, before, and after */
     perfexpert_hash_iter_str(my_module_globals.events_by_name, event, t) {
