@@ -142,7 +142,7 @@ int run_hpcrun(void) {
         }
 
         /* Arguments to run hpcrun */
-        if (NULL != my_module_globals.mic) {
+        /*if (NULL != my_module_globals.mic) {
             //The next two lines are actually only required by MPI runs (only ibrun.symm)
             if (havePrefix) {
                 e->argv[e->argc] = "\"";
@@ -150,9 +150,9 @@ int run_hpcrun(void) {
             }
             e->argv[e->argc] = MIC_HPCRUN;
         }
-        else{
+        else{*/
             e->argv[e->argc] = HPCRUN;
-        }
+       // }
         e->argc++;
         e->argv[e->argc] = "--output";
         e->argc++;
@@ -230,10 +230,11 @@ int run_hpcrun(void) {
         }
 
         //This is only needed for MPI runs (ibrun.symm)
-        if (NULL != my_module_globals.mic && havePrefix) {
+        /*if (NULL != my_module_globals.mic && havePrefix) {
             e->argv[e->argc] = "\"";
             e->argc++;
         }
+        */
 
         /* The last of the Mohicans */
         e->argv[e->argc] = NULL;
@@ -320,14 +321,14 @@ int run_hpcrun_mic(void) {
     int experiment_count = 0, event_count = MIC_EVENTS_PER_RUN, i = 0;
     int rc = PERFEXPERT_SUCCESS;
     hpctoolkit_event_t *event = NULL, *t = NULL;
-    char *script_file, *argv[4];
+    char *script_file, *argv[MAX_ARGUMENTS_COUNT];
+    int argc;
     FILE *script_file_FP;
     test_t test;
 
     OUTPUT_VERBOSE((10, "there will be 2 events/run"));
 
     /* If this command should run on the MIC, encapsulate it in a script */
-    /*
     PERFEXPERT_ALLOC(char, script_file, (strlen(globals.moduledir) + 15));
     sprintf(script_file, "%s/mic_hpcrun.sh", globals.moduledir);
 
@@ -337,7 +338,6 @@ int run_hpcrun_mic(void) {
     }
 
     fprintf(script_file_FP, "#!/bin/sh\n\n");
-    */
 
     /* Fill the script file with all the experiments, before, and after */
     perfexpert_hash_iter_str(my_module_globals.events_by_name, event, t) {
@@ -452,10 +452,15 @@ int run_hpcrun_mic(void) {
     test.input = NULL;
     test.info = globals.program;
 
-    argv[0] = "ssh";
-    argv[1] = my_module_globals.mic;
-    argv[2] = script_file;
-    argv[3] = NULL;
+    /* Add PREFIX to argv */
+    argc = 0;
+    while (NULL != my_module_globals.prefix[argc]) {
+        argv[argc] = my_module_globals.prefix[argc];
+        argc++;
+    }
+    argv[argc] = script_file;
+    argc++;
+    argv[argc] = NULL;
 
     /* Not using OUTPUT_VERBOSE because I want only one line */
     if (8 <= globals.verbose) {
