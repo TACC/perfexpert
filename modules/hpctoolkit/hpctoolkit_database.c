@@ -151,6 +151,8 @@ static int database_metrics(hpctoolkit_procedure_t *hotspot) {
     sprintf(sql, "SELECT id FROM perfexpert_hotspot WHERE perfexpert_id = %llu "
         "ORDER BY id DESC LIMIT 1;", globals.unique_id);
 
+    OUTPUT_VERBOSE((10, "    SQL: %s", sql));
+
     if (SQLITE_OK != sqlite3_exec(globals.db, sql,
         perfexpert_database_get_long_long_int, (void *)&id, &error)) {
         OUTPUT(("%s %s", _ERROR("SQL error"), error));
