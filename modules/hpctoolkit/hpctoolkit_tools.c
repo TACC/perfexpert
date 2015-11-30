@@ -325,6 +325,7 @@ int run_hpcrun_mic(void) {
     int argc;
     FILE *script_file_FP;
     test_t test;
+    int isMPI = PERFEXPERT_FALSE;
 
     OUTPUT_VERBOSE((10, "there will be 2 events/run"));
 
@@ -452,10 +453,42 @@ int run_hpcrun_mic(void) {
     test.input = NULL;
     test.info = globals.program;
 
+    /* Check if we are running an MPI code:
+        This is very naive right now, as it simply goes over the prefixes
+        and checks whether the user specifiec ibrun.sym, mpirun_rsh or
+        mpiexec.hydra. Other systems might have different MPI launchers,
+        so this needs to be changed to make it more portable.
+    */
+    i = 0;
+    while (NULL != my_module_globals.prefix[i]) {
+        if (!strcmp(my_module_globals.prefix[i], "ibrun.symm")) {
+            isMPI = PERFEXPERT_TRUE;
+            break;
+        }
+        if (!strcmp(my_module_globals.prefix[i], "mpirun_rsh")) {
+            isMPI = PERFEXPERT_TRUE;
+            break;
+        }
+        if (!strcmp(my_module_globals.prefix[i], "mpiexec.hydra")) {
+            isMPI = PERFEXPERT_TRUE;
+            break;
+        }
+    }
     /* Add PREFIX to argv */
     argc = 0;
-    while (NULL != my_module_globals.prefix[argc]) {
-        argv[argc] = my_module_globals.prefix[argc];
+    /* If we are running an MPI code, we have to use the prefix indicated
+        by the user */
+    if (isMPI) {
+        while (NULL != my_module_globals.prefix[argc]) {
+            argv[argc] = my_module_globals.prefix[argc];
+            argc++;
+        }
+    }
+    /* If not MPI, then we ssh into the MIC and run from there */
+    else {
+        argv[argc] = "ssh";
+        argc++;
+        argv[argc] = my_module_globals.mic;
         argc++;
     }
     argv[argc] = script_file;
