@@ -440,8 +440,9 @@ extern "C" {
                 clock_gettime(CLOCK_MONOTONIC, &time_end);
 
                 perfexpert_time_diff(&time_diff, &time_start, &time_end);
-                OUTPUT(("   %lld.%.9ld seconds for %d runs (includes measurement overhead)",
-                            (long long)time_diff.tv_sec, time_diff.tv_nsec, iter/MIC_EVENTS_PER_RUN));
+                OUTPUT(("   %lld.%.9ld seconds for %d/%d run (includes measurement overhead)",
+                            (long long)time_diff.tv_sec, time_diff.tv_nsec, iter/MIC_EVENTS_PER_RUN,
+                            perfexpert_hash_count_str(my_module_globals.events_by_name)/MIC_EVENTS_PER_RUN));
 
                 /* Free memory */
                 PERFEXPERT_DEALLOC(script_file);
@@ -498,7 +499,7 @@ extern "C" {
                     OUTPUT(("%s (%s)", _ERROR("unable to set script mode"), script_file));
                     PERFEXPERT_DEALLOC(script_file);
                     return PERFEXPERT_ERROR;
-                }   
+                }
 
                 /* The super-ninja test sctructure */
                 PERFEXPERT_ALLOC(char, test.output, (strlen(globals.moduledir) + 19));
@@ -577,8 +578,8 @@ extern "C" {
                 clock_gettime(CLOCK_MONOTONIC, &time_end);
 
                 perfexpert_time_diff(&time_diff, &time_start, &time_end);
-                OUTPUT(("   %lld.%.9ld seconds for %d runs (includes measurement overhead)",
-                            (long long)time_diff.tv_sec, time_diff.tv_nsec, iter/MIC_EVENTS_PER_RUN));
+                OUTPUT(("   %lld.%.9ld seconds for %d/%d run (includes measurement overhead)",
+                            (long long)time_diff.tv_sec, time_diff.tv_nsec, iter/MIC_EVENTS_PER_RUN, perfexpert_hash_count_str(my_module_globals.events_by_name)/MIC_EVENTS_PER_RUN));
 
                 /* Free memory */
                 PERFEXPERT_DEALLOC(script_file);
