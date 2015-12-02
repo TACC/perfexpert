@@ -55,6 +55,9 @@ int module_load(void) {
 
     /* TODO(agomez): check for VTune binaries availability here */
 
+    /* Initialize list of events */
+    my_module_globals.events_by_name = NULL;
+
     OUTPUT_VERBOSE((5, "%s", _MAGENTA("loaded")));
 
     return PERFEXPERT_SUCCESS;
@@ -67,8 +70,6 @@ int module_init(void) {
     myself_module.set_event   = &module_set_event;
     myself_module.query_event = &module_query_event;
 
-    /* Initialize list of events */
-    my_module_globals.events_by_name = NULL;
     perfexpert_list_construct(&(myself_module.profiles));
     my_module_globals.mic = NULL;
     my_module_globals.inputfile = NULL;
@@ -146,10 +147,20 @@ int module_measure(void) {
 
     if (0 == perfexpert_hash_count_str(my_module_globals.events_by_name)) {
         OUTPUT_VERBOSE((5, "adding events to collect"));
-        if (PERFEXPERT_SUCCESS != module_set_event("CPU_CLK_UNHALTED.REF_TSC")) {
-            OUTPUT(("%s", _ERROR("ADDING EVENTS [CPU_CLK_UNHALTED.REF_TSC]")));
+        if (NULL == my_module_globals.mic) {
+            if (PERFEXPERT_SUCCESS != module_set_event("CPU_CLK_UNHALTED.REF_TSC")) {
+                OUTPUT(("%s", _ERROR("ADDING EVENTS [CPU_CLK_UNHALTED.REF_TSC]")));
+            }
+            if (PERFEXPERT_SUCCESS != module_set_event("CPU_CLK_UNHALTED.REF_TSC")) {
+            }
         }
-        if (PERFEXPERT_SUCCESS != module_set_event("CPU_CLK_UNHALTED.REF_TSC")) {
+        else {
+            if (PERFEXPERT_SUCCESS != module_set_event("CPU_CLK_UNHALTED")) {
+                OUTPUT(("%s", _ERROR("ADDING EVENTS [CPU_CLK_UNHALTED]")));
+            }
+            if (PERFEXPERT_SUCCESS != module_set_event("INSTRUCTIONS_EXECUTED")) {
+                OUTPUT(("%s", _ERROR("ADDING EVENTS [INSTRUCTIONS_EXECUTED]")));
+            }
         }
     }
 
@@ -166,7 +177,7 @@ int module_measure(void) {
             return PERFEXPERT_ERROR;
         }
      } else {
-         if (PERFEXPERT_SUCCESS != run_amplxe_cl_mic()) {
+         if (PERFEXPERT_SUCCESS != run_amplxe_cl()) {
              OUTPUT(("%s", _ERROR("unable to run amplxecl on MIC")));
              OUTPUT(("Are you adding the flags to compile for MIC?"));
              return PERFEXPERT_ERROR;

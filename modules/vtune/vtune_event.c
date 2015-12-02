@@ -50,6 +50,7 @@ int module_set_event(const char *name) {
     perfexpert_hash_find_str(my_module_globals.events_by_name,
         perfexpert_md5_string(name), event);
 
+    /* if event is not NULL, then the event has been already set" */
     if (NULL != event) {
         OUTPUT_VERBOSE((10, "event %s already set", _RED((char *)name)));
         return PERFEXPERT_SUCCESS;

@@ -296,14 +296,19 @@ int parse_report(const char * parse_file, vtune_hw_profile_t *profile) {
         /* TODO(agomez): only collect statistics about a specific set of functions??
          */
         for (i = 5; i < argc; ++i) {
+            OUTPUT_VERBOSE((10, "Processing param %d out of %d  -- %s - %s", i, argc, events[i], argv[i]));
             vtune_event_t *e;
             PERFEXPERT_ALLOC(vtune_event_t, e, sizeof(vtune_event_t));
-            PERFEXPERT_ALLOC(char, e->name, strlen(events[i])+1);
-            strcpy(e->name, events[i]);
+            OUTPUT_VERBOSE((10, "Event allocated"));
+            PERFEXPERT_ALLOC(char, e->name, strlen(events[i]));
+            OUTPUT_VERBOSE((10, "memory allocated"));
+            strncpy(e->name, events[i], strlen(events[i]));
             strcpy(e->name_md5, perfexpert_md5_string(e->name));
             e->samples = 0;
             e->value = atol(argv[i]);
+            OUTPUT_VERBOSE((10, "Doing the hash"));
             perfexpert_hash_add_str(hotspot->events_by_name, name_md5, e);
+            OUTPUT_VERBOSE((10, "Appending"));
             perfexpert_list_append(&(hotspot->events), (perfexpert_list_item_t *) e);
         }
         perfexpert_hash_add_str(profile->hotspots_by_name, name_md5, hotspot);
@@ -374,15 +379,19 @@ int run_amplxe_cl(void) {
     argc++;
     argv[argc] = VTUNE_ACT_COLLECTWITH;
     argc++;
-    argv[argc] = "runsa";
+    if (NULL == my_module_globals.mic) {
+        argv[argc] = "runsa";
+    }
+    else {
+        argv[argc] = "runsa-knc";
+//        argc++;
+//        argv[argc] = "-target-duration-type=medium";
+    }
     argc++;
     argv[argc] = "-r";
     argc++;
     argv[argc] = my_module_globals.res_folder;
     argc++;
-    /* argv[argc] = "runsa-knc";
-       argc++;
-    */
     argv[argc] = "-knob";
     argc++;
     char * events_opt = (char *) malloc ((strlen(events)+14)*sizeof(char));
