@@ -56,11 +56,16 @@ int module_set_event(const char *name) {
     }
 
     /* Check if this event is available in this architeture */
-    if (PERFEXPERT_TRUE != module_query_event(name)) {
-        OUTPUT(("%s", _ERROR("VTune event not available")));
-        return PERFEXPERT_ERROR;
+    if (NULL == my_module_globals.mic) {
+        if (PERFEXPERT_TRUE != module_query_event(name)) {
+            OUTPUT(("%s", _ERROR("VTune event not available")));
+            return PERFEXPERT_ERROR;
+        }
     }
-
+    else {
+        OUTPUT_VERBOSE((3, "event not checked because the architecture is MIC "
+            "[%s]", name));
+    }
     /* Add event to the hash of events */
     PERFEXPERT_ALLOC(vtune_event_t, event, sizeof(vtune_event_t));
     PERFEXPERT_ALLOC(char, event->name, (strlen(name) + 1));
