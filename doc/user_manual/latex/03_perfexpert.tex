@@ -184,6 +184,39 @@ In each case, the classification (data access, instruction access, data TLB, etc
 
 \nicebox{NOTICE:}{PerfExpert creates a \texttt{.perfexpert-temp.XXXXXX} directory for each time it is executed. This directory has one subdirectory for each optimization cycle PerfExpert completed or attempted. Each subdirectory includes the intermediate files PerfExpert generated during each cycle, including the performance analysis reports.}
 
+\section{Running PerfExpert with MPI codes}
+\subsection{Using Intel Xeon Phi}
+When using native MPI applications on the Intel Xeon Phi, there are two main scenarios:
+\subsubsection{HPCToolkit}
+ This is the simplest case. All you need to do is to specify which MPI launcher you want to use as a prefix in your PerfExpert command. For example:
+ 
+	\begin{verbatim}
+perfexpert 0.1 -verbose=10 -modules=lcpi,hpctoolkit --module-option=lcpi,architecture=MIC \
+--module-option=hpctoolkit,mic-card=mic0 -p "ibrun.symm -m" -- ./lulesh2.0 -i 100 -s 8	
+	\end{verbatim}
+
+\subsubsection{Intel VTune}
+	In this case, the application that you want to analyze needs to be specified inside of a script. VTune will run then this script on the Intel Xeon Phi. For example, in the case of Lulesh, the script will look like this:
+
+	\begin{verbatim}
+#!/bin/bash
+
+export OMP_NUM_THREADS=1;  \
+export LD_LIBRARY_PATH=/opt/apps/intel/15/compiler/lib/mic/:$LD_LIBRARY_PATH; \
+/opt/apps/intel15/impi/5.0.2.044/mic/bin/mpiexec -np 8 \
+/work/02658/agomez/tools/toys/lulesh2.0.2/lulesh2.0 -i 10000 -s 8
+	\end{verbatim}
+	
+We first export a set of environmental variables that are required by our application to run on the Xeon Phi. Then, we need to specify an MPI launcher. In this example, we are choosing the mpiexec provided by Intel MPI 5.0 for the Intel Xeon Phi. This launcher needs the number of MPI tasks that will run on the coprocessor (8 in this example). Finally, we simply need to pass the application that we are studying with its arguments. 
+
+When calling Intel VTune with this script, the command will be like:
+
+\begin{verbatim}
+perfexpert 0.1 --verbose=10 --modules=lcpi,vtune --module-option=lcpi,architecture=MIC  \
+--module-option=vtune,mic-card=mic0  -- ssh mic0 PATH_TO_SCRIPT/test.sh
+\end{verbatim}
+
+
 \section{List of Recommendations for Optimization}
 
 If PerfExpert runs with \texttt{-Ðr} option enabled, it will also generate a list of suggestions for performance improvement for each bottleneck. This option is always available, it does not depend on which of the other command line option are. A list of suggestions for this example is shown below:
