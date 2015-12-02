@@ -41,18 +41,18 @@ if [ -f ${prefix}/etc/perfexpert_architecture.sql ]; then
     echo "Known architectures set"
 fi
 
-# Setup Hound
-if [ -f ${prefix}/etc/hound.sql ]; then
-    sqlite3 ${HOME}/.perfexpert.db < ${prefix}/etc/hound.sql
-    echo "Hound tool set"
-fi
-
 regex='.stampede.tacc.utexas.edu$'
-if [[ $HOSTNAME =~ $regex ]]; then
+if [ $HOSTNAME = $regex ] || [ $TACC_DOMAIN = stampede ]; then
     echo "Lucky you! Running a job on Stampede..."
     sqlite3 ${HOME}/.perfexpert.db < ${prefix}/etc/hound_jaketown.sql
     sqlite3 ${HOME}/.perfexpert.db < ${prefix}/etc/hound_knc.sql
     echo "Hound tool set (Jaketown and KNC)"
+else
+#Setup Hound
+    if [ -f ${prefix}/etc/hound.sql ]; then
+        sqlite3 ${HOME}/.perfexpert.db < ${prefix}/etc/hound.sql
+        echo "Hound tool set"
+    fi
 fi
 
 # Setup Memory Sniffer

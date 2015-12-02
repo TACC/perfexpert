@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
+ * Copyright (c) 2011-2015  University of Texas at Austin. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -15,7 +15,7 @@
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
  *
- * Authors: Leonardo Fialho and Ashay Rane
+ * Authors: Antonio Gomez-Iglesias, Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
  */
@@ -3083,7 +3083,72 @@ const char * const haswell[] = {
     NULL,
 };
 
-// TODO(agomez): this looks like garbage. Only the VTune module is using it...
+const char * const mic[] = {
+    "BANK_CONFLICTS",
+    "BRANCHES",
+    "BRANCHES_MISPREDICTED",
+    "CODE_CACHE_MISS",
+    "CODE_PAGE_WALK",
+    "CODE_READ",
+    "CPU_CLK_UNHALTED",
+    "DATA_CACHE_LINES_WRITTEN_BACK",
+    "DATA_PAGE_WALK",
+    "DATA_READ",
+    "DATA_READ_MISS",
+    "DATA_READ_MISS_OR_WRITE_MISS",
+    "DATA_READ_OR_WRITE",
+    "DATA_WRITE",
+    "DATA_WRITE_MISS",
+    "EXEC_STAGE_CYCLES",
+    "FE_STALLED",
+    "HWP_L2HIT",
+    "HWP_L2MISS",
+    "INSTRUCTIONS_EXECUTED",
+    "INSTRUCTIONS_EXECUTED_V_PIPE",
+    "L1_DATA_HIT_INFLIGHT_PF1",
+    "L1_DATA_PF1",
+    "L1_DATA_PF1_DROP",
+    "L1_DATA_PF1_MISS",
+    "L1_DATA_PF2",
+    "L2_CODE_READ_MISS_CACHE_FILL",
+    "L2_CODE_READ_MISS_MEM_FILL",
+    "L2_DATA_HIT_INFLIGHT_PF2",
+    "L2_DATA_PF1_MISS",
+    "L2_DATA_PF2",
+    "L2_DATA_PF2_DROP",
+    "L2_DATA_PF2_MISS",
+    "L2_DATA_READ_MISS_CACHE_FILL",
+    "L2_DATA_READ_MISS_MEM_FILL",
+    "L2_DATA_WRITE_MISS_CACHE_FILL",
+    "L2_DATA_WRITE_MISS_MEM_FILL",
+    "L2_READ_HIT_E",
+    "L2_READ_HIT_M",
+    "L2_READ_HIT_S",
+    "L2_READ_MISS",
+    "L2_VICTIM_REQ_WITH_DATA",
+    "L2_WRITE_HIT",
+    "LONG_CODE_PAGE_WALK",
+    "LONG_DATA_PAGE_WALK",
+    "MEMORY_ACCESSES_IN_BOTH_PIPES",
+    "MICROCODE_CYCLES",
+    "PIPELINE_AGI_STALLS",
+    "PIPELINE_FLUSHES",
+    "PIPELINE_SG_AGI_STALLS",
+    "SNP_HITM_BUNIT",
+    "SNP_HITM_L2",
+    "SNP_HIT_L2",
+    "VPU_DATA_READ",
+    "VPU_DATA_READ_MISS",
+    "VPU_DATA_WRITE",
+    "VPU_DATA_WRITE_MISS",
+    "VPU_ELEMENTS_ACTIVE",
+    "VPU_INSTRUCTIONS_EXECUTED",
+    "VPU_INSTRUCTIONS_EXECUTED_V_PIPE",
+    "VPU_STALL_REG",
+    NULL,
+};
+
+// TODO(agomez): this looks bad . Only the VTune module is using it...
 /* Intel CPUs models */
 typedef enum {
     NEHALEM_EP      = 26,
@@ -3100,6 +3165,7 @@ typedef enum {
     HASWELL         = 60,
     HASWELL_ULT     = 69,
     HASWELL_2       = 70,
+    KNIGHTS_CORNER  = 1,
 } intel_models_t;
 
 /* Intel events supported by architecture */
@@ -3114,7 +3180,7 @@ typedef struct {
  * processor-identification-with-cpuid-model-and-family-numbers#_mainline and
  * "Intel® 64 and IA-32 Architectures Software Developer’s Manual" (PDF)
  */
-intel_event_t intel_events[15] = {
+intel_event_t intel_events[16] = {
     { NEHALEM_EP,      "06_1AH", nehalen,       "i7-965/975, i7-9x0, W35xx, L55xx, E55xx, X55xx, W55xx (Nehalen)" },
     { NEHALEM,         "06_1EH", nehalen,       "i7-7xxQM, i7-8xxQM, i7-9xxXM, i5-7xx, i5-7xxS, i7-8xx, i7-8xxS, i7-8xxK, X34xx, LC55xx, EC55xx, P10xx (Nehalen)" },
     { NEHALEM_2,       "06_1FH", nehalen,       "i7-7xxQM, i7-8xxQM, i7-9xxXM, i5-7xx, i5-7xxS, i7-8xx, i7-8xxS, i7-8xxK, X34xx, LC55xx, EC55xx, P10xx (Nehalen)" },
@@ -3129,6 +3195,7 @@ intel_event_t intel_events[15] = {
     { HASWELL,         "06_3CH", haswell,       "E3-1200 v3 (Haswell)" },
     { HASWELL_ULT,     "06_45H", haswell,       "E3-1200 v3 (Haswell)" },
     { HASWELL_2,       "06_46H", haswell,       "E3-1200 v3 (Haswell)" },
+    { KNIGHTS_CORNER,  "0B_01H", mic,           "KnightsCorner"},
     { 0, NULL, NULL, NULL }
 };
 

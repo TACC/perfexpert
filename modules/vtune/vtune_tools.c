@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
+ * Copyright (c) 2011-2015  University of Texas at Austin. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -14,7 +14,7 @@
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
  *
- * Authors: Leonardo Fialho and Ashay Rane
+ * Authors: Antonio Gomez-Iglesias, Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
  */
@@ -176,6 +176,12 @@ int parse_line(char* line, char *argv[], int *argc) {
  * and returns the thread number (right after #)
  */
 int get_thread_number(const char *argv) {
+    OUTPUT_VERBOSE((6, "checking thread %s", argv));
+    if (strpbrk(argv, "TID") != NULL) {
+        OUTPUT_VERBOSE((6, "INVALID thread, returning 0"));
+        return 0;
+    }
+
     const char *p1 = strstr(argv, "#")+1;
     const char *p2 = strstr(p1, " (");
     int len = p2-p1;
@@ -278,9 +284,9 @@ int parse_report(const char * parse_file, vtune_hw_profile_t *profile) {
         strcpy(hotspot->src_file, argv[2]);
         hotspot->src_line = atoi(argv[3]);
         strcpy(hotspot->name_md5, perfexpert_md5_string(hotspot->name));
-        
+
         hotspot->thread = get_thread_number(argv[4]);
-        
+
         /* TODO(agomez) */
         hotspot->mpi_rank = 0;
 
@@ -304,6 +310,7 @@ int parse_report(const char * parse_file, vtune_hw_profile_t *profile) {
         perfexpert_list_append(&(profile->hotspots), (perfexpert_list_item_t *) hotspot);
     }
     fclose(in);
+    OUTPUT_VERBOSE((6, "Output file parsed"));
     return PERFEXPERT_SUCCESS;
 }
 

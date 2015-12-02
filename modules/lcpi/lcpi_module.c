@@ -174,6 +174,7 @@ int module_init(void) {
 
     OUTPUT(("%s", _YELLOW("Setting performance events")));
 
+    OUTPUT_VERBOSE((8, "ARCHITECTURE %s", my_module_globals.architecture));
     /* Jaketown (or SandyBridgeEP) */
     OUTPUT_VERBOSE((8, "Measurement module %s", my_module_globals.measurement->name));
     if (0 == strcmp("jaketown",
@@ -194,6 +195,10 @@ int module_init(void) {
     /* MIC (or KnightsCorner) */
     else if (0 == strcmp("mic",
         perfexpert_string_to_lower(my_module_globals.architecture))) {
+        //TODO This is hardcoded. Extract from the database (it's also hardcoded in the vtune module)
+        perfexpert_cpuinfo_set_family(11);
+        perfexpert_cpuinfo_set_model(1);
+        OUTPUT_VERBOSE((8, "Initializing metrics for the MIC"));
         if (PERFEXPERT_SUCCESS != metrics_mic()) {
             OUTPUT(("%s", _ERROR("generating LCPI metrics (MIC)")));
             return PERFEXPERT_ERROR;
@@ -214,6 +219,7 @@ int module_init(void) {
         return PERFEXPERT_ERROR;
     }
 
+    OUTPUT_VERBOSE((8, "List of metrics"));
     /* Show the list of metrics */
     perfexpert_hash_iter_str(my_module_globals.metrics_by_name, m, t) {
         OUTPUT_VERBOSE((7, "   %s=%s", _CYAN(m->name),

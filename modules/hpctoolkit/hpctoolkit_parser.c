@@ -209,7 +209,7 @@ static int parse_profile(xmlDocPtr document, xmlNodePtr node,
 
                     /* Set the MPI rank */
                     temp_str[2] = strtok(temp_str[1], ",");
-                    metric->mpi_rank = 0;
+                    metric->mpi_rank = atoi(temp_str[2]);// 0;
 
                     /* Set the thread ID */
                     temp_str[2] = strtok(NULL, ",");
