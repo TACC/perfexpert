@@ -190,7 +190,7 @@ int get_thread_number(const char *argv) {
     PERFEXPERT_ALLOC(char, res, len+1);
     strncpy(res, p1, len);
     res[len]='\0';
-    val = atoi(res);
+    val = strtol (res, NULL, 10); //atoi(res);
     PERFEXPERT_DEALLOC(res);
     return val;
 }
@@ -290,10 +290,10 @@ int parse_report(const char * parse_file, vtune_hw_profile_t *profile) {
         PERFEXPERT_ALLOC(char, hotspot->module, strlen(argv[1])+1);
         PERFEXPERT_ALLOC(char, hotspot->src_file, strlen(argv[2])+1);
 
-        strcpy(hotspot->name, argv[0]);
-        strcpy(hotspot->module, argv[1]);
-        strcpy(hotspot->src_file, argv[2]);
-        hotspot->src_line = atoi(argv[3]);
+        strncpy(hotspot->name, argv[0], strlen(argv[0]));
+        strncpy(hotspot->module, argv[1], strlen(argv[1]));
+        strncpy(hotspot->src_file, argv[2], strlen(argv[2]));
+        hotspot->src_line = strtol (argv[3], NULL, 10);//atoi(argv[3]);
         strcpy(hotspot->name_md5, perfexpert_md5_string(hotspot->name));
 
         hotspot->thread = get_thread_number(argv[4]);
@@ -313,7 +313,7 @@ int parse_report(const char * parse_file, vtune_hw_profile_t *profile) {
             strncpy(e->name, events[i], strlen(events[i]));
             strcpy(e->name_md5, perfexpert_md5_string(e->name));
             e->samples = 0;
-            e->value = atol(argv[i]);
+            e->value = strtol(argv[i], NULL, 10); //atol(argv[i]);
             perfexpert_hash_add_str(hotspot->events_by_name, name_md5, e);
             perfexpert_list_append(&(hotspot->events), (perfexpert_list_item_t *) e);
         }
