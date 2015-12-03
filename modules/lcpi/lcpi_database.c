@@ -124,26 +124,26 @@ int database_import(perfexpert_list_t *profiles, const char *table) {
     lcpi_hotspot_t *h = NULL;
 
     /* Select and import profiles */
-    OUTPUT_VERBOSE((5, "%s", _YELLOW("Importing profiles")));
+    OUTPUT_VERBOSE((5, "%s [%s]", _YELLOW("Importing profiles"), table));
     if (PERFEXPERT_SUCCESS != select_profiles(profiles, table)) {
         OUTPUT(("%s", _ERROR("importing profiles")));
     }
 
     /* For each profile, select and import its modules */
     perfexpert_list_for(p, profiles, lcpi_profile_t) {
-        OUTPUT_VERBOSE((5, "%s", _YELLOW("Importing modules")));
+        OUTPUT_VERBOSE((5, "%s [%s]", _YELLOW("Importing modules"), table));
         if (PERFEXPERT_SUCCESS != select_modules(p, table)) {
             OUTPUT(("%s", _ERROR("importing modules")));
         }
 
         /* Select and import hotspots */
-        OUTPUT_VERBOSE((5, "%s", _YELLOW("Importing hotspots")));
+        OUTPUT_VERBOSE((5, "%s [%s]", _YELLOW("Importing hotspots"), table));
         if (PERFEXPERT_SUCCESS != select_hotspots(&(p->hotspots), table)) {
             OUTPUT(("%s", _ERROR("importing hotspots")));
         }
 
         /* Map modules to hotspots */
-        OUTPUT_VERBOSE((5, "%s", _YELLOW("Mapping hotspots <-> modules")));
+        OUTPUT_VERBOSE((5, "%s [%s]", _YELLOW("Mapping hotspots <-> modules"), table));
         perfexpert_list_for(h, &(p->hotspots), lcpi_hotspot_t) {
             if (PERFEXPERT_SUCCESS != map_modules_to_hotspots(h,
                 p->modules_by_name, table)) {
@@ -152,7 +152,7 @@ int database_import(perfexpert_list_t *profiles, const char *table) {
         }
 
         /* Calculate metadata (cycles, instructions, relevance, and variance) */
-        OUTPUT_VERBOSE((5, "%s", _YELLOW("Calculating metadata")));
+        OUTPUT_VERBOSE((5, "%s [%s]", _YELLOW("Calculating metadata"), table));
         if (PERFEXPERT_SUCCESS != calculate_metadata(p, table)) {
             OUTPUT(("%s", _ERROR("calculating metadata")));
             return PERFEXPERT_ERROR;
