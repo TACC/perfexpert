@@ -51,8 +51,9 @@ int metrics_mic(void) {
 
     OUTPUT_VERBOSE((8, "Events set for the MIC"));
     /* Set the profile total cycles and total instructions counters */
-    my_module_globals.measurement->total_cycles_counter = "CPU_CLK_UNHALTED";
-    my_module_globals.measurement->total_inst_counter = "INSTRUCTIONS_EXECUTED";
+
+    strcpy (my_module_globals.measurement->total_cycles_counter, "CPU_CLK_UNHALTED");
+    strcpy (my_module_globals.measurement->total_inst_counter, "INSTRUCTIONS_EXECUTED");
 
     /* ratio.floating_point */
     if (PERFEXPERT_SUCCESS != lcpi_add_metric("ratio.VPU_instructions",
