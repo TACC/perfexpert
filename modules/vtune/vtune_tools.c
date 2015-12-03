@@ -102,9 +102,9 @@ int create_report(char* results_folder, const char* parse_file) {
     test.input = my_module_globals.inputfile;
     test.info = globals.program;
 
+    clock_gettime(CLOCK_MONOTONIC, &time_start);
     /* fork_and_wait_and_pray */
     rc = perfexpert_fork_and_wait(&test, (char **)argv);
-    clock_gettime(CLOCK_MONOTONIC, &time_start);
 
     /* Evaluate results if required to */
     if (PERFEXPERT_FALSE == my_module_globals.ignore_return_code) {
@@ -391,8 +391,8 @@ int run_amplxe_cl(void) {
     }
     else {
         argv[argc] = "runsa-knc";
-//        argc++;
-//        argv[argc] = "-target-duration-type=medium";
+        argc++;
+        argv[argc] = "-target-duration-type=medium";
     }
     argc++;
     argv[argc] = "-r";
@@ -439,8 +439,8 @@ int run_amplxe_cl(void) {
     test.info = globals.program;
 
     /* fork_and_wait_and_pray */
-    rc = perfexpert_fork_and_wait(&test, (char **)argv);
     clock_gettime(CLOCK_MONOTONIC, &time_start);
+    rc = perfexpert_fork_and_wait(&test, (char **)argv);
 
     /* Evaluate results if required to */
     if (PERFEXPERT_FALSE == my_module_globals.ignore_return_code) {
@@ -497,6 +497,7 @@ int collect_results(vtune_hw_profile_t *profile) {
 
     sprintf(csv_name, "%s/%s", my_module_globals.res_folder, template);
     mktemp(csv_name);
+
     OUTPUT_VERBOSE((9, "Creating report at %s", csv_name));
     if (PERFEXPERT_SUCCESS != create_report("", csv_name)) {
         OUTPUT(("%s", _ERROR("unable to create a report file from the \

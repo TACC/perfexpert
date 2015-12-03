@@ -70,7 +70,7 @@ int module_set_event(const char *name) {
     /* Add event to the hash of events */
     PERFEXPERT_ALLOC(vtune_event_t, event, sizeof(vtune_event_t));
     PERFEXPERT_ALLOC(char, event->name, (strlen(name) + 1));
-    strcpy(event->name, name);
+    strncpy(event->name, name, strlen(name));
     strcpy(event->name_md5, perfexpert_md5_string(name));
     perfexpert_hash_add_str(my_module_globals.events_by_name, name_md5, event);
 

@@ -100,16 +100,15 @@ int module_fini(void) {
     myself_module.set_event = NULL;
     myself_module.query_event = NULL;
 
-    /* Free the list of events */
-    /* TODO(agomez) make sure this is all correct */
-
-    /*
     perfexpert_hash_iter_str(my_module_globals.events_by_name, event, tmp) {
         perfexpert_hash_del_str(my_module_globals.events_by_name, event);
         PERFEXPERT_DEALLOC(event->name);
         PERFEXPERT_DEALLOC(event);
     }
 
+    /* Free the list of events */
+    /* TODO(agomez) make sure this is all correct */
+/*
     vtune_hw_profile_t *it;
     perfexpert_list_for (it, &(myself_module.profiles), vtune_hw_profile_t) {
         PERFEXPERT_DEALLOC (it->name);
@@ -144,7 +143,6 @@ int module_measure(void) {
     if (PERFEXPERT_SUCCESS != database_default_events(/*my_module_globals*/)) {
         OUTPUT(("%s", _ERROR("reading default events from the database")));
     }
-
     if (0 == perfexpert_hash_count_str(my_module_globals.events_by_name)) {
         OUTPUT_VERBOSE((5, "adding events to collect"));
         if (NULL == my_module_globals.mic) {
@@ -163,7 +161,6 @@ int module_measure(void) {
             }
         }
     }
-
     /* First of all, does the file exist? (it is just a double check) */
     if (PERFEXPERT_SUCCESS !=
         perfexpert_util_file_is_exec(globals.program_full)) {
@@ -196,9 +193,9 @@ int module_measure(void) {
        module */
 
     /* TODO(agomez): this line makes lcpi fail. I have to figure out why */
-    /* perfexpert_list_append (&(myself_module.profiles), 
+     perfexpert_list_append (&(myself_module.profiles), 
                                (perfexpert_list_item_t *) profile); 
-    */
+    
 
     if (PERFEXPERT_SUCCESS != collect_results(profile)) {
         OUTPUT(("%s",
