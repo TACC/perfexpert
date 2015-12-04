@@ -389,12 +389,14 @@ extern "C" {
                         isMPI = PERFEXPERT_TRUE;
                         break;
                     }
+                    i++;
                 }
                 /* Add PREFIX to argv */
                 argc = 0;
                 /* If we are running an MPI code, we have to use the prefix indicated
                    by the user */
                 if (isMPI) {
+                    OUTPUT_VERBOSE((8, "Running an MPI job on the MIC"));
                     while (NULL != my_module_globals.prefix[argc]) {
                         argv[argc] = my_module_globals.prefix[argc];
                         argc++;
@@ -402,6 +404,7 @@ extern "C" {
                 }
                 /* If not MPI, then we ssh into the MIC and run from there */
                 else {
+                    OUTPUT_VERBOSE((8, "Running a serial application on the MIC"));
                     argv[argc] = "ssh";
                     argc++;
                     argv[argc] = my_module_globals.mic;
