@@ -196,6 +196,7 @@ int module_init(void) {
     else if (0 == strcmp("mic",
         perfexpert_string_to_lower(my_module_globals.architecture))) {
         //TODO This is hardcoded. Extract from the database (it's also hardcoded in the vtune module)
+        //OJO
         perfexpert_cpuinfo_set_family(11);
         perfexpert_cpuinfo_set_model(1);
         OUTPUT_VERBOSE((8, "Initializing metrics for the MIC"));
