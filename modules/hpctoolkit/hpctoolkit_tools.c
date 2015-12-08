@@ -580,15 +580,7 @@ int run_hpcprof(char **file) {
     test_t test;
 
     /* Arguments to run hpcprof */
-
-    //TODO: This is hardcoded. It should follow the same model than run_hpcproc_mic
-
-    if (NULL == my_module_globals.mic) {
-        argv[0] = HPCPROF;
-    }
-    else {
-        argv[0] = MIC_HPCPROF;
-    }
+    argv[0] = HPCPROF;
     argv[1] = "--force-metric";
     argv[2] = "--metric=thread";
     argv[3] = "--struct";
