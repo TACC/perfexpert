@@ -178,9 +178,7 @@ static int output_profile(lcpi_hotspot_t *h, FILE *report_FP, const int scale) {
     /* Print the runtime of this hotspot */
     if (PERFEXPERT_SUCCESS != perfexpert_util_file_exists(h->file)) {
         OUTPUT(("   [%d -- %s] file %s does not exist. Is it a system file?", h->id, h->name, _YELLOW(h->file)));
-        //OUTPUT_VERBOSE((4, "   [%d] file %s does not exist. Is it a system file?", h->id, _YELLOW(h->file)));
         donotshowtop = PERFEXPERT_TRUE;
-//        return PERFEXPERT_SUCCESS;
     }
 
     if (!donotshowtop) {
