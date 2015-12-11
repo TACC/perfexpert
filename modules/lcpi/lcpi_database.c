@@ -325,18 +325,19 @@ static int calculate_metadata(lcpi_profile_t *profile, const char *table) {
     lcpi_hotspot_t *h = NULL;
 
     //OJO hardcoded for MIC
-    if (0 == strcmp("jaketown",
+/*    if (0 == strcmp("jaketown",
         perfexpert_string_to_lower(my_module_globals.architecture))) {
-        strcpy (my_module_globals.measurement->total_cycles_counter, "CPU_CLK_UNHALTED.THREAD_P");
-        strcpy (my_module_globals.measurement->total_inst_counter, "INST_RETIRED.ANY_P");
+        my_module_globals.measurement->total_cycles_counter="CPU_CLK_UNHALTED.THREAD_P";
+        my_module_globals.measurement->total_inst_counter="INST_RETIRED.ANY_P";
     }
+*/
     /* MIC (or KnightsCorner) */
-    else if (0 == strcmp("mic",
+/*    else if (0 == strcmp("mic",
         perfexpert_string_to_lower(my_module_globals.architecture))) {
-        strcpy (my_module_globals.measurement->total_cycles_counter, "CPU_CLK_UNHALTED");
-        strcpy (my_module_globals.measurement->total_inst_counter, "INSTRUCTIONS_EXECUTED");
+        my_module_globals.measurement->total_cycles_counter = "CPU_CLK_UNHALTED";
+        my_module_globals.measurement->total_inst_counter = "INSTRUCTIONS_EXECUTED";
     }
-
+*/
     /* Replace the '.' by '_' on the metrics name, this is bullshit... */
     PERFEXPERT_ALLOC(char, total_cycles,
         (strlen(my_module_globals.measurement->total_cycles_counter) + 1));

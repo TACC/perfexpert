@@ -55,8 +55,8 @@ int metrics_jaketown(void) {
     USE_EVENT("SIMD_FP_256.PACKED_DOUBLE");
 
     /* Set the profile total cycles and total instructions counters */
-    strcpy (my_module_globals.measurement->total_cycles_counter, "CPU_CLK_UNHALTED.THREAD_P");
-    strcpy (my_module_globals.measurement->total_inst_counter, "INST_RETIRED.ANY_P");
+    my_module_globals.measurement->total_cycles_counter = "CPU_CLK_UNHALTED.THREAD_P";
+    my_module_globals.measurement->total_inst_counter = "INST_RETIRED.ANY_P";
 
     /* ratio.floating_point */
     bzero(s, MAX_LCPI);
@@ -276,8 +276,8 @@ int metrics_jaketown_vtune(void) {
     USE_EVENT("SIMD_FP_256.PACKED_DOUBLE");
 
     /* Set the profile total cycles and total instructions counters */
-    strcpy (my_module_globals.measurement->total_cycles_counter, "CPU_CLK_UNHALTED.THREAD_P");
-    strcpy (my_module_globals.measurement->total_inst_counter, "INST_RETIRED.ANY_P");
+    my_module_globals.measurement->total_cycles_counter = "CPU_CLK_UNHALTED.THREAD_P";
+    my_module_globals.measurement->total_inst_counter = "INST_RETIRED.ANY_P";
 
     /* ratio.floating_point */
     bzero(s, MAX_LCPI);

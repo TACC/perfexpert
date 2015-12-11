@@ -140,7 +140,6 @@ int run_hpcrun(void) {
             havePrefix = 1;
             i++;
         }
-
         e->argv[e->argc] = HPCRUN;
         e->argc++;
         e->argv[e->argc] = "--output";
@@ -151,6 +150,9 @@ int run_hpcrun(void) {
 
         event_count = papi_max_events() - 3;
 
+        //OJO. Next two lines are hardcoded
+        //myself_module.total_inst_counter = "PAPI_TOT_INS";
+        //myself_module.total_cycles_counter = "PAPI_TOT_CYC";
         /* Set total number of instructions on every experiment */
         if (NULL == myself_module.total_inst_counter) {
             OUTPUT(("%s", _ERROR("total # of instructions counter not set")));
@@ -178,7 +180,6 @@ int run_hpcrun(void) {
 
         continue;
     }
-
     experiment_total = perfexpert_list_get_size(&experiments);
 
     /* For each experiment... */

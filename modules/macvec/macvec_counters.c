@@ -41,8 +41,8 @@ int counters_jaketown(void) {
     OUTPUT_VERBOSE((4, "%s", _YELLOW("setting counters (Intel native names)")));
 
     /* Set the profile total cycles and total instructions counters */
-    strcpy(my_module_globals.measurement->total_cycles_counter, "CPU_CLK_UNHALTED.THREAD_P");
-    strcpy(my_module_globals.measurement->total_inst_counter, "INST_RETIRED.ANY_P");
+    my_module_globals.measurement->total_cycles_counter = "CPU_CLK_UNHALTED.THREAD_P";
+    my_module_globals.measurement->total_inst_counter = "INST_RETIRED.ANY_P";
 
     /* Set the events on the measurement module */
     USE_EVENT("CPU_CLK_UNHALTED.THREAD_P");
@@ -56,8 +56,8 @@ int counters_mic(void) {
     OUTPUT_VERBOSE((4, "%s", _YELLOW("setting counters (PAPI)")));
 
     /* Set the profile total cycles and total instructions counters */
-    strcpy(my_module_globals.measurement->total_cycles_counter, "CPU_CLK_UNHALTED");
-    strcpy(my_module_globals.measurement->total_inst_counter, "INSTRUCTIONS_EXECUTED");
+    my_module_globals.measurement->total_cycles_counter = "CPU_CLK_UNHALTED";
+    my_module_globals.measurement->total_inst_counter = "INSTRUCTIONS_EXECUTED";
 
     /* Set the events on the measurement module */
     USE_EVENT("CPU_CLK_UNHALTED");
@@ -71,8 +71,8 @@ int counters_papi(void) {
     OUTPUT_VERBOSE((4, "%s", _YELLOW("setting counters (PAPI)")));
 
     /* Set the profile total cycles and total instructions counters */
-    strcpy(my_module_globals.measurement->total_cycles_counter, "PAPY_TOT_CYC");
-    strcpy(my_module_globals.measurement->total_inst_counter, "PAPI_TOT_INS");
+    my_module_globals.measurement->total_cycles_counter = "PAPY_TOT_CYC";
+    my_module_globals.measurement->total_inst_counter = "PAPI_TOT_INS";
 
     /* Set the events on the measurement module */
     USE_EVENT("PAPI_TOT_CYC");

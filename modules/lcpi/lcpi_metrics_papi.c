@@ -58,8 +58,8 @@ int metrics_papi(void) {
     }
 
     /* Set the profile total cycles and total instructions counters */
-    strcpy (my_module_globals.measurement->total_cycles_counter, "PAPY_TOT_CYC");
-    strcpy (my_module_globals.measurement->total_inst_counter, "PAPI_TOT_INS");
+    my_module_globals.measurement->total_cycles_counter = "PAPY_TOT_CYC";
+    my_module_globals.measurement->total_inst_counter = "PAPI_TOT_INS";
 
     /* Generate LCPI PAPI metrics (be sure the events are ordered) */
     if (PERFEXPERT_SUCCESS != generate_ratio_floating_point()) {
