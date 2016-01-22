@@ -185,14 +185,29 @@ In each case, the classification (data access, instruction access, data TLB, etc
 \nicebox{NOTICE:}{PerfExpert creates a \texttt{.perfexpert-temp.XXXXXX} directory for each time it is executed. This directory has one subdirectory for each optimization cycle PerfExpert completed or attempted. Each subdirectory includes the intermediate files PerfExpert generated during each cycle, including the performance analysis reports.}
 
 \section{Running PerfExpert with MPI codes}
+
+TACC systems use \texttt{ibrun} to launch MPI codes, so all these examples use \texttt{ibrun}. When running on other sites,
+remember to change \texttt{ibrun} by \texttt{mpirun} or the launcher used at that site.
+
+To run PerfExpert with an MPI code, use \texttt{ibrun} as a prefix with the \texttt{-p} option as follows: 
+
+\begin{verbatim}
+perfexpert 0.1 --verbose=10 -modules=lcpi,hpctoolkit -p "ibrun" -- ./XSBench  -t 4 -s large
+\end{verbatim}
+
+Parameters can be passed to \texttt{ibrun} as follows:
+
+\begin{verbatim}
+perfexpert 0.1 --verbose=10 -modules=lcpi,hpctoolkit -p "ibrun -np 4" -- ./XSBench  -t 4 -s large
+\end{verbatim}
+
 \subsection{Using Intel Xeon Phi}
 When using native MPI applications on the Intel Xeon Phi, there are two main scenarios:
 \subsubsection{HPCToolkit}
  This is the simplest case. All you need to do is to specify which MPI launcher you want to use as a prefix in your PerfExpert command. For example:
  
 	\begin{verbatim}
-perfexpert 0.1 -verbose=10 -modules=lcpi,hpctoolkit --module-option=lcpi,architecture=MIC \
---module-option=hpctoolkit,mic-card=mic0 -p "ibrun.symm -m" -- ./lulesh2.0 -i 100 -s 8	
+	perfexpert 0.1 --modules=lcpi,hpctoolkit --module-option=lcpi,architecture=MIC  --module-option=hpctoolkit,mic-card=mic0 --module-option=hpctoolkit,prefix="ibrun.symm -m" -- ./lules2.0 -i 100 -s 8
 	\end{verbatim}
 
 \subsubsection{Intel VTune}
