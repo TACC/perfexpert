@@ -456,7 +456,7 @@ static int set_module_option(char *option) {
     /* Expand list of modules options */
     perfexpert_string_split(option, options, ',');
     while ((NULL != options[i]) && (NULL != options[i + 1])) {
-        OUTPUT_VERBOSE((10, "\n\n Setting option %s \n\n", options[i]));
+        OUTPUT_VERBOSE((10, "Setting option %s", options[i]));
         if (PERFEXPERT_SUCCESS != perfexpert_module_set_option(options[i],
             options[i + 1])) {
             OUTPUT(("%s [%s,%s]", _ERROR("while setting module options"),

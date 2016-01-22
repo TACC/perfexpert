@@ -295,6 +295,43 @@ int perfexpert_util_path_only(const char *file, char **path) {
             PERFEXPERT_DEALLOC(env_path);
         }
     }
+    /*
+    if (NULL == resolved_path) {
+        char try_file[40];
+        struct stat fin;
+        sprintf(try_file, "/usr/local/bin/%s", file);
+        OUTPUT_VERBOSE((10, "Checking file %s", try_file));
+        if (access(try_file, F_OK) != -1) {
+            PERFEXPERT_ALLOC(char, resolved_path, strlen(try_file)+1);
+            memcpy(resolved_path, try_file, strlen(try_file));
+            OUTPUT_VERBOSE((10, "Found"));
+        }
+        if (NULL == resolved_path) {
+            sprintf (try_file, "/usr/bin/%s", file);
+            OUTPUT_VERBOSE((10, "Checking file %s", try_file));
+            if ((0 == access(try_file, X_OK)) && (0 == stat(try_file, &fin))) {
+                if ((S_ISREG(fin.st_mode)) && ((0 != getuid()) ||
+                    (0 != (fin.st_mode & (S_IXUSR | S_IXGRP | S_IXOTH))))) {
+                    PERFEXPERT_ALLOC(char, resolved_path,
+                        (strlen(try_file) + 1));
+                    memcpy(resolved_path, try_file, strlen(try_file));
+                }
+            }
+        }
+        if (NULL == resolved_path) {
+            sprintf (try_file, "/bin/%s", file);
+            OUTPUT_VERBOSE((10, "Checking file %s", try_file));
+            if ((0 == access(try_file, X_OK)) && (0 == stat(try_file, &fin))) {
+                if ((S_ISREG(fin.st_mode)) && ((0 != getuid()) ||
+                    (0 != (fin.st_mode & (S_IXUSR | S_IXGRP | S_IXOTH))))) {
+                    PERFEXPERT_ALLOC(char, resolved_path,
+                        (strlen(try_file) + 1));
+                    memcpy(resolved_path, try_file, strlen(try_file));
+                }
+            }
+        }
+    }
+    */
 
     if (NULL == resolved_path) {
         resolved_path = getcwd(NULL, 0);

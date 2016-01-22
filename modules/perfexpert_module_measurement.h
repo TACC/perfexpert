@@ -35,7 +35,7 @@ extern "C" {
 /* Interface extenstions */
 typedef int (*perfexpert_module_measurement_set_event_fn_t)(const char *name);
 
-/* HPCToolkit module interface */
+/* Measurement module interface */
 typedef struct {
     volatile perfexpert_list_item_t *next;
     volatile perfexpert_list_item_t *prev;

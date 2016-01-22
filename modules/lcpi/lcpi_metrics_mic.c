@@ -51,6 +51,7 @@ int metrics_mic(void) {
 
     OUTPUT_VERBOSE((8, "Events set for the MIC"));
     /* Set the profile total cycles and total instructions counters */
+
     my_module_globals.measurement->total_cycles_counter = "CPU_CLK_UNHALTED";
     my_module_globals.measurement->total_inst_counter = "INSTRUCTIONS_EXECUTED";
 

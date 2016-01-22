@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
+ * Copyright (c) 2011-2015  University of Texas at Austin. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -9,12 +9,12 @@
  *
  * PerfExpert is free software: you can redistribute it and/or modify it under
  * the terms of the The University of Texas at Austin Research License
- * 
+ *
  * PerfExpert is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
- * 
- * Authors: Leonardo Fialho and Ashay Rane
+ *
+ * Authors: Antonio Gomez-Iglesias, Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
  */
@@ -253,7 +253,12 @@ uint8_t instrument(macpo_options_t* macpo_options, const char* args[],
         }
         project->unparse();
 
-        if (options.base_compiler.size() > 0) {
+        // If no_compile is specified, exit
+        if (options.no_compile == true) {
+            return 0;
+        }
+
+         if (options.base_compiler.size() > 0) {
             std::string base_compiler = get_path(options.base_compiler);
             if (base_compiler.empty() ||
                     access(base_compiler.c_str(), R_OK | X_OK) == -1) {

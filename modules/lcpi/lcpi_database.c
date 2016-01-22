@@ -124,26 +124,26 @@ int database_import(perfexpert_list_t *profiles, const char *table) {
     lcpi_hotspot_t *h = NULL;
 
     /* Select and import profiles */
-    OUTPUT_VERBOSE((5, "%s", _YELLOW("Importing profiles")));
+    OUTPUT_VERBOSE((5, "%s [%s]", _YELLOW("Importing profiles"), table));
     if (PERFEXPERT_SUCCESS != select_profiles(profiles, table)) {
         OUTPUT(("%s", _ERROR("importing profiles")));
     }
 
     /* For each profile, select and import its modules */
     perfexpert_list_for(p, profiles, lcpi_profile_t) {
-        OUTPUT_VERBOSE((5, "%s", _YELLOW("Importing modules")));
+        OUTPUT_VERBOSE((5, "%s [%s]", _YELLOW("Importing modules"), table));
         if (PERFEXPERT_SUCCESS != select_modules(p, table)) {
             OUTPUT(("%s", _ERROR("importing modules")));
         }
 
         /* Select and import hotspots */
-        OUTPUT_VERBOSE((5, "%s", _YELLOW("Importing hotspots")));
+        OUTPUT_VERBOSE((5, "%s [%s]", _YELLOW("Importing hotspots"), table));
         if (PERFEXPERT_SUCCESS != select_hotspots(&(p->hotspots), table)) {
             OUTPUT(("%s", _ERROR("importing hotspots")));
         }
 
         /* Map modules to hotspots */
-        OUTPUT_VERBOSE((5, "%s", _YELLOW("Mapping hotspots <-> modules")));
+        OUTPUT_VERBOSE((5, "%s [%s]", _YELLOW("Mapping hotspots <-> modules"), table));
         perfexpert_list_for(h, &(p->hotspots), lcpi_hotspot_t) {
             if (PERFEXPERT_SUCCESS != map_modules_to_hotspots(h,
                 p->modules_by_name, table)) {
@@ -152,7 +152,7 @@ int database_import(perfexpert_list_t *profiles, const char *table) {
         }
 
         /* Calculate metadata (cycles, instructions, relevance, and variance) */
-        OUTPUT_VERBOSE((5, "%s", _YELLOW("Calculating metadata")));
+        OUTPUT_VERBOSE((5, "%s [%s]", _YELLOW("Calculating metadata"), table));
         if (PERFEXPERT_SUCCESS != calculate_metadata(p, table)) {
             OUTPUT(("%s", _ERROR("calculating metadata")));
             return PERFEXPERT_ERROR;
@@ -324,6 +324,20 @@ static int calculate_metadata(lcpi_profile_t *profile, const char *table) {
     lcpi_module_t *m = NULL, *t = NULL;
     lcpi_hotspot_t *h = NULL;
 
+    //OJO hardcoded for MIC
+/*    if (0 == strcmp("jaketown",
+        perfexpert_string_to_lower(my_module_globals.architecture))) {
+        my_module_globals.measurement->total_cycles_counter="CPU_CLK_UNHALTED.THREAD_P";
+        my_module_globals.measurement->total_inst_counter="INST_RETIRED.ANY_P";
+    }
+*/
+    /* MIC (or KnightsCorner) */
+/*    else if (0 == strcmp("mic",
+        perfexpert_string_to_lower(my_module_globals.architecture))) {
+        my_module_globals.measurement->total_cycles_counter = "CPU_CLK_UNHALTED";
+        my_module_globals.measurement->total_inst_counter = "INSTRUCTIONS_EXECUTED";
+    }
+*/
     /* Replace the '.' by '_' on the metrics name, this is bullshit... */
     PERFEXPERT_ALLOC(char, total_cycles,
         (strlen(my_module_globals.measurement->total_cycles_counter) + 1));
@@ -359,6 +373,8 @@ static int calculate_metadata(lcpi_profile_t *profile, const char *table) {
             "SELECT MAX(a) FROM (SELECT SUM(value) AS a FROM perfexpert_event WHERE "
             "hotspot_id = %llu AND name = '%s');", h->id, total_inst);
 
+        OUTPUT_VERBOSE((8, "importing max instructions: %s", sql));
+
         if (SQLITE_OK != sqlite3_exec(globals.db, sql,
             perfexpert_database_get_double, (void *)&(h->max_inst), &error)) {
             OUTPUT(("%s %s", _ERROR("SQL error"), error));
@@ -372,6 +388,8 @@ static int calculate_metadata(lcpi_profile_t *profile, const char *table) {
             "SELECT MIN(a) FROM (SELECT SUM(value) AS a FROM perfexpert_event WHERE "
             "hotspot_id = %llu AND name = '%s');", h->id, total_inst);
 
+        OUTPUT_VERBOSE((8, "importing min instructions: %s", sql));
+
         if (SQLITE_OK != sqlite3_exec(globals.db, sql,
             perfexpert_database_get_double, (void *)&(h->min_inst), &error)) {
             OUTPUT(("%s %s", _ERROR("SQL error"), error));
@@ -384,6 +402,8 @@ static int calculate_metadata(lcpi_profile_t *profile, const char *table) {
         sprintf(sql, "SELECT DISTINCT experiment FROM perfexpert_event WHERE "
             "hotspot_id = %llu;", h->id);
 
+        OUTPUT_VERBOSE((8, "importing experiments: %s", sql));
+
         if (SQLITE_OK != sqlite3_exec(globals.db, sql, import_experiment,
             (void *)h, &error)) {
             OUTPUT(("%s %s", _ERROR("SQL error"), error));
@@ -395,6 +415,8 @@ static int calculate_metadata(lcpi_profile_t *profile, const char *table) {
         bzero(sql, MAX_BUFFER_SIZE);
         sprintf(sql, "SELECT SUM(value) FROM perfexpert_event WHERE hotspot_id = %llu "
             "AND name = '%s';", h->id, total_cycles);
+
+        OUTPUT_VERBOSE((8, "importing cycles: %s", sql));
 
         if (SQLITE_OK != sqlite3_exec(globals.db, sql,
             perfexpert_database_get_double, (void *)&(h->cycles), &error)) {

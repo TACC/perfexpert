@@ -172,46 +172,49 @@ static int output_profile(lcpi_hotspot_t *h, FILE *report_FP, const int scale) {
     int print_ratio = PERFEXPERT_TRUE, warn_fp_ratio = PERFEXPERT_FALSE;
     lcpi_metric_t *l = NULL, *t = NULL;
     char *shortname = NULL;
+    int donotshowtop = PERFEXPERT_FALSE;
 
     OUTPUT_VERBOSE((4, "   [%d] %s", h->id, _YELLOW(h->name)));
     /* Print the runtime of this hotspot */
     if (PERFEXPERT_SUCCESS != perfexpert_util_file_exists(h->file)) {
-        OUTPUT_VERBOSE((4, "   [%d] file %s does not exist. Is it a system file?", h->id, _YELLOW(h->file)));
-        return PERFEXPERT_SUCCESS;
+        OUTPUT(("   [%d -- %s] file %s does not exist. Is it a system file?", h->id, h->name, _YELLOW(h->file)));
+        donotshowtop = PERFEXPERT_TRUE;
     }
 
-    perfexpert_util_filename_only(h->file, &shortname);
-    switch (h->type) {
-        case PERFEXPERT_HOTSPOT_PROGRAM:
-            printf("Aggregate (%.2f%% of the total runtime)\n",
-                h->importance * 100);
-            fprintf(report_FP, "Aggregate (%.2f%% of the total runtime)\n",
-                h->importance * 100);
-            break;
+    if (!donotshowtop) {
+        perfexpert_util_filename_only(h->file, &shortname);
+        switch (h->type) {
+            case PERFEXPERT_HOTSPOT_PROGRAM:
+                printf("Aggregate (%.2f%% of the total runtime)\n",
+                    h->importance * 100);
+                fprintf(report_FP, "Aggregate (%.2f%% of the total runtime)\n",
+                    h->importance * 100);
+                break;
 
-        case PERFEXPERT_HOTSPOT_FUNCTION:
-            printf(
-                "Function %s in line %d of %s (%.2f%% of the total runtime)\n",
-                _CYAN(h->name), h->line, shortname, h->importance * 100);
-            fprintf(report_FP,
-                "Function %s in line %d of %s (%.2f%% of the total runtime)\n",
-                h->name, h->line, shortname, h->importance * 100);
-            break;
+            case PERFEXPERT_HOTSPOT_FUNCTION:
+                printf(
+                    "Function %s in line %d of %s (%.2f%% of the total runtime)\n",
+                    _CYAN(h->name), h->line, shortname, h->importance * 100);
+                fprintf(report_FP,
+                    "Function %s in line %d of %s (%.2f%% of the total runtime)\n",
+                    h->name, h->line, shortname, h->importance * 100);
+                break;
 
-        case PERFEXPERT_HOTSPOT_LOOP:
-            printf(
-                "Loop in function %s in %s:%d (%.2f%% of the total runtime)\n",
-                _CYAN(h->name), shortname, h->line, h->importance * 100);
-            fprintf(report_FP,
-                "Loop in function %s in %s:%d (%.2f%% of the total runtime)\n",
-                h->name, shortname, h->line, h->importance * 100);
-            break;
+            case PERFEXPERT_HOTSPOT_LOOP:
+                printf(
+                    "Loop in function %s in %s:%d (%.2f%% of the total runtime)\n",
+                    _CYAN(h->name), shortname, h->line, h->importance * 100);
+                fprintf(report_FP,
+                    "Loop in function %s in %s:%d (%.2f%% of the total runtime)\n",
+                    h->name, shortname, h->line, h->importance * 100);
+                break;
 
-        case PERFEXPERT_HOTSPOT_UNKNOWN:
-        default:
-            return PERFEXPERT_ERROR;
+            case PERFEXPERT_HOTSPOT_UNKNOWN:
+            default:
+                return PERFEXPERT_ERROR;
+        }
+        PERFEXPERT_DEALLOC(shortname);
     }
-    PERFEXPERT_DEALLOC(shortname);
 
     /* Print an horizontal double-line */
     PRETTY_PRINT(81, "=");

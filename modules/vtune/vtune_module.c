@@ -55,6 +55,9 @@ int module_load(void) {
 
     /* TODO(agomez): check for VTune binaries availability here */
 
+    /* Initialize list of events */
+    my_module_globals.events_by_name = NULL;
+
     OUTPUT_VERBOSE((5, "%s", _MAGENTA("loaded")));
 
     return PERFEXPERT_SUCCESS;
@@ -67,8 +70,6 @@ int module_init(void) {
     myself_module.set_event   = &module_set_event;
     myself_module.query_event = &module_query_event;
 
-    /* Initialize list of events */
-    my_module_globals.events_by_name = NULL;
     perfexpert_list_construct(&(myself_module.profiles));
     my_module_globals.mic = NULL;
     my_module_globals.inputfile = NULL;
@@ -99,16 +100,15 @@ int module_fini(void) {
     myself_module.set_event = NULL;
     myself_module.query_event = NULL;
 
-    /* Free the list of events */
-    /* TODO(agomez) make sure this is all correct */
-
-    /*
     perfexpert_hash_iter_str(my_module_globals.events_by_name, event, tmp) {
         perfexpert_hash_del_str(my_module_globals.events_by_name, event);
         PERFEXPERT_DEALLOC(event->name);
         PERFEXPERT_DEALLOC(event);
     }
 
+    /* Free the list of events */
+    /* TODO(agomez) make sure this is all correct */
+/*
     vtune_hw_profile_t *it;
     perfexpert_list_for (it, &(myself_module.profiles), vtune_hw_profile_t) {
         PERFEXPERT_DEALLOC (it->name);
@@ -143,16 +143,24 @@ int module_measure(void) {
     if (PERFEXPERT_SUCCESS != database_default_events(/*my_module_globals*/)) {
         OUTPUT(("%s", _ERROR("reading default events from the database")));
     }
-
     if (0 == perfexpert_hash_count_str(my_module_globals.events_by_name)) {
         OUTPUT_VERBOSE((5, "adding events to collect"));
-        if (PERFEXPERT_SUCCESS != module_set_event("CPU_CLK_UNHALTED.REF_TSC")) {
-            OUTPUT(("%s", _ERROR("ADDING EVENTS [CPU_CLK_UNHALTED.REF_TSC]")));
+        if (NULL == my_module_globals.mic) {
+            if (PERFEXPERT_SUCCESS != module_set_event("CPU_CLK_UNHALTED.REF_TSC")) {
+                OUTPUT(("%s", _ERROR("ADDING EVENTS [CPU_CLK_UNHALTED.REF_TSC]")));
+            }
+            if (PERFEXPERT_SUCCESS != module_set_event("CPU_CLK_UNHALTED.REF_TSC")) {
+            }
         }
-        if (PERFEXPERT_SUCCESS != module_set_event("CPU_CLK_UNHALTED.REF_TSC")) {
+        else {
+            if (PERFEXPERT_SUCCESS != module_set_event("CPU_CLK_UNHALTED")) {
+                OUTPUT(("%s", _ERROR("ADDING EVENTS [CPU_CLK_UNHALTED]")));
+            }
+            if (PERFEXPERT_SUCCESS != module_set_event("INSTRUCTIONS_EXECUTED")) {
+                OUTPUT(("%s", _ERROR("ADDING EVENTS [INSTRUCTIONS_EXECUTED]")));
+            }
         }
     }
-
     /* First of all, does the file exist? (it is just a double check) */
     if (PERFEXPERT_SUCCESS !=
         perfexpert_util_file_is_exec(globals.program_full)) {
@@ -166,7 +174,7 @@ int module_measure(void) {
             return PERFEXPERT_ERROR;
         }
      } else {
-         if (PERFEXPERT_SUCCESS != run_amplxe_cl_mic()) {
+         if (PERFEXPERT_SUCCESS != run_amplxe_cl()) {
              OUTPUT(("%s", _ERROR("unable to run amplxecl on MIC")));
              OUTPUT(("Are you adding the flags to compile for MIC?"));
              return PERFEXPERT_ERROR;
@@ -185,9 +193,9 @@ int module_measure(void) {
        module */
 
     /* TODO(agomez): this line makes lcpi fail. I have to figure out why */
-    /* perfexpert_list_append (&(myself_module.profiles), 
+     perfexpert_list_append (&(myself_module.profiles), 
                                (perfexpert_list_item_t *) profile); 
-    */
+    
 
     if (PERFEXPERT_SUCCESS != collect_results(profile)) {
         OUTPUT(("%s",
