@@ -69,6 +69,11 @@ static int macpo_instrument(void *n, int c, char **val, char **names) {
 
     OUTPUT_VERBOSE((6, "  instrumenting %s   @   %s:%s", name, file, line));
 
+    if (PERFEXPERT_SUCCESS != perfexpert_util_file_is_writable(file)) {
+        OUTPUT_VERBOSE((6, "  file %s is not writable", file));
+        return PERFEXPERT_SUCCESS;
+    }
+
     // Remove everything after '(' in the function name (if exists)
     char *ptr = strchr(name, '(');
     if (ptr) {
