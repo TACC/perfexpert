@@ -245,25 +245,15 @@ int macpo_compile() {
             comp_loaded = PERFEXPERT_TRUE;
     }
     if (comp_loaded == PERFEXPERT_FALSE) {
-        OUTPUT(("%s", _ERROR("required module not available")));
+        OUTPUT(("%s", _ERROR("required compilation module not available")));
         return PERFEXPERT_ERROR;
     }
 
-    if (!myself_module.measurement) {
-        OUTPUT(("MEASUREMENT IS NULL"));
-        return PERFEXPERT_ERROR;
-    }
-    myself_module.measurement->compile();
-/*    if (myself_module.compile() != PERFEXPERT_SUCCESS) {
+    if (myself_module.measurement->compile() != PERFEXPERT_SUCCESS) {
         OUTPUT(("%s", _ERROR (" failed to compile ")));
         return PERFEXPERT_ERROR;
     }
-*/
-   /*
-    myself_module.compile->module_load();
-    myself_module.compile.module_init();
-    myself_module.compile.module_compile();
-*/
+
     return PERFEXPERT_SUCCESS;
 }
 
@@ -284,10 +274,27 @@ int macpo_run() {
     /* fork_and_wait_and_pray */
     rc = perfexpert_fork_and_wait(&test, argv);
     PERFEXPERT_DEALLOC(test.output);
-    if (rc != PERFEXPERT_SUCCESS) {
-        OUTPUT(("%s", _ERROR(" problem while running the application")));
-        return PERFEXPERT_ERROR;
+    switch (rc) {
+        case PERFEXPERT_FAILURE:
+        case PERFEXPERT_ERROR:
+            OUTPUT(("%s (return code: %d) Usually, this means that an error"
+                " happened during the program execution. To see the program"
+                "'s output, check the content of this file: [%s]. If you "
+                "want to PerfExpert ignore the return code next time you "
+                "run this program, set the 'return-code' option for the "
+                "macpo module. See 'perfepxert -H macpo' for details.",
+                _ERROR("the target program returned non-zero"), rc, 
+                test.output));
+            return PERFEXPERT_ERROR;
+
+        case PERFEXPERT_SUCCESS:
+            OUTPUT_VERBOSE((7, "[ %s  ]", _BOLDGREEN("OK")));
+            break;
+
+        default:
+            break;
     }
+
     return PERFEXPERT_SUCCESS;
 }
 
