@@ -43,7 +43,7 @@ extern "C" {
 #include "common/perfexpert_fork.h"
 #include "common/perfexpert_util.h"
 
-perfexpert_module_t myself_module;
+//perfexpert_module_t myself_module;
 
 /* macpo_instrument_all */
 int macpo_instrument_all(void) {
@@ -219,10 +219,46 @@ static int macpo_instrument(void *n, int c, char **val, char **names) {
 }
 
 int macpo_compile() {
-    if (myself_module.compile() != PERFEXPERT_SUCCESS) {
+    int comp_loaded = PERFEXPERT_FALSE;
+
+    if (PERFEXPERT_TRUE == perfexpert_module_available("make")) {
+        OUTPUT_VERBOSE((5, "%s",
+            _CYAN("will use make as compilation module")));
+        myself_module.measurement = (perfexpert_module_measurement_t *) perfexpert_module_get("make");
+        if (NULL != myself_module.measurement)
+            comp_loaded = PERFEXPERT_TRUE;
+    }
+
+    if (comp_loaded == PERFEXPERT_FALSE && PERFEXPERT_TRUE == perfexpert_module_available("icc")) {
+        OUTPUT_VERBOSE((5, "%s",
+            _CYAN("will use icc as compilation module")));
+        myself_module.measurement = (perfexpert_module_measurement_t *) perfexpert_module_get("icc");
+        if (NULL != myself_module.measurement)
+            comp_loaded = PERFEXPERT_TRUE;
+    }
+
+    if (comp_loaded == PERFEXPERT_FALSE && PERFEXPERT_TRUE == perfexpert_module_available("gcc")) {
+        OUTPUT_VERBOSE((5, "%s",
+            _CYAN("will use gcc as compilation module")));
+        myself_module.measurement = (perfexpert_module_measurement_t *) perfexpert_module_get("gcc");
+        if (NULL != myself_module.measurement)
+            comp_loaded = PERFEXPERT_TRUE;
+    }
+    if (comp_loaded == PERFEXPERT_FALSE) {
+        OUTPUT(("%s", _ERROR("required module not available")));
+        return PERFEXPERT_ERROR;
+    }
+
+    if (!myself_module.measurement) {
+        OUTPUT(("MEASUREMENT IS NULL"));
+        return PERFEXPERT_ERROR;
+    }
+    myself_module.measurement->compile();
+/*    if (myself_module.compile() != PERFEXPERT_SUCCESS) {
         OUTPUT(("%s", _ERROR (" failed to compile ")));
         return PERFEXPERT_ERROR;
     }
+*/
    /*
     myself_module.compile->module_load();
     myself_module.compile.module_init();

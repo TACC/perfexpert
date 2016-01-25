@@ -28,8 +28,16 @@ extern "C" {
 
 /* Modules headers */
 #include "modules/perfexpert_module_base.h"
+#include "modules/perfexpert_module_measurement.h"
 
-perfexpert_module_1_0_0_t myself_module;
+typedef struct{
+    perfexpert_module_measurement_t *measurement;
+    perfexpert_module_1_0_0_t macpo_module;
+} perfexpert_macpo_module_1_0_0_t;
+
+perfexpert_macpo_module_1_0_0_t myself_module;
+
+//perfexpert_module_1_0_0_t myself_module;
 
 #ifdef __cplusplus
 }

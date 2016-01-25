@@ -3,7 +3,6 @@ module_version
 module_load
 module_init
 module_fini
-module_compile
 module_instrument
 module_measure
 module_analyze
