@@ -15,7 +15,7 @@ This module calls the MACPO tool (look in the tool/macpo folder) to instrument t
 
 ## COPYRIGHT
 
-Copyright (c) 2011-2015  University of Texas at Austin. All rights reserved.
+Copyright (c) 2011-2016  University of Texas at Austin. All rights reserved.
 
 Additional copyrights may follow
 
