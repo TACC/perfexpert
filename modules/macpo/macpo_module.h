@@ -29,9 +29,7 @@ extern "C" {
 /* Modules headers */
 #include "modules/perfexpert_module_base.h"
 
-/* LCPI module interface */
-typedef perfexpert_module_t perfexpert_module_macpo_1_0_0_t;
-typedef perfexpert_module_macpo_1_0_0_t perfexpert_module_macpo_t;
+perfexpert_module_1_0_0_t myself_module;
 
 #ifdef __cplusplus
 }

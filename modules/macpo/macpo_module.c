@@ -32,9 +32,9 @@ extern "C" {
 /* PerfExpert common headers */
 #include "common/perfexpert_constants.h"
 #include "common/perfexpert_output.h"
+#include "modules/perfexpert_module_base.h"
 
 /* Global variable to define the module itself */
-perfexpert_module_macpo_t myself_module;
 char module_version[] = "1.0.0";
 
 /* module_load */
@@ -45,6 +45,9 @@ int module_load(void) {
 
 /* module_init */
 int module_init(void) {
+    int comp_loaded = PERFEXPERT_FALSE;
+    myself_module.compile = NULL;
+
     /* Module pre-requisites */
     if (PERFEXPERT_SUCCESS != perfexpert_module_requires("macpo",
         PERFEXPERT_PHASE_INSTRUMENT, "lcpi", PERFEXPERT_PHASE_ANALYZE,
@@ -68,6 +71,38 @@ int module_init(void) {
         PERFEXPERT_PHASE_ANALYZE, "macpo", PERFEXPERT_PHASE_MEASURE,
         PERFEXPERT_MODULE_BEFORE)) {
         OUTPUT(("%s", _ERROR("pre-required module/phase not available")));
+        return PERFEXPERT_ERROR;
+    }
+
+    /* Should we use make? */
+    if (PERFEXPERT_TRUE == perfexpert_module_available("make")) {
+        OUTPUT_VERBOSE((5, "%s",
+            _CYAN("will use make as compililation module")));
+        myself_module.compile = perfexpert_module_get ("make");
+        if (NULL != myself_module.compile)
+            comp_loaded = PERFEXPERT_TRUE;
+    }
+
+    /* Should we use icc? */
+    if (comp_loaded == PERFEXPERT_FALSE && PERFEXPERT_TRUE == perfexpert_module_available("icc")) {
+        OUTPUT_VERBOSE((5, "%s",
+            _CYAN("will use icc as compililation module")));
+        myself_module.compile = perfexpert_module_get ("icc");
+        if (NULL != myself_module.compile)
+            comp_loaded = PERFEXPERT_TRUE;
+    }
+
+    /* Should we use gcc? */
+    if (comp_loaded == PERFEXPERT_FALSE && PERFEXPERT_TRUE == perfexpert_module_available("gcc")) {
+        OUTPUT_VERBOSE((5, "%s",
+            _CYAN("will use gcc as compililation module")));
+        myself_module.compile = perfexpert_module_get ("gcc");
+        if (NULL != myself_module.compile)
+            comp_loaded = PERFEXPERT_TRUE;
+    }
+
+    if (comp_loaded == PERFEXPERT_FALSE) {
+        OUTPUT(("%s", _ERROR("required module not available")));
         return PERFEXPERT_ERROR;
     }
 
@@ -97,7 +132,17 @@ int module_instrument(void) {
 /* module_measure */
 int module_measure(void) {
     OUTPUT(("%s", _YELLOW("Collecting measurements")));
+    //First, recompile the code
+    if (PERFEXPERT_SUCCESS != macpo_compile()) {
+        OUTPUT(("%s", _ERROR("compiling code after instrumentation")));
+        return PERFEXPERT_ERROR;
+    }
 
+    if (PERFEXPERT_SUCCESS != macpo_run()) {
+        OUTPUT(("%s", _ERROR("running code after instrumentation")));
+        return PERFEXPERT_ERROR;
+    }
+    //Rerun the code
     return PERFEXPERT_SUCCESS;
 }
 

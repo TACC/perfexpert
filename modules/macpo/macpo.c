@@ -33,11 +33,17 @@ extern "C" {
 /* Modules headers */
 #include "macpo.h"
 
+#include "macpo_module.h"
+
+#include "../perfexpert_module_base.h"
+
 /* PerfExpert common headers */
 #include "common/perfexpert_alloc.h"
 #include "common/perfexpert_output.h"
 #include "common/perfexpert_fork.h"
 #include "common/perfexpert_util.h"
+
+perfexpert_module_t myself_module;
 
 /* macpo_instrument_all */
 int macpo_instrument_all(void) {
@@ -209,6 +215,43 @@ static int macpo_instrument(void *n, int c, char **val, char **names) {
     PERFEXPERT_DEALLOC(argv[5]);
     PERFEXPERT_DEALLOC(argv[7]);
     PERFEXPERT_DEALLOC(fullpath);
+    return PERFEXPERT_SUCCESS;
+}
+
+int macpo_compile() {
+    if (myself_module.compile() != PERFEXPERT_SUCCESS) {
+        OUTPUT(("%s", _ERROR (" failed to compile ")));
+        return PERFEXPERT_ERROR;
+    }
+   /*
+    myself_module.compile->module_load();
+    myself_module.compile.module_init();
+    myself_module.compile.module_compile();
+*/
+    return PERFEXPERT_SUCCESS;
+}
+
+int macpo_run() {
+    char *argv[2];
+    int rc = PERFEXPERT_SUCCESS;
+    test_t test;
+
+    argv[0] = globals.program_full;
+    argv[1] = NULL;
+
+    PERFEXPERT_ALLOC(char, test.output,
+        (strlen(globals.moduledir) + 8));
+    sprintf(test.output, "%s/macpo-run.output", globals.moduledir);
+    test.input  = NULL;
+    test.info   = globals.program;
+
+    /* fork_and_wait_and_pray */
+    rc = perfexpert_fork_and_wait(&test, argv);
+    PERFEXPERT_DEALLOC(test.output);
+    if (rc != PERFEXPERT_SUCCESS) {
+        OUTPUT(("%s", _ERROR(" problem while running the application")));
+        return PERFEXPERT_ERROR;
+    }
     return PERFEXPERT_SUCCESS;
 }
 
