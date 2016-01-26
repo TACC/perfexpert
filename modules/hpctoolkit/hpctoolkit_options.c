@@ -59,6 +59,7 @@ int parse_module_args(int argc, char *argv[]) {
         .mic_after         = NULL
     };
 
+
     /* If some environment variable is defined, use it! */
     if (PERFEXPERT_SUCCESS != parse_env_vars()) {
         OUTPUT(("%s", _ERROR("parsing environment variables")));

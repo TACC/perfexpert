@@ -48,6 +48,10 @@ int module_load(void) {
 int module_init(void) {
     int comp_loaded = PERFEXPERT_FALSE;
  //   myself_module.measurement=NULL;
+    my_module_globals.prefix[0] = NULL;
+    my_module_globals.before[0] = NULL;
+    my_module_globals.after[0] = NULL;
+    my_module_globals.ignore_return_code = PERFEXPERT_FALSE;
 
     /* Module pre-requisites */
     if (PERFEXPERT_SUCCESS != perfexpert_module_requires("macpo",

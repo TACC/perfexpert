@@ -192,7 +192,6 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
     perfexpert_module_t *m = NULL;
     char str[MAX_BUFFER_SIZE];
 
-    OUTPUT_VERBOSE((8, "Parsing %d -- %s", key, arg));
     switch (key) {
         /* Activate colorful mode */
         case 'c':
@@ -350,7 +349,7 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
         case 'p':
             OUTPUT_VERBOSE((1, "option 'p' set [%s]", arg ? arg : "(null)"));
             bzero(str, MAX_BUFFER_SIZE);
-           // sprintf(str, "hpctoolkit,prefix=%s", arg ? arg : "");
+            //sprintf(str, "macpo,prefix=%s", arg ? arg : "");
             sprintf(str, "prefix=%s", arg ? arg : "");
             if (PERFEXPERT_SUCCESS != set_module_option(str)) {
                 argp_error(state, "error setting module option");
@@ -456,7 +455,6 @@ static int set_module_option(char *option) {
     /* Expand list of modules options */
     perfexpert_string_split(option, options, ',');
     while ((NULL != options[i]) && (NULL != options[i + 1])) {
-        OUTPUT_VERBOSE((10, "Setting option %s", options[i]));
         if (PERFEXPERT_SUCCESS != perfexpert_module_set_option(options[i],
             options[i + 1])) {
             OUTPUT(("%s [%s,%s]", _ERROR("while setting module options"),

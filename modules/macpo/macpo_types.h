@@ -27,7 +27,7 @@ extern "C" {
 #endif
 
 #include "common/perfexpert_constants.h"
-
+/*
 typedef struct {
     char *prefix[MAX_ARGUMENTS_COUNT];
     char *before[MAX_ARGUMENTS_COUNT];
@@ -36,7 +36,7 @@ typedef struct {
     char res_folder[MAX_FILENAME];
     int ignore_return_code;
 } my_module_globals_t;
-
+*/
 #ifdef __cplusplus
 }
 #endif

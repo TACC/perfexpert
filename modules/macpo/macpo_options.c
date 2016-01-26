@@ -56,7 +56,7 @@ int parse_module_args(int argc, char *argv[]) {
     };
 
 
-    OUTPUT(("%s", _ERROR("parsing environment variables")));
+    OUTPUT(("%s -- %d -- %s", _ERROR("parsing environment variables"), argc, argv[0]));
 
     /* If some environment variable is defined, use it! */
     if (PERFEXPERT_SUCCESS != parse_env_vars()) {
@@ -144,6 +144,7 @@ int parse_module_args(int argc, char *argv[]) {
 
 /* parse_options */
 static error_t parse_options(int key, char *arg, struct argp_state *state) {
+    printf ("option %c", key);
     switch (key) {
         /* Should I run some program after each execution? */
         case 'a':

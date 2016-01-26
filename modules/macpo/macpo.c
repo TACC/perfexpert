@@ -281,7 +281,7 @@ int macpo_run() {
     /* add the PREFIX */
     i = 0;
     argc = 0;
-    printf ("Adding prefix");
+    printf ("\n\n\n\n\nAdding prefix\n\n\n\n\n");
     while (NULL != my_module_globals.prefix[i]) {
         printf ("prefix");
         argv[argc] = my_module_globals.prefix[i];
@@ -320,9 +320,9 @@ int macpo_run() {
     test.info   = globals.program;
 
     /* fork_and_wait */
-    clock_gettime(CLOCK_MONOTONIC, &time_start);
+ //   clock_gettime(CLOCK_MONOTONIC, &time_start);
     rc = perfexpert_fork_and_wait(&test, (char **)argv);
-    clock_gettime(CLOCK_MONOTONIC, &time_end);
+//    clock_gettime(CLOCK_MONOTONIC, &time_end);
 
     PERFEXPERT_DEALLOC(test.output);
     if (PERFEXPERT_FALSE == my_module_globals.ignore_return_code) {
@@ -348,10 +348,9 @@ int macpo_run() {
         }
     }
     /* Calculate and display runtime */
-    clock_gettime(CLOCK_MONOTONIC, &time_end);
-    perfexpert_time_diff(&time_diff, &time_start, &time_end);
-    OUTPUT(("   [1/1] %lld.%.9ld seconds (includes measurement overhead)",
-        (long long)time_diff.tv_sec, time_diff.tv_nsec));
+ //   perfexpert_time_diff(&time_diff, &time_start, &time_end);
+ //   OUTPUT(("   [1/1] %lld.%.9ld seconds (includes measurement overhead)",
+ //       (long long)time_diff.tv_sec, time_diff.tv_nsec));
 
     /* Run the AFTER program */
     if (NULL != my_module_globals.after[0]) {
