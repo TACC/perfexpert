@@ -26,6 +26,8 @@
 extern "C" {
 #endif
 
+#include "macpo_types.h"
+
 /* Tools headers */
 #include "tools/perfexpert/perfexpert_types.h"
 
@@ -48,6 +50,8 @@ static int macpo_instrument(void *n, int c, char **val, char **names);
 int macpo_compile(void);
 int macpo_run(void);
 int macpo_analyze(void);
+
+extern my_module_globals_t my_module_globals;
 
 #ifdef __cplusplus
 }

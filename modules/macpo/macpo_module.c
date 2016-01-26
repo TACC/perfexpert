@@ -36,6 +36,7 @@ extern "C" {
 
 /* Global variable to define the module itself */
 char module_version[] = "1.0.0";
+my_module_globals_t my_module_globals;
 
 /* module_load */
 int module_load(void) {
@@ -73,6 +74,22 @@ int module_init(void) {
         OUTPUT(("%s", _ERROR("pre-required module/phase not available")));
         return PERFEXPERT_ERROR;
     }
+
+    OUTPUT(("Parsing arguments"));
+    if (PERFEXPERT_SUCCESS != parse_module_args(myself_module.argc,
+        myself_module.argv)) {
+        OUTPUT(("%s", _ERROR("parsing module arguments")));
+        return PERFEXPERT_ERROR;
+    }
+
+    // TODO: I'm going to need this here
+    /*
+    if (PERFEXPERT_SUCCESS != init_database()) {
+        OUTPUT(("%s", _ERROR("initialing tables")));
+        return PERFEXPERT_ERROR;
+    }
+    */
+
 /*
     if (PERFEXPERT_TRUE == perfexpert_module_available("make")) {
         OUTPUT_VERBOSE((5, "%s",

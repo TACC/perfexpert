@@ -26,6 +26,7 @@ extern "C" {
 /* System standard headers */
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 
 /* Utility headers */
 #include <sqlite3.h>
@@ -39,11 +40,10 @@ extern "C" {
 
 /* PerfExpert common headers */
 #include "common/perfexpert_alloc.h"
-#include "common/perfexpert_output.h"
+#include "common/perfexpert_constants.h"
 #include "common/perfexpert_fork.h"
-#include "common/perfexpert_util.h"
-
-//perfexpert_module_t myself_module;
+#include "common/perfexpert_output.h"
+#include "common/perfexpert_time.h"
 
 /* macpo_instrument_all */
 int macpo_instrument_all(void) {
@@ -85,8 +85,6 @@ static int macpo_instrument(void *n, int c, char **val, char **names) {
     if (ptr) {
         *ptr = 0;
     }
-
-    //OUTPUT_VERBOSE((6, "short name %s", name));
 
     if (PERFEXPERT_SUCCESS != perfexpert_util_file_exists(file)) {
         return PERFEXPERT_SUCCESS;
@@ -258,12 +256,62 @@ int macpo_compile() {
 }
 
 int macpo_run() {
-    char *argv[2];
+    struct timespec time_start, time_end, time_diff;
+    char *argv[MAX_ARGUMENTS_COUNT];
     int rc = PERFEXPERT_SUCCESS;
     test_t test;
+    int i = 0, argc = 0;
 
-    argv[0] = globals.program_full;
-    argv[1] = NULL;
+    /* Run the BEFORE program */
+    if (NULL != my_module_globals.before[0]) {
+        OUTPUT_VERBOSE((8, " %s", "running the before program"));
+        PERFEXPERT_ALLOC(char, test.output, (strlen(globals.moduledir) + 20));
+        sprintf(test.output, "%s/before.output", globals.moduledir);
+        test.input = NULL;
+        test.info = my_module_globals.before[0];
+
+        if (0 != perfexpert_fork_and_wait(&test,
+            (char **)my_module_globals.before)) {
+            OUTPUT(("   %s", _RED("'before' command returns non-zero")));
+        }
+        PERFEXPERT_DEALLOC(test.output);
+    }
+
+    /* Create the command line */
+    /* add the PREFIX */
+    i = 0;
+    argc = 0;
+    printf ("Adding prefix");
+    while (NULL != my_module_globals.prefix[i]) {
+        printf ("prefix");
+        argv[argc] = my_module_globals.prefix[i];
+        argc++;
+        i++;
+    }
+
+    /* if we need something for MACPO, put it here. But we don't need it */
+
+    /* add the program */
+    argv[argc] = globals.program_full;
+    i = 0;
+    argc++;
+    while (NULL != globals.program_argv[i]) {
+        argv[argc] = globals.program_argv[i];
+        argc++;
+        i++;
+    }
+
+    /* Required to indicate the last parameter */
+    argv[argc] = NULL;
+
+    /* Not using OUTPUT_VERBOSEbecause I want only one line */
+    if (8 <= globals.verbose) {
+        printf("%s    %s", PROGRAM_PREFIX, _YELLOW("command line:"));
+        for (i = 0; i < argc; i++) {
+            printf(" %s", argv[i]);
+        }
+        printf("\n");
+    }
 
     PERFEXPERT_ALLOC(char, test.output,
         (strlen(globals.moduledir) + 8));
@@ -271,30 +319,53 @@ int macpo_run() {
     test.input  = NULL;
     test.info   = globals.program;
 
-    /* fork_and_wait_and_pray */
-    rc = perfexpert_fork_and_wait(&test, argv);
+    /* fork_and_wait */
+    clock_gettime(CLOCK_MONOTONIC, &time_start);
+    rc = perfexpert_fork_and_wait(&test, (char **)argv);
+    clock_gettime(CLOCK_MONOTONIC, &time_end);
+
     PERFEXPERT_DEALLOC(test.output);
-    switch (rc) {
-        case PERFEXPERT_FAILURE:
-        case PERFEXPERT_ERROR:
-            OUTPUT(("%s (return code: %d) Usually, this means that an error"
-                " happened during the program execution. To see the program"
-                "'s output, check the content of this file: [%s]. If you "
-                "want to PerfExpert ignore the return code next time you "
-                "run this program, set the 'return-code' option for the "
-                "macpo module. See 'perfepxert -H macpo' for details.",
-                _ERROR("the target program returned non-zero"), rc, 
-                test.output));
-            return PERFEXPERT_ERROR;
+    if (PERFEXPERT_FALSE == my_module_globals.ignore_return_code) {
+        switch (rc) {
+            case PERFEXPERT_FAILURE:
+            case PERFEXPERT_ERROR:
+                OUTPUT(("%s (return code: %d) Usually, this means that an error"
+                    " happened during the program execution. To see the program"
+                    "'s output, check the content of this file: [%s]. If you "
+                    "want to PerfExpert ignore the return code next time you "
+                    "run this program, set the 'return-code' option for the "
+                    "macpo module. See 'perfepxert -H macpo' for details.",
+                    _ERROR("the target program returned non-zero"), rc,
+                    test.output));
+                return PERFEXPERT_ERROR;
 
-        case PERFEXPERT_SUCCESS:
-            OUTPUT_VERBOSE((7, "[ %s  ]", _BOLDGREEN("OK")));
-            break;
+            case PERFEXPERT_SUCCESS:
+                OUTPUT_VERBOSE((7, "[ %s  ]", _BOLDGREEN("OK")));
+                break;
 
-        default:
-            break;
+            default:
+                break;
+        }
     }
+    /* Calculate and display runtime */
+    clock_gettime(CLOCK_MONOTONIC, &time_end);
+    perfexpert_time_diff(&time_diff, &time_start, &time_end);
+    OUTPUT(("   [1/1] %lld.%.9ld seconds (includes measurement overhead)",
+        (long long)time_diff.tv_sec, time_diff.tv_nsec));
 
+    /* Run the AFTER program */
+    if (NULL != my_module_globals.after[0]) {
+        PERFEXPERT_ALLOC(char, test.output, (strlen(globals.moduledir) + 20));
+        sprintf(test.output, "%s/after.output", globals.moduledir);
+        test.input = NULL;
+        test.info = my_module_globals.after[0];
+
+        if (0 != perfexpert_fork_and_wait(&test,
+            (char **)my_module_globals.after)) {
+            OUTPUT(("%s", _RED("'after' command return non-zero")));
+        }
+        PERFEXPERT_DEALLOC(test.output);
+    }
     return PERFEXPERT_SUCCESS;
 }
 
