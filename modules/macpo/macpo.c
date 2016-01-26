@@ -262,6 +262,24 @@ int macpo_run() {
     test_t test;
     int i = 0, argc = 0;
 
+
+    /* Run the global BEFORE program */
+    if (NULL != globals.before) {
+        char *before[MAX_ARGUMENTS_COUNT];
+        perfexpert_string_split(globals.before, before,  ' ');
+        OUTPUT_VERBOSE((8, " %s", "running the before program"));
+        PERFEXPERT_ALLOC(char, test.output, (strlen(globals.moduledir) + 20));
+        sprintf(test.output, "%s/before.output", globals.moduledir);
+        test.input = NULL;
+        test.info = before[0];
+
+        if (0 != perfexpert_fork_and_wait(&test,
+            (char **)before)) {
+            OUTPUT(("   %s", _RED("'before' command returns non-zero")));
+        }
+        PERFEXPERT_DEALLOC(test.output);
+    }
+
     /* Run the BEFORE program */
     if (NULL != my_module_globals.before[0]) {
         OUTPUT_VERBOSE((8, " %s", "running the before program"));
@@ -279,11 +297,22 @@ int macpo_run() {
 
     /* Create the command line */
     /* add the PREFIX */
+
+    OUTPUT(("Going to process the prefix"));
     i = 0;
     argc = 0;
-    printf ("\n\n\n\n\nAdding prefix\n\n\n\n\n");
+    if (NULL != globals.prefix) {
+        char *pref[MAX_ARGUMENTS_COUNT];
+        perfexpert_string_split(globals.prefix, pref, ' ');
+        while (NULL != pref[i]) {
+            argv[argc] = pref[i];
+            i++;
+            argc++;
+        }
+    }
+
+    i = 0;
     while (NULL != my_module_globals.prefix[i]) {
-        printf ("prefix");
         argv[argc] = my_module_globals.prefix[i];
         argc++;
         i++;
@@ -320,9 +349,9 @@ int macpo_run() {
     test.info   = globals.program;
 
     /* fork_and_wait */
- //   clock_gettime(CLOCK_MONOTONIC, &time_start);
+   // clock_gettime(CLOCK_MONOTONIC, &time_start);
     rc = perfexpert_fork_and_wait(&test, (char **)argv);
-//    clock_gettime(CLOCK_MONOTONIC, &time_end);
+   // clock_gettime(CLOCK_MONOTONIC, &time_end);
 
     PERFEXPERT_DEALLOC(test.output);
     if (PERFEXPERT_FALSE == my_module_globals.ignore_return_code) {
@@ -348,9 +377,25 @@ int macpo_run() {
         }
     }
     /* Calculate and display runtime */
- //   perfexpert_time_diff(&time_diff, &time_start, &time_end);
- //   OUTPUT(("   [1/1] %lld.%.9ld seconds (includes measurement overhead)",
- //       (long long)time_diff.tv_sec, time_diff.tv_nsec));
+    //perfexpert_time_diff(&time_diff, &time_start, &time_end);
+    //OUTPUT(("   [1/1] %lld.%.9ld seconds (includes measurement overhead)",
+    //    (long long)time_diff.tv_sec, time_diff.tv_nsec));
+
+    // Run the global after command
+    if (NULL != globals.after) {
+        char *after[MAX_ARGUMENTS_COUNT];
+        perfexpert_string_split(globals.after, after, ' ');
+        PERFEXPERT_ALLOC(char, test.output, (strlen(globals.moduledir) + 20));
+        sprintf(test.output, "%s/after.output", globals.moduledir);
+        test.input = NULL;
+        test.info = after[0];
+
+        if (0 != perfexpert_fork_and_wait(&test,
+            (char **)after)) {
+            OUTPUT(("%s", _RED("'after' command return non-zero")));
+        }
+        PERFEXPERT_DEALLOC(test.output);
+    }
 
     /* Run the AFTER program */
     if (NULL != my_module_globals.after[0]) {
@@ -377,9 +422,10 @@ int macpo_analyze() {
     argv[1] = "macpo.out";
     argv[2] = NULL;
 
-    PERFEXPERT_ALLOC(char, test.output, (strlen(globals.moduledir) + 2));
-    snprintf(test.output, strlen(globals.moduledir) + 2,
+    PERFEXPERT_ALLOC(char, test.output, (strlen(globals.moduledir) + 22));
+    snprintf(test.output, strlen(globals.moduledir) + 22,
             "%s/macpo-analyze.output", globals.moduledir);
+    OUTPUT_VERBOSE((6, "OUTPUT: %s" , test.output));
     test.input = NULL;
     test.info = globals.program;
 

@@ -71,14 +71,21 @@ int parse_module_args(int argc, char *argv[]) {
     OUTPUT(("%s", _ERROR("Expanding")));
 
     /* Expand AFTERs, BEFOREs, and PREFIXs arguments */
+    // TODO: right now we only use the before, after and
+    // prefix from globals. We should also consider values coming
+    // throught args_options.* (that have been set in the previous
+    // instruction
+    //args_options.after = globals.after;
     if (NULL != arg_options.after) {
         perfexpert_string_split(perfexpert_string_remove_spaces(
             arg_options.after), my_module_globals.after, ' ');
     }
+    //args_options.before = globals.before;
     if (NULL != arg_options.before) {
         perfexpert_string_split(perfexpert_string_remove_spaces(
             arg_options.before), my_module_globals.before, ' ');
     }
+    //arg_options.prefix = globals.prefix;
     if (NULL != arg_options.prefix) {
         perfexpert_string_split(perfexpert_string_remove_spaces(
             arg_options.prefix), my_module_globals.prefix, ' ');

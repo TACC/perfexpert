@@ -39,6 +39,9 @@ extern "C" {
 typedef struct {
     int  verbose;
     int  colorful;
+    char *prefix;//[MAX_ARGUMENTS_COUNT];   // what to prepend before executing the command
+    char *after;//[MAX_ARGUMENTS_COUNT];    // Code to run after the command (if any)
+    char *before;//[MAX_ARGUMENTS_COUNT];   // Code to run before the command (if any)
     char *workdir; // These should be the first variables in the structure
     char *dbfile;
     int  remove_garbage;

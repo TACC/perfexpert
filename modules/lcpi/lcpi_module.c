@@ -163,6 +163,7 @@ int module_init(void) {
             my_module_globals.architecture));
     }
 
+    OUTPUT_VERBOSE((10, "Initializing measurements module"));
     /* Initialize the measurements module before using it */
     if (PERFEXPERT_MODULE_LOADED == my_module_globals.measurement->status) {
         if (PERFEXPERT_SUCCESS != my_module_globals.measurement->init()) {
