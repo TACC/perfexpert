@@ -30,6 +30,7 @@ extern "C" {
 #include "macpo.h"
 
 /* PerfExpert common headers */
+#include "common/perfexpert_alloc.h"
 #include "common/perfexpert_constants.h"
 #include "common/perfexpert_output.h"
 #include "modules/perfexpert_module_base.h"
@@ -51,7 +52,8 @@ int module_init(void) {
     my_module_globals.prefix[0] = NULL;
     my_module_globals.before[0] = NULL;
     my_module_globals.after[0] = NULL;
-    my_module_globals.ignore_return_code = PERFEXPERT_FALSE;
+    my_module_globals.ignore_return_code = PERFEXPERT_TRUE;
+    my_module_globals.num_inst_files = 0;
 
     /* Module pre-requisites */
     if (PERFEXPERT_SUCCESS != perfexpert_module_requires("macpo",
@@ -130,6 +132,14 @@ int module_init(void) {
 
 /* module_fini */
 int module_fini(void) {
+    // Deallocate this list
+    int i = 0;
+    for (i = 0; i < my_module_globals.num_inst_files; ++i) {
+        PERFEXPERT_DEALLOC(my_module_globals.inst_files[i].file);
+        PERFEXPERT_DEALLOC(my_module_globals.inst_files[i].destfile);
+    }
+    my_module_globals.num_inst_files = 0;
+
     OUTPUT_VERBOSE((5, "%s", _MAGENTA("finalized")));
     return PERFEXPERT_SUCCESS;
 }
