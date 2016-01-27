@@ -48,6 +48,8 @@ static arg_options_t arg_options = { 0 };
 /* parse_cli_params */
 int parse_module_args(int argc, char *argv[]) {
     int i = 0;
+    int last = 0;
+    char *dump[MAX_ARGUMENTS_COUNT];
 
     /* Set default values */
     arg_options = (arg_options_t) {
@@ -70,18 +72,70 @@ int parse_module_args(int argc, char *argv[]) {
     argp_parse(&argp, argc, argv, 0, 0, NULL);
 
     /* Expand AFTERs, BEFOREs, and PREFIXs arguments */
+    /* AFTER */
+    if (NULL != globals.after) {
+        perfexpert_string_split(perfexpert_string_remove_spaces(
+            globals.after), dump, ' ');
+        i=0;
+        last = 0;
+        while (NULL != dump[i]) {
+            my_module_globals.after[last] = dump[i];
+            i++; last++;
+        }
+    }
     if (NULL != arg_options.after) {
         perfexpert_string_split(perfexpert_string_remove_spaces(
-            arg_options.after), my_module_globals.after, ' ');
+            arg_options.after), dump, ' ');
+        i = 0;
+        while (NULL != dump[i]) {
+            my_module_globals.after[last] = dump[i];
+            i++; last++;
+        }
+    }
+    
+    /* BEFORE */
+    if (NULL != globals.before) {
+        perfexpert_string_split(perfexpert_string_remove_spaces(
+            globals.before), dump, ' ');
+        i=0;
+        last = 0;
+        while (NULL != dump[i]) {
+            my_module_globals.before[last] = dump[i];
+            i++; last++;
+        }
     }
     if (NULL != arg_options.before) {
         perfexpert_string_split(perfexpert_string_remove_spaces(
-            arg_options.before), my_module_globals.before, ' ');
+            arg_options.before), dump, ' ');
+        i = 0;
+        while (NULL != dump[i]) {
+            my_module_globals.before[last] = dump[i];
+            i++; last++;
+        }
+    }
+    
+    /* PREFIX */
+    if (NULL != globals.prefix) {
+        perfexpert_string_split(perfexpert_string_remove_spaces(
+            globals.prefix), dump, ' ');
+        i=0;
+        last = 0;
+        while (NULL != dump[i]) {
+            my_module_globals.prefix[last] = dump[i];
+            i++; last++;
+        }
     }
     if (NULL != arg_options.prefix) {
         perfexpert_string_split(perfexpert_string_remove_spaces(
-            arg_options.prefix), my_module_globals.prefix, ' ');
+            arg_options.prefix), dump, ' ');
+        i = 0;
+        while (NULL != dump[i]) {
+            my_module_globals.prefix[last] = dump[i];
+            i++; last++;
+        }
     }
+
+    i = 0; 
     if (NULL != arg_options.mic_after) {
         perfexpert_string_split(perfexpert_string_remove_spaces(
             arg_options.mic_after), my_module_globals.mic_after, ' ');
