@@ -96,35 +96,6 @@ int module_init(void) {
     }
     */
 
-/*
-    if (PERFEXPERT_TRUE == perfexpert_module_available("make")) {
-        OUTPUT_VERBOSE((5, "%s",
-            _CYAN("will use make as compilation module")));
-        myself_module.measurement = (perfexpert_module_measurement_t *) perfexpert_module_get("make");
-        if (NULL != myself_module.measurement)
-            comp_loaded = PERFEXPERT_TRUE;
-    }
-
-    if (comp_loaded == PERFEXPERT_FALSE && PERFEXPERT_TRUE == perfexpert_module_available("icc")) {
-        OUTPUT_VERBOSE((5, "%s",
-            _CYAN("will use icc as compilation module")));
-        myself_module.measurement = (perfexpert_module_measurement_t *) perfexpert_module_get("icc");
-        if (NULL != myself_module.measurement)
-            comp_loaded = PERFEXPERT_TRUE;
-    }
-
-    if (comp_loaded == PERFEXPERT_FALSE && PERFEXPERT_TRUE == perfexpert_module_available("gcc")) {
-        OUTPUT_VERBOSE((5, "%s",
-            _CYAN("will use gcc as compilation module")));
-        myself_module.measurement = (perfexpert_module_measurement_t *) perfexpert_module_get("gcc");
-        if (NULL != myself_module.measurement)
-            comp_loaded = PERFEXPERT_TRUE;
-    }
-    if (comp_loaded == PERFEXPERT_FALSE) {
-        OUTPUT(("%s", _ERROR("required module not available")));
-        return PERFEXPERT_ERROR;
-    }
-*/
     OUTPUT_VERBOSE((5, "%s", _MAGENTA("initialized")));
 
     return PERFEXPERT_SUCCESS;
@@ -150,6 +121,8 @@ int module_instrument(void) {
 
     if (PERFEXPERT_SUCCESS != macpo_instrument_all()) {
         OUTPUT(("%s", _ERROR("instrumenting files")));
+        macpo_restore_code();
+        macpo_compile();
         return PERFEXPERT_ERROR;
     }
 
@@ -161,11 +134,14 @@ int module_measure(void) {
     OUTPUT(("%s", _YELLOW("Collecting measurements")));
     //First, recompile the code
     if (PERFEXPERT_SUCCESS != macpo_compile()) {
+        macpo_restore_code();
+        macpo_compile();
         OUTPUT(("%s", _ERROR("compiling code after instrumentation")));
         return PERFEXPERT_ERROR;
     }
 
     if (PERFEXPERT_SUCCESS != macpo_run()) {
+        macpo_restore_code();
         OUTPUT(("%s", _ERROR("running code after instrumentation")));
         return PERFEXPERT_ERROR;
     }
@@ -178,6 +154,8 @@ int module_analyze(void) {
     OUTPUT(("%s", _YELLOW("Analysing measurements")));
 
     if (PERFEXPERT_SUCCESS != macpo_analyze()) {
+        macpo_restore_code();
+        macpo_compile();
         OUTPUT(("%s", _ERROR("analyzing MACPO result")));
         return PERFEXPERT_ERROR;
     }

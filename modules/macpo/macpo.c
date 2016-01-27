@@ -114,6 +114,32 @@ static int macpo_instrument(void *n, int c, char **val, char **names) {
 
     perfexpert_util_make_path(fullpath);
 
+    // Check if the file had been already instrumented. If so, do not add it again
+    // to the list
+    for (i=0; i<my_module_globals.num_inst_files; ++i) {
+        if (strcmp(my_module_globals.inst_files[i].file, file) == 0) {
+            prevInst = PERFEXPERT_TRUE;
+            break;
+        }
+    }
+    // If the file has not been previously instrumented, we create a copy of the
+    // original file. This way, we can restore it later once MACPO has finished
+    if (!prevInst) {
+        PERFEXPERT_ALLOC(char, my_module_globals.inst_files[my_module_globals.num_inst_files].file, (strlen(file)+2));
+        strncpy (my_module_globals.inst_files[my_module_globals.num_inst_files].file, file, strlen(file));
+
+        PERFEXPERT_ALLOC(char, my_module_globals.inst_files[my_module_globals.num_inst_files].destfile,
+                        (strlen(globals.moduledir) + strlen(file)+5));
+        snprintf(my_module_globals.inst_files[my_module_globals.num_inst_files].destfile, 
+                 strlen(globals.moduledir) + strlen(file)+5,
+                 "%s/%s", globals.moduledir, file);
+
+        if (PERFEXPERT_SUCCESS != perfexpert_util_file_copy(my_module_globals.inst_files[my_module_globals.num_inst_files].destfile, my_module_globals.inst_files[my_module_globals.num_inst_files].file)) {
+            OUTPUT(("%s impossible to copy file %s to %s", _ERROR("IO ERROR"), my_module_globals.inst_files[my_module_globals.num_inst_files].file, my_module_globals.inst_files[my_module_globals.num_inst_files].destfile));
+        }
+        my_module_globals.num_inst_files++;
+    }
+
     /* Remove everyting after the '.' (for OMP functions) */
     /*
     name = t;
@@ -151,7 +177,7 @@ static int macpo_instrument(void *n, int c, char **val, char **names) {
     PERFEXPERT_ALLOC(char, argv[4],
         (strlen(globals.moduledir) + strlen(file) + 30));
     snprintf(argv[4], strlen(globals.moduledir) + strlen(file) + 30,
-            "--macpo:backup-filename=%s/%s", globals.moduledir, file);
+            "--macpo:backup-filename=%s/inst_%s", globals.moduledir, file);
 
     PERFEXPERT_ALLOC(char, argv[5], (strlen(name) + 25));
     if (0 == line) {
@@ -209,28 +235,13 @@ static int macpo_instrument(void *n, int c, char **val, char **names) {
     PERFEXPERT_ALLOC(char, rose_name, (strlen(filename) + 6));
     snprintf(rose_name, strlen(filename) + 6, "rose_%s", filename);
 
+
     if (PERFEXPERT_SUCCESS != perfexpert_util_file_rename(rose_name, file)) {
         OUTPUT(("%s impossible to copy file %s to %s", _ERROR("IO ERROR"),
                 rose_name, file));
     }
     else {
         OUTPUT_VERBOSE((9, "Copied file %s to: %s", rose_name, file));
-    }
-
-    // Check if the file had been already instrumented. If so, do not add it again
-    // to the list
-    for (i=0; i<my_module_globals.num_inst_files; ++i) {
-        if (strcmp(my_module_globals.inst_files[i].file, file) == 0) {
-            prevInst = PERFEXPERT_TRUE;
-            break;
-        }
-    }
-    if (!prevInst) {
-        PERFEXPERT_ALLOC(char, my_module_globals.inst_files[my_module_globals.num_inst_files].file, (strlen(file)));
-        snprintf (my_module_globals.inst_files[my_module_globals.num_inst_files].file, strlen(file), file);
-        PERFEXPERT_ALLOC(char, my_module_globals.inst_files[my_module_globals.num_inst_files].destfile, (strlen(argv[4])));
-        snprintf (my_module_globals.inst_files[my_module_globals.num_inst_files].destfile, strlen(argv[4]), argv[4]);
-        my_module_globals.num_inst_files++;
     }
 
     PERFEXPERT_DEALLOC(test.output);
@@ -248,6 +259,7 @@ static int macpo_instrument(void *n, int c, char **val, char **names) {
 int macpo_compile() {
     int comp_loaded = PERFEXPERT_FALSE;
 
+    OUTPUT_VERBOSE((9, "compiling the code"));
     if (PERFEXPERT_TRUE == perfexpert_module_available("make")) {
         OUTPUT_VERBOSE((5, "%s",
             _CYAN("will use make as compilation module")));
@@ -483,7 +495,13 @@ int macpo_analyze() {
     }
 
     PERFEXPERT_DEALLOC(test.output);
-    macpo_restore_code();
+    if (PERFEXPERT_SUCCESS != macpo_restore_code()) {
+        OUTPUT(("%s", _ERROR (" failed to restore the code ")));
+        return PERFEXPERT_ERROR;
+    }
+    if (PERFEXPERT_SUCCESS != macpo_compile()) {
+        OUTPUT(("%s", _ERROR (" failed to compile after restoring the code ")));
+    }
     return PERFEXPERT_SUCCESS;
 }
 
@@ -497,7 +515,8 @@ int macpo_restore_code() {
     char *fullpath_inst;
     char *fullpath;
     char *destfolder;
-    
+ 
+    OUTPUT_VERBOSE((9, "Restoring code after running the instrumented version"));   
     for (i=0; i<my_module_globals.num_inst_files; ++i) {
         file = my_module_globals.inst_files[i].file;
         backfile = my_module_globals.inst_files[i].destfile;
@@ -530,12 +549,12 @@ int macpo_restore_code() {
         snprintf(fullpath_inst, strlen(globals.moduledir) + strlen(folder) + strlen(filename) + 8,
                  "%s/%s/inst_%s", globals.moduledir, folder, filename);
 
-        OUTPUT_VERBOSE((9, "Copying instrumented file %s to %s", file, fullpath_inst));
+//        OUTPUT_VERBOSE((9, "Copying instrumented file %s to %s", file, fullpath_inst));
         if (PERFEXPERT_SUCCESS != perfexpert_util_file_rename(file, fullpath_inst)) {
             OUTPUT(("%s impossible to copy file %s to %s", _ERROR("IO ERROR"), file, fullpath_inst));
         }
-        OUTPUT_VERBOSE((9, "Restoring original file %s to %s", backfile, file));
-        if (PERFEXPERT_SUCCESS != perfexpert_util_file_rename(backfile, file)) {
+//        OUTPUT_VERBOSE((9, "Restoring original file %s to %s", backfile, file));
+        if (PERFEXPERT_SUCCESS != perfexpert_util_file_copy(file, backfile)) {
             OUTPUT(("%s impossible to copy file %s to %s", _ERROR("IO ERROR"), backfile, file));
         }
         PERFEXPERT_DEALLOC(fullpath);
