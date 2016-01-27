@@ -175,9 +175,9 @@ static int macpo_instrument(void *n, int c, char **val, char **names) {
 
 
     PERFEXPERT_ALLOC(char, argv[4],
-        (strlen(globals.moduledir) + strlen(file) + 30));
-    snprintf(argv[4], strlen(globals.moduledir) + strlen(file) + 30,
-            "--macpo:backup-filename=%s/inst_%s", globals.moduledir, file);
+        (strlen(globals.moduledir) + strlen(folder) + strlen(filename) + 35));
+    snprintf(argv[4], strlen(globals.moduledir) + +strlen(folder) + strlen(filename) + 35,
+            "--macpo:backup-filename=%s/%s/inst_%s", globals.moduledir, folder, filename);
 
     PERFEXPERT_ALLOC(char, argv[5], (strlen(name) + 25));
     if (0 == line) {
