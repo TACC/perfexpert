@@ -55,47 +55,34 @@ int parse_module_args(int argc, char *argv[]) {
         .after             = NULL,
     };
 
-
-    OUTPUT(("%s -- %d -- %s", _ERROR("parsing environment variables"), argc, argv[0]));
-
     /* If some environment variable is defined, use it! */
     if (PERFEXPERT_SUCCESS != parse_env_vars()) {
         OUTPUT(("%s", _ERROR("parsing environment variables")));
         return PERFEXPERT_ERROR;
     }
 
-    OUTPUT(("%s", _ERROR("parsing arguments")));
     /* Parse arguments */
     argp_parse(&argp, argc, argv, 0, 0, NULL);
-
-    OUTPUT(("%s", _ERROR("Expanding")));
 
     /* Expand AFTERs, BEFOREs, and PREFIXs arguments */
     // TODO: right now we only use the before, after and
     // prefix from globals. We should also consider values coming
     // throught args_options.* (that have been set in the previous
     // instruction
-    //args_options.after = globals.after;
     if (NULL != arg_options.after) {
         perfexpert_string_split(perfexpert_string_remove_spaces(
             arg_options.after), my_module_globals.after, ' ');
     }
-    //args_options.before = globals.before;
     if (NULL != arg_options.before) {
         perfexpert_string_split(perfexpert_string_remove_spaces(
             arg_options.before), my_module_globals.before, ' ');
     }
-    //arg_options.prefix = globals.prefix;
     if (NULL != arg_options.prefix) {
         perfexpert_string_split(perfexpert_string_remove_spaces(
             arg_options.prefix), my_module_globals.prefix, ' ');
     }
 
     OUTPUT_VERBOSE((7, "%s", _BLUE("Summary of options")));
-    OUTPUT_VERBOSE((7, "   Ignore return code:  %s",
-        my_module_globals.ignore_return_code ? "yes" : "no"));
-//    OUTPUT_VERBOSE((7, "   Program input file:  %s",
-//        my_module_globals.inputfile));
 
     if (7 <= globals.verbose) {
         printf("%s    Prefix:             ", PROGRAM_PREFIX);

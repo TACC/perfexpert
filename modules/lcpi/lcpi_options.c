@@ -43,8 +43,6 @@ static struct argp argp = { options, parse_options, NULL, NULL };
 int parse_module_args(int argc, char *argv[]) {
     int i = 0;
 
-    OUTPUT(("%s -- %d -- %s", _ERROR("parsing environment variables"), argc, argv[0]));
-
     /* If some environment variable is defined, use it! */
     if (PERFEXPERT_SUCCESS != parse_env_vars()) {
         OUTPUT(("%s", _ERROR("parsing environment variables")));
