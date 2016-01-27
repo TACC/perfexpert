@@ -58,7 +58,6 @@ extern "C" {
 #endif
 
 #include "perfexpert_constants.h"
-#include "perfexpert_output.h"
 
 /* see perfexpert_output function */
 #ifndef OUTPUT

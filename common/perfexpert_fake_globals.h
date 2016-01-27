@@ -27,11 +27,16 @@ extern "C" {
 #endif
 
 /* Fake globals, just to compile the library */
-typedef struct {
+ 
+ typedef struct {
     int verbose;
     int colorful;
+    char *prefix;
+    char *after;
+    char *before;
     char *workdir;
 } globals_t;
+
 
 extern globals_t globals; /* This variable is defined in the tool/module */
 

@@ -47,6 +47,7 @@ enum {
 #define MAX_FRAGMENT_DATA   1048576
 #define MAX_ARGUMENTS_COUNT 128
 #define MAX_FILENAME        512
+#define MAX_COLLECTION      4096
 
 /* Default values for some files and directories */
 #define PERFEXPERT_OUTPUT  "perfexpert.output"

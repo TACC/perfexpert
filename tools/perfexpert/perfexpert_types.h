@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
+ * Copyright (c) 2011-2016  University of Texas at Austin. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -14,7 +14,7 @@
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
  *
- * Authors: Leonardo Fialho and Ashay Rane
+ * Authors: Antonio Gomez-Iglesias, Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
  */
@@ -39,9 +39,9 @@ extern "C" {
 typedef struct {
     int  verbose;
     int  colorful;
-    char *prefix;//[MAX_ARGUMENTS_COUNT];   // what to prepend before executing the command
-    char *after;//[MAX_ARGUMENTS_COUNT];    // Code to run after the command (if any)
-    char *before;//[MAX_ARGUMENTS_COUNT];   // Code to run before the command (if any)
+    char *prefix;  // what to prepend before executing the command
+    char *after;   // Code to run after the command (if any)
+    char *before;  // Code to run before the command (if any)
     char *workdir; // These should be the first variables in the structure
     char *dbfile;
     int  remove_garbage;
