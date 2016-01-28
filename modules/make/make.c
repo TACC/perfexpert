@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015  University of Texas at Austin. All rights reserved.
+ * Copyright (c) 2011-2016  University of Texas at Austin. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -41,8 +41,11 @@ extern "C" {
 int run_make(void) {
     char temp_str[MAX_BUFFER_SIZE];
     char flags[MAX_BUFFER_SIZE];
-    char *argv[3];
+    char *argv[MAX_ARGUMENTS_COUNT];
     test_t test;
+    int argc = 0, i = 0;
+    int rc;
+
 
     OUTPUT_VERBOSE((5, "%s", _BLUE("Running 'make'")));
 
@@ -55,9 +58,18 @@ int run_make(void) {
         return PERFEXPERT_ERROR;
     }
 
-    argv[0] = "make";
-    // argv[1] = globals.target;
-    argv[1] = NULL;
+    argv[argc] = "make";
+    argc++;
+    if (my_module_globals.args[0]) {
+        i = 0;
+        while (NULL != my_module_globals.args[i]){
+            argv[argc] = my_module_globals.args[i];
+            i++;
+            argc++;
+        }
+    }
+    argv[argc] = NULL;
+    argc++;
 
     if (NULL != getenv("CFLAGS")) {
         strcat(flags, getenv("CFLAGS"));
@@ -87,7 +99,32 @@ int run_make(void) {
     test.output = temp_str;
 
     /* fork_and_wait_and_pray */
-    return perfexpert_fork_and_wait(&test, argv);
+    rc = perfexpert_fork_and_wait(&test, argv);
+
+    switch (rc) {
+        case PERFEXPERT_NO_REC:
+        case PERFEXPERT_FAILURE:
+        case PERFEXPERT_ERROR:
+            OUTPUT(("%s (return code: %d) Usually, this means that an error"
+                " happened during the program execution. To see the program"
+                "'s output, check the content of this file: [%s]. If you "
+                "want to PerfExpert ignore the return code next time you "
+                "run this program, set the 'return-code' option for the "
+                "macpo module. See 'perfepxert -H macpo' for details.",
+                _ERROR("the target program returned non-zero"), rc, 
+                test.output));
+            return PERFEXPERT_ERROR;
+
+        case PERFEXPERT_SUCCESS:
+            OUTPUT_VERBOSE((7, "[ %s  ]", _BOLDGREEN("OK")));
+            break;
+
+        default:
+            return PERFEXPERT_ERROR;
+            break;
+    }   
+
+    return PERFEXPERT_SUCCESS;
 }
 
 #ifdef __cplusplus

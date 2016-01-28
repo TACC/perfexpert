@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
+ * Copyright (c) 2011-2016  University of Texas at Austin. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -14,7 +14,7 @@
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
  *
- * Authors: Leonardo Fialho and Ashay Rane
+ * Authors: Antonio Gomez-Iglesias, Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
  */
@@ -27,6 +27,7 @@ extern "C" {
 
 /* Module headers */
 #include "make_module.h"
+#include "make_options.h"
 #include "make.h"
 
 /* PerfExpert common headers */
@@ -62,6 +63,13 @@ int module_init(void) {
     myself_module.unset_env  = &module_unset_env;
     myself_module.get_env    = &module_get_env;
 
+    OUTPUT(("Parsing arguments"));
+    if (PERFEXPERT_SUCCESS != parse_module_args(myself_module.argc,
+        myself_module.argv)) {
+        OUTPUT(("%s", _ERROR("parsing module arguments")));
+        return PERFEXPERT_ERROR;
+    } 
+
     OUTPUT_VERBOSE((5, "%s", _MAGENTA("initialized")));
 
     return PERFEXPERT_SUCCESS;
@@ -87,7 +95,6 @@ int module_compile(void) {
     OUTPUT(("%s [%s]", _YELLOW("Compiling"), globals.program));
 
     if (PERFEXPERT_SUCCESS != run_make()) {
-        OUTPUT(("%s", _ERROR("error running 'make'")));
         return PERFEXPERT_ERROR;
     }
 

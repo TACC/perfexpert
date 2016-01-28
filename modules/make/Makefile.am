@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
+# Copyright (c) 2011-2016  University of Texas at Austin. All rights reserved.
 #
 # $COPYRIGHT$
 #
@@ -14,7 +14,7 @@
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
 # A PARTICULAR PURPOSE.
 #
-# Authors: Leonardo Fialho and Ashay Rane
+# Authors: Antonio Gomez-Iglesias, Leonardo Fialho and Ashay Rane
 #
 # $HEADER$
 #
@@ -23,6 +23,6 @@ lib_LTLIBRARIES = libperfexpert_module_make.la
 libperfexpert_module_make_la_CPPFLAGS = -I$(srcdir)/../..
 libperfexpert_module_make_la_LDFLAGS = -module -version-info 1:0:0 \
 	-export-symbols $(srcdir)/make_module.sym
-libperfexpert_module_make_la_SOURCES = make_module.c make.c
+libperfexpert_module_make_la_SOURCES = make_module.c make_options.c make.c
 
 # EOF
