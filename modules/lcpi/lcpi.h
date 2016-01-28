@@ -57,7 +57,6 @@ typedef struct {
     perfexpert_list_t profiles;
     lcpi_metric_t *metrics_by_name;
     perfexpert_module_measurement_t *measurement;
-    double threshold;
     char *order;
     int help_only;
     int mic;

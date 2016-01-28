@@ -291,13 +291,7 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
         */
         case 'a':
             OUTPUT_VERBOSE((1, "option 'a' set [%s]", arg ? arg : "(null)"));
- //           bzero(str, MAX_BUFFER_SIZE);
-//            sprintf(str, "hpctoolkit,after=%s", arg ? arg : "");
             globals.after = (arg ? arg : "");
-//            perfexpert_string_split(arg, globals.after, ' ');
-//            if (PERFEXPERT_SUCCESS != set_module_option(str)) {
-//                argp_error(state, "error setting module option");
-//            }
             break;
 
         case 'A':
@@ -311,13 +305,7 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
 
         case 'b':
             OUTPUT_VERBOSE((1, "option 'b' set [%s]", arg ? arg : "(null)"));
-            //bzero(str, MAX_BUFFER_SIZE);
-//            sprintf(str, "hpctoolkit,before=%s", arg ? arg : "");
-//            perfexpert_string_split(arg, globals.before, ',');
             globals.before = (arg ? arg : "");
-//            if (PERFEXPERT_SUCCESS != set_module_option(str)) {
-//                argp_error(state, "error setting module option");
-//            }
             break;
 
         case 'B':
@@ -347,14 +335,7 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
 
         case 'p':
             OUTPUT_VERBOSE((1, "option 'p' set [%s]", arg ? arg : "(null)"));
-            //bzero(str, MAX_BUFFER_SIZE);
-            //sprintf(str, "macpo,prefix=%s", arg ? arg : "");
-            //sprintf(str, "prefix=%s", arg ? arg : "");
-//            perfexpert_string_split(arg, globals.prefix, ' ');
             globals.prefix = (arg ? arg : "");
-            //if (PERFEXPERT_SUCCESS != set_module_option(str)) {
-            //    argp_error(state, "error setting module option");
-            //}
             break;
 
         case 'P':
@@ -370,13 +351,7 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
         /* Arguments: threshold and target program and it's arguments */
         case ARGP_KEY_ARG:
             if ((('0' == arg[0]) || ('1' == arg[0])) && (0 == state->arg_num)) {
-                bzero(str, MAX_BUFFER_SIZE);
-                sprintf(str, "lcpi,threshold=%s", arg ? arg : "(null)");
-                OUTPUT_VERBOSE((1, "option 'threshold' set [%s]",
-                    arg ? arg : "(null)"));
-                if (PERFEXPERT_SUCCESS != set_module_option(str)) {
-                    return PERFEXPERT_ERROR;
-                }
+                globals.threshold = strtod(arg, NULL);
                 break;
             }
             arg_options.program = arg ? arg : NULL;
