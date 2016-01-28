@@ -25,10 +25,10 @@ We provide a \texttt{INSTALL} script in the \texttt{perfexpert-externals-X.X.tar
 
 The PerfExpert externals package contains another package named \texttt{apache-ant-1.9.1-bin.tar.gz}. This is the binary version of Apache Ant. As PerfExpert only needs Apache Ant during compilation there is no need to install this package in your system. Thus, you should only decompress it. To do that, run the following commands:
 
-\begin{verbatim}
+\begin{lstlisting}[breaklines]
 $ tar -xzvf ./apache-ant-1.9.1-bin.tar.gz
 $ export ANT_HOME=`pwd`/apache-ant-1.9.1
-\end{verbatim}
+\end{lstlisting}
 
 \noindent these commands will decompress Apache Ant and set the \texttt{ANT\_HOME} environment variable to reflect the \texttt{PATH} where such package has been decompressed.
 
@@ -36,25 +36,25 @@ $ export ANT_HOME=`pwd`/apache-ant-1.9.1
 
 All HPCToolkit prerequisites are provided in the package \texttt{hpctoolkit-externals-5.3.2-r4197.tar.gz}. The PerfExpert externals package provides both HPCToolkit and HPToolkit prerequisites packages. To decompress and install the HPCToolkit prerequisites package run the following commands:
 
-\begin{verbatim}
+\begin{lstlisting}[breaklines]
 $ tar -xzvf ./hpctoolkit-externals-5.3.2-r4197.tar.gz
 $ cd hpctoolkit-externals-5.3.2-r4197/
 $ ./configure
 $ make
-\end{verbatim}
+\end{lstlisting}
 
 \nicebox{NOTICE:}{The HPCToolkit externals package does not has to be installed in your system, HPCToolkit will take care of this. However, it should be compiled and available during HPCToolkit compilation and installation process.}
 
 After compiling the prerequisites for HPCToolkit, the HPCToolkit package can be installed. For that, run the following commands:
 
-\begin{verbatim}
+\begin{lstlisting}[breaklines]
 $ tar -xzvf ./hpctoolkit-5.3.2-r4197.tar.gz
 $ cd hpctoolkit-5.3.2-r4197/
 $ ./configure --prefix=WHERE_YOU_WANT_TO_INSTALL_IT \
     --with-externals=PATH_TO_HPCTOOLKIT_EXTERNALS_PACKAGE \
     --with-papi=PATH_TO_PAPI_INSTALLATION
 $ make install
-\end{verbatim}
+\end{lstlisting}
 
 \subsubsection{ROSE}
 
@@ -62,16 +62,16 @@ ROSE has several prerequisites. One of the most important one is the compiler. Y
 
 \nicebox{NOTICE:}{We had successfully compiled and installed ROSE using \texttt{GCC} 4.6, however according to the ROSE documentation this compiler is not supported. If you want to use this version of \texttt{GCC} do it carefully.}
 
-\begin{verbatim}
+\begin{lstlisting}[breaklines]
 $ tar -xzvf ./boost_1_47_0.tar.gz
 $ cd boost_1_47_0/
 $ ./bootstrap.sh
 $ ./b2 install --prefix=${INSTALL_DIR}
-\end{verbatim}
+\end{lstlisting}
 
 After installing successfully the Boost library run the following commands to compile and install ROSE:
 
-\begin{verbatim}
+\begin{lstlisting}[breaklines]
 $ tar -xzvf ./rose-0.9.5a-without-EDG-20584.tar.gz
 $ cd rose-0.9.5a-20584/
 $ mkdir _build
@@ -82,7 +82,7 @@ $ ../configure --prefix=WHERE_YOU_WANT_TO_INSTALL_IT --with-boost=WHERE_BOOST_IS
     --disable-java --with-gomp_omp_runtime_library=WHERE_LIBGOMP_IS \
     --libexecdir=/tmp --bindir=/tmp --sbindir=/tmp
 $ make install
-\end{verbatim}
+\end{lstlisting}
 
 \nicebox{NOTICE:}{The \texttt{configure} command we shown above avoids the compilation and installation of several features of ROSE. We do that to minimize the time required to compile ROSE. Moreover, some binaries that ROSE installs and we do not need them have been set to be installed into the \texttt{/tmp} directory. It is safe to clean the temporary directory after installing ROSE.}
 
@@ -92,14 +92,14 @@ $ make install
 
 Many Linux distributions already have the GNU Multiple Precision Arithmetic Library installed. To check if your system has it try to locate the \texttt{libgmp.so} file. If your system does not has the GNU Multiple Precision Arithmetic Library, run the following commands to install it:
 
-\begin{verbatim}
+\begin{lstlisting}[breaklines]
 $ tar -xzvf ./gmp-5.1.2.tar.gz
 $ cd gmp-5.1.2/
 $ ./configure --prefix=WHERE_YOU_WANT_TO_INSTALL_IT
 $ make
 $ make check
 $ make install
-\end{verbatim}
+\end{lstlisting}
 
 \nicebox{NOTICE:}{The GNU Multiple Precision Arithmetic Library is required to compile and execute MACPO, one of the tools which is part of PerfExpert. If you do not want to install MACPO you do not need to install the GNU Multiple Precision Arithmetic Library.}
 
@@ -107,12 +107,12 @@ $ make install
 
 To install Google SparseHash you should run the following commands:
 
-\begin{verbatim}
+\begin{lstlisting}[breaklines]
 $ tar -xzvf ./sparsehash-2.0.2.tar.gz
 $ cd sparsehash-2.0.2/
 $ ./configure --prefix=WHERE_YOU_WANT_TO_INSTALL_IT
 $ make install
-\end{verbatim}
+\end{lstlisting}
 
 \nicebox{NOTICE:}{Google SparseHash is required to compile and execute MACPO, one of the tools which is part of PerfExpert. If you do not want to install MACPO you do not need to install the Google SparseHash.}
 
@@ -128,9 +128,9 @@ We encourage people to have a look on the wiki page, send patches, and raise iss
 
 If you have downloaded PerfExpert from our version control system, you may have already noticed that there is no configure script available on the source code tree. To generate it run the following command:
 
-\begin{verbatim}
+\begin{lstlisting}[breaklines]
 $ ./autogen.sh
-\end{verbatim}
+\end{lstlisting}
 
 \texttt{autogen.sh} requires the following packages available:
 
@@ -143,26 +143,26 @@ $ ./autogen.sh
 
 PerfExpert comes with a \texttt{Makefile}-base source code tree to automate the entire installation process. Thus the compilation and installation of PerfExpert is similar to any other GNU package:
 
-\begin{verbatim}
+\begin{lstlisting}[breaklines]
 $ ./configure
 $ make
 $ make install
-\end{verbatim}
+\end{lstlisting}
 
 Optionally, you may want to run the set of test we have included into PerfExpert. To do so, just run ``\texttt{make check}'' after compiling your code.
 
 If any of the prerequisites of PerfExpert are not on the \texttt{PATH} or \texttt{LD\_LIBRARY\_PATH}, you can specify the right locations of such files. For that, have a look on the configure script help using the following command:
 
-\begin{verbatim}
+\begin{lstlisting}[breaklines]
 $ ./configure --help
-\end{verbatim}
+\end{lstlisting}
 
 A typical command line to run \texttt{configure} may looks like this:
 
-\begin{verbatim}
+\begin{lstlisting}[breaklines]
 $ ./configure --prefix=WHERE_YOU_WANT_TO_INSTALL_IT --with-rose=WHERE_ROSE_IS \
     --with-jvm=WHERE_JVM_IS --with-papi=WHERE_PAPI_IS --with-apache-ant=WHERE_ANT_IS
-\end{verbatim}
+\end{lstlisting}
 
 Optionally, you may want to run the set of test we have included into PerfExpert. To do so, just run ``\texttt{make check}'' after compiling your code.
 
@@ -178,8 +178,8 @@ During the installation process, PerfExpert will run a set of benchmark applicat
 
 We provide a set of tests you may want to run before using PerfExpert to optimize your applications. To run these tests you should run the following command inside the PerfExpert build tree:
 
-\begin{verbatim}
+\begin{lstlisting}[breaklines]
 $ make check
-\end{verbatim}
+\end{lstlisting}
 
 It is normal that one of the tests (\texttt{mpi\_stampede}) fails since it has been designed to be executed only on Stampede.

@@ -187,7 +187,7 @@ Here is a complete list of the environment variables PerfExpert uses. The comman
 
 	\item[\tt inputfile]\hfill \\
 	File to use as input for performance measurements. File format: each application hot-spot starts with a percent sign (\texttt{\%}), the \texttt{code} metrics are mandatory, the list of metrics may vary, according to the example above:
-	\begin{verbatim}
+	\begin{lstlisting}[breaklines]
 % 1st application hot-spot
 code.section_info=Loop in function compute.omp_fn.3() at ./mm_omp.c:14
 code.filename=./mm_omp.c
@@ -201,7 +201,7 @@ code.runtime=22.204
 ...
 % 2nd application hot-spot
 ...
-	\end{verbatim}
+	\end{lstlisting}
 	\item[\btt -o, --outputfile]\hfill \\
 	File to write possible optimizations (default: \texttt{STDOUT}). If the file exists it's content will be overwrite.
 
@@ -352,7 +352,7 @@ The temporary directory may be useful in many situations, such as:
 
 The basic directory tree of the temporary directory looks like the following:
 
-\begin{verbatim}
+\begin{lstlisting}[breaklines]
 .perfexpert-temp.FPAEx6
 .perfexpert-temp.FPAEx6/1
 .perfexpert-temp.FPAEx6/1/database
@@ -363,7 +363,7 @@ The basic directory tree of the temporary directory looks like the following:
 .perfexpert-temp.FPAEx6/2/database/src
 .perfexpert-temp.FPAEx6/2/measurements
   (...)
-\end{verbatim}
+\end{lstlisting}
 
 \noindent where for each optimization cycle there is a sub-directory named as cardinal numbers. The sub-directories inside each of the optimization cycle sub-directories are user for:
 
@@ -378,7 +378,7 @@ The basic directory tree of the temporary directory looks like the following:
 	Stores the measurement files collected with \texttt{hpcrun} (a tool from HPCToolkit). There is a \texttt{.log} file for each \texttt{hpcrun} invocation and one \texttt{.hpcrun} data file for each thread of each invocation of the binary executable, as following:
 \end{description}
 
-\begin{verbatim}
+\begin{lstlisting}[breaklines]
 .perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-000-7281ba5a-91510-0.log
 .perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-000-7281ba5a-91510-0.hpcrun
 .perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-001-7281ba5a-91510-0.hpcrun
@@ -397,7 +397,7 @@ The basic directory tree of the temporary directory looks like the following:
   (...)
 .perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-014-7281ba5a-91718-0.hpcrun
 .perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-015-7281ba5a-91718-0.hpcrun
-\end{verbatim}
+\end{lstlisting}
 
 \noindent where the filenames are composed of the name of the binary executable, the MPI JOBID (if existent), the thread ID, the process ID, and other control data. In the example above, we shown the \texttt{.log} files and the \texttt{.hpcrun} files from three invocations of \texttt{hpcrun} (the number of invocations may change from one system to other) using 16 threads each of them.
 

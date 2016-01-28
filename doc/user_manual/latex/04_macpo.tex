@@ -6,7 +6,7 @@ To demonstrate the functioning of MACPO, let's consider an example program. This
 
 The following code shows the function that is executed by each thread:
 
-\begin{verbatim}
+\begin{lstlisting}[breaklines]
 void* thread_func (void* arg) {
   int idx, i, repeat;
   float x, y, z;
@@ -23,26 +23,26 @@ void* thread_func (void* arg) {
   }
   pthread_exit(0);
 }
-\end{verbatim}
+\end{lstlisting}
 
 To compile the application using MACPO, indicating that we are interested in understanding the performance metrics associated with the \texttt{thread\_func} function, run the following commands:
-\begin{verbatim}
+\begin{lstlisting}[breaklines]
 $ macpo.sh --macpo:instrument=thread_func -c monte-carlo.cc
 $ macpo.sh --macpo:instrument=thread_func monte-carlo.o -o monte-carlo -lpthread -lrt
-\end{verbatim}
+\end{lstlisting}
 
 Runtime logs (macpo.out) are produced when the application is run:
-\begin{verbatim}
+\begin{lstlisting}[breaklines]
 $ ./monte-carlo
-\end{verbatim}
+\end{lstlisting}
 
 To print performance metrics, use the \texttt{macpo-analyze} program.
-\begin{verbatim}
+\begin{lstlisting}[breaklines]
 $ macpo-analyze macpo.out
-\end{verbatim}
+\end{lstlisting}
 
 This will produce an output that is similar to the one shown below:
-\begin{verbatim}
+\begin{lstlisting}[breaklines]
 Var "counts", seen 1668 times, estimated to cost 147.12 cycles on every access.
 Stride of 0 cache lines was observed 1585 times (100.00%).
 
@@ -53,7 +53,7 @@ NUMA data conflicts = 43.56%          [##################                      ]
 Level 1 data cache reuse factor = 97.0% [####################################### ]
 Level 2 data cache reuse factor = 3.0%  [##                                      ]
 Level 3 data cache reuse factor = 0.0%  [                                        ]
-\end{verbatim}
+\end{lstlisting}
 
 The output shows the estimated cost of memory accesses (147.12 cycles) to the variable \texttt{counts} in terms of cycles per access\footnote{A large number of cycles indicates poor memory performance. Causes of large values may be explained by the following metrics.}. The output also shows stride values (0 cache lines) observed in the accesses to the variable\footnote{A stride of 0 cache lines indicates that subsequent references are in the same cache line; this indicates good memory performance and is good for vectorization. A stride of $n$ indicates that subsequent references are $n$ cache lines apart; the larger $n$, the worse is the memory performance.}. As per the cache conflicts shown in the output, accesses to the variable \texttt{counts} suffer from both L1 and L2 cache conflicts (also known as cache thrashing). Using this knowledge, we can pad the \texttt{counts} array (\textit{i.e.}, add dummy bytes to the array) so that each thread running on a core and, thus, sharing an L1 cache as well as the shared L2 cache, which may be shared by other cores, accesses a different cache line. This optimization reduces the running time of the \texttt{thread\_func} routine from 9.14s to 3.17s.
 
