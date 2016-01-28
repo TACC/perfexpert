@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
+ * Copyright (c) 2011-2016  University of Texas at Austin. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -14,7 +14,7 @@
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
  *
- * Authors: Leonardo Fialho and Ashay Rane
+ * Authors: Antonio Gomez-Iglesias, Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
  */
@@ -279,7 +279,7 @@ int module_analyze(void) {
 
     /* For each profile... */
     macvec_profile_t* profile;
-    double threshold = my_module_globals.threshold;
+    double threshold = globals.threshold;
     perfexpert_list_for(profile, &(my_module_globals.profiles),
             macvec_profile_t) {
         perfexpert_list_t* hotspots = &(profile->hotspots);

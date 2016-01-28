@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
+# Copyright (c) 2011-2016  University of Texas at Austin. All rights reserved.
 #
 # $COPYRIGHT$
 #
@@ -23,6 +23,6 @@ lib_LTLIBRARIES = libperfexpert_module_macpo.la
 libperfexpert_module_macpo_la_CPPFLAGS = -I$(srcdir)/../..
 libperfexpert_module_macpo_la_LDFLAGS = -module -version-info 1:0:0 \
 	-export-symbols $(srcdir)/macpo_module.sym
-libperfexpert_module_macpo_la_SOURCES = macpo_module.c macpo.c
+libperfexpert_module_macpo_la_SOURCES = macpo_module.c macpo_options.c macpo.c
 
 # EOF

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015  University of Texas at Austin. All rights reserved.
+ * Copyright (c) 2011-2016  University of Texas at Austin. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -30,12 +30,14 @@ extern "C" {
 #include "macpo.h"
 
 /* PerfExpert common headers */
+#include "common/perfexpert_alloc.h"
 #include "common/perfexpert_constants.h"
 #include "common/perfexpert_output.h"
+#include "modules/perfexpert_module_base.h"
 
 /* Global variable to define the module itself */
-perfexpert_module_macpo_t myself_module;
 char module_version[] = "1.0.0";
+my_module_globals_t my_module_globals;
 
 /* module_load */
 int module_load(void) {
@@ -45,6 +47,15 @@ int module_load(void) {
 
 /* module_init */
 int module_init(void) {
+    int comp_loaded = PERFEXPERT_FALSE;
+ //   myself_module.measurement=NULL;
+    my_module_globals.prefix[0] = NULL;
+    my_module_globals.before[0] = NULL;
+    my_module_globals.after[0] = NULL;
+    my_module_globals.ignore_return_code = PERFEXPERT_TRUE;
+    my_module_globals.num_inst_files = 0;
+    my_module_globals.threshold = globals.threshold; 
+
     /* Module pre-requisites */
     if (PERFEXPERT_SUCCESS != perfexpert_module_requires("macpo",
         PERFEXPERT_PHASE_INSTRUMENT, "lcpi", PERFEXPERT_PHASE_ANALYZE,
@@ -71,6 +82,21 @@ int module_init(void) {
         return PERFEXPERT_ERROR;
     }
 
+    OUTPUT(("Parsing arguments"));
+    if (PERFEXPERT_SUCCESS != parse_module_args(myself_module.argc,
+        myself_module.argv)) {
+        OUTPUT(("%s", _ERROR("parsing module arguments")));
+        return PERFEXPERT_ERROR;
+    }
+
+    // TODO: I'm going to need this here
+    /*
+    if (PERFEXPERT_SUCCESS != init_database()) {
+        OUTPUT(("%s", _ERROR("initialing tables")));
+        return PERFEXPERT_ERROR;
+    }
+    */
+
     OUTPUT_VERBOSE((5, "%s", _MAGENTA("initialized")));
 
     return PERFEXPERT_SUCCESS;
@@ -78,6 +104,14 @@ int module_init(void) {
 
 /* module_fini */
 int module_fini(void) {
+    // Deallocate this list
+    int i = 0;
+    for (i = 0; i < my_module_globals.num_inst_files; ++i) {
+        PERFEXPERT_DEALLOC(my_module_globals.inst_files[i].file);
+        PERFEXPERT_DEALLOC(my_module_globals.inst_files[i].destfile);
+    }
+    my_module_globals.num_inst_files = 0;
+
     OUTPUT_VERBOSE((5, "%s", _MAGENTA("finalized")));
     return PERFEXPERT_SUCCESS;
 }
@@ -88,6 +122,8 @@ int module_instrument(void) {
 
     if (PERFEXPERT_SUCCESS != macpo_instrument_all()) {
         OUTPUT(("%s", _ERROR("instrumenting files")));
+        macpo_restore_code();
+        macpo_compile();
         return PERFEXPERT_ERROR;
     }
 
@@ -97,7 +133,20 @@ int module_instrument(void) {
 /* module_measure */
 int module_measure(void) {
     OUTPUT(("%s", _YELLOW("Collecting measurements")));
+    //First, recompile the code
+    if (PERFEXPERT_SUCCESS != macpo_compile()) {
+        macpo_restore_code();
+        macpo_compile();
+        OUTPUT(("%s", _ERROR("compiling code after instrumentation")));
+        return PERFEXPERT_ERROR;
+    }
 
+    if (PERFEXPERT_SUCCESS != macpo_run()) {
+        macpo_restore_code();
+        OUTPUT(("%s", _ERROR("running code after instrumentation")));
+        return PERFEXPERT_ERROR;
+    }
+    //Rerun the code
     return PERFEXPERT_SUCCESS;
 }
 
@@ -106,6 +155,8 @@ int module_analyze(void) {
     OUTPUT(("%s", _YELLOW("Analysing measurements")));
 
     if (PERFEXPERT_SUCCESS != macpo_analyze()) {
+        macpo_restore_code();
+        macpo_compile();
         OUTPUT(("%s", _ERROR("analyzing MACPO result")));
         return PERFEXPERT_ERROR;
     }

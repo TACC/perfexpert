@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
+ * Copyright (c) 2011-2016  University of Texas at Austin. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -14,7 +14,7 @@
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
  *
- * Authors: Leonardo Fialho and Ashay Rane
+ * Authors: Antonio Gomez-Iglesias, Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
  */
@@ -62,7 +62,6 @@ typedef struct {
     perfexpert_list_t profiles;
     perfexpert_module_measurement_t *measurement;
     char *architecture;
-    double threshold;
     int verbose;
     char* report_file;
 } my_module_globals_t;

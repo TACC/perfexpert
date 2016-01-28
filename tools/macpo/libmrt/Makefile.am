@@ -21,7 +21,11 @@
 
 lib_LIBRARIES = libmrt.a
 
+lib_LTLIBRARIES = libmrt.la
+
+#libtest_la_LDFLAGS = -version-info 0:0:0
 libmrt_a_SOURCES = mrt.cpp
-libmrt_a_CXXFLAGS = -I$(srcdir) -I$(srcdir)/../common -ldl
+libmrt_la_SOURCES = mrt.cpp
+libmrt_a_CXXFLAGS = -I$(srcdir) -I$(srcdir)/../common -I../common
 
 include_HEADERS = mrt.h ../common/macpo_record.h

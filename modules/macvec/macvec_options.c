@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
+ * Copyright (c) 2011-2016  University of Texas at Austin. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -14,7 +14,7 @@
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
  *
- * Authors: Leonardo Fialho and Ashay Rane
+ * Authors: Antonio Gomez-Iglesias, Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
  */
@@ -50,15 +50,12 @@ int parse_module_args(int argc, char *argv[]) {
         return PERFEXPERT_ERROR;
     }
 
-    /* Set default threshold value */
-    my_module_globals.threshold = 0.01;
-
     /* Parse arguments */
     argp_parse(&argp, argc, argv, 0, 0, NULL);
 
     /* Sanity check: threshold is mandatory, check limits */
-    if (((0 >= my_module_globals.threshold) ||
-        (1 < my_module_globals.threshold))) {
+    if (((0 >= globals.threshold) ||
+        (1 < globals.threshold))) {
         OUTPUT(("%s", _ERROR("invalid threshold")));
         return PERFEXPERT_ERROR;
     }
@@ -74,7 +71,7 @@ int parse_module_args(int argc, char *argv[]) {
     }
 
     OUTPUT_VERBOSE((7, "%s", _BLUE("Summary of options")));
-    OUTPUT_VERBOSE((7, "   Threshold:     %f", my_module_globals.threshold));
+    OUTPUT_VERBOSE((7, "   Threshold:     %f", globals.threshold));
     OUTPUT_VERBOSE((7, "   Architecture:  %s", my_module_globals.architecture));
     OUTPUT_VERBOSE((7, "   Verbose level: %d", my_module_globals.verbose));
     OUTPUT_VERBOSE((7, "   Report file: : %s", my_module_globals.report_file));
@@ -101,13 +98,6 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
             my_module_globals.architecture = arg;
             OUTPUT_VERBOSE((1, "option 'a' set [%s]",
                 my_module_globals.architecture));
-            break;
-
-        /* Threshold */
-        case 't':
-            my_module_globals.threshold = atof(arg);
-            OUTPUT_VERBOSE((1, "option 't' set [%f]",
-                my_module_globals.threshold));
             break;
 
         /* Vectorization report */
@@ -139,12 +129,6 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
 
 /* parse_env_vars */
 static int parse_env_vars(void) {
-    if (NULL != getenv("PERFEXPERT_MODULE_LCPI_THRESHOLD")) {
-        my_module_globals.threshold = atof(
-            getenv("PERFEXPERT_MODULE_LCPI_THRESHOLD"));
-        OUTPUT_VERBOSE((1, "ENV: threshold=%f", my_module_globals.threshold));
-    }
-
     if (NULL != getenv("PERFEXPERT_MODULE_LCPI_ARCHITECTURE")) {
         my_module_globals.architecture =
             getenv("PERFEXPERT_MODULE_LCPI_ARCHITECTURE");

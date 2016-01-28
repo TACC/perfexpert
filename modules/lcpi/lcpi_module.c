@@ -59,7 +59,6 @@ int module_init(void) {
     /* Initialize list of events */
     perfexpert_list_construct(&(my_module_globals.profiles));
     my_module_globals.metrics_by_name = NULL;
-    my_module_globals.threshold = 0.0;
     my_module_globals.help_only = PERFEXPERT_FALSE;
     my_module_globals.measurement = NULL;
     my_module_globals.architecture = NULL;
@@ -163,6 +162,7 @@ int module_init(void) {
             my_module_globals.architecture));
     }
 
+    OUTPUT_VERBOSE((10, "Initializing measurements module"));
     /* Initialize the measurements module before using it */
     if (PERFEXPERT_MODULE_LOADED == my_module_globals.measurement->status) {
         if (PERFEXPERT_SUCCESS != my_module_globals.measurement->init()) {

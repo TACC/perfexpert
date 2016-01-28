@@ -72,11 +72,6 @@ int parse_cli_params(int argc, char *argv[]) {
     /* Parse arguments */
     argp_parse(&argp, argc, argv, 0, 0, NULL);
 
-    printf ("[modules before]");
-   perfexpert_list_for(m, &(module_globals.modules), perfexpert_module_t) {
-            printf(" [%s]", m->name);
-        }
-     printf ("\n");
     /* Sanity check: verbose level should be between 1-10 */
     if ((0 > globals.verbose) || (10 < globals.verbose)) {
         OUTPUT(("%s", _ERROR("invalid verbose level")));
@@ -192,7 +187,6 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
     perfexpert_module_t *m = NULL;
     char str[MAX_BUFFER_SIZE];
 
-    OUTPUT_VERBOSE((8, "Parsing %d -- %s", key, arg));
     switch (key) {
         /* Activate colorful mode */
         case 'c':
@@ -297,11 +291,7 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
         */
         case 'a':
             OUTPUT_VERBOSE((1, "option 'a' set [%s]", arg ? arg : "(null)"));
-            bzero(str, MAX_BUFFER_SIZE);
-            sprintf(str, "hpctoolkit,after=%s", arg ? arg : "");
-            if (PERFEXPERT_SUCCESS != set_module_option(str)) {
-                argp_error(state, "error setting module option");
-            }
+            globals.after = (arg ? arg : "");
             break;
 
         case 'A':
@@ -315,11 +305,7 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
 
         case 'b':
             OUTPUT_VERBOSE((1, "option 'b' set [%s]", arg ? arg : "(null)"));
-            bzero(str, MAX_BUFFER_SIZE);
-            sprintf(str, "hpctoolkit,before=%s", arg ? arg : "");
-            if (PERFEXPERT_SUCCESS != set_module_option(str)) {
-                argp_error(state, "error setting module option");
-            }
+            globals.before = (arg ? arg : "");
             break;
 
         case 'B':
@@ -349,12 +335,7 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
 
         case 'p':
             OUTPUT_VERBOSE((1, "option 'p' set [%s]", arg ? arg : "(null)"));
-            bzero(str, MAX_BUFFER_SIZE);
-           // sprintf(str, "hpctoolkit,prefix=%s", arg ? arg : "");
-            sprintf(str, "prefix=%s", arg ? arg : "");
-            if (PERFEXPERT_SUCCESS != set_module_option(str)) {
-                argp_error(state, "error setting module option");
-            }
+            globals.prefix = (arg ? arg : "");
             break;
 
         case 'P':
@@ -370,13 +351,7 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
         /* Arguments: threshold and target program and it's arguments */
         case ARGP_KEY_ARG:
             if ((('0' == arg[0]) || ('1' == arg[0])) && (0 == state->arg_num)) {
-                bzero(str, MAX_BUFFER_SIZE);
-                sprintf(str, "lcpi,threshold=%s", arg ? arg : "(null)");
-                OUTPUT_VERBOSE((1, "option 'threshold' set [%s]",
-                    arg ? arg : "(null)"));
-                if (PERFEXPERT_SUCCESS != set_module_option(str)) {
-                    return PERFEXPERT_ERROR;
-                }
+                globals.threshold = strtod(arg, NULL);
                 break;
             }
             arg_options.program = arg ? arg : NULL;
@@ -456,7 +431,6 @@ static int set_module_option(char *option) {
     /* Expand list of modules options */
     perfexpert_string_split(option, options, ',');
     while ((NULL != options[i]) && (NULL != options[i + 1])) {
-        OUTPUT_VERBOSE((10, "Setting option %s", options[i]));
         if (PERFEXPERT_SUCCESS != perfexpert_module_set_option(options[i],
             options[i + 1])) {
             OUTPUT(("%s [%s,%s]", _ERROR("while setting module options"),

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
+ * Copyright (c) 2011-2016  University of Texas at Austin. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -14,7 +14,7 @@
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
  *
- * Authors: Leonardo Fialho and Ashay Rane
+ * Authors: Antonio Gomez-Iglesias, Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
  */
@@ -37,13 +37,9 @@ extern "C" {
 static struct argp_option options[] = {
     { 0, 0, 0, 0, "\n[MACVEC module options]", 1 },
 
-    { "threshold=VALUE", 0, 0, OPTION_DOC, "Threshold (relevance % of "
-      "runtime) to take hotspots into consideration (range: fractional number "
-      "greater than 0 and smaller than 1)" },
     { "verbose=VALUE", 0, 0, OPTION_DOC, "Enable verbose mode (range: 0-10)" },
     { "report=FILE", 0, 0, OPTION_DOC, "Vectorization report file." },
 
-    { "threshold", 't', "VALUE", OPTION_HIDDEN, 0 },
     { "architecture", 'a', "Bonnell|Broadwell|Haswell|IvyBridge|IvyTown|"
       "Jaketown|NehalemEP|NehalemEX|SandyBridge|Silvermont|WestmereEP-DP|"
       "WestmereEP-SP|WestmereEX|KnightsCorner (or MIC)", OPTION_HIDDEN, 0 },

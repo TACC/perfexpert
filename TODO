@@ -1,4 +1,4 @@
-Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
+Copyright (c) 2011-2016  University of Texas at Austin. All rights reserved.
 
 $COPYRIGHT$
 
@@ -13,7 +13,11 @@ PerfExpert is distributed in the hope that it will be useful, but WITHOUT ANY
 WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
 A PARTICULAR PURPOSE.
 
-Authors: Leonardo Fialho and Ashay Rane
+Authors: Antonio Gomez, Leonardo Fialho and Ashay Rane
+
+TODO:
+
+    - When running MACPO, it currently needs the code to be recompiled with a new set of flags. These flags will need to be entered by the user. This should be fixed. During instrumentation, the full path of mrt.h will be added.
 
 $HEADER$
 

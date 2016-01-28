@@ -39,6 +39,7 @@ extern "C" {
 
 /* transformation */
 int transformation(void) {
+    /*
     char temp_str[6][MAX_BUFFER_SIZE];
     char *argv[2];
     test_t test;
@@ -46,7 +47,7 @@ int transformation(void) {
     OUTPUT_VERBOSE((4, "%s", _BLUE("Code transformation phase")));
     OUTPUT(("%s", _YELLOW("Trying to apply optimizations")));
 
-    /* Set some environment variables to avoid working arguments */
+    // Set some environment variables to avoid working arguments
     bzero(temp_str[1], MAX_BUFFER_SIZE);
     sprintf(temp_str[1], "%d", globals.verbose);
     if (0 != setenv("PERFEXPERT_CT_VERBOSE_LEVEL", temp_str[1], 0)) {
@@ -79,24 +80,27 @@ int transformation(void) {
         goto ERROR;
     }
 
-    /* Arguments to run analyzer */
+    // Arguments to run analyzer
     argv[0] = CT_PROGRAM;
     argv[1] = NULL;
 
-    /* The super-ninja test sctructure */
+    // The super-ninja test sctructure
     bzero(temp_str[0], MAX_BUFFER_SIZE);
     sprintf(temp_str[0], "%s/%s", globals.moduledir, CT_OUTPUT);
     test.output = temp_str[0];
     test.input = NULL;
     test.info = temp_str[4];
 
-    /* run_and_fork_and_pray */
+    // run_and_fork_and_pray
     return perfexpert_fork_and_wait(&test, argv);
 
-    /* Error handling */
+    // Error handling
     ERROR:
     OUTPUT(("%s", _ERROR("unable to set environment variable")));
+
     return PERFEXPERT_ERROR;
+    */
+    return PERFEXPERT_SUCCESS;
 }
 
 #ifdef __cplusplus
