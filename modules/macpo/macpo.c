@@ -59,7 +59,6 @@ int macpo_instrument_all(void) {
     bzero(sql, MAX_BUFFER_SIZE);
     sprintf(sql, "SELECT name, file, line FROM hotspot WHERE perfexpert_id = "
         "%llu AND relevance>= %f", globals.unique_id, my_module_globals.threshold);
-    OUTPUT(("\n\n\n\n %s\n\n\n\n", sql));
     if (SQLITE_OK != sqlite3_exec(globals.db, sql, macpo_instrument, NULL,
         &error)) {
         OUTPUT(("%s %s", _ERROR("SQL error"), error));
