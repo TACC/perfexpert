@@ -54,6 +54,7 @@ int module_init(void) {
     my_module_globals.after[0] = NULL;
     my_module_globals.ignore_return_code = PERFEXPERT_TRUE;
     my_module_globals.num_inst_files = 0;
+    my_module_globals.threshold = globals.threshold; 
 
     /* Module pre-requisites */
     if (PERFEXPERT_SUCCESS != perfexpert_module_requires("macpo",

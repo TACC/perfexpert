@@ -55,6 +55,12 @@ int parse_module_args(int argc, char *argv[]) {
         .after             = NULL,
     };
 
+    if (((0 >= my_module_globals.threshold) || 
+            (1 < my_module_globals.threshold))) {
+        OUTPUT(("%s", _ERROR("invalid threshold")));
+        return PERFEXPERT_ERROR;
+    }
+
     /* If some environment variable is defined, use it! */
     if (PERFEXPERT_SUCCESS != parse_env_vars()) {
         OUTPUT(("%s", _ERROR("parsing environment variables")));
@@ -85,7 +91,8 @@ int parse_module_args(int argc, char *argv[]) {
     OUTPUT_VERBOSE((7, "%s", _BLUE("Summary of options")));
 
     if (7 <= globals.verbose) {
-        printf("%s    Prefix:             ", PROGRAM_PREFIX);
+        printf("%s    Threshold:           %f", PROGRAM_PREFIX, my_module_globals.threshold); 
+        printf("\n%s    Prefix:             ", PROGRAM_PREFIX);
         if (NULL == my_module_globals.prefix[0]) {
             printf(" (null)");
         } else {
@@ -138,7 +145,6 @@ int parse_module_args(int argc, char *argv[]) {
 
 /* parse_options */
 static error_t parse_options(int key, char *arg, struct argp_state *state) {
-    printf ("option %c", key);
     switch (key) {
         /* Should I run some program after each execution? */
         case 'a':

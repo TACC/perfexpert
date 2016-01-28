@@ -56,13 +56,10 @@ int macpo_instrument_all(void) {
     } 
     my_module_globals.num_inst_files = 0;
 
-    OUTPUT_VERBOSE((2, "%s", _BLUE("Adding MACPO instrumentation")));
-    OUTPUT(("%s", _YELLOW("Adding MACPO instrumentation")));
-
     bzero(sql, MAX_BUFFER_SIZE);
     sprintf(sql, "SELECT name, file, line FROM hotspot WHERE perfexpert_id = "
-        "%llu", globals.unique_id);
-
+        "%llu AND relevance>= %f", globals.unique_id, my_module_globals.threshold);
+    OUTPUT(("\n\n\n\n %s\n\n\n\n", sql));
     if (SQLITE_OK != sqlite3_exec(globals.db, sql, macpo_instrument, NULL,
         &error)) {
         OUTPUT(("%s %s", _ERROR("SQL error"), error));

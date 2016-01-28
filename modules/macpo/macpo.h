@@ -48,6 +48,7 @@ typedef struct {
 //    char *files_modified[MAX_COLLECTION]; //List of files modified on each execution of instrument
     int num_inst_files; 
     int ignore_return_code;
+    double threshold;
 } my_module_globals_t;
 
 /* Module interface */
