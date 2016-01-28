@@ -35,6 +35,7 @@ extern "C" {
     char *after;
     char *before;
     char *workdir;
+    double threshold;
 } globals_t;
 
 
