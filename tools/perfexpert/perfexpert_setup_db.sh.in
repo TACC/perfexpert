@@ -83,7 +83,7 @@ fi
 if [ -f ${prefix}/etc/lcpi_module.sql ]; then
     sqlite3 ${HOME}/.perfexpert.db < ${prefix}/etc/lcpi_module.sql
     sqlite3 ${HOME}/.perfexpert.db 'CREATE VIEW IF NOT EXISTS hotspot AS SELECT
-        perfexpert_id, id, name, type, file, line, depth
+        perfexpert_id, id, name, type, file, line, depth, relevance
         FROM perfexpert_hotspot;'
     echo "LCPI module set"
 fi
