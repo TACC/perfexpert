@@ -36,8 +36,6 @@ extern "C" {
 
 /* Private module types */
 typedef struct {
-//     char *target;
-//     char *env[MAX_ARGUMENTS_COUNT];
     char *args[MAX_ARGUMENTS_COUNT];
 } my_module_globals_t;
 
