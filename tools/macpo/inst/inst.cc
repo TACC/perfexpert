@@ -83,47 +83,75 @@ int parse_argument(char* arg, macpo_options_t& macpo_options) {
     if (option == "instrument") {
         if (!value.size())
             return -1;
+        name_list_t list;
+        split(value, ',', list);
 
-        parse_location(value, location);
-        void* alloc = malloc(sizeof(char) * location.function_name.size() + 1);
-        char* name = reinterpret_cast<char*>(alloc);
-        snprintf(name, location.function_name.size() + 1, "%s",
-                location.function_name.c_str());
-        instrument_block(&macpo_options, ACTION_INSTRUMENT, name,
-                location.line_number);
+        for (name_list_t::iterator it = list.begin(); it != list.end(); it++) {
+            if ((*it).empty()) {
+                continue; //In case there's a problem with the location
+            }
+            parse_location(*it, location);
+            void* alloc = malloc(sizeof(char) * location.function_name.size() + 1);
+            char* name = reinterpret_cast<char*>(alloc);
+            snprintf(name, location.function_name.size() + 1, "%s",
+                    location.function_name.c_str());
+            instrument_block(&macpo_options, ACTION_INSTRUMENT, name,
+                    location.line_number);
+        }
     } else if (option == "check-alignment") {
         if (!value.size())
             return -1;
+        
+        name_list_t list;
+        split(value, ',', list);
 
-        parse_location(value, location);
-        void* alloc = malloc(sizeof(char) * location.function_name.size() + 1);
-        char* name = reinterpret_cast<char*>(alloc);
-        snprintf(name, location.function_name.size() + 1, "%s",
-                location.function_name.c_str());
-        instrument_block(&macpo_options, ACTION_ALIGNCHECK, name,
-                location.line_number);
+        for (name_list_t::iterator it = list.begin(); it != list.end() ; it++) { 
+            parse_location(*it, location);
+            if ((*it).empty()) {
+                continue;
+            }
+            void* alloc = malloc(sizeof(char) * location.function_name.size() + 1);
+            char* name = reinterpret_cast<char*>(alloc);
+            snprintf(name, location.function_name.size() + 1, "%s",
+                    location.function_name.c_str());
+            instrument_block(&macpo_options, ACTION_ALIGNCHECK, name,
+                    location.line_number);
+        }
     } else if (option == "record-tripcount") {
         if (!value.size())
             return -1;
-
-        parse_location(value, location);
-        void* alloc = malloc(sizeof(char) * location.function_name.size() + 1);
-        char* name = reinterpret_cast<char*>(alloc);
-        snprintf(name, location.function_name.size() + 1, "%s",
-                location.function_name.c_str());
-        instrument_block(&macpo_options, ACTION_TRIPCOUNT, name,
-                location.line_number);
+        name_list_t list;
+        split(value, ',', list);
+        for (name_list_t::iterator it = list.begin(); it != list.end() ; it++) {
+            if ((*it).empty()) {
+                continue;
+            }
+            parse_location(*it, location);
+            void* alloc = malloc(sizeof(char) * location.function_name.size() + 1);
+            char* name = reinterpret_cast<char*>(alloc);
+            snprintf(name, location.function_name.size() + 1, "%s",
+                    location.function_name.c_str());
+            instrument_block(&macpo_options, ACTION_TRIPCOUNT, name,
+                    location.line_number);
+        }
     } else if (option == "record-branchpath") {
         if (!value.size())
             return -1;
 
-        parse_location(value, location);
-        void* alloc = malloc(sizeof(char) * location.function_name.size() + 1);
-        char* name = reinterpret_cast<char*>(alloc);
-        snprintf(name, location.function_name.size() + 1, "%s",
-                location.function_name.c_str());
-        instrument_block(&macpo_options, ACTION_BRANCHPATH, name,
-                location.line_number);
+        name_list_t list;
+        split(value, ',', list);
+        for (name_list_t::iterator it = list.begin(); it != list.end(); it++) {
+            if ((*it).empty()) {
+                continue;
+            }
+            parse_location(*it, location);
+            void* alloc = malloc(sizeof(char) * location.function_name.size() + 1);
+            char* name = reinterpret_cast<char*>(alloc);
+            snprintf(name, location.function_name.size() + 1, "%s",
+                    location.function_name.c_str());
+            instrument_block(&macpo_options, ACTION_BRANCHPATH, name,
+                    location.line_number);
+        }
     } else if (option == "gen-trace") {
         if (!value.size())
             return -1;
@@ -139,46 +167,73 @@ int parse_argument(char* arg, macpo_options_t& macpo_options) {
         if (!value.size())
             return -1;
 
-        parse_location(value, location);
-        void* alloc = malloc(sizeof(char) * location.function_name.size() + 1);
-        char* name = reinterpret_cast<char*>(alloc);
-        snprintf(name, location.function_name.size() + 1, "%s",
-                location.function_name.c_str());
-        instrument_block(&macpo_options, ACTION_VECTORSTRIDES, name,
-                location.line_number);
+        name_list_t list;
+        split(value, ',', list);
+        for (name_list_t::iterator it = list.begin(); it != list.end(); it++) {
+            if ((*it).empty()) {
+                continue;
+            }
+            parse_location(*it, location);
+            void* alloc = malloc(sizeof(char) * location.function_name.size() + 1);
+            char* name = reinterpret_cast<char*>(alloc);
+            snprintf(name, location.function_name.size() + 1, "%s",
+                    location.function_name.c_str());
+            instrument_block(&macpo_options, ACTION_VECTORSTRIDES, name,
+                    location.line_number);
+        }
     } else if (option == "overlap-check") {
         if (!value.size())
             return -1;
-
-        parse_location(value, location);
-        void* alloc = malloc(sizeof(char) * location.function_name.size() + 1);
-        char* name = reinterpret_cast<char*>(alloc);
-        snprintf(name, location.function_name.size() + 1, "%s",
-                location.function_name.c_str());
-        instrument_block(&macpo_options, ACTION_OVERLAPCHECK, name,
-                location.line_number);
+        name_list_t list;
+        split(value, ',', list);
+        for (name_list_t::iterator it = list.begin(); it != list.end(); it++) {
+            if ((*it).empty()){
+                continue;
+            }
+            parse_location(*it, location);
+            void* alloc = malloc(sizeof(char) * location.function_name.size() + 1);
+            char* name = reinterpret_cast<char*>(alloc);
+            snprintf(name, location.function_name.size() + 1, "%s",
+                    location.function_name.c_str());
+            instrument_block(&macpo_options, ACTION_OVERLAPCHECK, name,
+                    location.line_number);
+        }
     } else if (option == "stride-check") {
         if (!value.size())
             return -1;
 
-        parse_location(value, location);
-        void* alloc = malloc(sizeof(char) * location.function_name.size() + 1);
-        char* name = reinterpret_cast<char*>(alloc);
-        snprintf(name, location.function_name.size() + 1, "%s",
-                location.function_name.c_str());
-        instrument_block(&macpo_options, ACTION_STRIDECHECK, name,
-                location.line_number);
+        name_list_t list;
+        split(value, ',', list);
+        for (name_list_t::iterator it = list.begin(); it != list.end(); it++) {
+            if ((*it).empty()){
+                continue;
+            }
+            parse_location(*it, location);
+            void* alloc = malloc(sizeof(char) * location.function_name.size() + 1);
+            char* name = reinterpret_cast<char*>(alloc);
+            snprintf(name, location.function_name.size() + 1, "%s",
+                    location.function_name.c_str());
+            instrument_block(&macpo_options, ACTION_STRIDECHECK, name,
+                    location.line_number);
+        }
     } else if (option == "reuse-distance") {
         if (!value.size())
             return -1;
 
-        parse_location(value, location);
-        void* alloc = malloc(sizeof(char) * location.function_name.size() + 1);
-        char* name = reinterpret_cast<char*>(alloc);
-        snprintf(name, location.function_name.size() + 1, "%s",
-                location.function_name.c_str());
-        instrument_block(&macpo_options, ACTION_REUSEDISTANCE, name,
-                location.line_number);
+        name_list_t list;
+        split(value, ',', list);
+        for (name_list_t::iterator it = list.begin(); it != list.end(); it++) {
+            if ((*it).empty()){
+                continue;
+            }
+            parse_location(*it, location);
+            void* alloc = malloc(sizeof(char) * location.function_name.size() + 1);
+            char* name = reinterpret_cast<char*>(alloc);
+            snprintf(name, location.function_name.size() + 1, "%s",
+                    location.function_name.c_str());
+            instrument_block(&macpo_options, ACTION_REUSEDISTANCE, name,
+                    location.line_number);
+        }
     } else if (option == "backup-filename") {
         if (!value.size())
             return -1;
