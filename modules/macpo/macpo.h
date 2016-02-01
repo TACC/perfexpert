@@ -42,13 +42,12 @@ typedef struct {
     char *prefix[MAX_ARGUMENTS_COUNT];
     char *before[MAX_ARGUMENTS_COUNT];
     char *after[MAX_ARGUMENTS_COUNT];
-    //char *inputfile;
     char res_folder[MAX_FILENAME];
-    backfiles inst_files[MAX_COLLECTION];
-//    char *files_modified[MAX_COLLECTION]; //List of files modified on each execution of instrument
+//    backfiles inst_files[MAX_COLLECTION];
     int num_inst_files; 
     int ignore_return_code;
     double threshold;
+    st_insts instrument;
 } my_module_globals_t;
 
 /* Module interface */
@@ -62,6 +61,7 @@ int module_analyze(void);
 /* Module functions */
 int macpo_instrument_all(void);
 static int macpo_instrument(void *n, int c, char **val, char **names);
+int instrument_files(void);
 int macpo_compile(void);
 int macpo_run(void);
 int macpo_analyze(void);

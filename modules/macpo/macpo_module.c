@@ -55,6 +55,7 @@ int module_init(void) {
     my_module_globals.ignore_return_code = PERFEXPERT_TRUE;
     my_module_globals.num_inst_files = 0;
     my_module_globals.threshold = globals.threshold; 
+    my_module_globals.instrument.maxfiles = 0;
 
     /* Module pre-requisites */
     if (PERFEXPERT_SUCCESS != perfexpert_module_requires("macpo",
@@ -107,8 +108,8 @@ int module_fini(void) {
     // Deallocate this list
     int i = 0;
     for (i = 0; i < my_module_globals.num_inst_files; ++i) {
-        PERFEXPERT_DEALLOC(my_module_globals.inst_files[i].file);
-        PERFEXPERT_DEALLOC(my_module_globals.inst_files[i].destfile);
+        //PERFEXPERT_DEALLOC(my_module_globals.inst_files[i].file);
+        //PERFEXPERT_DEALLOC(my_module_globals.inst_files[i].destfile);
     }
     my_module_globals.num_inst_files = 0;
 
@@ -132,6 +133,7 @@ int module_instrument(void) {
 
 /* module_measure */
 int module_measure(void) {
+      
     OUTPUT(("%s", _YELLOW("Collecting measurements")));
     //First, recompile the code
     if (PERFEXPERT_SUCCESS != macpo_compile()) {
@@ -147,11 +149,13 @@ int module_measure(void) {
         return PERFEXPERT_ERROR;
     }
     //Rerun the code
+    
     return PERFEXPERT_SUCCESS;
 }
 
 /* module_analyze */
 int module_analyze(void) {
+
     OUTPUT(("%s", _YELLOW("Analysing measurements")));
 
     if (PERFEXPERT_SUCCESS != macpo_analyze()) {

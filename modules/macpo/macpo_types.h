@@ -27,12 +27,26 @@ extern "C" {
 #endif
 
 #include "common/perfexpert_constants.h"
-
+/*  
 typedef struct {
     char *file;
     char *destfile;
 } backfiles;
+*/
 
+
+typedef struct {
+    char *file;
+    char *backfile;
+    char *names[MAX_COLLECTION];
+    long locations[MAX_COLLECTION];
+    int maxlocations;
+} fileInsts;
+
+typedef struct {
+    fileInsts list[MAX_COLLECTION];
+    int maxfiles;
+} st_insts;
 /*
 typedef struct {
     char *prefix[MAX_ARGUMENTS_COUNT];
