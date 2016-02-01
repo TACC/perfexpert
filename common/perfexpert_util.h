@@ -40,6 +40,7 @@ int perfexpert_util_full_path(const char *file, char **fullpath);
 int perfexpert_util_file_rename(const char *oldname, const char *newname);
 int perfexpert_util_file_copy(const char *to, const char *from);
 int perfexpert_util_file_print(const char *file);
+int perfexpert_util_digits(long number);
 
 #ifdef __cplusplus
 }

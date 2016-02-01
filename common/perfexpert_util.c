@@ -23,6 +23,7 @@
 extern "C" {
 #endif
 
+#include <limits.h>
 #include <sys/stat.h>
 #include <errno.h>
 #include <string.h>
@@ -481,6 +482,12 @@ int perfexpert_util_file_print(const char *file) {
     fflush(stdout);
 
     return PERFEXPERT_SUCCESS;
+}
+
+int perfexpert_util_digits(long number) {
+    if (number < 0) return perfexpert_util_digits ((number == LONG_MIN) ? LONG_MAX : -number);
+    if (number < 10) return 1;
+    return 1 + perfexpert_util_digits (number / 10);
 }
 
 #ifdef __cplusplus
