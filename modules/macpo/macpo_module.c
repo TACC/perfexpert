@@ -48,12 +48,10 @@ int module_load(void) {
 /* module_init */
 int module_init(void) {
     int comp_loaded = PERFEXPERT_FALSE;
- //   myself_module.measurement=NULL;
     my_module_globals.prefix[0] = NULL;
     my_module_globals.before[0] = NULL;
     my_module_globals.after[0] = NULL;
     my_module_globals.ignore_return_code = PERFEXPERT_TRUE;
-    my_module_globals.num_inst_files = 0;
     my_module_globals.threshold = globals.threshold; 
     my_module_globals.instrument.maxfiles = 0;
 
@@ -83,7 +81,6 @@ int module_init(void) {
         return PERFEXPERT_ERROR;
     }
 
-    OUTPUT(("Parsing arguments"));
     if (PERFEXPERT_SUCCESS != parse_module_args(myself_module.argc,
         myself_module.argv)) {
         OUTPUT(("%s", _ERROR("parsing module arguments")));
@@ -106,12 +103,17 @@ int module_init(void) {
 /* module_fini */
 int module_fini(void) {
     // Deallocate this list
-    int i = 0;
-    for (i = 0; i < my_module_globals.num_inst_files; ++i) {
-        //PERFEXPERT_DEALLOC(my_module_globals.inst_files[i].file);
-        //PERFEXPERT_DEALLOC(my_module_globals.inst_files[i].destfile);
-    }
-    my_module_globals.num_inst_files = 0;
+    int i = 0, j = 0;
+
+    for (i = 0; i < my_module_globals.instrument.maxfiles; ++i) {
+        for (j = 0; j < my_module_globals.instrument.list[i].maxlocations; ++j) {
+            PERFEXPERT_DEALLOC(my_module_globals.instrument.list[i].names[j]);
+        }
+        PERFEXPERT_DEALLOC(my_module_globals.instrument.list[i].file);
+        PERFEXPERT_DEALLOC(my_module_globals.instrument.list[i].backfile);
+        my_module_globals.instrument.list[i].maxlocations = 0;
+    }   
+    my_module_globals.instrument.maxfiles = 0;
 
     OUTPUT_VERBOSE((5, "%s", _MAGENTA("finalized")));
     return PERFEXPERT_SUCCESS;
@@ -119,7 +121,6 @@ int module_fini(void) {
 
 /* module_instrument */
 int module_instrument(void) {
-    OUTPUT(("%s", _YELLOW("Instrumenting the code")));
 
     if (PERFEXPERT_SUCCESS != macpo_instrument_all()) {
         OUTPUT(("%s", _ERROR("instrumenting files")));
@@ -133,8 +134,6 @@ int module_instrument(void) {
 
 /* module_measure */
 int module_measure(void) {
-      
-    OUTPUT(("%s", _YELLOW("Collecting measurements")));
     //First, recompile the code
     if (PERFEXPERT_SUCCESS != macpo_compile()) {
         macpo_restore_code();
@@ -155,9 +154,6 @@ int module_measure(void) {
 
 /* module_analyze */
 int module_analyze(void) {
-
-    OUTPUT(("%s", _YELLOW("Analysing measurements")));
-
     if (PERFEXPERT_SUCCESS != macpo_analyze()) {
         macpo_restore_code();
         macpo_compile();

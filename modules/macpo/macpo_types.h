@@ -27,13 +27,6 @@ extern "C" {
 #endif
 
 #include "common/perfexpert_constants.h"
-/*  
-typedef struct {
-    char *file;
-    char *destfile;
-} backfiles;
-*/
-
 
 typedef struct {
     char *file;

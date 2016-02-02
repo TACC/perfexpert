@@ -44,7 +44,6 @@ typedef struct {
     char *after[MAX_ARGUMENTS_COUNT];
     char res_folder[MAX_FILENAME];
 //    backfiles inst_files[MAX_COLLECTION];
-    int num_inst_files; 
     int ignore_return_code;
     double threshold;
     st_insts instrument;
