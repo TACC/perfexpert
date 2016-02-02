@@ -30,16 +30,6 @@ extern "C" {
 #include "modules/perfexpert_module_base.h"
 #include "modules/perfexpert_module_measurement.h"
 
-/*
-typedef struct{
-    int argc;
-    char *argv[MAX_ARGUMENTS_COUNT];
-    
-    perfexpert_module_measurement_t *measurement;
-    perfexpert_module_1_0_0_t macpo_module;
-} perfexpert_macpo_module_1_0_0_t;
-*/
-
 typedef struct{
     volatile perfexpert_list_item_t *next;
     volatile perfexpert_list_item_t *prev;
@@ -62,8 +52,6 @@ typedef struct{
 } perfexpert_macpo_module_1_0_0_t;
 
 perfexpert_macpo_module_1_0_0_t myself_module;
-
-//perfexpert_module_1_0_0_t myself_module;
 
 #ifdef __cplusplus
 }

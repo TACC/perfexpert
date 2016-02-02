@@ -40,16 +40,6 @@ typedef struct {
     fileInsts list[MAX_COLLECTION];
     int maxfiles;
 } st_insts;
-/*
-typedef struct {
-    char *prefix[MAX_ARGUMENTS_COUNT];
-    char *before[MAX_ARGUMENTS_COUNT];
-    char *after[MAX_ARGUMENTS_COUNT];
-    //char *inputfile;
-    char res_folder[MAX_FILENAME];
-    int ignore_return_code;
-} my_module_globals_t;
-*/
 #ifdef __cplusplus
 }
 #endif

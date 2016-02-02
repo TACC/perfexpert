@@ -38,21 +38,20 @@ static struct argp_option options[] = {
     { 0, 0, 0, 0, "\n[MACPO module options]", 1 },
 
     { "return-code", 0, 0, OPTION_DOC, "Ignore the target return code" },
-/*    { "inputfile=FILE", 0, 0, OPTION_DOC, "Input file to the target program. Us"
-      "e this option instead of input pipe redirect ('<'). Output pipe ('>') is"
-      " not available because PerfExpert already has its standard output file"},
-*/    { "after=COMMAND", 0, 0, OPTION_DOC,
+    { "after=COMMAND", 0, 0, OPTION_DOC,
       "Command to execute after each run of the target program" },
     { "before=COMMAND", 0, 0, OPTION_DOC,
       "Command to execute before each run of the target program" },
+    { "main=FILENAME", 0, 0, OPTION_DOC,
+      "Filename where the find the entry point to the program (main function)" },
     { "prefix=PREFIX", 0, 0, OPTION_DOC, "Add a prefix to the command line, "
       "use double quotes to set arguments with spaces within (e.g., \"mpirun -n"
       " 2\")" },
 
     { "return-code", 'r', 0, OPTION_HIDDEN, 0 },
-//    { "inputfile", 'i', "FILE", OPTION_HIDDEN, 0 },
     { "after", 'a', "COMMAND", OPTION_HIDDEN, 0 },
     { "before", 'b', "COMMAND", OPTION_HIDDEN, 0 },
+    { "main", 'm', "FILENAME", OPTION_HIDDEN, 0 },
     { "prefix", 'p', "PREFIX", OPTION_HIDDEN, 0 },
 
     { "help", 'h', 0, OPTION_HIDDEN, "Show help message" },
@@ -64,6 +63,7 @@ typedef struct arg_options {
     char *prefix;
     char *before;
     char *after;
+    char *mainsrc;
 } arg_options_t;
 
 /* Function declarations */

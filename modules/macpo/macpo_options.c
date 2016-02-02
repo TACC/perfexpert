@@ -53,6 +53,7 @@ int parse_module_args(int argc, char *argv[]) {
         .prefix            = NULL,
         .before            = NULL,
         .after             = NULL,
+        .mainsrc          = NULL,
     };
 
     if (((0 >= my_module_globals.threshold) || 
@@ -86,6 +87,9 @@ int parse_module_args(int argc, char *argv[]) {
     if (NULL != arg_options.prefix) {
         perfexpert_string_split(perfexpert_string_remove_spaces(
             arg_options.prefix), my_module_globals.prefix, ' ');
+    }
+    if (NULL != arg_options.mainsrc) {
+        my_module_globals.mainsrc = arg_options.mainsrc;
     }
 
     OUTPUT_VERBOSE((7, "%s", _BLUE("Summary of options")));
@@ -124,6 +128,13 @@ int parse_module_args(int argc, char *argv[]) {
                 i++;
             }
         }
+
+        printf("\n%s    Main src file:      ", PROGRAM_PREFIX);
+        if (NULL == my_module_globals.mainsrc) {
+            printf(" (null)");
+        } else {
+            printf(" [%s]", (char *)my_module_globals.mainsrc);
+        }
         printf("\n");
         fflush(stdout);
     }
@@ -156,6 +167,11 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
         case 'b':
             arg_options.before = arg;
             OUTPUT_VERBOSE((1, "option 'b' set [%s]", arg_options.before));
+            break;
+
+        case 'm':
+            arg_options.mainsrc = arg;
+            OUTPUT_VERBOSE((1, "option 'm' set [%s]", arg_options.mainsrc));
             break;
 
         /* Should I add a program prefix to the command line? */
@@ -194,7 +210,10 @@ static int parse_env_vars(void) {
         arg_options.before = ("PERFEXPERT_MACPO_BEFORE");
         OUTPUT_VERBOSE((1, "ENV: before=%s", arg_options.before));
     }
-
+    if (NULL != getenv("PERFEXPERT_MACPO_MAIN")) {
+        arg_options.mainsrc = ("PERFEXPERT_MACPO_MAIN");
+        OUTPUT_VERBOSE((1, "ENV: main=%s", arg_options.mainsrc));
+    }
     if (NULL != getenv("PERFEXPERT_MACPO_AFTER")) {
         arg_options.after = ("PERFEXPERT_MACPO_AFTER");
         OUTPUT_VERBOSE((1, "ENV: after=%s", arg_options.after));

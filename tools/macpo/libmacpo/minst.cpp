@@ -519,7 +519,6 @@ void MINST::add_hooks_to_main_function(SgFunctionDefinition* main_def) {
     }
 
     if (insert_map_call) {
-
         for (std::vector<std::string>::iterator it = filesmapped.begin() ; it != filesmapped.end() ; it++) {
             // Create the function name using the base (indigo__create_map_) plus each filename that
             // implements an indigo__create_map_XXX function
