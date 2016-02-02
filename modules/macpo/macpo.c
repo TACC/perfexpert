@@ -27,6 +27,7 @@ extern "C" {
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <dirent.h>
 
 /* Utility headers */
 #include <sqlite3.h>
@@ -543,45 +544,66 @@ int macpo_analyze() {
     char * argv[3];
     int rc;
     test_t test;
-
-    argv[0] = "macpo-analyze";
-    argv[1] = "macpo.out";
-    argv[2] = NULL;
+    struct dirent* hFile;
+    int error = PERFEXPERT_FALSE;
+    char *macpo_out;
 
     OUTPUT_VERBOSE((6, "%s", _YELLOW("analyzing the results of running the instrumented code")));
+    argv[0] = "macpo-analyze";
 
-    PERFEXPERT_ALLOC(char, test.output, (strlen(globals.moduledir) + 22));
-    snprintf(test.output, strlen(globals.moduledir) + 22,
-            "%s/macpo-analyze.output", globals.moduledir);
-    test.input = NULL;
-    test.info = globals.program;
+    DIR* dirfile = opendir (".");
 
-    OUTPUT_VERBOSE((6, "   COMMAND=[%s %s]", argv[0], argv[1]));
+    if (!dirfile) {
+        OUTPUT(("%s", __ERROR("There was a problem opening the current folder")));
+        return PERFEXPERT_ERROR;
+    }
+    
+    /* MACPO will generate several different macpo.XXX files for MPI codes. Here,
+     * we iterate over all those files and run macpo-analize. Then we store the
+     * files somewhere else
+     */
 
-    rc = perfexpert_fork_and_wait(&test, (char **)argv);
+    while ((hFile = readdir(dirfile)) != NULL) {
+        if (hFile->d_type != DT_REG) continue; // Do not process symbolic link (macpo.out)
+        if (!strstr(hFile->d_name, "macpo.")) continue;
+        argv[1] = hFile->d_name;
+        argv[2] = NULL;
+        
+        PERFEXPERT_ALLOC(char, test.output, (strlen(globals.moduledir) + strlen(hFile->d_name) + 10));
+        snprintf(test.output, strlen(globals.moduledir) + strlen(hFile->d_name) + 10,
+                "%s/%s.output", globals.moduledir, hFile->d_name);
+        test.input = NULL;
+        test.info = globals.program;
 
-    switch (rc) {
-        case PERFEXPERT_FAILURE:
-        case PERFEXPERT_ERROR:
-            OUTPUT(("%s (return code: %d) Usually, this means that an error"
-                " happened during the program execution. To see the program"
-                "'s output, check the content of this file: [%s]. If you "
-                "want to PerfExpert ignore the return code next time you "
-                "run this program, set the 'return-code' option for the "
-                "macpo module. See 'perfepxert -H macpo' for details.",
-                _ERROR("the target program returned non-zero"), rc,
-                test.output));
-            return PERFEXPERT_ERROR;
+        OUTPUT_VERBOSE((6, "   COMMAND=[%s %s]", argv[0], argv[1]));
 
-        case PERFEXPERT_SUCCESS:
-            OUTPUT_VERBOSE((7, "[ %s  ]", _BOLDGREEN("OK")));
-            break;
+        rc = perfexpert_fork_and_wait(&test, (char **)argv);
 
+        switch (rc) {
+            case PERFEXPERT_FAILURE:
+            case PERFEXPERT_ERROR:
+                error = PERFEXPERT_TRUE;
+                break;
         default:
             break;
+        }
+        PERFEXPERT_DEALLOC(test.output);
+        
+        PERFEXPERT_ALLOC(char, macpo_out, strlen(globals.moduledir) + strlen(hFile->d_name) + 2);
+        snprintf(macpo_out, strlen(globals.moduledir) + strlen(hFile->d_name) + 2,
+                 "%s/%s", globals.moduledir, hFile->d_name);
+        if (PERFEXPERT_SUCCESS != perfexpert_util_file_rename(hFile->d_name, macpo_out)) {
+            OUTPUT(("%s", _ERROR(" moving file %s to %s"), hFile->d_name, macpo_out));
+        }
+        PERFEXPERT_DEALLOC(macpo_out);
+
+    }
+    closedir(dirfile);
+
+    if (error) {
+        OUTPUT(("%s", _ERROR(" there was an error while analyzing the results")));
     }
 
-    PERFEXPERT_DEALLOC(test.output);
     if (PERFEXPERT_SUCCESS != macpo_restore_code()) {
         OUTPUT(("%s", _ERROR (" failed to restore the code ")));
         return PERFEXPERT_ERROR;
