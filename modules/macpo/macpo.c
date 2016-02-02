@@ -189,6 +189,7 @@ int instrument_files() {
     test_t test;
     int rc;
     int argc = 0;
+    int startdealloc, enddealloc;
     
     char arguments[MAX_COLLECTION];
     char *target = arguments;
@@ -248,6 +249,7 @@ int instrument_files() {
             }
         }
     }
+    startdealloc = argc;
 //    PERFEXPERT_ALLOC(char, argv[argc], 25 + length);
 //    snprintf(argv[argc], 25 + length, "--macpo:check-alignment=%s", arguments);
 //    argc++;
@@ -260,6 +262,7 @@ int instrument_files() {
     PERFEXPERT_ALLOC(char, argv[argc], 25 + length);
     snprintf(argv[argc], 25 + length, "--macpo:instrument=%s", arguments);
     argc++;
+    enddealloc = argc;
 
     for (i = 0; i < my_module_globals.instrument.maxfiles; ++i) {
         if (!my_module_globals.mainsrc) {
@@ -335,7 +338,7 @@ int instrument_files() {
     }
 
     PERFEXPERT_DEALLOC(test.output);
-    for (i = 1; i <= 1; ++i) {
+    for (i = startdealloc; i < enddealloc; ++i) {
         PERFEXPERT_DEALLOC(argv[i]);
     }
     return PERFEXPERT_SUCCESS;
