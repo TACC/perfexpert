@@ -78,7 +78,7 @@ int macpo_instrument_all(void) {
 static int macpo_instrument(void *n, int c, char **val, char **names) {
     char *t = NULL, *name = val[0], *file = val[1];
     long line;
-    int i;
+    int i, j;
     int prevInst = PERFEXPERT_FALSE;
     char *folder, *fullpath, *filename, *rose_name;
 
@@ -96,10 +96,6 @@ static int macpo_instrument(void *n, int c, char **val, char **names) {
         *ptr = 0;
     }
 
-    //if (PERFEXPERT_SUCCESS != perfexpert_util_file_exists(file)) {
-    //    return PERFEXPERT_SUCCESS;
-    //}
-
     if (strlen(name)<=1) {
         return PERFEXPERT_SUCCESS;
     }
@@ -113,14 +109,27 @@ static int macpo_instrument(void *n, int c, char **val, char **names) {
     }
 
     //OUTPUT_VERBOSE((6, " going into the loop"));
+    int alreadyIn = PERFEXPERT_FALSE;
     for (i = 0; i < my_module_globals.instrument.maxfiles; ++i) {
         if (strcmp (my_module_globals.instrument.list[i].file, file) == 0) {
+            // This loop is just to check that the same line of the code has not been
+            // already added
+            for (j = 0; j < my_module_globals.instrument.list[i].maxlocations; j++) {
+                if (strcmp(name, my_module_globals.instrument.list[i].names[j] == 0)) {
+                    if (line == my_module_globals.instrument.list[i].locations[j]) {
+                        alreadyIn = PERFEXPERT_TRUE;
+                    }                
+                }
+            }
+            // Do not insert the same line in the same file more than once
+            if (alreadyIn) {
+                break;
+            }
             prevInst = PERFEXPERT_TRUE;
             int pos = my_module_globals.instrument.list[i].maxlocations;
             my_module_globals.instrument.list[i].locations[pos] = line;
             PERFEXPERT_ALLOC(char, my_module_globals.instrument.list[i].names[pos], strlen(name)+1);
             snprintf(my_module_globals.instrument.list[i].names[pos], strlen(name)+1, "%s", name);
-            OUTPUT_VERBOSE((6, "Added1 %s", name));
             my_module_globals.instrument.list[i].maxlocations++;
         }
     }
@@ -129,7 +138,6 @@ static int macpo_instrument(void *n, int c, char **val, char **names) {
         PERFEXPERT_ALLOC(char, my_module_globals.instrument.list[pos].names[0], strlen(name)+1);
         snprintf(my_module_globals.instrument.list[pos].names[0], strlen(name)+1, "%s", name);
         my_module_globals.instrument.list[pos].locations[0] = line;
-        OUTPUT_VERBOSE((6, "Added2 %s", name));
 
         my_module_globals.instrument.list[pos].maxlocations = 1;
         PERFEXPERT_ALLOC(char, my_module_globals.instrument.list[pos].file, strlen(file)+1);
@@ -149,18 +157,19 @@ static int macpo_instrument(void *n, int c, char **val, char **names) {
 }
 
 int instrument_files() {
-    char *argv[9];
+    char *argv[MAX_COLLECTION];
     int i, j;
     test_t test;
     int rc;
     
+    char arguments[MAX_COLLECTION];
+    char *target = arguments;
+    long length = 0;
+
     argv[0] = "macpo.sh";
     for (i = 0; i < my_module_globals.instrument.maxfiles; ++i) {
         fileInsts currfile;
         currfile = my_module_globals.instrument.list[i];
-        char arguments[MAX_COLLECTION];
-        char *target = arguments;
-        long length = 0;
         char *file, *filename, *folder, *fullpath;
         file = currfile.file;
 
@@ -201,7 +210,7 @@ int instrument_files() {
                 }
             }
             else{
-                if (j == 0) {
+                if (j == 0 && i==0) {
                     target += sprintf(target, "%s:%d", name, line);
                     length += strlen(name)+1+perfexpert_util_digits(line);
                 }
@@ -211,7 +220,8 @@ int instrument_files() {
                 }
             }
             OUTPUT_VERBOSE((6, "LENGTH: %ld", length));
-        }            
+        }
+    }
         PERFEXPERT_ALLOC(char, argv[1], 25 + length);
         snprintf(argv[1], 25 + length, "--macpo:check-alignment=%s", arguments);
         PERFEXPERT_ALLOC(char, argv[2], 30 + length);
@@ -219,25 +229,34 @@ int instrument_files() {
         PERFEXPERT_ALLOC(char, argv[3], 30 + length);
         snprintf(argv[3], 30 + length, "--macpo:vector-strides=%s", arguments);
 
-        PERFEXPERT_ALLOC(char, argv[4],
-            (strlen(globals.moduledir) + strlen(folder) + strlen(filename) + 35));
-        snprintf(argv[4], strlen(globals.moduledir) + +strlen(folder) + strlen(filename) + 35,
-            "--macpo:backup-filename=%s/%s/inst_%s", globals.moduledir, folder, filename);
+  //      PERFEXPERT_ALLOC(char, argv[4],
+  //          (strlen(globals.moduledir) + strlen(folder) + strlen(filename) + 35));
+  //      snprintf(argv[4], strlen(globals.moduledir) + +strlen(folder) + strlen(filename) + 35,
+  //          "--macpo:backup-filename=%s/%s/inst_%s", globals.moduledir, folder, filename);
 
-        PERFEXPERT_ALLOC(char, argv[5], 25 + length);
-        snprintf(argv[5], 25 + length, "--macpo:instrument=%s", arguments);
+        PERFEXPERT_ALLOC(char, argv[4], 25 + length);
+        snprintf(argv[4], 25 + length, "--macpo:instrument=%s", arguments);
+        int argc = 5;
 
-        argv[6] = "--macpo:no-compile";
+        for (i = 0; i < my_module_globals.instrument.maxfiles; ++i) {
+            argv[argc] = my_module_globals.instrument.list[i].file;
+            argc++;
+        }
+//        argv[6] = "--macpo:no-compile";
 
-        PERFEXPERT_ALLOC(char, argv[7], strlen(file)+1);
-        snprintf(argv[7], strlen(file)+1,"%s",file);
+  //      PERFEXPERT_ALLOC(char, argv[7], strlen(file)+1);
+  //      snprintf(argv[7], strlen(file)+1,"%s",file);
 
-        argv[8] = NULL;  /* Add NULL to indicate the end of arguments */
+        argv[argc] = NULL;  /* Add NULL to indicate the end of arguments */
 
-        PERFEXPERT_ALLOC(char, test.output, (strlen(globals.moduledir) +
+        /* PERFEXPERT_ALLOC(char, test.output, (strlen(globals.moduledir) +
                      strlen(file) + 20));
         snprintf(test.output, strlen(globals.moduledir) + strlen(file) + 20,
                 "%s/%s-macpo.output", globals.moduledir, file);
+        */
+        PERFEXPERT_ALLOC(char, test.output, (strlen(globals.moduledir) + 20));
+        snprintf(test.output, strlen(globals.moduledir) + 20,
+                "%s/macpo_instrument.output", globals.moduledir);
         test.input = NULL;
         test.info = globals.program;
 
@@ -270,7 +289,21 @@ int instrument_files() {
             }
         }
     
+        for (i = 0; i < my_module_globals.instrument.maxfiles; ++i) {
+            char *rose_name, *filename, *file;
+            file = my_module_globals.instrument.list[i].file;
+            perfexpert_util_filename_only(file, &filename);
+            PERFEXPERT_ALLOC(char, rose_name, (strlen(filename) + 6));
+            snprintf(rose_name, strlen(filename) + 6, "rose_%s", filename);
 
+
+            if (PERFEXPERT_SUCCESS != perfexpert_util_file_rename(rose_name, file)) {
+                OUTPUT(("%s impossible to copy file %s to %s", _ERROR("IO ERROR"),
+                    rose_name, file));
+            }
+            PERFEXPERT_DEALLOC(rose_name);
+        }
+ /*   
         char * rose_name;
         PERFEXPERT_ALLOC(char, rose_name, (strlen(filename) + 6));
         snprintf(rose_name, strlen(filename) + 6, "rose_%s", filename);
@@ -285,16 +318,16 @@ int instrument_files() {
         }
 
         PERFEXPERT_DEALLOC(rose_name);
-
+*/
         PERFEXPERT_DEALLOC(test.output);
         PERFEXPERT_DEALLOC(argv[1]);
         PERFEXPERT_DEALLOC(argv[2]);
         PERFEXPERT_DEALLOC(argv[3]);
         PERFEXPERT_DEALLOC(argv[4]);
         PERFEXPERT_DEALLOC(argv[5]);
-        PERFEXPERT_DEALLOC(argv[7]);
-        PERFEXPERT_DEALLOC(fullpath);
-    }
+       // PERFEXPERT_DEALLOC(argv[7]);
+        //PERFEXPERT_DEALLOC(fullpath);
+ //   }
 
     return PERFEXPERT_SUCCESS;
 }

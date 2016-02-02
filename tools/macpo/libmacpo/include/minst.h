@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
+ * Copyright (c) 2011-2016  University of Texas at Austin. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -14,7 +14,7 @@
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
  * 
- * Authors: Leonardo Fialho and Ashay Rane
+ * Authors: Antonio Gomez-Iglesias, Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
  */
@@ -30,6 +30,10 @@
 #include "generic_defs.h"
 #include "inst_defs.h"
 #include "instrumentor.h"
+
+// This will contain the list of filenames that implement
+// a indigo__create_map_XXX function (where XXX is the filename)
+extern std::vector<std::string> filesmapped;
 
 bool midend(SgProject* project, options_t& options);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015  University of Texas at Austin. All rights reserved.
+ * Copyright (c) 2011-2016  University of Texas at Austin. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -39,9 +39,13 @@
 #include "tracer.h"
 #include "tripcount.h"
 #include "vector_strides.h"
+#include "generic_vars.h"
 
 using namespace SageBuilder;
 using namespace SageInterface;
+
+std::vector<std::string> filesmapped; 
+
 
 bool midend(SgProject* project, options_t& options) {
     // Check if we really need to invoke the instrumentation.
@@ -94,26 +98,42 @@ MINST::MINST(const options_t& _options, SgProject* project)
 }
 
 void MINST::insert_map_prototype(SgNode* node) {
-    const char* func_name = "indigo__create_map";
+    const std::string base_name = "indigo__create_map_";
+    
+    // Recrate the function name using the value of filesmapped
+    for (std::vector<std::string>::iterator it = filesmapped.begin(); it!=filesmapped.end(); it++) {
+        std::string func_name = base_name + (*it);
 
-    if (!SageInterface::is_Fortran_language()) {
-        SgFunctionDeclaration *decl;
-        decl = SageBuilder::buildDefiningFunctionDeclaration(func_name,
-                buildVoidType(), buildFunctionParameterList(), global_node);
-        non_def_decl = SageBuilder::buildNondefiningFunctionDeclaration(decl,
-                global_node);
-        non_def_decl->get_functionModifier().setGnuAttributeWeak();
-        //SgLinkageModifier* link(non_def_decl->get_freepointer());
-        //link->setCppLinkage();
-        //((SgLinkageModifier* )(global_node))->setCppLinkage ();
-
+        if (!SageInterface::is_Fortran_language()) {
+            SgFunctionDeclaration *decl;
+            decl = SageBuilder::buildDefiningFunctionDeclaration(func_name,
+                    buildVoidType(), buildFunctionParameterList(), global_node);
+            non_def_decl = SageBuilder::buildNondefiningFunctionDeclaration(decl,
+                    global_node);
+            non_def_decl->get_functionModifier().setGnuAttributeWeak();
+            //SgLinkageModifier* link(non_def_decl->get_freepointer());
+            //link->setCppLinkage();
+            //((SgLinkageModifier* )(global_node))->setCppLinkage ();
+        }
     }
 }
 
 void MINST::insert_map_function(SgNode* node) {
     if (map_function_inserted == false) {
         SgProcedureHeaderStatement* header;
-        const char* func_name = "indigo__create_map";
+        const std::string base_name = "indigo__create_map_";
+        
+        const SgLocatedNode* located_node = isSgLocatedNode(node);
+        std::string fullpath = located_node->getFilenameString();
+        size_t beginIdx = fullpath.rfind('/');
+        std::string filename = fullpath.substr(beginIdx + 1);
+        size_t lastindex = filename.find_last_of(".");
+        std::string name = filename.substr(0, lastindex);
+
+        // Build the name for the function (indigo__create_map_+filename)
+        std::string func_name = base_name + name;
+        // Add the filename to the list of files mapped
+        filesmapped.push_back(name);
 
         if (SageInterface::is_Fortran_language()) {
             header = SageBuilder::buildProcedureHeaderStatement(func_name,
@@ -436,7 +456,10 @@ void MINST::add_hooks_to_main_function(SgFunctionDefinition* main_def) {
         return;
     }
 
-    std::string indigo__create_map = "indigo__create_map";
+    // This string is concatened with the filenames that actually implement
+    // each one of the functions that create the map
+    const std::string indigo__create_map = "indigo__create_map_";
+
     std::string  indigo__init;
     if (SageInterface::is_Fortran_language()) {
         indigo__init = "indigo__init";
@@ -496,13 +519,19 @@ void MINST::add_hooks_to_main_function(SgFunctionDefinition* main_def) {
     }
 
     if (insert_map_call) {
-        SgExprStatement* map_stmt = NULL;
-        map_stmt = ir_methods::prepare_call_statement(body,
-                indigo__create_map, empty_params, expr_stmt);
-        insertStatementAfter(expr_stmt, map_stmt);
-        ROSE_ASSERT(map_stmt);
 
-        insert_map_prototype(main_def);
+        for (std::vector<std::string>::iterator it = filesmapped.begin() ; it != filesmapped.end() ; it++) {
+            // Create the function name using the base (indigo__create_map_) plus each filename that
+            // implements an indigo__create_map_XXX function
+            std::string func_name = indigo__create_map+(*it);
+            SgExprStatement* map_stmt = NULL;
+            map_stmt = ir_methods::prepare_call_statement(body,
+                func_name, empty_params, expr_stmt);
+            insertStatementAfter(expr_stmt, map_stmt);
+            ROSE_ASSERT(map_stmt);
+
+            insert_map_prototype(main_def);
+        }
     }
 }
 
