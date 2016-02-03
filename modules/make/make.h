@@ -54,6 +54,7 @@ char* module_get_env(const char *name);
 
 /* Module functions */
 int run_make(void);
+int run_clean(void);
 
 #ifdef __cplusplus
 }

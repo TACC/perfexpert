@@ -94,6 +94,9 @@ int module_fini(void) {
 int module_compile(void) {
     OUTPUT(("%s [%s]", _YELLOW("Compiling"), globals.program));
 
+    if (PERFEXPERT_SUCCESS != run_clean()) {
+        return PERFEXPERT_ERROR;
+    }
     if (PERFEXPERT_SUCCESS != run_make()) {
         return PERFEXPERT_ERROR;
     }

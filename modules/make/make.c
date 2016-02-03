@@ -37,6 +37,79 @@ extern "C" {
 #include "common/perfexpert_output.h"
 #include "common/perfexpert_util.h"
 
+int run_clean(void){
+    char temp_str[MAX_BUFFER_SIZE];
+    char flags[MAX_BUFFER_SIZE];
+    char *argv[MAX_ARGUMENTS_COUNT];
+    test_t test;
+    int argc = 0, i = 0;
+    int rc;
+
+
+    OUTPUT_VERBOSE((5, "%s", _BLUE("Running 'clean'")));
+
+    /* If the user chose a Makefile... */
+    if ((PERFEXPERT_SUCCESS != perfexpert_util_file_exists("./Makefile")) &&
+        (PERFEXPERT_SUCCESS != perfexpert_util_file_exists("./makefile")) &&
+        (PERFEXPERT_SUCCESS != perfexpert_util_file_exists("./GNUmakefile"))) {
+        OUTPUT(("%s",
+        	_ERROR("'Makefile', 'makefile', or 'GNUmakefile' file not found")));
+        return PERFEXPERT_ERROR;
+    }
+
+    argv[argc] = "make";
+    argc++;
+    argv[argc] = "clean";
+    argc++;
+    argv[argc] = NULL;
+
+    /* Not using OUTPUT_VERBOSE because I want only one line */
+    if (8 <= globals.verbose) {
+        int i = 0;
+        printf("%s    %s", PROGRAM_PREFIX, _YELLOW("command line:"));
+        while (NULL != argv[i]) {
+            printf(" %s", argv[i]);
+            i++;
+        }
+        printf("\n");
+    }
+
+    /* Fill the ninja test structure... */
+    test.info = globals.program;
+    test.input = NULL;
+    bzero(temp_str, MAX_BUFFER_SIZE);
+    sprintf(temp_str, "%s/make_clean.output", globals.moduledir);
+    test.output = temp_str;
+
+    /* fork_and_wait_and_pray */
+    rc = perfexpert_fork_and_wait(&test, argv);
+
+    switch (rc) {
+        case PERFEXPERT_NO_REC:
+        case PERFEXPERT_FAILURE:
+        case PERFEXPERT_ERROR:
+            OUTPUT(("%s (return code: %d) Usually, this means that an error"
+                " happened during the program execution. To see the program"
+                "'s output, check the content of this file: [%s]. If you "
+                "want to PerfExpert ignore the return code next time you "
+                "run this program, set the 'return-code' option for the "
+                "macpo module. See 'perfepxert -H macpo' for details.",
+                _ERROR("the target program returned non-zero"), rc, 
+                test.output));
+            return PERFEXPERT_ERROR;
+
+        case PERFEXPERT_SUCCESS:
+            OUTPUT_VERBOSE((7, "[ %s  ]", _BOLDGREEN("OK")));
+            break;
+
+        default:
+            return PERFEXPERT_ERROR;
+            break;
+    }   
+
+    return PERFEXPERT_SUCCESS;
+}
+
 /* run_make */
 int run_make(void) {
     char temp_str[MAX_BUFFER_SIZE];
