@@ -68,7 +68,7 @@ int parse_module_args(int argc, char *argv[]) {
     OUTPUT_VERBOSE((7, "%s", _BLUE("Summary of options")));
 
     if (7 <= globals.verbose) {
-        printf("\n%s    Arguments:             ", PROGRAM_PREFIX);
+        printf("%s    Arguments:             ", PROGRAM_PREFIX);
         if (NULL == my_module_globals.args[0]) {
             printf(" (null)");
         } else {
