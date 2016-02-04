@@ -59,7 +59,7 @@ int parse_module_args(int argc, char *argv[]) {
         OUTPUT(("%s", _ERROR("invalid threshold")));
         return PERFEXPERT_ERROR;
     }
-
+/* 
     if (my_module_globals.report_file == NULL ||
             access(my_module_globals.report_file, R_OK) == -1) {
         OUTPUT(("%s", _ERROR("invalid report file")));
@@ -69,12 +69,13 @@ int parse_module_args(int argc, char *argv[]) {
           OUTPUT_VERBOSE((8, "%s %s", _ERROR("impossible to access report file"), my_module_globals.report_file));
         return PERFEXPERT_ERROR;
     }
+*/
 
     OUTPUT_VERBOSE((7, "%s", _BLUE("Summary of options")));
     OUTPUT_VERBOSE((7, "   Threshold:     %f", globals.threshold));
-    OUTPUT_VERBOSE((7, "   Architecture:  %s", my_module_globals.architecture));
+//     OUTPUT_VERBOSE((7, "   Architecture:  %s", my_module_globals.architecture));
     OUTPUT_VERBOSE((7, "   Verbose level: %d", my_module_globals.verbose));
-    OUTPUT_VERBOSE((7, "   Report file: : %s", my_module_globals.report_file));
+//    OUTPUT_VERBOSE((7, "   Report file: : %s", my_module_globals.report_file));
 
     /* Not using OUTPUT_VERBOSE because I want only one line */
     if (8 <= my_module_globals.verbose) {
@@ -94,19 +95,19 @@ int parse_module_args(int argc, char *argv[]) {
 static error_t parse_options(int key, char *arg, struct argp_state *state) {
     switch (key) {
         /* Sorting order */
-        case 'a':
+/*          case 'a':
             my_module_globals.architecture = arg;
             OUTPUT_VERBOSE((1, "option 'a' set [%s]",
                 my_module_globals.architecture));
             break;
-
+*/
         /* Vectorization report */
-        case 'r':
+/*          case 'r':
             my_module_globals.report_file = arg;
             OUTPUT_VERBOSE((1, "option 'r' set [%s]",
                 my_module_globals.report_file));
             break;
-
+ */
         /* Verbose */
         case 'v':
             my_module_globals.verbose = atoi(arg);
@@ -129,12 +130,12 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
 
 /* parse_env_vars */
 static int parse_env_vars(void) {
-    if (NULL != getenv("PERFEXPERT_MODULE_LCPI_ARCHITECTURE")) {
-        my_module_globals.architecture =
-            getenv("PERFEXPERT_MODULE_LCPI_ARCHITECTURE");
-        OUTPUT_VERBOSE((1, "ENV: order=%s", my_module_globals.architecture));
+/*    if (NULL != getenv("PERFEXPERT_MODULE_MACVEC_REPORT")) {
+        my_module_globals.report_file =
+            getenv("PERFEXPERT_MODULE_MACVEC_REPORT");
+        OUTPUT_VERBOSE((1, "ENV: report=%s", my_module_globals.report_file));
     }
-
+*/
     return PERFEXPERT_SUCCESS;
 }
 

@@ -61,9 +61,8 @@ extern "C" {
 typedef struct {
     perfexpert_list_t profiles;
     perfexpert_module_measurement_t *measurement;
-    char *architecture;
+    //char *architecture;
     int verbose;
-    char* report_file;
 } my_module_globals_t;
 
 extern my_module_globals_t my_module_globals;
@@ -76,7 +75,8 @@ int module_measure(void);
 int module_analyze(void);
 
 /* Function declarations */
-int database_import(perfexpert_list_t *profiles, const char *table);
+int database_import(perfexpert_list_t *profiles, char *filename);
+int list_files_hotspots(perfexpert_list_t *files);
 
 /* Processor specific functions */
 int counters_jaketown(void);

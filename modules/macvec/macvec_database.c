@@ -49,27 +49,60 @@ extern "C" {
 #include "common/perfexpert_md5.h"
 #include "common/perfexpert_output.h"
 
+int list_files_hotspots(perfexpert_list_t *files) {
+    char *error = NULL, sql[MAX_BUFFER_SIZE];
+
+    bzero(sql, MAX_BUFFER_SIZE);
+    sprintf(sql,
+        "SELECT DISTINCT(file) FROM "
+        "perfexpert_hotspot WHERE perfexpert_id = %llu;", globals.unique_id);
+
+    if (SQLITE_OK != sqlite3_exec(globals.db, sql, import_filenames,
+        (void *)files, &error)) {
+        OUTPUT(("%s %s", _ERROR("SQL error"), error));
+        sqlite3_free(error);
+        return PERFEXPERT_ERROR;
+    }
+
+    return PERFEXPERT_SUCCESS;
+}
+
+static int import_filenames(void *files, int n, char **val, char **names) {
+    char_t *file = NULL;
+
+    PERFEXPERT_ALLOC(char_t, file, sizeof(char_t));
+    perfexpert_list_item_construct((perfexpert_list_item_t *)file);
+    PERFEXPERT_ALLOC(char, file->name, (strlen(val[0]) + 1));
+    strcpy(file->name, val[0]);
+    perfexpert_list_append((perfexpert_list_t *)files,
+        (perfexpert_list_item_t *)file);
+
+    OUTPUT_VERBOSE((7, "\n\n\n\n FILE:    %s", _CYAN(file->name)));
+
+    return PERFEXPERT_SUCCESS;
+}
+
 /* database_import */
-int database_import(perfexpert_list_t *profiles, const char *table) {
+int database_import(perfexpert_list_t *profiles, char *filename) {
     macvec_profile_t *p = NULL;
     macvec_hotspot_t *h = NULL;
 
     /* Select and import profiles */
     OUTPUT_VERBOSE((5, "%s", _YELLOW("Importing profiles")));
-    if (PERFEXPERT_SUCCESS != select_profiles(profiles)) {
+    if (PERFEXPERT_SUCCESS != select_profiles(profiles, filename)) {
         OUTPUT(("%s", _ERROR("importing profiles")));
     }
 
     /* For each profile, select and import its modules */
     perfexpert_list_for(p, profiles, macvec_profile_t) {
         OUTPUT_VERBOSE((5, "%s", _YELLOW("Importing modules")));
-        if (PERFEXPERT_SUCCESS != select_modules(p)) {
+        if (PERFEXPERT_SUCCESS != select_modules(p, filename)) {
             OUTPUT(("%s", _ERROR("importing modules")));
         }
 
         /* Select and import hotspots */
         OUTPUT_VERBOSE((5, "%s", _YELLOW("Importing hotspots")));
-        if (PERFEXPERT_SUCCESS != select_hotspots(&(p->hotspots))) {
+        if (PERFEXPERT_SUCCESS != select_hotspots(&(p->hotspots), filename)) {
             OUTPUT(("%s", _ERROR("importing hotspots")));
         }
 
@@ -84,7 +117,7 @@ int database_import(perfexpert_list_t *profiles, const char *table) {
 
         /* Calculate metadata (cycles, instructions, relevance, and variance) */
         OUTPUT_VERBOSE((5, "%s", _YELLOW("Calculating metadata")));
-        if (PERFEXPERT_SUCCESS != calculate_metadata(p, table)) {
+        if (PERFEXPERT_SUCCESS != calculate_metadata(p)) {
             OUTPUT(("%s", _ERROR("calculating metadata")));
             return PERFEXPERT_ERROR;
         }
@@ -94,14 +127,15 @@ int database_import(perfexpert_list_t *profiles, const char *table) {
 }
 
 /* select_profiles */
-static int select_profiles(perfexpert_list_t *profiles) {
+static int select_profiles(perfexpert_list_t *profiles, char *filename) {
     char *error = NULL, sql[MAX_BUFFER_SIZE];
 
     bzero(sql, MAX_BUFFER_SIZE);
     sprintf(sql,
-        "SELECT DISTINCT profile FROM perfexpert_hotspot WHERE perfexpert_id = %llu;",
-        globals.unique_id);
+        "SELECT DISTINCT profile FROM perfexpert_hotspot WHERE perfexpert_id = %llu and file = '%s';",
+        globals.unique_id, filename);
 
+    OUTPUT(("SQL: %s", sql));
     if (SQLITE_OK != sqlite3_exec(globals.db, sql, import_profiles,
         (void *)profiles, &error)) {
         OUTPUT(("%s %s", _ERROR("SQL error"), error));
@@ -133,13 +167,13 @@ static int import_profiles(void *profiles, int n, char **val, char **names) {
 }
 
 /* select_modules */
-static int select_modules(macvec_profile_t *profile) {
+static int select_modules(macvec_profile_t *profile, char * filename) {
     char *error = NULL, sql[MAX_BUFFER_SIZE];
 
     bzero(sql, MAX_BUFFER_SIZE);
     sprintf(sql,
-        "SELECT DISTINCT module FROM perfexpert_hotspot WHERE perfexpert_id = %llu;",
-        globals.unique_id);
+        "SELECT DISTINCT module FROM perfexpert_hotspot WHERE perfexpert_id = %llu and file = '%s';",
+        globals.unique_id, filename);
 
     if (SQLITE_OK != sqlite3_exec(globals.db, sql, import_modules,
         (void *)profile, &error)) {
@@ -171,13 +205,13 @@ static int import_modules(void *profile, int n, char **val, char **names) {
 }
 
 /* select_hotspots */
-static int select_hotspots(perfexpert_list_t *hotspots) {
+static int select_hotspots(perfexpert_list_t *hotspots, char *filename) {
     char *error = NULL, sql[MAX_BUFFER_SIZE];
 
     bzero(sql, MAX_BUFFER_SIZE);
     sprintf(sql,
         "SELECT id, name, type, profile, module, file, line, depth FROM "
-        "perfexpert_hotspot WHERE perfexpert_id = %llu;", globals.unique_id);
+        "perfexpert_hotspot WHERE perfexpert_id = %llu AND file = '%s';", globals.unique_id, filename);
 
     if (SQLITE_OK != sqlite3_exec(globals.db, sql, import_hotspots,
         (void *)hotspots, &error)) {
@@ -248,7 +282,7 @@ static int map_modules_to_hotspots(macvec_hotspot_t *h, macvec_module_t *db) {
 }
 
 /* calculate_metadata */
-static int calculate_metadata(macvec_profile_t *profile, const char *table) {
+static int calculate_metadata(macvec_profile_t *profile) {
     char *error = NULL, sql[MAX_BUFFER_SIZE], *total_cycles, *total_inst;
     macvec_module_t *m = NULL, *t = NULL;
     macvec_hotspot_t *h = NULL;

@@ -43,6 +43,13 @@ typedef struct {
 typedef struct {
     volatile perfexpert_list_item_t *next;
     volatile perfexpert_list_item_t *prev;
+    
+    char *name;
+} char_t;
+
+typedef struct {
+    volatile perfexpert_list_item_t *next;
+    volatile perfexpert_list_item_t *prev;
     long long int id;
     char *name;
     hotspot_type_t type;

@@ -33,14 +33,16 @@ extern "C" {
 #include "common/perfexpert_list.h"
 
 /* Function declarations */
-static int select_profiles(perfexpert_list_t *profiles);
+static int import_filenames(void *files, int n, char **val, char **names);
+// static int database_import(perfexpert_list_t *profiles, char *filename);
+static int select_profiles(perfexpert_list_t *profiles, char *filename);
 static int import_profiles(void *profiles, int n, char **val, char **names);
-static int select_modules(macvec_profile_t *profile);
+static int select_modules(macvec_profile_t *profile, char *filename);
 static int import_modules(void *profile, int n, char **val, char **names);
-static int select_hotspots(perfexpert_list_t *hotspots);
+static int select_hotspots(perfexpert_list_t *hotspots, char *filename);
 static int import_hotspots(void *hotspots, int n, char **val, char **names);
 static int map_modules_to_hotspots(macvec_hotspot_t *h, macvec_module_t *m);
-static int calculate_metadata(macvec_profile_t *profile, const char *table);
+static int calculate_metadata(macvec_profile_t *profile);
 static int import_instructions(void *hotspot, int n, char **val, char **names);
 static int import_experiment(void *hotspot, int n, char **val, char **names);
 

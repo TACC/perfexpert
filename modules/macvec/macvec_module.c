@@ -31,6 +31,7 @@ extern "C" {
 #include "macvec_module.h"
 #include "macvec.h"
 #include "macvec_types.h"
+#include "macvec_database.h"
 
 /* PerfExpert common headers */
 #include "common/perfexpert_constants.h"
@@ -42,7 +43,6 @@ extern "C" {
 #include "common/perfexpert_string.h"
 
 /* Global variable to define the module itself */
-perfexpert_module_macvec_t myself_module;
 my_module_globals_t my_module_globals;
 char module_version[] = "1.0.0";
 
@@ -54,23 +54,24 @@ int module_load(void) {
 
 /* module_init */
 int module_init(void) {
+    int comp_loaded = PERFEXPERT_FALSE;
     /* Initialize list of events */
     perfexpert_list_construct(&(my_module_globals.profiles));
-    my_module_globals.architecture = NULL;
+//    my_module_globals.architecture = NULL;
 
-    /* Check if at least one of HPCToolkit or VTune is loaded */
+    // Check if at least one of HPCToolkit or VTune is loaded 
     if ((PERFEXPERT_FALSE == perfexpert_module_available("hpctoolkit")) &&
         (PERFEXPERT_FALSE == perfexpert_module_available("vtune"))) {
         OUTPUT(("%s", _RED("Neither HPCToolkit nor VTune module loaded")));
 
-        /* Default to HPCToolkit */
+        // Default to HPCToolkit
         OUTPUT(("%s", _RED("PerfExpert will try to load HPCToolkit module")));
         if (PERFEXPERT_SUCCESS != perfexpert_module_load("hpctoolkit")) {
             OUTPUT(("%s", _ERROR("while loading HPCToolkit module")));
             return PERFEXPERT_ERROR;
         }
 
-        /* Get the module address */
+        // Get the module address
         if (NULL == (my_module_globals.measurement =
                 (perfexpert_module_measurement_t *)
                 perfexpert_module_get("hpctoolkit"))) {
@@ -79,7 +80,7 @@ int module_init(void) {
         }
     }
 
-    /* Should we use HPCToolkit? */
+    // Should we use HPCToolkit?
     if (PERFEXPERT_TRUE == perfexpert_module_available("hpctoolkit")) {
         OUTPUT_VERBOSE((5, "%s",
             _CYAN("will use HPCToolkit as measurement module")));
@@ -97,7 +98,7 @@ int module_init(void) {
         }
     }
 
-    /* Should we generate metrics to use with Vtune? */
+    // Should we generate metrics to use with Vtune? 
     if (PERFEXPERT_TRUE == perfexpert_module_available("vtune")) {
         OUTPUT_VERBOSE((5, "%s",
             _CYAN("will use VTune as measurement module")));
@@ -115,12 +116,26 @@ int module_init(void) {
         }
     }
 
-    /* Triple check: at least one measurement module should be available */
+    // Triple check: at least one measurement module should be available
     if (NULL == my_module_globals.measurement) {
         OUTPUT(("%s", _ERROR("No measurement module loaded")));
         return PERFEXPERT_ERROR;
     }
-
+       
+    /* Module pre-requisites */
+/*  if (PERFEXPERT_SUCCESS != perfexpert_module_requires("macvec",
+        PERFEXPERT_PHASE_ANALYZE, NULL, PERFEXPERT_PHASE_MEASURE,
+        PERFEXPERT_MODULE_AFTER)) {
+        OUTPUT(("%s", _ERROR("pre-required module/phase not available 1")));
+        return PERFEXPERT_ERROR;
+    }   
+*/    /*if (PERFEXPERT_SUCCESS != perfexpert_module_requires("macvec",
+        PERFEXPERT_PHASE_ANALYZE, NULL, PERFEXPERT_PHASE_COMPILE,
+        PERFEXPERT_MODULE_BEFORE)) {
+        OUTPUT(("%s", _ERROR("pre-required module/phase not available 2")));
+        return PERFEXPERT_ERROR;
+    } 
+  */  
     /* Parse module options */
     if (PERFEXPERT_SUCCESS != parse_module_args(myself_module.argc,
                 myself_module.argv)) {
@@ -128,7 +143,34 @@ int module_init(void) {
         return PERFEXPERT_ERROR;
     }
 
+//    if (my_module_globals.report_file == NULL) {
+        if (PERFEXPERT_TRUE == perfexpert_module_available("make")) {
+            myself_module.measurement = (perfexpert_module_measurement_t *) perfexpert_module_get("make");
+            if (NULL != myself_module.measurement) {
+                comp_loaded = PERFEXPERT_TRUE;
+            }        
+        }
+        if (PERFEXPERT_TRUE == perfexpert_module_available("icc")) {
+            myself_module.measurement = (perfexpert_module_measurement_t *) perfexpert_module_get("icc");
+            if (NULL != myself_module.measurement) {
+                comp_loaded = PERFEXPERT_TRUE;
+            }        
+        }
+        if (PERFEXPERT_TRUE == perfexpert_module_available("gcc")) {
+            myself_module.measurement = (perfexpert_module_measurement_t *) perfexpert_module_get("gcc");
+            if (NULL != myself_module.measurement) {
+                comp_loaded = PERFEXPERT_TRUE;
+            }        
+        }
+//    }
+
+    if (!comp_loaded) {
+        OUTPUT(("%s", _ERROR(" this module needs a compilation module to be defined")));
+        return PERFEXPERT_ERROR;
+    }
+
     /* If the architecture was not set, we should try to identify it... */
+    /*  
     if (NULL == my_module_globals.architecture) {
         char *error = NULL, sql[MAX_BUFFER_SIZE];
         int family = perfexpert_cpuinfo_get_family();
@@ -156,7 +198,7 @@ int module_init(void) {
             my_module_globals.architecture));
     }
 
-    /* Initialize the measurements module before using it */
+    // Initialize the measurements module before using it
     if (PERFEXPERT_MODULE_LOADED == my_module_globals.measurement->status) {
         if (PERFEXPERT_SUCCESS != my_module_globals.measurement->init()) {
             OUTPUT(("%s [%s]", _ERROR("error initializing module"),
@@ -167,7 +209,7 @@ int module_init(void) {
 
     OUTPUT(("%s", _YELLOW("Setting performance events")));
 
-    /* Jaketown (or SandyBridgeEP) */
+    // Jaketown (or SandyBridgeEP)
     if (0 == strcmp("jaketown",
         perfexpert_string_to_lower(my_module_globals.architecture))) {
         if (PERFEXPERT_SUCCESS != counters_jaketown()) {
@@ -175,7 +217,7 @@ int module_init(void) {
             return PERFEXPERT_ERROR;
         }
     }
-    /* MIC (or KnightsCorner) */
+    // MIC (or KnightsCorner)
     else if (0 == strcmp("mic",
         perfexpert_string_to_lower(my_module_globals.architecture))) {
         if (PERFEXPERT_SUCCESS != metrics_mic()) {
@@ -183,7 +225,7 @@ int module_init(void) {
             return PERFEXPERT_ERROR;
         }
     }
-    /* Unknown */
+    // Unknown 
     else if (0 == strcmp("unknown",
         perfexpert_string_to_lower(my_module_globals.architecture))) {
         if (PERFEXPERT_SUCCESS != counters_papi()) {
@@ -191,12 +233,13 @@ int module_init(void) {
             return PERFEXPERT_ERROR;
         }
     }
-    /* If not any of the above, I'm sorry... */
+    // If not any of the above, I'm sorry...
     else {
         OUTPUT(("%s (%s)", _ERROR("setting counters"),
             my_module_globals.architecture));
         return PERFEXPERT_ERROR;
     }
+    */
 
     OUTPUT_VERBOSE((5, "%s", _MAGENTA("initialized")));
 
@@ -269,24 +312,69 @@ int module_analyze(void) {
     macvec_hotspot_t *h = NULL;
 
     OUTPUT(("%s", _YELLOW("Analyzing measurements")));
-
-    /* Import measurements to memory */
+/*  
+    // Import measurements to memory
     if (PERFEXPERT_SUCCESS != database_import(&(my_module_globals.profiles),
         my_module_globals.measurement->name)) {
         OUTPUT(("%s", _ERROR("unable to import profiles")));
         return PERFEXPERT_ERROR;
     }
-
+*/
+    char *cflags = getenv("CFLAGS");
+    char *newenv;
+            PERFEXPERT_ALLOC(char, newenv, strlen(cflags) + 30);
+            snprintf(newenv, strlen(cflags) + 30,
+                     "-vec-report=6 ", cflags);
+            if (setenv("CFLAGS", newenv, 1) < 0){
+                return PERFEXPERT_ERROR;
+            }
+            PERFEXPERT_DEALLOC(newenv);
+    /*   
+            OUTPUT(("2"));
+            char *cxxflags = getenv("CXXFLAGS");
+            PERFEXPERT_ALLOC(char, newenv, strlen(cxxflags) + strlen(my_module_globals.report_file) + 30);
+            snprintf(newenv, strlen(cxxflags) + strlen(my_module_globals.report_file) + 30,
+                     "-vec-report=6 -opt-report=%s %s", my_module_globals.report_file, cxxflags); 
+            if (setenv("CXXFLAGS", newenv, 1) < 0){
+                return PERFEXPERT_ERROR;
+            }
+            PERFEXPERT_DEALLOC(newenv);
+     
+            OUTPUT(("3"));
+            char *fcflags = getenv("FCFLAGS");
+            PERFEXPERT_ALLOC(char, newenv, strlen(fcflags)+strlen(my_module_globals.report_file) + 30);
+            snprintf(newenv, strlen(fcflags) + strlen(my_module_globals.report_file) + 30,
+                     "-vec-report=6 -opt-report=%s %s", my_module_globals.report_file, fcflags); 
+            if (setenv("FCFLAGS", newenv, 1) < 0){
+                return PERFEXPERT_ERROR;
+            }
+            PERFEXPERT_DEALLOC(newenv);
+*/
+            myself_module.measurement->compile();
+   //     }
+   // }
     /* For each profile... */
-    macvec_profile_t* profile;
+   
+    OUTPUT(("Code recompiled")); 
+    perfexpert_list_t files;
+    perfexpert_list_construct(&files);
+    OUTPUT(("Going to import the list of files"));
+    list_files_hotspots(&files);
+    OUTPUT(("Files imported"));
+    
     double threshold = globals.threshold;
-    perfexpert_list_for(profile, &(my_module_globals.profiles),
-            macvec_profile_t) {
-        perfexpert_list_t* hotspots = &(profile->hotspots);
-        filter_and_sort_hotspots(hotspots, threshold);
-        process_hotspots(hotspots, my_module_globals.report_file);
-    }
 
+    char_t *filename;
+    perfexpert_list_for (filename, &files, char_t) {        
+        macvec_profile_t* profile;
+        database_import(&(my_module_globals.profiles), filename->name);
+        perfexpert_list_for(profile, &(my_module_globals.profiles),
+                macvec_profile_t) {
+            perfexpert_list_t* hotspots = &(profile->hotspots);
+            filter_and_sort_hotspots(hotspots, threshold);
+            process_hotspots(hotspots); //, my_module_globals.report_file);
+        }   
+    }
     return PERFEXPERT_SUCCESS;
 }
 
