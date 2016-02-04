@@ -122,20 +122,6 @@ int module_init(void) {
         return PERFEXPERT_ERROR;
     }
        
-    /* Module pre-requisites */
-/*  if (PERFEXPERT_SUCCESS != perfexpert_module_requires("macvec",
-        PERFEXPERT_PHASE_ANALYZE, NULL, PERFEXPERT_PHASE_MEASURE,
-        PERFEXPERT_MODULE_AFTER)) {
-        OUTPUT(("%s", _ERROR("pre-required module/phase not available 1")));
-        return PERFEXPERT_ERROR;
-    }   
-*/    /*if (PERFEXPERT_SUCCESS != perfexpert_module_requires("macvec",
-        PERFEXPERT_PHASE_ANALYZE, NULL, PERFEXPERT_PHASE_COMPILE,
-        PERFEXPERT_MODULE_BEFORE)) {
-        OUTPUT(("%s", _ERROR("pre-required module/phase not available 2")));
-        return PERFEXPERT_ERROR;
-    } 
-  */  
     /* Parse module options */
     if (PERFEXPERT_SUCCESS != parse_module_args(myself_module.argc,
                 myself_module.argv)) {
@@ -143,26 +129,22 @@ int module_init(void) {
         return PERFEXPERT_ERROR;
     }
 
-//    if (my_module_globals.report_file == NULL) {
-        if (PERFEXPERT_TRUE == perfexpert_module_available("make")) {
-            myself_module.measurement = (perfexpert_module_measurement_t *) perfexpert_module_get("make");
-            if (NULL != myself_module.measurement) {
-                comp_loaded = PERFEXPERT_TRUE;
-            }        
-        }
-        if (PERFEXPERT_TRUE == perfexpert_module_available("icc")) {
-            myself_module.measurement = (perfexpert_module_measurement_t *) perfexpert_module_get("icc");
-            if (NULL != myself_module.measurement) {
-                comp_loaded = PERFEXPERT_TRUE;
-            }        
-        }
-        if (PERFEXPERT_TRUE == perfexpert_module_available("gcc")) {
-            myself_module.measurement = (perfexpert_module_measurement_t *) perfexpert_module_get("gcc");
-            if (NULL != myself_module.measurement) {
-                comp_loaded = PERFEXPERT_TRUE;
-            }        
-        }
-//    }
+    if (PERFEXPERT_TRUE == perfexpert_module_available("make")) {
+        myself_module.measurement = (perfexpert_module_measurement_t *) perfexpert_module_get("make");
+        if (NULL != myself_module.measurement) {
+            comp_loaded = PERFEXPERT_TRUE;
+        }        
+    }
+    if (PERFEXPERT_TRUE == perfexpert_module_available("icc")) {
+        myself_module.measurement = (perfexpert_module_measurement_t *) perfexpert_module_get("icc");
+        if (NULL != myself_module.measurement) {
+            comp_loaded = PERFEXPERT_TRUE;
+        }        
+    }
+    if (PERFEXPERT_TRUE == perfexpert_module_available("gcc")) {
+        OUTPUT((_ERROR("MACVEC only supports Intel compilers")));
+        return PERFEXPERT_ERROR;
+    }
 
     if (!comp_loaded) {
         OUTPUT(("%s", _ERROR(" this module needs a compilation module to be defined")));
