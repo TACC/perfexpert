@@ -312,48 +312,51 @@ int module_analyze(void) {
     macvec_hotspot_t *h = NULL;
 
     OUTPUT(("%s", _YELLOW("Analyzing measurements")));
-/*  
-    // Import measurements to memory
-    if (PERFEXPERT_SUCCESS != database_import(&(my_module_globals.profiles),
-        my_module_globals.measurement->name)) {
-        OUTPUT(("%s", _ERROR("unable to import profiles")));
-        return PERFEXPERT_ERROR;
-    }
-*/
+    
     char *cflags = getenv("CFLAGS");
     char *newenv;
-            PERFEXPERT_ALLOC(char, newenv, strlen(cflags) + 30);
-            snprintf(newenv, strlen(cflags) + 30,
-                     "-vec-report=6 ", cflags);
-            if (setenv("CFLAGS", newenv, 1) < 0){
-                return PERFEXPERT_ERROR;
-            }
-            PERFEXPERT_DEALLOC(newenv);
-    /*   
-            OUTPUT(("2"));
-            char *cxxflags = getenv("CXXFLAGS");
-            PERFEXPERT_ALLOC(char, newenv, strlen(cxxflags) + strlen(my_module_globals.report_file) + 30);
-            snprintf(newenv, strlen(cxxflags) + strlen(my_module_globals.report_file) + 30,
-                     "-vec-report=6 -opt-report=%s %s", my_module_globals.report_file, cxxflags); 
-            if (setenv("CXXFLAGS", newenv, 1) < 0){
-                return PERFEXPERT_ERROR;
-            }
-            PERFEXPERT_DEALLOC(newenv);
+    if (cflags) {
+        PERFEXPERT_ALLOC(char, newenv, strlen(cflags) + 15);
+        snprintf(newenv, strlen(cflags) + 15,
+                 "-vec-report=6 %s", cflags);
+        if (setenv("CFLAGS", newenv, 1) < 0){
+            return PERFEXPERT_ERROR;
+        }
+        PERFEXPERT_DEALLOC(newenv);
+    }
+    else {
+        setenv ("CFLAGS", "-vec-report=6", 1);
+    }
+
+    char *cxxflags = getenv("CXXFLAGS");
+    if (cxxflags) {
+        PERFEXPERT_ALLOC(char, newenv, strlen(cxxflags) + 15);
+        snprintf(newenv, strlen(cxxflags) + 15,
+                 "-vec-report=6 %s", cxxflags); 
+        if (setenv("CXXFLAGS", newenv, 1) < 0){
+            return PERFEXPERT_ERROR;
+        }
+        PERFEXPERT_DEALLOC(newenv);
+    }
+    else {
+        setenv("CXXFLAGS", "-vec-report=6", 1);
+    } 
      
-            OUTPUT(("3"));
-            char *fcflags = getenv("FCFLAGS");
-            PERFEXPERT_ALLOC(char, newenv, strlen(fcflags)+strlen(my_module_globals.report_file) + 30);
-            snprintf(newenv, strlen(fcflags) + strlen(my_module_globals.report_file) + 30,
-                     "-vec-report=6 -opt-report=%s %s", my_module_globals.report_file, fcflags); 
-            if (setenv("FCFLAGS", newenv, 1) < 0){
-                return PERFEXPERT_ERROR;
-            }
-            PERFEXPERT_DEALLOC(newenv);
-*/
-            myself_module.measurement->compile();
-   //     }
-   // }
-    /* For each profile... */
+    char *fcflags = getenv("FCFLAGS");
+    if (fcflags) {
+        PERFEXPERT_ALLOC(char, newenv, strlen(fcflags) + 15);
+        snprintf(newenv, strlen(fcflags) + 15,
+                 "-vec-report=6 %s", fcflags); 
+        if (setenv("FCFLAGS", newenv, 1) < 0){
+            return PERFEXPERT_ERROR;
+        }
+        PERFEXPERT_DEALLOC(newenv);
+    }
+    else {
+        setenv("FCFLAGS", "-vec-report=6", 1);
+    }
+    
+    myself_module.measurement->compile();
    
     perfexpert_list_t files;
     perfexpert_list_construct(&files);
@@ -369,7 +372,7 @@ int module_analyze(void) {
                 macvec_profile_t) {
             perfexpert_list_t* hotspots = &(profile->hotspots);
             filter_and_sort_hotspots(hotspots, threshold);
-            process_hotspots(hotspots, filename->name); //, my_module_globals.report_file);
+            process_hotspots(hotspots, filename->name); 
         }   
     }
     return PERFEXPERT_SUCCESS;
