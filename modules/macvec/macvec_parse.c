@@ -363,14 +363,12 @@ int process_file(perfexpert_list_t* hotspots, FILE* stream,
     }
 
     while (fgets(file_line, k_line_len, stream)) {
-        OUTPUT(("Processing line: %s", file_line));
+        //OUTPUT(("Processing line: %s", file_line));
         if (strlen(file_line)<5) {
-            continue;
+        //    continue;
         }
         regmatch_t pmatch[3] = {0};
-        OUTPUT(("BLAH"));
         if (strstr(file_line, "LOOP END") != NULL) {
-                OUTPUT(("1"));
             if (0 != perfexpert_list_get_size(&stack)) {
                 location_t *location = (location_t*)perfexpert_list_get_last(&stack);
                 if (location->ignored == 0) {
@@ -438,7 +436,6 @@ int process_file(perfexpert_list_t* hotspots, FILE* stream,
                 perfexpert_list_remove_item(&stack, (perfexpert_list_item_t *)location);
             }
         } else if (regexec(re_loop, file_line, 3, pmatch, 0) == 0) {
-            OUTPUT(("2"));
             int start = pmatch[1].rm_so;
             int length = pmatch[1].rm_eo - pmatch[1].rm_so;
 
@@ -474,7 +471,6 @@ int process_file(perfexpert_list_t* hotspots, FILE* stream,
             OUTPUT_VERBOSE((4, "Found loop in vec report at: %s:%d.",
                     loc->filename, loc->line_number));
         } else if (0 != perfexpert_list_get_size(&stack)) {
-            OUTPUT(("3"));
             location_t *location = NULL;
             location = (location_t *)perfexpert_list_get_last(&stack);
 
@@ -534,7 +530,6 @@ int process_file(perfexpert_list_t* hotspots, FILE* stream,
         }
     }
 
-    OUTPUT(("4"));
     regfree(&re_dep_var);
     regfree(&re_align_var);
 
@@ -542,29 +537,30 @@ int process_file(perfexpert_list_t* hotspots, FILE* stream,
             "vectorization report with hotspots:"),
             perfexpert_list_get_size(locations)));
 
-    while (perfexpert_list_get_size(&stack) != 0) {
-        perfexpert_list_item_t* last = NULL;
-        last = perfexpert_list_get_last(&stack);
-        perfexpert_list_remove_item(&stack, last);
+    if (perfexpert_list_get_size(locations) > 0 ) {
+        while (perfexpert_list_get_size(&stack) != 0) {
+            perfexpert_list_item_t* last = NULL;
+            last = perfexpert_list_get_last(&stack);
+            perfexpert_list_remove_item(&stack, last);
 
-        location_t* location = (location_t*) last;
-        while (perfexpert_list_get_size(&(location->var_list)) != 0) {
-            perfexpert_list_item_t* _last = NULL;
-            _last = perfexpert_list_get_last(&(location->var_list));
-            perfexpert_list_remove_item(&(location->var_list), _last);
+            location_t* location = (location_t*) last;
+            while (perfexpert_list_get_size(&(location->var_list)) != 0) {
+                perfexpert_list_item_t* _last = NULL;
+                _last = perfexpert_list_get_last(&(location->var_list));
+                perfexpert_list_remove_item(&(location->var_list), _last);
 
-            PERFEXPERT_DEALLOC(_last);
+                PERFEXPERT_DEALLOC(_last);
+            }
+
+            PERFEXPERT_DEALLOC(last);
         }
-
-        PERFEXPERT_DEALLOC(last);
     }
-
     perfexpert_list_destruct(&stack);
-    return SUCCESS;
+    return PERFEXPERT_SUCCESS;
 }
 
-int parse(perfexpert_list_t* hotspots, perfexpert_list_t* locations) {
-    macvec_hotspot_t *h = NULL;
+int parse(perfexpert_list_t* hotspots, perfexpert_list_t* locations, char *filename) {
+//    char_t *h = NULL;
 
     regex_t re_loop;
     const char* loop_pattern = "LOOP BEGIN at ([^\\(]*)\\(([0-9]*),([0-9]*)\\)";
@@ -579,40 +575,36 @@ int parse(perfexpert_list_t* hotspots, perfexpert_list_t* locations) {
         return -ERR_REGEX;
     }
 
-    perfexpert_list_for (h, hotspots, macvec_hotspot_t) {
-        FILE* stream = NULL;
-        char * report_filename;
-        PERFEXPERT_ALLOC (char, report_filename, strlen(h->file)+7);
-        char * pch;
-        pch = strrchr(h->file, '.');
-        memcpy(report_filename, h->file, pch - h->file);
-        strcat(report_filename, ".optrpt");
-        OUTPUT(("\n\n\n\n\n\n\n Reading report file: %s \n\n\n\n\n",report_filename));
-//        char * report_filename = h->file;
-        stream = fopen(report_filename, "r");
-        PERFEXPERT_DEALLOC(report_filename);
-        if (stream == NULL) {
-            regfree(&re_remark);
-            regfree(&re_loop);
+    FILE* stream = NULL;
+    char * report_filename;
+    PERFEXPERT_ALLOC (char, report_filename, strlen(filename)+7);
+    char * pch;
+    pch = strrchr(filename, '.');
+    memcpy(report_filename, filename, pch - filename);
+    strcat(report_filename, ".optrpt");
+    stream = fopen(report_filename, "r");
+    PERFEXPERT_DEALLOC(report_filename);
+    if (stream == NULL) {
+        regfree(&re_remark);
+        regfree(&re_loop);
+        OUTPUT_VERBOSE((6, "%s %s", _ERROR(" couldn't open file"), report_filename));
+        return -ERR_FILE;
+    }
 
-            return -ERR_FILE;
-        }
-
-        int err = process_file(hotspots, stream, &re_loop, &re_remark, locations);
-        if (err != 0) {
-            regfree(&re_remark);
-            regfree(&re_loop);
-            fclose(stream);
-
-            return err;
-        }
-
+    int err = process_file(hotspots, stream, &re_loop, &re_remark, locations);
+    if (err != 0) {
         regfree(&re_remark);
         regfree(&re_loop);
         fclose(stream);
+
+        return err;
     }
 
-    return SUCCESS;
+    regfree(&re_remark);
+    regfree(&re_loop);
+    fclose(stream);
+
+    return PERFEXPERT_SUCCESS;
 }
 
 static void print_recommendations(perfexpert_list_t* locations) {
@@ -669,21 +661,19 @@ static void print_recommendations(perfexpert_list_t* locations) {
     fprintf(stdout, "\n");
 }
 
-int process_hotspots(perfexpert_list_t* hotspots) {
+int process_hotspots(perfexpert_list_t* hotspots, char *filename) {
     perfexpert_list_t locations;
     perfexpert_list_construct(&locations);
     int err = SUCCESS;
    
-    if (SUCCESS != (err = parse(hotspots, &locations))) {
+    if (SUCCESS != (err = parse(hotspots, &locations, filename))) {
         OUTPUT(("%s: %d",
             _ERROR("Failed to parse vectorization reports, err code"), err));
         return PERFEXPERT_ERROR;
     }
 
-    OUTPUT(("GOING TO PRINT THE RECOMMENDATIONS"));
     print_recommendations(&locations);
 
-    OUTPUT(("DONE WITH THE RECOMMENDATIONS"));
     while (perfexpert_list_get_size(&locations) != 0) {
         perfexpert_list_item_t* last = NULL;
         last = perfexpert_list_get_last(&locations);
@@ -703,6 +693,5 @@ int process_hotspots(perfexpert_list_t* hotspots) {
     }
 
     perfexpert_list_destruct(&locations);
-    OUTPUT(("DONE PROCESSING HOTSPOTS"));
     return PERFEXPERT_SUCCESS;
 }

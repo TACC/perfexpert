@@ -355,24 +355,21 @@ int module_analyze(void) {
    // }
     /* For each profile... */
    
-    OUTPUT(("Code recompiled")); 
     perfexpert_list_t files;
     perfexpert_list_construct(&files);
-    OUTPUT(("Going to import the list of files"));
     list_files_hotspots(&files);
-    OUTPUT(("Files imported"));
     
     double threshold = globals.threshold;
 
     char_t *filename;
-    perfexpert_list_for (filename, &files, char_t) {        
+    perfexpert_list_for (filename, &files, char_t) {
         macvec_profile_t* profile;
         database_import(&(my_module_globals.profiles), filename->name);
         perfexpert_list_for(profile, &(my_module_globals.profiles),
                 macvec_profile_t) {
             perfexpert_list_t* hotspots = &(profile->hotspots);
             filter_and_sort_hotspots(hotspots, threshold);
-            process_hotspots(hotspots); //, my_module_globals.report_file);
+            process_hotspots(hotspots, filename->name); //, my_module_globals.report_file);
         }   
     }
     return PERFEXPERT_SUCCESS;

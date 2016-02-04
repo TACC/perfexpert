@@ -69,6 +69,10 @@ int list_files_hotspots(perfexpert_list_t *files) {
 
 static int import_filenames(void *files, int n, char **val, char **names) {
     char_t *file = NULL;
+    
+    if (perfexpert_util_file_is_writable(val[0]) == PERFEXPERT_ERROR) {
+        return PERFEXPERT_SUCCESS;
+    }
 
     PERFEXPERT_ALLOC(char_t, file, sizeof(char_t));
     perfexpert_list_item_construct((perfexpert_list_item_t *)file);
@@ -76,8 +80,6 @@ static int import_filenames(void *files, int n, char **val, char **names) {
     strcpy(file->name, val[0]);
     perfexpert_list_append((perfexpert_list_t *)files,
         (perfexpert_list_item_t *)file);
-
-    OUTPUT_VERBOSE((7, "\n\n\n\n FILE:    %s", _CYAN(file->name)));
 
     return PERFEXPERT_SUCCESS;
 }
@@ -135,7 +137,8 @@ static int select_profiles(perfexpert_list_t *profiles, char *filename) {
         "SELECT DISTINCT profile FROM perfexpert_hotspot WHERE perfexpert_id = %llu and file = '%s';",
         globals.unique_id, filename);
 
-    OUTPUT(("SQL: %s", sql));
+    OUTPUT_VERBOSE((9, "sql: %s", sql));
+
     if (SQLITE_OK != sqlite3_exec(globals.db, sql, import_profiles,
         (void *)profiles, &error)) {
         OUTPUT(("%s %s", _ERROR("SQL error"), error));
@@ -175,6 +178,8 @@ static int select_modules(macvec_profile_t *profile, char * filename) {
         "SELECT DISTINCT module FROM perfexpert_hotspot WHERE perfexpert_id = %llu and file = '%s';",
         globals.unique_id, filename);
 
+    OUTPUT_VERBOSE((9, "sql: %s", sql));
+    
     if (SQLITE_OK != sqlite3_exec(globals.db, sql, import_modules,
         (void *)profile, &error)) {
         OUTPUT(("%s %s", _ERROR("SQL error"), error));
@@ -212,6 +217,8 @@ static int select_hotspots(perfexpert_list_t *hotspots, char *filename) {
     sprintf(sql,
         "SELECT id, name, type, profile, module, file, line, depth FROM "
         "perfexpert_hotspot WHERE perfexpert_id = %llu AND file = '%s';", globals.unique_id, filename);
+
+    OUTPUT_VERBOSE((9, "sql: %s", sql));
 
     if (SQLITE_OK != sqlite3_exec(globals.db, sql, import_hotspots,
         (void *)hotspots, &error)) {
@@ -261,6 +268,8 @@ static int map_modules_to_hotspots(macvec_hotspot_t *h, macvec_module_t *db) {
     bzero(sql, MAX_BUFFER_SIZE);
     sprintf(sql, "SELECT module FROM perfexpert_hotspot WHERE perfexpert_id = %llu AND "
         "name = '%s';", globals.unique_id, h->name);
+
+    OUTPUT_VERBOSE((9, "sql: %s", sql));
 
     if (SQLITE_OK != sqlite3_exec(globals.db, sql,
         perfexpert_database_get_string, (void *)&module_name, &error)) {
