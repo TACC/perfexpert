@@ -230,6 +230,23 @@ int module_init(void) {
 
 /* module_fini */
 int module_fini(void) {
+    macvec_profile_t* profile;
+    perfexpert_list_for(profile, &(my_module_globals.profiles),
+            macvec_profile_t) {
+        PERFEXPERT_DEALLOC(profile->name);
+        macvec_module_t *module, *t;
+        perfexpert_hash_iter_str(profile->modules_by_name, module, t) {
+            PERFEXPERT_DEALLOC(module->name);
+            PERFEXPERT_DEALLOC(module);
+        }
+        macvec_hotspot_t *hotspot;
+        perfexpert_list_for(hotspot, &(profile->hotspots), macvec_hotspot_t) {
+            PERFEXPERT_DEALLOC(hotspot->name);
+            PERFEXPERT_DEALLOC(hotspot->file);
+            PERFEXPERT_DEALLOC(hotspot);
+        }
+        PERFEXPERT_DEALLOC(profile);
+    }
     OUTPUT_VERBOSE((5, "%s", _MAGENTA("finalized")));
 
     return PERFEXPERT_SUCCESS;
@@ -354,7 +371,8 @@ int module_analyze(void) {
                 macvec_profile_t) {
             perfexpert_list_t* hotspots = &(profile->hotspots);
             filter_and_sort_hotspots(hotspots, threshold);
-            process_hotspots(hotspots, filename->name); 
+            process_hotspots(hotspots, filename->name);
+            PERFEXPERT_DEALLOCATE(filename->name);
         }   
     }
     return PERFEXPERT_SUCCESS;

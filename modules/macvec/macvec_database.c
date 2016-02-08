@@ -67,9 +67,14 @@ int list_files_hotspots(perfexpert_list_t *files) {
     return PERFEXPERT_SUCCESS;
 }
 
+/* This function creates a list of the source filenames that contain
+ * hotspots and that are writable (we don't analyze external headers,
+ * system files,... The files are recompiled with the vectorization
+ * report flags so that they can be later on analyzed */
 static int import_filenames(void *files, int n, char **val, char **names) {
     char_t *file = NULL;
-    
+
+    /*  Only care about writable files */   
     if (perfexpert_util_file_is_writable(val[0]) == PERFEXPERT_ERROR) {
         return PERFEXPERT_SUCCESS;
     }

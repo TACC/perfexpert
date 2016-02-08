@@ -46,7 +46,6 @@ typedef struct {
 typedef struct {
     volatile perfexpert_list_item_t *next;
     volatile perfexpert_list_item_t *prev;
-    
     char *name;
 } char_t;
 
