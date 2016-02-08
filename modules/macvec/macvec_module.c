@@ -244,11 +244,13 @@ int module_fini(void) {
         perfexpert_list_for(hotspot, &(profile->hotspots), macvec_hotspot_t) {
             PERFEXPERT_DEALLOC(hotspot->name);
             PERFEXPERT_DEALLOC(hotspot->file);
-            PERFEXPERT_DEALLOC(hotspot);
+      //      PERFEXPERT_DEALLOC(hotspot);
         }
+        perfexpert_list_destruct(&(profile->hotspots));
     // This fails. I'm forgetting something else. TODO
-   //     PERFEXPERT_DEALLOC(profile);
+     //   PERFEXPERT_DEALLOC(profile);
     }
+    perfexpert_list_destruct (&(my_module_globals.profiles));
     OUTPUT_VERBOSE((5, "%s", _MAGENTA("finalized")));
 
     return PERFEXPERT_SUCCESS;
