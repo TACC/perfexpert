@@ -230,6 +230,7 @@ int module_init(void) {
 
 /* module_fini */
 int module_fini(void) {
+    OUTPUT_VERBOSE((5, "finalizing"));
     macvec_profile_t* profile;
     perfexpert_list_for(profile, &(my_module_globals.profiles),
             macvec_profile_t) {
@@ -245,7 +246,8 @@ int module_fini(void) {
             PERFEXPERT_DEALLOC(hotspot->file);
             PERFEXPERT_DEALLOC(hotspot);
         }
-        PERFEXPERT_DEALLOC(profile);
+    // This fails. I'm forgetting something else. TODO
+   //     PERFEXPERT_DEALLOC(profile);
     }
     OUTPUT_VERBOSE((5, "%s", _MAGENTA("finalized")));
 
@@ -372,8 +374,8 @@ int module_analyze(void) {
             perfexpert_list_t* hotspots = &(profile->hotspots);
             filter_and_sort_hotspots(hotspots, threshold);
             process_hotspots(hotspots, filename->name);
-            PERFEXPERT_DEALLOCATE(filename->name);
         }   
+        PERFEXPERT_DEALLOC(filename->name);
     }
     return PERFEXPERT_SUCCESS;
 }
