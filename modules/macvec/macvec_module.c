@@ -57,7 +57,6 @@ int module_init(void) {
     int comp_loaded = PERFEXPERT_FALSE;
     /* Initialize list of events */
     perfexpert_list_construct(&(my_module_globals.profiles));
-//    my_module_globals.architecture = NULL;
 
     // Check if at least one of HPCToolkit or VTune is loaded 
     if ((PERFEXPERT_FALSE == perfexpert_module_available("hpctoolkit")) &&
@@ -150,78 +149,6 @@ int module_init(void) {
         OUTPUT(("%s", _ERROR(" this module needs a compilation module to be defined")));
         return PERFEXPERT_ERROR;
     }
-
-    /* If the architecture was not set, we should try to identify it... */
-    /*  
-    if (NULL == my_module_globals.architecture) {
-        char *error = NULL, sql[MAX_BUFFER_SIZE];
-        int family = perfexpert_cpuinfo_get_family();
-        int model  = perfexpert_cpuinfo_get_model();
-
-        bzero(sql, MAX_BUFFER_SIZE);
-        sprintf(sql, "SELECT description FROM arch_processor WHERE family=%d "
-            "AND model=%d;", family, model);
-        OUTPUT_VERBOSE((10, "   SQL: %s", _CYAN(sql)));
-
-        if (SQLITE_OK != sqlite3_exec(globals.db, sql,
-            perfexpert_database_get_string,
-            (void *)&my_module_globals.architecture, &error)) {
-            OUTPUT(("%s %s", _ERROR("SQL error"), error));
-            sqlite3_free(error);
-            return PERFEXPERT_ERROR;
-        }
-
-        if (NULL == my_module_globals.architecture) {
-            OUTPUT_VERBOSE((1, "Unknown architecture, using PAPI defaults"));
-            my_module_globals.architecture = "unknown";
-        }
-
-        OUTPUT_VERBOSE((1, "Architecture not set but it looks like [%s]",
-            my_module_globals.architecture));
-    }
-
-    // Initialize the measurements module before using it
-    if (PERFEXPERT_MODULE_LOADED == my_module_globals.measurement->status) {
-        if (PERFEXPERT_SUCCESS != my_module_globals.measurement->init()) {
-            OUTPUT(("%s [%s]", _ERROR("error initializing module"),
-                my_module_globals.measurement->name));
-            return PERFEXPERT_ERROR;
-        }
-    }
-
-    OUTPUT(("%s", _YELLOW("Setting performance events")));
-
-    // Jaketown (or SandyBridgeEP)
-    if (0 == strcmp("jaketown",
-        perfexpert_string_to_lower(my_module_globals.architecture))) {
-        if (PERFEXPERT_SUCCESS != counters_jaketown()) {
-            OUTPUT(("%s", _ERROR("setting counters (Jaketown)")));
-            return PERFEXPERT_ERROR;
-        }
-    }
-    // MIC (or KnightsCorner)
-    else if (0 == strcmp("mic",
-        perfexpert_string_to_lower(my_module_globals.architecture))) {
-        if (PERFEXPERT_SUCCESS != metrics_mic()) {
-            OUTPUT(("%s", _ERROR("setting counters (MIC)")));
-            return PERFEXPERT_ERROR;
-        }
-    }
-    // Unknown 
-    else if (0 == strcmp("unknown",
-        perfexpert_string_to_lower(my_module_globals.architecture))) {
-        if (PERFEXPERT_SUCCESS != counters_papi()) {
-            OUTPUT(("%s", _ERROR("setting counters (PAPI)")));
-            return PERFEXPERT_ERROR;
-        }
-    }
-    // If not any of the above, I'm sorry...
-    else {
-        OUTPUT(("%s (%s)", _ERROR("setting counters"),
-            my_module_globals.architecture));
-        return PERFEXPERT_ERROR;
-    }
-    */
 
     OUTPUT_VERBOSE((5, "%s", _MAGENTA("initialized")));
 

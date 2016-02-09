@@ -61,7 +61,6 @@ extern "C" {
 typedef struct {
     perfexpert_list_t profiles;
     perfexpert_module_measurement_t *measurement;
-    //char *architecture;
     int verbose;
 } my_module_globals_t;
 
