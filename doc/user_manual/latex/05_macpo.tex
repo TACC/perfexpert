@@ -1,4 +1,4 @@
-\chapter{Using MACPO}
+\chapter{Using MACPO}\label{ch:macpo}
 MACPO is an acronym for Memory Access Characterization for Performance Optimization. It is a tool that has been built to assist performance tuning of single- and multi-threaded C, C++ or Fortran applications. More specifically, MACPO is designed to provide insight into an application's memory usage patterns.
 
 \section{A Quick Demonstration}
@@ -120,22 +120,6 @@ This section explains how to translate the MACPO metrics into source code change
 	A low reuse factor indicates that a line is frequently evicted from the cache. The reuse factor can be improved by reducing the reuse distance of memory accesses.
 \end{description}
 
-\section{Using MACPO from PerfExpert}
-
-MACPO has been integrated into PerfExpert. It can be passed as an option to the list of active modules. For example:
-
-\begin{lstlisting}[breaklines]
-
-perfexpert 0.1 --verbose=10 --modules=make,lcpi,hpctoolkit,macpo --module-option=macpo,main=Main.c -p mpirun -- ./XSBench  -t 4 -s small -l 100000
-
-\end{lstlisting}
-
-The previous command will execute the make, LCPI, HPCToolkit and MACPO modules. MACPO will use the information
-produced by HPCToolkit to instrument the most relevant functions and loops.
-
-The MACPO module accepts a set of optional arguments, the most relevant being the \texttt{main} argument. This
-argument is used to pass to MACPO the fullpath and the filename of where the entry point to the code of interest
-is located (i.e. the \texttt{main} function). This will ensure a correct and full instrumentation of the code.
 
 
 \section{Running MACPO as a standalone program}

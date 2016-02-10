@@ -158,6 +158,29 @@ Here is a complete list of the environment variables PerfExpert uses. The comman
 
 \subsection{\texttt{macpo}}
 
+
+\subsubsection{Synopsis}
+
+MACPO has been integrated into PerfExpert. More information about MACPO can be found in \ref{ch:macpo}. 
+
+\subsubsection{Command Line Arguments}
+
+MACPO can be used as a standalone application or as part of PerfExpert. In this second case, 
+it can be passed as an option to the list of active modules. For example:
+
+\begin{lstlisting}[breaklines]
+
+perfexpert 0.1 --modules=make,lcpi,hpctoolkit,macpo --module-option=macpo,main=/home/username/src/Main.c ./program program_args
+
+\end{lstlisting}
+
+The previous command will execute the make, LCPI, HPCToolkit and MACPO modules. MACPO will use the information
+produced by HPCToolkit to instrument the most relevant functions and loops.
+
+The MACPO module accepts a set of optional arguments, the most relevant being the \texttt{main} argument. This
+argument is used to pass to MACPO the fullpath and the filename of where the entry point to the code of interest
+is located (i.e. the \texttt{main} function). This will ensure a correct and full instrumentation of the code.
+
 \subsection{\texttt{MACVEC}}
 
 
