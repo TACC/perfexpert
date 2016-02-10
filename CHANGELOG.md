@@ -1,4 +1,4 @@
-Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
+Copyright (c) 2011-2016  University of Texas at Austin. All rights reserved.
 
 $COPYRIGHT$
 
@@ -13,7 +13,7 @@ PerfExpert is distributed in the hope that it will be useful, but WITHOUT ANY
 WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
 A PARTICULAR PURPOSE.
 
-Authors: Leonardo Fialho and Ashay Rane
+Authors: Antonio Gomez-Iglesias
 
 $HEADER$
 
@@ -26,5 +26,7 @@ $HEADER$
 - MACPO module
 - Changes in the tables in the DB to only have one table for hotspots and events. This forces the HPCToolkit and the VTune modules to write to the same tables. It simplifies the analysis of the measurements produced by those modules
 - Changes in the MACPO tool so that indigo__create_map is declared consistently (void indigo__create_map() __attribute__((weak)) )
+- Multiple files can be instrumented at the same time with MACPO. The entry point to the code needs to be passed as the last file.
+- MACVEC now automatically recompile the codes (using a makefile), creates a vectorization report for each file and analyzes it.
 
 EOF
