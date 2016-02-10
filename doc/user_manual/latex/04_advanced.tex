@@ -158,11 +158,65 @@ Here is a complete list of the environment variables PerfExpert uses. The comman
 
 \subsection{\texttt{macpo}}
 
+
 \subsubsection{Synopsis}
+
+MACPO has been integrated into PerfExpert. More information about MACPO can be found in \ref{ch:macpo}. 
+
+\subsubsection{Command Line Arguments}
+
+MACPO can be used as a standalone application or as part of PerfExpert. In this second case, 
+it can be passed as an option to the list of active modules. For example:
+
+\begin{lstlisting}[breaklines]
+
+perfexpert 0.1 --modules=make,lcpi,hpctoolkit,macpo --module-option=macpo,main=/home/username/src/Main.c ./program program_args
+
+\end{lstlisting}
+
+The previous command will execute the make, LCPI, HPCToolkit and MACPO modules. MACPO will use the information
+produced by HPCToolkit to instrument the most relevant functions and loops.
+
+The MACPO module accepts a set of optional arguments, the most relevant being the \texttt{main} argument. This
+argument is used to pass to MACPO the fullpath and the filename of where the entry point to the code of interest
+is located (i.e. the \texttt{main} function). This will ensure a correct and full instrumentation of the code.
+
+\subsection{\texttt{MACVEC}}
+
+
+\subsubsection{Synopsis}
+
+MACVEC is a vectorization report analyzer for the Intel compiler. It automatically creates vectorization reports
+for the applications that can be directly compiled with the Intel compiler commands or a \texttt{makefile} that uses
+the Intel compilers.
 
 \subsubsection{Description}
 
+MACVEC generates a report for the hotspots in the application that can benefit of vectorizing part of the code. The
+hotspots are detected using a measurement module (i.e. HPCToolkit or Intel VTune).
+
+MACVEC will recompile the code. When using a \texttt{makefile}, it is necessary that it implements a \texttt{clean}
+target, as \texttt{make clean} will be invoked before recompiling the code. After that first step, MACVEC will 
+pass the Intel compiler flags for generating a vectorization report using the environment variables \texttt{CFLAGS},
+\texttt{CXXFLAGS} and \texttt{FCFLAGS}. In order for this step to work, it is also necessary that the \texttt{makefile}
+does not overwrite those variables, but rather update them. Although MACVEC will generate vectorization reports for
+all the source files of the code, it will only analyze those files that contain functions or loops that represent
+hotspots. This will depend on the \texttt{threshold} specified when calling PerfExpert.
+
+
 \subsubsection{Command Line Arguments}
+
+MACVEC is not automatically used when running PerfExpert without specifying the modules that will be run.
+In order to use MACVEC, the user needs to pass it as a module:
+
+\begin{lstlisting}[breaklines]
+perfexpert 0.1 --modules=make,lcpi,hpctoolkit,macvec ./program program_args
+\end{lstlisting}
+
+The previous command will analyze the code using LCPI and HPCToolkit to find the hotspots. It will then
+recompile the code with the \texttt{make} command and analyze the vectorization report with MACVEC.
+
+MACVEC does not accept any extra arguments.
 
 \subsubsection{Exit Status}
 
