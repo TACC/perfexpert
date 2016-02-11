@@ -141,7 +141,7 @@ int output_analysis(perfexpert_list_t *profiles) {
 
         /* For each hotspot in the profile's list of hotspots... */
         perfexpert_list_for(h, &(p->hotspots), lcpi_hotspot_t) {
-            if (globals.threshold <= h->importance) {
+            if (my_module_globals.threshold <= h->importance) {
                 if (0 == strcmp("jaketown", perfexpert_string_to_lower(
                     my_module_globals.architecture))) {
                     if (PERFEXPERT_SUCCESS != output_profile(h, report_FP, 20)) {

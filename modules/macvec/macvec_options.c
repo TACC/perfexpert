@@ -54,14 +54,14 @@ int parse_module_args(int argc, char *argv[]) {
     argp_parse(&argp, argc, argv, 0, 0, NULL);
 
     /* Sanity check: threshold is mandatory, check limits */
-    if (((0 >= globals.threshold) ||
-        (1 < globals.threshold))) {
+    if (((0 >= my_module_globals.threshold) ||
+        (1 < my_module_globals.threshold))) {
         OUTPUT(("%s", _ERROR("invalid threshold")));
         return PERFEXPERT_ERROR;
     }
 
     OUTPUT_VERBOSE((7, "%s", _BLUE("Summary of options")));
-    OUTPUT_VERBOSE((7, "   Threshold:     %f", globals.threshold));
+    OUTPUT_VERBOSE((7, "   Threshold:     %f", my_module_globals.threshold));
     OUTPUT_VERBOSE((7, "   Verbose level: %d", my_module_globals.verbose));
 
     /* Not using OUTPUT_VERBOSE because I want only one line */

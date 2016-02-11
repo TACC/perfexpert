@@ -553,26 +553,28 @@ int process_file(perfexpert_list_t* hotspots, FILE* stream,
     regfree(&re_dep_var);
     regfree(&re_align_var);
 
-    OUTPUT(("%s [%d]", _YELLOW("Location list size after matching "
+    if (perfexpert_list_get_size(locations) > 0) {
+        OUTPUT(("%s [%d]", _YELLOW("Location list size after matching "
             "vectorization report with hotspots:"),
             perfexpert_list_get_size(locations)));
 
-    if (perfexpert_list_get_size(locations) > 0 ) {
-        while (perfexpert_list_get_size(&stack) != 0) {
-            perfexpert_list_item_t* last = NULL;
-            last = perfexpert_list_get_last(&stack);
-            perfexpert_list_remove_item(&stack, last);
+        if (perfexpert_list_get_size(locations) > 0 ) {
+            while (perfexpert_list_get_size(&stack) != 0) {
+                perfexpert_list_item_t* last = NULL;
+                last = perfexpert_list_get_last(&stack);
+                perfexpert_list_remove_item(&stack, last);
 
-            location_t* location = (location_t*) last;
-            while (perfexpert_list_get_size(&(location->var_list)) != 0) {
-                perfexpert_list_item_t* _last = NULL;
-                _last = perfexpert_list_get_last(&(location->var_list));
-                perfexpert_list_remove_item(&(location->var_list), _last);
+                location_t* location = (location_t*) last;
+                while (perfexpert_list_get_size(&(location->var_list)) != 0) {
+                    perfexpert_list_item_t* _last = NULL;
+                    _last = perfexpert_list_get_last(&(location->var_list));
+                    perfexpert_list_remove_item(&(location->var_list), _last);
 
-                PERFEXPERT_DEALLOC(_last);
+                    PERFEXPERT_DEALLOC(_last);
+                }
+
+                PERFEXPERT_DEALLOC(last);
             }
-
-            PERFEXPERT_DEALLOC(last);
         }
     }
     perfexpert_list_destruct(&stack);
@@ -639,6 +641,12 @@ static void print_recommendations(perfexpert_list_t* locations) {
         return PERFEXPERT_ERROR;
     }
     PERFEXPERT_DEALLOC(report_FP_file);
+
+    /*  Make sure that we have something to print */
+    if (perfexpert_list_get_size(locations)==0) {
+        fclose(report_FP);
+        return PERFEXPERT_SUCCESS;
+    }
 
     OUTPUT(("%s [%d]", _YELLOW("Printing recommendations"),
         perfexpert_list_get_size(locations)));
