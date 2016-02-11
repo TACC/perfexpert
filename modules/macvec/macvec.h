@@ -62,6 +62,7 @@ typedef struct {
     perfexpert_list_t profiles;
     perfexpert_module_measurement_t *measurement;
     int verbose;
+    double threshold;
 } my_module_globals_t;
 
 extern my_module_globals_t my_module_globals;

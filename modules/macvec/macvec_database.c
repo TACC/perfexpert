@@ -387,6 +387,9 @@ static int calculate_metadata(macvec_profile_t *profile) {
             profile->cycles += h->cycles;
         }
     }
+    if (profile->cycles <= 0.0 || profile->instructions <= 0.0)
+        return PERFEXPERT_SUCCESS;
+    
     OUTPUT_VERBOSE((3, "total # of instructions: [%f]", profile->instructions));
     OUTPUT_VERBOSE((3, "total # of cycles: [%f]", profile->cycles));
 
@@ -397,6 +400,9 @@ static int calculate_metadata(macvec_profile_t *profile) {
             h->instructions, h->variance, h->cycles, h->importance * 100,
             _CYAN(h->name)));
 
+        if (h->importance <= 0.0) {
+            continue;
+        }
         /* Write the importance back to the database */
         bzero(sql, MAX_BUFFER_SIZE);
         sprintf(sql, "UPDATE perfexpert_hotspot SET relevance = %f WHERE "

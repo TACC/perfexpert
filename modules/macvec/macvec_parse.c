@@ -553,26 +553,28 @@ int process_file(perfexpert_list_t* hotspots, FILE* stream,
     regfree(&re_dep_var);
     regfree(&re_align_var);
 
-    OUTPUT(("%s [%d]", _YELLOW("Location list size after matching "
+    if (perfexpert_list_get_size(locations) > 0) {
+        OUTPUT(("%s [%d]", _YELLOW("Location list size after matching "
             "vectorization report with hotspots:"),
             perfexpert_list_get_size(locations)));
 
-    if (perfexpert_list_get_size(locations) > 0 ) {
-        while (perfexpert_list_get_size(&stack) != 0) {
-            perfexpert_list_item_t* last = NULL;
-            last = perfexpert_list_get_last(&stack);
-            perfexpert_list_remove_item(&stack, last);
+        if (perfexpert_list_get_size(locations) > 0 ) {
+            while (perfexpert_list_get_size(&stack) != 0) {
+                perfexpert_list_item_t* last = NULL;
+                last = perfexpert_list_get_last(&stack);
+                perfexpert_list_remove_item(&stack, last);
 
-            location_t* location = (location_t*) last;
-            while (perfexpert_list_get_size(&(location->var_list)) != 0) {
-                perfexpert_list_item_t* _last = NULL;
-                _last = perfexpert_list_get_last(&(location->var_list));
-                perfexpert_list_remove_item(&(location->var_list), _last);
+                location_t* location = (location_t*) last;
+                while (perfexpert_list_get_size(&(location->var_list)) != 0) {
+                    perfexpert_list_item_t* _last = NULL;
+                    _last = perfexpert_list_get_last(&(location->var_list));
+                    perfexpert_list_remove_item(&(location->var_list), _last);
 
-                PERFEXPERT_DEALLOC(_last);
+                    PERFEXPERT_DEALLOC(_last);
+                }
+
+                PERFEXPERT_DEALLOC(last);
             }
-
-            PERFEXPERT_DEALLOC(last);
         }
     }
     perfexpert_list_destruct(&stack);
@@ -629,6 +631,22 @@ int parse(perfexpert_list_t* hotspots, perfexpert_list_t* locations, char *filen
 
 static void print_recommendations(perfexpert_list_t* locations) {
     location_t* location;
+    char *report_FP_file;
+    char *report_FP;
+    
+    PERFEXPERT_ALLOC(char, report_FP_file, (strlen(globals.moduledir) + 15));
+    sprintf(report_FP_file, "%s/report.txt", globals.moduledir);
+    if (NULL == (report_FP = fopen(report_FP_file, "a"))) {
+        OUTPUT(("%s (%s)", _ERROR("unable to open file"), report_FP_file));
+        return PERFEXPERT_ERROR;
+    }
+    PERFEXPERT_DEALLOC(report_FP_file);
+
+    /*  Make sure that we have something to print */
+    if (perfexpert_list_get_size(locations)==0) {
+        fclose(report_FP);
+        return PERFEXPERT_SUCCESS;
+    }
 
     OUTPUT(("%s [%d]", _YELLOW("Printing recommendations"),
         perfexpert_list_get_size(locations)));
@@ -637,9 +655,12 @@ static void print_recommendations(perfexpert_list_t* locations) {
         fprintf(stdout, "\nLoop in function %s in %s:%d (%.2f%% of the total "
             "runtime)\n", location->function, location->filename,
             location->line_number, location->importance * 100);
-
-            OUTPUT_VERBOSE((2, "Size of list containing variables: %d.",
-                    perfexpert_list_get_size(&(location->var_list))));
+        fprintf(report_FP, "\nLoop in function %s in %s:%d (%.2f%% of the total "
+            "runtime)\n", location->function, location->filename,
+            location->line_number, location->importance * 100);
+            
+        OUTPUT_VERBOSE((2, "Size of list containing variables: %d.",
+                perfexpert_list_get_size(&(location->var_list))));
 
         uint32_t size = perfexpert_list_get_size(&(location->var_list));
         if (0 != size) {
@@ -648,17 +669,21 @@ static void print_recommendations(perfexpert_list_t* locations) {
             uint32_t i = 0;
             perfexpert_list_for(var, &(location->var_list), var_t) {
                 fprintf(stdout, "%s at line %ld", var->name, var->line_number);
+                fprintf(report_FP, "%s at line %ld", var->name, var->line_number);
 
                 if (i != size-1) {
                     fprintf(stdout, ", ");
+                    fprintf(report_FP, ", ");
                 } else {
                     fprintf(stdout, ".");
+                    fprintf(report_FP, ".");
                 }
 
                 i += 1;
             }
 
             fprintf(stdout, "\n");
+            fprintf(report_FP, "\n");
         }
 
         OUTPUT_VERBOSE((4, "Remark count: %d.", location->remark_count));
@@ -672,6 +697,7 @@ static void print_recommendations(perfexpert_list_t* locations) {
                     const char** description = messages[j].description;
                     if (message != NULL && description != NULL) {
                         fprintf(stdout, "  - %s: %s\n", *message, *description);
+                        fprintf(report_FP, "  - %s: %s\n", *message, *description);
                     }
                 }
             }
@@ -679,6 +705,8 @@ static void print_recommendations(perfexpert_list_t* locations) {
     }
 
     fprintf(stdout, "\n");
+    fprintf(report_FP, "\n");
+    fclose(report_FP);
 }
 
 int process_hotspots(perfexpert_list_t* hotspots, char *filename) {

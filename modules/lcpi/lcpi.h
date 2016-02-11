@@ -61,6 +61,7 @@ typedef struct {
     int help_only;
     int mic;
     char *architecture;
+    double threshold;
     int verbose;
 } my_module_globals_t;
 

@@ -55,6 +55,8 @@ int module_load(void) {
 /* module_init */
 int module_init(void) {
     int comp_loaded = PERFEXPERT_FALSE;
+
+    my_module_globals.threshold = globals.threshold;
     /* Initialize list of events */
     perfexpert_list_construct(&(my_module_globals.profiles));
 
@@ -196,7 +198,7 @@ static int cmp_relevance(const macvec_hotspot_t **a,
     return 0;
 }
 
-int filter_and_sort_hotspots(perfexpert_list_t* hotspots, double threshold) {
+int filter_and_sort_hotspots(perfexpert_list_t* hotspots) {
     if (0 == perfexpert_list_get_size(hotspots)) {
         return PERFEXPERT_SUCCESS;
     }
@@ -213,7 +215,7 @@ int filter_and_sort_hotspots(perfexpert_list_t* hotspots, double threshold) {
     while (NULL != (item = perfexpert_list_get_first(hotspots))) {
         perfexpert_list_remove_item(hotspots, item);
         macvec_hotspot_t* hotspot = (macvec_hotspot_t*) item;
-        if (hotspot->importance >= threshold &&
+        if (hotspot->importance >= my_module_globals.threshold &&
                 hotspot->type == PERFEXPERT_HOTSPOT_LOOP) {
             items[index++] = item;
         }
@@ -292,7 +294,6 @@ int module_analyze(void) {
     perfexpert_list_construct(&files);
     list_files_hotspots(&files);
     
-    double threshold = globals.threshold;
 
     char_t *filename;
     perfexpert_list_for (filename, &files, char_t) {
@@ -301,7 +302,7 @@ int module_analyze(void) {
         perfexpert_list_for(profile, &(my_module_globals.profiles),
                 macvec_profile_t) {
             perfexpert_list_t* hotspots = &(profile->hotspots);
-            filter_and_sort_hotspots(hotspots, threshold);
+            filter_and_sort_hotspots(hotspots);
             process_hotspots(hotspots, filename->name);
         }   
         PERFEXPERT_DEALLOC(filename->name);
