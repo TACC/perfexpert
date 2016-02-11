@@ -1,26 +1,20 @@
-\chapter{List of Automatic Optimizations PerfExpert Supports}
-
-\begin{description}
-	\item[Loop Interchange]\hfill \\
-	\item[Loop Tiling (aka Loop Blocking)]\hfill \\
-	\item[Loop Fission]\hfill \\
-
-\end{description}
-
 \chapter{PerfExpert for Advanced Users}
 
-This chapter covers details of PerfExpert internal operation. While its reading is not required for common users, advanced user may appreciate its content.
+This chapter covers details of PerfExpert internal operation as well as how to use additional modules integrated
+in PerfExpert. While its reading is not required for common users, advanced user may appreciate its content.
 
 \section{The Big Picture}
 
 \section{Tools Which Are Part of PerfExpert}
 
-This section describes the usage details of each of the tools which compose PerfExpert.
+This section describes the usage details of each of the tools or modules which compose PerfExpert.
 
-\subsection{\texttt{perfexpert}}
+\subsection{\texttt{PerfExpert}}
 
 \subsubsection{Synopsis}
 
+Within the structure of PerfExpert, the main functionality is also considered a module. It is the only module
+that will always be executed.
 
 \btt perfexpert <\tt\underline{threshold}\btt> [-m \tt\underline{tar}g\underline{et} \btt | -s \tt\underline{sourcefile}\btt] [-r \tt\underline{count} \btt] [-d \tt\underline{database}\btt] [-p \tt p\underline{refix}\btt]\par
 \ \ \ \ \ \ \ \ \ \btt[-b \tt\underline{before}\btt] [-a \tt\underline{after}\btt] [-l \tt\underline{level}\btt] \btt[-k \tt\underline{card} \btt[-P \tt p\underline{refix}\btt] [-B \tt\underline{before}\btt] [-A \tt\underline{after}\btt]]\par
@@ -146,10 +140,19 @@ Here is a complete list of the environment variables PerfExpert uses. The comman
 
 \subsubsection{Exit Status}
 
+\subsection{\texttt{measurement}}
+
+\subsubsection{HPCToolkit}
+
+\subsubsection{Intel VTune}
+
 \subsection{\texttt{analyzer}}
 
 \subsubsection{Synopsis}
 
+This module provides the most common functionality that users require. It analyzes the data collected by the measurement
+module. The information that this module generates can be later on used by the \texttt{recommender} module \cite{recommender}
+to create a set of recommendations that the user can implement in the code.
 \subsubsection{Description}
 
 \subsubsection{Command Line Arguments}
@@ -168,11 +171,22 @@ MACPO has been integrated into PerfExpert. More information about MACPO can be f
 MACPO can be used as a standalone application or as part of PerfExpert. In this second case, 
 it can be passed as an option to the list of active modules. For example:
 
-\begin{lstlisting}[breaklines]
+%\begin{lstlisting}[breaklines]
+%
+%$ perfexpert 0.1 --modules=make,lcpi,hpctoolkit,macpo            \
+%            --module-option=macpo,main=/home/username/src/Main.c \
+%            ./program program_args
+%
+%
+%\end{lstlisting}
 
-perfexpert 0.1 --modules=make,lcpi,hpctoolkit,macpo --module-option=macpo,main=/home/username/src/Main.c ./program program_args
+\vspace{5pt}
+\btt \$ perfexpert \btt{0.1 --modules=make,lcpi,hpctoolkit,macpo}\par
+\ \ \ \ \ \ \ \ \ \ \btt{--module-option=macpo,main=/home/username/src/Main.c}\par 
+\ \ \ \ \ \ \ \ \ \ \tt{./program  program\_args}\par
+\normalfont
+\vspace{5pt}
 
-\end{lstlisting}
 
 The previous command will execute the make, LCPI, HPCToolkit and MACPO modules. MACPO will use the information
 produced by HPCToolkit to instrument the most relevant functions and loops.
@@ -210,8 +224,12 @@ MACVEC is not automatically used when running PerfExpert without specifying the 
 In order to use MACVEC, the user needs to pass it as a module:
 
 \begin{lstlisting}[breaklines]
-perfexpert 0.1 --modules=make,lcpi,hpctoolkit,macvec ./program program_args
+perfexpert 0.1 --modules=make,lcpi,hpctoolkit,macvec    \
+            ./program program_args
 \end{lstlisting}
+
+\btt perfexpert \btt{0.1 --modules=make,lcpi,hpctoolkit,macvec} \tt{./program  program\_args}\par
+\normalfont
 
 The previous command will analyze the code using LCPI and HPCToolkit to find the hotspots. It will then
 recompile the code with the \texttt{make} command and analyze the vectorization report with MACVEC.
@@ -220,7 +238,7 @@ MACVEC does not accept any extra arguments.
 
 \subsubsection{Exit Status}
 
-\subsection{\texttt{recommender}}
+\subsection{\texttt{recommender}} \label{recommender}
 
 \subsubsection{Description}
 
@@ -416,7 +434,7 @@ The basic directory tree of the temporary directory looks like the following:
 .perfexpert-temp.FPAEx6/2/database
 .perfexpert-temp.FPAEx6/2/database/src
 .perfexpert-temp.FPAEx6/2/measurements
-  (...)
+(...)
 \end{lstlisting}
 
 \noindent where for each optimization cycle there is a sub-directory named as cardinal numbers. The sub-directories inside each of the optimization cycle sub-directories are user for:
@@ -433,24 +451,24 @@ The basic directory tree of the temporary directory looks like the following:
 \end{description}
 
 \begin{lstlisting}[breaklines]
-.perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-000-7281ba5a-91510-0.log
-.perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-000-7281ba5a-91510-0.hpcrun
-.perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-001-7281ba5a-91510-0.hpcrun
-  (...)
-.perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-014-7281ba5a-91510-0.hpcrun
-.perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-015-7281ba5a-91510-0.hpcrun
-.perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-000-7281ba5a-91614-0.log
-.perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-000-7281ba5a-91614-0.hpcrun
-.perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-001-7281ba5a-91614-0.hpcrun
-  (...)
-.perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-014-7281ba5a-91614-0.hpcrun
-.perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-015-7281ba5a-91614-0.hpcrun
-.perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-000-7281ba5a-91718-0.log
-.perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-000-7281ba5a-91718-0.hpcrun
-.perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-001-7281ba5a-91718-0.hpcrun
-  (...)
-.perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-014-7281ba5a-91718-0.hpcrun
-.perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-015-7281ba5a-91718-0.hpcrun
+.perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-000-91510-0.log
+.perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-000-91510-0.hpcrun
+.perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-001-91510-0.hpcrun
+(...)
+.perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-014-91510-0.hpcrun
+.perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-015-91510-0.hpcrun
+.perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-000-91614-0.log
+.perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-000-91614-0.hpcrun
+.perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-001-91614-0.hpcrun
+(...)
+.perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-014-91614-0.hpcrun
+.perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-015-91614-0.hpcrun
+.perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-000-91718-0.log
+.perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-000-91718-0.hpcrun
+.perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-001-91718-0.hpcrun
+(...)
+.perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-014-91718-0.hpcrun
+.perfexpert-temp.FPAEx6/1/measurements/mm_omp-000000-015-91718-0.hpcrun
 \end{lstlisting}
 
 \noindent where the filenames are composed of the name of the binary executable, the MPI JOBID (if existent), the thread ID, the process ID, and other control data. In the example above, we shown the \texttt{.log} files and the \texttt{.hpcrun} files from three invocations of \texttt{hpcrun} (the number of invocations may change from one system to other) using 16 threads each of them.
@@ -474,21 +492,3 @@ Besides the sub-directories described above, there are the following files insid
 
 \section{Executing on the Intel\textsuperscript{\textregistered} Xeon Phi\textsuperscript{\texttrademark} Coprocessors}
 
-\chapter{Extending PerfExpert}
-\label{extending}
-
-\section{PerfExpert Database Layout}
-
-\section{Adding Metrics to PerfExpert}
-
-\subsection{Performance Counters}
-
-\subsection{Derived Metrics}
-
-\section{New Recommendations for Optimization}
-
-\section{Enabling New Automatic Optimizations}
-
-\subsection{Pattern Recognizers Interface}
-
-\subsection{Code Transformers Interface}

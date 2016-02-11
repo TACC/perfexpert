@@ -2,6 +2,12 @@
 
 The objective of this chapter is to explain how to run programs using PerfExpert and how to interpret its output using a simple matrix multiplication program. In this chapter, we will use the OpenMP simple matrix multiplication program\footnote{\url{https://computing.llnl.gov/tutorials/openMP/samples/C/omp\_mm.c}}. This program multiplies two matrices and prints one value from the resulting matrix.
 
+\nicebox{NOTICE:} {
+In order to use PerfExpert, the code of interest will need to be compiled
+with the \texttt{-g} flag. Make sure that any \texttt{makefile} used in
+the code includes this flag.
+}
+
 \nicebox{CAUTION:}{PerfExpert may, if you choose to use the full capabilities for automated optimization, change your source code during the process of optimization. PerfExpert  always saves the original file with a different name (\textit{e.g.}, \texttt{omp\_mm.c.old\_27301}) as well as adding annotations to your source code for each optimization it makes. We cannot, however, fully guarantee that code modifications for optimizations will not break your code. We recommend having a full backup of your original source code before using PerfExpert.}
 
 \section{Environment Configuration}
@@ -12,20 +18,21 @@ If you are using any of the TACC\footnote{\url{https://www.tacc.utexas.edu/}} ma
 $ module load papi hpctoolkit perfexpert
 \end{lstlisting}
 
-The runs with PerfExpert should be made using a data set size for each compute node which is equivalent to full production runs but for which execution time is not more than about ten or fifteen minutes since PerfExpert will run your application multiple times (actually, three times on Stampede) with different performance counters enabled. For that reason, before you run PerfExpert you should either request iterative access to computational resources (compute node), or modify the job script that you use to run your application and specify a running time that is about 3 (for Stampede) or 6 (for Lonestar) times the normal running time of the program.
+The runs with PerfExpert should be made using a data set size for each compute node which is equivalent to full production runs but for which execution time is not more than about ten or fifteen minutes since PerfExpert will run your application multiple times (actually, three times on Stampede) with different performance counters enabled. For that reason, before you run PerfExpert you should either request iterative access to computational resources (compute node), or modify the job script that you use to run your application and specify a running time that is about 3 (for Stampede) or 6 (for Lonestar) times the normal running time of the program. Depending on
+the modules that you use within PerfExpert, you might need to increase this
+time.
 
 To request iterative access to a compute node on Stampede, please, have a look on the User Guide\footnote{\url{https://portal.tacc.utexas.edu/group/tup/user-guides/stampede\#running}}.
 
 Below is an example of a job script file modified to use PerfExpert which runs PerfExpert on the application named my\_program and generate the performance analysis report. Adding command line options will cause suggestions for bottleneck remediation to be generated and output and/or automatic performance optimization to be attempted. 
 
-\pagebreak
 \noindent\hrulefill
 \begin{lstlisting}[breaklines]
 #!/bin/bash
 #SBATCH -J myMPI             # job name
-#SBATCH -o myMPI.o%j         # output and error filename (%j stands to jobID)
+#SBATCH -o myMPI.o%j         # output and error filename
 #SBATCH -n 16                # total number of mpi tasks requested
-#SBATCH -p development       # queue (partition) -- normal, development, etc.
+#SBATCH -p development       # queue (partition)
 #SBATCH -t 01:30:00          # run time (hh:mm:ss) - 1.5 hours
 perfexpert 0.1 ./my_program  # run the executable named my_program\end{lstlisting}\hrulefill
 	
@@ -33,39 +40,51 @@ perfexpert 0.1 ./my_program  # run the executable named my_program\end{lstlistin
 
 There are several different options for applying PerfExpert. The following summary shows you how to choose the options to run PerfExpert to match your needs.
 
-\begin{lstlisting}[breaklines]
+\begin{lstlisting}
 $ perfexpert -h
-Usage: perfexpert <threshold> [-m target|-s sourcefile] [-r count] [-d database]
-                  [-p prefix] [-b filename] [-a filename] [-l level] [-gvch]
-                  [-k card [-P prefix] [-B filename] [-A filename] ]
-                  <program_executable> [program_arguments]
+Usage: perfexpert <threshold> [-m target|-s sourcefile] [-r count] \
+                [-d database] [-p prefix] [-b filename] [-a filename] \
+                [-l level] [-gvch] [-k card [-P prefix] [-B filename] \
+                -A filename] \
+                <program_executable> [program_arguments]
 
-  <threshold>        Define the relevance (in % of runtime) of code fragments PerfExpert
-                     should take into consideration (> 0 and <= 1)
-  -m --makefile      Use GNU standard `make' command to compile the code (it requires
-                     the source code available in current directory)
-  -s --source        Specify the source code file (if your source code has more than one
-                     file please use a Makefile and choose `-m' option it also enables
+  <threshold>        Define the relevance (in % of runtime) of code
+                     fragments PerfExpert should take into consideration
+                     (> 0 and <= 1)
+  -m --makefile      Use GNU standard `make' command to compile the code
+                     (it requires the source code available in current
+                     directory)
+  -s --source        Specify the source code file (if your source code
+                     has more than one file please use a Makefile and
+                     choose `-m' option it also enables
                      the automatic optimization option `-a')
-  -r --recommend     Number of recommendations (`count') PerfExpert should show
+  -r --recommend     Number of recommendations (`count') PerfExpert
+                     should show
   -d --database      Select the recommendation database file
                      (default: PERFEXPERT_VARDIR/RECOMMENDATION_DB)
-  -p --prefix        Add a prefix to the command line (e.g. mpirun). Use double quotes to
-                     specify arguments with spaces within (e.g. -p "mpirun -n 2"). Use a
-                     semicolon (`;') to run multiple commands in the same command line
+  -p --prefix        Add a prefix to the command line (e.g. mpirun).
+                     Use double quotes to specify arguments with
+                     spaces within (e.g. -p "mpirun -n 2"). Use a
+                     semicolon (`;') to run multiple commands in the
+                     same command line
   -b --before        Execute 'filename' before each run of the application
   -a --after         Execute 'filename' after each run of the application
-  -k --knc           Tell PerfExpert to run the experiments on the KNC 'card'
-  -p --prefix-knc    Add a prefix to the command line (e.g. mpirun). Use double quotes to
-                     specify arguments with spaces within (e.g. -p "mpirun -n 2"). Use a
-                     semicolon (`;') to run multiple commands in the same command line
-  -B --knc-before    Execute 'filename' before each run of the application on the KNC
-  -A --knc-after     Execute 'filename' after each run of the application on the KNC
+  -k --knc           Tell PerfExpert to run the experiments on the
+                     KNC 'card'
+  -p --prefix-knc    Add a prefix to the command line (e.g. mpirun). Use
+                     double quotes to specify arguments with spaces within
+                     (e.g. -p "mpirun -n 2"). Use a semicolon (`;') to
+                     run multiple commands in the same command line
+  -B --knc-before    Execute 'filename' before each run of the application
+                     on the KNC
+  -A --knc-after     Execute 'filename' after each run of the application
+                     on the KNC
   -g --clean-garbage Remove temporary files after run
   -v --verbose       Enable verbose mode using default verbose level (1)
-  -l --verbose-level Enable verbose mode using a specific verbose level (1-10)
-  -c --colorful      Enable colors on verbose mode, no weird characters will appear on
-                     output files
+  -l --verbose-level Enable verbose mode using a specific verbose level
+                     (1-10)
+  -c --colorful      Enable colors on verbose mode, no weird characters
+                     will appear on output files
   -h --help          Show this message
 
 Use CC, CFLAGS and LDFLAGS to select compiler and compilation/linkage flags
@@ -222,30 +241,38 @@ When using native MPI applications on the Intel Xeon Phi, there are two main sce
 \subsubsection{HPCToolkit}
  This is the simplest case. All you need to do is to specify which MPI launcher you want to use as a prefix in your PerfExpert command. For example:
  
-	\begin{lstlisting}[breaklines]
-	perfexpert 0.1 --modules=lcpi,hpctoolkit --module-option=lcpi,architecture=MIC  --module-option=hpctoolkit,mic-card=mic0 --module-option=hpctoolkit,prefix="ibrun.symm -m" -- ./lulesh2.0 -i 100 -s 8
-	\end{lstlisting}
+\begin{lstlisting}[breaklines]
+$ perfexpert 0.1 --modules=lcpi,hpctoolkit                     \
+             --module-option=lcpi,architecture=MIC             \
+             --module-option=hpctoolkit,mic-card=mic0          \
+             --module-option=hpctoolkit,prefix="ibrun.symm -m" \
+             -- ./lulesh2.0 -i 100 -s 8
+\end{lstlisting}
 
 \subsubsection{Intel VTune}
 	In this case, the application that you want to analyze needs to be specified inside of a script. VTune will run then this script on the Intel Xeon Phi. For example, in the case of Lulesh, the script will look like this:
 
-	\begin{lstlisting}[breaklines]
+\noindent\hrulefill
+\begin{lstlisting}[breaklines]
 #!/bin/bash
 
-export OMP_NUM_THREADS=1;  \
-export LD_LIBRARY_PATH=/opt/apps/intel/15/compiler/lib/mic/:$LD_LIBRARY_PATH; \
-/opt/apps/intel15/impi/5.0.2.044/mic/bin/mpiexec -np 8 \
-/work/02658/agomez/tools/toys/lulesh2.0.2/lulesh2.0 -i 10000 -s 8
-	\end{lstlisting}
+$ export OMP_NUM_THREADS=1
+$ export LD_LIBRARY_PATH=/opt/apps/intel/15/compiler/lib/mic/:$LD_LIBRARY_PATH
+$ /opt/apps/intel15/impi/5.0.2.044/mic/bin/mpiexec -np 8 \
+  /work/02658/agomez/tools/toys/lulesh2.0.2/lulesh2.0 -i 10000 -s 8
+\end{lstlisting}\hrulefill
 	
 We first export a set of environmental variables that are required by our application to run on the Xeon Phi. Then, we need to specify an MPI launcher. In this example, we are choosing the mpiexec provided by Intel MPI 5.0 for the Intel Xeon Phi. This launcher needs the number of MPI tasks that will run on the coprocessor (8 in this example). Finally, we simply need to pass the application that we are studying with its arguments. 
 
 When calling Intel VTune with this script, the command will be like:
 
+\noindent\hrulefill
 \begin{lstlisting}[breaklines]
-perfexpert 0.1 --verbose=10 --modules=lcpi,vtune --module-option=lcpi,architecture=MIC  \
---module-option=vtune,mic-card=mic0  -- ssh mic0 PATH_TO_SCRIPT/test.sh
-\end{lstlisting}
+$ perfexpert 0.1 --verbose=10 --modules=lcpi,vtune  \
+             --module-option=lcpi,architecture=MIC  \
+             --module-option=vtune,mic-card=mic0    \
+             -- ssh mic0 PATH_TO_SCRIPT/test.sh
+\end{lstlisting}\hrulefill
 
 
 \section{List of Recommendations for Optimization}
@@ -253,14 +280,15 @@ perfexpert 0.1 --verbose=10 --modules=lcpi,vtune --module-option=lcpi,architectu
 If PerfExpert runs with \texttt{-Ðr} option enabled, it will also generate a list of suggestions for performance improvement for each bottleneck. This option is always available, it does not depend on which of the other command line option are. A list of suggestions for this example is shown below:
 
 \begin{lstlisting}[breaklines]
-#--------------------------------------------------
+#--------------------------------------------------------------
 # Recommendations for /work/02204/fialho/tutorial/3/mm_omp.c:14
-#--------------------------------------------------
+#--------------------------------------------------------------
 #
 # Here is a possible recommendation for this code segment
 #
 Description: move loop invariant computations out of loop
-Reason: this optimization reduces the number of executed floating-point operations
+Reason: this optimization reduces the number of executed
+        floating-point operations
 Code example:
 loop i
   x = x + a * b * c[i];
@@ -273,8 +301,8 @@ loop i
 # Here is a possible recommendation for this code segment
 #
 Description: change the order of loops
-Reason: this optimization may improve the memory access pattern and make it more cache 
-and TLB friendly
+Reason: this optimization may improve the memory access pattern
+        and make it more cache and TLB friendly
 Code example:
 loop i
   loop j {...}
@@ -285,9 +313,10 @@ loop j
 #
 # Here is a possible recommendation for this code segment
 #
-Description: componentize important loops by factoring them into their own subroutines
-Reason: this optimization may allow the compiler to optimize the loop independently and
-thus tune it better
+Description: componentize important loops by factoring them into
+        their own subroutines
+Reason: this optimization may allow the compiler to optimize the
+        loop independently and thus tune it better
 Code example:
 loop i {...}
 ...
