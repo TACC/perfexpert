@@ -186,15 +186,36 @@ Apart from the total running time, PerfExpert performance analysis report includ
 	\item Local Cycles Per Instruction (LCPI) values for the cost of memory accesses.
 \end{itemize}
 
-The program composition part shows what percentage of the total instructions were computational (floating-point instructions) and what percentage were instructions that accessed data. This gives a rough estimate in trying to understand whether optimizing the program for either data accesses or floating-point instructions would have a significant impact on the total running time of the program.
+The program composition part shows what percentage of the total instructions were
+computational (floating-point instructions) and what percentage were instructions
+that accessed data. This gives a rough estimate in trying to understand whether
+optimizing the program for either data accesses or floating-point instructions
+would have a significant impact on the total running time of the program.
 
-The PerfExpert performance analysis report also shows the GFLOPs rating, which is the number of floating-point operations executed per second in multiples of 109. The value for this metric is displayed as a percentage of the maximum possible GFLOP value for that particular machine. Although it is rare for real-world programs to match even 50\% of the maximum value, this metric can serve as an estimate of how efficiently the code performs computations.
+The PerfExpert performance analysis report also shows the GFLOPs rating, which is
+the number of floating-point operations executed per second in multiples of 109.
+The value for this metric is displayed as a percentage of the maximum possible GFLOP
+value for that particular machine. Although it is rare for real-world programs to
+match even 50\% of the maximum value, this metric can serve as an estimate of how
+efficiently the code performs computations.
 
-The next, and major, section of the PerfExpert performance analysis report shows the LCPI values, which is the ratio of cycles spent in the code segment for a specific category, divided by the total number of instructions in the code segment. The overall value is the ratio of the total cycles taken by the code segment to the total instructions executed in the code segment. 
+The next, and major, section of the PerfExpert performance analysis report shows the
+LCPI values, which is the ratio of cycles spent in the code segment for a specific
+category, divided by the total number of instructions in the code segment. The overall
+value is the ratio of the total cycles taken by the code segment to the total
+instructions executed in the code segment. 
 
-Generally, a value of 0.5 or lower for an LCPI is considered to be good. However, it is only necessary to look at the ratings (\texttt{good}, \texttt{okay}, \ldots, \texttt{bad}) The rest of the report maps this overall LCPI, into the six constituent categories: data accesses, instruction accesses, data TLB accesses, instruction TLB accesses, branches and floating point computations. Without getting into the details of instruction operation on Intel and AMD chips, one can say that these six categories record performance in non-overlapping ways. That is, they roughly represent six separate categories of performance for any application.
+Generally, a value of 0.5 or lower for an LCPI is considered to be good. However, it
+is only necessary to look at the ratings (\texttt{good}, \texttt{okay}, \ldots, \texttt{bad}).
+The rest of the report maps this overall LCPI, into the six constituent categories: data
+accesses, instruction accesses, data TLB accesses, instruction TLB accesses, branches and
+floating point computations. Without getting into the details of instruction operation on
+Intel and AMD chips, one can say that these six categories record performance in non-overlapping
+ways. That is, they roughly represent six separate categories of performance for any application.
 
-The LCPI value is a good indicator of the cost arising from instructions of the specific category. Hence, the higher the LCPI, the slower the program. The following is a brief description of each of these categories:
+The LCPI value is a good indicator of the cost arising from instructions of the specific
+category. Hence, the higher the LCPI, the slower the program. The following is a brief
+description of each of these categories:
 
 \begin{description}
 	\item[Data accesses:]\hfill \\
@@ -211,18 +232,34 @@ The LCPI value is a good indicator of the cost arising from instructions of the 
 	counts LCPI from executing computational (floating-point) instructions.
 \end{description}
 
-Some of these LCPI categories have subcategories. For instance, the LCPI from data and instruction accesses can be divided into LCPI arising from the individual levels of the data and instruction caches and branch LCPIs can be divided into LCPIs from correctly predicted and from mispredicted branch instructions. For floating-point instructions, the division is based on floating-point instructions that take few cycles to execute (\textit{e.g.}, add, subtract and multiply instructions) and on floating-point instructions that take longer to execute (\textit{e.g.}, divide and square-root instructions).
+Some of these LCPI categories have subcategories. For instance, the LCPI from data and
+instruction accesses can be divided into LCPI arising from the individual levels of the
+data and instruction caches and branch LCPIs can be divided into LCPIs from correctly
+predicted and from mispredicted branch instructions. For floating-point instructions,
+the division is based on floating-point instructions that take few cycles to execute
+(\textit{e.g.}, add, subtract and multiply instructions) and on floating-point instructions
+that take longer to execute (\textit{e.g.}, divide and square-root instructions).
 
-In each case, the classification (data access, instruction access, data TLB, etc.) is shown so that it is easy to understand which category is responsible for the performance slowdown. For instance if the overall CPI is ``\texttt{poor}'' and the data access LCPI is high, then you should concentrate on access to program variables and memory. Additional LCPI details help in relating performance numbers to the process architecture.
+In each case, the classification (data access, instruction access, data TLB, etc.) is
+shown so that it is easy to understand which category is responsible for the performance
+slowdown. For instance if the overall CPI is ``\texttt{poor}'' and the data access LCPI
+is high, then you should concentrate on access to program variables and memory. Additional
+LCPI details help in relating performance numbers to the process architecture.
 
-\nicebox{IMPORTANT:}{When PerfExpert runs with automatic performance optimization enabled the performance analysis report shown reflects the performance of the code after all possible automatic optimizations have been applied.}
+\nicebox{IMPORTANT:}{When PerfExpert runs with automatic performance optimization enabled
+the performance analysis report shown reflects the performance of the code after all
+possible automatic optimizations have been applied.}
 
-\nicebox{NOTICE:}{PerfExpert creates a \texttt{.perfexpert-temp.XXXXXX} directory for each time it is executed. This directory has one subdirectory for each optimization cycle PerfExpert completed or attempted. Each subdirectory includes the intermediate files PerfExpert generated during each cycle, including the performance analysis reports.}
+\nicebox{NOTICE:}{PerfExpert creates a \texttt{.perfexpert-temp.XXXXXX} directory for
+each time it is executed. This directory has one subdirectory for each optimization
+cycle PerfExpert completed or attempted. Each subdirectory includes the intermediate
+files PerfExpert generated during each cycle, including the performance analysis reports.}
 
 \section{Running PerfExpert with MPI codes}
 
-TACC systems use \texttt{ibrun} to launch MPI codes, so all these examples use \texttt{ibrun}. When running on other sites,
-remember to change \texttt{ibrun} by \texttt{mpirun} or the launcher used at that site.
+TACC systems use \texttt{ibrun} to launch MPI codes, so all these examples use
+\texttt{ibrun}. When running on other sites, remember to change \texttt{ibrun} by
+\texttt{mpirun} or the MPI launcher used at that site.
 
 To run PerfExpert with an MPI code, use \texttt{ibrun} as a prefix with the \texttt{-p} option as follows: 
 
@@ -250,8 +287,10 @@ Parameters can be passed to \texttt{ibrun} as follows:
 
 \subsection{Using Intel Xeon Phi}
 When using native MPI applications on the Intel Xeon Phi, there are two main scenarios:
-\subsubsection{HPCToolkit}
- This is the simplest case. All you need to do is to specify which MPI launcher you want to use as a prefix in your PerfExpert command. For example:
+\
+subsubsection{HPCToolkit}
+This is the simplest case. All you need to do is to specify which MPI launcher you want
+to use as a prefix in your PerfExpert command. For example:
  
 %\begin{lstlisting}[breaklines]
 %$ perfexpert 0.1 --modules=lcpi,hpctoolkit                     \
@@ -271,7 +310,9 @@ When using native MPI applications on the Intel Xeon Phi, there are two main sce
 \vspace{10pt}
 
 \subsubsection{Intel VTune}
-	In this case, the application that you want to analyze needs to be specified inside of a script. VTune will run then this script on the Intel Xeon Phi. For example, in the case of Lulesh, the script will look like this:
+In this case, the application that you want to analyze needs to be specified
+inside of a script. VTune will run then this script on the Intel Xeon Phi. For
+example, in the case of Lulesh, the script will look like this:
 
 \noindent\hrulefill
 \begin{lstlisting}[breaklines]
@@ -284,7 +325,11 @@ $ /opt/apps/intel15/impi/5.0.2.044/mic/bin/mpiexec -np 8 \
 \end{lstlisting}\hrulefill
 
 	
-We first export a set of environmental variables that are required by our application to run on the Xeon Phi. Then, we need to specify an MPI launcher. In this example, we are choosing the mpiexec provided by Intel MPI 5.0 for the Intel Xeon Phi. This launcher needs the number of MPI tasks that will run on the coprocessor (8 in this example). Finally, we simply need to pass the application that we are studying with its arguments. 
+We first export a set of environmental variables that are required by our application
+to run on the Xeon Phi. Then, we need to specify an MPI launcher. In this example, we
+are choosing the mpiexec provided by Intel MPI 5.0 for the Intel Xeon Phi. This launcher
+needs the number of MPI tasks that will run on the coprocessor (8 in this example).
+Finally, we simply need to pass the application that we are studying with its arguments. 
 
 When calling Intel VTune with this script, the command will be like:
 
@@ -299,8 +344,12 @@ $ perfexpert 0.1 --verbose=10 --modules=lcpi,vtune  \
 
 \section{List of Recommendations for Optimization}
 
-If PerfExpert runs with \texttt{-Ðr} option enabled, it will also generate a list of suggestions for performance improvement for each bottleneck. This option is always available, it does not depend on which of the other command line option are. A list of suggestions for this example is shown below:
+If PerfExpert runs with \texttt{-Ðr} option enabled, it will also generate a list of
+suggestions for performance improvement for each bottleneck. This option is always
+available, it does not depend on which of the other command line option are. A list
+of suggestions for this example is shown below:
 
+\noindent\hrulefill
 \begin{lstlisting}[breaklines]
 #--------------------------------------------------------------
 # Recommendations for /work/02204/fialho/tutorial/3/mm_omp.c:14
@@ -350,4 +399,4 @@ void lj() { loop j {...} }
 li();
 ...
 lj();
-\end{lstlisting}
+\end{lstlisting}\hrulefill
