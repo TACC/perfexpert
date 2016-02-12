@@ -104,23 +104,28 @@ Use the \texttt{-r} option to select the number of recommendations for optimizat
 
 For this guide, using the OpenMP simple matrix multiply code, we will use the following command line options:
 
-\begin{lstlisting}[breaklines]
-$ OMP_NUM_THREADS=16 CFLAGS="-fopenmp" perfexpert -s mm_omp.c 0.05 mm_omp
-\end{lstlisting}
+\vspace{10pt}
+\btt \$ OMP\_NUM\_THREADS=16 CFLAGS="-fopenmp" perfexpert \tt{-s mm\_omp.c 0.05 ./mm\_omp}\par
+\normalfont
+\vspace{10pt}
 
 which executes PerfExpert's automatic optimizations and will also generate an OpenMP-enabled binary which will run with 16 threads. In this case, PerfExpert will compile the \texttt{mm\_omp.c} code using the system's default compiler, which is GCC in the case of Stampede. PerfExpert will take into consideration only code fragments (loops and functions) that take more 5\% of the runtime.
 
 To select a different compiler, you should specify the \texttt{CC} environment variable as below:
 
-\begin{lstlisting}[breaklines]
-$ CC="icc" OMP_NUM_THREADS=16 CFLAGS="-fopenmp" perfexpert -s mm_omp.c 0.05 mm_omp
-\end{lstlisting}
+\vspace{10pt}
+\btt \$ CC="icc" CFLAGS="-fopenmp" OMP\_NUM\_THREADS=16 perfexpert \tt{-s mm\_omp.c 0.05 ./mm\_omp}\par
+\normalfont
+\vspace{10pt}
 
 If you do not want to have PerfExpert trying to optimize the application automatically, just compile your program and run the following command:
 
-\begin{lstlisting}[breaklines]
-$ OMP_NUM_THREADS=16 perfexpert 0.05 mm_omp
-\end{lstlisting}
+
+\vspace{10pt}
+\btt \$ OMP\_NUM\_THREADS=16 perfexpert \tt{0.05 ./mm\_omp}\par
+\normalfont
+\vspace{10pt}
+
 
 \nicebox{WARNING:}{If the command line you use to run PerfExpert includes the MPI launcher (\textit{i.e.}, \texttt{mpirun -n 2 my\_mpi\_app my\_mpi\_app\_arguments ...}), PerfExpert will analyze the performance of the MPI launcher instead of the performance of your application. Use the \texttt{-p} command line argument of PerfExpert to set the MPI launcher and all its arguments (\textit{e.g.}, \texttt{-p "mpirun -n 16"}).}
 
@@ -128,12 +133,19 @@ $ OMP_NUM_THREADS=16 perfexpert 0.05 mm_omp
 
 \subsection{make}
 
-The \texttt{make} module accept parameters that will be directly passed to the \texttt{make} command. So, if for example
-your code needs to be compiled with the command \texttt{make intel optim}, you will have to pass the \texttt{intel} and
-\texttt{optim} as arguments to the module in PerfExpert using the \texttt{args} option and the arguments between
-double quotes. The command will look like:
+The \texttt{make} module accept parameters that will be directly passed to the \texttt{make}
+command. So, if for example the code needs to be compiled with the command
+\texttt{make intel optim}, the user will have to pass the \texttt{intel} and
+\texttt{optim} as arguments to the module in PerfExpert using the \texttt{args}
+option and the arguments between double quotes. The command will look like:
 
-\texttt{perfexpert --modules=make --module-option=make,args="intel optim" ./program}
+\vspace{10pt}
+\btt \$ perfexpert \tt{0.1} \btt{--modules=make}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textbackslash \par
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \btt{--module-option=make,args="intel optim"} \textbackslash \par
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \tt{-- ./program  program\_args}\par
+\normalfont
+\vspace{10pt}
+
 
 \subsection{HPCToolkit}
 
