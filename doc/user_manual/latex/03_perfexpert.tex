@@ -226,28 +226,49 @@ remember to change \texttt{ibrun} by \texttt{mpirun} or the launcher used at tha
 
 To run PerfExpert with an MPI code, use \texttt{ibrun} as a prefix with the \texttt{-p} option as follows: 
 
-\begin{lstlisting}[breaklines]
-perfexpert 0.1 --verbose=10 --modules=lcpi,hpctoolkit -p "ibrun" -- ./program
-\end{lstlisting}
+\vspace{10pt}
+\btt \$ perfexpert \tt{0.1 --verbose=10 --modules=lcpi,hpctoolkit \ }\par
+\ \ \ \ \ \ \ \ \ \ \ \ \ \btt{-p "ibrun"} \tt{ -- ./program  program\_args}\par
+\normalfont
+\vspace{10pt}
+
+%\begin{lstlisting}[breaklines]
+%perfexpert 0.1 --verbose=10 --modules=lcpi,hpctoolkit -p "ibrun" -- ./program
+%\end{lstlisting}
 
 Parameters can be passed to \texttt{ibrun} as follows:
 
-\begin{lstlisting}[breaklines]
-perfexpert 0.1 --verbose=10 --modules=lcpi,hpctoolkit -p "ibrun -np 4" -- ./program
-\end{lstlisting}
+%\begin{lstlisting}[breaklines]
+%perfexpert 0.1 --verbose=10 --modules=lcpi,hpctoolkit -p "ibrun -np 4" -- ./program
+%\end{lstlisting}
+
+\vspace{10pt}
+\btt \$ perfexpert \tt{0.1 --verbose=10 --modules=lcpi,hpctoolkit \ }\par
+\ \ \ \ \ \ \ \ \ \ \ \ \ \btt{-p "ibrun -np 4"} \tt{ -- ./program  program\_args}\par
+\normalfont
+\vspace{10pt}
 
 \subsection{Using Intel Xeon Phi}
 When using native MPI applications on the Intel Xeon Phi, there are two main scenarios:
 \subsubsection{HPCToolkit}
  This is the simplest case. All you need to do is to specify which MPI launcher you want to use as a prefix in your PerfExpert command. For example:
  
-\begin{lstlisting}[breaklines]
-$ perfexpert 0.1 --modules=lcpi,hpctoolkit                     \
-             --module-option=lcpi,architecture=MIC             \
-             --module-option=hpctoolkit,mic-card=mic0          \
-             --module-option=hpctoolkit,prefix="ibrun.symm -m" \
-             -- ./lulesh2.0 -i 100 -s 8
-\end{lstlisting}
+%\begin{lstlisting}[breaklines]
+%$ perfexpert 0.1 --modules=lcpi,hpctoolkit                     \
+%             --module-option=lcpi,architecture=MIC             \
+%             --module-option=hpctoolkit,mic-card=mic0          \
+%             --module-option=hpctoolkit,prefix="ibrun.symm -m" \
+%             -- ./lulesh2.0 -i 100 -s 8
+%\end{lstlisting}
+
+\vspace{10pt}
+\btt \$ perfexpert \tt{0.1 --modules=lcpi,hpctoolkit }\par
+\ \ \ \ \ \ \ \ \ \ \ \ \ \btt{--module-option=lcpi,architecture=MIC}\par
+\ \ \ \ \ \ \ \ \ \ \ \ \ \btt{--module-option=hpctoolkit,mic-card=mic0}\par
+\ \ \ \ \ \ \ \ \ \ \ \ \ \btt{--module-option=hpctoolkit,prefix="ibrun.symm -m"}\par
+\ \ \ \ \ \ \ \ \ \ \ \ \tt{ -- ./program  program\_args}\par
+\normalfont
+\vspace{10pt}
 
 \subsubsection{Intel VTune}
 	In this case, the application that you want to analyze needs to be specified inside of a script. VTune will run then this script on the Intel Xeon Phi. For example, in the case of Lulesh, the script will look like this:
@@ -261,6 +282,7 @@ $ export LD_LIBRARY_PATH=/opt/apps/intel/15/compiler/lib/mic/:$LD_LIBRARY_PATH
 $ /opt/apps/intel15/impi/5.0.2.044/mic/bin/mpiexec -np 8 \
   /work/02658/agomez/tools/toys/lulesh2.0.2/lulesh2.0 -i 10000 -s 8
 \end{lstlisting}\hrulefill
+
 	
 We first export a set of environmental variables that are required by our application to run on the Xeon Phi. Then, we need to specify an MPI launcher. In this example, we are choosing the mpiexec provided by Intel MPI 5.0 for the Intel Xeon Phi. This launcher needs the number of MPI tasks that will run on the coprocessor (8 in this example). Finally, we simply need to pass the application that we are studying with its arguments. 
 

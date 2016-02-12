@@ -150,9 +150,11 @@ Here is a complete list of the environment variables PerfExpert uses. The comman
 
 \subsubsection{Synopsis}
 
-This module provides the most common functionality that users require. It analyzes the data collected by the measurement
-module. The information that this module generates can be later on used by the \texttt{recommender} module \cite{recommender}
+This module provides the most common functionality that users require. It analyzes the data
+collected by the measurement module. The information that this module generates can be later
+on used by the \texttt{recommender} module \ref{recommender}
 to create a set of recommendations that the user can implement in the code.
+
 \subsubsection{Description}
 
 \subsubsection{Command Line Arguments}
@@ -180,12 +182,12 @@ it can be passed as an option to the list of active modules. For example:
 %
 %\end{lstlisting}
 
-\vspace{5pt}
+\vspace{10pt}
 \btt \$ perfexpert \btt{0.1 --modules=make,lcpi,hpctoolkit,macpo}\par
 \ \ \ \ \ \ \ \ \ \ \btt{--module-option=macpo,main=/home/username/src/Main.c}\par 
 \ \ \ \ \ \ \ \ \ \ \tt{./program  program\_args}\par
 \normalfont
-\vspace{5pt}
+\vspace{10pt}
 
 
 The previous command will execute the make, LCPI, HPCToolkit and MACPO modules. MACPO will use the information
@@ -223,13 +225,15 @@ hotspots. This will depend on the \texttt{threshold} specified when calling Perf
 MACVEC is not automatically used when running PerfExpert without specifying the modules that will be run.
 In order to use MACVEC, the user needs to pass it as a module:
 
-\begin{lstlisting}[breaklines]
-perfexpert 0.1 --modules=make,lcpi,hpctoolkit,macvec    \
-            ./program program_args
-\end{lstlisting}
+%\begin{lstlisting}[breaklines]
+%perfexpert 0.1 --modules=make,lcpi,hpctoolkit,macvec    \
+%            ./program program_args
+%\end{lstlisting}
 
-\btt perfexpert \btt{0.1 --modules=make,lcpi,hpctoolkit,macvec} \tt{./program  program\_args}\par
+\vspace{10pt}
+\$ \btt perfexpert \btt{0.1 --modules=make,lcpi,hpctoolkit,macvec} \tt{./program  program\_args}\par
 \normalfont
+\vspace{10pt}
 
 The previous command will analyze the code using LCPI and HPCToolkit to find the hotspots. It will then
 recompile the code with the \texttt{make} command and analyze the vectorization report with MACVEC.
@@ -237,6 +241,26 @@ recompile the code with the \texttt{make} command and analyze the vectorization 
 MACVEC does not accept any extra arguments.
 
 \subsubsection{Exit Status}
+
+\subsection{\texttt{timb}}
+
+\subsubsection{Synopsis}
+
+The thread imbalance module (\texttt{timb}) analyzes the execution of codes parallelized with OpenMP
+and detects possible load imbalances between the different threads. 
+
+\subsubsection{Description}
+
+The \texttt{timb} module is currently a naive implementation of an analyzer for work imbalance between
+threads. It uses the total number of cycles used by the application and the total number of active cycles.
+
+\subsubsection{Command Line Arguments}
+
+\vspace{10pt}
+\$ \btt perfexpert \btt{0.1 --modules=lcpi,hpctoolkit,timb} \tt{./program  program\_args}\par
+\normalfont
+\vspace{10pt}
+
 
 \subsection{\texttt{recommender}} \label{recommender}
 
