@@ -130,6 +130,7 @@ int module_init(void) {
         return PERFEXPERT_ERROR;
     }
 
+    /*  Try to load a compilation module */
     if (PERFEXPERT_TRUE == perfexpert_module_available("make")) {
         myself_module.measurement = (perfexpert_module_measurement_t *) perfexpert_module_get("make");
         if (NULL != myself_module.measurement) {
@@ -147,6 +148,7 @@ int module_init(void) {
         return PERFEXPERT_ERROR;
     }
 
+    /*  If no compilation module is specified, finish */
     if (!comp_loaded) {
         OUTPUT(("%s", _ERROR(" this module needs a compilation module to be defined")));
         return PERFEXPERT_ERROR;
@@ -160,26 +162,29 @@ int module_init(void) {
 /* module_fini */
 int module_fini(void) {
     OUTPUT_VERBOSE((5, "finalizing"));
+    /*  Deallocate the memory that was previously allocated */
     macvec_profile_t* profile;
-    perfexpert_list_for(profile, &(my_module_globals.profiles),
-            macvec_profile_t) {
-        PERFEXPERT_DEALLOC(profile->name);
-        macvec_module_t *module, *t;
-        perfexpert_hash_iter_str(profile->modules_by_name, module, t) {
-            PERFEXPERT_DEALLOC(module->name);
-            PERFEXPERT_DEALLOC(module);
+    if (my_module_globals.profiles) {
+        perfexpert_list_for(profile, &(my_module_globals.profiles),
+                macvec_profile_t) {
+            PERFEXPERT_DEALLOC(profile->name);
+            macvec_module_t *module, *t;
+            perfexpert_hash_iter_str(profile->modules_by_name, module, t) {
+                PERFEXPERT_DEALLOC(module->name);
+                PERFEXPERT_DEALLOC(module);
+            }
+            macvec_hotspot_t *hotspot;
+            perfexpert_list_for(hotspot, &(profile->hotspots), macvec_hotspot_t) {
+                PERFEXPERT_DEALLOC(hotspot->name);
+                PERFEXPERT_DEALLOC(hotspot->file);
+                //      PERFEXPERT_DEALLOC(hotspot);
+            }
+            perfexpert_list_destruct(&(profile->hotspots));
+            // This fails. I'm forgetting something else. TODO
+            //   PERFEXPERT_DEALLOC(profile);
         }
-        macvec_hotspot_t *hotspot;
-        perfexpert_list_for(hotspot, &(profile->hotspots), macvec_hotspot_t) {
-            PERFEXPERT_DEALLOC(hotspot->name);
-            PERFEXPERT_DEALLOC(hotspot->file);
-      //      PERFEXPERT_DEALLOC(hotspot);
-        }
-        perfexpert_list_destruct(&(profile->hotspots));
-    // This fails. I'm forgetting something else. TODO
-     //   PERFEXPERT_DEALLOC(profile);
+        perfexpert_list_destruct (&(my_module_globals.profiles));
     }
-    perfexpert_list_destruct (&(my_module_globals.profiles));
     OUTPUT_VERBOSE((5, "%s", _MAGENTA("finalized")));
 
     return PERFEXPERT_SUCCESS;
@@ -244,7 +249,8 @@ int module_analyze(void) {
     macvec_hotspot_t *h = NULL;
 
     OUTPUT(("%s", _YELLOW("Analyzing measurements")));
-    
+   
+    /*  Append "-vec-report=6" to CFLAGS, CXXFLAGS and FCFLAGS */ 
     char *cflags = getenv("CFLAGS");
     char *newenv;
     if (cflags) {
@@ -287,14 +293,16 @@ int module_analyze(void) {
     else {
         setenv("FCFLAGS", "-vec-report=6", 1);
     }
-    
+    /*  Recompile the code with the new flags */    
     myself_module.measurement->compile();
-   
+ 
+  
+    /*  Get the list of files with hotspots */
     perfexpert_list_t files;
     perfexpert_list_construct(&files);
     list_files_hotspots(&files);
     
-
+    /*  Analyze the files with hotspots */
     char_t *filename;
     perfexpert_list_for (filename, &files, char_t) {
         macvec_profile_t* profile;

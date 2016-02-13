@@ -37,6 +37,8 @@ extern "C" {
 #include "common/perfexpert_output.h"
 #include "common/perfexpert_util.h"
 
+
+/*  Function to call the 'make clean' command */
 int run_clean(void){
     char temp_str[MAX_BUFFER_SIZE];
     char flags[MAX_BUFFER_SIZE];
@@ -88,12 +90,13 @@ int run_clean(void){
         case PERFEXPERT_NO_REC:
         case PERFEXPERT_FAILURE:
         case PERFEXPERT_ERROR:
-            OUTPUT(("%s (return code: %d) Usually, this means that an error"
-                " happened during the program execution. To see the program"
-                "'s output, check the content of this file: [%s]. If you "
-                "want to PerfExpert ignore the return code next time you "
-                "run this program, set the 'return-code' option for the "
-                "macpo module. See 'perfepxert -H macpo' for details.",
+            OUTPUT(("%s (return code: %d) Usually, this means that an error "
+                " happened during the program execution. To see the program "
+                "'s output, check the content of this file: [%s]. Make sure "
+                "that your makefile specifies a 'clean' target. "
+                "If you want to PerfExpert ignore the return code next time "
+                "you run this program, set the 'return-code' option for the "
+                "make module. See 'perfexpert -H make' for details.",
                 _ERROR("the target program returned non-zero"), rc, 
                 test.output));
             return PERFEXPERT_ERROR;
@@ -133,6 +136,7 @@ int run_make(void) {
 
     argv[argc] = "make";
     argc++;
+    /*  Pass any additional arguments to the make command */
     if (my_module_globals.args[0]) {
         i = 0;
         while (NULL != my_module_globals.args[i]){
@@ -183,7 +187,7 @@ int run_make(void) {
                 "'s output, check the content of this file: [%s]. If you "
                 "want to PerfExpert ignore the return code next time you "
                 "run this program, set the 'return-code' option for the "
-                "macpo module. See 'perfepxert -H macpo' for details.",
+                "make module. See 'perfexpert -H make' for details.",
                 _ERROR("the target program returned non-zero"), rc, 
                 test.output));
             return PERFEXPERT_ERROR;

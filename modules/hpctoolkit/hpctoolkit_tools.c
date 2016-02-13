@@ -259,7 +259,7 @@ int run_hpcrun(void) {
                             "the program's output, check the content of this file: "
                             "[%s]. If you want to PerfExpert ignore the return code"
                             " next time you run this program, set the 'return-code'"
-                            " option for the HPCToolkit module. See 'perfepxert -H "
+                            " option for the HPCToolkit module. See 'perfexpert -H "
                             " hpctoolkit' for details.",
                             _ERROR("the target program returned non-zero"), rc,
                             e->test.output));

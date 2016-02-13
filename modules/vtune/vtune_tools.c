@@ -116,7 +116,7 @@ int create_report(char* results_folder, const char* parse_file) {
                     "'s output, check the content of this file: [%s]. If you "
                     "want to PerfExpert ignore the return code next time you "
                     "run this program, set the 'return-code' option for the "
-                    "Vtune module. See 'perfepxert -H vtune' for details.",
+                    "Vtune module. See 'perfexpert -H vtune' for details.",
                     _ERROR("the target program returned non-zero"), rc,
                     test.output));
                 return PERFEXPERT_ERROR;
@@ -452,7 +452,7 @@ int run_amplxe_cl(void) {
                     "'s output, check the content of this file: [%s]. If you "
                     "want to PerfExpert ignore the return code next time you "
                     "run this program, set the 'return-code' option for the "
-                    "Vtune module. See 'perfepxert -H vtune' for details.",
+                    "Vtune module. See 'perfexpert -H vtune' for details.",
                     _ERROR("the target program returned non-zero"), rc,
                     test.output));
                 return PERFEXPERT_ERROR;
