@@ -1,6 +1,10 @@
 \chapter{Using PerfExpert}
 
-The objective of this chapter is to explain how to run programs using PerfExpert and how to interpret its output using a simple matrix multiplication program. In this chapter, we will use the OpenMP simple matrix multiplication program\footnote{\url{https://computing.llnl.gov/tutorials/openMP/samples/C/omp\_mm.c}}. This program multiplies two matrices and prints one value from the resulting matrix.
+The objective of this chapter is to explain how to run programs using PerfExpert and
+how to interpret its output using a simple matrix multiplication program. In this
+chapter, we will use the OpenMP simple matrix multiplication
+program\footnote{\url{https://computing.llnl.gov/tutorials/openMP/samples/C/omp\_mm.c}}.
+This program multiplies two matrices and prints one value from the resulting matrix.
 
 \nicebox{NOTICE:} {
 In order to use PerfExpert, the code of interest will need to be compiled
@@ -8,23 +12,45 @@ with the \texttt{-g} flag. Make sure that any \texttt{makefile} used in
 the code includes this flag.
 }
 
-\nicebox{CAUTION:}{PerfExpert may, if you choose to use the full capabilities for automated optimization, change your source code during the process of optimization. PerfExpert  always saves the original file with a different name (\textit{e.g.}, \texttt{omp\_mm.c.old\_27301}) as well as adding annotations to your source code for each optimization it makes. We cannot, however, fully guarantee that code modifications for optimizations will not break your code. We recommend having a full backup of your original source code before using PerfExpert.}
+\nicebox{CAUTION:}{PerfExpert may, if you choose to use the full capabilities for
+automated optimization, change your source code during the process of optimization.
+PerfExpert  always saves the original file with a different name (\textit{e.g.},
+\texttt{omp\_mm.c.old\_27301}) as well as adding annotations to your source code
+for each optimization it makes. We cannot, however, fully guarantee that code
+modifications for optimizations will not break your code. We recommend having a
+full backup of your original source code before using PerfExpert.}
 
 \section{Environment Configuration}
 
-If you are using any of the TACC\footnote{\url{https://www.tacc.utexas.edu/}} machines, load the appropriate modules:
+\nicebox{NOTICE:} {
+If you are using any of the TACC\footnote{\url{https://www.tacc.utexas.edu/}}
+machines, load the appropriate modules:
 
-\begin{lstlisting}[breaklines]
-$ module load papi hpctoolkit perfexpert
-\end{lstlisting}
+\vspace{10pt}
+\btt \$ module load papi hpctoolkit perfexpert\par
+\normalfont
+\vspace{10pt}
 
-The runs with PerfExpert should be made using a data set size for each compute node which is equivalent to full production runs but for which execution time is not more than about ten or fifteen minutes since PerfExpert will run your application multiple times (actually, three times on Stampede) with different performance counters enabled. For that reason, before you run PerfExpert you should either request iterative access to computational resources (compute node), or modify the job script that you use to run your application and specify a running time that is about 3 (for Stampede) or 6 (for Lonestar) times the normal running time of the program. Depending on
+}
+
+The runs with PerfExpert should be made using a data set size for each compute node
+which is equivalent to full production runs but for which execution time is not more
+than about ten or fifteen minutes since PerfExpert will run your application multiple
+times (actually, three times on Stampede) with different performance counters enabled.
+For that reason, before you run PerfExpert you should either request iterative access
+to computational resources (compute node), or modify the job script that you use to
+run your application and specify a running time that is about 3 (for Stampede) or 6
+(for Lonestar) times the normal running time of the program. Depending on
 the modules that you use within PerfExpert, you might need to increase this
 time.
 
-To request iterative access to a compute node on Stampede, please, have a look on the User Guide\footnote{\url{https://portal.tacc.utexas.edu/group/tup/user-guides/stampede\#running}}.
+To request iterative access to a compute node on Stampede, please, have a look on the User
+Guide\footnote{\url{https://portal.tacc.utexas.edu/group/tup/user-guides/stampede\#running}}.
 
-Below is an example of a job script file modified to use PerfExpert which runs PerfExpert on the application named my\_program and generate the performance analysis report. Adding command line options will cause suggestions for bottleneck remediation to be generated and output and/or automatic performance optimization to be attempted. 
+Below is an example of a job script file modified to use PerfExpert which runs PerfExpert
+on the application named my\_program and generate the performance analysis report. Adding
+command line options will cause suggestions for bottleneck remediation to be generated and
+output and/or automatic performance optimization to be attempted. 
 
 \noindent\hrulefill
 \begin{lstlisting}[breaklines]
@@ -34,11 +60,14 @@ Below is an example of a job script file modified to use PerfExpert which runs P
 #SBATCH -n 16                # total number of mpi tasks requested
 #SBATCH -p development       # queue (partition)
 #SBATCH -t 01:30:00          # run time (hh:mm:ss) - 1.5 hours
-perfexpert 0.1 ./my_program  # run the executable named my_program\end{lstlisting}\hrulefill
+perfexpert 0.1 ./my_program  # run the executable named my_program
+
+\end{lstlisting}\hrulefill
 	
 \section{PerfExpert Options}
 
-There are several different options for applying PerfExpert. The following summary shows you how to choose the options to run PerfExpert to match your needs.
+There are several different options for applying PerfExpert. The following summary shows
+you how to choose the options to run PerfExpert to match your needs.
 
 \begin{lstlisting}
 $ perfexpert -h
@@ -90,26 +119,48 @@ Usage: perfexpert <threshold> [-m target|-s sourcefile] [-r count] \
 Use CC, CFLAGS and LDFLAGS to select compiler and compilation/linkage flags
 \end{lstlisting}
 
-If you select the \texttt{-m} or \texttt{-s} options, PerfExpert will try to automatically optimize your code and show you the performance analysis report \& the list of suggestion for bottleneck remediation when no automatic optimization is possible.
+If you select the \texttt{-m} or \texttt{-s} options, PerfExpert will try to automatically
+optimize your code and show you the performance analysis report \& the list of suggestion
+for bottleneck remediation when no automatic optimization is possible.
 
-For the \texttt{-m} or \texttt{-s} options, PerfExpert requires access to the application source code. If you select the \texttt{-m} option and the application is composed of multiple files, your source code tree should have a \texttt{Makefile} file to enable PerfExpert compile your code. If your application is composed of a single source code file, the option \texttt{-s} is sufficient for you. If you do not select \texttt{-m} or \texttt{-s} options, PerfExpert requires only the binary code and will show you only the performance analysis report and the list of suggestion for bottleneck remediation.
+For the \texttt{-m} or \texttt{-s} options, PerfExpert requires access to the application
+source code. If you select the \texttt{-m} option and the application is composed of multiple
+files, your source code tree should have a \texttt{Makefile} file to enable PerfExpert compile
+your code. If your application is composed of a single source code file, the option \texttt{-s}
+is sufficient for you. If you do not select \texttt{-m} or \texttt{-s} options, PerfExpert
+requires only the binary code and will show you only the performance analysis report and the
+list of suggestion for bottleneck remediation.
 
-PerfExpert will run your application multiple times to collect different performance metrics. You may use the \texttt{-b} (or \texttt{-a}) options if you want to execute a program or script before (or after) each run. The argument \texttt{program\_executable} should be the filename of the application you want to analyze, not a shell script, otherwise, PerfExpert will analyze the performance of the shell script instead of the performance of you application.
+PerfExpert will run your application multiple times to collect different performance metrics.
+You may use the \texttt{-b} (or \texttt{-a}) options if you want to execute a program or script
+before (or after) each run. The argument \texttt{program\_executable} should be the filename
+of the application you want to analyze, not a shell script, otherwise, PerfExpert will analyze
+the performance of the shell script instead of the performance of you application.
 
-Use the \texttt{-r} option to select the number of recommendations for optimization you want for each code section which is a performance bottleneck.
+Use the \texttt{-r} option to select the number of recommendations for optimization you want
+for each code section which is a performance bottleneck.
 
-\nicebox{CAUTION:}{If your program takes any argument that starts with a ``\texttt{-}'' signal PerfExpert will interpret this as a command line option. To help PerfExpert handle \texttt{program\_arguments} correctly, use quotes and add a space before the program's arguments (e.g., ``\texttt{ -s 50}'').}
+\nicebox{CAUTION:}{If your program takes any argument that starts with a ``\texttt{-}'' signal
+PerfExpert will interpret this as a command line option. To help PerfExpert handle
+\texttt{program\_arguments} correctly, use quotes and add a space before the program's
+arguments (e.g., ``\texttt{ -s 50}'').}
 
-\nicebox{CAUTION:}{In case you are trying to optimize a MPI application, you should use the \texttt{-p} option to specify the MPI launcher and also it's arguments.}
+\nicebox{CAUTION:}{In case you are trying to optimize a MPI application, you should use the
+\texttt{-p} option to specify the MPI launcher and also it's arguments.}
 
-For this guide, using the OpenMP simple matrix multiply code, we will use the following command line options:
+For this guide, using the OpenMP simple matrix multiply code, we will use the following
+command line options:
 
 \vspace{10pt}
 \btt \$ OMP\_NUM\_THREADS=16 CFLAGS="-fopenmp" perfexpert \tt{-s mm\_omp.c 0.05 ./mm\_omp}\par
 \normalfont
 \vspace{10pt}
 
-which executes PerfExpert's automatic optimizations and will also generate an OpenMP-enabled binary which will run with 16 threads. In this case, PerfExpert will compile the \texttt{mm\_omp.c} code using the system's default compiler, which is GCC in the case of Stampede. PerfExpert will take into consideration only code fragments (loops and functions) that take more 5\% of the runtime.
+which executes PerfExpert's automatic optimizations and will also generate an OpenMP-enabled
+binary which will run with 16 threads. In this case, PerfExpert will compile the
+\texttt{mm\_omp.c} code using the system's default compiler, which is GCC in the case
+of Stampede. PerfExpert will take into consideration only code fragments (loops and
+functions) that take more 5\% of the runtime.
 
 To select a different compiler, you should specify the \texttt{CC} environment variable as below:
 
@@ -118,7 +169,8 @@ To select a different compiler, you should specify the \texttt{CC} environment v
 \normalfont
 \vspace{10pt}
 
-If you do not want to have PerfExpert trying to optimize the application automatically, just compile your program and run the following command:
+If you do not want to have PerfExpert trying to optimize the application automatically,
+just compile your program and run the following command:
 
 
 \vspace{10pt}
@@ -127,7 +179,11 @@ If you do not want to have PerfExpert trying to optimize the application automat
 \vspace{10pt}
 
 
-\nicebox{WARNING:}{If the command line you use to run PerfExpert includes the MPI launcher (\textit{i.e.}, \texttt{mpirun -n 2 my\_mpi\_app my\_mpi\_app\_arguments ...}), PerfExpert will analyze the performance of the MPI launcher instead of the performance of your application. Use the \texttt{-p} command line argument of PerfExpert to set the MPI launcher and all its arguments (\textit{e.g.}, \texttt{-p "mpirun -n 16"}).}
+\nicebox{WARNING:}{If the command line you use to run PerfExpert includes the MPI launcher
+(\textit{i.e.}, \texttt{mpirun -n 2 my\_mpi\_app my\_mpi\_app\_arguments ...}), PerfExpert
+will analyze the performance of the MPI launcher instead of the performance of your
+application. Use the \texttt{-p} command line argument of PerfExpert to set the MPI
+launcher and all its arguments (\textit{e.g.}, \texttt{-p "mpirun -n 16"}).}
 
 \section{Passing Options to the Modules}
 
@@ -154,7 +210,8 @@ option and the arguments between double quotes. The command will look like:
 
 \section{The Performance Analysis Report}
 
-This section explains the performance analysis report and the metrics shown by PerfExpert. We discuss the following sample output:
+This section explains the performance analysis report and the metrics shown by PerfExpert.
+We discuss the following sample output:
 
 \begin{lstlisting}[breaklines]
 Loop in function compute() (99.9% of the total runtime)
@@ -189,7 +246,8 @@ upper bound estimates
    - slow FP instr       :  0.0 >
 \end{lstlisting}
 
-Apart from the total running time, PerfExpert performance analysis report includes, for each code segment:
+Apart from the total running time, PerfExpert performance analysis report includes, for
+each code segment:
 
 \begin{itemize}
 	\item Instruction execution ratios (with respect to total instructions);
@@ -273,7 +331,8 @@ TACC systems use \texttt{ibrun} to launch MPI codes, so all these examples use
 \texttt{ibrun}. When running on other sites, remember to change \texttt{ibrun} by
 \texttt{mpirun} or the MPI launcher used at that site.
 
-To run PerfExpert with an MPI code, use \texttt{ibrun} as a prefix with the \texttt{-p} option as follows: 
+To run PerfExpert with an MPI code, use \texttt{ibrun} as a prefix with the \texttt{-p}
+option as follows: 
 
 \vspace{10pt}
 \btt \$ perfexpert \tt{0.1 --verbose=10 --modules=lcpi,hpctoolkit \ }\par
