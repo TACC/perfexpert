@@ -632,20 +632,20 @@ int parse(perfexpert_list_t* hotspots, perfexpert_list_t* locations, char *filen
 static void print_recommendations(perfexpert_list_t* locations) {
     location_t* location;
     char *report_FP_file;
-    char *report_FP;
+    FILE *report_FP;
     
     PERFEXPERT_ALLOC(char, report_FP_file, (strlen(globals.moduledir) + 15));
     sprintf(report_FP_file, "%s/report.txt", globals.moduledir);
     if (NULL == (report_FP = fopen(report_FP_file, "a"))) {
         OUTPUT(("%s (%s)", _ERROR("unable to open file"), report_FP_file));
-        return PERFEXPERT_ERROR;
+        return;
     }
     PERFEXPERT_DEALLOC(report_FP_file);
 
     /*  Make sure that we have something to print */
     if (perfexpert_list_get_size(locations)==0) {
         fclose(report_FP);
-        return PERFEXPERT_SUCCESS;
+        return;
     }
 
     OUTPUT(("%s [%d]", _YELLOW("Printing recommendations"),

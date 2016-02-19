@@ -164,7 +164,7 @@ int module_fini(void) {
     OUTPUT_VERBOSE((5, "finalizing"));
     /*  Deallocate the memory that was previously allocated */
     macvec_profile_t* profile;
-    if (my_module_globals.profiles) {
+    //if (my_module_globals.profiles) {
         perfexpert_list_for(profile, &(my_module_globals.profiles),
                 macvec_profile_t) {
             PERFEXPERT_DEALLOC(profile->name);
@@ -184,7 +184,7 @@ int module_fini(void) {
             //   PERFEXPERT_DEALLOC(profile);
         }
         perfexpert_list_destruct (&(my_module_globals.profiles));
-    }
+    // }
     OUTPUT_VERBOSE((5, "%s", _MAGENTA("finalized")));
 
     return PERFEXPERT_SUCCESS;
