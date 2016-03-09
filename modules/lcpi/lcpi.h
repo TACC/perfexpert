@@ -100,6 +100,9 @@ int hotspot_sort(perfexpert_list_t *profiles);
 /* Processor specific functions */
 int metrics_jaketown(void);
 int metrics_jaketown_vtune(void);
+int metrics_haswell(void);
+int metrics_haswell_tune(void);
+int metrics_mic(void);
 int metrics_mic(void);
 int metrics_papi(void);  /* Fallback for unknown processors */
 

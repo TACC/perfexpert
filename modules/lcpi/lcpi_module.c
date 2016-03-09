@@ -193,6 +193,22 @@ int module_init(void) {
             }
         }
     }
+    else if (0 == strcmp("haswell",
+        perfexpert_string_to_lower(my_module_globals.architecture))) {
+        OUTPUT(("LOADING HASWELL EVENTS"));
+        if (0 == strcmp(my_module_globals.measurement->name, "vtune")) {
+            if (PERFEXPERT_SUCCESS != metrics_haswell_vtune()) {
+                OUTPUT(("%s", _ERROR("generating LCPI metrics (Haswell)")));
+                return PERFEXPERT_ERROR;
+            }
+        }
+        else {
+            if (PERFEXPERT_SUCCESS != metrics_haswell()) {
+                OUTPUT(("%s", _ERROR("generating LCPI metrics (Haswell)")));
+                return PERFEXPERT_ERROR;
+            }
+        }
+    }
     /* MIC (or KnightsCorner) */
     else if (0 == strcmp("mic",
         perfexpert_string_to_lower(my_module_globals.architecture))) {

@@ -63,6 +63,7 @@ INSERT INTO arch_processor (id, family, model, description) VALUES (7, 6, 45, 'J
 INSERT INTO arch_processor (id, family, model, description) VALUES (8, 6, 62, 'IvyTown');
 INSERT INTO arch_processor (id, family, model, description) VALUES (9, 6, 58, 'IvyBridge');
 INSERT INTO arch_processor (id, family, model, description) VALUES (10, 6, 60, 'Haswell');
+INSERT INTO arch_processor (id, family, model, description) VALUES (10, 6, 63, 'Haswell');
 INSERT INTO arch_processor (id, family, model, description) VALUES (10, 6, 69, 'Haswell');
 INSERT INTO arch_processor (id, family, model, description) VALUES (10, 6, 70, 'Haswell');
 INSERT INTO arch_processor (id, family, model, description) VALUES (11, 6, 55, 'Silvermont');
@@ -73,7 +74,7 @@ INSERT INTO arch_processor (id, family, model, description) VALUES (12, 6, 39, '
 INSERT INTO arch_processor (id, family, model, description) VALUES (12, 6, 54, 'Bonnell');
 INSERT INTO arch_processor (id, family, model, description) VALUES (12, 6, 53, 'Bonnell');
 INSERT INTO arch_processor (id, family, model, description) VALUES (13, 11, 1, 'KnightsCorner');
-
+INSERT INTO arch_processor (id, family, model, description) VALUES (14, 6, 61, 'Broadwell');
 
 INSERT INTO arch_event (id, code, umask, name, description, type, processor_id) VALUES (0, 20, 1, 'ARITH.CYCLES_DIV_BUSY', 'Cycles the divider is busy', 'core', 1);
 INSERT INTO arch_event (id, code, umask, name, description, type, processor_id) VALUES (1, 20, 1, 'ARITH.DIV', 'Divide Operations executed', 'core', 1);
