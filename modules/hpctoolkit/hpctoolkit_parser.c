@@ -209,13 +209,20 @@ static int parse_profile(xmlDocPtr document, xmlNodePtr node,
 
                     /* Set the MPI rank */
                     temp_str[2] = strtok(temp_str[1], ",");
-                    metric->mpi_rank = atoi(temp_str[2]);// 0;
+
+
+                    if (NULL != temp_str[2]) {
+                        temp_str[2][0]='0';
+                        metric->mpi_rank = strtol(temp_str[2], NULL, 10);
+                    }
 
                     /* Set the thread ID */
                     temp_str[2] = strtok(NULL, ",");
+                    
+
                     if (NULL != temp_str[2]) {
                         temp_str[2][strlen(temp_str[2]) - 1] = '\0';
-                        metric->thread = atoi(temp_str[2]);
+                        metric->thread = strtol(temp_str[2], NULL, 10);
                     }
                 }
             }
