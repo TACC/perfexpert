@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
+ * Copyright (c) 2011-2016  University of Texas at Austin. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -14,7 +14,7 @@
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
  *
- * Authors: Leonardo Fialho and Ashay Rane
+ * Authors: Antonio Gomez-Iglesias, Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
  */
@@ -70,7 +70,6 @@ int papi_max_events(void) {
 int papi_get_sampling_rate(const char *name) {
     int event_code, cat = 0, rate = 0;
     PAPI_event_info_t info;
-
     static sample_t sample[] = {
         {99999999, 10000000, " " },
         {9999999, 5000000, "FP_COMP_OPS_EXE:SSE_FP_PACKED_DOUBLE ARITH:FPU_DIV "
@@ -97,7 +96,8 @@ int papi_get_sampling_rate(const char *name) {
             "FP_COMP_OPS_EXE:SSE_DOUBLE_PRECISION:SSE_FP:SSE_FP_PACKED:"
             "SSE_FP_SCALAR:SSE_SINGLE_PRECISION:X87 CPU_CLK_UNHALTED:THREAD_P "
             "BR_INST_RETIRED:ALL_BRANCHES BR_MISP_RETIRED:ALL_BRANCHES"
-            "BRANCHES_MISPREDICTED INSTRUCTIONS_EXECUTED VPU_ELEMENTS_ACTIVE "},
+            "BRANCHES_MISPREDICTED INSTRUCTIONS_EXECUTED VPU_ELEMENTS_ACTIVE "
+            "CYCLE_ACTIVITY:STALLS_L2_PENDING"},
         {4999999, 500000, "PAPI_L2_DCA PAPI_L2_TCA PAPI_L2_ICA PAPI_L2_DCM "
             "PAPI_L2_ICM PAPI_L2_TCM PAPI_L3_TCM PAPI_L3_TCA PAPI_BR_INS "
             "L2_RQSTS:DEMAND_DATA_RD_HIT PAPI_BR_MSP MEM_UOP_RETIRED:ALL_LOADS "
@@ -106,7 +106,8 @@ int papi_get_sampling_rate(const char *name) {
             "MEM_UOP_RETIRED:ANY_LOADS L2_RQSTS:CODE_RD_MISS CODE_READ "
             "CODE_CACHE_MISS DATA_READ_OR_WRITE HWP_L2MISS SNP_HITM_L2 "
             "L2_DATA_WRITE_MISS_MEM_FILL L2_VICTIM_REQ_WITH_DATA "
-            "L2_DATA_READ_MISS_MEM_FILL DATA_READ_MISS_OR_WRITE_MISS " },
+            "L2_DATA_READ_MISS_MEM_FILL DATA_READ_MISS_OR_WRITE_MISS "
+            "MEM_LOAD_UOPS_LLC_HIT_RETIRED MEM_LOAD_UOPS_MISC_RETIRED:LLC_MISS"},
         {499999, 100000, "DTLB_STORE_MISSES:CAUSES_A_WALK"
             "PAPI_TLB_DM DTLB_LOAD_MISSES:WALK_DURATION PAPI_TLB_IM "
             "ITLB_MISSES:WALK_DURATION DTLB_LOAD_MISSES:CAUSES_A_WALK "

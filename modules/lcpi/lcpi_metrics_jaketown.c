@@ -53,11 +53,20 @@ int metrics_jaketown(void) {
     USE_EVENT("INST_RETIRED.ANY_P");
     USE_EVENT("SIMD_FP_256.PACKED_SINGLE");
     USE_EVENT("SIMD_FP_256.PACKED_DOUBLE");
+    USE_EVENT("CYCLE_ACTIVITY.STALLS_L2_PENDING");
+    USE_EVENT("MEM_LOAD_UOPS_LLC_HIT_RETIRED");
+    USE_EVENT("MEM_LOAD_UOPS_MISC_RETIRED.LLC_MISS");
 
     /* Set the profile total cycles and total instructions counters */
     my_module_globals.measurement->total_cycles_counter = "CPU_CLK_UNHALTED.THREAD_P";
     my_module_globals.measurement->total_inst_counter = "INST_RETIRED.ANY_P";
 
+    /* ratio stall/cycles */
+    bzero(s, MAX_LCPI);
+    strcpy(s, ("CYCLE_ACTIVITY.STALLS_L2_PENDING/CPU_CLK_UNHALTED.THREAD_P"));
+    if (PERFEXPERT_SUCCESS != lcpi_add_metric("ratio.stall",s)) {
+        return PERFEXPERT_ERROR;
+    }
     /* ratio.floating_point */
     bzero(s, MAX_LCPI);
     strcpy(s, "(SIMD_FP_256.PACKED_SINGLE+SIMD_FP_256.PACKED_DOUBLE+"
@@ -145,6 +154,20 @@ int metrics_jaketown(void) {
     bzero(s, MAX_LCPI);
     strcpy(s, "(LAST_LEVEL_CACHE_MISSES * mem_lat) / INST_RETIRED.ANY_P");
     if (PERFEXPERT_SUCCESS != lcpi_add_metric("data_accesses.LLC_misses", s)) {
+        return PERFEXPERT_ERROR;
+    }
+
+    /*  % memory bound */
+    /*  %MEM Bound = CYCLE_ACTIVITY.STALLS_L2_PENDING * L3_Miss_fraction / CLOCKS */
+    /*  L3_Miss_fraction is:
+     *  MEM_L3_WEIGHT * MEM_LOAD_UOPS_RETIRED.LLC_MISS_PS / (MEM_LOAD_UOPS_RETIRED.LLC_HIT_PS + 
+     *  MEM_LOAD_UOPS_RETIRED.LLC_MISS_PS * MEM_L3_WEIGHT) */
+    /*  MEM_L3_WEIGHT is system dependent, but we can assume 7 */
+    bzero(s, MAX_LCPI);
+    strcpy(s, "(CYCLE_ACTIVITY.STALLS_L2_PENDING * ( 7 *"
+              "MEM_LOAD_UOPS_MISC_RETIRED.LLC_MISS / ( MEM_LOAD_UOPS_LLC_HIT_RETIRED +"
+              "7 * MEM_LOAD_UOPS_MISC_RETIRED.LLC_MISS ) ) / CPU_CLK_UNHALTED.THREAD_P )");
+    if (PERFEXPERT_SUCCESS != lcpi_add_metric("data_accesses.memory_bound", s)) {
         return PERFEXPERT_ERROR;
     }
 
