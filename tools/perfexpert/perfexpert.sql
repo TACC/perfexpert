@@ -27,6 +27,14 @@ PRAGMA foreign_keys = ON;
 --
 -- Create tables
 --
+
+CREATE TABLE IF NOT EXISTS perfexpert_experiment (
+    perfexpert_id INTEGER PRIMARY KEY,
+    command VARCHAR,
+    mpi_tasks INTEGER,
+    threads INTEGER
+);
+
 CREATE TABLE IF NOT EXISTS category (
     id    INTEGER NOT NULL,
     name  VARCHAR NOT NULL,

@@ -34,6 +34,8 @@ extern "C" {
 int add_event(void *unused, int argc, char **argv, char **event);
 int database_hw_events(vtune_hw_profile_t *profile);
 int database_default_events(void);
+static int database_set_tasks_threads();
+
 /* static int database_metrics(hpctoolkit_procedure_t *hotspot); */
 
 #ifdef __cplusplus

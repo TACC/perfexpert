@@ -192,6 +192,48 @@ int database_hw_events(vtune_hw_profile_t *profile) {
     return PERFEXPERT_SUCCESS;
 }
 
+static int database_set_tasks_threads() {
+    char sql[MAX_BUFFER_SIZE];
+    char *error;
+    int mpi_tasks;
+    int threads;
+
+    bzero(sql, MAX_BUFFER_SIZE);
+    sprintf(sql, "SELECT MAX(mpi_task) FROM perfexpert_event");
+
+    OUTPUT_VERBOSE((10, "    SQL: %s", sql));
+    if (SQLITE_OK != sqlite3_exec(globals.db, sql,
+        perfexpert_database_get_int, (void *)&mpi_tasks, &error)) {
+        OUTPUT(("%s %s", _ERROR("SQL error"), error));
+        sqlite3_free(error);
+        return PERFEXPERT_ERROR;
+    }   
+
+    bzero(sql, MAX_BUFFER_SIZE);
+    sprintf(sql, "SELECT MAX(thread_id) FROM perfexpert_event");
+
+    OUTPUT_VERBOSE((10, "    SQL: %s", sql));
+    if (SQLITE_OK != sqlite3_exec(globals.db, sql,
+        perfexpert_database_get_int, (void *)&threads, &error)) {
+        OUTPUT(("%s %s", _ERROR("SQL error"), error));
+        sqlite3_free(error);
+        return PERFEXPERT_ERROR;
+    }   
+
+    bzero(sql, MAX_BUFFER_SIZE);
+    sprintf(sql, "UPDATE perfexpert_experiment SET"
+            " mpi_tasks=%d, threads=%d WHERE perfexpert_id=%d",
+            mpi_tasks, threads, globals.unique_id);
+
+    OUTPUT_VERBOSE((10, "    SQL: %s", sql));
+    if (SQLITE_OK != sqlite3_exec(globals.db, sql, NULL, NULL, &error)) {
+        OUTPUT(("%s %s", _ERROR("SQL error"), error));                                                                               
+        sqlite3_free(error);
+        return PERFEXPERT_ERROR;
+    }   
+    return PERFEXPERT_SUCCESS;
+}
+
 #ifdef __cplusplus
 }
 #endif

@@ -63,6 +63,9 @@ int main(int argc, char** argv) {
     perfexpert_step_t *s = NULL;
     struct tm *lt;
     time_t t;
+    char *error;
+    char sql[MAX_BUFFER_SIZE];
+    char command[MAX_BUFFER_SIZE];
 
     /* Register the perfexpert signal handler */
     signal(SIGSEGV, perfexpert_sighandler);
@@ -138,6 +141,23 @@ int main(int argc, char** argv) {
         globals.dbfile)) {
         OUTPUT(("%s", _ERROR("connecting to database")));
         goto CLEANUP;
+    }
+
+
+    i = 0;
+    command="";
+    while (NULL != globals.program_argv[i]) {
+        strcat (command, globals.program_argv[i]);
+        i++;
+    }
+
+    bzero(sql, MAX_BUFFER_SIZE);
+    sprintf(sql, "INSERT INTO perfexpert_experiment(perfexpert_id, command, mpi_tasks, threads)"
+            " VALUES (%d, '%s', 1, 1);", globals.unique_id, command);
+    if (SQLITE_OK != sqlite3_exec(globals.db, sql, NULL, NULL, &error)) {
+        OUTPUT(("%s %s", _ERROR("SQL error"), error));
+        sqlite3_free(error);
+        return PERFEXPERT_ERROR;
     }
 
     /* Step 4: Initialize modules */

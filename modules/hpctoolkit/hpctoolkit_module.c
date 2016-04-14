@@ -195,6 +195,12 @@ int module_measure(void) {
         return PERFEXPERT_ERROR;
     }
 
+    /*  Set number of tasks and threads for this experiment */
+    if (PERFEXPERT_SUCCESS != database_set_tasks_threads()) {
+        OUTPUT(("%s", _ERROR("writing tasks and threads to database")));
+        return PERFEXPERT_ERROR;
+    }
+
     return PERFEXPERT_SUCCESS;
 }
 

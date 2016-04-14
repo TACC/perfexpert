@@ -32,6 +32,7 @@ extern "C" {
 /* Function declarations */
 static int database_hotspots(hpctoolkit_profile_t *profile);
 static int database_metrics(hpctoolkit_procedure_t *hotspot);
+static int database_set_tasks_threads();
 
 #ifdef __cplusplus
 }
