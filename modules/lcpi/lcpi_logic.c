@@ -42,13 +42,19 @@ extern "C" {
 
 /* logic_lcpi_compute */
 int logic_lcpi_compute(lcpi_profile_t *profile) {
+
     lcpi_metric_t *h_lcpi = NULL, *l = NULL, *t = NULL;
     lcpi_hotspot_t *h = NULL;
     double *values = NULL;
     char **names = NULL;
     int count = 0, i = 0;
+    int mpi_tasks, threads;
+    int task, thread;
 
     OUTPUT_VERBOSE((4, "%s", _YELLOW("Calculating LCPI metrics")));
+    
+    mpi_tasks = database_get_mpi_tasks();
+    threads = database_get_threads();
 
     /* For each hotspot in this profile... */
     perfexpert_list_for(h, &(profile->hotspots), lcpi_hotspot_t) {
@@ -68,14 +74,24 @@ int logic_lcpi_compute(lcpi_profile_t *profile) {
             if (0 < count) {
                 PERFEXPERT_ALLOC(double, values, (sizeof(double *) * count));
 
-                for (i = 0; i < count; i++) {
-                    if (-1.0 != database_get_hound(names[i])) {
-                        values[i] = database_get_hound(names[i]);
-                        OUTPUT_VERBOSE((10, "           Found name %s = %g", names[i], values[i]));
-                    } else if (-1.0 != database_get_event(names[i], h->id)) {
-                        values[i] = database_get_event(names[i], h->id);
-                        OUTPUT_VERBOSE((10, "      [%d] Found name %s = %g", h->id, names[i], values[i]));
+                for (task = 0; task < mpi_tasks; task++) {
+                    for (thread = 0; thread < threads; thread++) {
+                        for (i = 0; i < count; i++) {
+                            if (-1.0 != database_get_hound(names[i])) {
+                                values[i] = database_get_hound(names[i]);
+                                OUTPUT_VERBOSE((10, "           Found name %s = %g", names[i], values[i]));
+                            } else if (-1.0 != database_get_event(names[i], h->id, task, thread)) {
+                                values[i] = database_get_event(names[i], h->id, task, thread);
+                                OUTPUT_VERBOSE((10, "      [%d] Found name %s = %g", h->id, names[i], values[i]));
+                            }
+                        }
+                        // if it's serial (aggregated), we don't need to continue
+                        if (my_module_globals.output == SERIAL_OUTPUT) 
+                            break;
                     }
+                    // if it's serial (aggregated), we don't need to continue
+                    if (my_module_globals.output == SERIAL_OUTPUT)
+                        break;
                 }
 
                 /* Evaluate the LCPI expression */

@@ -506,21 +506,84 @@ double database_get_hound(const char *name) {
 }
 
 /* database_get_event */
-double database_get_event(const char *name, int hotspot_id) {
+double database_get_event(const char *name, int hotspot_id, int mpi_task, int thread_id) {
     char *error = NULL, sql[MAX_BUFFER_SIZE];
     double value = -1.0;
 
     bzero(sql, MAX_BUFFER_SIZE);
-    sprintf(sql, "SELECT SUM(value) FROM perfexpert_event WHERE hotspot_id = %d AND "
-        "name = '%s';", hotspot_id, name);
 
+    if (my_module_globals.output==SERIAL_OUTPUT) {
+        sprintf(sql, "SELECT SUM(value) FROM perfexpert_event WHERE hotspot_id = %d AND "
+            "name = '%s';", hotspot_id, name);
+
+        if (SQLITE_OK != sqlite3_exec(globals.db, sql,
+            perfexpert_database_get_double, (void *)&value, &error)) {
+            OUTPUT(("%s %s", _ERROR("SQL error"), error));
+            sqlite3_free(error);
+        }
+    }
+    else {
+        if (my_module_globals.output==PARALLEL_OUTPUT) {
+            sprintf(sql, "SELECT SUM(value) FROM perfexpert_event WHERE hotspot_id = %d AND "
+                "name = '%s' AND mpi_task=%d;", hotspot_id, name, mpi_task);
+
+            if (SQLITE_OK != sqlite3_exec(globals.db, sql,
+                perfexpert_database_get_double, (void *)&value, &error)) {
+               OUTPUT(("%s %s", _ERROR("SQL error"), error));
+                sqlite3_free(error);
+            }
+        }
+        else {  // Hybrid output
+            sprintf(sql, "SELECT SUM(value) FROM perfexpert_event WHERE hotspot_id = %d AND "
+                "name = '%s' AND mpi_task=%d and thread_id=%d;", hotspot_id, name, mpi_task, thread_id);
+
+            if (SQLITE_OK != sqlite3_exec(globals.db, sql,
+                perfexpert_database_get_double, (void *)&value, &error)) {
+               OUTPUT(("%s %s", _ERROR("SQL error"), error));
+                sqlite3_free(error);
+            }
+        }
+    }
+
+    return value;
+}
+
+/*  return number of threads */
+int database_get_threads () {
+    char sql[MAX_BUFFER_SIZE];
+    char *error;
+    int value = 0;
+
+    bzero(sql, MAX_BUFFER_SIZE);
+    sprintf(sql,
+            "SELECT threads FROM perfexpert_experiment WHERE perfexpert_id = %llu;",
+            globals.unique_id);
     if (SQLITE_OK != sqlite3_exec(globals.db, sql,
-        perfexpert_database_get_double, (void *)&value, &error)) {
+        perfexpert_database_get_int, (int *)&value, &error)) {
         OUTPUT(("%s %s", _ERROR("SQL error"), error));
         sqlite3_free(error);
     }
 
-    return value;
+    return value+1;   
+}
+
+/*  return number of MPI tasks */
+int database_get_mpi_tasks () {
+    char sql[MAX_BUFFER_SIZE];
+    char *error;
+    int value = 0;
+
+    bzero(sql, MAX_BUFFER_SIZE);
+    sprintf(sql,
+            "SELECT mpi_tasks FROM perfexpert_experiment WHERE perfexpert_id = %llu;",
+            globals.unique_id);
+    if (SQLITE_OK != sqlite3_exec(globals.db, sql,
+        perfexpert_database_get_int, (int *)&value, &error)) {
+        OUTPUT(("%s %s", _ERROR("SQL error"), error));
+        sqlite3_free(error);
+    }
+
+    return value+1;
 }
 
 #ifdef __cplusplus

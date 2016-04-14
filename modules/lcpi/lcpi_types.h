@@ -36,6 +36,8 @@ typedef struct {
     char name_md5[33];
     void *expression;
     double value;
+    int mpi_task;
+    int thread_id;
     perfexpert_hash_handle_t hh_str;
 } lcpi_metric_t;
 

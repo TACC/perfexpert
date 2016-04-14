@@ -47,7 +47,7 @@ static struct argp_option options[] = {
       "Order in which hotspots should be sorted (Valid values: relevance, "
       "performance, mixed. Default value: unsorted)" },
     { "verbose=VALUE", 0, 0, OPTION_DOC, "Enable verbose mode (range: 0-10)" },
-
+    { "output=MODE", 'o', "0,1,2", OPTION_DOC, "Output for serial/aggregated mode (0), for MPI tasks (1), for MPI and threads (2)"}, 
     { "mic", 'm', 0, OPTION_HIDDEN, 0 },
     { "sort-order", 's', "relevance|performance|mixed", OPTION_HIDDEN, 0 },
     { "architecture", 'a', "Bonnell|Broadwell|Haswell|IvyBridge|IvyTown|"

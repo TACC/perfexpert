@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
+ * Copyright (c) 2011-2016  University of Texas at Austin. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -14,7 +14,7 @@
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
  *
- * Authors: Leonardo Fialho and Ashay Rane
+ * Authors: Antonio Gomez-Iglesias, Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
  */
@@ -64,6 +64,7 @@ int parse_module_args(int argc, char *argv[]) {
     OUTPUT_VERBOSE((7, "   Sorting order: %s", my_module_globals.order));
     OUTPUT_VERBOSE((7, "   Architecture:  %s", my_module_globals.architecture));
     OUTPUT_VERBOSE((7, "   Verbose level: %d", my_module_globals.verbose));
+    OUTPUT_VERBOSE((7, "   Output mode:   %d", my_module_globals.output));
 
     /* Not using OUTPUT_VERBOSE because I want only one line */
     if (8 <= my_module_globals.verbose) {
@@ -92,9 +93,13 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
         /* Sorting order */
         case 's':
             my_module_globals.order = arg;
-            OUTPUT_VERBOSE((1, "option 'o' set [%s]", my_module_globals.order));
+            OUTPUT_VERBOSE((1, "option 's' set [%s]", my_module_globals.order));
             break;
-  
+ 
+        case 'o':
+           my_module_globals.output = arg;
+           OUTPUT_VERBOSE((1, "option 'o' set [%s]", my_module_globals.output));
+           break;
         /* Verbose */
         case 'v':
             my_module_globals.verbose = atoi(arg);
@@ -125,8 +130,15 @@ static int parse_env_vars(void) {
     if (NULL != getenv("PERFEXPERT_MODULE_LCPI_ARCHITECTURE")) {
         my_module_globals.architecture =
             getenv("PERFEXPERT_MODULE_LCPI_ARCHITECTURE");
-        OUTPUT_VERBOSE((1, "ENV: order=%s", my_module_globals.architecture));
+        OUTPUT_VERBOSE((1, "ENV: architecture=%s", my_module_globals.architecture));
     }
+
+    if (NULL != getenv("PERFEXPERT_MODULE_LCPI_OUTPUT")) {
+        my_module_globals.output =
+            getenv("PERFEXPERT_MODULE_LCPI_OUTPUT");
+        OUTPUT_VERBOSE((1, "ENV: output=%s", my_module_globals.output));
+    }
+
 
     return PERFEXPERT_SUCCESS;
 }

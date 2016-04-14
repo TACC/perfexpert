@@ -65,6 +65,7 @@ int module_init(void) {
     my_module_globals.mic = PERFEXPERT_FALSE;
     my_module_globals.verbose = globals.verbose;
     my_module_globals.threshold = globals.threshold;
+    my_module_globals.output = SERIAL_OUTPUT;
 
     /* Check if at least one of HPCToolkit or VTune is loaded */
     if ((PERFEXPERT_FALSE == perfexpert_module_available("hpctoolkit")) &&
