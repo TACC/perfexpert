@@ -26,7 +26,6 @@ extern "C" {
 /* System standard headers */
 #include <stdio.h>
 #include <stdlib.h>
-// #include <string.h>
 #include <argp.h>
 
 /* Modules headers */
@@ -97,8 +96,8 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
             break;
  
         case 'o':
-           my_module_globals.output = arg;
-           OUTPUT_VERBOSE((1, "option 'o' set [%s]", my_module_globals.output));
+           my_module_globals.output = strtol(arg, NULL,10);
+           OUTPUT_VERBOSE((1, "option 'o' set [%d]", my_module_globals.output));
            break;
         /* Verbose */
         case 'v':
@@ -134,8 +133,9 @@ static int parse_env_vars(void) {
     }
 
     if (NULL != getenv("PERFEXPERT_MODULE_LCPI_OUTPUT")) {
-        my_module_globals.output =
-            getenv("PERFEXPERT_MODULE_LCPI_OUTPUT");
+        OUTPUT_VERBOSE((1, "ENV: output"));
+        char * t =  getenv("PERFEXPERT_MODULE_LCPI_OUTPUT");
+        my_module_globals.output = strtol(t, NULL, 10);
         OUTPUT_VERBOSE((1, "ENV: output=%s", my_module_globals.output));
     }
 
