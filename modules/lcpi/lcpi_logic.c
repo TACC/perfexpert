@@ -80,12 +80,15 @@ int logic_lcpi_compute(lcpi_profile_t *profile) {
                     }
                     PERFEXPERT_ALLOC(double, values, (sizeof(double *) * count));
                     for (i = 0; i < count; i++) {
-                        if (-1.0 != database_get_hound(names[i])) {
-                            values[i] = database_get_hound(names[i]);
+                        values[i] = database_get_hound(names[i]);
+                        if (-1.0 != values[i]) {
+                            //values[i] = database_get_hound(names[i]);
                             OUTPUT_VERBOSE((10, "           Found name %s = %g", names[i], values[i]));
-                        } else if (-1.0 != database_get_event(names[i], h->id, task, thread)) {
+                        } else { // if (-1.0 != database_get_event(names[i], h->id, task, thread)) {
                             values[i] = database_get_event(names[i], h->id, task, thread);
-                            OUTPUT_VERBOSE((10, "      [%d] Found name %s = %g", h->id, names[i], values[i]));
+                            if (values[i] != -1.0) {
+                                OUTPUT_VERBOSE((10, "      [%d] Found name %s = %g", h->id, names[i], values[i]));
+                            }
                         }
                     }
                     /* Evaluate the LCPI expression */
