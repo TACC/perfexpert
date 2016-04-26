@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
+ * Copyright (c) 2011-2016  University of Texas at Austin. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -14,7 +14,7 @@
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
  *
- * Authors: Leonardo Fialho and Ashay Rane
+ * Authors: Antonio Gomez-Iglesias, Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
  */
@@ -201,12 +201,12 @@ static int database_metrics(hpctoolkit_procedure_t *hotspot) {
     return PERFEXPERT_SUCCESS;
 }
 
-static int database_set_tasks_threads() {
+int database_set_tasks_threads() {
     char sql[MAX_BUFFER_SIZE];
     char *error;
     int mpi_tasks;
     int threads;
-
+    
     bzero(sql, MAX_BUFFER_SIZE);
     sprintf(sql, "SELECT MAX(mpi_task) FROM perfexpert_event");
 
@@ -231,7 +231,7 @@ static int database_set_tasks_threads() {
 
     bzero(sql, MAX_BUFFER_SIZE);
     sprintf(sql, "UPDATE perfexpert_experiment SET"
-            " mpi_tasks=%d, threads=%d WHERE perfexpert_id=%d",
+            " mpi_tasks=%d, threads=%d WHERE perfexpert_id=%llu",
             mpi_tasks, threads, globals.unique_id);
 
     OUTPUT_VERBOSE((10, "    SQL: %s", sql));
@@ -242,6 +242,7 @@ static int database_set_tasks_threads() {
     }
     return PERFEXPERT_SUCCESS;
 }
+
 #ifdef __cplusplus
 }
 #endif

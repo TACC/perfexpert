@@ -712,11 +712,14 @@ static void print_recommendations(perfexpert_list_t* locations) {
 int process_hotspots(perfexpert_list_t* hotspots, char *filename) {
     perfexpert_list_t locations;
     perfexpert_list_construct(&locations);
-    int err = SUCCESS;
-   
-    if (SUCCESS != (err = parse(hotspots, &locations, filename))) {
-        OUTPUT(("%s: %d",
-            _ERROR("Failed to parse vectorization reports, err code"), err));
+    int err = PERFEXPERT_SUCCESS;
+  
+//    if (PERFEXPERT_SUCCESS != perfexpert_util_file_exists(filename)) {
+//        return PERFEXPERT_ERROR;
+//    }
+    if (PERFEXPERT_SUCCESS != (err = parse(hotspots, &locations, filename))) {
+//        OUTPUT(("%s %s, error code: %d",
+//            _ERROR("Failed to parse vectorization report"), filename, err));
         return PERFEXPERT_ERROR;
     }
 

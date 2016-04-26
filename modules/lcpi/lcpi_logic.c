@@ -63,47 +63,47 @@ int logic_lcpi_compute(lcpi_profile_t *profile) {
 
         /* For each LCPI definition... */
         perfexpert_hash_iter_str(my_module_globals.metrics_by_name, l, t) {
-            PERFEXPERT_ALLOC(lcpi_metric_t, h_lcpi, sizeof(lcpi_metric_t));
-            strcpy(h_lcpi->name_md5, l->name_md5);
-            h_lcpi->expression = l->expression;
-            h_lcpi->value = l->value;
-            h_lcpi->name = l->name;
+            for (task = 0; task < mpi_tasks; task++) {
+                for (thread = 0; thread < threads; thread++) {
+                    PERFEXPERT_ALLOC(lcpi_metric_t, h_lcpi, sizeof(lcpi_metric_t));
+                    strcpy(h_lcpi->name_md5, l->name_md5);
+                    h_lcpi->expression = l->expression;
+                    h_lcpi->value = l->value;
+                    h_lcpi->name = l->name;
+                    h_lcpi->mpi_task = task;
+                    h_lcpi->thread_id = thread;
 
-            /* Get the list of variables and their values */
-            evaluator_get_variables(h_lcpi->expression, &names, &count);
-            if (0 < count) {
-                PERFEXPERT_ALLOC(double, values, (sizeof(double *) * count));
-
-                for (task = 0; task < mpi_tasks; task++) {
-                    for (thread = 0; thread < threads; thread++) {
-                        for (i = 0; i < count; i++) {
-                            if (-1.0 != database_get_hound(names[i])) {
-                                values[i] = database_get_hound(names[i]);
-                                OUTPUT_VERBOSE((10, "           Found name %s = %g", names[i], values[i]));
-                            } else if (-1.0 != database_get_event(names[i], h->id, task, thread)) {
-                                values[i] = database_get_event(names[i], h->id, task, thread);
-                                OUTPUT_VERBOSE((10, "      [%d] Found name %s = %g", h->id, names[i], values[i]));
-                            }
-                        }
-                        // if it's serial (aggregated), we don't need to continue
-                        if (my_module_globals.output == SERIAL_OUTPUT) 
-                            break;
+                    /* Get the list of variables and their values */
+                    evaluator_get_variables(h_lcpi->expression, &names, &count);
+                    if (count <= 0) {
+                        continue;
                     }
+                    PERFEXPERT_ALLOC(double, values, (sizeof(double *) * count));
+                    for (i = 0; i < count; i++) {
+                        if (-1.0 != database_get_hound(names[i])) {
+                            values[i] = database_get_hound(names[i]);
+                            OUTPUT_VERBOSE((10, "           Found name %s = %g", names[i], values[i]));
+                        } else if (-1.0 != database_get_event(names[i], h->id, task, thread)) {
+                            values[i] = database_get_event(names[i], h->id, task, thread);
+                            OUTPUT_VERBOSE((10, "      [%d] Found name %s = %g", h->id, names[i], values[i]));
+                        }
+                    }
+                    /* Evaluate the LCPI expression */
+                    h_lcpi->value = evaluator_evaluate(h_lcpi->expression, count,
+                                                       names, values);
+                    /* Add the LCPI to the hotspot's list of LCPIs */
+                    perfexpert_hash_add_str(h->metrics_by_name, name_md5, h_lcpi);
+
+                    OUTPUT_VERBOSE((10, "    %s (%d - %d) = [%g]", h_lcpi->name, h_lcpi->mpi_task, h_lcpi->thread_id,  h_lcpi->value));
+                    PERFEXPERT_DEALLOC(values);
                     // if it's serial (aggregated), we don't need to continue
-                    if (my_module_globals.output == SERIAL_OUTPUT)
+                    if (my_module_globals.output == SERIAL_OUTPUT) 
                         break;
                 }
-
-                /* Evaluate the LCPI expression */
-                h_lcpi->value = evaluator_evaluate(h_lcpi->expression, count,
-                    names, values);
-                PERFEXPERT_DEALLOC(values);
+                // if it's serial (aggregated), we don't need to continue
+                if (my_module_globals.output == SERIAL_OUTPUT)
+                    break;
             }
-
-            /* Add the LCPI to the hotspot's list of LCPIs */
-            perfexpert_hash_add_str(h->metrics_by_name, name_md5, h_lcpi);
-
-            OUTPUT_VERBOSE((10, "    %s = [%g]", h_lcpi->name, h_lcpi->value));
         }
     }
     return PERFEXPERT_SUCCESS;

@@ -1,5 +1,5 @@
 --
--- Copyright (c) 2011-2015 University of Texas at Austin. All rights reserved.
+-- Copyright (c) 2011-2016 University of Texas at Austin. All rights reserved.
 --
 -- $COPYRIGHT$
 --
@@ -31,6 +31,8 @@ CREATE TABLE IF NOT EXISTS lcpi_metric (
     id         INTEGER PRIMARY KEY,
     name       VARCHAR NOT NULL,
     value      REAL    NOT NULL,
+    mpi_task   INTEGER NOT NULL,
+    thread     INTEGER NOT NULL,
     hotspot_id INTEGER NOT NULL,
     FOREIGN KEY (hotspot_id) REFERENCES perfexpert_hotspot(id)
 --    hotspot_id INTEGER REFERENCES hotspot

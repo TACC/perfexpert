@@ -65,6 +65,8 @@ int database_export(perfexpert_list_t *profiles, const char *table) {
                  "id            INTEGER PRIMARY KEY,        "
                  "name          VARCHAR NOT NULL,           "
                  "value         REAL    NOT NULL,           "
+                 "mpi_task      INTEGER NOT NULL,           "
+                 "thread        INTEGER NOT NULL,           "
                  "hotspot_id    INTEGER NOT NULL,           "
                  "FOREIGN KEY (hotspot_id) REFERENCES perfexpert_hotspot(id));");
 
@@ -91,9 +93,9 @@ int database_export(perfexpert_list_t *profiles, const char *table) {
             /* ...the metrics */
             perfexpert_hash_iter_str(h->metrics_by_name, m, t) {
                 bzero(sql, MAX_BUFFER_SIZE);
-                sprintf(sql, "INSERT INTO lcpi_metric (name, value, hotspot_id)"
-                    " VALUES ('%s', %f, %llu);", m->name,
-                    isnormal(m->value) ? m->value: 0.0, h->id);
+                sprintf(sql, "INSERT INTO lcpi_metric (name, value, mpi_task, thread, hotspot_id)"
+                    " VALUES ('%s', %f, %d, %d, %llu);", m->name,
+                    isnormal(m->value) ? m->value: 0.0, m->mpi_task, m->thread_id, h->id);
 
                 OUTPUT_VERBOSE((10, "      %s SQL: %s", _CYAN(m->name), sql));
 
@@ -558,6 +560,7 @@ int database_get_threads () {
     sprintf(sql,
             "SELECT threads FROM perfexpert_experiment WHERE perfexpert_id = %llu;",
             globals.unique_id);
+    OUTPUT_VERBOSE((3, "importing threads: %s", sql));
     if (SQLITE_OK != sqlite3_exec(globals.db, sql,
         perfexpert_database_get_int, (int *)&value, &error)) {
         OUTPUT(("%s %s", _ERROR("SQL error"), error));
@@ -577,6 +580,7 @@ int database_get_mpi_tasks () {
     sprintf(sql,
             "SELECT mpi_tasks FROM perfexpert_experiment WHERE perfexpert_id = %llu;",
             globals.unique_id);
+    OUTPUT_VERBOSE((3, "importing MPI tasks: %s", sql));
     if (SQLITE_OK != sqlite3_exec(globals.db, sql,
         perfexpert_database_get_int, (int *)&value, &error)) {
         OUTPUT(("%s %s", _ERROR("SQL error"), error));

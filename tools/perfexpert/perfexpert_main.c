@@ -145,20 +145,12 @@ int main(int argc, char** argv) {
 
 
     i = 0;
-    command="";
+    sprintf (command, "");
     while (NULL != globals.program_argv[i]) {
         strcat (command, globals.program_argv[i]);
         i++;
     }
 
-    bzero(sql, MAX_BUFFER_SIZE);
-    sprintf(sql, "INSERT INTO perfexpert_experiment(perfexpert_id, command, mpi_tasks, threads)"
-            " VALUES (%d, '%s', 1, 1);", globals.unique_id, command);
-    if (SQLITE_OK != sqlite3_exec(globals.db, sql, NULL, NULL, &error)) {
-        OUTPUT(("%s %s", _ERROR("SQL error"), error));
-        sqlite3_free(error);
-        return PERFEXPERT_ERROR;
-    }
 
     /* Step 4: Initialize modules */
     if (PERFEXPERT_SUCCESS != perfexpert_module_init()) {
@@ -181,6 +173,16 @@ int main(int argc, char** argv) {
     if (PERFEXPERT_SUCCESS != perfexpert_backup_create(&globals.backup)) {
         OUTPUT(("%s", _ERROR("unable to initialize backup")));
         goto CLEANUP;
+    }
+
+    bzero(sql, MAX_BUFFER_SIZE);
+    sprintf(sql, "INSERT INTO perfexpert_experiment(perfexpert_id, command, mpi_tasks, threads)"
+            " VALUES (%llu, '%s', 1, 1);", globals.unique_id, command);
+    OUTPUT_VERBOSE((10, " sql: %s", sql));
+    if (SQLITE_OK != sqlite3_exec(globals.db, sql, NULL, NULL, &error)) {
+        OUTPUT(("%s %s", _ERROR("SQL error"), error));
+        sqlite3_free(error);
+        return PERFEXPERT_ERROR;
     }
 
     /* Step 6: Iterate through steps  */

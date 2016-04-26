@@ -222,7 +222,7 @@ static int database_set_tasks_threads() {
 
     bzero(sql, MAX_BUFFER_SIZE);
     sprintf(sql, "UPDATE perfexpert_experiment SET"
-            " mpi_tasks=%d, threads=%d WHERE perfexpert_id=%d",
+            " mpi_tasks=%d, threads=%d WHERE perfexpert_id=%llu",
             mpi_tasks, threads, globals.unique_id);
 
     OUTPUT_VERBOSE((10, "    SQL: %s", sql));

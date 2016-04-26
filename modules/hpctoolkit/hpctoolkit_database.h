@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
+ * Copyright (c) 2011-2016  University of Texas at Austin. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -14,7 +14,7 @@
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
  *
- * Authors: Leonardo Fialho and Ashay Rane
+ * Authors: Antonio Gomez-Iglesias, Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
  */
@@ -32,7 +32,7 @@ extern "C" {
 /* Function declarations */
 static int database_hotspots(hpctoolkit_profile_t *profile);
 static int database_metrics(hpctoolkit_procedure_t *hotspot);
-static int database_set_tasks_threads();
+int database_set_tasks_threads();
 
 #ifdef __cplusplus
 }
