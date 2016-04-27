@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
+ * Copyright (c) 2011-2015  University of Texas at Austin. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -14,7 +14,7 @@
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
  *
- * Authors: Leonardo Fialho and Ashay Rane
+ * Authors: Antonio Gomez-Iglesias, Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
  */
@@ -44,7 +44,7 @@ static int map_modules_to_hotspots(lcpi_hotspot_t *h, lcpi_module_t *m,
 static int calculate_metadata(lcpi_profile_t *profile, const char *table);
 static int import_instructions(void *hotspot, int n, char **val, char **names);
 static int import_experiment(void *hotspot, int n, char **val, char **names);
-
+static int import_hound(lcpi_hound_t *);
 #ifdef __cplusplus
 }
 #endif

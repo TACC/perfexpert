@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015  University of Texas at Austin. All rights reserved.
+ * Copyright (c) 2011-2016  University of Texas at Austin. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -60,6 +60,7 @@ extern "C" {
 typedef struct {
     perfexpert_list_t profiles;
     lcpi_metric_t *metrics_by_name;
+    lcpi_hound_t *hound_info;
     perfexpert_module_measurement_t *measurement;
     char *order;
     int help_only;

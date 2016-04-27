@@ -46,13 +46,21 @@ int logic_lcpi_compute(lcpi_profile_t *profile) {
     lcpi_metric_t *h_lcpi = NULL, *l = NULL, *t = NULL;
     lcpi_hotspot_t *h = NULL;
     double *values = NULL;
+    lcpi_hound_t *hound_info;
     char **names = NULL;
     int count = 0, i = 0;
     int mpi_tasks, threads;
     int task, thread;
 
     OUTPUT_VERBOSE((4, "%s", _YELLOW("Calculating LCPI metrics")));
-    
+
+    if (my_module_globals.hound_info==NULL) {
+        if (PERFEXPERT_SUCCESS != import_hound (my_module_globals.hound_info)) {
+            OUTPUT((_ERROR("importing hound")));
+            return PERFEXPERT_ERROR;
+        }
+    }
+
     mpi_tasks = database_get_mpi_tasks();
     threads = database_get_threads();
 
@@ -80,7 +88,11 @@ int logic_lcpi_compute(lcpi_profile_t *profile) {
                     }
                     PERFEXPERT_ALLOC(double, values, (sizeof(double *) * count));
                     for (i = 0; i < count; i++) {
-                        values[i] = database_get_hound(names[i]);
+                        perfexpert_hash_find_str(my_module_globals.hound_info, names[i], hound_info);
+                        if (hound_info) {
+                            values[i] = hound_info->value;
+                            //values[i] = database_get_hound(names[i]);
+                        }
                         if (-1.0 != values[i]) {
                             //values[i] = database_get_hound(names[i]);
                             OUTPUT_VERBOSE((10, "           Found name %s = %g", names[i], values[i]));

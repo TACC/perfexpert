@@ -59,6 +59,7 @@ int module_init(void) {
     /* Initialize list of events */
     perfexpert_list_construct(&(my_module_globals.profiles));
     my_module_globals.metrics_by_name = NULL;
+    my_module_globals.hound_info = NULL;
     my_module_globals.help_only = PERFEXPERT_FALSE;
     my_module_globals.measurement = NULL;
     my_module_globals.architecture = NULL;

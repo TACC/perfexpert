@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015  University of Texas at Austin. All rights reserved.
+ * Copyright (c) 2011-2016  University of Texas at Austin. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -560,7 +560,7 @@ int database_get_threads () {
     sprintf(sql,
             "SELECT threads FROM perfexpert_experiment WHERE perfexpert_id = %llu;",
             globals.unique_id);
-    OUTPUT_VERBOSE((3, "importing threads: %s", sql));
+    OUTPUT_VERBOSE((10, "importing threads: %s", sql));
     if (SQLITE_OK != sqlite3_exec(globals.db, sql,
         perfexpert_database_get_int, (int *)&value, &error)) {
         OUTPUT(("%s %s", _ERROR("SQL error"), error));
@@ -580,7 +580,7 @@ int database_get_mpi_tasks () {
     sprintf(sql,
             "SELECT mpi_tasks FROM perfexpert_experiment WHERE perfexpert_id = %llu;",
             globals.unique_id);
-    OUTPUT_VERBOSE((3, "importing MPI tasks: %s", sql));
+    OUTPUT_VERBOSE((10, "importing MPI tasks: %s", sql));
     if (SQLITE_OK != sqlite3_exec(globals.db, sql,
         perfexpert_database_get_int, (int *)&value, &error)) {
         OUTPUT(("%s %s", _ERROR("SQL error"), error));
@@ -588,6 +588,34 @@ int database_get_mpi_tasks () {
     }
 
     return value+1;
+}
+
+static inline int process_hound_info(void *var, int c, char **val, char **names) {
+    lcpi_hound_t *h;
+    int i;
+    for (i = 0; i < c; ++i) {
+        PERFEXPERT_ALLOC(lcpi_hound_t, h, sizeof(lcpi_hound_t));
+        PERFEXPERT_ALLOC(char, h->name, strlen(names[i]));
+        strcpy(h->name, names[i]);
+        h->value = strtol(val[i], NULL, 10);
+        perfexpert_hash_add_str(my_module_globals.hound_info, name, h);
+    }
+}
+
+int import_hound(lcpi_hound_t *hound) {
+    char sql[MAX_BUFFER_SIZE];
+    char *error;
+   
+    bzero(sql, MAX_BUFFER_SIZE);
+    sprintf(sql,
+            "SELECT name, value FROM hound;");
+    OUTPUT_VERBOSE((10, "importing hound information: %s", sql));
+    if (SQLITE_OK != sqlite3_exec(globals.db, sql,
+        process_hound_info, (lcpi_hound_t*) &hound, &error)) {
+        OUTPUT(("%s $s", _ERROR("SQL error"), error));
+        sqlite3_free(error);
+    }
+    return PERFEXPERT_SUCCESS;
 }
 
 #ifdef __cplusplus

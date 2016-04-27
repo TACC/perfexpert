@@ -30,6 +30,12 @@ extern "C" {
 #include "common/perfexpert_hash.h"
 #include "common/perfexpert_list.h"
 
+typedef struct {
+    char *name;
+    double value;
+    perfexpert_hash_handle_t hh_str;
+} lcpi_hound_t;
+
 /* Module types */
 typedef struct {
     char *name;
