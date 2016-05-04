@@ -32,6 +32,7 @@ extern "C" {
 
 typedef struct {
     char *name;
+    char name_md5[33];
     double value;
     perfexpert_hash_handle_t hh_str;
 } lcpi_hound_t;

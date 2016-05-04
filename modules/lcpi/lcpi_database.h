@@ -44,7 +44,8 @@ static int map_modules_to_hotspots(lcpi_hotspot_t *h, lcpi_module_t *m,
 static int calculate_metadata(lcpi_profile_t *profile, const char *table);
 static int import_instructions(void *hotspot, int n, char **val, char **names);
 static int import_experiment(void *hotspot, int n, char **val, char **names);
-static int import_hound(lcpi_hound_t *);
+
+int import_hound(lcpi_hound_t *);
 #ifdef __cplusplus
 }
 #endif

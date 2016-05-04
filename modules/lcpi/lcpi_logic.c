@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015  University of Texas at Austin. All rights reserved.
+ * Copyright (c) 2011-2016  University of Texas at Austin. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -46,7 +46,7 @@ int logic_lcpi_compute(lcpi_profile_t *profile) {
     lcpi_metric_t *h_lcpi = NULL, *l = NULL, *t = NULL;
     lcpi_hotspot_t *h = NULL;
     double *values = NULL;
-    lcpi_hound_t *hound_info;
+    lcpi_hound_t *hound_info, *ddd;
     char **names = NULL;
     int count = 0, i = 0;
     int mpi_tasks, threads;
@@ -64,6 +64,10 @@ int logic_lcpi_compute(lcpi_profile_t *profile) {
     mpi_tasks = database_get_mpi_tasks();
     threads = database_get_threads();
 
+//    perfexpert_hash_iter_str(my_module_globals.hound_info, hound_info, ddd) {
+//        OUTPUT(("In HOUND -> %s", hound_info->name));
+//    }
+
     /* For each hotspot in this profile... */
     perfexpert_list_for(h, &(profile->hotspots), lcpi_hotspot_t) {
         OUTPUT_VERBOSE((10, "  %s (%s:%d@%s)", _YELLOW(h->name), 
@@ -71,6 +75,11 @@ int logic_lcpi_compute(lcpi_profile_t *profile) {
 
         /* For each LCPI definition... */
         perfexpert_hash_iter_str(my_module_globals.metrics_by_name, l, t) {
+            /* Get the list of variables and their values */
+            evaluator_get_variables(l->expression, &names, &count);
+            if (count <= 0) {
+                continue;
+            }
             for (task = 0; task < mpi_tasks; task++) {
                 for (thread = 0; thread < threads; thread++) {
                     PERFEXPERT_ALLOC(lcpi_metric_t, h_lcpi, sizeof(lcpi_metric_t));
@@ -81,21 +90,16 @@ int logic_lcpi_compute(lcpi_profile_t *profile) {
                     h_lcpi->mpi_task = task;
                     h_lcpi->thread_id = thread;
 
-                    /* Get the list of variables and their values */
-                    evaluator_get_variables(h_lcpi->expression, &names, &count);
-                    if (count <= 0) {
-                        continue;
-                    }
                     PERFEXPERT_ALLOC(double, values, (sizeof(double *) * count));
                     for (i = 0; i < count; i++) {
-                        perfexpert_hash_find_str(my_module_globals.hound_info, names[i], hound_info);
+                        perfexpert_hash_find_str(my_module_globals.hound_info, perfexpert_md5_string(names[i]), hound_info);
                         if (hound_info) {
                             values[i] = hound_info->value;
-                            //values[i] = database_get_hound(names[i]);
-                        }
-                        if (-1.0 != values[i]) {
-                            //values[i] = database_get_hound(names[i]);
                             OUTPUT_VERBOSE((10, "           Found name %s = %g", names[i], values[i]));
+                            //values[i] = database_get_hound(names[i]);
+//                        }
+//                        if (-1.0 != values[i]) {
+                            //values[i] = database_get_hound(names[i]);
                         } else { // if (-1.0 != database_get_event(names[i], h->id, task, thread)) {
                             values[i] = database_get_event(names[i], h->id, task, thread);
                             if (values[i] != -1.0) {
@@ -106,6 +110,9 @@ int logic_lcpi_compute(lcpi_profile_t *profile) {
                     /* Evaluate the LCPI expression */
                     h_lcpi->value = evaluator_evaluate(h_lcpi->expression, count,
                                                        names, values);
+                    if (h_lcpi->value<0.0) {
+                        h_lcpi->value = 0.0;
+                    }
                     /* Add the LCPI to the hotspot's list of LCPIs */
                     perfexpert_hash_add_str(h->metrics_by_name, name_md5, h_lcpi);
 

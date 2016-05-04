@@ -517,36 +517,24 @@ double database_get_event(const char *name, int hotspot_id, int mpi_task, int th
     if (my_module_globals.output==SERIAL_OUTPUT) {
         sprintf(sql, "SELECT SUM(value) FROM perfexpert_event WHERE hotspot_id = %d AND "
             "name = '%s';", hotspot_id, name);
-
-        if (SQLITE_OK != sqlite3_exec(globals.db, sql,
-            perfexpert_database_get_double, (void *)&value, &error)) {
-            OUTPUT(("%s %s", _ERROR("SQL error"), error));
-            sqlite3_free(error);
-        }
     }
     else {
         if (my_module_globals.output==PARALLEL_OUTPUT) {
             sprintf(sql, "SELECT SUM(value) FROM perfexpert_event WHERE hotspot_id = %d AND "
                 "name = '%s' AND mpi_task=%d;", hotspot_id, name, mpi_task);
-
-            if (SQLITE_OK != sqlite3_exec(globals.db, sql,
-                perfexpert_database_get_double, (void *)&value, &error)) {
-               OUTPUT(("%s %s", _ERROR("SQL error"), error));
-                sqlite3_free(error);
-            }
         }
         else {  // Hybrid output
             sprintf(sql, "SELECT SUM(value) FROM perfexpert_event WHERE hotspot_id = %d AND "
                 "name = '%s' AND mpi_task=%d and thread_id=%d;", hotspot_id, name, mpi_task, thread_id);
-
-            if (SQLITE_OK != sqlite3_exec(globals.db, sql,
-                perfexpert_database_get_double, (void *)&value, &error)) {
-               OUTPUT(("%s %s", _ERROR("SQL error"), error));
-                sqlite3_free(error);
-            }
         }
     }
 
+    if (SQLITE_OK != sqlite3_exec(globals.db, sql,
+        perfexpert_database_get_double, (void *)&value, &error)) {
+        OUTPUT(("%s %s", _ERROR("SQL error"), error));
+        sqlite3_free(error);
+        return -1.0;
+    }
     return value;
 }
 
@@ -590,16 +578,20 @@ int database_get_mpi_tasks () {
     return value+1;
 }
 
-static inline int process_hound_info(void *var, int c, char **val, char **names) {
+static inline int process_hound_info(void *dump, int n, char **val, char **names) {
     lcpi_hound_t *h;
-    int i;
-    for (i = 0; i < c; ++i) {
+//    int i;
+//    for (i = 0; i < n; ++i) {
+//        OUTPUT(("PROCESSING %s = %s\n", val[0], val[1]));
         PERFEXPERT_ALLOC(lcpi_hound_t, h, sizeof(lcpi_hound_t));
-        PERFEXPERT_ALLOC(char, h->name, strlen(names[i]));
-        strcpy(h->name, names[i]);
-        h->value = strtol(val[i], NULL, 10);
-        perfexpert_hash_add_str(my_module_globals.hound_info, name, h);
-    }
+        PERFEXPERT_ALLOC(char, h->name, strlen(val[0]));
+        strcpy(h->name, val[0]);
+        strcpy(h->name_md5, perfexpert_md5_string(val[0])); 
+        h->value = strtol(val[1], NULL, 10);
+//        OUTPUT(("ADDING %s", h->name));
+        perfexpert_hash_add_str(my_module_globals.hound_info, name_md5, h);
+//    }
+    return PERFEXPERT_SUCCESS;
 }
 
 int import_hound(lcpi_hound_t *hound) {
@@ -612,8 +604,9 @@ int import_hound(lcpi_hound_t *hound) {
     OUTPUT_VERBOSE((10, "importing hound information: %s", sql));
     if (SQLITE_OK != sqlite3_exec(globals.db, sql,
         process_hound_info, (lcpi_hound_t*) &hound, &error)) {
-        OUTPUT(("%s $s", _ERROR("SQL error"), error));
+        OUTPUT(("%s %s", _ERROR("SQL error"), error));
         sqlite3_free(error);
+        return PERFEXPERT_ERROR;
     }
     return PERFEXPERT_SUCCESS;
 }
