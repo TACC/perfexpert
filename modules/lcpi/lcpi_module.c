@@ -255,6 +255,11 @@ int module_init(void) {
 
 /* module_fini */
 int module_fini(void) {
+    lcpi_hound_t *t, *d;
+    perfexpert_hash_iter_str(my_module_globals.hound_info, t, d) {
+       PERFEXPERT_DEALLOC(t->name); 
+       PERFEXPERT_DEALLOC(t);
+    }
     OUTPUT_VERBOSE((5, "%s", _MAGENTA("finalized")));
 
     return PERFEXPERT_SUCCESS;

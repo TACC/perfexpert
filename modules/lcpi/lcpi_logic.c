@@ -68,6 +68,7 @@ int logic_lcpi_compute(lcpi_profile_t *profile) {
 //        OUTPUT(("In HOUND -> %s", hound_info->name));
 //    }
 
+    OUTPUT(("ANALYZING PROFILES"));
     /* For each hotspot in this profile... */
     perfexpert_list_for(h, &(profile->hotspots), lcpi_hotspot_t) {
         OUTPUT_VERBOSE((10, "  %s (%s:%d@%s)", _YELLOW(h->name), 
@@ -104,6 +105,9 @@ int logic_lcpi_compute(lcpi_profile_t *profile) {
                             values[i] = database_get_event(names[i], h->id, task, thread);
                             if (values[i] != -1.0) {
                                 OUTPUT_VERBOSE((10, "      [%d] Found name %s = %g", h->id, names[i], values[i]));
+                            }
+                            else {
+                                values[i] = 0.0;
                             }
                         }
                     }
