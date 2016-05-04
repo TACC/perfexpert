@@ -64,11 +64,6 @@ int logic_lcpi_compute(lcpi_profile_t *profile) {
     mpi_tasks = database_get_mpi_tasks();
     threads = database_get_threads();
 
-//    perfexpert_hash_iter_str(my_module_globals.hound_info, hound_info, ddd) {
-//        OUTPUT(("In HOUND -> %s", hound_info->name));
-//    }
-
-    OUTPUT(("ANALYZING PROFILES"));
     /* For each hotspot in this profile... */
     perfexpert_list_for(h, &(profile->hotspots), lcpi_hotspot_t) {
         OUTPUT_VERBOSE((10, "  %s (%s:%d@%s)", _YELLOW(h->name), 
@@ -81,8 +76,11 @@ int logic_lcpi_compute(lcpi_profile_t *profile) {
             if (count <= 0) {
                 continue;
             }
+            /* Iterate over all the MPI processes */
             for (task = 0; task < mpi_tasks; task++) {
+                /* Iterate over all threads */
                 for (thread = 0; thread < threads; thread++) {
+                    /* Allocate the metric */
                     PERFEXPERT_ALLOC(lcpi_metric_t, h_lcpi, sizeof(lcpi_metric_t));
                     strcpy(h_lcpi->name_md5, l->name_md5);
                     h_lcpi->expression = l->expression;
@@ -92,21 +90,22 @@ int logic_lcpi_compute(lcpi_profile_t *profile) {
                     h_lcpi->thread_id = thread;
 
                     PERFEXPERT_ALLOC(double, values, (sizeof(double *) * count));
+                    /* Iterate over all the events of each metric */
                     for (i = 0; i < count; i++) {
+                        /* Check if the current event is in hound */
                         perfexpert_hash_find_str(my_module_globals.hound_info, perfexpert_md5_string(names[i]), hound_info);
                         if (hound_info) {
+                            /* If in hound, use that value */
                             values[i] = hound_info->value;
                             OUTPUT_VERBOSE((10, "           Found name %s = %g", names[i], values[i]));
-                            //values[i] = database_get_hound(names[i]);
-//                        }
-//                        if (-1.0 != values[i]) {
-                            //values[i] = database_get_hound(names[i]);
-                        } else { // if (-1.0 != database_get_event(names[i], h->id, task, thread)) {
+                        } else {
+                            /* If not in hound, look that event in the DB for the task and thread */
                             values[i] = database_get_event(names[i], h->id, task, thread);
                             if (values[i] != -1.0) {
                                 OUTPUT_VERBOSE((10, "      [%d] Found name %s = %g", h->id, names[i], values[i]));
                             }
                             else {
+                                /* Value not found */
                                 values[i] = 0.0;
                             }
                         }
@@ -114,9 +113,6 @@ int logic_lcpi_compute(lcpi_profile_t *profile) {
                     /* Evaluate the LCPI expression */
                     h_lcpi->value = evaluator_evaluate(h_lcpi->expression, count,
                                                        names, values);
-                    if (h_lcpi->value<0.0) {
-                        h_lcpi->value = 0.0;
-                    }
                     /* Add the LCPI to the hotspot's list of LCPIs */
                     perfexpert_hash_add_str(h->metrics_by_name, name_md5, h_lcpi);
 
