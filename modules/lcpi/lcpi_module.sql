@@ -35,6 +35,5 @@ CREATE TABLE IF NOT EXISTS lcpi_metric (
     thread     INTEGER NOT NULL,
     hotspot_id INTEGER NOT NULL,
     FOREIGN KEY (hotspot_id) REFERENCES perfexpert_hotspot(id)
---    hotspot_id INTEGER REFERENCES hotspot
 );
 

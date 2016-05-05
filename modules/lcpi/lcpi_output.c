@@ -101,6 +101,10 @@ int output_analysis(perfexpert_list_t *profiles) {
     char *shortname = NULL;
     FILE *report_FP;
     char *report_FP_file;
+    int task, thread, mpi_tasks, threads;
+
+    mpi_tasks = database_get_mpi_tasks();
+    threads = database_get_threads();
 
     OUTPUT_VERBOSE((4, "%s", _YELLOW("Printing analysis report")));
 
@@ -114,6 +118,8 @@ int output_analysis(perfexpert_list_t *profiles) {
     }
     PERFEXPERT_DEALLOC(report_FP_file);
 
+    for (task = 0; task < mpi_tasks; task++) {
+        for (thread = 0; thread < threads; thread++) {
     /* For each profile in the list of profiles... */
     perfexpert_list_for(p, profiles, lcpi_profile_t) {
         /* Print total runtime for this profile */
@@ -144,7 +150,7 @@ int output_analysis(perfexpert_list_t *profiles) {
             if (my_module_globals.threshold <= h->importance) {
                 if (0 == strcmp("jaketown", perfexpert_string_to_lower(
                     my_module_globals.architecture))) {
-                    if (PERFEXPERT_SUCCESS != output_profile(h, report_FP, 20)) {
+                    if (PERFEXPERT_SUCCESS != output_profile(h, report_FP, 20, task, thread)) {
                         OUTPUT(("%s (%s)", _ERROR("printing hotspot analysis"),
                             h->name));
                         return PERFEXPERT_ERROR;
@@ -152,7 +158,7 @@ int output_analysis(perfexpert_list_t *profiles) {
                 }
                 if (0 == strcmp("mic", perfexpert_string_to_lower(
                     my_module_globals.architecture))) {
-                    if (PERFEXPERT_SUCCESS != output_profile(h, report_FP, 40)) {
+                    if (PERFEXPERT_SUCCESS != output_profile(h, report_FP, 40, task, thread)) {
                         OUTPUT(("%s (%s)", _ERROR("printing hotspot analysis"),
                             h->name));
                         return PERFEXPERT_ERROR;
@@ -161,6 +167,10 @@ int output_analysis(perfexpert_list_t *profiles) {
             }
         }
     }
+
+        } /* threads */
+    } /* tasks */
+
     /* Close file */
     fclose(report_FP);
 
@@ -168,7 +178,7 @@ int output_analysis(perfexpert_list_t *profiles) {
 }
 
 /* output_profile */
-static int output_profile(lcpi_hotspot_t *h, FILE *report_FP, const int scale) {
+static int output_profile(lcpi_hotspot_t *h, FILE *report_FP, const int scale, const int task, const int thread) {
     int print_ratio = PERFEXPERT_TRUE, warn_fp_ratio = PERFEXPERT_FALSE;
     lcpi_metric_t *l = NULL, *t = NULL;
     char *shortname = NULL;
@@ -192,21 +202,41 @@ static int output_profile(lcpi_hotspot_t *h, FILE *report_FP, const int scale) {
                 break;
 
             case PERFEXPERT_HOTSPOT_FUNCTION:
-                printf(
-                    "Function %s in line %d of %s (%.2f%% of the total runtime)\n",
-                    _CYAN(h->name), h->line, shortname, h->importance * 100);
-                fprintf(report_FP,
-                    "Function %s in line %d of %s (%.2f%% of the total runtime)\n",
-                    h->name, h->line, shortname, h->importance * 100);
+                if (my_module_globals.output==SERIAL_OUTPUT) {
+                    printf(
+                        "Function %s in line %d of %s (%.2f%% of the total runtime)\n",
+                        _CYAN(h->name), h->line, shortname, h->importance * 100);
+                    fprintf(report_FP,
+                        "Function %s in line %d of %s (%.2f%% of the total runtime)\n",
+                        h->name, h->line, shortname, h->importance * 100);
+                }
+                else {
+                    printf(
+                        "[MPI %d / Thread %d] Function %s in line %d of %s (%.2f%% of the total runtime)\n",
+                        task, thread, _CYAN(h->name), h->line, shortname, h->importance * 100);
+                    fprintf(report_FP,
+                        "[MPI %d / Thread %d] Function %s in line %d of %s (%.2f%% of the total runtime)\n",
+                        task, thread, h->name, h->line, shortname, h->importance * 100);
+                }
                 break;
 
             case PERFEXPERT_HOTSPOT_LOOP:
-                printf(
-                    "Loop in function %s in %s:%d (%.2f%% of the total runtime)\n",
-                    _CYAN(h->name), shortname, h->line, h->importance * 100);
-                fprintf(report_FP,
-                    "Loop in function %s in %s:%d (%.2f%% of the total runtime)\n",
-                    h->name, shortname, h->line, h->importance * 100);
+                if (my_module_globals.output==SERIAL_OUTPUT) {
+                    printf(
+                        "Loop in function %s in %s:%d (%.2f%% of the total runtime)\n",
+                        _CYAN(h->name), shortname, h->line, h->importance * 100);
+                    fprintf(report_FP,
+                        "Loop in function %s in %s:%d (%.2f%% of the total runtime)\n",
+                        h->name, shortname, h->line, h->importance * 100);
+                }
+                else {
+                    printf(
+                        "[MPI %d / Thread %d] Loop in function %s in %s:%d (%.2f%% of the total runtime)\n",
+                        task, thread, _CYAN(h->name), shortname, h->line, h->importance * 100);
+                    fprintf(report_FP,
+                        "[MPI %d / Thread%d] Loop in function %s in %s:%d (%.2f%% of the total runtime)\n",
+                        task, thread, h->name, shortname, h->line, h->importance * 100);
+                }
                 break;
 
             case PERFEXPERT_HOTSPOT_UNKNOWN:
@@ -223,6 +253,10 @@ static int output_profile(lcpi_hotspot_t *h, FILE *report_FP, const int scale) {
     perfexpert_hash_iter_str(h->metrics_by_name, l, t) {
         char *temp = NULL, *cat = NULL, *subcat = NULL, desc[24];
 
+        if ((l->mpi_task!=task) || (l->thread_id!=thread))
+        //    return PERFEXPERT_SUCCESS;
+            continue;
+        
         PERFEXPERT_ALLOC(char, temp, (strlen(l->name) + 1));
         strcpy(temp, l->name);
         perfexpert_string_replace_char(temp, '_', ' ');

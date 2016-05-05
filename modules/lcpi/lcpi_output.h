@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
+ * Copyright (c) 2011-2016  University of Texas at Austin. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -14,7 +14,7 @@
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
  *
- * Authors: Leonardo Fialho and Ashay Rane
+ * Authors: Antonio Gomez-Iglesias, Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
  */
@@ -29,7 +29,7 @@ extern "C" {
 /* Modules headers */
 #include "lcpi_types.h"
 
-static int output_profile(lcpi_hotspot_t *h, FILE *report_FP, const int scale);
+static int output_profile(lcpi_hotspot_t *h, FILE *report_FP, const int scale, const int task, const int thread);
 
 #ifdef __cplusplus
 }
