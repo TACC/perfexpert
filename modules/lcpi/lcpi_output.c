@@ -253,8 +253,7 @@ static int output_profile(lcpi_hotspot_t *h, FILE *report_FP, const int scale, c
     perfexpert_hash_iter_str(h->metrics_by_name, l, t) {
         char *temp = NULL, *cat = NULL, *subcat = NULL, desc[24];
 
-        if ((l->mpi_task!=task) || (l->thread_id!=thread))
-        //    return PERFEXPERT_SUCCESS;
+        if (((l->mpi_task!=task) || (l->thread_id!=thread)) && my_module_globals.output!=SERIAL_OUTPUT)
             continue;
         
         PERFEXPERT_ALLOC(char, temp, (strlen(l->name) + 1));
