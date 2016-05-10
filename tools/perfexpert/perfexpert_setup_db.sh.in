@@ -1,6 +1,6 @@
 #!@BASH_PROGRAM@
 #
-# Copyright (c) 2011-2015  University of Texas at Austin. All rights reserved.
+# Copyright (c) 2011-2016  University of Texas at Austin. All rights reserved.
 #
 # $COPYRIGHT$
 #
@@ -77,6 +77,12 @@ fi
 if [ -f ${prefix}/etc/readelf_module.sql ]; then
     sqlite3 ${HOME}/.perfexpert.db < ${prefix}/etc/readelf_module.sql
     echo "ReadELF module set"
+fi
+
+# Setup MACVEC module
+if [ -f ${prefix}/etc/macvec_module.sql ]; then
+    sqlite3 ${HOME}/.perfexpert.db < ${prefix}/etc/macvec_module.sql
+    echo "MACVEC module set"
 fi
 
 # Setup LCPI module

@@ -29,6 +29,7 @@
 #include "macvec_types.h"
 #include "common/perfexpert_list.h"
 #include "common/perfexpert_output.h"
+#include "common/perfexpert_database.h"
 
 enum { SUCCESS = 0,
     ERR_FILE,
@@ -67,6 +68,7 @@ typedef struct {
     perfexpert_list_t var_list;
 } location_t;
 
+/*
 typedef struct {
     long remark_number;
     const char** message;
@@ -74,6 +76,7 @@ typedef struct {
 
     void (*process_fn)(const char*, location_t*);
 } message_t;
+*/
 
 const char* msg_ptr_check = "Check if pointers overlap";
 const char* msg_trip_count = "Inform compiler about loop trip count";
@@ -136,7 +139,7 @@ const char* dsc_prefetch = "Gather and scatter accesses in vector instructions "
 
 static regex_t re_dep_var, re_align_var;
 
-void align_var(const char* line, location_t* location) {
+int align_var(const char* line, location_t* location) {
     regmatch_t pmatch[3] = {0};
     OUTPUT_VERBOSE((4, "Trying to extract variable and line number from: %s.",
             line));
@@ -177,10 +180,14 @@ void align_var(const char* line, location_t* location) {
 
         OUTPUT_VERBOSE((2, "List size after adding variables: %d.",
                 perfexpert_list_get_size(&(location->var_list))));
+        return PERFEXPERT_SUCCESS;
+    }
+    else {
+        return PERFEXPERT_ERROR;
     }
 }
 
-void extract_var(const char* line, location_t* location) {
+int extract_var(const char* line, location_t* location) {
     regmatch_t pmatch[5] = {0};
     OUTPUT_VERBOSE((4, "Trying to extract variables and line numbers from: %s.",
             line));
@@ -256,9 +263,18 @@ void extract_var(const char* line, location_t* location) {
 
         OUTPUT_VERBOSE((2, "List size after adding variables: %d.",
                 perfexpert_list_get_size(&(location->var_list))));
+        return PERFEXPERT_SUCCESS;
+    }
+    else {
+        return PERFEXPERT_ERROR;
     }
 }
 
+void extract_vars(const char* line, location_t* location) {
+    if (PERFEXPERT_SUCCESS != extract_var (line, location))
+        align_var(line, location);
+}
+/*  
 const message_t messages[] = {
     { 15308, &msg_ptr_check,    &dsc_ptr_check,     NULL,         },
     { 15344, &msg_ptr_check,    &dsc_ptr_check,     NULL,         },
@@ -308,7 +324,7 @@ const message_t messages[] = {
 };
 
 const long message_count = sizeof(messages) / sizeof(message_t);
-
+*/
 var_t* find_var(perfexpert_list_t* vars, char* name, int line) {
     var_t* var;
     if (vars == NULL || name == NULL) {
@@ -363,6 +379,8 @@ macvec_hotspot_t* find(perfexpert_list_t* hotspots, char* filename, int line) {
 int process_file(perfexpert_list_t* hotspots, FILE* stream,
     regex_t* re_loop, regex_t* re_remark, perfexpert_list_t* locations) {
     char file_line[k_line_len];
+    char sql[MAX_BUFFER_SIZE];
+    char *error = NULL, *description = NULL;
 
     perfexpert_list_t stack;
     perfexpert_list_construct(&stack);
@@ -501,6 +519,19 @@ int process_file(perfexpert_list_t* hotspots, FILE* stream,
 
                 /* Check if this is an "interesting" remark. */
                 uint32_t i = 0;
+                bzero(sql, MAX_BUFFER_SIZE);
+                sprintf(sql, "SELECT description FROM macvec_rules WHERE rule=%d;", remark_number);
+                if (SQLITE_OK!=sqlite3_exec(globals.db, sql, perfexpert_database_get_string, (void *) &description, &error)) {
+                    OUTPUT(("%s %s", _ERROR("SQL error"), error));
+                    sqlite3_free(error);
+                }
+                if (description==NULL) {
+                    OUTPUT_VERBOSE((4, "Ignoring remark %ld because we are not "
+                            "interested in tracking it.", remark_number));
+                    /* Not found in interested remarks. */
+                    continue;
+                }
+/*
                 for (i = 0; i < message_count; i++) {
                     if (messages[i].remark_number == remark_number) {
                         break;
@@ -510,17 +541,20 @@ int process_file(perfexpert_list_t* hotspots, FILE* stream,
                 if (i == message_count) {
                     OUTPUT_VERBOSE((4, "Ignoring remark %ld because we are not "
                             "interested in tracking it.", remark_number));
-                    /* Not found in interested remarks. */
                     continue;
                 }
+                */
 
                 OUTPUT_VERBOSE((4, "Found line with remark %ld.",
                         remark_number));
+                extract_vars(file_line, location);
+                /*
                 if (messages[i].process_fn != NULL) {
                     OUTPUT_VERBOSE((4, "Running remark-specific handler..."));
                     messages[i].process_fn(file_line, location);
                     OUTPUT_VERBOSE((4, "Exited remark-specific handler..."));
                 }
+                */
 
                 OUTPUT_VERBOSE((4, "Looping over %d remarks.",
                         location->remark_count));
@@ -641,6 +675,8 @@ static void print_recommendations(perfexpert_list_t* locations) {
     location_t* location;
     char *report_FP_file;
     FILE *report_FP;
+    char sql[MAX_BUFFER_SIZE];
+    char *error = NULL, *description = NULL;
     
     PERFEXPERT_ALLOC(char, report_FP_file, (strlen(globals.moduledir) + 15));
     sprintf(report_FP_file, "%s/report.txt", globals.moduledir);
@@ -699,6 +735,20 @@ static void print_recommendations(perfexpert_list_t* locations) {
         uint32_t i, j;
         for (i = 0; i < location->remark_count; i++) {
             uint32_t remark_number = location->remarks_list[i];
+            bzero(sql, MAX_BUFFER_SIZE);
+            sprintf(sql, "SELECT description FROM macvec_rules WHERE rule=%d;", remark_number);
+            OUTPUT_VERBOSE((10, "  sql: %s\n", sql));
+            if (SQLITE_OK!=sqlite3_exec(globals.db, sql, perfexpert_database_get_string, (void *) &description, &error)) {
+                OUTPUT(("%s %s", _ERROR("SQL error"), error));
+                sqlite3_free(error);
+            }
+            if (description == NULL)
+                continue;
+            fprintf(stdout, "  - %s\n", description);
+            fprintf(report_FP, "  - %s\n", description);
+            PERFEXPERT_DEALLOC(description);
+            description = NULL;
+            /*
             for (j = 0; j < message_count; j++) {
                 if (messages[j].remark_number == remark_number) {
                     const char** message = messages[j].message;
@@ -709,6 +759,7 @@ static void print_recommendations(perfexpert_list_t* locations) {
                     }
                 }
             }
+            */
         }
     }
 

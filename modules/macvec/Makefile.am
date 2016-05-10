@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
+# Copyright (c) 2011-2016  University of Texas at Austin. All rights reserved.
 #
 # $COPYRIGHT$
 #
@@ -14,7 +14,7 @@
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
 # A PARTICULAR PURPOSE.
 #
-# Authors: Leonardo Fialho and Ashay Rane
+# Authors: Antonio Gomez-Iglesias, Leonardo Fialho and Ashay Rane
 #
 # $HEADER$
 #
@@ -26,4 +26,8 @@ libperfexpert_module_macvec_la_LDFLAGS = -lm -lsqlite3 -module \
 libperfexpert_module_macvec_la_SOURCES = macvec_module.c macvec_counters.c \
     macvec_database.c macvec_options.c macvec_parse.c
 
+install-exec-local:
+	$(MKDIR_P) $(DESTDIR)$(sysconfdir)
+	$(INSTALL) -m 644 $(top_srcdir)/modules/macvec/macvec_module.sql \
+		$(DESTDIR)$(sysconfdir)/
 # EOF
