@@ -605,14 +605,22 @@ int parse(perfexpert_list_t* hotspots, perfexpert_list_t* locations, char *filen
     memcpy(report_filename, filename, pch - filename);
     strcat(report_filename, ".optrpt");
     stream = fopen(report_filename, "r");
-    PERFEXPERT_DEALLOC(report_filename);
     if (stream == NULL) {
-        regfree(&re_remark);
-        regfree(&re_loop);
         OUTPUT_VERBOSE((6, "%s %s", _ERROR(" couldn't open file"), report_filename));
-        return -ERR_FILE;
+        PERFEXPERT_DEALLOC(report_filename);
+        PERFEXPERT_ALLOC (char, report_filename, strlen(globals.moduledir)+17);
+        sprintf(report_filename, "%s/make.output", globals.moduledir);
+        stream = fopen(report_filename, "r");
+        if (stream == NULL) {
+            OUTPUT_VERBOSE((6, "%s %s", _ERROR(" couldn't open file"), report_filename));
+            regfree(&re_remark);
+            regfree(&re_loop);
+            PERFEXPERT_DEALLOC(report_filename);
+            return -ERR_FILE;
+        }
     }
 
+    PERFEXPERT_DEALLOC(report_filename);
     int err = process_file(hotspots, stream, &re_loop, &re_remark, locations);
     if (err != 0) {
         regfree(&re_remark);

@@ -250,48 +250,48 @@ int module_analyze(void) {
 
     OUTPUT(("%s", _YELLOW("Analyzing measurements")));
    
-    /*  Append "-vec-report=6" to CFLAGS, CXXFLAGS and FCFLAGS */ 
+    /*  Append vectorization report flags to CFLAGS, CXXFLAGS and FCFLAGS */ 
     char *cflags = getenv("CFLAGS");
     char *newenv;
     if (cflags) {
-        PERFEXPERT_ALLOC(char, newenv, strlen(cflags) + 15);
-        snprintf(newenv, strlen(cflags) + 15,
-                 "-vec-report=6 %s", cflags);
+        PERFEXPERT_ALLOC(char, newenv, strlen(cflags) + 150);
+        snprintf(newenv, strlen(cflags) + 150,
+                 " -qopt-report=5 -qopt-report-phase=vec -qopt-report-file=stdout  %s", cflags);
         if (setenv("CFLAGS", newenv, 1) < 0){
             return PERFEXPERT_ERROR;
         }
         PERFEXPERT_DEALLOC(newenv);
     }
     else {
-        setenv ("CFLAGS", "-vec-report=6", 1);
+        setenv ("CFLAGS", " -qopt-report=5 -qopt-report-phase=vec -qopt-report-file=stdout ", 1);
     }
 
     char *cxxflags = getenv("CXXFLAGS");
     if (cxxflags) {
-        PERFEXPERT_ALLOC(char, newenv, strlen(cxxflags) + 15);
-        snprintf(newenv, strlen(cxxflags) + 15,
-                 "-vec-report=6 %s", cxxflags); 
+        PERFEXPERT_ALLOC(char, newenv, strlen(cxxflags) + 150);
+        snprintf(newenv, strlen(cxxflags) + 150,
+                 " -qopt-report=5 -qopt-report-phase=vec -qopt-report-file=stdout  %s", cxxflags); 
         if (setenv("CXXFLAGS", newenv, 1) < 0){
             return PERFEXPERT_ERROR;
         }
         PERFEXPERT_DEALLOC(newenv);
     }
     else {
-        setenv("CXXFLAGS", "-vec-report=6", 1);
+        setenv("CXXFLAGS", " -qopt-report=5 -qopt-report-phase=vec -qopt-report-file=stdout ", 1);
     } 
      
     char *fcflags = getenv("FCFLAGS");
     if (fcflags) {
-        PERFEXPERT_ALLOC(char, newenv, strlen(fcflags) + 15);
-        snprintf(newenv, strlen(fcflags) + 15,
-                 "-vec-report=6 %s", fcflags); 
+        PERFEXPERT_ALLOC(char, newenv, strlen(fcflags) + 150);
+        snprintf(newenv, strlen(fcflags) + 150,
+                 " -qopt-report=5 -qopt-report-phase=vec -qopt-report-file=stdout  %s", fcflags); 
         if (setenv("FCFLAGS", newenv, 1) < 0){
             return PERFEXPERT_ERROR;
         }
         PERFEXPERT_DEALLOC(newenv);
     }
     else {
-        setenv("FCFLAGS", "-vec-report=6", 1);
+        setenv("FCFLAGS", "-qopt-report=5 -qopt-report-phase=vec -qopt-report-file=stdout ", 1);
     }
     /*  Recompile the code with the new flags */    
     myself_module.measurement->compile();

@@ -70,6 +70,8 @@ int module_init(void) {
         return PERFEXPERT_ERROR;
     } 
 
+    OUTPUT_VERBOSE((1, "Make sure that your makefile does not overwrite CLAGS, CXXFLAGS, FCFLAGS (instead, it should append values to these variables"));
+
     OUTPUT_VERBOSE((5, "%s", _MAGENTA("initialized")));
 
     return PERFEXPERT_SUCCESS;
