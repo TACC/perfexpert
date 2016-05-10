@@ -120,55 +120,59 @@ int output_analysis(perfexpert_list_t *profiles) {
 
     for (task = 0; task < mpi_tasks; task++) {
         for (thread = 0; thread < threads; thread++) {
-    /* For each profile in the list of profiles... */
-    perfexpert_list_for(p, profiles, lcpi_profile_t) {
-        /* Print total runtime for this profile */
-        PRETTY_PRINT(81, "-");
-        // printf(
-        //     "Total running time for %s is %.2f seconds between all %d cores\n",
-        //     _CYAN(p->name), p->cycles / database_get_hound("CPU_freq"),
-        //     (int)sysconf(_SC_NPROCESSORS_ONLN));
-        // printf("The wall-clock time for %s is approximately %.2f seconds\n\n",
-        //     _CYAN(p->name), (p->cycles / database_get_hound("CPU_freq") /
-        //         sysconf(_SC_NPROCESSORS_ONLN)));
+            /* For each profile in the list of profiles... */
+            perfexpert_list_for(p, profiles, lcpi_profile_t) {
+                /* Print total runtime for this profile */
+                PRETTY_PRINT(81, "-");
+                // printf(
+                //     "Total running time for %s is %.2f seconds between all %d cores\n",
+                //     _CYAN(p->name), p->cycles / database_get_hound("CPU_freq"),
+                //     (int)sysconf(_SC_NPROCESSORS_ONLN));
+                // printf("The wall-clock time for %s is approximately %.2f seconds\n\n",
+                //     _CYAN(p->name), (p->cycles / database_get_hound("CPU_freq") /
+                //         sysconf(_SC_NPROCESSORS_ONLN)));
 
-        /* For each module in the profile's list of modules... */
-        perfexpert_hash_iter_str(p->modules_by_name, m, t) {
-            perfexpert_util_filename_only(m->name, &shortname);
-            m->importance = m->cycles / p->cycles;
-            printf("Module %s takes %.2f%% of the total runtime\n",
-                _MAGENTA(shortname), m->importance * 100);
-            fprintf(report_FP, "Module %s takes %.2f%% of the total runtime\n",
-                shortname, m->importance * 100);
-
-        }
-        printf("\n");
-        fprintf(report_FP, "\n");
-
-        /* For each hotspot in the profile's list of hotspots... */
-        perfexpert_list_for(h, &(p->hotspots), lcpi_hotspot_t) {
-            if (my_module_globals.threshold <= h->importance) {
-                if (0 == strcmp("jaketown", perfexpert_string_to_lower(
-                    my_module_globals.architecture))) {
-                    if (PERFEXPERT_SUCCESS != output_profile(h, report_FP, 20, task, thread)) {
-                        OUTPUT(("%s (%s)", _ERROR("printing hotspot analysis"),
-                            h->name));
-                        return PERFEXPERT_ERROR;
-                    }
+                /* For each module in the profile's list of modules... */
+                perfexpert_hash_iter_str(p->modules_by_name, m, t) {
+                    perfexpert_util_filename_only(m->name, &shortname);
+                    m->importance = m->cycles / p->cycles;
+                    printf("Module %s takes %.2f%% of the total runtime\n",
+                        _MAGENTA(shortname), m->importance * 100);
+                    fprintf(report_FP, "Module %s takes %.2f%% of the total runtime\n",
+                        shortname, m->importance * 100);
                 }
-                if (0 == strcmp("mic", perfexpert_string_to_lower(
-                    my_module_globals.architecture))) {
-                    if (PERFEXPERT_SUCCESS != output_profile(h, report_FP, 40, task, thread)) {
-                        OUTPUT(("%s (%s)", _ERROR("printing hotspot analysis"),
-                            h->name));
-                        return PERFEXPERT_ERROR;
+                printf("\n");
+                fprintf(report_FP, "\n");
+
+                /* For each hotspot in the profile's list of hotspots... */
+                perfexpert_list_for(h, &(p->hotspots), lcpi_hotspot_t) {
+                    if (my_module_globals.threshold <= h->importance) {
+                        if (0 == strcmp("jaketown", perfexpert_string_to_lower(
+                            my_module_globals.architecture))) {
+                            if (PERFEXPERT_SUCCESS != output_profile(h, report_FP, 20, task, thread)) {
+                                OUTPUT(("%s (%s)", _ERROR("printing hotspot analysis"),
+                                    h->name));
+                               return PERFEXPERT_ERROR;
+                            }
+                        }
+                        if (0 == strcmp("mic", perfexpert_string_to_lower(
+                            my_module_globals.architecture))) {
+                            if (PERFEXPERT_SUCCESS != output_profile(h, report_FP, 40, task, thread)) {
+                                OUTPUT(("%s (%s)", _ERROR("printing hotspot analysis"),
+                                    h->name));
+                                return PERFEXPERT_ERROR;
+                            }
+                        }
                     }
                 }
             }
-        }
-    }
-
+            if (my_module_globals.output==SERIAL_OUTPUT) {
+                break;
+            }
         } /* threads */
+        if (my_module_globals.output!=SERIAL_OUTPUT) {
+            break;
+        }
     } /* tasks */
 
     /* Close file */
