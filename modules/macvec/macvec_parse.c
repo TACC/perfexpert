@@ -69,75 +69,6 @@ typedef struct {
     perfexpert_list_t var_list;
 } location_t;
 
-/*
-typedef struct {
-    long remark_number;
-    const char** message;
-    const char** description;
-
-    void (*process_fn)(const char*, location_t*);
-} message_t;
-*/
-
-const char* msg_ptr_check = "Check if pointers overlap";
-const char* msg_trip_count = "Inform compiler about loop trip count";
-const char* msg_mem_align = "Align memory references";
-const char* msg_branch_eval = "Indicate branch evaluations";
-const char* msg_float_conv = "Use limited types";
-const char* msg_unit_stride = "Try and use unit strides";
-const char* msg_prefetch = "Try software prefetching";
-
-const char* dsc_ptr_check = "If the compiler is unaware that pointers do not "
-    "overlap in memory, the compiler's dependence analysis may infer "
-    "existence of vector dependence. If the pointers used in this loop "
-    "body indeed do not overlap, declare them with the 'restrict' keyword. "
-    "For instance: double* restrict ptr_a;. See "
-    "https://software.intel.com/en-us/articles/vectorization-with-the-intel"
-    "-compilers-part-i for additional details.";
-
-const char* dsc_trip_count = "The compiler's vectorization cost model can be "
-    "takes various factors into account, with the loop trip count being "
-    "one among them. Informing the compiler about loop trip counts that "
-    "cannot be statically inferred helps the compiler make better "
-    "decisions about the vectorizability of the code. If loop trip count "
-    "is known, add \"#pragma loop_count(n)\" directive before the loop, "
-    "where 'n' is equal to the loop count. See "
-    "https://software.intel.com/en-us/node/524502 for additional details.";
-
-const char* dsc_mem_align = "Aligned memory accesses usually incur much lower "
-    "penalty of access (when compared with unaligned acccesses), "
-    "especially on the Intel Xeon Phi coprocessor. To align arrays and "
-    "structures, use __attribute__((aligned(64))) for statically-allocated "
-    "memory and _mm_malloc() for dynamically allocated memory. See "
-    "https://software.intel.com/en-us/articles/data-alignment-to-assist-"
-    "vectorization for additional details.";
-
-const char* dsc_branch_eval = "Branches that evaluate to always true or always "
-    "false can be indicated to the compiler to change code layout for "
-    "optimization. Use the \"__builtin_expect()\" intrinsic function to "
-    "indicate branch outcomes that are highly biased.";
-
-const char* dsc_float_conv = "Using mixed precision (single- as well as double-"
-    "precision) values in a loop body introduces many inefficiences in "
-    "vectorized code generation. The inefficiencies arise in choosing "
-    "the appropriate alignment, converting intermediate results from one "
-    "format to another and in estimating the cost of vectorization. If "
-    "possible, convert all floating point values to use the same "
-    "precision.";
-
-const char* dsc_unit_stride = "Strided accesses to array elements leads to "
-    "cache and TLB misses. A unit stride (stride increment of 1) is not only "
-    "cache and TLB friendly but also assists in vectorization. To enforce unit "
-    "strides, check that the loop induction variable is incremented by one and "
-    "that the loop induction variable is used to index into the last "
-    "(innermost) dimension of the array.";
-
-const char* dsc_prefetch = "Gather and scatter accesses in vector instructions "
-    "cause high penalty at execution time. If the code is being compiled for "
-    "the Xeon Phi coprocessor, using software prefetching may help. See "
-    "https://software.intel.com/sites/products/documentation/doclib/iss/2013/compiler/cpp-lin/GUID-3A086451-4C82-4BB1-B742-FF93EBF60DA3.htm "
-    "for details.";
-
 static regex_t re_dep_var, re_align_var;
 
 int align_var(const char* line, location_t* location) {
@@ -275,57 +206,7 @@ void extract_vars(const char* line, location_t* location) {
     if (PERFEXPERT_SUCCESS != extract_var (line, location))
         align_var(line, location);
 }
-/*  
-const message_t messages[] = {
-    { 15308, &msg_ptr_check,    &dsc_ptr_check,     NULL,         },
-    { 15344, &msg_ptr_check,    &dsc_ptr_check,     NULL,         },
-    { 15346, &msg_ptr_check,    NULL,               &extract_var, },
 
-    { 15315, &msg_trip_count,   &dsc_trip_count,    NULL,         },
-    { 15321, &msg_trip_count,   &dsc_trip_count,    NULL,         },
-    { 15335, &msg_trip_count,   &dsc_trip_count,    NULL,         },
-    { 15523, &msg_trip_count,   &dsc_trip_count,    NULL,         },
-
-    { 15381, &msg_mem_align,    &dsc_mem_align,     NULL,         },
-    { 15389, &msg_mem_align,    &dsc_mem_align,     &align_var,   },
-    { 15409, &msg_mem_align,    &dsc_mem_align,     NULL,         },
-    { 15421, &msg_mem_align,    &dsc_mem_align,     NULL,         },
-    { 15450, &msg_mem_align,    &dsc_mem_align,     NULL,         },
-    { 15451, &msg_mem_align,    &dsc_mem_align,     NULL,         },
-    { 15456, &msg_mem_align,    &dsc_mem_align,     NULL,         },
-    { 15457, &msg_mem_align,    &dsc_mem_align,     NULL,         },
-    { 15468, &msg_mem_align,    &dsc_mem_align,     NULL,         },
-    { 15469, &msg_mem_align,    &dsc_mem_align,     NULL,         },
-    { 15472, &msg_mem_align,    &dsc_mem_align,     NULL,         },
-    { 15473, &msg_mem_align,    &dsc_mem_align,     NULL,         },
-    { 15524, &msg_mem_align,    &dsc_mem_align,     NULL,         },
-
-    { 15336, &msg_branch_eval,  &dsc_branch_eval,   NULL,         },
-
-    { 15311, &msg_float_conv,   &dsc_float_conv,    NULL,         },
-    { 15327, &msg_float_conv,   &dsc_float_conv,    NULL,         },
-    { 15386, &msg_float_conv,   &dsc_float_conv,    NULL,         },
-    { 15410, &msg_float_conv,   &dsc_float_conv,    NULL,         },
-    { 15411, &msg_float_conv,   &dsc_float_conv,    NULL,         },
-    { 15417, &msg_float_conv,   &dsc_float_conv,    NULL,         },
-    { 15418, &msg_float_conv,   &dsc_float_conv,    NULL,         },
-
-    { 15320, &msg_unit_stride,  &dsc_unit_stride,   NULL,         },
-    { 15452, &msg_unit_stride,  &dsc_unit_stride,   NULL,         },
-    { 15453, &msg_unit_stride,  &dsc_unit_stride,   NULL,         },
-    { 15460, &msg_unit_stride,  &dsc_unit_stride,   NULL,         },
-    { 15461, &msg_unit_stride,  &dsc_unit_stride,   NULL,         },
-
-    { 15415, &msg_prefetch,     &dsc_prefetch,      NULL,         },
-    { 15416, &msg_prefetch,     &dsc_prefetch,      NULL,         },
-    { 15458, &msg_prefetch,     &dsc_prefetch,      NULL,         },
-    { 15459, &msg_prefetch,     &dsc_prefetch,      NULL,         },
-    { 15462, &msg_prefetch,     &dsc_prefetch,      NULL,         },
-    { 15463, &msg_prefetch,     &dsc_prefetch,      NULL,         },
-};
-
-const long message_count = sizeof(messages) / sizeof(message_t);
-*/
 var_t* find_var(perfexpert_list_t* vars, char* name, int line) {
     var_t* var;
     if (vars == NULL || name == NULL) {
@@ -402,10 +283,6 @@ int process_file(perfexpert_list_t* hotspots, FILE* stream,
     }
 
     while (fgets(file_line, k_line_len, stream)) {
-        //OUTPUT(("Processing line: %s", file_line));
-        if (strlen(file_line)<5) {
-        //    continue;
-        }
         regmatch_t pmatch[3] = {0};
         if (strstr(file_line, "LOOP END") != NULL) {
             if (0 != perfexpert_list_get_size(&stack)) {
@@ -532,30 +409,10 @@ int process_file(perfexpert_list_t* hotspots, FILE* stream,
                     /* Not found in interested remarks. */
                     continue;
                 }
-/*
-                for (i = 0; i < message_count; i++) {
-                    if (messages[i].remark_number == remark_number) {
-                        break;
-                    }
-                }
-
-                if (i == message_count) {
-                    OUTPUT_VERBOSE((4, "Ignoring remark %ld because we are not "
-                            "interested in tracking it.", remark_number));
-                    continue;
-                }
-                */
 
                 OUTPUT_VERBOSE((4, "Found line with remark %ld.",
                         remark_number));
                 extract_vars(file_line, location);
-                /*
-                if (messages[i].process_fn != NULL) {
-                    OUTPUT_VERBOSE((4, "Running remark-specific handler..."));
-                    messages[i].process_fn(file_line, location);
-                    OUTPUT_VERBOSE((4, "Exited remark-specific handler..."));
-                }
-                */
 
                 OUTPUT_VERBOSE((4, "Looping over %d remarks.",
                         location->remark_count));
@@ -752,18 +609,6 @@ static void print_recommendations(perfexpert_list_t* locations) {
 
             PERFEXPERT_DEALLOC(description);
             description = NULL;
-            /*
-            for (j = 0; j < message_count; j++) {
-                if (messages[j].remark_number == remark_number) {
-                    const char** message = messages[j].message;
-                    const char** description = messages[j].description;
-                    if (message != NULL && description != NULL) {
-                        fprintf(stdout, "  - %s: %s\n", *message, *description);
-                        fprintf(report_FP, "  - %s: %s\n", *message, *description);
-                    }
-                }
-            }
-            */
         }
     }
 
@@ -777,9 +622,6 @@ int process_hotspots(perfexpert_list_t* hotspots, char *filename) {
     perfexpert_list_construct(&locations);
     int err = PERFEXPERT_SUCCESS;
   
-//    if (PERFEXPERT_SUCCESS != perfexpert_util_file_exists(filename)) {
-//        return PERFEXPERT_ERROR;
-//    }
     if (PERFEXPERT_SUCCESS != (err = parse(hotspots, &locations, filename))) {
 //        OUTPUT(("%s %s, error code: %d",
 //            _ERROR("Failed to parse vectorization report"), filename, err));
