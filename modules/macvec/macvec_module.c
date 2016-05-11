@@ -154,6 +154,10 @@ int module_init(void) {
         return PERFEXPERT_ERROR;
     }
 
+    if (init_macvec_results() != PERFEXPERT_SUCCESS) {
+        OUTPUT(("%s", _ERROR("Error creating table for MACVEC results")));
+        return PERFEXPERT_ERROR;
+    }
     OUTPUT_VERBOSE((5, "%s", _MAGENTA("initialized")));
 
     return PERFEXPERT_SUCCESS;

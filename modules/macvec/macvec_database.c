@@ -49,6 +49,41 @@ extern "C" {
 #include "common/perfexpert_md5.h"
 #include "common/perfexpert_output.h"
 
+int init_macvec_results() {
+    char *error, sql[MAX_BUFFER_SIZE];
+    bzero(sql, MAX_BUFFER_SIZE);
+    sprintf(sql, " CREATE TABLE IF NOT EXISTS macvec_analysis ("
+                 " id         INTEGER PRIMARY KEY,             "
+                 " line       INTEGER,                         "
+                 " filename   VARCHAR,                         "
+                 " analysis   VARCHAR);");
+    OUTPUT_VERBOSE((10, "      SQL: %s", sql));
+    if (SQLITE_OK != sqlite3_exec(globals.db, sql, NULL, NULL, &error)) {
+        OUTPUT(("%s %s", _ERROR("SQL error"), error));
+        sqlite3_free(error);
+        return PERFEXPERT_ERROR;
+    }
+    return PERFEXPERT_SUCCESS;
+}
+
+/* Store one result of the analysis in the DB */
+int store_result(int line, char *filename, char *analysis) {
+    char *error = NULL, sql[MAX_BUFFER_SIZE];
+    
+    bzero(sql, MAX_BUFFER_SIZE);
+    /* By inserting a NULL into the primary key we are autoincrementing that id */
+    sprintf(sql, "INSERT INTO macvec_analysis(id, line, filename, analysis) "
+                 "VALUES(NULL, %d, '%s', '%s');",
+                 line, filename, analysis);
+    OUTPUT_VERBOSE((10, "      SQL: %s", sql));
+    if (SQLITE_OK != sqlite3_exec(globals.db, sql, NULL, NULL, &error)) {
+        OUTPUT(("%s %s %s", _ERROR("SQL error"), error, sql));
+        sqlite3_free(error);
+        return PERFEXPERT_ERROR;
+    }
+    return PERFEXPERT_SUCCESS;
+}
+
 int list_files_hotspots(perfexpert_list_t *files) {
     char *error = NULL, sql[MAX_BUFFER_SIZE];
 

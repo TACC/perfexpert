@@ -26,6 +26,7 @@
 #include <string.h>
 
 #include "macvec.h"
+#include "macvec_database.h"
 #include "macvec_types.h"
 #include "common/perfexpert_list.h"
 #include "common/perfexpert_output.h"
@@ -746,6 +747,9 @@ static void print_recommendations(perfexpert_list_t* locations) {
                 continue;
             fprintf(stdout, "  - %s\n", description);
             fprintf(report_FP, "  - %s\n", description);
+            
+            store_result(location->line_number, location->filename, description);
+
             PERFEXPERT_DEALLOC(description);
             description = NULL;
             /*

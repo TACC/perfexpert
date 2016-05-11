@@ -33,6 +33,8 @@ extern "C" {
 #include "common/perfexpert_list.h"
 
 /* Function declarations */
+int init_macvec_results();
+int store_result(int line, char *filename, char *analysis);
 static int import_filenames(void *files, int n, char **val, char **names);
 // static int database_import(perfexpert_list_t *profiles, char *filename);
 static int select_profiles(perfexpert_list_t *profiles, char *filename);
