@@ -269,7 +269,7 @@ int metrics_knl(void) {
 }
 
 
-int metrics_jaketown_vtune(void) {
+int metrics_knl_vtune(void) {
     char s[MAX_LCPI];
 
     /* Set the events on the measurement module */
@@ -302,7 +302,7 @@ int metrics_jaketown_vtune(void) {
     my_module_globals.measurement->total_inst_counter = "INST_RETIRED.ANY_P";
 
     /* ratio.floating_point */
-    bzero(s, MAX_LCPI);
+/*    bzero(s, MAX_LCPI);
     strcpy(s, "(SIMD_FP_256.PACKED_SINGLE+SIMD_FP_256.PACKED_DOUBLE+"
         "FP_COMP_OPS_EXE.SSE_PACKED_SINGLE+FP_COMP_OPS_EXE.SSE_PACKED_DOUBLE+"
         "FP_COMP_OPS_EXE.SSE_SCALAR_SINGLE+FP_COMP_OPS_EXE.SSE_SCALAR_DOUBLE+"
@@ -310,7 +310,7 @@ int metrics_jaketown_vtune(void) {
     if (PERFEXPERT_SUCCESS != lcpi_add_metric("ratio.floating_point", s)) {
         return PERFEXPERT_ERROR;
     }
-
+*/
     /* ratio.data_accesses */
     bzero(s, MAX_LCPI);
     strcpy(s, "MEM_UOPS_RETIRED.ALL_LOADS / INST_RETIRED.ANY_P");
@@ -319,7 +319,7 @@ int metrics_jaketown_vtune(void) {
     }
 
     /* GFLOPS_(%_max).overall */
-    bzero(s, MAX_LCPI);
+/*    bzero(s, MAX_LCPI);
     strcpy(s, "(((SIMD_FP_256.PACKED_SINGLE*8)+("
         "(SIMD_FP_256.PACKED_DOUBLE+FP_COMP_OPS_EXE.SSE_PACKED_SINGLE)*4)+"
         "(FP_COMP_OPS_EXE.SSE_PACKED_DOUBLE*2)+"
@@ -328,24 +328,24 @@ int metrics_jaketown_vtune(void) {
     if (PERFEXPERT_SUCCESS != lcpi_add_metric("GFLOPS_(%_max).overall", s)) {
         return PERFEXPERT_ERROR;
     }
-
+*/
     /* GFLOPS_(%_max).packed */
-    bzero(s, MAX_LCPI);
+/*    bzero(s, MAX_LCPI);
     strcpy(s, "(((SIMD_FP_256.PACKED_SINGLE*8)+"
         "((SIMD_FP_256.PACKED_DOUBLE+FP_COMP_OPS_EXE.SSE_PACKED_SINGLE)*4)+"
         "(FP_COMP_OPS_EXE.SSE_PACKED_DOUBLE * 2))/INST_RETIRED.ANY_P)/8");
     if (PERFEXPERT_SUCCESS != lcpi_add_metric("GFLOPS_(%_max).packed", s)) {
         return PERFEXPERT_ERROR;
     }
-
+*/
     /* GFLOPS_(%_max).scalar */
-    bzero(s, MAX_LCPI);
+/*    bzero(s, MAX_LCPI);
     strcpy(s, "((FP_COMP_OPS_EXE.SSE_SCALAR_SINGLE+"
         "FP_COMP_OPS_EXE.SSE_SCALAR_DOUBLE)/INST_RETIRED.ANY_P)/8");
     if (PERFEXPERT_SUCCESS != lcpi_add_metric("GFLOPS_(%_max).scalar", s)) {
         return PERFEXPERT_ERROR;
     }
-
+*/
     /* overall */
     bzero(s, MAX_LCPI);
     strcpy(s, "CPU_CLK_UNHALTED.THREAD_P / INST_RETIRED.ANY_P");
@@ -371,12 +371,12 @@ int metrics_jaketown_vtune(void) {
     }
 
     /* data_accesses.L2_cache_hits */
-    bzero(s, MAX_LCPI);
+/*    bzero(s, MAX_LCPI);
     strcpy(s, "(L2_RQSTS.DEMAND_DATA_RD_HIT * L2_lat) / INST_RETIRED.ANY_P");
     if (PERFEXPERT_SUCCESS != lcpi_add_metric("data_accesses.L2_cache_hits", s)) {
         return PERFEXPERT_ERROR;
     }
-
+*/
     /* data_accesses.L3_cache_hits */
     bzero(s, MAX_LCPI);
     strcpy(s, "(LONGEST_LAT_CACHE.REFERENCE * L3_lat) / INST_RETIRED.ANY_P");
@@ -392,13 +392,13 @@ int metrics_jaketown_vtune(void) {
     }
 
     /* instruction_accesses.overall */
-    bzero(s, MAX_LCPI);
+  /*  bzero(s, MAX_LCPI);
     strcpy(s, "((ICACHE.MISSES * L1_ilat) + (L2_RQSTS.CODE_RD_HIT * L2_lat)"
             " + (L2_RQSTS.CODE_RD_MISS * mem_lat)) / INST_RETIRED.ANY_P");
     if (PERFEXPERT_SUCCESS != lcpi_add_metric("instruction_accesses.overall", s)) {
         return PERFEXPERT_ERROR;
     }
-
+*/
     /* instruction_accesses.L1_hits */
     bzero(s, MAX_LCPI);
     strcpy(s, "(ICACHE.MISSES * L1_ilat) / INST_RETIRED.ANY_P");
@@ -407,33 +407,33 @@ int metrics_jaketown_vtune(void) {
     }
 
     /* instruction_accesses.L2_hits */
-    bzero(s, MAX_LCPI);
+  /*  bzero(s, MAX_LCPI);
     strcpy(s, "(L2_RQSTS.CODE_RD_HIT * L2_lat) / INST_RETIRED.ANY_P");
     if (PERFEXPERT_SUCCESS != lcpi_add_metric("instruction_accesses.L2_hits", s)) {
         return PERFEXPERT_ERROR;
     }
-
+*/
     /* instruction_accesses.L2_misses */
-    bzero(s, MAX_LCPI);
+/*    bzero(s, MAX_LCPI);
     strcpy(s, "(L2_RQSTS.CODE_RD_MISS * mem_lat) / INST_RETIRED.ANY_P");
     if (PERFEXPERT_SUCCESS != lcpi_add_metric("instruction_accesses.L2_misses", s)) {
         return PERFEXPERT_ERROR;
     }
-
+*/
     /* data_TLB.overall */
-    bzero(s, MAX_LCPI);
+/*    bzero(s, MAX_LCPI);
     strcpy(s, "DTLB_LOAD_MISSES.WALK_DURATION / INST_RETIRED.ANY_P");
     if (PERFEXPERT_SUCCESS != lcpi_add_metric("data_TLB.overall", s)) {
         return PERFEXPERT_ERROR;
     }
-
+*/
     /* instruction_TLB.overall */
-    bzero(s, MAX_LCPI);
+/*    bzero(s, MAX_LCPI);
     strcpy(s, "ITLB_MISSES.WALK_DURATION / INST_RETIRED.ANY_P");
     if (PERFEXPERT_SUCCESS != lcpi_add_metric("instruction_TLB.overall", s)) {
         return PERFEXPERT_ERROR;
     }
-
+*/
     /* branch_instructions.overall */
     bzero(s, MAX_LCPI);
     strcpy(s, "((BR_INST_RETIRED.ALL_BRANCHES * BR_lat) "
@@ -457,7 +457,7 @@ int metrics_jaketown_vtune(void) {
     }
 
     /* FP_instructions.overall */
-    bzero(s, MAX_LCPI);
+/*    bzero(s, MAX_LCPI);
     strcpy(s, "((SIMD_FP_256.PACKED_SINGLE + SIMD_FP_256.PACKED_DOUBLE + "
         "FP_COMP_OPS_EXE.X87 + FP_COMP_OPS_EXE.SSE_PACKED_SINGLE + "
         "FP_COMP_OPS_EXE.SSE_PACKED_DOUBLE + "
@@ -466,9 +466,9 @@ int metrics_jaketown_vtune(void) {
     if (PERFEXPERT_SUCCESS != lcpi_add_metric("FP_instructions.overall", s)) {
         return PERFEXPERT_ERROR;
     }
-
+*/
     /* FP_instructions.fast */
-    bzero(s, MAX_LCPI);
+/*    bzero(s, MAX_LCPI);
     strcpy(s, "(SIMD_FP_256.PACKED_SINGLE + SIMD_FP_256.PACKED_DOUBLE + "
         "FP_COMP_OPS_EXE.X87 + FP_COMP_OPS_EXE.SSE_PACKED_SINGLE + "
         "FP_COMP_OPS_EXE.SSE_PACKED_DOUBLE + "
@@ -477,14 +477,14 @@ int metrics_jaketown_vtune(void) {
     if (PERFEXPERT_SUCCESS != lcpi_add_metric("FP_instructions.fast", s)) {
         return PERFEXPERT_ERROR;
     }
-
+*/
     /* FP_instructions.slow */
-    bzero(s, MAX_LCPI);
+/*    bzero(s, MAX_LCPI);
     strcpy(s, "ARITH.FPU_DIV / INST_RETIRED.ANY_P");
     if (PERFEXPERT_SUCCESS != lcpi_add_metric("FP_instructions.slow", s)) {
         return PERFEXPERT_ERROR;
     }
-
+*/
     return PERFEXPERT_SUCCESS;
 }
 

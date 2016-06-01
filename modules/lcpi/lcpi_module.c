@@ -224,6 +224,21 @@ int module_init(void) {
             return PERFEXPERT_ERROR;
         }
     }
+    else if (0 == strcmp("knl",
+	perfexpert_string_to_lower(my_module_globals.architecture))) {
+        if (0 == strcmp(my_module_globals.measurement->name, "vtune")) {
+            if (PERFEXPERT_SUCCESS != metrics_knl_vtune()) {
+                OUTPUT(("%s", _ERROR("generating LCPI metrics (KNL)")));
+                return PERFEXPERT_ERROR;
+            }
+        }
+        else {
+            if (PERFEXPERT_SUCCESS != metrics_knl()) {
+                OUTPUT(("%s", _ERROR("generating LCPI metrics (KNL)")));
+                return PERFEXPERT_ERROR;
+            }
+        }
+    }
     /* Unknown */
     else if (0 == strcmp("unknown",
         perfexpert_string_to_lower(my_module_globals.architecture))) {
