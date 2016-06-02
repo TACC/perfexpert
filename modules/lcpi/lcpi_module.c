@@ -224,7 +224,7 @@ int module_init(void) {
             return PERFEXPERT_ERROR;
         }
     }
-    else if (0 == strcmp("knl",
+    else if (0 == strcmp("knightslanding",
 	perfexpert_string_to_lower(my_module_globals.architecture))) {
         if (0 == strcmp(my_module_globals.measurement->name, "vtune")) {
             if (PERFEXPERT_SUCCESS != metrics_knl_vtune()) {
