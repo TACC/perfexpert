@@ -249,7 +249,12 @@ int parse_report(const char * parse_file, vtune_hw_profile_t *profile) {
     for (i = 5; i < argc; ++i)  {
         char * tok;
         int parts = 0;
+	if (!strchr(c_events[i], ':'))
+            continue;
+
         tok = strtok(c_events[i], ":");
+//	if (tok==NULL)
+//            continue;
         while (tok != NULL) {
             if (parts == 1) {
                 events[i] = tok;
@@ -307,6 +312,8 @@ int parse_report(const char * parse_file, vtune_hw_profile_t *profile) {
         // TODO(agomez): only collect statistics about a specific set of functions??
         //
         for (i = 5; i < argc; ++i) {
+            if (events[i]==NULL)
+                continue;
             vtune_event_t *e;
             PERFEXPERT_ALLOC(vtune_event_t, e, sizeof(vtune_event_t));
             PERFEXPERT_ALLOC(char, e->name, strlen(events[i])+1);
