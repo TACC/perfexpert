@@ -75,6 +75,7 @@ typedef struct {
     char res_folder[MAX_FILENAME];
     vtune_event_t *events_by_name;
     int ignore_return_code;
+    char *architecture;
 } my_module_globals_t;
 
 typedef struct {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015  University of Texas at Austin. All rights reserved.
+ * Copyright (c) 2011-2016  University of Texas at Austin. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -28,6 +28,7 @@ extern "C" {
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
 
 /* Modules headers */
 #include "vtune.h"
@@ -176,14 +177,20 @@ int parse_line(char* line, char *argv[], int *argc) {
  * and returns the thread number (right after #)
  */
 int get_thread_number(const char *argv) {
-    OUTPUT_VERBOSE((6, "checking thread %s", argv));
-    if (strpbrk(argv, "TID") != NULL) {
-        OUTPUT_VERBOSE((6, "INVALID thread, returning 0"));
+    OUTPUT_VERBOSE((9, "checking thread %s", argv));
+    if (strpbrk(argv, "TID") == NULL) {
+        OUTPUT_VERBOSE((6, "INVALID thread, returning 0 (%s)", argv));
         return 0;
     }
 
-    const char *p1 = strstr(argv, "#")+1;
+
+    char *p1 = strstr(argv, "#");
+    if (p1 == NULL)
+        return PERFEXPERT_UNDEFINED;
+    p1++;
     const char *p2 = strstr(p1, " (");
+    if (p2 == NULL)
+        return PERFEXPERT_UNDEFINED;
     int len = p2-p1;
     int val;
     char *res;
@@ -191,6 +198,7 @@ int get_thread_number(const char *argv) {
     strncpy(res, p1, len);
     res[len]='\0';
     val = strtol (res, NULL, 10); //atoi(res);
+    OUTPUT_VERBOSE((9, "Thread %d", val));
     PERFEXPERT_DEALLOC(res);
     return val;
 }
@@ -302,6 +310,8 @@ int parse_report(const char * parse_file, vtune_hw_profile_t *profile) {
         strcpy(hotspot->name_md5, perfexpert_md5_string(hotspot->name));
 
         hotspot->thread = get_thread_number(argv[4]);
+        if (hotspot->thread == PERFEXPERT_UNDEFINED)
+            continue;
 
         /* TODO(agomez) */
         hotspot->mpi_rank = 0;
@@ -348,6 +358,7 @@ int run_amplxe_cl(void) {
     int argc = 0, i = 0, rc;
     test_t test;
     static char template[] = "vtune-XXXXXX";
+    char hostname[1024];
 
     sprintf(my_module_globals.res_folder, "%s/%s", globals.moduledir, template);
     mktemp(my_module_globals.res_folder);
@@ -389,8 +400,14 @@ int run_amplxe_cl(void) {
     /* Step 2: arguments to run VTune */
     argv[argc] = VTUNE_CL_BIN;
     argc++;
-    argv[argc] = "-allow-multiple-runs";
-    argc++;
+    // Do not allow multiple runs on KNL (it fails)
+    if (0 != strcmp("knightslanding",
+        perfexpert_string_to_lower(my_module_globals.architecture))) {
+    	argv[argc] = "-allow-multiple-runs";
+    	argc++;
+	argv[argc] = "-no-analyze-system";
+	argc++;
+    }
     argv[argc] = VTUNE_ACT_COLLECTWITH;
     argc++;
     if (NULL == my_module_globals.mic) {
@@ -492,6 +509,18 @@ int run_amplxe_cl(void) {
             OUTPUT(("%s", _RED("'after' command return non-zero")));
         }
         PERFEXPERT_DEALLOC(test.output);
+    }
+
+    // VTune 16 creates a folder with the name passed plust the hostname. We need to check if this
+    // is the case
+    if (perfexpert_util_dir_exists(my_module_globals.res_folder)!=PERFEXPERT_SUCCESS) {
+        gethostname(hostname, 1023);
+	sprintf(my_module_globals.res_folder, "%s.%s", my_module_globals.res_folder, hostname);
+        OUTPUT_VERBOSE((10, "Checking folder %s", my_module_globals.res_folder));
+	if (perfexpert_util_dir_exists(my_module_globals.res_folder)!=PERFEXPERT_SUCCESS) {
+            OUTPUT(("%s", _ERROR("Impossible to find the folder with the results from VTune")));
+            return PERFEXPERT_ERROR;
+        }
     }
 
     return PERFEXPERT_SUCCESS;

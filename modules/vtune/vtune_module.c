@@ -37,6 +37,7 @@ extern "C" {
 #include "common/perfexpert_alloc.h"
 #include "common/perfexpert_constants.h"
 #include "common/perfexpert_hash.h"
+#include "common/perfexpert_database.h"
 #include "common/perfexpert_list.h"
 // #include "common/perfexpert_md5.h"
 #include "common/perfexpert_output.h"
@@ -65,6 +66,9 @@ int module_load(void) {
 
 /* module_init */
 int module_init(void) {
+    char sql[MAX_BUFFER_SIZE];
+    char *error;
+
     /* Extended interface */
 
     myself_module.set_event   = &module_set_event;
@@ -85,6 +89,33 @@ int module_init(void) {
     if (PERFEXPERT_SUCCESS != init_database()) {
         OUTPUT(("%s", _ERROR("initialing tables")));
         return PERFEXPERT_ERROR;
+    }
+
+    /* If the architecture was not set, we should try to identify it... */
+    if (NULL == my_module_globals.architecture) {
+        int family = perfexpert_cpuinfo_get_family();
+        int model  = perfexpert_cpuinfo_get_model();
+
+        bzero(sql, MAX_BUFFER_SIZE);
+        sprintf(sql, "SELECT description FROM arch_processor WHERE family=%d "
+            "AND model=%d;", family, model);
+        OUTPUT_VERBOSE((10, "   SQL: %s", _CYAN(sql)));
+
+        if (SQLITE_OK != sqlite3_exec(globals.db, sql,
+            perfexpert_database_get_string,
+            (void *)&my_module_globals.architecture, &error)) {
+            OUTPUT(("%s %s", _ERROR("SQL error"), error));
+            sqlite3_free(error);
+            return PERFEXPERT_ERROR;
+        }
+
+        if (NULL == my_module_globals.architecture) {
+            OUTPUT_VERBOSE((1, "Unknown architecture, using PAPI defaults"));
+            my_module_globals.architecture = "unknown";
+        }
+
+        OUTPUT_VERBOSE((1, "Architecture not set but it looks like [%s]",
+            my_module_globals.architecture));
     }
 
     OUTPUT_VERBOSE((5, "%s", _MAGENTA("initialized")));
