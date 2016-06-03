@@ -320,13 +320,35 @@ static int map_modules_to_hotspots(lcpi_hotspot_t *h, lcpi_module_t *db,
     return PERFEXPERT_SUCCESS;
 }
 
+/* set the correct instructions for cycles and instructions */
+int set_cycles_and_instructions () {
+    if ((0 == strcmp("jaketown",
+        perfexpert_string_to_lower(my_module_globals.architecture))) ||
+        (0 == strcmp("haswell",
+        perfexpert_string_to_lower(my_module_globals.architecture))) ||
+        (0 == strcmp("knightslanding",
+        perfexpert_string_to_lower(my_module_globals.architecture))))  {
+        my_module_globals.measurement->total_cycles_counter="CPU_CLK_UNHALTED.THREAD_P";
+        my_module_globals.measurement->total_inst_counter="INST_RETIRED.ANY_P";
+    }
+    if (0 == strcmp("mic",
+        perfexpert_string_to_lower(my_module_globals.architecture))) {
+        my_module_globals.measurement->total_cycles_counter = "CPU_CLK_UNHALTED";
+        my_module_globals.measurement->total_inst_counter = "INSTRUCTIONS_EXECUTED";
+    }
+    return PERFEXPERT_SUCCESS;
+}
+
 /* calculate_metadata */
 static int calculate_metadata(lcpi_profile_t *profile, const char *table) {
     char *error = NULL, sql[MAX_BUFFER_SIZE], *total_cycles, *total_inst;
     lcpi_module_t *m = NULL, *t = NULL;
     lcpi_hotspot_t *h = NULL;
 
-    //OJO hardcoded for MIC
+    if (PERFEXPERT_SUCCESS != set_cycles_and_instructions()) {
+        return PERFEXPERT_ERROR;
+    }
+
 /*    if (0 == strcmp("jaketown",
         perfexpert_string_to_lower(my_module_globals.architecture))) {
         my_module_globals.measurement->total_cycles_counter="CPU_CLK_UNHALTED.THREAD_P";
@@ -340,6 +362,14 @@ static int calculate_metadata(lcpi_profile_t *profile, const char *table) {
         my_module_globals.measurement->total_inst_counter = "INSTRUCTIONS_EXECUTED";
     }
 */
+/*
+    if (0 == strcmp("knightslanding",
+        perfexpert_string_to_lower(my_module_globals.architecture))) {
+        my_module_globals.measurement->total_cycles_counter = "CPU_CLK_UNHALTED.THREAD_P";
+        my_module_globals.measurement->total_inst_counter = "INST_RETIRED.ANY_P";
+    }
+*/
+
     /* Replace the '.' by '_' on the metrics name, this is bullshit... */
     PERFEXPERT_ALLOC(char, total_cycles,
         (strlen(my_module_globals.measurement->total_cycles_counter) + 1));
@@ -514,6 +544,7 @@ double database_get_event(const char *name, int hotspot_id, int mpi_task, int th
 
     bzero(sql, MAX_BUFFER_SIZE);
 
+    OUTPUT(("IMPORTING %s", name));
     if (my_module_globals.output==SERIAL_OUTPUT) {
         sprintf(sql, "SELECT SUM(value) FROM perfexpert_event WHERE hotspot_id = %d AND "
             "name = '%s';", hotspot_id, name);
