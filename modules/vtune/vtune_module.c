@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015  University of Texas at Austin. All rights reserved.
+ * Copyright (c) 2011-2016  University of Texas at Austin. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -237,6 +237,12 @@ int module_measure(void) {
 
     if (PERFEXPERT_SUCCESS != database_hw_events(profile)) {
         PERFEXPERT_DEALLOC(profile);
+        return PERFEXPERT_ERROR;
+    }
+
+    /*  Set number of tasks and threads for this experiment */
+    if (PERFEXPERT_SUCCESS != database_set_tasks_threads()) {
+        OUTPUT(("%s", _ERROR("writing tasks and threads to database")));
         return PERFEXPERT_ERROR;
     }
 

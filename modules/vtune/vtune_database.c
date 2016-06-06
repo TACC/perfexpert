@@ -158,10 +158,10 @@ int database_hw_events(vtune_hw_profile_t *profile) {
         sprintf(sql, "INSERT INTO perfexpert_hotspot (perfexpert_id, "
                 "id, name, type, profile, module, file, line, depth, "
                 "relevance) VALUES (%llu, %llu, '%s', 0, 'profile', '%s', "
-                "'file', 0,0,0);", globals.unique_id, id, h->name, h->module);
+                "'%s', %d, 0, 0);", globals.unique_id, id, h->name, h->module, h->src_file, h->src_line);
 
         OUTPUT_VERBOSE((9, "  Hotspot: %s SQL: %s", _YELLOW(h->name), sql));
-
+        
         if (SQLITE_OK != sqlite3_exec(globals.db, sql, NULL, NULL, &error)) {
             OUTPUT(("%s %s", _ERROR("SQL error"), error));
             sqlite3_free(error);
@@ -173,7 +173,7 @@ int database_hw_events(vtune_hw_profile_t *profile) {
             bzero(sql, MAX_BUFFER_SIZE);
             sprintf(sql, "INSERT INTO perfexpert_event (name, \
                 thread_id, mpi_task, experiment, value, hotspot_id) VALUES \
-                ('%s', %d, %d, %d, %llu, %d)", e->name, h->thread,
+                ('%s', %d, %d, %d, %llu, %d);", e->name, h->thread,
                 h->mpi_rank, globals.cycle, e->value, id);
 
             OUTPUT_VERBOSE((9, "  [%d] %s SQL: %s", id,
@@ -192,14 +192,14 @@ int database_hw_events(vtune_hw_profile_t *profile) {
     return PERFEXPERT_SUCCESS;
 }
 
-static int database_set_tasks_threads() {
+int database_set_tasks_threads() {
     char sql[MAX_BUFFER_SIZE];
     char *error;
     int mpi_tasks;
     int threads;
 
     bzero(sql, MAX_BUFFER_SIZE);
-    sprintf(sql, "SELECT MAX(mpi_task) FROM perfexpert_event");
+    sprintf(sql, "SELECT MAX(mpi_task) FROM perfexpert_event;");
 
     OUTPUT_VERBOSE((10, "    SQL: %s", sql));
     if (SQLITE_OK != sqlite3_exec(globals.db, sql,
@@ -210,7 +210,7 @@ static int database_set_tasks_threads() {
     }   
 
     bzero(sql, MAX_BUFFER_SIZE);
-    sprintf(sql, "SELECT MAX(thread_id) FROM perfexpert_event");
+    sprintf(sql, "SELECT MAX(thread_id) FROM perfexpert_event;");
 
     OUTPUT_VERBOSE((10, "    SQL: %s", sql));
     if (SQLITE_OK != sqlite3_exec(globals.db, sql,

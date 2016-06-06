@@ -310,6 +310,7 @@ int parse_report(const char * parse_file, vtune_hw_profile_t *profile) {
         strcpy(hotspot->name_md5, perfexpert_md5_string(hotspot->name));
 
         hotspot->thread = get_thread_number(argv[4]);
+
         if (hotspot->thread == PERFEXPERT_UNDEFINED)
             continue;
 
