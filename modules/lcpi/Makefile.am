@@ -20,8 +20,8 @@
 #
 
 lib_LTLIBRARIES = libperfexpert_module_lcpi.la
-libperfexpert_module_lcpi_la_CPPFLAGS = -I$(srcdir)/../..
-libperfexpert_module_lcpi_la_LDFLAGS = -lpapi -lmatheval -lm -lsqlite3 -module \
+libperfexpert_module_lcpi_la_CPPFLAGS = -I$(srcdir)/../.. -fopenmp
+libperfexpert_module_lcpi_la_LDFLAGS = -lpapi -lmatheval -lm -lsqlite3 -fopenmp -module
 	-version-info 1:0:0 -export-symbols $(srcdir)/lcpi_module.sym
 libperfexpert_module_lcpi_la_SOURCES = lcpi_module.c \
 	lcpi_database.c \

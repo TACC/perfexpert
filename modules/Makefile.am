@@ -34,8 +34,8 @@ SUBDIRS += $(ENABLE_MACVEC)
 
 lib_LTLIBRARIES = libperfexpert_module_base.la
 libperfexpert_module_base_la_SOURCES = perfexpert_module_base.c
-libperfexpert_module_base_la_CPPFLAGS = -I$(srcdir)/..
+libperfexpert_module_base_la_CPPFLAGS = -I$(srcdir)/.. -fopenmp
 libperfexpert_module_base_la_LDFLAGS = -lltdl -version-info 1:0:0 \
-	-export-symbols $(srcdir)/perfexpert_module_base.sym
+	-export-symbols $(srcdir)/perfexpert_module_base.sym -fopenmp
 
 # EOF

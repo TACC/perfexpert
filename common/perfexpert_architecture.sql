@@ -3419,5 +3419,10 @@ INSERT INTO arch_event (id, code, umask, name, description, type, processor_id) 
 INSERT INTO arch_event (id, code, umask, name, description, type, processor_id) VALUES (3339,0 ,0 ,'PAGE_WALKS.WALKS', '',  'core', 15);
 INSERT INTO arch_event (id, code, umask, name, description, type, processor_id) VALUES (3340,0 ,0 ,'PAGE_WALKS.CYCLES', '',  'core', 15);
 INSERT INTO arch_event (id, code, umask, name, description, type, processor_id) VALUES (3341,0 ,0 ,'MEC_MISC.IPP_INJECTIONS', '',  'core', 15);
-
+INSERT INTO arch_event (id, code, umask, name, description, type, processor_id) VALUES (3342,0 ,0 ,'UNC_E_RPQ_INSERTS', '',  'core', 15);
+INSERT INTO arch_event (id, code, umask, name, description, type, processor_id) VALUES (3343,0 ,0 ,'UNC_E_WPQ_INSERTS', '',  'core', 15);
+INSERT INTO arch_event (id, code, umask, name, description, type, processor_id) VALUES (3344,0 ,0 ,'UNC_E_EDC_ACCESS.HIT_CLEAN', '',  'core', 15);
+INSERT INTO arch_event (id, code, umask, name, description, type, processor_id) VALUES (3345,0 ,0 ,'UNC_E_EDC_ACCESS.HIT_DIRTY', '',  'core', 15);
+INSERT INTO arch_event (id, code, umask, name, description, type, processor_id) VALUES (3346,0 ,0 ,'UNC_E_EDC_ACCESS.MISS_CLEAN', '',  'core', 15);
+INSERT INTO arch_event (id, code, umask, name, description, type, processor_id) VALUES (3347,0 ,0 ,'UNC_E_EDC_ACCESS.MISS_DIRTY', '',  'core', 15);
 END TRANSACTION;

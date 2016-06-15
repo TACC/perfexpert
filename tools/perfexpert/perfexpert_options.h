@@ -97,6 +97,8 @@ static struct argp_option options[] = {
         "Enable verbose mode (default: 5, range: 0-10)" },
     { "recommendations", 'r', "COUNT", 0,
         "Number of recommendations PerfExpert should provide (default: 3)" },
+    { "output_mode=MODE", 'o', 0, 0, 
+            "Output for serial/aggregated mode (0), for MPI tasks (1), for MPI and threads (2)" },
 
     { 0, 0, 0, 0, "Other options:", 6 },
     { "database", 'd', "FILE", 0, "Select a recommendation database file "

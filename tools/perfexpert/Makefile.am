@@ -21,8 +21,8 @@
 
 bin_PROGRAMS = perfexpert
 
-perfexpert_CFLAGS = -O3
-perfexpert_LDFLAGS = -lsqlite3
+perfexpert_CFLAGS = -O3 -fopenmp
+perfexpert_LDFLAGS = -lsqlite3 -fopenmp
 perfexpert_LDADD = ../../common/libperfexpert_common.la \
 	../../modules/libperfexpert_module_base.la
 perfexpert_CPPFLAGS = -I$(srcdir)/../..

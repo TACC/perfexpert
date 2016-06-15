@@ -63,7 +63,7 @@ int parse_module_args(int argc, char *argv[]) {
     OUTPUT_VERBOSE((7, "   Sorting order: %s", my_module_globals.order));
     OUTPUT_VERBOSE((7, "   Architecture:  %s", my_module_globals.architecture));
     OUTPUT_VERBOSE((7, "   Verbose level: %d", my_module_globals.verbose));
-    OUTPUT_VERBOSE((7, "   Output mode:   %d", my_module_globals.output));
+//    OUTPUT_VERBOSE((7, "   Output mode:   %d", my_module_globals.output));
 
     /* Not using OUTPUT_VERBOSE because I want only one line */
     if (8 <= my_module_globals.verbose) {
@@ -95,10 +95,10 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
             OUTPUT_VERBOSE((1, "option 's' set [%s]", my_module_globals.order));
             break;
  
-        case 'o':
-           my_module_globals.output = strtol(arg, NULL,10);
-           OUTPUT_VERBOSE((1, "option 'o' set [%d]", my_module_globals.output));
-           break;
+//        case 'o':
+//           my_module_globals.output = strtol(arg, NULL,10);
+//           OUTPUT_VERBOSE((1, "option 'o' set [%d]", my_module_globals.output));
+//           break;
         /* Verbose */
         case 'v':
             my_module_globals.verbose = atoi(arg);
@@ -132,12 +132,12 @@ static int parse_env_vars(void) {
         OUTPUT_VERBOSE((1, "ENV: architecture=%s", my_module_globals.architecture));
     }
 
-    if (NULL != getenv("PERFEXPERT_MODULE_LCPI_OUTPUT")) {
-        OUTPUT_VERBOSE((1, "ENV: output"));
-        char * t =  getenv("PERFEXPERT_MODULE_LCPI_OUTPUT");
-        my_module_globals.output = strtol(t, NULL, 10);
-        OUTPUT_VERBOSE((1, "ENV: output=%s", my_module_globals.output));
-    }
+//    if (NULL != getenv("PERFEXPERT_MODULE_LCPI_OUTPUT")) {
+//        OUTPUT_VERBOSE((1, "ENV: output"));
+//        char * t =  getenv("PERFEXPERT_MODULE_LCPI_OUTPUT");
+//        my_module_globals.output = strtol(t, NULL, 10);
+//        OUTPUT_VERBOSE((1, "ENV: output=%s", my_module_globals.output));
+//    }
 
 
     return PERFEXPERT_SUCCESS;

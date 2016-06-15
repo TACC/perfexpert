@@ -273,29 +273,34 @@ int metrics_knl_vtune(void) {
     char s[MAX_LCPI];
 
     /* Set the events on the measurement module */
-    //USE_EVENT("ARITH.FPU_DIV");
     USE_EVENT("BR_INST_RETIRED.ALL_BRANCHES");
     USE_EVENT("BR_MISP_RETIRED.ALL_BRANCHES");
     USE_EVENT("CPU_CLK_UNHALTED.THREAD_P");
-//    USE_EVENT("DTLB_LOAD_MISSES.WALK_DURATION");
-//    USE_EVENT("FP_COMP_OPS_EXE.SSE_PACKED_SINGLE");
-//    USE_EVENT("FP_COMP_OPS_EXE.SSE_PACKED_DOUBLE");
-//    USE_EVENT("FP_COMP_OPS_EXE.SSE_SCALAR_SINGLE");
-//    USE_EVENT("FP_COMP_OPS_EXE.SSE_SCALAR_DOUBLE");
-//    USE_EVENT("FP_COMP_OPS_EXE.X87");
+    USE_EVENT("PAGE_WALKS.WALKS"); // This can be used to measure TLB misses
+    USE_EVENT("PAGE_WALKS.D_SIDE_CYCLES");
+    USE_EVENT("PAGE_WALKS.I_SIDE_CYCLES");
+
     USE_EVENT("ICACHE.MISSES");
-//    USE_EVENT("ITLB_MISSES.WALK_DURATION");
-//    USE_EVENT("L2_RQSTS.DEMAND_DATA_RD_HIT");
-//    USE_EVENT("L2_RQSTS.CODE_RD_HIT");
-//    USE_EVENT("L2_RQSTS.CODE_RD_MISS");
     USE_EVENT("LONGEST_LAT_CACHE.MISS");
     USE_EVENT("LONGEST_LAT_CACHE.REFERENCE");
     USE_EVENT("MEM_UOPS_RETIRED.ALL_LOADS");
+    USE_EVENT("MEM_UOPS_RETIRED.L2_MISS_LOADS_PS");
+
+    USE_EVENT("UOPS_RETIRED.ALL"); // -> DO I NEED THIS ONE???
+    USE_EVENT("UOPS_RETIRED.SCALAR_SIMD");
+    USE_EVENT("UOPS_RETIRED.PACKED_SIMD");
+
     USE_EVENT("INST_RETIRED.ANY_P");
-//    USE_EVENT("UOPS_RETIRED.SCALAR_SIMD");
-//    USE_EVENT("UOPS_RETIRED.PACKED_SIMD");
-//    USE_EVENT("SIMD_FP_256.PACKED_SINGLE");
-//    USE_EVENT("SIMD_FP_256.PACKED_DOUBLE");
+ 
+
+//    USE_EVENT("NO_ALLOC_CYCLES.ALL"); //Is this one OK?
+
+    USE_EVENT("UNC_E_RPQ_INSERTS");
+    USE_EVENT("UNC_E_WPQ_INSERTS");
+    USE_EVENT("UNC_E_EDC_ACCESS.HIT_CLEAN");
+    USE_EVENT("UNC_E_EDC_ACCESS.HIT_DIRTY");
+    USE_EVENT("UNC_E_EDC_ACCESS.MISS_CLEAN");
+    USE_EVENT("UNC_E_EDC_ACCESS.MISS_DIRTY");
 
     /* Set the profile total cycles and total instructions counters */
     my_module_globals.measurement->total_cycles_counter = "CPU_CLK_UNHALTED.THREAD_P";
@@ -346,6 +351,13 @@ int metrics_knl_vtune(void) {
         return PERFEXPERT_ERROR;
     }
 */
+
+    bzero(s, MAX_LCPI);
+    strcpy(s, "(UOPS_RETIRED.SCALAR_SIMD+UOPS_RETIRED.PACKED_SIMD) / UOPS_RETIRED.ALL");
+    if (PERFEXPERT_SUCCESS != lcpi_add_metric("SIMD overall",s)) {
+        return PERFEXPERT_ERROR;
+    }
+
     /* overall */
     bzero(s, MAX_LCPI);
     strcpy(s, "CPU_CLK_UNHALTED.THREAD_P / INST_RETIRED.ANY_P");
@@ -391,6 +403,23 @@ int metrics_knl_vtune(void) {
         return PERFEXPERT_ERROR;
     }
 
+
+    /* MCDRAM Read BW */
+    bzero(s, MAX_LCPI);
+    strcpy(s, "(UNC_E_RPQ_INSERTS - UNC_E_EDC_ACCESS.HIT_CLEAN / UNC_E_EDC_ACCESS.MISS_CLEAN - "
+              "UNC_E_EDC_ACCESS.HIT_DIRTY / UNC_E_EDC_ACCESS.MISS_DIRTY) * 64 / CPU_CLK_UNHALTED.THREAD_P");
+    if (PERFEXPERT_SUCCESS != lcpi_add_metric("mcdram.read_bandwidth", s)) {
+        return PERFEXPERT_ERROR;
+    }
+
+    /* MCDRAM Write BW */
+    bzero(s, MAX_LCPI);
+    // I should add this: DCLK_Events_CAS_Reads
+    strcpy(s, "UNC_E_WPQ_INSERTS * 64 / CPU_CLK_UNHALTED.THREAD_P");
+    if (PERFEXPERT_SUCCESS != lcpi_add_metric("mcdram.write_bandwidth", s)) {
+        return PERFEXPERT_ERROR;
+    }
+
     /* instruction_accesses.overall */
   /*  bzero(s, MAX_LCPI);
     strcpy(s, "((ICACHE.MISSES * L1_ilat) + (L2_RQSTS.CODE_RD_HIT * L2_lat)"
@@ -403,6 +432,12 @@ int metrics_knl_vtune(void) {
     bzero(s, MAX_LCPI);
     strcpy(s, "(ICACHE.MISSES * L1_ilat) / INST_RETIRED.ANY_P");
     if (PERFEXPERT_SUCCESS != lcpi_add_metric("instruction_accesses.L1_hits", s)) {
+        return PERFEXPERT_ERROR;
+    }
+
+    bzero(s, MAX_LCPI);
+    strcpy(s, "FETCH_STALL.ICACHE_FILL_PENDING_CYCLES / CPU_CLK_UNHALTED.THREAD_P");
+    if (PERFEXPERT_SUCCESS != lcpi_add_metric("instruction_accesses.L1_misses", s)) {
         return PERFEXPERT_ERROR;
     }
 
@@ -428,12 +463,18 @@ int metrics_knl_vtune(void) {
     }
 */
     /* instruction_TLB.overall */
-/*    bzero(s, MAX_LCPI);
-    strcpy(s, "ITLB_MISSES.WALK_DURATION / INST_RETIRED.ANY_P");
+    bzero(s, MAX_LCPI);
+    strcpy(s, "PAGE_WALKS.WALKS / INST_RETIRED.ANY_P");
     if (PERFEXPERT_SUCCESS != lcpi_add_metric("instruction_TLB.overall", s)) {
         return PERFEXPERT_ERROR;
     }
-*/
+
+    bzero(s, MAX_LCPI);
+    strcpy(s, "(PAGE_WALKS.D_SIDE_CYCLES+PAGE_WALKS.I_SIDE_CYCLES) / CPU_CLK_UNHALTED.THREAD_P");
+    if (PERFEXPERT_SUCCESS != lcpi_add_metric("instruction_TLB.time", s)) {
+        return PERFEXPERT_ERROR;
+    }
+
     /* branch_instructions.overall */
     bzero(s, MAX_LCPI);
     strcpy(s, "((BR_INST_RETIRED.ALL_BRANCHES * BR_lat) "

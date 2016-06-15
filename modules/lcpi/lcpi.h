@@ -52,9 +52,9 @@ extern "C" {
 #endif
 #define PROGRAM_PREFIX "[perfexpert_module_lcpi]"
 
-#define SERIAL_OUTPUT 0
-#define PARALLEL_OUTPUT 1
-#define HYBRID_OUTPUT 2
+//#define SERIAL_OUTPUT 0
+//#define PARALLEL_OUTPUT 1
+//#define HYBRID_OUTPUT 2
 
 /* Module types */
 typedef struct {
@@ -65,7 +65,7 @@ typedef struct {
     char *order;
     int help_only;
     int mic;
-    int output;
+//    int output;
     char *architecture;
     double threshold;
     int verbose;
@@ -98,7 +98,7 @@ int metrics_attach_machine(void);
 int database_import(perfexpert_list_t *profiles, const char *table);
 int database_export(perfexpert_list_t *profiles, const char *table);
 double database_get_hound(const char *name);
-double database_get_event(const char *name, int hotspot_id, int mpi_task, int thread_id);
+double database_get_event(const sqlite3* db, const char *name, int hotspot_id, int mpi_task, int thread_id);
 int database_get_mpi_tasks();
 int database_get_threads();
 

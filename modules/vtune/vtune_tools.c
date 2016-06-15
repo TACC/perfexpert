@@ -72,8 +72,10 @@ int create_report(char* results_folder, const char* parse_file) {
     argc++;
     argv[argc] = "-group-by=source-line";
     argc++;
-    argv[argc] = "-group-by=thread";
-    argc++;
+    if (globals.output_mode == HYBRID_OUTPUT) {
+        argv[argc] = "-group-by=thread";
+        argc++;
+    }
     argv[argc] = "-r";
     argc++;
     argv[argc] = my_module_globals.res_folder;
@@ -297,6 +299,10 @@ int parse_report(const char * parse_file, vtune_hw_profile_t *profile) {
         if ( strchr(argv[0], '<')) {
             continue; //Skip it
         }
+        if (strstr(argv[0], "Outside any") != NULL ) {
+            continue;
+        }
+
         parse_hotspot_name(argv[0], argv[0]);
         PERFEXPERT_ALLOC(vtune_hotspots_t, hotspot, sizeof(vtune_hotspots_t));
         PERFEXPERT_ALLOC(char, hotspot->name, strlen(argv[0])+1);

@@ -136,6 +136,7 @@ int parse_cli_params(int argc, char *argv[]) {
     OUTPUT_VERBOSE((7, "   verbose level:      %d", globals.verbose));
     OUTPUT_VERBOSE((7, "   colorful verbose?   %s", globals.colorful ?
         "yes" : "no"));
+    OUTPUT_VERBOSE((7, "   output modoe        %d", globals.output_mode));
     OUTPUT_VERBOSE((7, "   leave garbage?      %s", globals.remove_garbage ?
         "yes" : "no"));
     OUTPUT_VERBOSE((7, "   database file:      %s", globals.dbfile));
@@ -238,6 +239,14 @@ static error_t parse_options(int key, char *arg, struct argp_state *state) {
             OUTPUT_VERBOSE((1, "option 'v' set [%d]", globals.verbose));
             break;
 
+        /*  Output mode */
+        case 'o':
+            globals.output_mode = arg ? atoi(arg) : SERIAL_OUTPUT;
+            if (globals.output_mode>HYBRID_OUTPUT) {
+                globals.output_mode = SERIAL_OUTPUT;
+            }
+            OUTPUT_VERBOSE((1, "option 'o' set %d", globals.output_mode));
+            break;
         /* List of modules */
         case 'M':
             OUTPUT_VERBOSE((1, "option 'M' set [%s]", arg ? arg : "(null)"));
@@ -382,6 +391,14 @@ static int parse_env_vars(void) {
     if (NULL != getenv("PERFEXPERT_VERBOSE_LEVEL")) {
         globals.verbose = atoi(getenv("PERFEXPERT_VERBOSE_LEVEL"));
         OUTPUT_VERBOSE((1, "ENV: verbose_level=%d", globals.verbose));
+    }
+
+    if (NULL != getenv("PERFEXPERT_OUTPUT_MODE")) {
+        globals.output_mode = atoi(getenv("PERFEXPERT_OUTPUT_MODE"));
+        if (globals.output_mode>HYBRID_OUTPUT) {
+            globals.output_mode = SERIAL_OUTPUT;
+        }
+        OUTPUT_VERBOSE((1, "ENV: output_mode=%d", globals.output_mode));
     }
 
     if (NULL != getenv("PERFEXPERT_DATABASE_FILE")) {

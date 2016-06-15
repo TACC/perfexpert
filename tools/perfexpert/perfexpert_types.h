@@ -55,6 +55,7 @@ typedef struct {
     sqlite3 *db;
     perfexpert_backup_t backup;
     double threshold;
+    int output_mode;
 } globals_t;
 
 extern globals_t globals; /* This variable is defined in perfexpert_main.c */

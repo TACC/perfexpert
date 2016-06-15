@@ -30,6 +30,7 @@ extern "C" {
 #include "modules/perfexpert_module_measurement.h"
 #include "lcpi_module.h"
 #include "lcpi.h"
+#include <omp.h>
 
 /* PerfExpert common headers */
 #include "common/perfexpert_constants.h"
@@ -66,7 +67,7 @@ int module_init(void) {
     my_module_globals.mic = PERFEXPERT_FALSE;
     my_module_globals.verbose = globals.verbose;
     my_module_globals.threshold = globals.threshold;
-    my_module_globals.output = SERIAL_OUTPUT;
+//    my_module_globals.output = SERIAL_OUTPUT;
 
     /* Check if at least one of HPCToolkit or VTune is loaded */
     if ((PERFEXPERT_FALSE == perfexpert_module_available("hpctoolkit")) &&

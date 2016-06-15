@@ -3185,6 +3185,12 @@ const char * const knl[] = {
     "BR_MISP_RETIRED.REL_CALL_PS",
     "BR_MISP_RETIRED.FAR_BRANCH",
     "BR_MISP_RETIRED.FAR_BRANCH_PS",
+    "UNC_E_RPQ_INSERTS",
+    "UNC_E_WPQ_INSERTS",
+    "UNC_E_EDC_ACCESS.HIT_CLEAN",
+    "UNC_E_EDC_ACCESS.HIT_DIRTY",
+    "UNC_E_EDC_ACCESS.MISS_CLEAN",
+    "UNC_E_EDC_ACCESS.MISS_DIRTY",
     NULL,
 };
 
@@ -3303,7 +3309,7 @@ intel_event_t intel_events[17] = {
     { HASWELL_ULT,     "06_45H", haswell,       "E3-1200 v3 (Haswell)" },
     { HASWELL_2,       "06_46H", haswell,       "E3-1200 v3 (Haswell)" },
     { KNIGHTS_CORNER,  "0B_01H", mic,           "KnightsCorner"},
-    { KNIGHTS_LANDING,  "XXXX", knl,           "KnightsLanding"},
+    { KNIGHTS_LANDING, "06_57H", knl,           "KnightsLanding"},
     { 0, NULL, NULL, NULL }
 };
 

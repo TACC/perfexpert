@@ -59,6 +59,10 @@ enum {
 #define RECOMMENDER_METRICS "recommender_metrics.txt"
 #define RECOMMENDER_REPORT  "recommender_report.txt"
 
+#define SERIAL_OUTPUT 0
+#define PARALLEL_OUTPUT 1
+#define HYBRID_OUTPUT 2
+
 #define CT_PROGRAM "perfexpert_ct"
 #define CT_OUTPUT  "ct.output"
 #define CT_REPORT  "ct_report.txt"

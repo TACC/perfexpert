@@ -147,8 +147,11 @@ int output_analysis(perfexpert_list_t *profiles) {
                 /* For each hotspot in the profile's list of hotspots... */
                 perfexpert_list_for(h, &(p->hotspots), lcpi_hotspot_t) {
                     if (my_module_globals.threshold <= h->importance) {
-                        if (0 == strcmp("jaketown", perfexpert_string_to_lower(
-                            my_module_globals.architecture))) {
+                    	OUTPUT(("Analyzing hotspot"));
+                        if ((0 == strcmp("jaketown", perfexpert_string_to_lower(
+                            my_module_globals.architecture))) || (0 ==strcmp("haswell", perfexpert_string_to_lower(
+                            my_module_globals.architecture))) || (0 ==strcmp("knightslanding", perfexpert_string_to_lower(
+                            my_module_globals.architecture)))) {
                             if (PERFEXPERT_SUCCESS != output_profile(h, report_FP, 20, task, thread)) {
                                 OUTPUT(("%s (%s)", _ERROR("printing hotspot analysis"),
                                     h->name));
@@ -166,11 +169,11 @@ int output_analysis(perfexpert_list_t *profiles) {
                     }
                 }
             }
-            if (my_module_globals.output==SERIAL_OUTPUT) {
+            if (globals.output_mode==SERIAL_OUTPUT) {
                 break;
             }
         } /* threads */
-        if (my_module_globals.output!=SERIAL_OUTPUT) {
+        if (globals.output_mode!=SERIAL_OUTPUT) {
             break;
         }
     } /* tasks */
@@ -206,7 +209,7 @@ static int output_profile(lcpi_hotspot_t *h, FILE *report_FP, const int scale, c
                 break;
 
             case PERFEXPERT_HOTSPOT_FUNCTION:
-                if (my_module_globals.output==SERIAL_OUTPUT) {
+                if (globals.output_mode==SERIAL_OUTPUT) {
                     printf(
                         "Function %s in line %d of %s (%.2f%% of the total runtime)\n",
                         _CYAN(h->name), h->line, shortname, h->importance * 100);
@@ -225,7 +228,7 @@ static int output_profile(lcpi_hotspot_t *h, FILE *report_FP, const int scale, c
                 break;
 
             case PERFEXPERT_HOTSPOT_LOOP:
-                if (my_module_globals.output==SERIAL_OUTPUT) {
+                if (globals.output_mode==SERIAL_OUTPUT) {
                     printf(
                         "Loop in function %s in %s:%d (%.2f%% of the total runtime)\n",
                         _CYAN(h->name), shortname, h->line, h->importance * 100);
@@ -257,7 +260,7 @@ static int output_profile(lcpi_hotspot_t *h, FILE *report_FP, const int scale, c
     perfexpert_hash_iter_str(h->metrics_by_name, l, t) {
         char *temp = NULL, *cat = NULL, *subcat = NULL, desc[24];
 
-        if (((l->mpi_task!=task) || (l->thread_id!=thread)) && my_module_globals.output!=SERIAL_OUTPUT)
+        if (((l->mpi_task != task) || (l->thread_id != thread)) && globals.output_mode != SERIAL_OUTPUT)
             continue;
         
         PERFEXPERT_ALLOC(char, temp, (strlen(l->name) + 1));
