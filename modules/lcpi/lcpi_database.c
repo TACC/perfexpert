@@ -346,9 +346,8 @@ static int calculate_metadata(lcpi_profile_t *profile, const char *table) {
     char *error = NULL, sql[MAX_BUFFER_SIZE], *total_cycles, *total_inst;
     lcpi_module_t *m = NULL, *t = NULL;
     lcpi_hotspot_t *h = NULL;
-    sqlite3 **db;
+    sqlite3 *db [MAX_THREADS];
     int i, num_threads;
-    double dd;
 
     if (PERFEXPERT_SUCCESS != set_cycles_and_instructions()) {
         return PERFEXPERT_ERROR;
@@ -384,10 +383,10 @@ if (PERFEXPERT_SUCCESS != perfexpert_database_update(&globals.dbfile)) {
 
     #pragma omp parallel
     {
-        num_threads = omp_get_num_threads();
+        num_threads = omp_get_num_threads()%MAX_THREADS;
     }
     
-    PERFEXPERT_ALLOC(sqlite3*, db, num_threads);
+//    PERFEXPERT_ALLOC(sqlite3*, db, num_threads);
     
     for (i=0; i<num_threads; ++i) {
         if (PERFEXPERT_SUCCESS != perfexpert_database_connect(&(db[i]),globals.dbfile))
@@ -401,7 +400,7 @@ if (PERFEXPERT_SUCCESS != perfexpert_database_update(&globals.dbfile)) {
 
     OUTPUT(("BEFORE"));
     /* For each hotspot... */
-    #pragma omp parallel private(sql, h, error)
+    #pragma omp parallel private(sql, h, error) num_threads(num_threads)
    {
     #pragma omp single nowait
     {
@@ -504,7 +503,7 @@ if (PERFEXPERT_SUCCESS != perfexpert_database_update(&globals.dbfile)) {
     for (i=0; i<num_threads; ++i) {
         perfexpert_database_disconnect (db[i]);
     }
-    PERFEXPERT_DEALLOC(db);
+//    PERFEXPERT_DEALLOC(db);
     OUTPUT(("AFTER"));
     OUTPUT_VERBOSE((3, "total # of instructions: [%f]", profile->instructions));
     OUTPUT_VERBOSE((3, "total # of cycles: [%f]", profile->cycles));

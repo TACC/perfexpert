@@ -49,6 +49,9 @@ enum {
 #define MAX_FILENAME        512
 #define MAX_COLLECTION      4096
 
+/* Maximum number of threads when running on parallel */
+#define MAX_THREADS        64
+
 /* Default values for some files and directories */
 #define PERFEXPERT_OUTPUT  "perfexpert.output"
 #define PERFEXPERT_DB      "perfexpert.db"

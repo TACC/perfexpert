@@ -407,18 +407,21 @@ int run_amplxe_cl(void) {
     /* Step 2: arguments to run VTune */
     argv[argc] = VTUNE_CL_BIN;
     argc++;
+
     // Do not allow multiple runs on KNL (it fails)
     if (0 != strcmp("knightslanding",
         perfexpert_string_to_lower(my_module_globals.architecture))) {
-    	argv[argc] = "-allow-multiple-runs";
-    	argc++;
-	argv[argc] = "-no-analyze-system";
 	argc++;
+	argv[argc] = "-no-analyze-system";
     }
     argv[argc] = VTUNE_ACT_COLLECTWITH;
     argc++;
     if (NULL == my_module_globals.mic) {
         argv[argc] = "runsa";
+    	argc++;
+//    	argv[argc] = "-allow-multiple-runs";
+//        argc++;
+        argv[argc] = "-data-limit=0";
     }
     else {
         argv[argc] = "runsa-knc";
@@ -437,8 +440,10 @@ int run_amplxe_cl(void) {
     strcat(events_opt, events);
     argv[argc]=events_opt;
     argc++;
+    
     argv[argc] = "--";
     argc++;
+
 
     /* Step 3: add the program and... */
     argv[argc] = globals.program_full;

@@ -53,7 +53,7 @@ int logic_lcpi_compute(lcpi_profile_t *profile) {
     int count = 0, i = 0;
     int mpi_tasks, threads, num_threads;
     int task, thread, my_thread;
-    sqlite3 **db;
+    sqlite3 *db[MAX_THREADS];
 
     OUTPUT_VERBOSE((4, "%s", _YELLOW("Calculating LCPI metrics")));
 
@@ -66,9 +66,8 @@ int logic_lcpi_compute(lcpi_profile_t *profile) {
 
     #pragma omp parallel
     {
-        num_threads = omp_get_num_threads();
+        num_threads = omp_get_num_threads()%MAX_THREADS;
     }
-    PERFEXPERT_ALLOC(sqlite3*, db, num_threads);
     for (i = 0; i < num_threads; ++i) {
         if (PERFEXPERT_SUCCESS != perfexpert_database_connect(&(db[i]),globals.dbfile)) {
             OUTPUT(("ERROR creating DB number %d", i));
@@ -87,7 +86,7 @@ int logic_lcpi_compute(lcpi_profile_t *profile) {
         for (thread = 0; thread < threads; thread++) {
             /* With this if statement we don't need a break at the end -> good for OpenMP */
             if ((globals.output_mode != SERIAL_OUTPUT) || ((globals.output_mode == SERIAL_OUTPUT) && (task == 0) && (thread == 0))) {
-//#pragma omp parallel private (h, task, thread, count, l, hound_info, values, h_lcpi, names, i, t)
+//#pragma omp parallel private (h, task, thread, count, l, hound_info, values, h_lcpi, names, i, t) num_threads(num_threads)
         /* For each LCPI definition... */
                 perfexpert_hash_iter_str(my_module_globals.metrics_by_name, l, t) {
                 /* Get the list of variables and their values */
@@ -96,7 +95,7 @@ int logic_lcpi_compute(lcpi_profile_t *profile) {
                         continue;
                     }
                     /* For each hotspot in this profile... */
-		    #pragma omp parallel private(i, h_lcpi, values, hound_info, my_thread, h) default(none) shared(profile, names, count, l, task, thread, my_module_globals, db)
+//		    #pragma omp parallel private(i, h_lcpi, values, hound_info, my_thread, h) default(none) shared(profile, names, count, l, task, thread, my_module_globals, db)
                     {
                     #pragma omp single nowait
                     {
@@ -165,13 +164,12 @@ int logic_lcpi_compute(lcpi_profile_t *profile) {
     }//mpi
     OUTPUT(("LEFT PARALLEL PART"));
     for (i = 0; i < num_threads; ++i) {
-         OUTPUT(("DISCONNECTING DB %d", i));
         if (PERFEXPERT_SUCCESS != perfexpert_database_disconnect(db[i])) {
             OUTPUT(("ERROR disconnecting DB number %d", i));
             return PERFEXPERT_ERROR;
         }
     }
-    PERFEXPERT_DEALLOC(db);
+//    PERFEXPERT_DEALLOC(db);
     return PERFEXPERT_SUCCESS;
 }
 

@@ -57,7 +57,7 @@ int perfexpert_database_update(char **file) {
 
     /* System version */
     if (NULL == (ver_FP = fopen(sys_ver, "r"))) {
-        OUTPUT(("%s", _ERROR("unable to open sys DB version file")));
+        OUTPUT(("%s %s", _ERROR("unable to open sys DB version file "), sys_ver));
         goto CLEAN_UP;
     }
     if (0 == fscanf(ver_FP, "%s", sys_ver)) {
