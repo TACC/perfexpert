@@ -143,10 +143,10 @@ int metrics_knl(void) {
         return PERFEXPERT_ERROR;
     }
 
-    /* data_accesses.L3_cache_hits */
+    /* data_accesses.L2_cache_hits */
     bzero(s, MAX_LCPI);
-    strcpy(s, "(LAST_LEVEL_CACHE_REFERENCES * L3_lat) / INST_RETIRED.ANY_P");
-    if (PERFEXPERT_SUCCESS != lcpi_add_metric("data_accesses.L3_cache_hits", s)) {
+    strcpy(s, "(LAST_LEVEL_CACHE_REFERENCES * L2_lat) / INST_RETIRED.ANY_P");
+    if (PERFEXPERT_SUCCESS != lcpi_add_metric("data_accesses.L2_cache_hits", s)) {
         return PERFEXPERT_ERROR;
     }
 
@@ -364,7 +364,7 @@ int metrics_knl_vtune(void) {
     bzero(s, MAX_LCPI);
     strcpy(s, "((MEM_UOPS_RETIRED.ALL_LOADS * L1_dlat) + "
         "(L2_RQSTS.DEMAND_DATA_RD_HIT * L2_lat) + "
-        "(LONGEST_LAT_CACHE.REFERENCE * L3_lat) + "
+//        "(LONGEST_LAT_CACHE.REFERENCE * L3_lat) + "
         "LONGEST_LAT_CACHE.MISS * mem_lat) / INST_RETIRED.ANY_P");
     if (PERFEXPERT_SUCCESS != lcpi_add_metric("data_accesses.overall", s)) {
         return PERFEXPERT_ERROR;
@@ -386,8 +386,8 @@ int metrics_knl_vtune(void) {
 */
     /* data_accesses.L3_cache_hits */
     bzero(s, MAX_LCPI);
-    strcpy(s, "(LONGEST_LAT_CACHE.REFERENCE * L3_lat) / INST_RETIRED.ANY_P");
-    if (PERFEXPERT_SUCCESS != lcpi_add_metric("data_accesses.L3_cache_hits", s)) {
+    strcpy(s, "(LONGEST_LAT_CACHE.REFERENCE * L2_lat) / INST_RETIRED.ANY_P");
+    if (PERFEXPERT_SUCCESS != lcpi_add_metric("data_accesses.L2_cache_hits", s)) {
         return PERFEXPERT_ERROR;
     }
 
