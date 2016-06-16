@@ -365,30 +365,19 @@ static int calculate_metadata(lcpi_profile_t *profile, const char *table) {
     strcpy(total_inst, my_module_globals.measurement->total_inst_counter);
 
     perfexpert_string_replace_char(total_inst, '.', '_');
-/*        
-if (PERFEXPERT_SUCCESS != perfexpert_database_update(&globals.dbfile)) {
-                        OUTPUT (("ERROR updating DB"));
-                                        return PERFEXPERT_ERROR;
-                                                }
-*/
     perfexpert_database_disconnect (globals.db);
-
-
-////////////
-
-   PERFEXPERT_DEALLOC(globals.dbfile);
-   PERFEXPERT_ALLOC(char, globals.dbfile,
+    PERFEXPERT_DEALLOC(globals.dbfile);
+    PERFEXPERT_ALLOC(char, globals.dbfile,
         (strlen(PERFEXPERT_DB) + strlen(globals.workdir) + 2));
     sprintf(globals.dbfile, "%s/%s", globals.workdir, PERFEXPERT_DB);
 
+    /* Simple get the number of threads that I can use (I can only use 64 max) */
     #pragma omp parallel
     {
         num_threads = omp_get_num_threads()%MAX_THREADS;
     }
     
-//    PERFEXPERT_ALLOC(sqlite3*, db, num_threads);
-    
-    for (i=0; i<num_threads; ++i) {
+    for (i=0; i < num_threads; ++i) {
         if (PERFEXPERT_SUCCESS != perfexpert_database_connect(&(db[i]),globals.dbfile))
             OUTPUT(("ERROR creating DB number %d", i));
     }
@@ -398,113 +387,100 @@ if (PERFEXPERT_SUCCESS != perfexpert_database_update(&globals.dbfile)) {
         return PERFEXPERT_ERROR;
     }
 
-    OUTPUT(("BEFORE"));
     /* For each hotspot... */
     #pragma omp parallel private(sql, h, error) num_threads(num_threads)
-   {
-    #pragma omp single nowait
     {
-    perfexpert_list_for(h, &(profile->hotspots), lcpi_hotspot_t) {
-        #pragma omp task
+        #pragma omp single nowait
         {
-        int pos = omp_get_thread_num();      
-        /* Import instructions (sum of all experiments) */
-//        OUTPUT(("THREAD %d of %d (cpu %d) DB: %s", pos, omp_get_num_threads(), sched_getcpu(), globals.dbfile));
-        bzero(sql, MAX_BUFFER_SIZE);
-        sprintf(sql, "SELECT SUM(value) FROM perfexpert_event WHERE hotspot_id = %llu "
-            "AND name = '%s' GROUP BY experiment;", h->id, total_inst);
+        perfexpert_list_for(h, &(profile->hotspots), lcpi_hotspot_t) {
+            #pragma omp task
+            {
+                int pos = omp_get_thread_num();      
+                /* Import instructions (sum of all experiments) */
+                bzero(sql, MAX_BUFFER_SIZE);
+                sprintf(sql, "SELECT SUM(value) FROM perfexpert_event WHERE hotspot_id = %llu "
+                             "AND name = '%s' GROUP BY experiment;", h->id, total_inst);
 
-        OUTPUT_VERBOSE((8, "importing instructions %s", sql));
+                OUTPUT_VERBOSE((8, "importing instructions %s", sql));
 
-        if (SQLITE_OK != sqlite3_exec(db[pos], sql, import_instructions,
-            (void *)h, &error)) {
-            OUTPUT(("%s %s \n%s", _ERROR("SQL error"), error, sql));
-            sqlite3_free(error);
-            //return PERFEXPERT_ERROR;
-        }
+                if (SQLITE_OK != sqlite3_exec(db[pos], sql, import_instructions,
+                                              (void *)h, &error)) {
+                    OUTPUT(("%s %s \n%s", _ERROR("SQL error"), error, sql));
+                    sqlite3_free(error);
+                }
+                /* Import maximum instructions */
+                bzero(sql, MAX_BUFFER_SIZE);
+                sprintf(sql,
+                           "SELECT MAX(a) FROM (SELECT SUM(value) AS a FROM perfexpert_event WHERE "
+                           "hotspot_id = %llu AND name = '%s');", h->id, total_inst);
 
-        /* Import maximum instructions */
-        bzero(sql, MAX_BUFFER_SIZE);
-        sprintf(sql,
-            "SELECT MAX(a) FROM (SELECT SUM(value) AS a FROM perfexpert_event WHERE "
-            "hotspot_id = %llu AND name = '%s');", h->id, total_inst);
+                OUTPUT_VERBOSE((8, "importing max instructions: %s", sql));
 
-        OUTPUT_VERBOSE((8, "importing max instructions: %s", sql));
+                if (SQLITE_OK != sqlite3_exec(db[omp_get_thread_num()], sql,
+                    perfexpert_database_get_double, (void *)&(h->max_inst), &error)) {
+                    OUTPUT(("%s %s", _ERROR("SQL error"), error));
+                    sqlite3_free(error);
+                }
 
-        if (SQLITE_OK != sqlite3_exec(db[omp_get_thread_num()], sql,
-            perfexpert_database_get_double, (void *)&(h->max_inst), &error)) {
-            OUTPUT(("%s %s", _ERROR("SQL error"), error));
-            sqlite3_free(error);
-            //return PERFEXPERT_ERROR;
-        }
+                /* Import minimum instructions */
+                bzero(sql, MAX_BUFFER_SIZE);
+                sprintf(sql,
+                    "SELECT MIN(a) FROM (SELECT SUM(value) AS a FROM perfexpert_event WHERE "
+                    "hotspot_id = %llu AND name = '%s');", h->id, total_inst);
 
-        /* Import minimum instructions */
-        bzero(sql, MAX_BUFFER_SIZE);
-        sprintf(sql,
-            "SELECT MIN(a) FROM (SELECT SUM(value) AS a FROM perfexpert_event WHERE "
-            "hotspot_id = %llu AND name = '%s');", h->id, total_inst);
+                OUTPUT_VERBOSE((8, "importing min instructions: %s", sql));
 
-        OUTPUT_VERBOSE((8, "importing min instructions: %s", sql));
+                if (SQLITE_OK != sqlite3_exec(db[omp_get_thread_num()], sql,
+                        perfexpert_database_get_double, (void *)&(h->min_inst), &error)) {
+                    OUTPUT(("%s %s", _ERROR("SQL error"), error));
+                    sqlite3_free(error);
+                }
 
-        if (SQLITE_OK != sqlite3_exec(db[omp_get_thread_num()], sql,
-            perfexpert_database_get_double, (void *)&(h->min_inst), &error)) {
-            OUTPUT(("%s %s", _ERROR("SQL error"), error));
-            sqlite3_free(error);
-            //return PERFEXPERT_ERROR;
-        }
+                /* Import number of experiments */
+                bzero(sql, MAX_BUFFER_SIZE);
+                sprintf(sql, "SELECT DISTINCT experiment FROM perfexpert_event WHERE "
+                        "hotspot_id = %llu;", h->id);
 
-        /* Import number of experiments */
-        bzero(sql, MAX_BUFFER_SIZE);
-        sprintf(sql, "SELECT DISTINCT experiment FROM perfexpert_event WHERE "
-            "hotspot_id = %llu;", h->id);
+                OUTPUT_VERBOSE((8, "importing experiments: %s", sql));
 
-        OUTPUT_VERBOSE((8, "importing experiments: %s", sql));
+                if (SQLITE_OK != sqlite3_exec(db[omp_get_thread_num()], sql, import_experiment,
+                                              (void *)h, &error)) {
+                    OUTPUT(("%s %s", _ERROR("SQL error"), error));
+                    sqlite3_free(error);
+                }
 
-        if (SQLITE_OK != sqlite3_exec(db[omp_get_thread_num()], sql, import_experiment,
-            (void *)h, &error)) {
-            OUTPUT(("%s %s", _ERROR("SQL error"), error));
-            sqlite3_free(error);
-            //return PERFEXPERT_ERROR;
-        }
+                /* Import cycles */
+                bzero(sql, MAX_BUFFER_SIZE);
+                sprintf(sql, "SELECT SUM(value) FROM perfexpert_event WHERE hotspot_id = %llu "
+                        "AND name = '%s';", h->id, total_cycles);
 
-        /* Import cycles */
-        bzero(sql, MAX_BUFFER_SIZE);
-        sprintf(sql, "SELECT SUM(value) FROM perfexpert_event WHERE hotspot_id = %llu "
-            "AND name = '%s';", h->id, total_cycles);
+                OUTPUT_VERBOSE((8, "importing cycles: %s", sql));
 
-        OUTPUT_VERBOSE((8, "importing cycles: %s", sql));
+                if (SQLITE_OK != sqlite3_exec(db[omp_get_thread_num()], sql,
+                        perfexpert_database_get_double, (void *)&(h->cycles), &error)) {
+                    OUTPUT(("%s %s", _ERROR("SQL error"), error));
+                    sqlite3_free(error);
+                }
 
-        if (SQLITE_OK != sqlite3_exec(db[omp_get_thread_num()], sql,
-            perfexpert_database_get_double, (void *)&(h->cycles), &error)) {
-            OUTPUT(("%s %s", _ERROR("SQL error"), error));
-            sqlite3_free(error);
-            //return PERFEXPERT_ERROR;
-        }
-
-        /* Do the math... */
-        if ((DBL_MIN != h->max_inst) &&
-            (DBL_MAX != h->min_inst)) {
-            h->variance = (h->max_inst - h->min_inst) / h->max_inst;
-            h->instructions = h->instructions / h->experiments;
-            h->module->instructions += h->instructions;
-	    #pragma omp atomic
-            profile->instructions += h->instructions;
-            h->module->cycles += h->cycles;
-	    #pragma omp atomic
-            profile->cycles += h->cycles;
-        }
-//        OUTPUT(("THREAD %d closing DB", omp_get_thread_num()));
-//        perfexpert_database_disconnect (db);
-//        OUTPUT(("THREAD %d DB closed", omp_get_thread_num()));
-    }  //task
-    } // for
-    } // single
+                /* Do the math... */
+                if ((DBL_MIN != h->max_inst) &&
+                    (DBL_MAX != h->min_inst)) {
+                    h->variance = (h->max_inst - h->min_inst) / h->max_inst;
+                    h->instructions = h->instructions / h->experiments;
+                    h->module->instructions += h->instructions;
+	            #pragma omp atomic
+                    profile->instructions += h->instructions;
+                    h->module->cycles += h->cycles;
+                    #pragma omp atomic
+                    profile->cycles += h->cycles;
+               }
+           }  //task
+           } // for
+        } // single
     }  //omp parallel
     for (i=0; i<num_threads; ++i) {
         perfexpert_database_disconnect (db[i]);
     }
-//    PERFEXPERT_DEALLOC(db);
-    OUTPUT(("AFTER"));
     OUTPUT_VERBOSE((3, "total # of instructions: [%f]", profile->instructions));
     OUTPUT_VERBOSE((3, "total # of cycles: [%f]", profile->cycles));
 

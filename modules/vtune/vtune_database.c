@@ -157,8 +157,8 @@ int database_hw_events(vtune_hw_profile_t *profile) {
         */
         sprintf(sql, "INSERT INTO perfexpert_hotspot (perfexpert_id, "
                 "id, name, type, profile, module, file, line, depth, "
-                "relevance) VALUES (%llu, %llu, '%s', 0, 'profile', '%s', "
-                "'%s', %d, 0, 0);", globals.unique_id, id, h->name, h->module, h->src_file, h->src_line);
+                "relevance) VALUES (%llu, %llu, '%s', %d, 'profile', '%s', "
+                "'%s', %d, 0, 0);", globals.unique_id, id, h->name, h->type, h->module, h->src_file, h->src_line);
 
         OUTPUT_VERBOSE((9, "  Hotspot: %s SQL: %s", _YELLOW(h->name), sql));
         

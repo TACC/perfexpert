@@ -57,6 +57,7 @@ typedef struct {
     int mpi_rank;
     int thread;
     int src_line;
+    int type;
 
     perfexpert_list_t events;
     vtune_event_t *events_by_name;

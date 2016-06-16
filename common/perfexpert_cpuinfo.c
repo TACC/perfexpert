@@ -57,8 +57,8 @@ static int perfexpert_cpuinfo(void) {
 
     fclose(cpuinfo);
 
-    OUTPUT_VERBOSE((4, "CPUINFO Processor family: [%d]", family));
-    OUTPUT_VERBOSE((4, "CPUINFO Processor model:  [%d]", model));
+    OUTPUT_VERBOSE((6, "CPUINFO Processor family: [%d]", family));
+    OUTPUT_VERBOSE((6, "CPUINFO Processor model:  [%d]", model));
 
     return PERFEXPERT_SUCCESS;
 }
@@ -94,18 +94,12 @@ int perfexpert_cpuinfo_get_family(void) {
 /* perfexpert_cpuinfo_set_model */
 int perfexpert_cpuinfo_set_model(int value) {
     model = value;
-
-    OUTPUT_VERBOSE((4, "CPUINFO Processor model:  [%d]", model));
-
     return PERFEXPERT_SUCCESS;
 }
 
 /* perfexpert_cpuinfo_set_family */
 int perfexpert_cpuinfo_set_family(int value) {
     family = value;
-
-    OUTPUT_VERBOSE((4, "CPUINFO Processor family: [%d]", family));
-
     return PERFEXPERT_SUCCESS;
 }
 

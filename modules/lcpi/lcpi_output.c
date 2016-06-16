@@ -147,7 +147,6 @@ int output_analysis(perfexpert_list_t *profiles) {
                 /* For each hotspot in the profile's list of hotspots... */
                 perfexpert_list_for(h, &(p->hotspots), lcpi_hotspot_t) {
                     if (my_module_globals.threshold <= h->importance) {
-                    	OUTPUT(("Analyzing hotspot"));
                         if ((0 == strcmp("jaketown", perfexpert_string_to_lower(
                             my_module_globals.architecture))) || (0 ==strcmp("haswell", perfexpert_string_to_lower(
                             my_module_globals.architecture))) || (0 ==strcmp("knightslanding", perfexpert_string_to_lower(
@@ -181,6 +180,7 @@ int output_analysis(perfexpert_list_t *profiles) {
     /* Close file */
     fclose(report_FP);
 
+
     return PERFEXPERT_SUCCESS;
 }
 
@@ -197,6 +197,8 @@ static int output_profile(lcpi_hotspot_t *h, FILE *report_FP, const int scale, c
         OUTPUT(("   [%d -- %s] file %s does not exist. Is it a system file?", h->id, h->name, _YELLOW(h->file)));
         donotshowtop = PERFEXPERT_TRUE;
     }
+
+
 
     if (!donotshowtop) {
         perfexpert_util_filename_only(h->file, &shortname);

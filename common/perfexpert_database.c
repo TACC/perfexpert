@@ -157,7 +157,7 @@ int perfexpert_database_disconnect(sqlite3 *db) {
     sqlite3_close(db);
     sqlite3_close(disk_db);
 
-    OUTPUT_VERBOSE((4, "disconnected from database (saved in %s/%s)",
+    OUTPUT_VERBOSE((10, "disconnected from database (saved in %s/%s)",
         globals.workdir, PERFEXPERT_DB));
 
     return PERFEXPERT_SUCCESS;
@@ -206,7 +206,7 @@ int perfexpert_database_connect(sqlite3 **db, const char *file) {
         goto CLEAN_UP;
     }
 
-    OUTPUT_VERBOSE((4, "      connected to %s", file));
+    OUTPUT_VERBOSE((10, "      connected to %s", file));
 
     return PERFEXPERT_SUCCESS;
 

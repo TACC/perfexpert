@@ -78,9 +78,6 @@ int logic_lcpi_compute(lcpi_profile_t *profile) {
     mpi_tasks = database_get_mpi_tasks();
     threads = database_get_threads();
 
-
-    OUTPUT(("GOING TO PARALLEL PART"));
-
     for (task = 0; task < mpi_tasks; task++) {
     /* Iterate over all threads */
         for (thread = 0; thread < threads; thread++) {
@@ -95,7 +92,7 @@ int logic_lcpi_compute(lcpi_profile_t *profile) {
                         continue;
                     }
                     /* For each hotspot in this profile... */
-//		    #pragma omp parallel private(i, h_lcpi, values, hound_info, my_thread, h) default(none) shared(profile, names, count, l, task, thread, my_module_globals, db)
+		    #pragma omp parallel private(i, h_lcpi, values, hound_info, my_thread, h) default(none) shared(profile, names, count, l, task, thread, my_module_globals, db) num_threads(num_threads)
                     {
                     #pragma omp single nowait
                     {
@@ -162,7 +159,6 @@ int logic_lcpi_compute(lcpi_profile_t *profile) {
            }
         } //thread
     }//mpi
-    OUTPUT(("LEFT PARALLEL PART"));
     for (i = 0; i < num_threads; ++i) {
         if (PERFEXPERT_SUCCESS != perfexpert_database_disconnect(db[i])) {
             OUTPUT(("ERROR disconnecting DB number %d", i));
