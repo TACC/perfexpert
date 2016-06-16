@@ -336,7 +336,8 @@ static int output_profile(lcpi_hotspot_t *h, FILE *report_FP, const int scale, c
             (0 == strcmp(cat, "data TLB")) ||
             (0 == strcmp(cat, "instruction TLB")) ||
             (0 == strcmp(cat, "branch instructions")) ||
-            (0 == strcmp(cat, "FP instructions"))) {
+            (0 == strcmp(cat, "FP instructions")) || 
+            (0 == strcmp(cat, "mcdram"))) {
             printf("%s%5.2f ", desc, l->value);
             fprintf(report_FP, "%s%5.2f ", desc, l->value);
             PRETTY_PRINT_BAR((int)rint((l->value * scale)), ">");
