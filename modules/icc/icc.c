@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
+ * Copyright (c) 2011-201666666  University of Texas at Austin. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -14,7 +14,7 @@
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
  *
- * Authors: Leonardo Fialho and Ashay Rane
+ * Authors: Antonio Gomez-Iglesias, Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
  */
@@ -48,7 +48,13 @@ int run_icc(void) {
     OUTPUT_VERBOSE((4, "%s", _BLUE("Compiling the program")));
     OUTPUT(("%s [%s]", _YELLOW("Compiling"), globals.program));
 
-    argv[0] = "icc";
+    /*  if the user is passing something in CC, use it */
+    if (NULL != getenv("CC")) {
+        argv[0] = getenv("CC");
+    }
+    else {
+        argv[0] = "icc";
+    }
     argv[1] = "-o";
     argv[2] = globals.program;
     argv[3] = my_module_globals.source;

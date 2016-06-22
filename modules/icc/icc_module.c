@@ -99,7 +99,7 @@ int module_fini(void) {
 /* module_compile */
 int module_compile(void) {
     if (PERFEXPERT_SUCCESS != run_icc()) {
-        OUTPUT(("%s", _ERROR("error running 'make'")));
+        OUTPUT(("%s", _ERROR("error invoking the compiler")));
         return PERFEXPERT_ERROR;
     }
 
