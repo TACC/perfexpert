@@ -157,6 +157,12 @@ int parse_cli_params(int argc, char *argv[]) {
     }
     printf("\n");
 
+    /*  If the user doesn't pass a module, load LCPI by default */
+    if (perfexpert_list_get_size(&module_globals.modules) == 0)  {
+        OUTPUT_VERBOSE((1, "No module was specified. Loading LCPI"));
+        load_module("lcpi");
+    }
+
     if (7 <= globals.verbose) {
         printf("%s    Modules:           ", PROGRAM_PREFIX);
         perfexpert_list_for(m, &(module_globals.modules), perfexpert_module_t) {
