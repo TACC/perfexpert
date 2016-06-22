@@ -550,7 +550,7 @@ int database_get_threads () {
             globals.unique_id);
     OUTPUT_VERBOSE((10, "importing threads: %s", sql));
     if (SQLITE_OK != sqlite3_exec(globals.db, sql,
-        perfexpert_database_get_int, (int *)&value, &error)) {
+        perfexpert_database_get_int, (void *)&value, &error)) {
         OUTPUT(("%s %s", _ERROR("SQL error"), error));
         sqlite3_free(error);
     }
@@ -570,7 +570,7 @@ int database_get_mpi_tasks () {
             globals.unique_id);
     OUTPUT_VERBOSE((10, "importing MPI tasks: %s", sql));
     if (SQLITE_OK != sqlite3_exec(globals.db, sql,
-        perfexpert_database_get_int, (int *)&value, &error)) {
+        perfexpert_database_get_int, (void *)&value, &error)) {
         OUTPUT(("%s %s", _ERROR("SQL error"), error));
         sqlite3_free(error);
     }

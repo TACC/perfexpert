@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015  University of Texas at Austin. All rights reserved.
+ * Copyright (c) 2011-2016  University of Texas at Austin. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -33,6 +33,7 @@ extern "C" {
 
 /* Modules headers */
 #include "timb.h"
+#include "timb_database.h"
 #include "timb_output.h"
 
 /* Tools headers */
@@ -85,6 +86,8 @@ extern "C" {
 int output_analysis(void) {
     char PERCENTAGE[] = "0..........25..........50..........75..........100";
     char *error = NULL, sql[MAX_BUFFER_SIZE];
+    long long int instructions;
+    int rank, thread;
     char *report_FP_file;
     FILE *report_FP;
     PERFEXPERT_ALLOC(char, report_FP_file, (strlen(globals.moduledir) + 15));
@@ -141,61 +144,120 @@ int output_analysis(void) {
     fprintf(report_FP, " Task   Instructions   %%  %s\n", PERCENTAGE);
     fclose(report_FP);
 
-    /* Get thread cycles */
-    bzero(sql, MAX_BUFFER_SIZE);
-    if (my_module_globals.measure_mod == HPCTOOLKIT_MOD) {
-        //sprintf(sql, "SELECT h.profile, e.thread_id, SUM(e.value) AS value FROM "
-        sprintf(sql, "SELECT h.profile, e.mpi_task, SUM(e.value) AS value FROM "
-            "perfexpert_hotspot AS h JOIN perfexpert_event AS e ON h.id = "
-            "e.hotspot_id WHERE h.perfexpert_id = %llu AND e.name = 'INST_RETIRED_ANY_P' "
-            //"e.hotspot_id WHERE h.perfexpert_id = %llu AND e.name = 'PAPI_TOT_INS' "
-            "GROUP BY e.mpi_task ORDER BY e.mpi_task ASC;", globals.unique_id);
-            //"GROUP BY e.thread_id ORDER BY e.thread_id ASC;", globals.unique_id);
-    }
 
-    if (my_module_globals.measure_mod == VTUNE_MOD) {
-        sprintf(sql, "SELECT h.profile, e.thread_id, SUM(e.value) AS value FROM "
-            "perfexpert_hotspot AS h JOIN perfexpert_event AS e ON h.id = "
-            "e.hotspot_id WHERE h.perfexpert_id = %llu AND e.name = 'CPU_CLK_UNHALTED_REF_TSC' "
-            "GROUP BY e.thread_id ORDER BY e.thread_id ASC;", globals.unique_id);
-    }
-
-    if (SQLITE_OK != sqlite3_exec(globals.db, sql, output_thread, NULL,
-        &error)) {
-        OUTPUT(("%s %s", _ERROR("SQL error"), error));
-        sqlite3_free(error);
-        return PERFEXPERT_ERROR;
-    }
+    my_module_globals.ranks = get_mpi_ranks_LCPI();
+    my_module_globals.threads = get_threads_LCPI();
 
     if (NULL == (report_FP = fopen(report_FP_file, "a"))) {
         OUTPUT(("%s (%s)", _ERROR("unable to open file"), report_FP_file));
         return;
-    }   
+    }
+    PERFEXPERT_ALLOC(cycles_rank, my_module_globals.cycles_mpi, my_module_globals.ranks);
+
+    OUTPUT(("NUMBER OF RANKS %d -- NUMBER OF THREADS %d", my_module_globals.ranks, my_module_globals.threads));
+
+    for (rank = 0; rank < my_module_globals.ranks; ++rank) {
+//        PERFEXPERT_ALLOC(long long int, my_module_globals.cycles_mpi[rank].threads, my_module_globals.threads);
+       
+        instructions = get_instructions_rank(rank);
+        OUTPUT(("INSTRUCTIONS FOR RANK %d: %llu", rank, instructions));
+        if (rank == 0) {
+            my_module_globals.cycles_mpi[rank].min_threads = instructions;
+            my_module_globals.cycles_mpi[rank].max_threads = instructions;
+        }
+        else {
+            if (instructions > my_module_globals.cycles_mpi[rank].max_threads)
+                my_module_globals.cycles_mpi[rank].max_threads = instructions;
+            if (instructions < my_module_globals.cycles_mpi[rank].min_threads)
+                my_module_globals.cycles_mpi[rank].min_threads = instructions;
+        }
+
+        my_module_globals.cycles_mpi[rank].cycles = instructions;
+
+        for (thread = 0; thread < my_module_globals.threads; ++thread) {
+            instructions = get_instructions_thread(rank, thread);
+            OUTPUT(("INSTRUCTIONS FOR THREAD %d: %llu", thread, instructions));
+            if (thread == 0) {
+                my_module_globals.cycles_mpi[rank].max_threads = instructions;
+                my_module_globals.cycles_mpi[rank].min_threads = instructions;
+            }
+            else {
+                if (instructions > my_module_globals.cycles_mpi[rank].max_threads)
+                    my_module_globals.cycles_mpi[rank].max_threads = instructions;
+                if (instructions < my_module_globals.cycles_mpi[rank].min_threads)
+                    my_module_globals.cycles_mpi[rank].min_threads = instructions;
+            }
+            my_module_globals.cycles_mpi[rank].threads[thread] = instructions; 
+        }
+    }
+
+    OUTPUT(("COLLECTED DATA"));
+    for (rank = 0; rank < my_module_globals.ranks; ++rank) {
+        /* Sanity check (not necessary) */
+        if (my_module_globals.total==0)
+            break;
+
+        printf(" -------------------------\n Process %d\n", rank);
+        fprintf(report_FP, " -------------------------\n Process %d\n", rank);
+        printf("%5d   %10.2g (%10.2g%%) << total instruction count for %s\n",
+                rank, my_module_globals.cycles_mpi[rank].cycles, 100*my_module_globals.cycles_mpi[rank].cycles/my_module_globals.total, _CYAN(globals.program));
+//        printf("                              with a variance up to %.2f%%\n",
+//                (100 * ((my_module_globals.maximum - my_module_globals.minimum) /
+//                my_module_globals.maximum)));
+        fprintf(report_FP, "%5d   %10.2g (%10.2g%%) << total instruction count for %s\n",
+                rank, my_module_globals.cycles_mpi[rank].cycles, 100*my_module_globals.cycles_mpi[rank].cycles/my_module_globals.total, _CYAN(globals.program));
+//        fprintf(report_FP, "%5d   %10.2g 100.00%% << total instruction count for %s\n",
+//                rank, my_module_globals.total, _CYAN(globals.program));
+//        fprintf(report_FP, "                              with a variance up to %.2f%%\n",
+//                (100 * ((my_module_globals.maximum - my_module_globals.minimum) /
+//                my_module_globals.maximum)));
+        PRETTY_PRINT(79, "-");
+        PRETTY_PRINT(79, "-");
+        printf("\n");
+        fprintf(report_FP, "\n");
+        for (thread = 0; thread < my_module_globals.threads; ++thread) {
+            /*  Sanity check (not necessary) */
+            if (my_module_globals.cycles_mpi[rank].cycles == 0)
+                break;
+            printf(" ******** Thread %d\n", thread);
+            fprintf(report_FP, " ******** Thread %d\n", thread);
+            printf("Thread %3d %10.2g%%", thread, 100*my_module_globals.cycles_mpi[rank].threads[thread]/my_module_globals.cycles_mpi[rank].cycles);
+            fprintf(report_FP, "Thread %3d %10.2g%%", thread, 100*my_module_globals.cycles_mpi[rank].threads[thread]/my_module_globals.cycles_mpi[rank].cycles);
+            /* 
+            printf("%5d   %10.2g 100.00%% << total instruction count for %s\n",
+                    thread, my_module_globals.cycles_mpi[rank].threads[thread], _CYAN(my_module_globals.cycles_mpi[rank].cycles));
+            printf("                              with a variance up to %.2f%%\n",
+                    (100 * ((my_module_globals.maximum - my_module_globals.minimum) /
+                    my_module_globals.maximum)));
+            fprintf(report_FP, "%5d   %10.2g 100.00%% << total instruction count for %s\n",
+                    rank, my_module_globals.total, _CYAN(globals.program));
+            fprintf(report_FP, "                              with a variance up to %.2f%%\n",
+                    (100 * ((my_module_globals.maximum - my_module_globals.minimum) /
+                    my_module_globals.maximum)));
+            */
+           PRETTY_PRINT(79, "-");
+           PRETTY_PRINT(79, "-");
+           printf("\n");
+           fprintf(report_FP, "\n");
+        }
+    }
+
+    /* Print report footer */
+    //printf(" -------------------------\n");
+    //fprintf(report_FP, " -------------------------\n");
+    //    }
+   // }
 
     /* Print report footer */
     printf(" -------------------------\n");
     fprintf(report_FP, " -------------------------\n");
     //printf("%5d   %10.2g 100.00%% << total cycle count for %s\n",
-    printf("%5d   %10.2g 100.00%% << total instruction count for %s\n",
-        my_module_globals.threads, my_module_globals.total,
-        _CYAN(globals.program));
-    printf("                              with a variance up to %.2f%%\n",
-        (100 * ((my_module_globals.maximum - my_module_globals.minimum) /
-            my_module_globals.maximum)));
-    fprintf(report_FP, "%5d   %10.2g 100.00%% << total instruction count for %s\n",
-        my_module_globals.threads, my_module_globals.total,
-        _CYAN(globals.program));
-    fprintf(report_FP, "                              with a variance up to %.2f%%\n",
-        (100 * ((my_module_globals.maximum - my_module_globals.minimum) /
-            my_module_globals.maximum)));
-    PRETTY_PRINT(79, "-");
-    PRETTY_PRINT(79, "-");
-    printf("\n");
-    fprintf(report_FP, "\n");
     fclose(report_FP);
     
     PERFEXPERT_DEALLOC(report_FP_file);
-    
+//    for (rank = 0; rank < my_module_globals.ranks; ++rank)
+//        PERFEXPERT_DEALLOC (my_module_globals.cycles_mpi[rank].threads);
+    //PERFEXPERT_DEALLOC(my_module_globals.cycles_mpi);
     return PERFEXPERT_SUCCESS;
 }
 

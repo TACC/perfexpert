@@ -67,7 +67,7 @@ int init_macvec_results() {
 }
 
 /* Store one result of the analysis in the DB */
-int store_result(int line, char *filename, char *analysis) {
+int store_macvec_result(int line, char *filename, char *analysis) {
     char *error = NULL, sql[MAX_BUFFER_SIZE];
     
     bzero(sql, MAX_BUFFER_SIZE);

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
+# Copyright (c) 2011-2016  University of Texas at Austin. All rights reserved.
 #
 # $COPYRIGHT$
 #
@@ -14,7 +14,7 @@
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
 # A PARTICULAR PURPOSE.
 #
-# Authors: Leonardo Fialho and Ashay Rane
+# Authors: Antonio Gomez-Iglesias, Leonardo Fialho and Ashay Rane
 #
 # $HEADER$
 #
@@ -24,6 +24,11 @@ libperfexpert_module_timb_la_CPPFLAGS = -I$(srcdir)/../..
 libperfexpert_module_timb_la_LDFLAGS = -module -lsqlite3 -lm \
 	-version-info 1:0:0 -export-symbols $(srcdir)/timb_module.sym
 libperfexpert_module_timb_la_SOURCES = timb_module.c \
-	timb_output.c
+	timb_output.c timb_database.c
+
+install-exec-local:
+	    $(MKDIR_P) $(DESTDIR)$(sysconfdir)
+	    $(INSTALL) -m 644 $(top_srcdir)/modules/timb/timb_module.sql \
+	        $(DESTDIR)$(sysconfdir)/
 
 # EOF

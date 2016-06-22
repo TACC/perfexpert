@@ -605,7 +605,7 @@ static void print_recommendations(perfexpert_list_t* locations) {
             fprintf(stdout, "  - %s\n", description);
             fprintf(report_FP, "  - %s\n", description);
             
-            store_result(location->line_number, location->filename, description);
+            store_macvec_result(location->line_number, location->filename, description);
 
             PERFEXPERT_DEALLOC(description);
             description = NULL;

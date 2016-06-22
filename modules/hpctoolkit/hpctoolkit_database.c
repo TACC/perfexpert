@@ -208,7 +208,7 @@ int database_set_tasks_threads() {
     int threads;
     
     bzero(sql, MAX_BUFFER_SIZE);
-    sprintf(sql, "SELECT MAX(mpi_task) FROM perfexpert_event");
+    sprintf(sql, "SELECT MAX(mpi_task) FROM perfexpert_event;");
 
     OUTPUT_VERBOSE((10, "    SQL: %s", sql));
     if (SQLITE_OK != sqlite3_exec(globals.db, sql,
@@ -219,7 +219,7 @@ int database_set_tasks_threads() {
     }
 
     bzero(sql, MAX_BUFFER_SIZE);
-    sprintf(sql, "SELECT MAX(thread_id) FROM perfexpert_event");
+    sprintf(sql, "SELECT MAX(thread_id) FROM perfexpert_event;");
 
     OUTPUT_VERBOSE((10, "    SQL: %s", sql));
     if (SQLITE_OK != sqlite3_exec(globals.db, sql,

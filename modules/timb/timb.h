@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015  University of Texas at Austin. All rights reserved.
+ * Copyright (c) 2011-2016  University of Texas at Austin. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -43,6 +43,15 @@ typedef enum{
     VTUNE_MOD = 2,
 } perfexpert_timb_modules;
 
+typedef struct {
+    long long int cycles;
+    //long long int *threads;
+    long long int threads[20];
+    long long int max_threads;
+    long long int min_threads;
+} cycles_rank;
+
+
 /* Module types */
 typedef struct {
     perfexpert_module_hpctoolkit_t *hpctoolkit;
@@ -52,7 +61,11 @@ typedef struct {
     double maximum;
     double minimum;
     int threads;
+    int ranks;
+    cycles_rank *cycles_mpi;
 } my_module_globals_t;
+
+
 
 extern my_module_globals_t my_module_globals;
 

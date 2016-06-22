@@ -25,7 +25,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 static inline int output_thread(void *var, int c, char **val, char **names);
 
 #ifdef __cplusplus
