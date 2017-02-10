@@ -150,6 +150,7 @@ int output_analysis(perfexpert_list_t *profiles) {
                         if ((0 == strcmp("jaketown", perfexpert_string_to_lower(
                             my_module_globals.architecture))) || (0 ==strcmp("haswell", perfexpert_string_to_lower(
                             my_module_globals.architecture))) || (0 ==strcmp("knightslanding", perfexpert_string_to_lower(
+                            my_module_globals.architecture))) || (0 ==strcmp("skylake", perfexpert_string_to_lower(       
                             my_module_globals.architecture)))) {
                             if (PERFEXPERT_SUCCESS != output_profile(h, report_FP, 20, task, thread)) {
                                 OUTPUT(("%s (%s)", _ERROR("printing hotspot analysis"),

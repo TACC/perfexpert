@@ -329,6 +329,8 @@ int set_cycles_and_instructions () {
         (0 == strcmp("haswell",
         perfexpert_string_to_lower(my_module_globals.architecture))) ||
         (0 == strcmp("knightslanding",
+        perfexpert_string_to_lower(my_module_globals.architecture))) ||
+        (0 == strcmp("skylake",
         perfexpert_string_to_lower(my_module_globals.architecture))))  {
         my_module_globals.measurement->total_cycles_counter="CPU_CLK_UNHALTED.THREAD_P";
         my_module_globals.measurement->total_inst_counter="INST_RETIRED.ANY_P";

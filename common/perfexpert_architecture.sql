@@ -1,5 +1,5 @@
 --
--- Copyright (c) 2011-2015 University of Texas at Austin. All rights reserved.
+-- Copyright (c) 2011-2016 University of Texas at Austin. All rights reserved.
 --
 -- $COPYRIGHT$
 --
@@ -76,6 +76,7 @@ INSERT INTO arch_processor (id, family, model, description) VALUES (12, 6, 53, '
 INSERT INTO arch_processor (id, family, model, description) VALUES (13, 11, 1, 'KnightsCorner');
 INSERT INTO arch_processor (id, family, model, description) VALUES (14, 6, 61, 'Broadwell');
 INSERT INTO arch_processor (id, family, model, description) VALUES (15, 6, 87, 'KnightsLanding');
+INSERT INTO arch_processor (id, family, model, description) VALUES (16, 6, 85, 'SkyLake');
 
 INSERT INTO arch_event (id, code, umask, name, description, type, processor_id) VALUES (0, 20, 1, 'ARITH.CYCLES_DIV_BUSY', 'Cycles the divider is busy', 'core', 1);
 INSERT INTO arch_event (id, code, umask, name, description, type, processor_id) VALUES (1, 20, 1, 'ARITH.DIV', 'Divide Operations executed', 'core', 1);

@@ -226,7 +226,7 @@ int module_init(void) {
         }
     }
     else if (0 == strcmp("knightslanding",
-	perfexpert_string_to_lower(my_module_globals.architecture))) {
+	    perfexpert_string_to_lower(my_module_globals.architecture))) {
         if (0 == strcmp(my_module_globals.measurement->name, "vtune")) {
             if (PERFEXPERT_SUCCESS != metrics_knl_vtune()) {
                 OUTPUT(("%s", _ERROR("generating LCPI metrics (KNL)")));
@@ -236,6 +236,21 @@ int module_init(void) {
         else {
             if (PERFEXPERT_SUCCESS != metrics_knl()) {
                 OUTPUT(("%s", _ERROR("generating LCPI metrics (KNL)")));
+                return PERFEXPERT_ERROR;
+            }
+        }
+    }
+    else if (0 == strcmp("skylake",
+        perfexpert_string_to_lower(my_module_globals.architecture))) {
+        if (0 == strcmp(my_module_globals.measurement->name, "vtune")) {
+            if (PERFEXPERT_SUCCESS != metrics_skl_vtune()) {
+                OUTPUT(("%s", _ERROR("generating LCPI metrics (SKL)")));
+                return PERFEXPERT_ERROR;
+            }
+        }
+        else {
+            if (PERFEXPERT_SUCCESS != metrics_skl()) {
+                OUTPUT(("%s", _ERROR("generating LCPI metrics (SKL)")));
                 return PERFEXPERT_ERROR;
             }
         }
