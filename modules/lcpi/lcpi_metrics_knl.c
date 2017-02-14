@@ -21,12 +21,27 @@
 
 /* System standard headers */
 #include <string.h>
+#include <stdint.h>
+#include <stdlib.h>
 
 /* Modules headers */
 #include "lcpi.h"
 
 /* PerfExpert common headers */
 #include "common/perfexpert_constants.h"
+
+
+int is_flat_mode(void) {
+    char output[10];
+    // On KNL, memkind-hbw-nodes should be present
+    FILE *fp = popen("memkind-hbw-nodes", "r");
+    if (fp == NULL)
+        return PERFEXPERT_ERROR;
+    fgets(output, 10, fp);
+    int val = strtol (output, NULL, 10);
+    return val;
+}
+
 
 int metrics_knl(void) {
     char s[MAX_LCPI];
@@ -168,7 +183,7 @@ int metrics_knl_vtune(void) {
         return PERFEXPERT_ERROR;
     }
    
-   bzero(s, MAX_LCPI);
+    bzero(s, MAX_LCPI);
     strcpy(s, "((UNC_E_RPQ_INSERTS - UNC_E_EDC_ACCESS.HIT_CLEAN / UNC_E_EDC_ACCESS.MISS_CLEAN - "
               "UNC_E_EDC_ACCESS.HIT_DIRTY / UNC_E_EDC_ACCESS.MISS_DIRTY) * 64 / CPU_CLK_UNHALTED.THREAD_P) + "
               "(UNC_E_WPQ_INSERTS * 64 / CPU_CLK_UNHALTED.THREAD_P)");
@@ -178,8 +193,14 @@ int metrics_knl_vtune(void) {
 
     /* MCDRAM Read BW */
     bzero(s, MAX_LCPI);
-    strcpy(s, "(UNC_E_RPQ_INSERTS - UNC_E_EDC_ACCESS.HIT_CLEAN / UNC_E_EDC_ACCESS.MISS_CLEAN - "
-              "UNC_E_EDC_ACCESS.HIT_DIRTY / UNC_E_EDC_ACCESS.MISS_DIRTY) * 64 / CPU_CLK_UNHALTED.THREAD_P");
+    // This is for Cache Mode
+    if (is_flat_mode()) {
+        strcpy(s, "UNC_E_RPQ_INSERTS * 64 / CPU_CLK_UNHALTED.THREAD_P");
+    }
+    else {
+        strcpy(s, "(UNC_E_RPQ_INSERTS - UNC_E_EDC_ACCESS.HIT_CLEAN / UNC_E_EDC_ACCESS.MISS_CLEAN - "
+                  "UNC_E_EDC_ACCESS.HIT_DIRTY / UNC_E_EDC_ACCESS.MISS_DIRTY) * 64 / CPU_CLK_UNHALTED.THREAD_P");
+    }
     if (PERFEXPERT_SUCCESS != lcpi_add_metric("mcdram.read_bandwidth", s)) {
         return PERFEXPERT_ERROR;
     }
