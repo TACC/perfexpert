@@ -584,7 +584,7 @@ int run_hpcprof(char **file) {
     argv[0] = HPCPROF;
     argv[1] = "--force-metric";
     argv[2] = "--metric=thread";
-    argv[3] = "--struct";
+    argv[3] = "--structure";
     PERFEXPERT_ALLOC(char, argv[4],
             (strlen(globals.moduledir) + strlen(globals.program) + 23));
     sprintf(argv[4], "%s/%s.hpcstruct", globals.moduledir, globals.program);
