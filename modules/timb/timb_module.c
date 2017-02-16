@@ -154,7 +154,12 @@ int module_measure(void) {
 int module_analyze(void) {
     OUTPUT(("%s", _YELLOW("Analysing measurements")));
 
-    if (PERFEXPERT_SUCCESS != output_analysis()) {
+    if (PERFEXPERT_SUCCESS != output_analysis(PERFEXPERT_TRUE)) {
+        OUTPUT(("%s", _ERROR("printing analysis report")));
+        return PERFEXPERT_ERROR;
+    }
+
+    if (PERFEXPERT_SUCCESS != output_analysis(PERFEXPERT_FALSE)) {
         OUTPUT(("%s", _ERROR("printing analysis report")));
         return PERFEXPERT_ERROR;
     }

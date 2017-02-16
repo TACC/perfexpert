@@ -82,7 +82,7 @@ extern "C" {
     }
 
 /* output_analysis */
-int output_analysis(void) {
+int output_analysis(int isMPI) {
     char PERCENTAGE[] = "0..........25..........50..........75..........100";
     char *error = NULL, sql[MAX_BUFFER_SIZE];
     char *report_FP_file;
@@ -118,46 +118,70 @@ int output_analysis(void) {
 
     /* Print report header */
     PRETTY_PRINT(79, "=");
-    //OUTPUT(("%s", _CYAN("Thread balancing")));
-    OUTPUT(("%s", _CYAN("Load balancing")));
-    fprintf(report_FP, "Load balancing\n");
+    if (isMPI) {
+        OUTPUT(("%s", _CYAN("MPI Load balancing")));
+        fprintf(report_FP, "MPI Load balancing\n");
+    }
+    else {
+        OUTPUT(("%s", _CYAN("Thread Load balancing")));
+        fprintf(report_FP, "Thread Load balancing\n");
+    }
     PRETTY_PRINT(79, "=");
     if (0.0 == my_module_globals.total) {
         printf("%s the cycles count is zero, measurement problems?\n\n",
             _BOLDRED("WARNING:"));
     }
-    printf("%s this analysis does not take into consideration synchronization "
-        "between\n         tasks, only the total number of instructions each task"
-//        "between\n         threads, only the total number of cycles each thread"
-//        " consumed\n\n", _BOLDRED("WARNING:"));
-        " executed\n\n", _BOLDRED("WARNING:"));
-    fprintf(report_FP, "%s this analysis does not take into consideration synchronization "
-        "between\n         tasks, only the total number of instructions each task"
-//        "between\n         threads, only the total number of cycles each thread"
-//        " consumed\n\n", _BOLDRED("WARNING:"));
-        " executed\n\n", _BOLDRED("WARNING:"));
-//    printf(" Thread    Cycles     %%    %s\n", PERCENTAGE);
-    printf(" Task   Instructions   %%  %s\n", PERCENTAGE);
+    if (isMPI) {
+        printf("%s this analysis does not take into consideration synchronization "
+            "between\n         tasks, only the total number of instructions each task"
+            " executed\n\n", _BOLDRED("WARNING:"));
+        fprintf(report_FP, "%s this analysis does not take into consideration synchronization "
+            "between\n         tasks, only the total number of instructions each task"
+            " executed\n\n", _BOLDRED("WARNING:"));
+        printf(" Task   Instructions   %%  %s\n", PERCENTAGE);
+    }
+    else {
+        printf("%s this analysis does not take into consideration synchronization "
+            "between\n         threads, only the total number of cycles each thread"
+            " consumed\n\n", _BOLDRED("WARNING:"));
+        fprintf(report_FP, "%s this analysis does not take into consideration synchronization "
+            "between\n         threads, only the total number of cycles each thread"
+            " consumed\n\n", _BOLDRED("WARNING:"));
+        printf(" Thread    Cycles     %%    %s\n", PERCENTAGE);
+    }
     fprintf(report_FP, " Task   Instructions   %%  %s\n", PERCENTAGE);
     fclose(report_FP);
 
     /* Get thread cycles */
     bzero(sql, MAX_BUFFER_SIZE);
     if (my_module_globals.measure_mod == HPCTOOLKIT_MOD) {
-        //sprintf(sql, "SELECT h.profile, e.thread_id, SUM(e.value) AS value FROM "
-        sprintf(sql, "SELECT h.profile, e.mpi_task, SUM(e.value) AS value FROM "
-            "perfexpert_hotspot AS h JOIN perfexpert_event AS e ON h.id = "
-            "e.hotspot_id WHERE h.perfexpert_id = %llu AND e.name = 'INST_RETIRED_ANY_P' "
-            //"e.hotspot_id WHERE h.perfexpert_id = %llu AND e.name = 'PAPI_TOT_INS' "
-            "GROUP BY e.mpi_task ORDER BY e.mpi_task ASC;", globals.unique_id);
-            //"GROUP BY e.thread_id ORDER BY e.thread_id ASC;", globals.unique_id);
+        if (isMPI) {
+           sprintf(sql, "SELECT h.profile, e.mpi_task, SUM(e.value) AS value FROM "
+                "perfexpert_hotspot AS h JOIN perfexpert_event AS e ON h.id = "
+                "e.hotspot_id WHERE h.perfexpert_id = %llu AND e.name = 'INST_RETIRED_ANY_P' "
+                "GROUP BY e.mpi_task ORDER BY e.mpi_task ASC;", globals.unique_id);
+        }
+        else {
+            sprintf(sql, "SELECT h.profile, e.thread_id, SUM(e.value) AS value FROM "
+                "perfexpert_hotspot AS h JOIN perfexpert_event AS e ON h.id = "
+                "e.hotspot_id WHERE h.perfexpert_id = %llu AND e.name = 'INST_RETIRED_ANY_P' "
+                "GROUP BY e.thread_id ORDER BY e.thread_id ASC;", globals.unique_id);
+        }
     }
 
     if (my_module_globals.measure_mod == VTUNE_MOD) {
-        sprintf(sql, "SELECT h.profile, e.thread_id, SUM(e.value) AS value FROM "
-            "perfexpert_hotspot AS h JOIN perfexpert_event AS e ON h.id = "
-            "e.hotspot_id WHERE h.perfexpert_id = %llu AND e.name = 'CPU_CLK_UNHALTED_REF_TSC' "
-            "GROUP BY e.thread_id ORDER BY e.thread_id ASC;", globals.unique_id);
+        if (isMPI) {
+            sprintf(sql, "SELECT h.profile, e.mpi_task, SUM(e.value) AS value FROM "
+                "perfexpert_hotspot AS h JOIN perfexpert_event AS e ON h.id = "
+                "e.hotspot_id WHERE h.perfexpert_id = %llu AND e.name = 'CPU_CLK_UNHALTED_REF_TSC' "
+                "GROUP BY e.mpi_task ORDER BY e.mpi_task ASC;", globals.unique_id);
+        }
+        else {
+            sprintf(sql, "SELECT h.profile, e.thread_id, SUM(e.value) AS value FROM "
+                "perfexpert_hotspot AS h JOIN perfexpert_event AS e ON h.id = "
+                "e.hotspot_id WHERE h.perfexpert_id = %llu AND e.name = 'CPU_CLK_UNHALTED_REF_TSC' "
+                "GROUP BY e.thread_id ORDER BY e.thread_id ASC;", globals.unique_id);
+        }
     }
 
     if (SQLITE_OK != sqlite3_exec(globals.db, sql, output_thread, NULL,

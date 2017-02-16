@@ -65,7 +65,7 @@ int module_analyze(void);
 
 /* Module functions */
 int parse_module_args(int argc, char *argv[]);
-int output_analysis(void);
+int output_analysis(int isMPI);
 
 #ifdef __cplusplus
 }
