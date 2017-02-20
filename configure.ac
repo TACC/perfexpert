@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
+# Copyright (c) 2011-2017  University of Texas at Austin. All rights reserved.
 #
 # $COPYRIGHT$
 #
@@ -14,7 +14,7 @@
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
 # A PARTICULAR PURPOSE.
 #
-# Authors: Leonardo Fialho and Ashay Rane
+# Authors: Antonio Gomez-Iglesias, Leonardo Fialho and Ashay Rane
 #
 # $HEADER$
 #
@@ -166,6 +166,19 @@ AC_ARG_WITH([boost-lib],
 AC_ARG_WITH([boost-include],
     [AS_HELP_STRING([--with-boost-include], [set Boost include path])],
     [CPPFLAGS+=" -I$withval"])
+
+AC_ARG_WITH([libunwind],
+    [AS_HELP_STRING([--with-libunwind], [set UNWIND library and include path])],
+    [CPPFLAGS+=" -I$withval/include"
+    LDFLAGS+=" -L$withval/lib"])
+
+AC_ARG_WITH([libunwind-lib],
+    [AS_HELP_STRING([--with-libunwind-lib], [set UNWIND library path])],
+    [LDFLAGS+=" -L$withval"])
+
+AC_ARG_WITH([libunwind-include],
+    [AS_HELP_STRING([--with-libunwind-include], [set UNWIND include path])],
+    [LDFLAGS+=" -L$withval"])
 
 AC_ARG_WITH([libdwarf],
     [AS_HELP_STRING([--with-libdwarf], [set DWARF library and include path])],
@@ -496,6 +509,14 @@ AS_IF([test x"$ENABLE_MACPO" = xyes], [
 
     AC_CHECK_LIB([gsl], [gsl_histogram_alloc, gsl_histogram_free], [],
         [AC_MSG_ERROR([not found: libgsl.so])], [-lgslcblas])
+
+    # Check for libunwind (for resolving function addresses to filenames)
+    #
+    AC_CHECK_LIB([unwind], 
+                 [backtrace],
+                 [libunwind_LIBS=-lunwind], [AC_MSG_ERROR([Couldn't find or use libunwind.])])
+
+    AC_SUBST(LIBUNWIND_LIB)
 
     # Check for libelf (for resolving function addresses to filenames)
     #

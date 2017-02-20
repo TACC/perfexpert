@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
+# Copyright (c) 2011-2017  University of Texas at Austin. All rights reserved.
 #
 # $COPYRIGHT$
 #
@@ -14,14 +14,14 @@
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
 # A PARTICULAR PURPOSE.
 #
-# Authors: Leonardo Fialho and Ashay Rane
+# Authors: Antonio Gomez-Iglesias, Leonardo Fialho and Ashay Rane
 #
 # $HEADER$
 #
 
 lib_LTLIBRARIES = libperfexpert_common.la
 libperfexpert_common_la_CPPFLAGS = -I$(srcdir)/..
-libperfexpert_common_la_LDFLAGS = -lltdl -version-info 1:0:0
+libperfexpert_common_la_LDFLAGS = -lltdl -lunwind -version-info 1:0:0
 libperfexpert_common_la_SOURCES = perfexpert_alloc.c \
 	perfexpert_backup.c \
 	perfexpert_base64.c \
@@ -33,6 +33,7 @@ libperfexpert_common_la_SOURCES = perfexpert_alloc.c \
 	perfexpert_log.c \
 	perfexpert_string.c \
 	perfexpert_time.c \
+	perfexpert_unwind.c \
 	perfexpert_util.c
 
 # Install architecture database
