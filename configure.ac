@@ -815,6 +815,31 @@ AS_IF([test x"$ENABLE_TIMB" = xyes], [
 AC_SUBST([ENABLE_TIMB])
 
 #------------------------------------------------------------------------------
+# lustre module requirements
+#
+AC_ARG_ENABLE([module-lustre],
+    [AS_HELP_STRING([--disable-module-lustre],
+        [disable LUSTRE (lustre load) analysis module])],
+    [ENABLE_LUSTRE=$enableval], [ENABLE_LUSTRE=yes])
+
+AC_MSG_CHECKING([whether to enable LUSTRE (lustre load) analysis module])
+AS_IF([test x"$ENABLE_LUSTRE" = xyes], [
+    AC_MSG_RESULT([yes])
+
+    # Math library
+    #
+    AC_CHECK_LIB([m], [rint], [], [AC_MSG_ERROR([libm.so not found])])
+
+    ENABLE_LUSTRE=lustre
+    ENABLED_MODULES+="lustre "
+    AC_CONFIG_FILES([modules/lustre/Makefile])
+], [
+    AC_MSG_RESULT([no])
+    ENABLE_LUSTRE=
+])
+AC_SUBST([ENABLE_LUSTRE])
+
+#------------------------------------------------------------------------------
 # LCPI module requirements
 #
 AC_ARG_ENABLE([module-lcpi],
