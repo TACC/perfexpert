@@ -19,16 +19,20 @@
 # $HEADER$
 #
 
-lib_LTLIBRARIES = libperfexpert_module_lustre.la
+lib_LTLIBRARIES = libperfexpert_module_lustre_wrapper.la
+libperfexpert_module_lustre_wrapper_la_CFLAGS = -I$(srcdir)/../..
+libperfexpert_module_lustre_wrapper_la_CPFLAGS = -I$(srcdir)/../..
+libperfexpert_module_lustre_wrapper_la_LDFLAGS = -module -lm \
+	-version-info 1:0:0
+libperfexpert_module_lustre_wrapper_la_SOURCES = lustre_wrapper.c
+
+
+lib_LTLIBRARIES += libperfexpert_module_lustre.la
 libperfexpert_module_lustre_la_CPPFLAGS = -I$(srcdir)/../..
 libperfexpert_module_lustre_la_LDFLAGS = -module -lsqlite3 -lm \
 	-version-info 1:0:0 -export-symbols $(srcdir)/lustre_module.sym
 libperfexpert_module_lustre_la_SOURCES = lustre_module.c \
 	lustre_output.c
 
-lib_LTLIBRARIES += libperfexpert_lustre_wrapper.la
-libperfexpert_lustre_wrapper_la_CPFLAGS = -I$(srcdir)/../..
-libperfexpert_lustre_wrapper_la_LDFLAGS = -module -lsqlite3 -lm \
-	-version-info 1:0:0
-libperfexpert_lustre_wrapper_la_SOURCES = lustre_wrapper.c
-# EOF
+
+#EOF

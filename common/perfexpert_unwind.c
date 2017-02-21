@@ -28,13 +28,13 @@ extern "C" {
 #include <stdio.h>
 #include "common/perfexpert_constants.h" 
 
-int perfexpert_unwind_get_file_line (unw_word_t addr, char *file, size_t len, int *line, char *code) {
+int perfexpert_unwind_get_file_line (unw_word_t addr, char *file, size_t len, int *line, char *executable) {
     static char buf[256];
     char *p; 
 
     // prepare command to be executed
     // our program need to be passed after the -e parameter
-    sprintf (buf, "/usr/bin/addr2line -C -e %s -f -i %lx", code, addr);
+    sprintf (buf, "/usr/bin/addr2line -C -e %s -f -i %lx", executable, addr);
     FILE* f = popen (buf, "r");
 
     if (f == NULL)
@@ -72,7 +72,7 @@ int perfexpert_unwind_get_file_line (unw_word_t addr, char *file, size_t len, in
 }
 
 // Call this function to get a backtrace.
-void capture_backtrace() { 
+void capture_backtrace(char *executable) { 
     char name[256];
     unw_cursor_t cursor; unw_context_t uc; 
     unw_word_t ip, sp, offp;
@@ -90,7 +90,7 @@ void capture_backtrace() {
         unw_get_reg(&cursor, UNW_REG_IP, &ip);
         unw_get_reg(&cursor, UNW_REG_SP, &sp);
 
-        perfexpert_unwind_get_file_line ((long)ip, file, 256, &line, "a.out");//globals.program);
+        perfexpert_unwind_get_file_line ((long)ip, file, 256, &line, executable);
         printf("%s in file %s line %d\n", name, file, line);
     }   
 }
