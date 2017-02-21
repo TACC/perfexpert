@@ -30,6 +30,7 @@ extern "C" {
 
 /* Function declarations */
 int perfexpert_unwind_get_file_line (unw_word_t addr, char *file, size_t len, int *line, char *code);
+void capture_backtrace();
 
 #ifdef __cplusplus
 }

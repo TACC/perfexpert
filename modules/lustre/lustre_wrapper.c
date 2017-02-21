@@ -19,45 +19,63 @@
  * $HEADER$
  */
 
-#ifndef PREFEXPERT_MODULE_LUSTRE_LIB_H_
-#define PREFEXPERT_MODULE_LUSTRE_LIB_H_
+#ifndef PREFEXPERT_MODULE_LUSTRE_WRAPPER_H_
+#define PREFEXPERT_MODULE_LUSTRE_WRAPPER_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #define _GNU_SOURCE
+#include <stddef.h>
+#include <stdlib.h>
 #include <dlfcn.h>
 #include <stdio.h>
-#include <execinfo.h>
+
+//#include <execinfo.h>
 #include <signal.h>
-#include <stdlib.h>
 #include <unistd.h>
 
-#define TRACE_MSG fprintf(stderr, "TRACE at: %s() [%s:%d]\n", \
-                        __FUNCTION__, __FILE__, __LINE__)
+#include "perfexpert_unwind.h"
+
+
+//#define UNW_LOCAL_ONLY
+//#include <libunwind.h>
 
 static ssize_t (*real_write)(int fd, const void *buf, size_t count) = NULL;
-static size_t (*real_fwrite)(const void *ptr, size_t size, size_t n, FILE *s) = NULL;
+static ssize_t (*real_fwrite)(const void *ptr, size_t size, size_t n, FILE *s) = NULL;
 static ssize_t (*real_read)(int fd, void *buf, size_t count) = NULL;
-static size_t (*real_fread)(void * ptr, size_t size, size_t n, FILE* s) = NULL;
+static ssize_t (*real_fread)(void * ptr, size_t size, size_t n, FILE* s) = NULL;
 static int (*real_open)(const char *path, int oflag, ... ) = NULL;
 static FILE* (*real_fopen)(const char *path, const char *mode) = NULL;
 static int (*real_close)(int fd);
 static int (*real_fclose)(FILE *stream) = NULL;
+/*  
+// Call this function to get a backtrace.
+void capture_backtrace() { 
+    char name[256];
+    unw_cursor_t cursor; unw_context_t uc; 
+    unw_word_t ip, sp, offp;
 
-void handler(int sig) {
-  void *array[10];
-  size_t size;
+    unw_getcontext(&uc);
+    unw_init_local(&cursor, &uc);
 
-  // get void*'s for all entries on the stack
-  size = backtrace(array, 10);
+    while (unw_step(&cursor) > 0)
+    {   
+        char file[256];
+        int line = 0;
 
-  // print out all the frames to stderr
-  fprintf(stderr, "Error: signal %d:\n", sig);
-  backtrace_symbols_fd(array, size, STDERR_FILENO);
-  exit(1);
+        name[0] = '\0';
+        unw_get_proc_name(&cursor, name, 256, &offp);
+        unw_get_reg(&cursor, UNW_REG_IP, &ip);
+        unw_get_reg(&cursor, UNW_REG_SP, &sp);
+
+        perfexpert_unwind_get_file_line ((long)ip, file, 256, &line, "a.out");//globals.program);
+        getFileAndLine((long)ip, file, 256, &line);
+        printf("%s in file %s line %d\n", name, file, line);
+    }   
 }
+*/
 
 int open(const char *path, int oflag, ... ) { 
     va_list argp;
@@ -75,19 +93,19 @@ FILE* fopen(const char *path, const char *mode) {
 
 ssize_t write(int fd, const void *buf, size_t count) {
     printf ("Writing %lu\n", count);
-    TRACE_MSG;
+    capture_backtrace();
     real_write=dlsym(RTLD_NEXT, "write");
     return real_write(fd,buf,count);
 }
 
 size_t fwrite(const void * ptr, size_t size, size_t n, FILE * s) {
+    capture_backtrace();
     real_fwrite=dlsym(RTLD_NEXT, "fwrite");
     return real_fwrite(ptr, size, n, s);
 }
 
 ssize_t read(int fd, void *buf, size_t count) {
     printf ("Reading %lu\n", count);
-    TRACE_MSG;
     real_read=dlsym(RTLD_NEXT, "read");
     return real_read(fd,buf,count);
 }
@@ -100,7 +118,6 @@ size_t fread(void *ptr, size_t size, size_t n, FILE * s) {
 
 int close(int fd) {
     printf ("Closing\n");
-    TRACE_MSG;
     real_close=dlsym(RTLD_NEXT, "close");
     return real_close(fd);
 }
@@ -114,4 +131,4 @@ int fclose(FILE *stream) {
 }
 #endif
 
-#endif /* PREFEXPERT_MODULE_LUSTRE_LIB_H_ */
+#endif /* PREFEXPERT_MODULE_LUSTRE_WRAPPER_H_ */

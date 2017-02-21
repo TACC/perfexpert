@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
+# Copyright (c) 2011-2017  University of Texas at Austin. All rights reserved.
 #
 # $COPYRIGHT$
 #
@@ -14,7 +14,7 @@
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
 # A PARTICULAR PURPOSE.
 #
-# Authors: Leonardo Fialho and Ashay Rane
+# Authors: Antonio Gomez-Iglesias, Leonardo Fialho and Ashay Rane
 #
 # $HEADER$
 #
@@ -31,6 +31,7 @@ SUBDIRS += $(ENABLE_GPP)
 SUBDIRS += $(ENABLE_ICC)
 SUBDIRS += $(ENABLE_SQLRULES)
 SUBDIRS += $(ENABLE_MACVEC)
+SUBDIRS += $(ENABLE_LUSTRE)
 
 lib_LTLIBRARIES = libperfexpert_module_base.la
 libperfexpert_module_base_la_SOURCES = perfexpert_module_base.c

@@ -71,6 +71,30 @@ int perfexpert_unwind_get_file_line (unw_word_t addr, char *file, size_t len, in
     return PERFEXPERT_SUCCESS;
 }
 
+// Call this function to get a backtrace.
+void capture_backtrace() { 
+    char name[256];
+    unw_cursor_t cursor; unw_context_t uc; 
+    unw_word_t ip, sp, offp;
+
+    unw_getcontext(&uc);
+    unw_init_local(&cursor, &uc);
+
+    while (unw_step(&cursor) > 0)
+    {   
+        char file[256];
+        int line = 0;
+
+        name[0] = '\0';
+        unw_get_proc_name(&cursor, name, 256, &offp);
+        unw_get_reg(&cursor, UNW_REG_IP, &ip);
+        unw_get_reg(&cursor, UNW_REG_SP, &sp);
+
+        perfexpert_unwind_get_file_line ((long)ip, file, 256, &line, "a.out");//globals.program);
+        printf("%s in file %s line %d\n", name, file, line);
+    }   
+}
+
 #ifdef __cplusplus
 }
 #endif
