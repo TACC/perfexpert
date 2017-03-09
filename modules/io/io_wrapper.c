@@ -19,8 +19,8 @@
  * $HEADER$
  */
 
-#ifndef PREFEXPERT_MODULE_LUSTRE_WRAPPER_H_
-#define PREFEXPERT_MODULE_LUSTRE_WRAPPER_H_
+#ifndef PREFEXPERT_MODULE_IO_WRAPPER_H_
+#define PREFEXPERT_MODULE_IO_WRAPPER_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -211,4 +211,4 @@ size_t fread(void *ptr, size_t size, size_t n, FILE * s) {
 }
 #endif
 
-#endif /* PREFEXPERT_MODULE_LUSTRE_WRAPPER_H_ */
+#endif /* PREFEXPERT_MODULE_IO_WRAPPER_H_ */

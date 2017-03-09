@@ -31,7 +31,7 @@ SUBDIRS += $(ENABLE_GPP)
 SUBDIRS += $(ENABLE_ICC)
 SUBDIRS += $(ENABLE_SQLRULES)
 SUBDIRS += $(ENABLE_MACVEC)
-SUBDIRS += $(ENABLE_LUSTRE)
+SUBDIRS += $(ENABLE_IO)
 
 lib_LTLIBRARIES = libperfexpert_module_base.la
 libperfexpert_module_base_la_SOURCES = perfexpert_module_base.c

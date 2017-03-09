@@ -836,29 +836,29 @@ AS_IF([test x"$ENABLE_TIMB" = xyes], [
 AC_SUBST([ENABLE_TIMB])
 
 #------------------------------------------------------------------------------
-# lustre module requirements
+# io module requirements
 #
-AC_ARG_ENABLE([module-lustre],
-    [AS_HELP_STRING([--disable-module-lustre],
-        [disable LUSTRE (lustre load) analysis module])],
-    [ENABLE_LUSTRE=$enableval], [ENABLE_LUSTRE=yes])
+AC_ARG_ENABLE([module-io],
+    [AS_HELP_STRING([--disable-module-io],
+        [disable IO analysis module])],
+    [ENABLE_IO=$enableval], [ENABLE_IO=yes])
 
-AC_MSG_CHECKING([whether to enable LUSTRE (lustre load) analysis module])
-AS_IF([test x"$ENABLE_LUSTRE" = xyes], [
+AC_MSG_CHECKING([whether to enable IO analysis module])
+AS_IF([test x"$ENABLE_IO" = xyes], [
     AC_MSG_RESULT([yes])
 
     # Math library
     #
     AC_CHECK_LIB([m], [rint], [], [AC_MSG_ERROR([libm.so not found])])
 
-    ENABLE_LUSTRE=lustre
-    ENABLED_MODULES+="lustre "
-    AC_CONFIG_FILES([modules/lustre/Makefile])
+    ENABLE_IO=io
+    ENABLED_MODULES+="io "
+    AC_CONFIG_FILES([modules/io/Makefile])
 ], [
     AC_MSG_RESULT([no])
-    ENABLE_LUSTRE=
+    ENABLE_IO=
 ])
-AC_SUBST([ENABLE_LUSTRE])
+AC_SUBST([ENABLE_IO])
 
 #------------------------------------------------------------------------------
 # LCPI module requirements

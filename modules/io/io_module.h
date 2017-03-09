@@ -19,8 +19,8 @@
  * $HEADER$
  */
 
-#ifndef PREFEXPERT_MODULE_LUSTRE_MODULE_H_
-#define PREFEXPERT_MODULE_LUSTRE_MODULE_H_
+#ifndef PREFEXPERT_MODULE_IO_MODULE_H_
+#define PREFEXPERT_MODULE_IO_MODULE_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -30,11 +30,11 @@ extern "C" {
 #include "modules/perfexpert_module_base.h"
 
 /* Thread Imbalance module interface */
-typedef perfexpert_module_t perfexpert_module_lustre_1_0_0_t;
-typedef perfexpert_module_lustre_1_0_0_t perfexpert_module_lustre_t;
+typedef perfexpert_module_t perfexpert_module_io_1_0_0_t;
+typedef perfexpert_module_io_1_0_0_t perfexpert_module_io_t;
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* PREFEXPERT_MODULE_LUSTRE_MODULE_H_ */
+#endif /* PREFEXPERT_MODULE_IO_MODULE_H_ */

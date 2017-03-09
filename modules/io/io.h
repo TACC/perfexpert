@@ -19,8 +19,8 @@
  * $HEADER$
  */
 
-#ifndef PERFEXPERT_MODULE_LUSTRE_H_
-#define PERFEXPERT_MODULE_LUSTRE_H_
+#ifndef PERFEXPERT_MODULE_IO_H_
+#define PERFEXPERT_MODULE_IO_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -32,7 +32,7 @@ extern "C" {
 #ifdef PROGRAM_PREFIX
 #undef PROGRAM_PREFIX
 #endif
-#define PROGRAM_PREFIX "[perfexpert_module_lustre]"
+#define PROGRAM_PREFIX "[perfexpert_module_io]"
 
 /* Module types */
 typedef struct {
@@ -59,4 +59,4 @@ int output_analysis();
 }
 #endif
 
-#endif /* PERFEXPERT_MODULE_LUSTRE_H_ */
+#endif /* PERFEXPERT_MODULE_IO_H_ */

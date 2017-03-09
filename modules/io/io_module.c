@@ -27,15 +27,15 @@ extern "C" {
 #include <float.h>
 
 /* Module headers */
-#include "lustre_module.h"
-#include "lustre.h"
+#include "io_module.h"
+#include "io.h"
 
 /* PerfExpert common headers */
 #include "common/perfexpert_constants.h"
 #include "common/perfexpert_output.h"
 
 /* Global variable to define the module itself */
-perfexpert_module_lustre_t myself_module;
+perfexpert_module_io_t myself_module;
 my_module_globals_t my_module_globals;
 char module_version[] = "1.0.0";
 
