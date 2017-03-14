@@ -32,12 +32,21 @@ extern "C" {
 #include <dlfcn.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <string.h>
+
+
+#include <fcntl.h>
+
 
 #include <signal.h>
 #include <unistd.h>
 
 #define UNW_LOCAL_ONLY
 #include <libunwind.h>
+
+#define FOPEN 1
+#define FREAD 2
+#define FWRITE 3
 
 //#include "common/perfexpert_unwind.h"
 //#include "common/perfexpert_output.h"
@@ -56,30 +65,54 @@ static int (*real_fclose)(FILE *stream) = NULL;
 
 int perfexpert_unwind_get_file_line (unw_word_t addr, char *file, size_t len, int *line, char *executable) {
     static char buf[256];
+    char out[256] = {0};
     char *p; 
 
+    if (executable == NULL)
+        return -1;
     // prepare command to be executed
     // our program need to be passed after the -e parameter
     sprintf (buf, "/usr/bin/addr2line -C -e %s -f -i %lx", executable, addr);
+    //sprintf (buf, "/usr/bin/addr2line -C -e ./example -f -i %lx", addr);
     printf ("Running this command: %s\n", buf);
-    return 1;
+    //return 1;
+
     FILE* f = popen (buf, "r");
+    int flags;
+    int fd = fileno(f);
+    flags = fcntl (fd, F_GETFL, 0);
+    flags |= O_NONBLOCK;
+    fcntl (fd, F_SETFL, flags);
 
     if (f == NULL)
-    {   
-        perror (buf);
+    {  
+        printf ("f is NULL!! \n"); 
+        perror (out);
         return 0;
     }   
 
+    printf ("f was correct\n");
+    while (fgets(out, 256, f) != NULL) {
+        printf ("Buffer: %s\n", out);
+    }
+    printf ("Out of the loop\n");
+//    printf ("Bye\n");
     // get function name
-    fgets (buf, 256, f); 
+   // fgets (out, 256, f); 
 
+   // printf ("Buffer: %s\n", out);
+    pclose(f);
+    printf ("Bye\n");
+    return 0;
     // get file and line
-    fgets (buf, 256, f); 
+    fgets (out, 256, f); 
+    printf ("Buffer: %s\n", out);
+    printf ("Length: %d\n", strlen(out));
 
-    if (buf[0] != '?') {   
+    if (out[0] != '?') {
         int l;
-        char *p = buf;
+        int i = 0;
+        char *p = out;
 
         // file name is until ':'
         while (*p != ':') {   
@@ -88,7 +121,7 @@ int perfexpert_unwind_get_file_line (unw_word_t addr, char *file, size_t len, in
 
         *p++ = 0;
         // after file name follows line number
-        strcpy (file , buf);
+        strcpy (file , out);
         sscanf (p,"%d", line);
     }
     else {
@@ -100,7 +133,8 @@ int perfexpert_unwind_get_file_line (unw_word_t addr, char *file, size_t len, in
 }
 
 // Call this function to get a backtrace.
-void capture_backtrace(char *executable) {
+void capture_backtrace(char *executable, int function) {
+    printf ("ENTERING BACKTRACE\n");
     char name[256];
     unw_cursor_t cursor; unw_context_t uc;
     unw_word_t ip, sp, offp;
@@ -115,15 +149,29 @@ void capture_backtrace(char *executable) {
 
         name[0] = '\0';
         unw_get_proc_name(&cursor, name, 256, &offp);
+        printf ("Function name: %s\n", name);
         unw_get_reg(&cursor, UNW_REG_IP, &ip);
         unw_get_reg(&cursor, UNW_REG_SP, &sp);
 
         perfexpert_unwind_get_file_line ((long)ip, file, 256, &line, executable);
-        printf("%s in file %s line %d\n", name, file, line);
+/*  
+        //if (line==0)
+        //    break;
+        //if (strlen(file)<2)
+        //    break;
+
+        if (function ==FOPEN)
+            printf("[fopen] %s in file %s line %d\n", name, file, line);
+        if (function ==FREAD)
+            printf("[fread] %s in file %s line %d\n", name, file, line);
+        if (function ==FWRITE)
+            printf("[fwrite] %s in file %s line %d\n", name, file, line);
+*/
     }
+    printf ("DONE WITH BACKTRACE\n");
 }
 
-
+/*
 void init() __attribute__ ((constructor));
 void init() {
     program = getenv("PERFEXPERT_PROGRAM");
@@ -133,9 +181,10 @@ void init() {
         return;
     }
     else {
-        printf ("The program that is going to run is %s\n", program);
+//        printf ("The program that is going to run is %s\n", program);
     }
 }
+*/
 
 /*  int open(const char *path, int oflag, ... ) { 
     va_list argp;
@@ -147,15 +196,16 @@ void init() {
 }
 */
 
-  FILE* fopen(const char *path, const char *mode) {
+/*    FILE* fopen(const char *path, const char *mode) {
     program = getenv("PERFEXPERT_PROGRAM");
     printf ("fopen: %s\n", program);
-    capture_backtrace (program);
+    capture_backtrace (program, FOPEN);
     printf ("That was the backtrace\n");
     real_fopen=dlsym(RTLD_NEXT, "fopen");
     printf ("Bye fopen\n");
     return real_fopen(path, mode);
 }
+*/
 
 
 /*  ssize_t write(int fd, const void *buf, size_t count) {
@@ -167,10 +217,12 @@ void init() {
 */
 
 size_t fwrite(const void * ptr, size_t size, size_t n, FILE * s) {
-//    program = getenv("PERFEXPERT_PROGRAM");
-    printf ("fwrite\n");
-    capture_backtrace(program);
+    program = getenv("PERFEXPERT_PROGRAM");
+    printf ("MY FWRITE\n");
+    capture_backtrace(program, FWRITE);
+    printf ("before system fwrite\n");
     real_fwrite=dlsym(RTLD_NEXT, "fwrite");
+    printf ("after system fwrite\n");
     return real_fwrite(ptr, size, n, s);
 }
 
@@ -183,9 +235,9 @@ size_t fwrite(const void * ptr, size_t size, size_t n, FILE * s) {
 */
 
 size_t fread(void *ptr, size_t size, size_t n, FILE * s) {
- //   program = getenv("PERFEXPERT_PROGRAM");
+    program = getenv("PERFEXPERT_PROGRAM");
     printf ("fread\n");
-    capture_backtrace (program);
+    capture_backtrace (program, FREAD);
     real_fread=dlsym(RTLD_NEXT, "fread");
     return real_fread(ptr, size, n, s);
 }
