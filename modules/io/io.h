@@ -26,6 +26,12 @@
 extern "C" {
 #endif
 
+#define FOPEN 0
+#define FCLOSE 1
+#define FWRITE 2
+#define FREAD 3
+#define MAX_FUNCTIONS 4
+
 /* Tools headers */
 #include "tools/perfexpert/perfexpert_types.h"
 
@@ -34,12 +40,35 @@ extern "C" {
 #endif
 #define PROGRAM_PREFIX "[perfexpert_module_io]"
 
+typedef struct {
+    char function_name [256]; //Function that originates an IO request
+    long address;  //Address where that IO requests happens
+    unsigned long count; //Number of times the request has been issued
+} code_function_t;
+
+extern code_function_t code_function;
+
+typedef struct {
+    code_function_t *code;
+    int size; // Total number of functions with IO requests for this specific function
+} io_function_t;
+
+extern io_function_t io_function;
+
+
+//typedef struct {
+//    io_function_t functions[4];
+//} io_data_t;
+
+//extern io_data_t io_data;
+
 /* Module types */
 typedef struct {
     double total;
     double maximum;
     double minimum;
     int threads;
+    io_function_t data[MAX_FUNCTIONS];
 } my_module_globals_t;
 
 extern my_module_globals_t my_module_globals;

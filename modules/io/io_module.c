@@ -33,6 +33,7 @@ extern "C" {
 /* PerfExpert common headers */
 #include "common/perfexpert_constants.h"
 #include "common/perfexpert_output.h"
+#include "common/perfexpert_alloc.h"
 
 /* Global variable to define the module itself */
 perfexpert_module_io_t myself_module;
@@ -54,6 +55,9 @@ int module_init(void) {
     my_module_globals.maximum = DBL_MIN;
     my_module_globals.minimum = DBL_MAX;
     my_module_globals.threads = 0;
+    for (int i=0; i<MAX_FUNCTIONS; ++i) {
+        my_module_globals.data[i].size=0;
+    }
 
     OUTPUT_VERBOSE((5, "%s", _MAGENTA("initialized")));
 
@@ -64,6 +68,9 @@ int module_init(void) {
 int module_fini(void) {
     OUTPUT_VERBOSE((5, "%s", _MAGENTA("finalized")));
 
+    for (int i =0; i < MAX_FUNCTIONS; ++i) {
+        PERFEXPERT_DEALLOC(my_module_globals.data[i].code);
+    }
     return PERFEXPERT_SUCCESS;
 }
 

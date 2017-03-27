@@ -34,6 +34,9 @@ extern "C" {
 #include <stdarg.h>
 #include <string.h>
 
+#include <pty.h>
+#include <sys/types.h>
+#include <signal.h>
 
 #include <fcntl.h>
 
@@ -44,10 +47,7 @@ extern "C" {
 #define UNW_LOCAL_ONLY
 #include <libunwind.h>
 
-#define FOPEN 1
-#define FREAD 2
-#define FWRITE 3
-
+#include "io.h"
 //#include "common/perfexpert_unwind.h"
 //#include "common/perfexpert_output.h"
 //#include "common/perfexpert_fake_globals.h"
@@ -64,26 +64,61 @@ static int (*real_close)(int fd);
 static int (*real_fclose)(FILE *stream) = NULL;
 
 int perfexpert_unwind_get_file_line (unw_word_t addr, char *file, size_t len, int *line, char *executable) {
-    static char buf[256];
-    char out[256] = {0};
+    char buf[256];
     char *p; 
 
     if (executable == NULL)
         return -1;
     // prepare command to be executed
     // our program need to be passed after the -e parameter
-    sprintf (buf, "/usr/bin/addr2line -C -e %s -f -i %lx", executable, addr);
+//    snprintf (buf, 256, "/usr/bin/addr2line -C -e %s -f -i %lx", executable, addr);
+    //snprintf (buf, 256, "/usr/bin/ls");
     //sprintf (buf, "/usr/bin/addr2line -C -e ./example -f -i %lx", addr);
-    printf ("Running this command: %s\n", buf);
+ //   printf ("Running this command: %s\n", buf);
     //return 1;
 
-    FILE* f = popen (buf, "r");
-    int flags;
-    int fd = fileno(f);
-    flags = fcntl (fd, F_GETFL, 0);
-    flags |= O_NONBLOCK;
-    fcntl (fd, F_SETFL, flags);
+    //FILE* f = popen (buf, "r");
+    pid_t pid;
+    fflush(stdout);
+    switch(forkpty(&pid, NULL, NULL, NULL)) {
+        case -1:
+            perror ("Error while forkpty");
+            exit (-1);
+        case 0:
+  //          execl ("/usr/bin/addr2line", "addr2line", "-C", "-e", executable, "-f", "-i" , addr, NULL);
+            execl ("/usr/bin/ls", "ls", NULL);
+            exit(0);
+        default: {
+  //          while (1) {
+                int ret;
+                char out[256] = {0};
+                if ((ret = read(pid, out, 255)) < 0) {
+           //         perror ("Reading from child process");
+                    break;
+                    //exit(-1);
+                }
+                out[ret]='\0';
+                printf ("Buffer1: %s\n", out);
+                if ((ret = read(pid, out, 255)) < 0) {
+           //         perror ("Reading from child process");
+                    break;
+                    //exit(-1);
+                }
+                out[ret]='\0';
+                printf ("Buffer2: %s\n", out);
+            }
+//                 }
+    }
+    printf ("pid is %d\n", pid);
+    kill (pid, SIGKILL);
+    printf ("Bye\n");
+//    int flags;
+//    int fd = fileno(f);
+//    flags = fcntl (fd, F_GETFL, 0);
+//    flags |= O_NONBLOCK;
+//    fcntl (fd, F_SETFL, flags);
 
+    /*  
     if (f == NULL)
     {  
         printf ("f is NULL!! \n"); 
@@ -128,8 +163,29 @@ int perfexpert_unwind_get_file_line (unw_word_t addr, char *file, size_t len, in
         strcpy (file,"unkown");
         *line = 0;
     }
-    pclose(f);
+    */
+//    pclose(f);
     return 1;
+}
+
+void add_function_to_data(char * function_name, long address, int function) {
+    int found = 0;
+    for (int i=0; i<my_module_globals.data[function].size; ++i) {
+        if ((strcmp (my_module_globals.data[function].code[i].function_name, function_name)==0) && 
+                    (my_module_globals.data[function].code[i].address==address)) {
+            found = 1;
+            my_module_globals.data[function].code[i].count++;
+            break;
+        }
+    }
+    if (!found) {
+        PERFEXPERT_REALLOC(io_function, my_module_globals.data[function].code, (my_module_globals.data[function].size+1)*sizeof(code_function_t));
+        strcpy (my_module_globals.data[function].code[my_module_globals.data[function].size].function_name, function_name);
+        my_module_globals.data[function].code[my_module_globals.data[function].size].address = address;
+        my_module_globals.data[function].code[my_module_globals.data[function].size].count=1;
+        my_module_globals.data[function].size++;
+
+    }
 }
 
 // Call this function to get a backtrace.
@@ -142,18 +198,35 @@ void capture_backtrace(char *executable, int function) {
     unw_getcontext(&uc);
     unw_init_local(&cursor, &uc);
 
+    int level=0;
     while (unw_step(&cursor) > 0)
     {
-        char file[256];
-        int line = 0;
+        if (level==0) {
+            level++;
+            continue;
+        }
+        if (level>1) {
+            break;
+        }
+        if (level==1) {
+            char file[256];
+            int line = 0;
 
-        name[0] = '\0';
-        unw_get_proc_name(&cursor, name, 256, &offp);
-        printf ("Function name: %s\n", name);
-        unw_get_reg(&cursor, UNW_REG_IP, &ip);
-        unw_get_reg(&cursor, UNW_REG_SP, &sp);
+            name[0] = '\0';
+            unw_get_proc_name(&cursor, name, 256, &offp);
+            printf ("Function name: %s\n", name);
+            unw_get_reg(&cursor, UNW_REG_IP, &ip);
+            unw_get_reg(&cursor, UNW_REG_SP, &sp);
+            
+            add_function_to_data (name, (long)ip, function);
+//            strcpy (my_module_globals.data[function].code[0].function_name, name);
+//            my_module_globals.data[function].code[0].address=(long) ip;
+            //perfexpert_unwind_get_file_line ((long)ip, file, 256, &line, executable);
 
-        perfexpert_unwind_get_file_line ((long)ip, file, 256, &line, executable);
+            level++;
+        }
+        printf ("Done with perfexpert_unwind_get_file_line\n");
+
 /*  
         //if (line==0)
         //    break;

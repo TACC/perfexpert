@@ -22,7 +22,7 @@
 lib_LTLIBRARIES = libperfexpert_module_io_wrapper.la
 libperfexpert_module_io_wrapper_la_CFLAGS = -I$(srcdir)/../..
 libperfexpert_module_io_wrapper_la_CPFLAGS = -I$(srcdir)/../..
-libperfexpert_module_io_wrapper_la_LDFLAGS = -module -lm -lunwind -ldl \
+libperfexpert_module_io_wrapper_la_LDFLAGS = -module -lm -lunwind -ldl -lutil\
 	-version-info 1:0:0
 libperfexpert_module_io_wrapper_la_SOURCES = io_wrapper.c
 
