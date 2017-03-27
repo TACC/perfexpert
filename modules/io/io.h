@@ -46,14 +46,15 @@ typedef struct {
     unsigned long count; //Number of times the request has been issued
 } code_function_t;
 
-extern code_function_t code_function;
+//extern code_function_t code_function;
+
 
 typedef struct {
     code_function_t *code;
     int size; // Total number of functions with IO requests for this specific function
 } io_function_t;
 
-extern io_function_t io_function;
+//extern io_function_t io_function;
 
 
 //typedef struct {

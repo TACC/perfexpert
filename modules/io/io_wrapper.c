@@ -63,6 +63,8 @@ static FILE* (*real_fopen)(const char *path, const char *mode) = NULL;
 static int (*real_close)(int fd);
 static int (*real_fclose)(FILE *stream) = NULL;
 
+my_module_globals_t my_module_globals; //OJO
+
 int perfexpert_unwind_get_file_line (unw_word_t addr, char *file, size_t len, int *line, char *executable) {
     char buf[256];
     char *p; 
@@ -171,26 +173,28 @@ int perfexpert_unwind_get_file_line (unw_word_t addr, char *file, size_t len, in
 void add_function_to_data(char * function_name, long address, int function) {
     int found = 0;
     for (int i=0; i<my_module_globals.data[function].size; ++i) {
-        if ((strcmp (my_module_globals.data[function].code[i].function_name, function_name)==0) && 
-                    (my_module_globals.data[function].code[i].address==address)) {
-            found = 1;
-            my_module_globals.data[function].code[i].count++;
-            break;
-        }
+      if ((strcmp (my_module_globals.data[function].code[i].function_name, function_name)==0) && 
+                  (my_module_globals.data[function].code[i].address==address)) {
+        found = 1;
+        printf ("Function and address founds [%d]\n", function);
+        my_module_globals.data[function].code[i].count++;
+        break;
+      }
     }
-    if (!found) {
-        PERFEXPERT_REALLOC(io_function, my_module_globals.data[function].code, (my_module_globals.data[function].size+1)*sizeof(code_function_t));
+    if (found==0) {
+        printf ("not found, adding new [%d]\n", function);
+        //PERFEXPERT_REALLOC((code_function_t), my_module_globals.data[function].code, (my_module_globals.data[function].size+1)*sizeof(code_function_t));
+        my_module_globals.data[function].code = (code_function_t *) realloc (my_module_globals.data[function].code, (my_module_globals.data[function].size+1)*sizeof(code_function_t));
         strcpy (my_module_globals.data[function].code[my_module_globals.data[function].size].function_name, function_name);
         my_module_globals.data[function].code[my_module_globals.data[function].size].address = address;
         my_module_globals.data[function].code[my_module_globals.data[function].size].count=1;
         my_module_globals.data[function].size++;
-
     }
 }
 
 // Call this function to get a backtrace.
 void capture_backtrace(char *executable, int function) {
-    printf ("ENTERING BACKTRACE\n");
+  //  printf ("ENTERING BACKTRACE\n");
     char name[256];
     unw_cursor_t cursor; unw_context_t uc;
     unw_word_t ip, sp, offp;
@@ -214,18 +218,16 @@ void capture_backtrace(char *executable, int function) {
 
             name[0] = '\0';
             unw_get_proc_name(&cursor, name, 256, &offp);
-            printf ("Function name: %s\n", name);
+//            printf ("Function name: %s\n", name);
             unw_get_reg(&cursor, UNW_REG_IP, &ip);
             unw_get_reg(&cursor, UNW_REG_SP, &sp);
             
+            printf ("Adding function %s and address %lu\n", name, (long) ip);
             add_function_to_data (name, (long)ip, function);
-//            strcpy (my_module_globals.data[function].code[0].function_name, name);
-//            my_module_globals.data[function].code[0].address=(long) ip;
             //perfexpert_unwind_get_file_line ((long)ip, file, 256, &line, executable);
 
             level++;
         }
-        printf ("Done with perfexpert_unwind_get_file_line\n");
 
 /*  
         //if (line==0)
@@ -269,16 +271,13 @@ void init() {
 }
 */
 
-/*    FILE* fopen(const char *path, const char *mode) {
+FILE* fopen(const char *path, const char *mode) {
     program = getenv("PERFEXPERT_PROGRAM");
-    printf ("fopen: %s\n", program);
     capture_backtrace (program, FOPEN);
-    printf ("That was the backtrace\n");
     real_fopen=dlsym(RTLD_NEXT, "fopen");
-    printf ("Bye fopen\n");
     return real_fopen(path, mode);
 }
-*/
+
 
 
 /*  ssize_t write(int fd, const void *buf, size_t count) {
@@ -291,11 +290,8 @@ void init() {
 
 size_t fwrite(const void * ptr, size_t size, size_t n, FILE * s) {
     program = getenv("PERFEXPERT_PROGRAM");
-    printf ("MY FWRITE\n");
     capture_backtrace(program, FWRITE);
-    printf ("before system fwrite\n");
     real_fwrite=dlsym(RTLD_NEXT, "fwrite");
-    printf ("after system fwrite\n");
     return real_fwrite(ptr, size, n, s);
 }
 
@@ -309,7 +305,6 @@ size_t fwrite(const void * ptr, size_t size, size_t n, FILE * s) {
 
 size_t fread(void *ptr, size_t size, size_t n, FILE * s) {
     program = getenv("PERFEXPERT_PROGRAM");
-    printf ("fread\n");
     capture_backtrace (program, FREAD);
     real_fread=dlsym(RTLD_NEXT, "fread");
     return real_fread(ptr, size, n, s);
@@ -323,14 +318,13 @@ size_t fread(void *ptr, size_t size, size_t n, FILE * s) {
 }
 */
 
-/*int fclose(FILE *stream) {
+int fclose(FILE *stream) {
     program = getenv("PERFEXPERT_PROGRAM");
-    printf ("fclose\n");
-    capture_backtrace (program);
+    capture_backtrace (program, FCLOSE);
     real_fclose=dlsym(RTLD_NEXT, "fclose");
     return real_fclose(stream);
 }
-*/
+
 
 #ifdef __cplusplus
 }
