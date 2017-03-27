@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013  University of Texas at Austin. All rights reserved.
+ * Copyright (c) 2011-2017  University of Texas at Austin. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -14,7 +14,7 @@
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
  *
- * Authors: Leonardo Fialho and Ashay Rane
+ * Authors: Antonio Gomez-Iglesias, Leonardo Fialho and Ashay Rane
  *
  * $HEADER$
  */
@@ -40,6 +40,15 @@ extern "C" {
         exit(PERFEXPERT_ERROR);                                      \
     }                                                                \
     perfexpert_alloc_add(ptr, size);                                 \
+    bzero(ptr, size)
+
+#define PERFEXPERT_REALLOC(type, ptr, size)                            \
+    ptr = (type *)realloc(ptr, size);                                  \
+    if (NULL == ptr) {                                                 \
+        OUTPUT(("%s", _ERROR((char *)"unable to reallocate memory"))); \
+        exit(PERFEXPERT_ERROR);                                        \
+    }                                                                  \
+    perfexpert_alloc_add(ptr, size);                                   \
     bzero(ptr, size)
 
 #define PERFEXPERT_DEALLOC(ptr)    \
