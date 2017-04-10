@@ -48,9 +48,6 @@ extern "C" {
 #include <libunwind.h>
 
 #include "io.h"
-//#include "common/perfexpert_unwind.h"
-//#include "common/perfexpert_output.h"
-//#include "common/perfexpert_fake_globals.h"
 
 char *program;
 
@@ -58,16 +55,20 @@ static ssize_t (*real_write)(int fd, const void *buf, size_t count) = NULL;
 static ssize_t (*real_fwrite)(const void *ptr, size_t size, size_t n, FILE *s) = NULL;
 static ssize_t (*real_read)(int fd, void *buf, size_t count) = NULL;
 static ssize_t (*real_fread)(void * ptr, size_t size, size_t n, FILE* s) = NULL;
-static int (*real_open)(const char *path, int oflag, ... ) = NULL;
+static int (*real_fprintf)( FILE * __restrict stream, const char * __restrict format, ... ) = NULL;
+static int (*real_fscanf)( FILE * stream, const char * format, ... ) = NULL;
+static int (*real_fputs)( const char * str, FILE * stream ) = NULL;
+char * (*real_fgets)( char * str, int num, FILE * stream ) = NULL;
 static FILE* (*real_fopen)(const char *path, const char *mode) = NULL;
-static int (*real_close)(int fd);
 static int (*real_fclose)(FILE *stream) = NULL;
 
 my_module_globals_t my_module_globals; 
 
 void add_function_to_data(char * function_name, long address, int function) {
     int found = 0;
-    for (int i=0; i<my_module_globals.data[function].size; ++i) {
+    int i;
+
+    for (i=0; i<my_module_globals.data[function].size; ++i) {
       if ((strcmp (my_module_globals.data[function].code[i].function_name, function_name)==0) && 
                   (my_module_globals.data[function].code[i].address==address)) {
         found = 1;
@@ -89,7 +90,6 @@ void add_function_to_data(char * function_name, long address, int function) {
 
 // Call this function to get a backtrace.
 void capture_backtrace(char *executable, int function) {
-  //  printf ("ENTERING BACKTRACE\n");
     char name[256];
     unw_cursor_t cursor; unw_context_t uc;
     unw_word_t ip, sp, offp;
@@ -117,20 +117,14 @@ void capture_backtrace(char *executable, int function) {
             unw_get_reg(&cursor, UNW_REG_IP, &ip);
             unw_get_reg(&cursor, UNW_REG_SP, &sp);
             
-            printf ("Adding function %s and address %lu\n", name, (long) ip);
+            printf ("[%d] Adding function %s and address %lu\n", function, name, (long) ip);
             add_function_to_data (name, (long)ip, function);
 
             level++;
         }
     }
-    printf ("DONE WITH BACKTRACE\n");
 }
 
-void finish() __attribute__ ((destructor));
-void finish() {
-//Write my_module_globals.data to file
-//
-}
 /*
 void init() __attribute__ ((constructor));
 void init() {
@@ -146,6 +140,30 @@ void init() {
 }
 */
 
+void finish() __attribute__ ((destructor));
+void finish() {
+    int i, j;
+    FILE *output;
+    char buffer[256];
+
+    buffer[255]=0;
+    printf("This is the finish method\n");
+    real_fopen=dlsym(RTLD_NEXT, "fopen");
+    real_fclose=dlsym(RTLD_NEXT, "fclose");
+    real_fwrite=dlsym(RTLD_NEXT, "fwrite");
+    real_fprintf=dlsym(RTLD_NEXT, "fprintf");
+
+    output=real_fopen("perfexpert_io_output", "w");
+
+    for (i=0; i<MAX_FUNCTIONS; ++i) {
+        real_fprintf (output, "Function: %d\n", i);
+        for (j=0; j<my_module_globals.data[i].size; ++j) {
+            real_fprintf(output, "Source code function: %s -- %ld -- %d\n", my_module_globals.data[i].code[j].function_name, my_module_globals.data[i].code[j].address, my_module_globals.data[i].code[j].count-1);
+        }
+    }
+    real_fclose(output);
+}
+
 FILE* fopen(const char *path, const char *mode) {
     program = getenv("PERFEXPERT_PROGRAM");
     capture_backtrace (program, FOPEN);
@@ -160,11 +178,56 @@ size_t fwrite(const void * ptr, size_t size, size_t n, FILE * s) {
     return real_fwrite(ptr, size, n, s);
 }
 
+int fscanf ( FILE * __restrict stream, const char *__restrict format, ... ) {
+    int retval;
+    program = getenv("PERFEXPERT_PROGRAM");
+    printf ("\nCalling fscanf\n\n");
+    va_list argptr;
+    va_start(argptr, format);
+    if (stream!=stderr && stream!=stdout) {
+        capture_backtrace(program, FSCANF);
+    }
+    retval=vfscanf(stream, format, argptr);
+    va_end(argptr);
+    return retval;
+}
+
+int fprintf ( FILE * __restrict stream, const char *__restrict format, ... ) {
+    int retval;
+    program = getenv("PERFEXPERT_PROGRAM");
+    printf ("\nCalling fprintf\n\n");
+    va_list argptr;
+    va_start(argptr, format);
+    if (stream!=stderr && stream!=stdout) {
+        capture_backtrace(program, FPRINTF);
+    }
+    retval=vfprintf(stream, format, argptr);
+    va_end(argptr);
+    return retval;
+}
+
 size_t fread(void *ptr, size_t size, size_t n, FILE * s) {
     program = getenv("PERFEXPERT_PROGRAM");
     capture_backtrace (program, FREAD);
     real_fread=dlsym(RTLD_NEXT, "fread");
     return real_fread(ptr, size, n, s);
+}
+
+char * fgets ( char * str, int num, FILE * stream ) {
+    program = getenv("PERFEXPERT_PROGRAM");
+    printf ("THIS IS FGETS\n");
+    capture_backtrace(program, FGETS);
+    real_fgets=dlsym(RTLD_NEXT, "fgets");
+    return real_fgets (str, num, stream);
+}
+
+//fprintf without formatted strings actually calls fputs
+int fputs ( const char * str, FILE * stream ) {
+    program = getenv ("PERFEXPERT_PROGRAM");
+    printf("THIS IS FPUTS\n");
+    capture_backtrace (program, FPUTS);
+    real_fputs=dlsym(RTLD_NEXT, "fputs");
+    return real_fputs (str, stream);
 }
 
 int fclose(FILE *stream) {

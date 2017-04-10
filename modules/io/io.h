@@ -28,9 +28,16 @@ extern "C" {
 
 #define FOPEN 0
 #define FCLOSE 1
+
 #define FWRITE 2
-#define FREAD 3
-#define MAX_FUNCTIONS 4
+#define FPRINTF 3
+#define FPUTS 4
+
+#define FREAD 5
+#define FSCANF 6
+#define FGETS 7
+
+#define MAX_FUNCTIONS 8
 
 /* Tools headers */
 #include "tools/perfexpert/perfexpert_types.h"

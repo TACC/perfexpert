@@ -49,13 +49,14 @@ int module_load(void) {
 
 /* module_init */
 int module_init(void) {
+    int i;
     /* Module pre-requisites */
 
     /* Initialize some variables */
     my_module_globals.maximum = DBL_MIN;
     my_module_globals.minimum = DBL_MAX;
     my_module_globals.threads = 0;
-    for (int i=0; i<MAX_FUNCTIONS; ++i) {
+    for (i=0; i<MAX_FUNCTIONS; ++i) {
         my_module_globals.data[i].size=0;
     }
 
@@ -66,9 +67,11 @@ int module_init(void) {
 
 /* module_fini */
 int module_fini(void) {
+    int i;
+
     OUTPUT_VERBOSE((5, "%s", _MAGENTA("finalized")));
 
-    for (int i =0; i < MAX_FUNCTIONS; ++i) {
+    for (i =0; i < MAX_FUNCTIONS; ++i) {
         PERFEXPERT_DEALLOC(my_module_globals.data[i].code);
     }
     return PERFEXPERT_SUCCESS;
