@@ -32,7 +32,7 @@ libperfexpert_module_io_la_CPPFLAGS = -I$(srcdir)/../..
 libperfexpert_module_io_la_LDFLAGS = -module -lsqlite3 -lm \
 	-version-info 1:0:0 -export-symbols $(srcdir)/io_module.sym
 libperfexpert_module_io_la_SOURCES = io_module.c \
-	io_output.c
+	io_output.c io_options.c
 
 
 #EOF
