@@ -128,6 +128,7 @@ void init() __attribute__ ((constructor));
 
 void init() {
     executable = getenv("PERFEXPERT_PROGRAM");
+    globals.moduledir = getenv("PERFEXPERT_IO_FOLDER");
     return;
 }
 
@@ -136,6 +137,7 @@ void finish() {
     int i, j;
     FILE *output;
     char buffer[256];
+    char path[255];
 
     buffer[255]=0;
     printf("This is the finish method\n");
@@ -144,7 +146,10 @@ void finish() {
     real_fwrite=dlsym(RTLD_NEXT, "fwrite");
     real_fprintf=dlsym(RTLD_NEXT, "fprintf");
 
-    output=real_fopen("perfexpert_io_output", "w");
+
+    snprintf (path, 255, "%s/perfexpert_io_output", globals.moduledir);
+
+    output=real_fopen(path, "w");
 
     for (i=0; i<MAX_FUNCTIONS; ++i) {
         real_fprintf (output, "Function: %d\n", i);

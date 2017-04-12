@@ -36,6 +36,7 @@ extern "C" {
 #include "common/perfexpert_output.h"
 #include "common/perfexpert_alloc.h"
 #include "common/perfexpert_time.h"
+#include "common/perfexpert_util.h"
 
 /* Global variable to define the module itself */
 perfexpert_module_io_t myself_module;
@@ -128,6 +129,9 @@ int module_measure(void) {
     e->argc++;
     PERFEXPERT_ALLOC(char, e->argv[e->argc], strlen(globals.program_full)+20);
     sprintf(e->argv[e->argc], "PERFEXPERT_PROGRAM=%s", globals.program_full);
+    e->argc++;
+
+    sprintf(e->argv[e->argc], "PERFEXPERT_IO_FOLDER=%s", globals.moduledir);
     e->argc++;
 
     argc = 0;
