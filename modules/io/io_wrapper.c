@@ -49,7 +49,7 @@ extern "C" {
 
 #include "io.h"
 
-char *program;
+char *executable;
 
 static ssize_t (*real_write)(int fd, const void *buf, size_t count) = NULL;
 static ssize_t (*real_fwrite)(const void *ptr, size_t size, size_t n, FILE *s) = NULL;
@@ -113,7 +113,6 @@ void capture_backtrace(char *executable, int function) {
 
             name[0] = '\0';
             unw_get_proc_name(&cursor, name, 256, &offp);
-//            printf ("Function name: %s\n", name);
             unw_get_reg(&cursor, UNW_REG_IP, &ip);
             unw_get_reg(&cursor, UNW_REG_SP, &sp);
             
@@ -125,20 +124,12 @@ void capture_backtrace(char *executable, int function) {
     }
 }
 
-/*
 void init() __attribute__ ((constructor));
+
 void init() {
-    program = getenv("PERFEXPERT_PROGRAM");
-    if (program == NULL) {
-        //OUTPUT(("%s", _ERROR("Program has not been defined"));
-        printf("%s \n", "Program has not been defined");
-        return;
-    }
-    else {
-//        printf ("The program that is going to run is %s\n", program);
-    }
+    executable = getenv("PERFEXPERT_PROGRAM");
+    return;
 }
-*/
 
 void finish() __attribute__ ((destructor));
 void finish() {
@@ -165,27 +156,27 @@ void finish() {
 }
 
 FILE* fopen(const char *path, const char *mode) {
-    program = getenv("PERFEXPERT_PROGRAM");
-    capture_backtrace (program, FOPEN);
+    executable = getenv("PERFEXPERT_PROGRAM");
+    capture_backtrace (executable, FOPEN);
     real_fopen=dlsym(RTLD_NEXT, "fopen");
     return real_fopen(path, mode);
 }
 
 size_t fwrite(const void * ptr, size_t size, size_t n, FILE * s) {
-    program = getenv("PERFEXPERT_PROGRAM");
-    capture_backtrace(program, FWRITE);
+    executable = getenv("PERFEXPERT_PROGRAM");
+    capture_backtrace(executable, FWRITE);
     real_fwrite=dlsym(RTLD_NEXT, "fwrite");
     return real_fwrite(ptr, size, n, s);
 }
 
 int fscanf ( FILE * __restrict stream, const char *__restrict format, ... ) {
     int retval;
-    program = getenv("PERFEXPERT_PROGRAM");
+    executable = getenv("PERFEXPERT_PROGRAM");
     printf ("\nCalling fscanf\n\n");
     va_list argptr;
     va_start(argptr, format);
     if (stream!=stderr && stream!=stdout) {
-        capture_backtrace(program, FSCANF);
+        capture_backtrace(executable, FSCANF);
     }
     retval=vfscanf(stream, format, argptr);
     va_end(argptr);
@@ -194,12 +185,12 @@ int fscanf ( FILE * __restrict stream, const char *__restrict format, ... ) {
 
 int fprintf ( FILE * __restrict stream, const char *__restrict format, ... ) {
     int retval;
-    program = getenv("PERFEXPERT_PROGRAM");
+    executable = getenv("PERFEXPERT_PROGRAM");
     printf ("\nCalling fprintf\n\n");
     va_list argptr;
     va_start(argptr, format);
     if (stream!=stderr && stream!=stdout) {
-        capture_backtrace(program, FPRINTF);
+        capture_backtrace(executable, FPRINTF);
     }
     retval=vfprintf(stream, format, argptr);
     va_end(argptr);
@@ -207,32 +198,32 @@ int fprintf ( FILE * __restrict stream, const char *__restrict format, ... ) {
 }
 
 size_t fread(void *ptr, size_t size, size_t n, FILE * s) {
-    program = getenv("PERFEXPERT_PROGRAM");
-    capture_backtrace (program, FREAD);
+    executable = getenv("PERFEXPERT_PROGRAM");
+    capture_backtrace (executable, FREAD);
     real_fread=dlsym(RTLD_NEXT, "fread");
     return real_fread(ptr, size, n, s);
 }
 
 char * fgets ( char * str, int num, FILE * stream ) {
-    program = getenv("PERFEXPERT_PROGRAM");
+    executable = getenv("PERFEXPERT_PROGRAM");
     printf ("THIS IS FGETS\n");
-    capture_backtrace(program, FGETS);
+    capture_backtrace(executable, FGETS);
     real_fgets=dlsym(RTLD_NEXT, "fgets");
     return real_fgets (str, num, stream);
 }
 
 //fprintf without formatted strings actually calls fputs
 int fputs ( const char * str, FILE * stream ) {
-    program = getenv ("PERFEXPERT_PROGRAM");
+    executable = getenv ("PERFEXPERT_PROGRAM");
     printf("THIS IS FPUTS\n");
-    capture_backtrace (program, FPUTS);
+    capture_backtrace (executable, FPUTS);
     real_fputs=dlsym(RTLD_NEXT, "fputs");
     return real_fputs (str, stream);
 }
 
 int fclose(FILE *stream) {
-    program = getenv("PERFEXPERT_PROGRAM");
-    capture_backtrace (program, FCLOSE);
+    executable = getenv("PERFEXPERT_PROGRAM");
+    capture_backtrace (executable, FCLOSE);
     real_fclose=dlsym(RTLD_NEXT, "fclose");
     return real_fclose(stream);
 }
