@@ -105,7 +105,6 @@ int module_analyze(void);
 
 /* Module functions */
 int parse_module_args(int argc, char *argv[]);
-int output_analysis();
 
 #ifdef __cplusplus
 }

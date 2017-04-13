@@ -30,8 +30,10 @@ extern "C" {
 /* Module headers */
 #include "io_module.h"
 #include "io.h"
+#include "io_database.h"
+#include "io_output.h"
 
-/* PerfExpert common headers */
+        /* PerfExpert common headers */
 #include "common/perfexpert_constants.h"
 #include "common/perfexpert_output.h"
 #include "common/perfexpert_alloc.h"
@@ -220,7 +222,21 @@ int module_measure(void) {
 
 /* module_analyze */
 int module_analyze(void) {
+    char path[255];
+
     OUTPUT(("%s", _YELLOW("Analysing measurements")));
+
+    snprintf (path, 255, "%s/perfexpert_io_output", globals.moduledir);
+
+    if (PERFEXPERT_SUCCESS != generate_raw_output(path, globals.program_full)) {
+        OUTPUT(("%s", _ERROR("processing output")));
+        return PERFEXPERT_ERROR;
+    }
+
+    if (PERFEXPERT_SUCCESS != database_export(my_module_globals.data)) {
+        OUTPUT(("%s", _ERROR("storing data into database")));
+        return PERFEXPERT_ERROR;
+    }
 
     if (PERFEXPERT_SUCCESS != output_analysis()) {
         OUTPUT(("%s", _ERROR("printing analysis report")));

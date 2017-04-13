@@ -1,4 +1,4 @@
-/*
+/*                                                                                                                                   
  * Copyright (c) 2011-2017  University of Texas at Austin. All rights reserved.
  *
  * $COPYRIGHT$
@@ -19,24 +19,30 @@
  * $HEADER$
  */
 
-#ifndef PERFEXPERT_MODULE_IO_DATABASE_H_
-#define PERFEXPERT_MODULE_IO_DATABASE_H_
+#ifndef PREFEXPERT_MODULE_IO_OUTPUT_H_
+#define PREFEXPERT_MODULE_IO_OUTPUT_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* Modules headers */
 #include "io.h"
 
-/* PerfExpert common headers */
-#include "common/perfexpert_list.h"
 
-int database_export(io_function_t *results);
-int database_input(io_function_t *results);
-//static int store_function (code_function_t *function);
+#include <stdio.h>
+#include <string.h>
+
+#define UNW_LOCAL_ONLY
+#include <libunwind.h>
+
+
+static int perfexpert_unwind_get_file_line (unw_word_t addr, char *file, size_t len, int *line, char *executable);
+int generate_raw_output(char *output_file, char * executable);
+int output_analysis();
+
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* PERFEXPERT_MODULE_IO_DATABASE_H_ */
+#endif /* PREFEXPERT_MODULE_IO_OUTPUT_H_ */ 
+

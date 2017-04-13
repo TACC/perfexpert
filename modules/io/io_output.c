@@ -19,21 +19,17 @@
  * $HEADER$
  */
 
-#ifndef PREFEXPERT_MODULE_IO_OUTPUT_H_
-#define PREFEXPERT_MODULE_IO_OUTPUT_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #include "io.h"
+#include "io_output.h"
 
 
 #include <stdio.h>
 #include <string.h>
-
-#define UNW_LOCAL_ONLY
-#include <libunwind.h>
 
 int perfexpert_unwind_get_file_line (unw_word_t addr, char *file, size_t len, int *line, char *executable) {
     char buf[256];
@@ -79,8 +75,12 @@ int perfexpert_unwind_get_file_line (unw_word_t addr, char *file, size_t len, in
     return PERFEXPERT_SUCCESS;
 }
 
-
-int perfexpert_io_output(char *output, char * executable) {
+/*  This file generates a text file with the raw output of the module:
+        - functions
+        - filenames
+        - line numbers ...
+*/
+int generate_raw_output(char *output_file, char * executable) {
     FILE *fp;
     ssize_t read;
     int line;
@@ -91,7 +91,7 @@ int perfexpert_io_output(char *output, char * executable) {
     char filename[256];
     int i;
 
-    fp = fopen(output, "r");
+    fp = fopen(output_file, "r");
     //Read line by line
     //Each line contains:
     //  io_function function_name address
@@ -113,9 +113,13 @@ int perfexpert_io_output(char *output, char * executable) {
     return PERFEXPERT_SUCCESS;
 }
 
+/*  This function prints the output on screen/file */
+int output_analysis() {
+
+}
+
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* PREFEXPERT_MODULE_IO_OUTPUT_H_ */ 
 
