@@ -53,9 +53,11 @@ extern "C" {
 #define IO "IO"
 
 typedef struct {
-    char function_name [256]; //Function that originates an IO request
-    long address;  //Address where that IO requests happens
-    unsigned long count; //Number of times the request has been issued
+    char file_name [256];
+    char function_name [256];   //Function that originates an IO request
+    long address;               //Address where that IO requests happens
+    int line;                   //Actual line where the request is coming from
+    unsigned long count;        //Number of times the request has been issued
 } code_function_t;
 
 //extern code_function_t code_function;

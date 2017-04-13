@@ -85,9 +85,11 @@ int perfexpert_io_output(char *output, char * executable) {
     ssize_t read;
     int line;
     size_t len;
-    char *io_function, *function_name;
+    int io_function;
+    char *function_name;
     unsigned long address;
     char filename[256];
+    int i;
 
     fp = fopen(output, "r");
     //Read line by line
@@ -96,9 +98,16 @@ int perfexpert_io_output(char *output, char * executable) {
     if (fp == NULL) {
         return PERFEXPERT_ERROR;
     }
+
+    i=0;
     while ((read = getline(&line, &len, fp)) != -1) {
-        sscanf(line, "%s %s %lu", &io_function, &function_name, &address);
+        sscanf(line, "%d %s %lu", &io_function, &function_name, &address);
         perfexpert_unwind_get_file_line (address, filename, 256, &line, executable);
+        my_module_globals.data[io_function].code = (code_function_t *) realloc (my_module_globals.data[io_function].code, (my_module_globals.data[io_function].size+1)*sizeof(code_function_t));
+        my_module_globals.data[io_function].code[my_module_globals.data[io_function].size].line=line;
+        strcpy(my_module_globals.data[io_function].code[my_module_globals.data[io_function].size].function_name, function_name);
+        strcpy(my_module_globals.data[io_function].code[my_module_globals.data[io_function].size].file_name, filename);
+        my_module_globals.data[io_function].size++;
     }
     fclose(fp);
     return PERFEXPERT_SUCCESS;
