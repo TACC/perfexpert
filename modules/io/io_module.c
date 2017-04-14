@@ -95,7 +95,8 @@ int module_fini(void) {
 
 /* module_measure */
 int module_measure(void) {
-    /* Run the code.
+    /* 
+       Run the code.
        We need to use LD_PRELOAD to access the wrappers implemented in io_wrapper.c
     */
     experiment_t *e;
@@ -157,7 +158,7 @@ int module_measure(void) {
         (strlen(globals.moduledir) + strlen(IO) + 25));
 
     sprintf(e->test.output, "%s/%s.output", globals.moduledir, IO);
-//    e->test.input = my_module_globals.inputfile;
+    e->test.input = my_module_globals.inputfile;
     e->test.info = globals.program;
 
     if (4 <= globals.verbose) {
@@ -169,7 +170,7 @@ int module_measure(void) {
     }
 
     OUTPUT(("%s", _YELLOW("Running the code")));
-    /* fork_and_wait_and_pray and calculate and display runtime */
+    /*  Fork and run the command */
     clock_gettime(CLOCK_MONOTONIC, &time_start);
     rc = perfexpert_fork_and_wait(&(e->test), (char **)e->argv);
     clock_gettime(CLOCK_MONOTONIC, &time_end);
