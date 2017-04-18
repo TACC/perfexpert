@@ -58,6 +58,7 @@ typedef struct {
     long address;               //Address where that IO requests happens
     int line;                   //Actual line where the request is coming from
     unsigned long count;        //Number of times the request has been issued
+    unsigned long datasize;         //Aggregated amount of bytes read/written
 } code_function_t;
 
 //extern code_function_t code_function;

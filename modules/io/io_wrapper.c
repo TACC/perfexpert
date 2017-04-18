@@ -64,7 +64,7 @@ static int (*real_fclose)(FILE *stream) = NULL;
 
 my_module_globals_t my_module_globals; 
 
-void add_function_to_data(char * function_name, long address, int function) {
+void add_function_to_data(char * function_name, long address, int function, long size) {
     int found = 0;
     int i;
 
@@ -74,6 +74,7 @@ void add_function_to_data(char * function_name, long address, int function) {
         found = 1;
         printf ("Function and address founds [%d]\n", function);
         my_module_globals.data[function].code[i].count++;
+        my_module_globals.data[function].code[i].datasize+=size;
         break;
       }
     }
@@ -83,13 +84,14 @@ void add_function_to_data(char * function_name, long address, int function) {
         my_module_globals.data[function].code = (code_function_t *) realloc (my_module_globals.data[function].code, (my_module_globals.data[function].size+1)*sizeof(code_function_t));
         strcpy (my_module_globals.data[function].code[my_module_globals.data[function].size].function_name, function_name);
         my_module_globals.data[function].code[my_module_globals.data[function].size].address = address;
+        my_module_globals.data[function].code[my_module_globals.data[function].size].datasize=size;
         my_module_globals.data[function].code[my_module_globals.data[function].size].count=1;
         my_module_globals.data[function].size++;
     }
 }
 
 // Call this function to get a backtrace.
-void capture_backtrace(char *executable, int function) {
+void capture_backtrace(char *executable, int function, long datasize) {
     char name[256];
     unw_cursor_t cursor; unw_context_t uc;
     unw_word_t ip, sp, offp;
@@ -117,7 +119,7 @@ void capture_backtrace(char *executable, int function) {
             unw_get_reg(&cursor, UNW_REG_SP, &sp);
             
             printf ("[%d] Adding function %s and address %lu\n", function, name, (long) ip);
-            add_function_to_data (name, (long)ip, function);
+            add_function_to_data (name, (long)ip, function, datasize);
 
             level++;
         }
@@ -162,14 +164,14 @@ void finish() {
 
 FILE* fopen(const char *path, const char *mode) {
     executable = getenv("PERFEXPERT_PROGRAM");
-    capture_backtrace (executable, FOPEN);
+    capture_backtrace (executable, FOPEN, 0);
     real_fopen=dlsym(RTLD_NEXT, "fopen");
     return real_fopen(path, mode);
 }
 
 size_t fwrite(const void * ptr, size_t size, size_t n, FILE * s) {
     executable = getenv("PERFEXPERT_PROGRAM");
-    capture_backtrace(executable, FWRITE);
+    capture_backtrace(executable, FWRITE, size*n);
     real_fwrite=dlsym(RTLD_NEXT, "fwrite");
     return real_fwrite(ptr, size, n, s);
 }
@@ -181,7 +183,7 @@ int fscanf ( FILE * __restrict stream, const char *__restrict format, ... ) {
     va_list argptr;
     va_start(argptr, format);
     if (stream!=stderr && stream!=stdout) {
-        capture_backtrace(executable, FSCANF);
+        capture_backtrace(executable, FSCANF, 0);
     }
     retval=vfscanf(stream, format, argptr);
     va_end(argptr);
@@ -195,7 +197,7 @@ int fprintf ( FILE * __restrict stream, const char *__restrict format, ... ) {
     va_list argptr;
     va_start(argptr, format);
     if (stream!=stderr && stream!=stdout) {
-        capture_backtrace(executable, FPRINTF);
+        capture_backtrace(executable, FPRINTF, 0);
     }
     retval=vfprintf(stream, format, argptr);
     va_end(argptr);
@@ -204,7 +206,7 @@ int fprintf ( FILE * __restrict stream, const char *__restrict format, ... ) {
 
 size_t fread(void *ptr, size_t size, size_t n, FILE * s) {
     executable = getenv("PERFEXPERT_PROGRAM");
-    capture_backtrace (executable, FREAD);
+    capture_backtrace (executable, FREAD, size*n);
     real_fread=dlsym(RTLD_NEXT, "fread");
     return real_fread(ptr, size, n, s);
 }
@@ -212,7 +214,7 @@ size_t fread(void *ptr, size_t size, size_t n, FILE * s) {
 char * fgets ( char * str, int num, FILE * stream ) {
     executable = getenv("PERFEXPERT_PROGRAM");
     printf ("THIS IS FGETS\n");
-    capture_backtrace(executable, FGETS);
+    capture_backtrace(executable, FGETS, num);
     real_fgets=dlsym(RTLD_NEXT, "fgets");
     return real_fgets (str, num, stream);
 }
@@ -221,14 +223,14 @@ char * fgets ( char * str, int num, FILE * stream ) {
 int fputs ( const char * str, FILE * stream ) {
     executable = getenv ("PERFEXPERT_PROGRAM");
     printf("THIS IS FPUTS\n");
-    capture_backtrace (executable, FPUTS);
+    capture_backtrace (executable, FPUTS, 0);
     real_fputs=dlsym(RTLD_NEXT, "fputs");
     return real_fputs (str, stream);
 }
 
 int fclose(FILE *stream) {
     executable = getenv("PERFEXPERT_PROGRAM");
-    capture_backtrace (executable, FCLOSE);
+    capture_backtrace (executable, FCLOSE, 0);
     real_fclose=dlsym(RTLD_NEXT, "fclose");
     return real_fclose(stream);
 }

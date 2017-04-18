@@ -48,9 +48,6 @@ extern "C" {
 #include "common/perfexpert_md5.h"
 #include "common/perfexpert_output.h"
 
-#include <omp.h>
-#include <sched.h>
-
 /* database_export */
 int database_export(io_function_t *results) {
     char *error = NULL, sql[MAX_BUFFER_SIZE];
@@ -66,6 +63,7 @@ int database_export(io_function_t *results) {
                  "function      VARCHAR NOT NULL,           "
                  "filename      VARCHAR NOT NULL,           "
                  "line          INTEGER NOT NULL,           "
+                 "datasize      INTEGER NOT NULL,           "
                  "value         INTEGER NOT NULL,           );");
 
     OUTPUT_VERBOSE((5, "%s", _BLUE("Writing IO profiles to database")));
@@ -86,10 +84,10 @@ int database_export(io_function_t *results) {
 
     for (i=0; i<results->size; i++) {
         bzero(sql, MAX_BUFFER_SIZE);
-        sprintf(sql, "INSERT INTO io_metric (function, filename, line, value)"
+        sprintf(sql, "INSERT INTO io_metric (function, filename, line, datasize, value)"
                       " VALUES ('%s', %ld, %ld);", results->code[i].function_name,
                       results->code[i].file_name, results->code[i].address,
-                      results->code[i].count);
+                      results->code[i].datasize, results->code[i].count);
         OUTPUT_VERBOSE((10, "      %s SQL: %s", _CYAN(results->code[i].function_name), sql));
         if (SQLITE_OK != sqlite3_exec(globals.db, sql, NULL, NULL, &error)) {
             OUTPUT(("%s %s", _ERROR("SQL error"), error));
