@@ -19,6 +19,8 @@
 # $HEADER$
 #
 
+AUTOMAKE_OPTIONS = subdir-objects
+
 SUBDIRS = libmacpo inst libmrt analyze libset
 dist_bin_SCRIPTS = macpo.sh
 

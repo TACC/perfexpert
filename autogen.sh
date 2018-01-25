@@ -22,6 +22,7 @@
 
 # Run autoreconf
 mkdir -p m4
+mkdir -p lib/cache_sim/m4
 mkdir -p config
 aclocal -I m4 --install
 autoreconf -ivf --warnings=all,no-obsolete,no-override -I config

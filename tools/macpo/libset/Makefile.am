@@ -19,6 +19,8 @@
 # $HEADER$
 #
 
+AUTOMAKE_OPTIONS = subdir-objects
+
 lib_LTLIBRARIES = libset.la 
 
 libset_la_SOURCES = ../analyze/cache_info.cpp set_cache_conflict_lib.cpp
