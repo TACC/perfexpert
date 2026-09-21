@@ -90,7 +90,7 @@ static struct argp_option options[] = {
         "times" },
     { "module-help", 'H', "MODULE|all", 0, "Show module options" },
 
-    { 0, 0, 0, 0, "Output formating options:", 5 },
+    { 0, 0, 0, 0, "Output formatting options:", 5 },
     { "colorful", 'c', 0, 0, "Enable ANSI colors" },
     { "verbose", 'v', "LEVEL", 0, "Enable verbose mode (range: 0-10)" },
     { "verbose-level", 'l', "LEVEL", OPTION_ALIAS,
